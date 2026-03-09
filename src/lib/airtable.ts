@@ -294,6 +294,15 @@ export async function deleteInteraction(id: string): Promise<void> {
   await request(`${TABLES.interactions}/${id}`, { method: 'DELETE' })
 }
 
+export async function getRecentInteractions(limit: number): Promise<Interaction[]> {
+  const records = await fetchAll<InteractionFields>(TABLES.interactions, {
+    'sort[0][field]': 'Date',
+    'sort[0][direction]': 'desc',
+    maxRecords: String(limit),
+  })
+  return records.map(mapInteraction)
+}
+
 // ── Follow-up helpers ────────────────────────────────────────────────────────
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000

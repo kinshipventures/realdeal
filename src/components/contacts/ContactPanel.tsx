@@ -22,10 +22,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
     setSearch('')
     setSelectedContact(null)
     setShowNewContact(false)
-    getContacts(categoryId).then(data => {
-      setContacts(data)
-      setLoading(false)
-    })
+    getContacts(categoryId)
+      .then(data => setContacts(data))
+      .catch(err => console.error('Failed to load contacts:', err))
+      .finally(() => setLoading(false))
   }, [categoryId])
 
   function handleSaved(updated: Contact) {

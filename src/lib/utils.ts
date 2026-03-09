@@ -23,3 +23,8 @@ export function avatarHue(name: string): number {
 export function initials(name: string): string {
   return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
+
+export function daysOverdue(contact: { last_contacted_at: string | null }): number | null {
+  if (!contact.last_contacted_at) return null
+  return Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
+}

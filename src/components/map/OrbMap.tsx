@@ -147,7 +147,12 @@ export function OrbMap() {
 
     getCategories(list.id).then(async (cats: Category[]) => {
       const savedPositions = getPositions()
-      const posMap = circularLayout(cats, savedPositions, position, 230)
+      // Radius grows with category count so orbs never crowd
+      const CAT_SIZE = 64
+      const CAT_GAP = 24
+      const minRadius = Math.ceil(cats.length * (CAT_SIZE + CAT_GAP) / (2 * Math.PI))
+      const radius = Math.max(230, minRadius)
+      const posMap = circularLayout(cats, savedPositions, position, radius)
 
       // Derive category counts from warm cache (no extra API call)
       const allContacts = await getContacts()
@@ -199,6 +204,11 @@ export function OrbMap() {
 
       setNodes([listNode, ...catNodes])
       setEdges(catEdges)
+    }).catch(() => {
+      // Reset loading state on the orb so the user can retry
+      setNodes(prev => prev.map(n =>
+        n.id === list.id ? { ...n, data: { ...n.data, loading: false } } : n
+      ))
     })
   }, [])
 
@@ -214,26 +224,33 @@ export function OrbMap() {
   }, [handleListClick])
 
   useEffect(() => {
+    let stale = false
     async function init() {
-      const [allLists, allContacts] = await Promise.all([getLists(), getContacts()])
-      listsRef.current = allLists
+      try {
+        const [allLists, allContacts] = await Promise.all([getLists(), getContacts()])
+        if (stale) return
+        listsRef.current = allLists
 
-      // Single pass: derive { total, overdue } per list from the warm contact cache
-      const countsByList: Record<string, ListCounts> = {}
-      for (const contact of allContacts) {
-        for (const listId of contact.list_ids) {
-          if (!countsByList[listId]) countsByList[listId] = { total: 0, overdue: 0 }
-          countsByList[listId].total++
-          if (isOverdue(contact)) countsByList[listId].overdue++
+        // Single pass: derive { total, overdue } per list from the warm contact cache
+        const countsByList: Record<string, ListCounts> = {}
+        for (const contact of allContacts) {
+          for (const listId of contact.list_ids) {
+            if (!countsByList[listId]) countsByList[listId] = { total: 0, overdue: 0 }
+            countsByList[listId].total++
+            if (isOverdue(contact)) countsByList[listId].overdue++
+          }
         }
-      }
-      countsByListRef.current = countsByList
+        countsByListRef.current = countsByList
 
-      const savedPositions = getPositions()
-      setNodes(buildHomeNodes(allLists, countsByList, savedPositions, handleListClick))
-      setEdges(buildHomeEdges(allLists))
+        const savedPositions = getPositions()
+        setNodes(buildHomeNodes(allLists, countsByList, savedPositions, handleListClick))
+        setEdges(buildHomeEdges(allLists))
+      } catch (err) {
+        console.error('Failed to load network:', err)
+      }
     }
     init()
+    return () => { stale = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
