@@ -8,11 +8,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts"
+    "seed:lists": "tsx --env-file=.env.local src/scripts/seedLists.ts",
+    "seed:csv": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
-    "@supabase/supabase-js": "^2.98.0",
     "@xyflow/react": "^12.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

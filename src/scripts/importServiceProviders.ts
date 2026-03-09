@@ -1,28 +1,56 @@
 // Service Providers CSV import script
-// Usage: pnpm run seed
+// Usage: pnpm run seed:csv
 //
 // Reads ~/Downloads/Service Providers - Sheet1 (1).csv
 // Imports contacts into the 'Services for Founders' list, bucketed by category
 
-import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
-import type { Database } from '../lib/types'
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL!
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!
+const TOKEN = process.env.VITE_AIRTABLE_TOKEN!
+const BASE_ID = process.env.VITE_AIRTABLE_BASE_ID!
+const BASE_URL = `https://api.airtable.com/v0/${BASE_ID}`
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+if (!TOKEN || !BASE_ID) {
+  console.error('Missing VITE_AIRTABLE_TOKEN or VITE_AIRTABLE_BASE_ID')
   process.exit(1)
 }
 
-const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+const TABLES = {
+  lists: 'tblnsxNUscKApvMsV',
+  categories: 'tblVAgv23LUXs7Q0p',
+  contacts: 'tbll75mRMMVBGiNpj',
+}
 
-// CSV column → DB field mapping
-// Agency, Contact name, Category, Website, Contact Info, Email,
-// Location, Specialization, Past Clients, Recommended by, Notes
+async function airtable(path: string, options?: RequestInit) {
+  const res = await fetch(`${BASE_URL}/${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  })
+  if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
+async function fetchAll(table: string, params = ''): Promise<{ id: string; fields: Record<string, unknown> }[]> {
+  const records: { id: string; fields: Record<string, unknown> }[] = []
+  let offset: string | undefined
+  do {
+    const sep = params ? '&' : '?'
+    const url = offset ? `${table}?${params}${sep}offset=${offset}` : params ? `${table}?${params}` : table
+    const data = await airtable(url)
+    records.push(...data.records)
+    offset = data.offset
+  } while (offset)
+  return records
+}
+
+// ── CSV parsing ──────────────────────────────────────────────────────────────
+
 function parseCSV(content: string) {
   const lines = content.split('\n').filter(l => l.trim())
   const headers = parseRow(lines[0])
@@ -48,33 +76,41 @@ function parseRow(line: string): string[] {
   return result
 }
 
+// ── Main ─────────────────────────────────────────────────────────────────────
+
 async function run() {
   const csvPath = join(homedir(), 'Downloads', 'Service Providers - Sheet1 (1).csv')
   const content = readFileSync(csvPath, 'utf-8')
   const rows = parseCSV(content).filter(r => r['Agency']?.trim())
 
-  // Fetch the Services for Founders list
-  const { data: list, error: listErr } = await supabase
-    .from('lists')
-    .select('id')
-    .eq('name', 'Services for Founders')
-    .single()
-
-  if (listErr || !list) {
-    console.error('Could not find "Services for Founders" list. Run seed migrations first.')
+  // Fetch Services for Founders list
+  const lists = await fetchAll(TABLES.lists, `filterByFormula=${encodeURIComponent('Name="Services for Founders"')}`)
+  const list = lists[0]
+  if (!list) {
+    console.error('Could not find "Services for Founders" list. Run pnpm run seed:lists first.')
     process.exit(1)
   }
+  const listId = list.id
 
   // Fetch all categories for this list
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name')
-    .eq('list_id', list.id)
+  const categories = await fetchAll(
+    TABLES.categories,
+    `filterByFormula=${encodeURIComponent(`FIND("${listId}", ARRAYJOIN({List}))`)}`
+  )
+  const categoryMap = new Map(
+    categories.map(c => [(c.fields.Name as string).toLowerCase(), c.id])
+  )
 
-  const categoryMap = new Map(categories?.map(c => [c.name.toLowerCase(), c.id]) ?? [])
+  // Fetch existing contacts (by email) for upsert
+  const existingContacts = await fetchAll(TABLES.contacts)
+  const emailIndex = new Map(
+    existingContacts
+      .filter(c => c.fields.Email)
+      .map(c => [(c.fields.Email as string).toLowerCase(), c.id])
+  )
 
   let imported = 0
-  let skipped = 0
+  let updated = 0
 
   for (const row of rows) {
     const name = row['Agency']?.trim()
@@ -84,65 +120,45 @@ async function run() {
       ? `Contact: ${row['Contact name'].trim()}`
       : ''
     const existingNotes = row['Notes']?.trim()
-    const notes = [contactNote, existingNotes].filter(Boolean).join('\n') || null
+    const notes = [contactNote, existingNotes].filter(Boolean).join('\n') || undefined
 
-    const contactData = {
-      name,
-      email: row['Email']?.trim() || null,
-      phone: row['Contact Info']?.trim() || null,
-      website: row['Website']?.trim() || null,
-      location: row['Location']?.trim() || null,
-      specialization: row['Specialization']?.trim() || null,
-      past_clients: row['Past Clients']?.trim() || null,
-      recommended_by: row['Recommended by']?.trim() || null,
-      notes,
-    }
-
-    // Upsert on email (if present), otherwise insert
-    let contactId: string | null = null
-
-    if (contactData.email) {
-      const { data: existing } = await supabase
-        .from('contacts')
-        .select('id')
-        .eq('email', contactData.email)
-        .single()
-
-      if (existing) {
-        await supabase.from('contacts').update(contactData).eq('id', existing.id)
-        contactId = existing.id
-        skipped++
-      }
-    }
-
-    if (!contactId) {
-      const { data: inserted, error } = await supabase
-        .from('contacts')
-        .insert(contactData)
-        .select('id')
-        .single()
-
-      if (error || !inserted) {
-        console.error(`Failed to insert ${name}:`, error?.message)
-        continue
-      }
-      contactId = inserted.id
-      imported++
-    }
-
-    // Resolve category
     const rawCategory = row['Category']?.trim().toLowerCase()
     const categoryId = rawCategory ? (categoryMap.get(rawCategory) ?? null) : null
 
-    // Create list membership
-    await supabase.from('list_memberships').upsert({
-      contact_id: contactId,
-      list_id: list.id,
-      category_id: categoryId,
-    }, { onConflict: 'contact_id,list_id,category_id' })
+    const fields: Record<string, unknown> = {
+      Name: name,
+      Email: row['Email']?.trim() || undefined,
+      Phone: row['Contact Info']?.trim() || undefined,
+      Website: row['Website']?.trim() || undefined,
+      Location: row['Location']?.trim() || undefined,
+      Specialization: row['Specialization']?.trim() || undefined,
+      'Past Clients': row['Past Clients']?.trim() || undefined,
+      'Recommended By': row['Recommended by']?.trim() || undefined,
+      Notes: notes,
+      Lists: [listId],
+      Categories: categoryId ? [categoryId] : undefined,
+    }
+
+    const email = row['Email']?.trim().toLowerCase()
+    const existingId = email ? emailIndex.get(email) : undefined
+
+    if (existingId) {
+      await airtable(`${TABLES.contacts}/${existingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ fields }),
+      })
+      updated++
+    } else {
+      const r = await airtable(TABLES.contacts, {
+        method: 'POST',
+        body: JSON.stringify({ fields }),
+      })
+      if (email) emailIndex.set(email, r.id)
+      imported++
+    }
   }
 
-  console.log(`Done. Imported: ${imported}, updated: ${skipped}`)
+  console.log(`Done. Imported: ${imported}, updated: ${updated}`)
 }
 
-run().catch(console.error)
+run().catch(err => { console.error(err); process.exit(1) })

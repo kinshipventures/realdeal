@@ -1,9 +1,8 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap');
 
 @layer base {
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+  *, *::before, *::after { box-sizing: border-box; }
 
   html, body, #root {
     height: 100%;
@@ -12,9 +11,105 @@
   }
 
   body {
-    background: #0a0a0a;
-    color: #f0f0f0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F5F4F0;
+    color: rgba(0,0,0,0.85);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* ── React Flow ────────────────────────────────────────────────────────────── */
+
+.react-flow__node {
+  cursor: default;
+}
+
+.react-flow__node:focus,
+.react-flow__node:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing;
+}
+
+/* ── Orb interactions ───────────────────────────────────────────────────────── */
+/* Transforms live in CSS — JS only touches box-shadow (color-dependent).      */
+/* This avoids React re-render wiping inline style.transform mid-animation.    */
+
+.orb-interactive {
+  will-change: transform;
+  transition:
+    transform 0.22s cubic-bezier(0.215, 0.61, 0.355, 1),
+    box-shadow 0.22s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.orb-interactive:hover {
+  transform: scale(var(--orb-scale, 1.06)) translateY(var(--orb-lift, -2px));
+}
+
+.orb-interactive:active {
+  transform: scale(0.93) !important;
+  transition-duration: 0.08s !important;
+  transition-timing-function: ease-in !important;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+
+@keyframes orb-enter {
+  from { opacity: 0; transform: scale(0.5); filter: blur(6px); }
+  to   { opacity: 1; transform: scale(1);   filter: blur(0px); }
+}
+
+.orb-enter {
+  animation: orb-enter 0.5s cubic-bezier(0.5, 1, 0.9, 1) both;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 0.15; transform: scale(1.1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────────── */
+
+.panel-enter {
+  animation: panel-slide-in 0.35s cubic-bezier(0.87, 0, 0.13, 1) both;
+}
+
+@keyframes panel-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+
+/* ── Grain overlay ──────────────────────────────────────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
 }
