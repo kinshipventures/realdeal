@@ -239,10 +239,12 @@ export async function deleteContact(id: string): Promise<void> {
 
 // ── Interactions ─────────────────────────────────────────────────────────────
 
-function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction {
+function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | null {
+  const contact_id = r.fields.Contact?.[0]
+  if (!contact_id) return null
   return {
     id: r.id,
-    contact_id: r.fields.Contact?.[0] ?? '',
+    contact_id,
     type: r.fields.Type ?? 'note',
     date: r.fields.Date ?? r.createdTime,
     notes: r.fields.Notes ?? null,
@@ -257,7 +259,7 @@ export async function getInteractions(contactId: string): Promise<Interaction[]>
     'sort[0][field]': 'Date',
     'sort[0][direction]': 'desc',
   })
-  return records.map(mapInteraction)
+  return records.flatMap(r => mapInteraction(r) ?? [])
 }
 
 export async function createInteraction(data: Omit<Interaction, 'id' | 'created_at'>): Promise<Interaction> {
@@ -272,7 +274,9 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
       },
     }),
   })
-  return mapInteraction(r)
+  const mapped = mapInteraction(r)
+  if (!mapped) throw new Error('Created interaction missing Contact link')
+  return mapped
 }
 
 export async function updateInteraction(
@@ -287,7 +291,9 @@ export async function updateInteraction(
     method: 'PATCH',
     body: JSON.stringify({ fields }),
   })
-  return mapInteraction(r)
+  const mapped = mapInteraction(r)
+  if (!mapped) throw new Error('Updated interaction missing Contact link')
+  return mapped
 }
 
 export async function deleteInteraction(id: string): Promise<void> {
@@ -300,7 +306,7 @@ export async function getRecentInteractions(limit: number): Promise<Interaction[
     'sort[0][direction]': 'desc',
     maxRecords: String(limit),
   })
-  return records.map(mapInteraction)
+  return records.flatMap(r => mapInteraction(r) ?? [])
 }
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────

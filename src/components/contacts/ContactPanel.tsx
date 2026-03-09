@@ -13,18 +13,20 @@ interface ContactPanelProps {
 export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanelProps) {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [showNewContact, setShowNewContact] = useState(false)
 
   useEffect(() => {
     setLoading(true)
+    setLoadError(false)
     setSearch('')
     setSelectedContact(null)
     setShowNewContact(false)
     getContacts(categoryId)
       .then(data => setContacts(data))
-      .catch(err => console.error('Failed to load contacts:', err))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [categoryId])
 
@@ -164,6 +166,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
               animation: 'spin 0.8s linear infinite',
               margin: '0 auto',
             }} />
+          </div>
+        ) : loadError ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.38)', fontSize: 13 }}>
+            Could not load contacts. Check your connection and try again.
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.25)', fontSize: 13 }}>
