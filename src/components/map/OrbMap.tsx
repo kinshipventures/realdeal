@@ -10,7 +10,7 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { getLists, getCategories, getOverdueContacts } from '../../lib/airtable'
+import { getLists, getCategories, getContacts, isOverdue } from '../../lib/airtable'
 import type { Category, List } from '../../lib/types'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
@@ -65,9 +65,11 @@ function circularLayout(
   return map
 }
 
+type ListCounts = { total: number; overdue: number }
+
 function buildHomeNodes(
   lists: List[],
-  overdueIds: Set<string>,
+  countsByList: Record<string, ListCounts>,
   savedPositions: Record<string, { x: number; y: number }>,
   onListClick: (list: List, pos: { x: number; y: number }) => void
 ): Node[] {
@@ -84,6 +86,7 @@ function buildHomeNodes(
 
   const listNodes: Node[] = lists.map((list, i) => {
     const pos = listPositions.get(list.id)!
+    const counts = countsByList[list.id] ?? { total: 0, overdue: 0 }
     return {
       id: list.id,
       type: 'list',
@@ -91,7 +94,8 @@ function buildHomeNodes(
       style: { overflow: 'visible' },
       data: {
         list,
-        isOverdue: overdueIds.has(list.id),
+        contactCount: counts.total,
+        overdueCount: counts.overdue,
         loading: false,
         animationDelay: `${i * 0.04}s`,
         onClick: () => onListClick(list, pos),
@@ -121,7 +125,7 @@ export function OrbMap() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
   const listsRef = useRef<List[]>([])
-  const overdueRef = useRef<Set<string>>(new Set())
+  const countsByListRef = useRef<Record<string, ListCounts>>({})
   // Refs for stale-closure-safe navigation state
   const viewRef = useRef<'lists' | 'categories'>('lists')
   const selectedListRef = useRef<List | null>(null)
@@ -141,10 +145,21 @@ export function OrbMap() {
       n.id === list.id ? { ...n, data: { ...n.data, loading: true } } : n
     ))
 
-    getCategories(list.id).then((cats: Category[]) => {
+    getCategories(list.id).then(async (cats: Category[]) => {
       const savedPositions = getPositions()
       const posMap = circularLayout(cats, savedPositions, position, 230)
 
+      // Derive category counts from warm cache (no extra API call)
+      const allContacts = await getContacts()
+      const countsByCategory: Record<string, number> = {}
+      for (const contact of allContacts) {
+        if (!contact.list_ids.includes(list.id)) continue
+        for (const catId of contact.category_ids) {
+          countsByCategory[catId] = (countsByCategory[catId] ?? 0) + 1
+        }
+      }
+
+      const listCounts = countsByListRef.current[list.id] ?? { total: 0, overdue: 0 }
       const listNode: Node = {
         id: list.id,
         type: 'list',
@@ -152,7 +167,8 @@ export function OrbMap() {
         style: { overflow: 'visible' },
         data: {
           list,
-          isOverdue: overdueRef.current.has(list.id),
+          contactCount: listCounts.total,
+          overdueCount: listCounts.overdue,
           loading: false,
           onClick: undefined,
         },
@@ -166,6 +182,7 @@ export function OrbMap() {
         data: {
           category: cat,
           listColor: list.color,
+          contactCount: countsByCategory[cat.id] ?? 0,
           animationDelay: `${i * 0.03}s`,
           onClick: () => setSelectedCategoryId(prev => prev === cat.id ? null : cat.id),
         },
@@ -192,27 +209,28 @@ export function OrbMap() {
     setSelectedList(null)
     setSelectedCategoryId(null)
     const savedPositions = getPositions()
-    setNodes(buildHomeNodes(listsRef.current, overdueRef.current, savedPositions, handleListClick))
+    setNodes(buildHomeNodes(listsRef.current, countsByListRef.current, savedPositions, handleListClick))
     setEdges(buildHomeEdges(listsRef.current))
   }, [handleListClick])
 
   useEffect(() => {
     async function init() {
-      const allLists = await getLists()
+      const [allLists, allContacts] = await Promise.all([getLists(), getContacts()])
       listsRef.current = allLists
 
-      const priorityLists = allLists.filter(l => l.is_priority)
-      const checks = await Promise.all(
-        priorityLists.map(async l => {
-          const overdue = await getOverdueContacts(l.id)
-          return { id: l.id, hasOverdue: overdue.length > 0 }
-        })
-      )
-      const overdueIds = new Set(checks.filter(c => c.hasOverdue).map(c => c.id))
-      overdueRef.current = overdueIds
+      // Single pass: derive { total, overdue } per list from the warm contact cache
+      const countsByList: Record<string, ListCounts> = {}
+      for (const contact of allContacts) {
+        for (const listId of contact.list_ids) {
+          if (!countsByList[listId]) countsByList[listId] = { total: 0, overdue: 0 }
+          countsByList[listId].total++
+          if (isOverdue(contact)) countsByList[listId].overdue++
+        }
+      }
+      countsByListRef.current = countsByList
 
       const savedPositions = getPositions()
-      setNodes(buildHomeNodes(allLists, overdueIds, savedPositions, handleListClick))
+      setNodes(buildHomeNodes(allLists, countsByList, savedPositions, handleListClick))
       setEdges(buildHomeEdges(allLists))
     }
     init()

@@ -5,7 +5,8 @@ import { hexToRgba } from '../../lib/utils'
 
 export type ListNodeData = {
   list: List
-  isOverdue: boolean
+  contactCount: number
+  overdueCount: number
   loading?: boolean
   animationDelay?: string
   onClick?: () => void
@@ -20,7 +21,7 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, isOverdue, loading, animationDelay, onClick } = data
+  const { list, contactCount, overdueCount, loading, animationDelay, onClick } = data
   const color = list.color ?? '#718096'
   const size = 96
 
@@ -57,7 +58,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
       />
 
       {/* Overdue pulse ring */}
-      {isOverdue && (
+      {overdueCount > 0 && (
         <div style={{
           position: 'absolute',
           inset: -8,
@@ -106,20 +107,40 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             animation: 'spin 0.75s linear infinite',
           }} />
         ) : (
-          <span style={{
-            fontSize: fontSize(list.name),
-            fontWeight: 600,
-            color: 'rgba(0,0,0,0.72)',
-            textAlign: 'center',
-            lineHeight: 1.3,
-            letterSpacing: '-0.01em',
-            padding: '0 12px',
-            userSelect: 'none',
-            zIndex: 1,
-            position: 'relative',
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            position: 'relative', zIndex: 1, padding: '0 10px',
           }}>
-            {list.name}
-          </span>
+            <span style={{
+              fontSize: fontSize(list.name),
+              fontWeight: 600,
+              color: 'rgba(0,0,0,0.72)',
+              textAlign: 'center',
+              lineHeight: 1.3,
+              letterSpacing: '-0.01em',
+              userSelect: 'none',
+            }}>
+              {list.name}
+            </span>
+            <span style={{
+              fontSize: 9, color: 'rgba(0,0,0,0.30)',
+              letterSpacing: '0.01em', userSelect: 'none',
+            }}>
+              {contactCount}
+            </span>
+            {overdueCount > 0 && (
+              <span style={{
+                fontSize: 9, color: 'hsla(20, 80%, 45%, 0.80)',
+                display: 'flex', alignItems: 'center', gap: 3, userSelect: 'none',
+              }}>
+                <span style={{
+                  width: 4, height: 4, borderRadius: '50%',
+                  background: 'hsla(20, 80%, 45%, 0.80)', flexShrink: 0,
+                }} />
+                {overdueCount}
+              </span>
+            )}
+          </div>
         )}
 
         {/* Color bottom rim */}

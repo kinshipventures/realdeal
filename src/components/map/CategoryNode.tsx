@@ -6,6 +6,7 @@ import { hexToRgba } from '../../lib/utils'
 export type CategoryNodeData = {
   category: Category
   listColor?: string | null
+  contactCount?: number
   animationDelay?: string
   onClick: () => void
 }
@@ -19,7 +20,7 @@ function fontSize(name: string): number {
 }
 
 export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
-  const { category, listColor, animationDelay, onClick } = data
+  const { category, listColor, contactCount, animationDelay, onClick } = data
   const SIZE = 64
 
   const accentColor = listColor ?? '#718096'
@@ -78,20 +79,30 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
           ;(e.currentTarget as HTMLElement).style.boxShadow = shadow
         }}
       >
-        <span style={{
-          fontSize: fontSize(category.name),
-          fontWeight: 500,
-          color: 'rgba(0,0,0,0.60)',
-          textAlign: 'center',
-          lineHeight: 1.3,
-          letterSpacing: '-0.005em',
-          padding: '0 8px',
-          userSelect: 'none',
-          position: 'relative',
-          zIndex: 1,
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+          position: 'relative', zIndex: 1, padding: '0 8px',
         }}>
-          {category.name}
-        </span>
+          <span style={{
+            fontSize: fontSize(category.name),
+            fontWeight: 500,
+            color: 'rgba(0,0,0,0.60)',
+            textAlign: 'center',
+            lineHeight: 1.3,
+            letterSpacing: '-0.005em',
+            userSelect: 'none',
+          }}>
+            {category.name}
+          </span>
+          {contactCount !== undefined && (
+            <span style={{
+              fontSize: 8, color: 'rgba(0,0,0,0.28)',
+              letterSpacing: '0.01em', userSelect: 'none',
+            }}>
+              {contactCount}
+            </span>
+          )}
+        </div>
 
         {/* Color rim */}
         <div style={{
