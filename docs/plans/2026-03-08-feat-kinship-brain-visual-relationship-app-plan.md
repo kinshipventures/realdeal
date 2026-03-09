@@ -65,10 +65,10 @@ VITE_SUPABASE_ANON_KEY=...
 ```
 
 **Acceptance criteria:**
-- [ ] `pnpm dev` runs without error
-- [ ] Supabase client connects (env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
-- [ ] Tailwind styles apply
-- [ ] React Flow renders a test node
+- [x] `pnpm dev` runs without error
+- [x] Supabase client connects (env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
+- [x] Tailwind styles apply
+- [x] React Flow renders a test node
 
 ---
 
