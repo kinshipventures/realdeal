@@ -229,6 +229,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
         categoryId={categoryId}
         onClose={() => { setSelectedContact(null); setShowNewContact(false) }}
         onSaved={handleSaved}
+        onDeleted={() => {
+          if (selectedContact) setContacts(prev => prev.filter(c => c.id !== selectedContact.id))
+          setSelectedContact(null)
+        }}
       />
     )}
     </>

@@ -42,9 +42,19 @@ async function fetchAll(table: string, params = ''): Promise<{ id: string; field
   do {
     const sep = params ? '&' : '?'
     const url = offset ? `${table}?${params}${sep}offset=${offset}` : params ? `${table}?${params}` : table
-    const data = await airtable(url)
+    let data
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        data = await airtable(url)
+        break
+      } catch (e) {
+        if (attempt === 2) throw e
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+      }
+    }
     records.push(...data.records)
     offset = data.offset
+    if (offset) await new Promise(r => setTimeout(r, 200)) // pace pagination
   } while (offset)
   return records
 }
@@ -83,7 +93,7 @@ async function run() {
   const content = readFileSync(csvPath, 'utf-8')
   const rows = parseCSV(content).filter(r => r['Agency']?.trim())
 
-  // Fetch Services for Founders list
+  console.log('Fetching list...')
   const lists = await fetchAll(TABLES.lists, `filterByFormula=${encodeURIComponent('Name="Services for Founders"')}`)
   const list = lists[0]
   if (!list) {
@@ -91,26 +101,49 @@ async function run() {
     process.exit(1)
   }
   const listId = list.id
+  console.log(`List found: ${list.fields.Name} (${listId})`)
 
-  // Fetch all categories for this list
-  const categories = await fetchAll(
-    TABLES.categories,
-    `filterByFormula=${encodeURIComponent(`FIND("${listId}", ARRAYJOIN({List}))`)}`
-  )
+  console.log('Fetching categories...')
+  const allCategories = await fetchAll(TABLES.categories)
+  // Filter client-side — formula FIND on linked fields matches names, not IDs
+  const listCategories = allCategories.filter(c => {
+    const linked = c.fields.List as string[] | undefined
+    return linked?.includes(listId)
+  })
   const categoryMap = new Map(
-    categories.map(c => [(c.fields.Name as string).toLowerCase(), c.id])
+    listCategories.map(c => [(c.fields.Name as string).toLowerCase(), c.id])
   )
+  console.log(`${listCategories.length} categories linked to list`)
 
-  // Fetch existing contacts (by email) for upsert
-  const existingContacts = await fetchAll(TABLES.contacts)
+  // Create any categories present in CSV but missing from Airtable
+  const csvCategories = [...new Set(
+    parseCSV(content).map(r => r['Category']?.trim()).filter(Boolean)
+  )]
+  for (const name of csvCategories) {
+    if (!categoryMap.has(name.toLowerCase())) {
+      console.log(`  Creating category: ${name}`)
+      const r = await airtable(TABLES.categories, {
+        method: 'POST',
+        body: JSON.stringify({ fields: { Name: name, List: [listId] } }),
+      })
+      categoryMap.set(name.toLowerCase(), r.id)
+      await new Promise(res => setTimeout(res, 250))
+    }
+  }
+  console.log(`${categoryMap.size} categories ready`)
+
+  console.log('Fetching existing contacts for dedup (email only)...')
+  const existingContacts = await fetchAll(TABLES.contacts, 'fields[]=Email')
   const emailIndex = new Map(
     existingContacts
       .filter(c => c.fields.Email)
       .map(c => [(c.fields.Email as string).toLowerCase(), c.id])
   )
+  console.log(`${existingContacts.length} existing contacts indexed. Starting import of ${rows.length} rows...`)
 
   let imported = 0
   let updated = 0
+  let i = 0
 
   for (const row of rows) {
     const name = row['Agency']?.trim()
@@ -156,9 +189,13 @@ async function run() {
       if (email) emailIndex.set(email, r.id)
       imported++
     }
+
+    i++
+    if (i % 10 === 0) process.stdout.write(`\r${i}/${rows.length} (${imported} new, ${updated} updated)`)
+    await new Promise(r => setTimeout(r, 250)) // stay under 5 req/sec
   }
 
-  console.log(`Done. Imported: ${imported}, updated: ${updated}`)
+  console.log(`\nDone. Imported: ${imported}, updated: ${updated}`)
 }
 
 run().catch(err => { console.error(err); process.exit(1) })

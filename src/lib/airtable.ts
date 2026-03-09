@@ -232,6 +232,11 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   return updated
 }
 
+export async function deleteContact(id: string): Promise<void> {
+  await request(`${TABLES.contacts}/${id}`, { method: 'DELETE' })
+  if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
+}
+
 // ── Interactions ─────────────────────────────────────────────────────────────
 
 function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction {
@@ -268,6 +273,25 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
     }),
   })
   return mapInteraction(r)
+}
+
+export async function updateInteraction(
+  id: string,
+  data: Partial<Pick<Interaction, 'type' | 'date' | 'notes'>>
+): Promise<Interaction> {
+  const fields: Record<string, unknown> = {}
+  if (data.type !== undefined) fields.Type = data.type
+  if (data.date !== undefined) fields.Date = data.date
+  if (data.notes !== undefined) fields.Notes = data.notes ?? undefined
+  const r = await request<AirtableRecord<InteractionFields>>(`${TABLES.interactions}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
+  })
+  return mapInteraction(r)
+}
+
+export async function deleteInteraction(id: string): Promise<void> {
+  await request(`${TABLES.interactions}/${id}`, { method: 'DELETE' })
 }
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────

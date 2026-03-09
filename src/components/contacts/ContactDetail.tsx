@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { Contact, Interaction, InteractionType } from '../../lib/types'
-import { getInteractions, logInteraction, updateContact, createContact } from '../../lib/airtable'
+import { getInteractions, logInteraction, updateContact, createContact, deleteContact, updateInteraction, deleteInteraction } from '../../lib/airtable'
 import { formatRelativeTime, avatarHue, initials } from '../../lib/utils'
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   categoryId: string
   onClose: () => void
   onSaved: (contact: Contact) => void
+  onDeleted?: () => void
 }
 
 const TYPES: InteractionType[] = ['call', 'email', 'meeting', 'intro', 'event', 'note']
@@ -15,7 +16,7 @@ const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', meeting: 'Meeting', intro: 'Intro', event: 'Event', note: 'Note',
 }
 
-export function ContactDetail({ contact, categoryId, onClose, onSaved }: Props) {
+export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted }: Props) {
   const isNew = contact === null
 
   const [draft, setDraft] = useState<Partial<Contact>>(
@@ -32,6 +33,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved }: Props) 
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
   const [logNotes, setLogNotes] = useState('')
   const [creating, setCreating] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [editingInteraction, setEditingInteraction] = useState<string | null>(null)
+  const [editType, setEditType] = useState<InteractionType>('call')
+  const [editDate, setEditDate] = useState('')
+  const [editNotes, setEditNotes] = useState('')
 
   useEffect(() => {
     if (contact?.id) getInteractions(contact.id).then(setInteractions)
@@ -165,6 +172,46 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved }: Props) 
     }
   }
 
+  async function handleDelete() {
+    if (!contact?.id) return
+    setDeleting(true)
+    try {
+      await deleteContact(contact.id)
+      onDeleted?.()
+      onClose()
+    } catch (err) {
+      console.error('Failed to delete contact:', err)
+      setDeleting(false)
+      setConfirmDelete(false)
+    }
+  }
+
+  function startEditInteraction(interaction: Interaction) {
+    setEditingInteraction(interaction.id)
+    setEditType(interaction.type)
+    setEditDate(interaction.date.slice(0, 10))
+    setEditNotes(interaction.notes ?? '')
+  }
+
+  async function handleUpdateInteraction(id: string) {
+    try {
+      const updated = await updateInteraction(id, { type: editType, date: editDate, notes: editNotes.trim() || null })
+      setInteractions(prev => prev.map(i => i.id === id ? updated : i))
+      setEditingInteraction(null)
+    } catch (err) {
+      console.error('Failed to update interaction:', err)
+    }
+  }
+
+  async function handleDeleteInteraction(id: string) {
+    try {
+      await deleteInteraction(id)
+      setInteractions(prev => prev.filter(i => i.id !== id))
+    } catch (err) {
+      console.error('Failed to delete interaction:', err)
+    }
+  }
+
   const hue = avatarHue(draft.name ?? '')
   const nameInitials = initials(draft.name ?? '')
 
@@ -206,7 +253,54 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved }: Props) 
     >
       {/* Header */}
       <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          {/* Delete control — existing contacts only */}
+          {!isNew ? (
+            confirmDelete ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{
+                    fontSize: 11, fontWeight: 500,
+                    color: deleting ? 'rgba(0,0,0,0.28)' : 'rgba(180,40,40,0.85)',
+                    background: 'none', border: 'none',
+                    cursor: deleting ? 'default' : 'pointer',
+                    padding: 0, letterSpacing: '0.01em',
+                  }}
+                >
+                  {deleting ? 'Deleting...' : 'Confirm delete'}
+                </button>
+                <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.20)' }}>·</span>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    fontSize: 11, color: 'rgba(0,0,0,0.38)',
+                    background: 'none', border: 'none',
+                    cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={{
+                  fontSize: 11, color: 'rgba(0,0,0,0.25)',
+                  background: 'none', border: 'none',
+                  cursor: 'pointer', padding: 0,
+                  letterSpacing: '0.01em',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.25)' }}
+              >
+                Delete
+              </button>
+            )
+          ) : <div />}
+
           <button
             onClick={onClose}
             aria-label="Close contact"
@@ -473,23 +567,88 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved }: Props) 
                   borderBottom: i < interactions.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 500,
-                    color: 'rgba(0,0,0,0.50)',
-                    background: 'rgba(0,0,0,0.05)',
-                    padding: '2px 8px',
-                    borderRadius: 100,
+                {editingInteraction === interaction.id ? (
+                  /* Edit mode */
+                  <div style={{
+                    background: 'rgba(0,0,0,0.03)',
+                    border: '1px solid rgba(0,0,0,0.07)',
+                    borderRadius: 8,
+                    padding: '10px 12px',
                   }}>
-                    {TYPE_LABELS[interaction.type]}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }}>
-                    {formatRelativeTime(interaction.date)}
-                  </span>
-                </div>
-                {interaction.notes && (
-                  <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.55)', lineHeight: 1.55, marginTop: 4 }}>
-                    {interaction.notes}
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+                      {TYPES.map(t => (
+                        <button key={t} onClick={() => setEditType(t)} style={{
+                          fontSize: 10, fontWeight: 500,
+                          padding: '2px 8px', borderRadius: 100,
+                          background: editType === t ? 'rgba(0,0,0,0.10)' : 'rgba(0,0,0,0.04)',
+                          border: '1px solid',
+                          borderColor: editType === t ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.07)',
+                          color: editType === t ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.38)',
+                          cursor: 'pointer',
+                        }}>{TYPE_LABELS[t]}</button>
+                      ))}
+                    </div>
+                    <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} style={{
+                      width: '100%', fontSize: 12, padding: '4px 8px',
+                      background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 5, color: 'rgba(0,0,0,0.70)', marginBottom: 6,
+                      outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+                    }} />
+                    <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} placeholder="Notes" style={{
+                      width: '100%', fontSize: 12, padding: '4px 8px',
+                      background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 5, color: 'rgba(0,0,0,0.70)', marginBottom: 8,
+                      outline: 'none', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box',
+                    }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => handleUpdateInteraction(interaction.id)} style={{
+                        fontSize: 11, fontWeight: 500, padding: '4px 12px',
+                        background: 'rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.10)',
+                        borderRadius: 5, color: 'rgba(0,0,0,0.70)', cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}>Save</button>
+                      <button onClick={() => setEditingInteraction(null)} style={{
+                        fontSize: 11, color: 'rgba(0,0,0,0.35)',
+                        background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      }}>cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Read mode */
+                  <div className="interaction-row" style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 500,
+                        color: 'rgba(0,0,0,0.50)',
+                        background: 'rgba(0,0,0,0.05)',
+                        padding: '2px 8px', borderRadius: 100,
+                      }}>
+                        {TYPE_LABELS[interaction.type]}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => startEditInteraction(interaction)} className="interaction-action" style={{
+                          fontSize: 10, color: 'rgba(0,0,0,0.28)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          opacity: 0, transition: 'opacity 0.15s',
+                        }}>edit</button>
+                        <button onClick={() => handleDeleteInteraction(interaction.id)} className="interaction-action" style={{
+                          fontSize: 10, color: 'rgba(0,0,0,0.28)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          opacity: 0, transition: 'opacity 0.15s',
+                        }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.28)' }}
+                        >del</button>
+                        <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }}>
+                          {formatRelativeTime(interaction.date)}
+                        </span>
+                      </div>
+                    </div>
+                    {interaction.notes && (
+                      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.55)', lineHeight: 1.55, marginTop: 4 }}>
+                        {interaction.notes}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
