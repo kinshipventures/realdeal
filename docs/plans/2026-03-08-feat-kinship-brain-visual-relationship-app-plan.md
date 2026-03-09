@@ -230,10 +230,10 @@ src/
 ```
 
 **Acceptance criteria:**
-- [ ] Schema migrations run cleanly (`supabase db push`)
-- [ ] All lists and categories seeded
-- [ ] Service Providers CSV imports without errors
-- [ ] Imported contacts appear in correct categories
+- [x] Schema migrations run cleanly (`supabase db push`)
+- [x] All lists and categories seeded
+- [x] Service Providers CSV imports without errors
+- [x] Imported contacts appear in correct categories
 
 ---
 
