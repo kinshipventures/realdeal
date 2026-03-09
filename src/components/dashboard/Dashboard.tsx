@@ -29,20 +29,19 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
-  // Schwartzian transform: compute daysOverdue once per contact, not twice per sort comparison
+  // Schwartzian transform: compute daysOverdue once per contact, reused for both sort and display
   const overdueContacts = useMemo(() =>
     contacts
       .filter(isOverdue)
-      .map(c => ({ c, days: daysOverdue(c) }))
+      .map(c => ({ contact: c, days: daysOverdue(c) }))
       .sort((a, b) => {
         // null = never contacted → highest urgency, sorts first
-        if (a.days === null && b.days === null) return a.c.name.localeCompare(b.c.name)
+        if (a.days === null && b.days === null) return a.contact.name.localeCompare(b.contact.name)
         if (a.days === null) return -1
         if (b.days === null) return 1
-        if (a.days === b.days) return a.c.name.localeCompare(b.c.name)
+        if (a.days === b.days) return a.contact.name.localeCompare(b.contact.name)
         return b.days - a.days
-      })
-      .map(({ c }) => c),
+      }),
     [contacts]
   )
 
@@ -162,6 +161,7 @@ export function Dashboard() {
                 {overdueContacts.length}
               </span>
             )}
+
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -176,8 +176,8 @@ export function Dashboard() {
                 <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.38)' }}>All caught up.</span>
               </div>
             ) : (
-              overdueContacts.map(contact => (
-                <OverdueRow key={contact.id} contact={contact} onClick={() => setSelectedContact(contact)} />
+              overdueContacts.map(({ contact, days }) => (
+                <OverdueRow key={contact.id} contact={contact} days={days} onClick={() => setSelectedContact(contact)} />
               ))
             )}
           </div>
@@ -264,7 +264,7 @@ export function Dashboard() {
       {selectedContact && (
         <ContactDetail
           contact={selectedContact}
-          categoryId={selectedContact.category_ids[0] ?? ''}
+          categoryId={selectedContact.category_ids[0]}
           onClose={() => setSelectedContact(null)}
           onSaved={handleContactSaved}
           onDeleted={handleContactDeleted}
@@ -288,9 +288,8 @@ function Spinner() {
   )
 }
 
-function OverdueRow({ contact, onClick }: { contact: Contact; onClick: () => void }) {
+function OverdueRow({ contact, days, onClick }: { contact: Contact; days: number | null; onClick: () => void }) {
   const hue = avatarHue(contact.name)
-  const days = daysOverdue(contact)
   const roleCompany = [contact.role, contact.company].filter(Boolean).join(' at ')
 
   return (

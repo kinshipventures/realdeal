@@ -5,7 +5,7 @@ import { formatRelativeTime, avatarHue, initials } from '../../lib/utils'
 
 interface Props {
   contact: Contact | null  // null = create mode
-  categoryId: string
+  categoryId?: string      // only used for create mode — optional when opening existing contacts
   onClose: () => void
   onSaved: (contact: Contact) => void
   onDeleted?: () => void
@@ -23,7 +23,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     contact ?? {
       name: '', email: null, phone: null, company: null, role: null,
       location: null, website: null, notes: null, recommended_by: null,
-      specialization: null, past_clients: null, category_ids: [categoryId], list_ids: [],
+      specialization: null, past_clients: null, category_ids: categoryId ? [categoryId] : [], list_ids: [],
     }
   )
   const [editingField, setEditingField] = useState<keyof Contact | null>(isNew ? 'name' : null)
@@ -140,7 +140,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         past_clients: draft.past_clients ?? null,
         last_contacted_at: null,
         list_ids: [],
-        category_ids: [categoryId],
+        category_ids: categoryId ? [categoryId] : [],
       })
       onSaved(created)
       onClose()
