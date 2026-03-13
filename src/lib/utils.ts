@@ -1,6 +1,22 @@
+function expandHex(hex: string): string {
+  if (hex.length === 4) return '#' + hex[1]+hex[1] + hex[2]+hex[2] + hex[3]+hex[3]
+  return hex
+}
+
 export function hexToRgba(hex: string, alpha: number): string {
+  hex = expandHex(hex)
   const n = parseInt(hex.replace('#', ''), 16)
+  if (isNaN(n)) return `rgba(113, 128, 150, ${alpha})`
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
+
+// Returns raw "r, g, b" channels for use in rgba(var(--orb-color-rgb), alpha).
+// Must be raw channels, never rgb(...) — see CLAUDE.md CSS custom property note.
+export function hexToRgbValues(hex: string): string {
+  hex = expandHex(hex)
+  const n = parseInt(hex.replace('#', ''), 16)
+  if (isNaN(n)) return '113, 128, 150'  // fallback: default gray
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`
 }
 
 export function formatRelativeTime(dateStr: string | null): string {

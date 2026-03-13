@@ -1,7 +1,6 @@
-import type React from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
-import type { Category } from '../../lib/types'
-import { hexToRgba } from '../../lib/utils'
+import type { Category, HexColor } from '../../lib/types'
+import { GlassOrb } from './GlassOrb'
 
 export type CategoryNodeData = {
   category: Category
@@ -12,6 +11,8 @@ export type CategoryNodeData = {
 }
 export type CategoryNodeType = Node<CategoryNodeData>
 
+const SIZE = 64
+
 function fontSize(name: string): number {
   if (name.length <= 5) return 11
   if (name.length <= 10) return 10
@@ -21,27 +22,7 @@ function fontSize(name: string): number {
 
 export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
   const { category, listColor, contactCount, animationDelay, onClick } = data
-  const SIZE = 64
-
-  const accentColor = listColor ?? '#718096'
-
-  const bg = [
-    `radial-gradient(ellipse 52% 32% at 30% 22%, rgba(255,255,255,0.72) 0%, transparent 100%)`,
-    `radial-gradient(ellipse 40% 40% at 68% 70%, ${hexToRgba(accentColor, 0.12)} 0%, transparent 100%)`,
-    `rgba(255,255,255,0.56)`,
-  ].join(', ')
-
-  const shadow = [
-    `0 0 20px ${hexToRgba(accentColor, 0.10)}`,
-    `0 3px 12px rgba(0,0,0,0.06)`,
-    `inset 0 1px 0 rgba(255,255,255,0.90)`,
-  ].join(', ')
-
-  const shadowHover = [
-    `0 0 32px ${hexToRgba(accentColor, 0.18)}`,
-    `0 6px 20px rgba(0,0,0,0.08)`,
-    `inset 0 1px 0 rgba(255,255,255,0.95)`,
-  ].join(', ')
+  const accentColor = (listColor ?? '#718096') as HexColor
 
   return (
     <>
@@ -52,32 +33,12 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
       />
 
-      <div
-        className="orb-enter orb-interactive"
+      <GlassOrb
+        size={SIZE}
+        color={accentColor}
+        glowIntensity="low"
+        animationDelay={animationDelay}
         onClick={onClick}
-        style={{
-          '--orb-scale': '1.1',
-          '--orb-lift': '-1px',
-          width: SIZE,
-          height: SIZE,
-          borderRadius: '50%',
-          position: 'relative',
-          cursor: 'pointer',
-          background: bg,
-          border: '1px solid rgba(255,255,255,0.65)',
-          boxShadow: shadow,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          animationDelay,
-        } as React.CSSProperties}
-        onMouseEnter={e => {
-          ;(e.currentTarget as HTMLElement).style.boxShadow = shadowHover
-        }}
-        onMouseLeave={e => {
-          ;(e.currentTarget as HTMLElement).style.boxShadow = shadow
-        }}
       >
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -113,7 +74,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
           height: 1.5,
           background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
         }} />
-      </div>
+      </GlassOrb>
     </>
   )
 }

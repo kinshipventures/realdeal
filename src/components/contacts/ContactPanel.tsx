@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getContacts } from '../../lib/airtable'
 import type { Contact } from '../../lib/types'
+import { useEscape } from '../../lib/escapeStack'
+import { Spinner, CloseButton } from '../ui'
 import { ContactCard } from './ContactCard'
 import { ContactDetail } from './ContactDetail'
 
@@ -17,6 +19,14 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
   const [search, setSearch] = useState('')
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [showNewContact, setShowNewContact] = useState(false)
+
+  // Panel animation fix: only animate on first mount, not when switching categories
+  const wasOpen = useRef(false)
+  useEffect(() => { wasOpen.current = true }, [])
+  const animateClass = wasOpen.current ? '' : 'panel-enter'
+
+  const handleClose = useCallback(() => onClose(), [onClose])
+  useEscape(handleClose)
 
   useEffect(() => {
     setLoading(true)
@@ -53,7 +63,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
   return (
     <>
     <div
-      className="panel-enter"
+      className={animateClass}
       style={{
         position: 'fixed',
         top: 0,
@@ -76,44 +86,14 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
             <div style={{ fontSize: 18, fontWeight: 600, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
               {categoryName ?? '—'}
             </div>
-            <div style={{
-              fontSize: 11,
-              color: 'rgba(0,0,0,0.30)',
-              marginTop: 3,
-              letterSpacing: '0.01em',
-            }}>
+            <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.30)', marginTop: 3, letterSpacing: '0.01em' }}>
               contacts
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            style={{
-              marginTop: 2,
-              width: 26, height: 26,
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.04)',
-              border: '1px solid rgba(0,0,0,0.08)',
-              color: 'rgba(0,0,0,0.35)',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, lineHeight: 1,
-              transition: 'background 0.15s, color 0.15s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.background = 'rgba(0,0,0,0.07)'
-              el.style.color = 'rgba(0,0,0,0.70)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.background = 'rgba(0,0,0,0.04)'
-              el.style.color = 'rgba(0,0,0,0.35)'
-            }}
-          >
-            ×
-          </button>
+          <div style={{ marginTop: 2 }}>
+            <CloseButton onClick={onClose} />
+          </div>
         </div>
 
         {/* Search */}
@@ -157,16 +137,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       {/* Contact list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-            <div style={{
-              width: 20, height: 20,
-              borderRadius: '50%',
-              border: '1.5px solid rgba(0,0,0,0.08)',
-              borderTopColor: 'rgba(0,0,0,0.35)',
-              animation: 'spin 0.8s linear infinite',
-              margin: '0 auto',
-            }} />
-          </div>
+          <Spinner />
         ) : loadError ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.38)', fontSize: 13 }}>
             Could not load contacts. Check your connection and try again.
@@ -200,6 +171,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           {!loading && `${filtered.length} contact${filtered.length !== 1 ? 's' : ''}`}
         </span>
         <button
+          type="button"
           onClick={() => setShowNewContact(true)}
           style={{
             padding: '6px 14px',

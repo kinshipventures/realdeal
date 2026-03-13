@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getContacts, getLists, isOverdue, getRecentInteractions } from '../../lib/airtable'
-import { daysOverdue, formatRelativeTime, avatarHue, initials } from '../../lib/utils'
+import { daysOverdue, formatRelativeTime } from '../../lib/utils'
 import type { Contact, List, Interaction } from '../../lib/types'
+import { Spinner, Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 
 const BG = [
@@ -97,7 +98,7 @@ export function Dashboard() {
 
   function handleContactDeleted() {
     if (!selectedContact) return
-    const id = selectedContact.id  // capture before closing over selectedContact
+    const id = selectedContact.id
     setContacts(prev => prev.filter(c => c.id !== id))
     setSelectedContact(null)
   }
@@ -105,9 +106,10 @@ export function Dashboard() {
   return (
     <div style={{ width: '100vw', height: '100vh', background: BG, position: 'relative', overflow: 'hidden' }}>
 
-      {/* Map view button — same pill style as OrbMap breadcrumb */}
       <button
+        type="button"
         onClick={() => navigate('/map')}
+        className="action-ghost"
         style={{
           position: 'absolute', top: 28, right: 28, zIndex: 20,
           padding: '8px 18px',
@@ -118,12 +120,7 @@ export function Dashboard() {
           border: '1px solid rgba(0,0,0,0.07)',
           fontSize: 12,
           letterSpacing: '0.01em',
-          color: 'rgba(0,0,0,0.35)',
-          cursor: 'pointer',
-          transition: 'color 0.15s',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.7)' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.35)' }}
       >
         Map view →
       </button>
@@ -161,7 +158,6 @@ export function Dashboard() {
                 {overdueContacts.length}
               </span>
             )}
-
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -191,7 +187,7 @@ export function Dashboard() {
             <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.25)', letterSpacing: '0.01em', marginBottom: 12 }}>
               network
             </div>
-            {loading ? <Spinner /> : (
+            {loading ? <Spinner size={18} padding={20} /> : (
               <>
                 <div style={{ fontSize: 22, fontWeight: 600, color: 'rgba(0,0,0,0.82)', letterSpacing: '-0.02em', marginBottom: 12 }}>
                   {totalContacts} contacts
@@ -232,17 +228,16 @@ export function Dashboard() {
                   return (
                     <button
                       key={interaction.id}
+                      type="button"
                       onClick={() => setSelectedContact(contact)}
+                      className="interactive-row"
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         width: '100%', padding: '10px 24px',
                         background: 'none', border: 'none',
                         borderBottom: '1px solid rgba(0,0,0,0.04)',
                         cursor: 'pointer', textAlign: 'left',
-                        transition: 'background 0.15s',
                       }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.035)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
                     >
                       <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)' }}>
                         <span style={{ color: 'rgba(0,0,0,0.38)' }}>{interaction.type}</span>
@@ -274,48 +269,23 @@ export function Dashboard() {
   )
 }
 
-function Spinner() {
-  return (
-    <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-      <div style={{
-        width: 20, height: 20, borderRadius: '50%',
-        border: '1.5px solid rgba(0,0,0,0.08)',
-        borderTopColor: 'rgba(0,0,0,0.35)',
-        animation: 'spin 0.8s linear infinite',
-        margin: '0 auto',
-      }} />
-    </div>
-  )
-}
-
 function OverdueRow({ contact, days, onClick }: { contact: Contact; days: number | null; onClick: () => void }) {
-  const hue = avatarHue(contact.name)
   const roleCompany = [contact.role, contact.company].filter(Boolean).join(' at ')
 
   return (
     <button
+      type="button"
       onClick={onClick}
+      className="interactive-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         width: '100%', padding: '12px 24px',
         background: 'none', border: 'none',
         borderBottom: '1px solid rgba(0,0,0,0.04)',
         cursor: 'pointer', textAlign: 'left',
-        transition: 'background 0.15s',
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.035)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
     >
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-        background: `hsla(${hue}, 55%, 70%, 0.35)`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: 600,
-        color: `hsla(${hue}, 45%, 30%, 0.85)`,
-        letterSpacing: '0.02em',
-      }}>
-        {initials(contact.name)}
-      </div>
+      <Avatar name={contact.name} size={32} variant="subtle" />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.82)', lineHeight: 1.3 }}>

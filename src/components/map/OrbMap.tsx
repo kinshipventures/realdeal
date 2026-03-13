@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -17,7 +17,6 @@ import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { ContactPanel } from '../contacts/ContactPanel'
 import { getPositions, savePosition } from '../../hooks/useNodePositions'
-import { useState } from 'react'
 
 const LIST_SIZE = 96
 
@@ -27,7 +26,6 @@ const nodeTypes = {
   moj: MojNodeComponent,
 }
 
-// Home view: Moj at origin, lists in a circle around it
 function hubLayout(
   lists: { id: string }[],
   savedPositions: Record<string, { x: number; y: number }>,
@@ -47,7 +45,6 @@ function hubLayout(
   return { mojPos, listPositions }
 }
 
-// Category view: selected list at center, categories arranged around it
 function circularLayout(
   items: { id: string }[],
   savedPositions: Record<string, { x: number; y: number }>,
@@ -123,17 +120,27 @@ export function OrbMap() {
   const [view, setView] = useState<'lists' | 'categories'>('lists')
   const [selectedList, setSelectedList] = useState<List | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [initError, setInitError] = useState(false)
 
   const listsRef = useRef<List[]>([])
   const countsByListRef = useRef<Record<string, ListCounts>>({})
-  // Refs for stale-closure-safe navigation state
   const viewRef = useRef<'lists' | 'categories'>('lists')
   const selectedListRef = useRef<List | null>(null)
+  // Generation counter — discards stale responses if user clicks a different list quickly
+  const listClickGenRef = useRef(0)
+  // Track all active error-clear timeout IDs for cleanup on unmount
+  const errorTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  // Cleanup pending timeouts on unmount
+  useEffect(() => {
+    const timeouts = errorTimeoutsRef.current
+    return () => { timeouts.forEach(clearTimeout) }
+  }, [])
 
   const handleListClick = useCallback((list: List, position: { x: number; y: number }) => {
-    // Read current state through refs — avoids stale closure bug when
-    // handleListClick is captured inside node data.onClick
     if (viewRef.current === 'categories' && selectedListRef.current?.id === list.id) return
+
+    const gen = ++listClickGenRef.current
 
     viewRef.current = 'categories'
     selectedListRef.current = list
@@ -146,15 +153,15 @@ export function OrbMap() {
     ))
 
     getCategories(list.id).then(async (cats: Category[]) => {
+      if (gen !== listClickGenRef.current) return  // discard stale response
+
       const savedPositions = getPositions()
-      // Radius grows with category count so orbs never crowd
       const CAT_SIZE = 64
       const CAT_GAP = 24
       const minRadius = Math.ceil(cats.length * (CAT_SIZE + CAT_GAP) / (2 * Math.PI))
       const radius = Math.max(230, minRadius)
       const posMap = circularLayout(cats, savedPositions, position, radius)
 
-      // Derive category counts from warm cache (no extra API call)
       const allContacts = await getContacts()
       const countsByCategory: Record<string, number> = {}
       for (const contact of allContacts) {
@@ -205,10 +212,21 @@ export function OrbMap() {
       setNodes([listNode, ...catNodes])
       setEdges(catEdges)
     }).catch(() => {
-      // Reset loading state on the orb so the user can retry
+      if (gen !== listClickGenRef.current) return
+
+      const listId = list.id
       setNodes(prev => prev.map(n =>
-        n.id === list.id ? { ...n, data: { ...n.data, loading: false } } : n
+        n.id === listId ? { ...n, data: { ...n.data, loading: false, loadError: true } } : n
       ))
+
+      // Clear the error indicator after animation completes; track timeout for cleanup
+      const timeoutId = setTimeout(() => {
+        errorTimeoutsRef.current.delete(timeoutId)
+        setNodes(prev => prev.map(n =>
+          n.id === listId ? { ...n, data: { ...n.data, loadError: false } } : n
+        ))
+      }, 2000)
+      errorTimeoutsRef.current.add(timeoutId)
     })
   }, [])
 
@@ -231,7 +249,6 @@ export function OrbMap() {
         if (stale) return
         listsRef.current = allLists
 
-        // Single pass: derive { total, overdue } per list from the warm contact cache
         const countsByList: Record<string, ListCounts> = {}
         for (const contact of allContacts) {
           for (const listId of contact.list_ids) {
@@ -247,6 +264,7 @@ export function OrbMap() {
         setEdges(buildHomeEdges(allLists))
       } catch (err) {
         console.error('Failed to load network:', err)
+        if (!stale) setInitError(true)
       }
     }
     init()
@@ -274,6 +292,19 @@ export function OrbMap() {
       ].join(', '),
     }}>
 
+      {/* Init failure — indistinguishable from loading without this */}
+      {initError && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <p style={{ color: 'rgba(0,0,0,0.45)', fontSize: 14 }}>
+            Could not load your network. Check your connection and refresh.
+          </p>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       {view === 'categories' && selectedList && (
         <nav style={{
@@ -294,16 +325,10 @@ export function OrbMap() {
           letterSpacing: '0.01em',
         }}>
           <button
+            type="button"
             onClick={handleBack}
-            style={{
-              background: 'none', border: 'none',
-              color: 'rgba(0,0,0,0.35)',
-              cursor: 'pointer', padding: 0, fontSize: 12,
-              letterSpacing: '0.01em',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.7)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.35)' }}
+            className="action-ghost"
+            style={{ padding: 0, fontSize: 12, letterSpacing: '0.01em' }}
           >
             Home
           </button>

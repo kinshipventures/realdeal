@@ -107,7 +107,7 @@ function mapList(r: AirtableRecord<ListFields>): List {
   return {
     id: r.id,
     name: r.fields.Name,
-    color: r.fields.Color ?? null,
+    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
     owner: r.fields.Owner ?? null,
     is_priority: r.fields['Is Priority'] ?? false,
     created_at: r.createdTime,
@@ -126,21 +126,55 @@ function mapCategory(r: AirtableRecord<CategoryFields>): Category {
     id: r.id,
     list_id: r.fields.List?.[0] ?? '',
     name: r.fields.Name,
-    color: r.fields.Color ?? null,
+    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
     created_at: r.createdTime,
   }
 }
 
-let _categoriesCache: Category[] | null = null
+const CACHE_TTL = 5 * 60 * 1000
 
-export async function getCategories(listId?: string): Promise<Category[]> {
-  // Fetch all categories once and cache in-memory — Airtable formula `{List}`
-  // resolves to names not IDs, so we filter client-side.
-  if (!_categoriesCache) {
-    const records = await fetchAll<CategoryFields>(TABLES.categories)
-    _categoriesCache = records.map(mapCategory)
+let _categoriesCache: Category[] | null = null
+let _categoriesCacheTime = 0
+let _categoriesFetch: Promise<Category[]> | null = null
+
+export function getCategories(listId?: string): Promise<Category[]> {
+  const isExpired = !_categoriesCache || Date.now() - _categoriesCacheTime > CACHE_TTL
+  const isFresh = _categoriesCache && !isExpired
+
+  if (isFresh) {
+    return Promise.resolve(
+      listId ? _categoriesCache!.filter(c => c.list_id === listId) : _categoriesCache!
+    )
   }
-  return listId ? _categoriesCache.filter(c => c.list_id === listId) : _categoriesCache
+
+  // Stale-while-revalidate: return stale immediately, refresh in background
+  if (_categoriesCache && isExpired && !_categoriesFetch) {
+    const stale = _categoriesCache
+    _categoriesFetch = fetchAll<CategoryFields>(TABLES.categories)
+      .then(records => {
+        _categoriesCache = records.map(mapCategory)
+        _categoriesCacheTime = Date.now()
+        _categoriesFetch = null
+        return _categoriesCache
+      })
+      .catch(err => { _categoriesFetch = null; throw err })
+    return Promise.resolve(
+      listId ? stale.filter(c => c.list_id === listId) : stale
+    )
+  }
+
+  // Cold cache — deduplicate concurrent fetches via in-flight Promise
+  if (!_categoriesFetch) {
+    _categoriesFetch = fetchAll<CategoryFields>(TABLES.categories)
+      .then(records => {
+        _categoriesCache = records.map(mapCategory)
+        _categoriesCacheTime = Date.now()
+        _categoriesFetch = null
+        return _categoriesCache
+      })
+      .catch(err => { _categoriesFetch = null; throw err })
+  }
+  return _categoriesFetch.then(all => listId ? all.filter(c => c.list_id === listId) : all)
 }
 
 // ── Contacts ─────────────────────────────────────────────────────────────────
@@ -167,13 +201,47 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
 }
 
 let _contactsCache: Contact[] | null = null
+let _contactsCacheTime = 0
+let _contactsFetch: Promise<Contact[]> | null = null
 
-export async function getContacts(categoryId?: string): Promise<Contact[]> {
-  if (!_contactsCache) {
-    const records = await fetchAll<ContactFields>(TABLES.contacts)
-    _contactsCache = records.map(mapContact)
+export function getContacts(categoryId?: string): Promise<Contact[]> {
+  const isExpired = !_contactsCache || Date.now() - _contactsCacheTime > CACHE_TTL
+  const isFresh = _contactsCache && !isExpired
+
+  if (isFresh) {
+    return Promise.resolve(
+      categoryId ? _contactsCache!.filter(c => c.category_ids.includes(categoryId)) : _contactsCache!
+    )
   }
-  return categoryId ? _contactsCache.filter(c => c.category_ids.includes(categoryId)) : _contactsCache
+
+  // Stale-while-revalidate: return stale immediately, refresh in background
+  if (_contactsCache && isExpired && !_contactsFetch) {
+    const stale = _contactsCache
+    _contactsFetch = fetchAll<ContactFields>(TABLES.contacts)
+      .then(records => {
+        _contactsCache = records.map(mapContact)
+        _contactsCacheTime = Date.now()
+        _contactsFetch = null
+        return _contactsCache
+      })
+      .catch(err => { _contactsFetch = null; throw err })
+    return Promise.resolve(
+      categoryId ? stale.filter(c => c.category_ids.includes(categoryId)) : stale
+    )
+  }
+
+  // Cold cache — deduplicate concurrent fetches via in-flight Promise
+  if (!_contactsFetch) {
+    _contactsFetch = fetchAll<ContactFields>(TABLES.contacts)
+      .then(records => {
+        _contactsCache = records.map(mapContact)
+        _contactsCacheTime = Date.now()
+        _contactsFetch = null
+        return _contactsCache
+      })
+      .catch(err => { _contactsFetch = null; throw err })
+  }
+  return _contactsFetch.then(all => categoryId ? all.filter(c => c.category_ids.includes(categoryId)) : all)
 }
 
 export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): Promise<Contact> {
