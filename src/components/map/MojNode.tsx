@@ -61,7 +61,7 @@ export function MojNodeComponent(_: NodeProps<MojNodeType>) {
           zIndex: 1,
           lineHeight: 1.2,
         }}>
-          Moj
+          MRM
         </span>
 
         {/* Color rim */}
