@@ -245,7 +245,7 @@ function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | nul
   return {
     id: r.id,
     contact_id,
-    type: r.fields.Type ?? 'note',
+    type: (r.fields.Type as string) === 'event' ? 'meeting' : (r.fields.Type?.toLowerCase() as InteractionType ?? 'note'),
     date: r.fields.Date ?? r.createdTime,
     notes: r.fields.Notes ?? null,
     created_at: r.createdTime,
@@ -332,7 +332,7 @@ export async function logInteraction(
   const interaction = await createInteraction({ ...data, contact_id: contactId })
 
   // Only update last_contacted_at for non-note types
-  if (data.type !== 'note') {
+  if (data.type !== 'note' && data.type !== 'intro') {
     await updateContact(contactId, { last_contacted_at: data.date })
   }
 

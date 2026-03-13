@@ -1,4 +1,4 @@
-export type InteractionType = 'call' | 'email' | 'meeting' | 'intro' | 'event' | 'note'
+export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
 export type Owner = 'moj_mahdara' | 'kinship_ventures'
 
 export interface List {

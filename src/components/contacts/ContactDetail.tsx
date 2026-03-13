@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { Contact, Interaction, InteractionType } from '../../lib/types'
 import { getInteractions, logInteraction, updateContact, createContact, deleteContact, updateInteraction, deleteInteraction } from '../../lib/airtable'
 import { formatRelativeTime, avatarHue, initials } from '../../lib/utils'
@@ -11,9 +11,31 @@ interface Props {
   onDeleted?: () => void
 }
 
-const TYPES: InteractionType[] = ['call', 'email', 'meeting', 'intro', 'event', 'note']
+const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
-  call: 'Call', email: 'Email', meeting: 'Meeting', intro: 'Intro', event: 'Event', note: 'Note',
+  call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
+}
+
+// Summary bar icons — module-level to avoid re-creating on every render
+const svgProps = { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const }
+const TYPE_ICONS: Record<string, React.ReactElement> = {
+  call: <svg {...svgProps}><path d="M6 3H4a1 1 0 0 0-1 1c0 5 4 9 9 9a1 1 0 0 0 1-1v-2l-3-1-1.5 1.5A7 7 0 0 1 5.5 6.5L7 5 6 3z" /></svg>,
+  email: <svg {...svgProps}><rect x="2" y="3.5" width="12" height="9" rx="1" /><path d="M2 4.5l6 4 6-4" /></svg>,
+  text: <svg {...svgProps}><path d="M3 3h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H6l-3 2.5V11H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" /><path d="M5 6.5h6M5 8.5h4" /></svg>,
+  meeting: <svg {...svgProps}><circle cx="8" cy="5" r="2.5" /><path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5" /></svg>,
+}
+
+// Shared timeline styles — module-level to avoid re-creating across 100+ rows
+const rowStyle: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }
+const pillStyle: React.CSSProperties = { fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.50)' }
+const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }
+
+function latestContactDate(interactions: Interaction[]): string | null {
+  const dates = interactions
+    .filter(i => i.type !== 'note' && i.type !== 'intro')
+    .map(i => i.date)
+  if (!dates.length) return null
+  return dates.reduce((a, b) => a > b ? a : b)
 }
 
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted }: Props) {
@@ -32,17 +54,38 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [logType, setLogType] = useState<InteractionType>('call')
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
   const [logNotes, setLogNotes] = useState('')
+  const [isLogging, setIsLogging] = useState(false)
   const [creating, setCreating] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingInteraction, setEditingInteraction] = useState<string | null>(null)
   const [editType, setEditType] = useState<InteractionType>('call')
   const [editDate, setEditDate] = useState('')
   const [editNotes, setEditNotes] = useState('')
 
   useEffect(() => {
-    if (contact?.id) getInteractions(contact.id).then(setInteractions)
+    if (!contact?.id) return
+    let canceled = false
+    getInteractions(contact.id).then(data => {
+      if (!canceled) setInteractions(data)
+    })
+    return () => { canceled = true }
   }, [contact?.id])
+
+  // Summary bar — memoized per-type recency for primary channels
+  const typeRecency = useMemo(() => {
+    const recency: Record<string, string | null> = { call: null, email: null, text: null, meeting: null }
+    const found = new Set<string>()
+    for (const i of interactions) {
+      if (i.type in recency && !found.has(i.type)) {
+        recency[i.type] = i.date
+        found.add(i.type)
+        if (found.size === 4) break
+      }
+    }
+    return recency
+  }, [interactions])
 
   // Update draft and auto-save for existing contacts
   function handleBlur(key: keyof Contact, value: string) {
@@ -152,7 +195,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleLog() {
-    if (!contact?.id) return
+    if (!contact?.id || isLogging) return
+    setIsLogging(true)
     try {
       const interaction = await logInteraction(contact.id, {
         type: logType,
@@ -164,11 +208,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       setLogNotes('')
       setLogType('call')
       setLogDate(new Date().toISOString().slice(0, 10))
-      if (logType !== 'note') {
+      if (logType !== 'note' && logType !== 'intro') {
         onSaved({ ...contact, last_contacted_at: logDate })
       }
     } catch (err) {
       console.error('Failed to log interaction:', err)
+    } finally {
+      setIsLogging(false)
     }
   }
 
@@ -194,21 +240,34 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleUpdateInteraction(id: string) {
+    if (!contact) return
     try {
       const updated = await updateInteraction(id, { type: editType, date: editDate, notes: editNotes.trim() || null })
-      setInteractions(prev => prev.map(i => i.id === id ? updated : i))
+      const updatedList = interactions.map(i => i.id === id ? updated : i)
+      setInteractions(updatedList)
       setEditingInteraction(null)
+      const newDate = latestContactDate(updatedList)
+      await updateContact(contact.id, { last_contacted_at: newDate })
+      onSaved({ ...contact, last_contacted_at: newDate })
     } catch (err) {
       console.error('Failed to update interaction:', err)
     }
   }
 
   async function handleDeleteInteraction(id: string) {
+    if (!contact || deletingId) return
+    setDeletingId(id)
     try {
       await deleteInteraction(id)
-      setInteractions(prev => prev.filter(i => i.id !== id))
+      const remaining = interactions.filter(i => i.id !== id)
+      setInteractions(remaining)
+      const newDate = latestContactDate(remaining)
+      await updateContact(contact.id, { last_contacted_at: newDate })
+      onSaved({ ...contact, last_contacted_at: newDate })
     } catch (err) {
       console.error('Failed to delete interaction:', err)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -252,7 +311,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       }}
     >
       {/* Header */}
-      <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '24px 24px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           {/* Delete control — existing contacts only */}
           {!isNew ? (
@@ -322,7 +381,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, paddingBottom: !isNew ? 0 : 20 }}>
           {/* Avatar */}
           <div style={{
             width: 48, height: 48,
@@ -413,6 +472,29 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
           </div>
         </div>
+
+        {/* Summary bar — fixed in header, shows recency per primary type */}
+        {!isNew && (
+          <div style={{ padding: '12px 0', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              {(['call', 'email', 'text', 'meeting'] as const).map(t => {
+                const date = typeRecency[t]
+                const never = !date
+                return (
+                  <div key={t} style={{ textAlign: 'center' }}>
+                    <div style={{ color: never ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.38)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                      {TYPE_ICONS[t]}
+                      <span style={{ fontSize: 10 }}>{TYPE_LABELS[t]}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: never ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.45)', marginTop: 2 }}>
+                      {date ? formatRelativeTime(date) : 'Never'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Scrollable body */}
@@ -536,18 +618,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
                 <button
                   onClick={handleLog}
+                  disabled={isLogging}
                   style={{
                     fontSize: 12, fontWeight: 500,
                     padding: '6px 16px',
                     background: 'rgba(0,0,0,0.07)',
                     border: '1px solid rgba(0,0,0,0.10)',
                     borderRadius: 6,
-                    color: 'rgba(0,0,0,0.70)',
-                    cursor: 'pointer',
+                    color: isLogging ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.70)',
+                    cursor: isLogging ? 'default' : 'pointer',
                     transition: 'background 0.15s',
                   }}
                 >
-                  Log {TYPE_LABELS[logType]}
+                  {isLogging ? 'Logging...' : `Log ${TYPE_LABELS[logType]}`}
                 </button>
               </div>
             )}
@@ -562,9 +645,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               <div
                 key={interaction.id}
                 style={{
-                  paddingBottom: 12,
-                  marginBottom: 12,
-                  borderBottom: i < interactions.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                  ...rowStyle,
+                  borderBottom: i < interactions.length - 1 ? rowStyle.borderBottom : 'none',
+                  opacity: deletingId === interaction.id ? 0.4 : 1,
+                  transition: 'opacity 0.15s',
                 }}
               >
                 {editingInteraction === interaction.id ? (
@@ -616,13 +700,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 ) : (
                   /* Read mode */
                   <div className="interaction-row" style={{ position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 500,
-                        color: 'rgba(0,0,0,0.50)',
-                        background: 'rgba(0,0,0,0.05)',
-                        padding: '2px 8px', borderRadius: 100,
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: interaction.notes ? 4 : 0 }}>
+                      <span style={pillStyle}>
                         {TYPE_LABELS[interaction.type]}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -639,7 +718,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.28)' }}
                         >del</button>
-                        <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }}>
+                        <span style={timestampStyle}>
                           {formatRelativeTime(interaction.date)}
                         </span>
                       </div>
