@@ -183,6 +183,12 @@
   100% { border-color: rgba(255,255,255,0.65); }
 }
 
+@keyframes input-shake {
+  0%, 100% { translate: 0; }
+  20%, 60% { translate: -4px; }
+  40%, 80% { translate: 4px; }
+}
+
 /* ── Panel ─────────────────────────────────────────────────────────────────── */
 
 .panel-enter {

@@ -177,6 +177,20 @@ export function getCategories(listId?: string): Promise<Category[]> {
   return _categoriesFetch.then(all => listId ? all.filter(c => c.list_id === listId) : all)
 }
 
+export async function createCategory(name: string, listId: string): Promise<Category> {
+  const r = await request<AirtableRecord<CategoryFields>>(TABLES.categories, {
+    method: 'POST',
+    body: JSON.stringify({
+      fields: {
+        Name: name,
+        List: [listId],
+      },
+    }),
+  })
+  _categoriesCache = null
+  return mapCategory(r)
+}
+
 // ── Contacts ─────────────────────────────────────────────────────────────────
 
 function mapContact(r: AirtableRecord<ContactFields>): Contact {

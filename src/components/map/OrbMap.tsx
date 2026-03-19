@@ -10,13 +10,14 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { getLists, getCategories, getContacts, isOverdue } from '../../lib/airtable'
+import { getLists, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
 import type { Category, List } from '../../lib/types'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
+import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { ContactPanel } from '../contacts/ContactPanel'
-import { getPositions, savePosition } from '../../hooks/useNodePositions'
+import { getPositions, savePosition, clearPositionsForIds } from '../../hooks/useNodePositions'
 
 const LIST_SIZE = 96
 
@@ -24,7 +25,10 @@ const nodeTypes = {
   list: ListNodeComponent,
   category: CategoryNodeComponent,
   moj: MojNodeComponent,
+  'create-category': CreateCategoryNodeComponent,
 }
+
+const CREATE_CAT_ID = '__create-category__'
 
 function hubLayout(
   lists: { id: string }[],
@@ -121,6 +125,7 @@ export function OrbMap() {
   const [selectedList, setSelectedList] = useState<List | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [initError, setInitError] = useState(false)
+  const [catRefresh, setCatRefresh] = useState(0)
 
   const listsRef = useRef<List[]>([])
   const countsByListRef = useRef<Record<string, ListCounts>>({})
@@ -158,9 +163,10 @@ export function OrbMap() {
       const savedPositions = getPositions()
       const CAT_SIZE = 64
       const CAT_GAP = 24
-      const minRadius = Math.ceil(cats.length * (CAT_SIZE + CAT_GAP) / (2 * Math.PI))
+      const layoutItems = [...cats, { id: CREATE_CAT_ID }]
+      const minRadius = Math.ceil(layoutItems.length * (CAT_SIZE + CAT_GAP) / (2 * Math.PI))
       const radius = Math.max(230, minRadius)
-      const posMap = circularLayout(cats, savedPositions, position, radius)
+      const posMap = circularLayout(layoutItems, savedPositions, position, radius)
 
       const allContacts = await getContacts()
       const countsByCategory: Record<string, number> = {}
@@ -200,6 +206,23 @@ export function OrbMap() {
         },
       }))
 
+      const createNode: Node = {
+        id: CREATE_CAT_ID,
+        type: 'create-category',
+        position: posMap.get(CREATE_CAT_ID)!,
+        draggable: false,
+        style: { overflow: 'visible' },
+        data: {
+          listColor: list.color,
+          animationDelay: `${cats.length * 0.03}s`,
+          onCreate: async (name: string) => {
+            await createCategory(name, list.id)
+            clearPositionsForIds(cats.map(c => c.id))
+            setCatRefresh(r => r + 1)
+          },
+        },
+      }
+
       const edgeColor = list.color ? `${list.color}30` : 'rgba(0,0,0,0.07)'
       const catEdges: Edge[] = cats.map(cat => ({
         id: `e-${list.id}-${cat.id}`,
@@ -209,7 +232,7 @@ export function OrbMap() {
         type: 'straight',
       }))
 
-      setNodes([listNode, ...catNodes])
+      setNodes([listNode, ...catNodes, createNode])
       setEdges(catEdges)
     }).catch(() => {
       if (gen !== listClickGenRef.current) return
@@ -240,6 +263,18 @@ export function OrbMap() {
     setNodes(buildHomeNodes(listsRef.current, countsByListRef.current, savedPositions, handleListClick))
     setEdges(buildHomeEdges(listsRef.current))
   }, [handleListClick])
+
+  // Re-build category view after a new category is created
+  useEffect(() => {
+    if (catRefresh === 0) return
+    const list = selectedListRef.current
+    if (!list) return
+    const listNode = nodes.find(n => n.id === list.id)
+    if (!listNode) return
+    // Reset view state so handleListClick's early-return guard doesn't block
+    viewRef.current = 'lists'
+    handleListClick(list, listNode.position)
+  }, [catRefresh]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let stale = false
