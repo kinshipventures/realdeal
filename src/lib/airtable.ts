@@ -336,6 +336,58 @@ function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | nul
   }
 }
 
+// ── All interactions cache (90-day window for dashboard scoring) ─────────────
+
+let _interactionsCache: Interaction[] | null = null
+let _interactionsCacheTime = 0
+let _interactionsFetch: Promise<Interaction[]> | null = null
+
+export function getAllInteractions(): Promise<Interaction[]> {
+  const isExpired = !_interactionsCache || Date.now() - _interactionsCacheTime > CACHE_TTL
+  const isFresh = _interactionsCache && !isExpired
+
+  if (isFresh) return Promise.resolve(_interactionsCache!)
+
+  if (_interactionsCache && isExpired && !_interactionsFetch) {
+    const stale = _interactionsCache
+    _interactionsFetch = fetchAll<InteractionFields>(TABLES.interactions, {
+      filterByFormula: `IS_AFTER({Date}, DATEADD(TODAY(), -90, 'days'))`,
+      'sort[0][field]': 'Date',
+      'sort[0][direction]': 'desc',
+    })
+      .then(records => {
+        _interactionsCache = records.flatMap(r => mapInteraction(r) ?? [])
+        _interactionsCacheTime = Date.now()
+        _interactionsFetch = null
+        return _interactionsCache
+      })
+      .catch(err => { _interactionsFetch = null; throw err })
+    return Promise.resolve(stale)
+  }
+
+  if (!_interactionsFetch) {
+    _interactionsFetch = fetchAll<InteractionFields>(TABLES.interactions, {
+      filterByFormula: `IS_AFTER({Date}, DATEADD(TODAY(), -90, 'days'))`,
+      'sort[0][field]': 'Date',
+      'sort[0][direction]': 'desc',
+    })
+      .then(records => {
+        _interactionsCache = records.flatMap(r => mapInteraction(r) ?? [])
+        _interactionsCacheTime = Date.now()
+        _interactionsFetch = null
+        return _interactionsCache
+      })
+      .catch(err => { _interactionsFetch = null; throw err })
+  }
+  return _interactionsFetch
+}
+
+export function invalidateInteractionsCache(): void {
+  _interactionsCache = null
+}
+
+// ── Per-contact interactions (unchanged — used by InteractionSection) ────────
+
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
   if (!/^rec[A-Za-z0-9]{14}$/.test(contactId)) throw new Error('Invalid contact ID')
   const records = await fetchAll<InteractionFields>(TABLES.interactions, {
@@ -360,6 +412,8 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
   })
   const mapped = mapInteraction(r)
   if (!mapped) throw new Error('Created interaction missing Contact link')
+  // Optimistic append — avoids full re-fetch
+  if (_interactionsCache) _interactionsCache.unshift(mapped)
   return mapped
 }
 
@@ -382,6 +436,7 @@ export async function updateInteraction(
 
 export async function deleteInteraction(id: string): Promise<void> {
   await request(`${TABLES.interactions}/${id}`, { method: 'DELETE' })
+  if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
 }
 
 export async function getRecentInteractions(limit: number): Promise<Interaction[]> {
