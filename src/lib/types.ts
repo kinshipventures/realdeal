@@ -4,19 +4,21 @@ export type ISODate = string          // YYYY-MM-DD date string
 
 export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
 export type Owner = 'moj_mahdara' | 'kinship_ventures'
+export type Cadence = 'weekly' | 'biweekly' | 'monthly' | 'quarterly'
 
-export interface List {
+export interface Pod {
   id: string           // Airtable record ID
   name: string
   color: HexColor | null
   owner: Owner | null
   is_priority: boolean
+  cadence: Cadence | null  // null = default monthly
   created_at: string   // Airtable createdTime
 }
 
 export interface Category {
   id: string
-  list_id: string      // single linked List record ID
+  list_id: string      // single linked Pod record ID
   name: string
   color: HexColor | null
   created_at: string
@@ -36,7 +38,7 @@ export interface Contact {
   specialization: string | null
   past_clients: string | null
   last_contacted_at: ISODate | null
-  list_ids: string[]      // linked List record IDs
+  list_ids: string[]      // linked Pod record IDs
   category_ids: string[]  // linked Category record IDs
   created_at: string
 }
@@ -48,4 +50,14 @@ export interface Interaction {
   date: ISODate
   notes: string | null
   created_at: string
+}
+
+// Social equity types
+export type FocusReason = 'overdue' | 'birthday' | 'serendipity'
+
+export interface FocusItem {
+  contact: Contact
+  pod: Pod | null
+  reason: FocusReason
+  score: number
 }

@@ -1,9 +1,9 @@
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
-import type { List, HexColor } from '../../lib/types'
+import type { Pod, HexColor } from '../../lib/types'
 import { GlassOrb } from './GlassOrb'
 
 export type ListNodeData = {
-  list: List
+  list: Pod
   contactCount: number
   overdueCount: number
   loading?: boolean

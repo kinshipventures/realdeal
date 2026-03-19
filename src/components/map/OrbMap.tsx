@@ -10,8 +10,8 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { getLists, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
-import type { Category, List } from '../../lib/types'
+import { getPods, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
+import type { Category, Pod } from '../../lib/types'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
@@ -66,15 +66,15 @@ function circularLayout(
   return map
 }
 
-type ListCounts = { total: number; overdue: number }
+type PodCounts = { total: number; overdue: number }
 
 function buildHomeNodes(
-  lists: List[],
-  countsByList: Record<string, ListCounts>,
+  pods: Pod[],
+  countsByPod: Record<string, PodCounts>,
   savedPositions: Record<string, { x: number; y: number }>,
-  onListClick: (list: List, pos: { x: number; y: number }) => void
+  onPodClick: (pod: Pod, pos: { x: number; y: number }) => void
 ): Node[] {
-  const { mojPos, listPositions } = hubLayout(lists, savedPositions)
+  const { mojPos, listPositions } = hubLayout(pods, savedPositions)
 
   const mojNode: Node = {
     id: MOJ_ID,
@@ -85,33 +85,33 @@ function buildHomeNodes(
     data: {},
   }
 
-  const listNodes: Node[] = lists.map((list, i) => {
-    const pos = listPositions.get(list.id)!
-    const counts = countsByList[list.id] ?? { total: 0, overdue: 0 }
+  const podNodes: Node[] = pods.map((pod, i) => {
+    const pos = listPositions.get(pod.id)!
+    const counts = countsByPod[pod.id] ?? { total: 0, overdue: 0 }
     return {
-      id: list.id,
+      id: pod.id,
       type: 'list',
       position: pos,
       style: { overflow: 'visible' },
       data: {
-        list,
+        list: pod,
         contactCount: counts.total,
         overdueCount: counts.overdue,
         loading: false,
         animationDelay: `${i * 0.04}s`,
-        onClick: () => onListClick(list, pos),
+        onClick: () => onPodClick(pod, pos),
       },
     }
   })
 
-  return [mojNode, ...listNodes]
+  return [mojNode, ...podNodes]
 }
 
-function buildHomeEdges(lists: List[]): Edge[] {
-  return lists.map(list => ({
-    id: `e-moj-${list.id}`,
+function buildHomeEdges(pods: Pod[]): Edge[] {
+  return pods.map(pod => ({
+    id: `e-moj-${pod.id}`,
     source: MOJ_ID,
-    target: list.id,
+    target: pod.id,
     style: { stroke: 'rgba(0,0,0,0.07)', strokeWidth: 0.75 },
     type: 'straight',
   }))
@@ -122,15 +122,15 @@ export function OrbMap() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 
   const [view, setView] = useState<'lists' | 'categories'>('lists')
-  const [selectedList, setSelectedList] = useState<List | null>(null)
+  const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [initError, setInitError] = useState(false)
   const [catRefresh, setCatRefresh] = useState(0)
 
-  const listsRef = useRef<List[]>([])
-  const countsByListRef = useRef<Record<string, ListCounts>>({})
+  const podsRef = useRef<Pod[]>([])
+  const countsByPodRef = useRef<Record<string, PodCounts>>({})
   const viewRef = useRef<'lists' | 'categories'>('lists')
-  const selectedListRef = useRef<List | null>(null)
+  const selectedPodRef = useRef<Pod | null>(null)
   // Generation counter — discards stale responses if user clicks a different list quickly
   const listClickGenRef = useRef(0)
   // Track all active error-clear timeout IDs for cleanup on unmount
@@ -142,22 +142,22 @@ export function OrbMap() {
     return () => { timeouts.forEach(clearTimeout) }
   }, [])
 
-  const handleListClick = useCallback((list: List, position: { x: number; y: number }) => {
-    if (viewRef.current === 'categories' && selectedListRef.current?.id === list.id) return
+  const handlePodClick = useCallback((pod: Pod, position: { x: number; y: number }) => {
+    if (viewRef.current === 'categories' && selectedPodRef.current?.id === pod.id) return
 
     const gen = ++listClickGenRef.current
 
     viewRef.current = 'categories'
-    selectedListRef.current = list
-    setSelectedList(list)
+    selectedPodRef.current = pod
+    setSelectedPod(pod)
     setView('categories')
     setSelectedCategoryId(null)
 
     setNodes(prev => prev.map(n =>
-      n.id === list.id ? { ...n, data: { ...n.data, loading: true } } : n
+      n.id === pod.id ? { ...n, data: { ...n.data, loading: true } } : n
     ))
 
-    getCategories(list.id).then(async (cats: Category[]) => {
+    getCategories(pod.id).then(async (cats: Category[]) => {
       if (gen !== listClickGenRef.current) return  // discard stale response
 
       const savedPositions = getPositions()
@@ -171,22 +171,22 @@ export function OrbMap() {
       const allContacts = await getContacts()
       const countsByCategory: Record<string, number> = {}
       for (const contact of allContacts) {
-        if (!contact.list_ids.includes(list.id)) continue
+        if (!contact.list_ids.includes(pod.id)) continue
         for (const catId of contact.category_ids) {
           countsByCategory[catId] = (countsByCategory[catId] ?? 0) + 1
         }
       }
 
-      const listCounts = countsByListRef.current[list.id] ?? { total: 0, overdue: 0 }
-      const listNode: Node = {
-        id: list.id,
+      const podCounts = countsByPodRef.current[pod.id] ?? { total: 0, overdue: 0 }
+      const podNode: Node = {
+        id: pod.id,
         type: 'list',
         position,
         style: { overflow: 'visible' },
         data: {
-          list,
-          contactCount: listCounts.total,
-          overdueCount: listCounts.overdue,
+          list: pod,
+          contactCount: podCounts.total,
+          overdueCount: podCounts.overdue,
           loading: false,
           onClick: undefined,
         },
@@ -199,7 +199,7 @@ export function OrbMap() {
         style: { overflow: 'visible' },
         data: {
           category: cat,
-          listColor: list.color,
+          listColor: pod.color,
           contactCount: countsByCategory[cat.id] ?? 0,
           animationDelay: `${i * 0.03}s`,
           onClick: () => setSelectedCategoryId(prev => prev === cat.id ? null : cat.id),
@@ -213,40 +213,40 @@ export function OrbMap() {
         draggable: false,
         style: { overflow: 'visible' },
         data: {
-          listColor: list.color,
+          listColor: pod.color,
           animationDelay: `${cats.length * 0.03}s`,
           onCreate: async (name: string) => {
-            await createCategory(name, list.id)
+            await createCategory(name, pod.id)
             clearPositionsForIds(cats.map(c => c.id))
             setCatRefresh(r => r + 1)
           },
         },
       }
 
-      const edgeColor = list.color ? `${list.color}30` : 'rgba(0,0,0,0.07)'
+      const edgeColor = pod.color ? `${pod.color}30` : 'rgba(0,0,0,0.07)'
       const catEdges: Edge[] = cats.map(cat => ({
-        id: `e-${list.id}-${cat.id}`,
-        source: list.id,
+        id: `e-${pod.id}-${cat.id}`,
+        source: pod.id,
         target: cat.id,
         style: { stroke: edgeColor, strokeWidth: 0.75 },
         type: 'straight',
       }))
 
-      setNodes([listNode, ...catNodes, createNode])
+      setNodes([podNode, ...catNodes, createNode])
       setEdges(catEdges)
     }).catch(() => {
       if (gen !== listClickGenRef.current) return
 
-      const listId = list.id
+      const podId = pod.id
       setNodes(prev => prev.map(n =>
-        n.id === listId ? { ...n, data: { ...n.data, loading: false, loadError: true } } : n
+        n.id === podId ? { ...n, data: { ...n.data, loading: false, loadError: true } } : n
       ))
 
       // Clear the error indicator after animation completes; track timeout for cleanup
       const timeoutId = setTimeout(() => {
         errorTimeoutsRef.current.delete(timeoutId)
         setNodes(prev => prev.map(n =>
-          n.id === listId ? { ...n, data: { ...n.data, loadError: false } } : n
+          n.id === podId ? { ...n, data: { ...n.data, loadError: false } } : n
         ))
       }, 2000)
       errorTimeoutsRef.current.add(timeoutId)
@@ -255,48 +255,48 @@ export function OrbMap() {
 
   const handleBack = useCallback(() => {
     viewRef.current = 'lists'
-    selectedListRef.current = null
+    selectedPodRef.current = null
     setView('lists')
-    setSelectedList(null)
+    setSelectedPod(null)
     setSelectedCategoryId(null)
     const savedPositions = getPositions()
-    setNodes(buildHomeNodes(listsRef.current, countsByListRef.current, savedPositions, handleListClick))
-    setEdges(buildHomeEdges(listsRef.current))
-  }, [handleListClick])
+    setNodes(buildHomeNodes(podsRef.current, countsByPodRef.current, savedPositions, handlePodClick))
+    setEdges(buildHomeEdges(podsRef.current))
+  }, [handlePodClick])
 
   // Re-build category view after a new category is created
   useEffect(() => {
     if (catRefresh === 0) return
-    const list = selectedListRef.current
-    if (!list) return
-    const listNode = nodes.find(n => n.id === list.id)
-    if (!listNode) return
-    // Reset view state so handleListClick's early-return guard doesn't block
+    const pod = selectedPodRef.current
+    if (!pod) return
+    const podNode = nodes.find(n => n.id === pod.id)
+    if (!podNode) return
+    // Reset view state so handlePodClick's early-return guard doesn't block
     viewRef.current = 'lists'
-    handleListClick(list, listNode.position)
+    handlePodClick(pod, podNode.position)
   }, [catRefresh]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let stale = false
     async function init() {
       try {
-        const [allLists, allContacts] = await Promise.all([getLists(), getContacts()])
+        const [allPods, allContacts] = await Promise.all([getPods(), getContacts()])
         if (stale) return
-        listsRef.current = allLists
+        podsRef.current = allPods
 
-        const countsByList: Record<string, ListCounts> = {}
+        const countsByPod: Record<string, PodCounts> = {}
         for (const contact of allContacts) {
-          for (const listId of contact.list_ids) {
-            if (!countsByList[listId]) countsByList[listId] = { total: 0, overdue: 0 }
-            countsByList[listId].total++
-            if (isOverdue(contact)) countsByList[listId].overdue++
+          for (const podId of contact.list_ids) {
+            if (!countsByPod[podId]) countsByPod[podId] = { total: 0, overdue: 0 }
+            countsByPod[podId].total++
+            if (isOverdue(contact)) countsByPod[podId].overdue++
           }
         }
-        countsByListRef.current = countsByList
+        countsByPodRef.current = countsByPod
 
         const savedPositions = getPositions()
-        setNodes(buildHomeNodes(allLists, countsByList, savedPositions, handleListClick))
-        setEdges(buildHomeEdges(allLists))
+        setNodes(buildHomeNodes(allPods, countsByPod, savedPositions, handlePodClick))
+        setEdges(buildHomeEdges(allPods))
       } catch (err) {
         console.error('Failed to load network:', err)
         if (!stale) setInitError(true)
@@ -341,7 +341,7 @@ export function OrbMap() {
       )}
 
       {/* Breadcrumb */}
-      {view === 'categories' && selectedList && (
+      {view === 'categories' && selectedPod && (
         <nav style={{
           position: 'absolute',
           top: 28,
@@ -368,7 +368,7 @@ export function OrbMap() {
             Home
           </button>
           <span style={{ color: 'rgba(0,0,0,0.2)', fontSize: 10 }}>›</span>
-          <span style={{ color: 'rgba(0,0,0,0.8)', fontWeight: 500 }}>{selectedList.name}</span>
+          <span style={{ color: 'rgba(0,0,0,0.8)', fontWeight: 500 }}>{selectedPod.name}</span>
         </nav>
       )}
 

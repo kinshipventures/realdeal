@@ -1,4 +1,4 @@
-import type { List, Category, Contact, Interaction, InteractionType, Owner } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner } from './types'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
 const TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN
@@ -14,11 +14,12 @@ export const TABLES = {
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────
 
-interface ListFields {
+interface PodFields {
   Name: string
   Color?: string
   Owner?: Owner
   'Is Priority'?: boolean
+  Cadence?: Cadence
   Categories?: string[]
   Contacts?: string[]
 }
@@ -103,20 +104,21 @@ async function fetchAll<T>(table: string, params?: Record<string, string>): Prom
 
 // ── Lists ────────────────────────────────────────────────────────────────────
 
-function mapList(r: AirtableRecord<ListFields>): List {
+function mapPod(r: AirtableRecord<PodFields>): Pod {
   return {
     id: r.id,
     name: r.fields.Name,
     color: (r.fields.Color ?? null) as import('./types').HexColor | null,
     owner: r.fields.Owner ?? null,
     is_priority: r.fields['Is Priority'] ?? false,
+    cadence: r.fields.Cadence ?? null,
     created_at: r.createdTime,
   }
 }
 
-export async function getLists(): Promise<List[]> {
-  const records = await fetchAll<ListFields>(TABLES.lists)
-  return records.map(mapList)
+export async function getPods(): Promise<Pod[]> {
+  const records = await fetchAll<PodFields>(TABLES.lists)
+  return records.map(mapPod)
 }
 
 // ── Categories ───────────────────────────────────────────────────────────────
@@ -393,16 +395,28 @@ export async function getRecentInteractions(limit: number): Promise<Interaction[
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
-
-export function isOverdue(contact: Contact): boolean {
-  if (!contact.last_contacted_at) return true
-  return Date.now() - new Date(contact.last_contacted_at).getTime() > THIRTY_DAYS_MS
+const CADENCE_MS: Record<Cadence, number> = {
+  weekly: 7 * 24 * 60 * 60 * 1000,
+  biweekly: 14 * 24 * 60 * 60 * 1000,
+  monthly: 30 * 24 * 60 * 60 * 1000,
+  quarterly: 90 * 24 * 60 * 60 * 1000,
 }
 
-export async function getOverdueContacts(listId: string): Promise<Contact[]> {
+const GRACE_PERIOD_MS = 14 * 24 * 60 * 60 * 1000
+
+export function isOverdue(contact: Contact, cadence: Cadence = 'monthly'): boolean {
+  if (isInGracePeriod(contact)) return false
+  if (!contact.last_contacted_at) return true
+  return Date.now() - new Date(contact.last_contacted_at).getTime() > CADENCE_MS[cadence]
+}
+
+export function isInGracePeriod(contact: Contact): boolean {
+  return Date.now() - new Date(contact.created_at).getTime() < GRACE_PERIOD_MS
+}
+
+export async function getOverdueContacts(podId: string, cadence: Cadence = 'monthly'): Promise<Contact[]> {
   const contacts = await getContacts()
-  return contacts.filter(c => c.list_ids.includes(listId) && isOverdue(c))
+  return contacts.filter(c => c.list_ids.includes(podId) && isOverdue(c, cadence))
 }
 
 // ── Interaction side-effect: update last_contacted_at ────────────────────────
@@ -413,8 +427,8 @@ export async function logInteraction(
 ): Promise<Interaction> {
   const interaction = await createInteraction({ ...data, contact_id: contactId })
 
-  // Only update last_contacted_at for non-note types
-  if (data.type !== 'note' && data.type !== 'intro') {
+  // Update last_contacted_at for all types except internal notes
+  if (data.type !== 'note') {
     await updateContact(contactId, { last_contacted_at: data.date })
   }
 

@@ -35,7 +35,7 @@ const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(0,0,0,0
 
 function latestContactDate(interactions: Interaction[]): ISODate | null {
   const dates = interactions
-    .filter(i => i.type !== 'note' && i.type !== 'intro')
+    .filter(i => i.type !== 'note')
     .map(i => i.date)
   if (!dates.length) return null
   return dates.reduce((a, b) => a > b ? a : b)
@@ -99,7 +99,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
       setLogNotes('')
       setLogType('call')
       setLogDate(new Date().toISOString().slice(0, 10))
-      if (logType !== 'note' && logType !== 'intro') {
+      if (logType !== 'note') {
         onContactUpdated({ ...contact, last_contacted_at: logDate })
       }
     } catch {

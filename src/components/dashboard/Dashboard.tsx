@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getContacts, getLists, isOverdue, getRecentInteractions } from '../../lib/airtable'
+import { getContacts, getPods, isOverdue, getRecentInteractions } from '../../lib/airtable'
 import { daysOverdue, formatRelativeTime } from '../../lib/utils'
-import type { Contact, List, Interaction } from '../../lib/types'
+import type { Contact, Pod, Interaction } from '../../lib/types'
 import { Spinner, Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 
@@ -24,7 +24,7 @@ const PANEL: React.CSSProperties = {
 export function Dashboard() {
   const navigate = useNavigate()
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [lists, setLists] = useState<List[]>([])
+  const [pods, setPods] = useState<Pod[]>([])
   const [recentInteractions, setRecentInteractions] = useState<Interaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +48,7 @@ export function Dashboard() {
 
   const totalContacts = contacts.length
 
-  const countsByList = useMemo(() => {
+  const countsByPod = useMemo(() => {
     const map: Record<string, number> = {}
     for (const c of contacts) {
       for (const lid of c.list_ids) {
@@ -70,21 +70,21 @@ export function Dashboard() {
     return map
   }, [contacts])
 
-  const sortedLists = useMemo(
-    () => [...lists].sort((a, b) => {
+  const sortedPods = useMemo(
+    () => [...pods].sort((a, b) => {
       if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1
       return a.name.localeCompare(b.name)
     }),
-    [lists]
+    [pods]
   )
 
   useEffect(() => {
-    Promise.allSettled([getContacts(), getLists(), getRecentInteractions(20)])
-      .then(([contactsResult, listsResult, interactionsResult]) => {
+    Promise.allSettled([getContacts(), getPods(), getRecentInteractions(20)])
+      .then(([contactsResult, podsResult, interactionsResult]) => {
         if (contactsResult.status === 'fulfilled') setContacts(contactsResult.value)
         else setError('Could not load contacts. Check your connection and refresh.')
 
-        if (listsResult.status === 'fulfilled') setLists(listsResult.value)
+        if (podsResult.status === 'fulfilled') setPods(podsResult.value)
 
         if (interactionsResult.status === 'fulfilled') setRecentInteractions(interactionsResult.value)
         // interactions failure is silent — feed shows empty state
@@ -193,11 +193,11 @@ export function Dashboard() {
                   {totalContacts} contacts
                 </div>
                 <div style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 12 }}>
-                  {sortedLists.map(list => (
-                    <div key={list.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
-                      <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)' }}>{list.name}</span>
+                  {sortedPods.map(pod => (
+                    <div key={pod.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
+                      <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)' }}>{pod.name}</span>
                       <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.35)', fontVariantNumeric: 'tabular-nums' }}>
-                        {countsByList[list.id] ?? 0}
+                        {countsByPod[pod.id] ?? 0}
                       </span>
                     </div>
                   ))}
