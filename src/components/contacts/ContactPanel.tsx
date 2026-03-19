@@ -29,15 +29,17 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
   useEscape(handleClose)
 
   useEffect(() => {
+    let canceled = false
     setLoading(true)
     setLoadError(false)
     setSearch('')
     setSelectedContact(null)
     setShowNewContact(false)
     getContacts(categoryId)
-      .then(data => setContacts(data))
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false))
+      .then(data => { if (!canceled) setContacts(data) })
+      .catch(() => { if (!canceled) setLoadError(true) })
+      .finally(() => { if (!canceled) setLoading(false) })
+    return () => { canceled = true }
   }, [categoryId])
 
   function handleSaved(updated: Contact) {

@@ -55,7 +55,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
   const [logType, setLogType] = useState<InteractionType>('call')
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
   const [logNotes, setLogNotes] = useState('')
-  const [isLogging, setIsLogging] = useState(false)
+  const [opState, setOpState] = useState<'idle' | 'logging' | 'deleting' | 'updating'>('idle')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingInteraction, setEditingInteraction] = useState<EditingInteraction>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -85,8 +85,8 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
   }, [interactions])
 
   async function handleLog() {
-    if (isLogging) return
-    setIsLogging(true)
+    if (opState !== 'idle') return
+    setOpState('logging')
     setActionError(null)
     try {
       const interaction = await logInteraction(contact.id, {
@@ -105,12 +105,13 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
     } catch {
       setActionError('failed to log — try again')
     } finally {
-      setIsLogging(false)
+      setOpState('idle')
     }
   }
 
   async function handleUpdateInteraction(id: string) {
-    if (!editingInteraction) return
+    if (!editingInteraction || opState !== 'idle') return
+    setOpState('updating')
     setActionError(null)
     try {
       const updated = await updateInteraction(id, {
@@ -126,11 +127,14 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
       onContactUpdated({ ...contact, last_contacted_at: newDate })
     } catch {
       setActionError('failed to update — try again')
+    } finally {
+      setOpState('idle')
     }
   }
 
   async function handleDeleteInteraction(id: string) {
-    if (deletingId) return
+    if (opState !== 'idle') return
+    setOpState('deleting')
     setDeletingId(id)
     setActionError(null)
     try {
@@ -144,6 +148,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
       setActionError('failed to delete — try again')
     } finally {
       setDeletingId(null)
+      setOpState('idle')
     }
   }
 
@@ -286,19 +291,19 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
 
           <button
             onClick={handleLog}
-            disabled={isLogging}
+            disabled={opState === 'logging'}
             style={{
               fontSize: 12, fontWeight: 500,
               padding: '6px 16px',
               background: 'rgba(0,0,0,0.07)',
               border: '1px solid rgba(0,0,0,0.10)',
               borderRadius: 6,
-              color: isLogging ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.70)',
-              cursor: isLogging ? 'default' : 'pointer',
+              color: opState === 'logging' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.70)',
+              cursor: opState === 'logging' ? 'default' : 'pointer',
               transition: 'background 0.15s',
             }}
           >
-            {isLogging ? 'Logging...' : `Log ${TYPE_LABELS[logType]}`}
+            {opState === 'logging' ? 'Logging...' : `Log ${TYPE_LABELS[logType]}`}
           </button>
         </div>
       )}

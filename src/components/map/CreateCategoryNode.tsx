@@ -17,12 +17,16 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     if (active) inputRef.current?.focus()
   }, [active])
 
+  useEffect(() => () => clearTimeout(errorTimerRef.current), [])
+
   const reset = useCallback(() => {
+    clearTimeout(errorTimerRef.current)
     setActive(false)
     setValue('')
     setError(null)
@@ -33,7 +37,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
     const trimmed = value.trim()
     if (!trimmed) {
       setError('empty')
-      setTimeout(() => setError(null), 600)
+      errorTimerRef.current = setTimeout(() => setError(null), 600)
       return
     }
     setSubmitting(true)

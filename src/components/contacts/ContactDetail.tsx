@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { Contact } from '../../lib/types'
 import { updateContact, createContact, deleteContact } from '../../lib/airtable'
 import { avatarHue, initials } from '../../lib/utils'
@@ -32,22 +32,28 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [saveError, setSaveError] = useState<SaveError>(null)
+  const saveGenRef = useRef(0)
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
 
-  // Auto-save on blur for existing contacts
+  // Auto-save on blur for existing contacts — generation counter prevents stale responses from overwriting
   function handleBlur(key: keyof Contact, value: string) {
     const v = value.trim() || null
     setDraft(prev => ({ ...prev, [key]: v }))
     setEditingField(null)
     if (!isNew && contact) {
+      const gen = ++saveGenRef.current
       updateContact(contact.id, { [key]: v } as Partial<Contact>)
         .then(updated => {
+          if (gen !== saveGenRef.current) return
           if (saveError?.field === key) setSaveError(null)
           onSaved(updated)
         })
-        .catch(() => setSaveError({ field: key, value: v }))
+        .catch(() => {
+          if (gen !== saveGenRef.current) return
+          setSaveError({ field: key, value: v })
+        })
     }
   }
 
