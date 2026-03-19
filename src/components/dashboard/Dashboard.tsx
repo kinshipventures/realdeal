@@ -1,17 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { getContacts, getPods, isOverdue, getRecentInteractions } from '../../lib/airtable'
+
 import { daysOverdue, formatRelativeTime } from '../../lib/utils'
 import type { Contact, Pod, Interaction } from '../../lib/types'
 import { Spinner, Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
-
-const BG = [
-  'radial-gradient(ellipse 70% 55% at 12% 8%,  rgba(180,160,255,0.13) 0%, transparent 60%)',
-  'radial-gradient(ellipse 55% 45% at 88% 88%, rgba(255,160,100,0.10) 0%, transparent 55%)',
-  'radial-gradient(ellipse 45% 40% at 75% 10%, rgba(140,200,255,0.08) 0%, transparent 50%)',
-  '#F5F4F0',
-].join(', ')
 
 const PANEL: React.CSSProperties = {
   background: 'rgba(245,244,240,0.88)',
@@ -22,7 +15,6 @@ const PANEL: React.CSSProperties = {
 }
 
 export function Dashboard() {
-  const navigate = useNavigate()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
   const [recentInteractions, setRecentInteractions] = useState<Interaction[]>([])
@@ -104,26 +96,7 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: BG, position: 'relative', overflow: 'hidden' }}>
-
-      <button
-        type="button"
-        onClick={() => navigate('/map')}
-        className="action-ghost"
-        style={{
-          position: 'absolute', top: 28, right: 28, zIndex: 20,
-          padding: '8px 18px',
-          borderRadius: 100,
-          background: 'rgba(255,255,255,0.70)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(0,0,0,0.07)',
-          fontSize: 12,
-          letterSpacing: '0.01em',
-        }}
-      >
-        Map view →
-      </button>
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
 
       {/* Main grid */}
       <div style={{

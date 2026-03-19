@@ -5,9 +5,12 @@ import {
   BackgroundVariant,
   useNodesState,
   useEdgesState,
+  useOnViewportChange,
+  useReactFlow,
   type Node,
   type Edge,
   type OnNodeDrag,
+  type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
@@ -117,9 +120,22 @@ function buildHomeEdges(pods: Pod[]): Edge[] {
   }))
 }
 
+const VIEWPORT_KEY = 'kinshipbrain:map-viewport'
+
+function loadViewport(): Viewport | null {
+  try {
+    const raw = localStorage.getItem(VIEWPORT_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const { setViewport } = useReactFlow()
+
+  // Persist viewport to localStorage on pan/zoom end
+  useOnViewportChange({ onEnd: (vp: Viewport) => localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp)) })
 
   const [view, setView] = useState<'lists' | 'categories'>('lists')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
@@ -316,15 +332,9 @@ export function OrbMap() {
 
   return (
     <div style={{
-      width: '100vw',
-      height: '100vh',
+      width: '100%',
+      height: '100%',
       position: 'relative',
-      background: [
-        'radial-gradient(ellipse 70% 55% at 12% 8%,  rgba(180,160,255,0.13) 0%, transparent 60%)',
-        'radial-gradient(ellipse 55% 45% at 88% 88%, rgba(255,160,100,0.10) 0%, transparent 55%)',
-        'radial-gradient(ellipse 45% 40% at 75% 10%, rgba(140,200,255,0.08) 0%, transparent 50%)',
-        '#F5F4F0',
-      ].join(', '),
     }}>
 
       {/* Init failure — indistinguishable from loading without this */}
@@ -379,7 +389,11 @@ export function OrbMap() {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onNodeDragStop={handleNodeDragStop}
-        fitView
+        onInit={() => {
+          const saved = loadViewport()
+          if (saved) setViewport(saved)
+        }}
+        fitView={!loadViewport()}
         fitViewOptions={{ padding: 0.22 }}
         minZoom={0.15}
         maxZoom={2.5}
