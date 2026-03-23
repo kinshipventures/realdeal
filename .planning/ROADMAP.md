@@ -57,11 +57,11 @@ Plans:
   6. All empty states use orb illustrations, ghost hints, warm copy, and one CTA
   7. Pod cards show sparkline trends and mini orb avatars
   8. Interaction timeline shows semantic type colors
-**Plans:** 7 plans
+**Plans:** 2/7 plans executed
 
 Plans:
-- [ ] 02.1-01-PLAN.md — Fraunces font swap, dark mode tokens, interaction color tokens, copy/voice updates
-- [ ] 02.1-02-PLAN.md — Two-tone gradient orbs with glow halos and health ring SVG
+- [x] 02.1-01-PLAN.md — Fraunces font swap, dark mode tokens, interaction color tokens, copy/voice updates
+- [x] 02.1-02-PLAN.md — Two-tone gradient orbs with glow halos and health ring SVG
 - [ ] 02.1-03-PLAN.md — Orbital map layout, fly-from-hub entrance animation, dashed orbit rings
 - [ ] 02.1-04-PLAN.md — Dashboard mini orb cards, pod-colored hover, interaction type colors
 - [ ] 02.1-05-PLAN.md — Responsive nav (mobile tab bar), full-screen mobile panel, ARIA
@@ -86,5 +86,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
 | 2. Visual Redesign | 2/2 | Complete   | 2026-03-23 |
-| 02.1. Design Implementation | 0/7 | Planning complete | - |
+| 02.1. Design Implementation | 2/7 | In Progress|  |
 | 3. Close-Out | 0/TBD | Not started | - |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-visual-redesign plan 02
-last_updated: "2026-03-23T04:16:58.100Z"
+stopped_at: Completed 02.1-design-implementation plan 02
+last_updated: "2026-03-23T17:51:38.218Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 12
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Moj opens the app daily and it changes how she manages relationships
-**Current focus:** Phase 02 — visual-redesign
+**Current focus:** Phase 02.1 — design-implementation
 
 ## Current Position
 
-Phase: 02 (visual-redesign) — EXECUTING
-Plan: 2 of 2
+Phase: 02.1 (design-implementation) — EXECUTING
+Plan: 2 of 7
 
 ## Performance Metrics
 
@@ -46,8 +46,13 @@ Plan: 2 of 2
 | Phase 01-contact-profiles P03 | 2 | 2 tasks | 2 files |
 | Phase 02-visual-redesign P01 | 3 | 2 tasks | 8 files |
 | Phase 02-visual-redesign P02 | 12 | 3 tasks | 6 files |
+| Phase 02.1-design-implementation P02 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Implement all DESIGN.md decisions — Fraunces font, two-tone gradient orbs, orbital map, health rings, entrance animations, mini orb cards, empty states, loading skeletons, dark mode, responsive, data viz, copy updates, accessibility (INSERTED)
 
 ### Decisions
 
@@ -69,6 +74,7 @@ Recent decisions affecting current work:
 - [Phase 02-visual-redesign]: PANEL constant fully tokenized — var(--surface-panel), var(--panel-blur), var(--surface-panel-border), var(--panel-radius)
 - [Phase 02-visual-redesign]: Equity ring gradient white-to-white on green band — visible arc without green clash
 - [Phase 02-visual-redesign]: FocusCard accent changed from orange (#FFB547) to brand green (var(--color-brand)) for visual consistency
+- [Phase 02.1-design-implementation]: Two-tone orb gradient locked: linear-gradient(135deg, base → shift) with POD_SHIFT_COLORS map. Hover glow via ref mutation to avoid re-renders.
 
 ### Pending Todos
 
@@ -83,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T04:16:58.099Z
-Stopped at: Completed 02-visual-redesign plan 02
+Last session: 2026-03-23T17:51:38.217Z
+Stopped at: Completed 02.1-design-implementation plan 02
 Resume file: None
