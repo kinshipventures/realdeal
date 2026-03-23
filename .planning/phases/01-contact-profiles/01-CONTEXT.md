@@ -1,56 +1,88 @@
 # Phase 1: Contact Profiles - Context
 
-**Gathered:** 2026-03-20
+**Gathered:** 2026-03-22
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Opening a contact shows enriched context — milestones, interests, relationship history, birthday countdown, and their equity score. Import script has dedup logic for clean data. This phase adds new Airtable fields, wires them into the existing ContactDetail panel, surfaces the equity score per-contact, and hardens the import script.
+Enriched contact profiles with birthday, milestones, interests, and relationship context fields. Per-contact equity score with visual breakdown. Import dedup logic for clean re-imports. New Airtable fields follow Briell's conventions and are editable in Airtable directly.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Profile layout
-- **D-01:** Equity score + label (e.g. "Healthy · 72") in the header area, below name/role, always visible. Small and understated.
-- **D-02:** Birthday, milestones, interests, and relationship context fields extend the existing "context" section in ContactDetail — no new sections.
-- **D-03:** All new fields (milestones, interests, relationship context) are freeform text — same textarea pattern as existing notes/past-clients fields. Compatible with Briell editing directly in Airtable.
-- **D-04:** Birthday field is a date input. When birthday is within 30 days, an inline "in X days" label appears next to the date. Subtle, no special UI treatment beyond the text.
+### Profile field organization
+- **D-01:** New personal fields (birthday, milestones, interests, relationship context) go in a NEW "personal" section, separate from the existing "context" section
+- **D-02:** "context" stays professional (specialization, past clients, recommended by). "personal" is the relationship layer — this is what drives social equity and separates the app from a generic CRM
+- **D-03:** Section order: contact → context → personal → notes → interactions
+- **D-04:** All new text fields (milestones, interests, relationship context) are freeform textarea — same pattern as existing notes/past-clients fields. Compatible with Briell editing directly in Airtable.
 
-### Equity score display
-- **D-05:** Score + label in header. Tapping/clicking the score reveals a small breakdown: counts by interaction type (e.g. "3 calls, 2 emails, 1 intro") for the last 90 days. Progressive disclosure — collapsed by default.
-- **D-06:** Score label gets a subtle color tint matching its state (Thriving/Healthy/Cooling/Dormant). Stays within the glass/neutral palette — not traffic-light bright.
-- **D-07:** Ship with current weights (intro=5, meeting=4, call=3, text=2, email=2, note=0). Easy to tune later — it's one constant object. Don't block on Moj feedback.
+### Birthday countdown
+- **D-05:** Birthday field is a date input. When birthday is within 30 days, an inline "in X days" label appears next to the date. Subtle, informational nudge — not an alert.
+- **D-06:** Claude's discretion on exact countdown format and placement within the personal section
+
+### Equity score display on profile
+- **D-07:** Per-contact equity score shown as a segmented/stacked ring — same visual language as the Dashboard EquityRing but broken down by interaction type
+- **D-08:** Each interaction type gets its own color segment. Arc length reflects actual weighted contribution (intros take more arc than texts because they're weighted 5x vs 2x)
+- **D-09:** Score number and label (e.g. "72 · Healthy") displayed alongside the ring
+- **D-10:** Visual approach chosen because Moj prioritizes bold, expressive design — plain numbers don't match the Oura ring / Spotify Wrapped energy
+- **D-11:** Ship with current weights (intro=5, meeting=4, call=3, text=2, email=2, note=0). Easy to tune later — one constant object. Don't block on Moj feedback.
 
 ### Import dedup
-- **D-08:** Import script must check name + email before creating contacts (DATA-01). Existing email-only dedup is insufficient.
+- **D-12:** Handle dedup behavior as it comes — match on name + email, specific collision behavior (skip vs update) decided when real CSVs arrive from Briell
+- **D-13:** Script should be ready to run but doesn't need speculative architecture
+
+### Data dependency strategy
+- **D-14:** Build UI and Airtable field mappings that work with existing data. Empty fields show placeholders that light up when Briell populates them in Airtable
+- **D-15:** No dummy data systems or speculative integrations. Plug-and-play when real data arrives.
 
 ### Claude's Discretion
-- Exact color values for score label tints
 - Birthday countdown wording and threshold edge cases
-- Score breakdown expand/collapse animation
+- Stacked ring color palette per interaction type
+- Interaction type legend/labels around the ring
+- Loading and empty states for new sections
+- Score label color tint per state (Thriving/Healthy/Cooling/Dormant) — stays within glass/neutral palette
 - Import script: exact matching strategy for name+email (case sensitivity, fuzzy vs exact)
 - New Airtable field naming (must follow Briell's conventions — Title Case with spaces)
 
 </decisions>
+
+<specifics>
+## Specific Ideas
+
+- Moj wants the app to feel like an "Oura ring for relationships" — the stacked ring on profiles extends that metaphor to individual contacts
+- "Make everything bolder" — new profile sections should lean toward the Trolley CRM visual direction
+- The professional/personal section split reinforces that this isn't a CRM — the personal layer is what Moj's social equity philosophy is built on (giving > taking, micro-habits of care)
+- Score should feel like a health indicator, not a judgment — "Healthy · 72" not "Score: 72/100"
+- Birthday countdown is informational nudge — "in 12 days" in tertiary text
+
+</specifics>
 
 <canonical_refs>
 ## Canonical References
 
 **Downstream agents MUST read these before planning or implementing.**
 
-### Existing code
-- `src/components/contacts/ContactDetail.tsx` — Current profile panel with inline-editable fields, auto-save on blur pattern
-- `src/components/contacts/ContactPanel.tsx` — Contact list panel that opens ContactDetail
-- `src/lib/equity.ts` — `contactEquityScore()`, `scoreLabel()`, `INTERACTION_WEIGHTS`, `indexByContact()`
-- `src/lib/airtable.ts` — Data layer: `ContactFields` interface, `updateContact()`, cache invalidation pattern
-- `src/lib/types.ts` — `Contact` interface (needs new fields), `InteractionType`, `Interaction`
-- `src/scripts/importServiceProviders.ts` — Current import script with email-only dedup
+### Product context
+- `docs/context-map.md` — Full synthesis of 8 Granola meeting transcripts. Source of truth for Moj's vision, priorities, and design direction.
 
 ### Design system
-- `docs/design-system.md` — Token set, typography, spacing, glass orb visual rules
+- `docs/design-system.md` — Token set, typography, spacing, glass orb rules, motion curves
+
+### Existing profile implementation
+- `src/components/contacts/ContactDetail.tsx` — Current click-to-edit profile with auto-save, `field()` renderer, generation counter conflict prevention
+- `src/components/contacts/InteractionSection.tsx` — Interaction timeline already on profile
+
+### Equity scoring
+- `src/lib/equity.ts` — `contactEquityScore()`, `INTERACTION_WEIGHTS`, `indexByContact()`, `scoreLabel()`. Ring needs a companion function that returns per-type breakdown.
+- `src/components/dashboard/Dashboard.tsx` — `EquityRing` component (SVG arc). Stacked ring extends this pattern with per-type segments.
+
+### Data layer
+- `src/lib/airtable.ts` — `ContactFields` interface, `updateContact()`, cache invalidation. New fields added here.
+- `src/lib/types.ts` — `Contact` interface needs `birthday`, `milestones`, `interests`, `relationship_context` fields
+- `src/scripts/importServiceProviders.ts` — Current import script pattern. Dedup logic adds here.
 
 </canonical_refs>
 
@@ -58,38 +90,32 @@ Opening a contact shows enriched context — milestones, interests, relationship
 ## Existing Code Insights
 
 ### Reusable Assets
-- `ContactDetail.field()` renderer: handles label + display/input toggle with auto-save on blur. Extend for new fields.
-- `contactEquityScore()` in equity.ts: already returns 0-100. Just need to call it per-contact and display.
-- `indexByContact()`: pre-indexes interactions by contact ID for O(1) lookup.
-- `INTERACTION_WEIGHTS` constant: the source of truth for score calculation.
+- `ContactDetail.field()` renderer — handles click-to-edit, auto-save on blur, escape revert. New text fields plug in directly.
+- `EquityRing` in Dashboard.tsx — SVG arc with gradient. Stacked ring variant needs per-type arc segments instead of single arc.
+- `contactEquityScore()` in equity.ts — returns single 0-100 number. Needs companion function returning per-type weighted contributions for ring segments.
+- `INTERACTION_WEIGHTS` — defines weight per type. Ring segment proportions derived from these.
 
 ### Established Patterns
-- Inline-editable fields with `editingField` state and `handleBlur` auto-save (ContactDetail.tsx)
-- Module-level caches with TTL and stale-while-revalidate (airtable.ts)
+- Auto-save on blur with generation counter (prevents stale overwrites)
+- Escape stack for layered panel dismissal
+- Section labels: lowercase, 11px, `rgba(0,0,0,0.25)`, `letterSpacing: 0.01em`
 - Airtable field naming: Title Case with spaces (e.g. "Past Clients", "Recommended By")
 
 ### Integration Points
-- `Contact` type in types.ts needs `birthday`, `milestones`, `interests`, `relationship_context` fields
-- `ContactFields` interface in airtable.ts needs matching Airtable field names
-- `mapContact()` in airtable.ts needs to map new fields
-- `updateContact()` in airtable.ts needs to handle new fields in the PATCH body
+- `Contact` type in types.ts — add `birthday`, `milestones`, `interests`, `relationship_context`
+- `ContactFields` interface in airtable.ts — add matching Airtable field names
+- `mapContact()` in airtable.ts — map new fields
+- `updateContact()` — already handles partial updates, new fields work automatically
 - InteractionSection already loads per-contact interactions — score breakdown can reuse this data
 
 </code_context>
 
-<specifics>
-## Specific Ideas
-
-- Score should feel like a health indicator, not a judgment — "Healthy · 72" not "Score: 72/100"
-- Birthday countdown is informational nudge, not an alert — "in 12 days" in tertiary text
-- Breakdown expand should feel like Apple's disclosure triangles — clean, not accordion-y
-
-</specifics>
-
 <deferred>
 ## Deferred Ideas
 
-- Birthday surfacing on the orb map or dashboard focus items — already handled by todaysFocus() in equity.ts, can enhance later
+- Gmail integration for cross-channel contact timeline — blocked on credentials, separate phase
+- AI enrichment from social/email/messages — future
+- Birthday surfacing on Dashboard (not just profile) — could enhance todaysFocus() later but not Phase 1 scope
 - Structured tags for interests (comma-separated pills) — revisit if freeform feels limiting after real use
 
 </deferred>
@@ -97,4 +123,4 @@ Opening a contact shows enriched context — milestones, interests, relationship
 ---
 
 *Phase: 01-contact-profiles*
-*Context gathered: 2026-03-20*
+*Context gathered: 2026-03-22*
