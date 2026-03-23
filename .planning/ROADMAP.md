@@ -22,7 +22,11 @@
   3. Contact profile has editable milestones, interests, and relationship context fields that save to Airtable
   4. Per-contact equity score (0-100) and score breakdown (by interaction type) are visible on the profile
   5. New Airtable fields follow Briell's naming conventions and are visible/editable in Airtable directly
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Data layer + personal section (birthday, milestones, interests, relationship context)
+- [ ] 01-02-PLAN.md — Import script dedup (name + email dual-index)
+- [ ] 01-03-PLAN.md — Equity score breakdown + segmented ring on profile
 
 ### Phase 2: Visual Redesign
 **Goal**: The app looks polished enough to demo to Gwyneth — design aligned to Trolley CRM PDF direction
@@ -51,6 +55,6 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Contact Profiles | 0/TBD | Not started | - |
+| 1. Contact Profiles | 0/3 | Planning complete | - |
 | 2. Visual Redesign | 0/TBD | Not started | - |
 | 3. Close-Out | 0/TBD | Not started | - |
