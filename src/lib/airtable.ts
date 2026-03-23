@@ -43,6 +43,10 @@ interface ContactFields {
   'Recommended By'?: string
   Specialization?: string
   'Past Clients'?: string
+  Birthday?: string
+  Milestones?: string
+  Interests?: string
+  'Relationship Context'?: string
   'Last Contacted'?: string
   Lists?: string[]
   Categories?: string[]
@@ -209,6 +213,10 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     recommended_by: r.fields['Recommended By'] ?? null,
     specialization: r.fields.Specialization ?? null,
     past_clients: r.fields['Past Clients'] ?? null,
+    birthday: r.fields.Birthday ?? null,
+    milestones: r.fields.Milestones ?? null,
+    interests: r.fields.Interests ?? null,
+    relationship_context: r.fields['Relationship Context'] ?? null,
     last_contacted_at: r.fields['Last Contacted'] ?? null,
     list_ids: r.fields.Lists ?? [],
     category_ids: r.fields.Categories ?? [],
@@ -276,6 +284,10 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
         'Recommended By': data.recommended_by ?? undefined,
         Specialization: data.specialization ?? undefined,
         'Past Clients': data.past_clients ?? undefined,
+        Birthday: data.birthday ?? undefined,
+        Milestones: data.milestones ?? undefined,
+        Interests: data.interests ?? undefined,
+        'Relationship Context': data.relationship_context ?? undefined,
         'Last Contacted': data.last_contacted_at ?? undefined,
         Lists: data.list_ids.length ? data.list_ids : undefined,
         Categories: data.category_ids.length ? data.category_ids : undefined,
@@ -299,6 +311,10 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.recommended_by !== undefined) fields['Recommended By'] = data.recommended_by
   if (data.specialization !== undefined) fields.Specialization = data.specialization
   if (data.past_clients !== undefined) fields['Past Clients'] = data.past_clients
+  if (data.birthday !== undefined) fields.Birthday = data.birthday
+  if (data.milestones !== undefined) fields.Milestones = data.milestones
+  if (data.interests !== undefined) fields.Interests = data.interests
+  if (data.relationship_context !== undefined) fields['Relationship Context'] = data.relationship_context
   if (data.last_contacted_at !== undefined) fields['Last Contacted'] = data.last_contacted_at
   if (data.list_ids !== undefined) fields.Lists = data.list_ids
   if (data.category_ids !== undefined) fields.Categories = data.category_ids

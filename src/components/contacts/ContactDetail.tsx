@@ -23,7 +23,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     contact ?? {
       name: '', email: null, phone: null, company: null, role: null,
       location: null, website: null, notes: null, recommended_by: null,
-      specialization: null, past_clients: null, category_ids: categoryId ? [categoryId] : [], list_ids: [],
+      specialization: null, past_clients: null,
+      birthday: null, milestones: null, interests: null, relationship_context: null,
+      category_ids: categoryId ? [categoryId] : [], list_ids: [],
     }
   )
   const [editingField, setEditingField] = useState<keyof Contact | null>(isNew ? 'name' : null)
@@ -186,6 +188,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         recommended_by: draft.recommended_by ?? null,
         specialization: draft.specialization ?? null,
         past_clients: draft.past_clients ?? null,
+        birthday: draft.birthday ?? null,
+        milestones: draft.milestones ?? null,
+        interests: draft.interests ?? null,
+        relationship_context: draft.relationship_context ?? null,
         last_contacted_at: null,
         list_ids: [],
         category_ids: categoryId ? [categoryId] : [],

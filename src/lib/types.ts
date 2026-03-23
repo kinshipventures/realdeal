@@ -37,6 +37,10 @@ export interface Contact {
   recommended_by: string | null
   specialization: string | null
   past_clients: string | null
+  birthday: ISODate | null
+  milestones: string | null
+  interests: string | null
+  relationship_context: string | null
   last_contacted_at: ISODate | null
   list_ids: string[]      // linked Pod record IDs
   category_ids: string[]  // linked Category record IDs
