@@ -107,10 +107,10 @@ export function ImportPanel() {
     }}>
       <div style={{ width: '100%', maxWidth: 640 }}>
         <h1 style={{
-          fontFamily: 'Fraunces, serif',
+          fontFamily: 'var(--font-serif)',
           fontWeight: 700,
           fontSize: 18,
-          color: 'var(--text-primary)',
+          color: 'var(--color-text-primary)',
           margin: '0 0 32px',
         }}>
           Import Contacts
@@ -142,23 +142,23 @@ export function ImportPanel() {
                 padding: 32,
               }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary, rgba(0,0,0,0.28))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
               <p style={{
-                fontFamily: 'Fraunces, serif',
+                fontFamily: 'var(--font-serif)',
                 fontWeight: 700,
                 fontSize: 18,
-                color: 'var(--text-primary)',
+                color: 'var(--color-text-primary)',
                 margin: 0,
               }}>
                 Drop a CSV file here
               </p>
               <p style={{
                 fontSize: 13,
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
                 margin: 0,
               }}>
                 or click to browse
@@ -180,7 +180,7 @@ export function ImportPanel() {
         {/* State 2: Preview */}
         {state === 'preview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{fileName}</p>
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>{fileName}</p>
 
             {/* Pod selector */}
             <div>
@@ -188,7 +188,7 @@ export function ImportPanel() {
                 display: 'block',
                 fontSize: 13,
                 fontWeight: 500,
-                color: 'var(--text-primary)',
+                color: 'var(--color-text-primary)',
                 marginBottom: 8,
               }}>
                 Import into pod:
@@ -203,7 +203,7 @@ export function ImportPanel() {
                   borderRadius: 8,
                   border: '1px solid var(--edge-strong)',
                   background: 'var(--color-surface)',
-                  color: 'var(--text-primary)',
+                  color: 'var(--color-text-primary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
@@ -216,7 +216,7 @@ export function ImportPanel() {
 
             {/* Column mapping */}
             <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
                 Column mapping
               </p>
               <div style={{
@@ -234,8 +234,8 @@ export function ImportPanel() {
                     borderBottom: '1px solid var(--divider)',
                     fontSize: 13,
                   }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{csvHeader}</span>
-                    <span style={{ color: airtableField && !airtableField.startsWith('_') ? 'var(--color-brand)' : 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--color-text-primary)' }}>{csvHeader}</span>
+                    <span style={{ color: airtableField && !airtableField.startsWith('_') ? 'var(--color-brand)' : 'var(--color-text-secondary)' }}>
                       {airtableField && !airtableField.startsWith('_')
                         ? `→ ${airtableField}`
                         : airtableField === '_category'
@@ -249,7 +249,7 @@ export function ImportPanel() {
 
             {/* Preview table */}
             <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
                 Preview (first 5 rows)
               </p>
               <div style={{ overflowX: 'auto' }}>
@@ -270,7 +270,7 @@ export function ImportPanel() {
                           textAlign: 'left',
                           fontSize: 11,
                           fontWeight: 500,
-                          color: 'var(--text-secondary)',
+                          color: 'var(--color-text-secondary)',
                           borderBottom: '1px solid var(--edge)',
                           whiteSpace: 'nowrap',
                         }}>{h}</th>
@@ -283,7 +283,7 @@ export function ImportPanel() {
                         {parsedHeaders.map(h => (
                           <td key={h} style={{
                             padding: '8px 12px',
-                            color: 'var(--text-primary)',
+                            color: 'var(--color-text-primary)',
                             borderBottom: i < 4 ? '1px solid var(--divider)' : 'none',
                             whiteSpace: 'nowrap',
                             maxWidth: 200,
@@ -296,7 +296,7 @@ export function ImportPanel() {
                   </tbody>
                 </table>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0 0' }}>
+              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '8px 0 0' }}>
                 {parsedRows.length} contacts ready to import
               </p>
             </div>
@@ -329,7 +329,7 @@ export function ImportPanel() {
                   background: 'none',
                   border: 'none',
                   fontSize: 13,
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
@@ -343,7 +343,7 @@ export function ImportPanel() {
         {/* State 3: Importing */}
         {state === 'importing' && progress && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--color-text-primary)', margin: 0 }}>
               Importing... {progress.current}/{progress.total}
             </p>
             <div style={{
@@ -360,7 +360,7 @@ export function ImportPanel() {
                 transition: 'width 0.2s',
               }} />
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
               {progress.imported} imported, {progress.skipped} skipped
             </p>
           </div>
@@ -375,16 +375,16 @@ export function ImportPanel() {
               border: '1px solid var(--edge)',
               borderRadius: 8,
             }}>
-              <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: '0 0 4px', fontWeight: 500 }}>
+              <p style={{ fontSize: 13, color: 'var(--color-text-primary)', margin: '0 0 4px', fontWeight: 500 }}>
                 Imported {result.imported} contacts, skipped {result.skipped} duplicates
               </p>
               {result.errors.length > 0 && (
                 <div style={{ marginTop: 8 }}>
-                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 4px' }}>
+                  <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: '0 0 4px' }}>
                     {result.errors.length} error{result.errors.length !== 1 ? 's' : ''}:
                   </p>
                   {result.errors.map((err, i) => (
-                    <p key={i} style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0' }}>{err}</p>
+                    <p key={i} style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: '2px 0' }}>{err}</p>
                   ))}
                 </div>
               )}
@@ -414,7 +414,7 @@ export function ImportPanel() {
                   background: 'none',
                   border: 'none',
                   fontSize: 13,
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
