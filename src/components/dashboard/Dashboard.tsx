@@ -15,11 +15,11 @@ import { Spinner, Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 
 const PANEL: React.CSSProperties = {
-  background: 'rgba(245,244,240,0.88)',
-  backdropFilter: 'blur(32px)',
-  WebkitBackdropFilter: 'blur(32px)',
-  border: '1px solid rgba(0,0,0,0.07)',
-  borderRadius: 16,
+  background: 'var(--surface-panel)',
+  backdropFilter: 'var(--panel-blur)',
+  WebkitBackdropFilter: 'var(--panel-blur)',
+  border: 'var(--surface-panel-border)',
+  borderRadius: 'var(--panel-radius)',
 }
 
 const SNOOZE_KEY = 'kinshipbrain:dormant-snooze'
@@ -168,42 +168,47 @@ export function Dashboard() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 24px 80px' }}>
+      {/* Green header band */}
+      <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 24px 32px' }}>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
-        {/* Top row: Score + Stats */}
-        <div style={{ display: 'flex', gap: 24, marginBottom: 24, alignItems: 'flex-start' }}>
+            {/* Equity score ring — directly on green, no panel wrapper */}
+            <div style={{ padding: '0', display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
+              {interactionsLoading ? (
+                <Spinner size={18} padding={20} />
+              ) : (
+                <>
+                  <EquityRing score={overallScore} size={80} />
+                  <div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                      {overallScore}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
+                      {scoreLabel(overallScore)}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-          {/* Equity score ring */}
-          <div style={{ ...PANEL, padding: '28px 32px', display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
-            {interactionsLoading ? (
-              <Spinner size={18} padding={20} />
-            ) : (
-              <>
-                <EquityRing score={overallScore} size={80} />
-                <div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                    {overallScore}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 4, letterSpacing: '0.01em' }}>
-                    {scoreLabel(overallScore)}
-                  </div>
+            {/* Stats — semi-transparent white panel on green */}
+            <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 'var(--panel-radius)', padding: '20px 24px', flex: 1 }}>
+              {!dataReady ? <Spinner size={18} padding={16} /> : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                  <StatBlock label="Pods" value={pods.length} />
+                  <StatBlock label="Contacts" value={contacts.length} />
+                  <StatBlock label="Reached (7d)" value={recentlyContacted} />
+                  <StatBlock label="Overdue" value={overdueContacts.length} accent />
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Stats */}
-          <div style={{ ...PANEL, padding: '20px 24px', flex: 1 }}>
-            {!dataReady ? <Spinner size={18} padding={16} /> : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                <StatBlock label="Pods" value={pods.length} />
-                <StatBlock label="Contacts" value={contacts.length} />
-                <StatBlock label="Reached (7d)" value={recentlyContacted} />
-                <StatBlock label="Overdue" value={overdueContacts.length} accent />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Rest of dashboard on light background */}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
 
         {/* Pod health cards */}
         {!dataReady ? null : podStats.length > 0 && (
@@ -217,7 +222,7 @@ export function Dashboard() {
         {/* Today's Focus */}
         {focusItems.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.25)', letterSpacing: '0.01em', marginBottom: 12, textTransform: 'uppercase', fontWeight: 500 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12 }}>
               today's focus
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -235,7 +240,7 @@ export function Dashboard() {
             borderBottom: '1px solid rgba(0,0,0,0.04)',
             display: 'flex', alignItems: 'center',
           }}>
-            <span style={{ fontSize: 16, fontWeight: 600, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.02em' }}>
+            <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
               needs attention
             </span>
             {overdueContacts.length > 0 && (
@@ -256,12 +261,12 @@ export function Dashboard() {
           {contactsLoading ? (
             <Spinner />
           ) : error ? (
-            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.45)', fontSize: 13 }}>
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
               {error}
             </div>
           ) : overdueContacts.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-              <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.38)' }}>All caught up.</span>
+              <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>All caught up.</span>
             </div>
           ) : (
             <div style={{ maxHeight: 400, overflowY: 'auto' }}>
@@ -285,10 +290,10 @@ export function Dashboard() {
                 fontFamily: 'inherit',
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(0,0,0,0.65)' }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                 {dormantContacts.length} contact{dormantContacts.length !== 1 ? 's' : ''} need a decision
               </span>
-              <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
                 ▾
               </span>
             </button>
@@ -337,8 +342,8 @@ function EquityRing({ score, size }: { score: number; size: number }) {
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      {/* Ghost track */}
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+      {/* Ghost track — white alpha on green */}
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth={strokeWidth} />
       {/* Score arc */}
       <circle
         cx={size / 2} cy={size / 2} r={radius}
@@ -352,8 +357,8 @@ function EquityRing({ score, size }: { score: number; size: number }) {
       />
       <defs>
         <linearGradient id="equityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FF6B4A" />
-          <stop offset="100%" stopColor="#7B61FF" />
+          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.60)" />
         </linearGradient>
       </defs>
     </svg>
@@ -365,12 +370,12 @@ function StatBlock({ label, value, accent }: { label: string; value: number; acc
     <div style={{ textAlign: 'center' }}>
       <div style={{
         fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1,
-        color: accent && value > 0 ? 'hsla(20, 80%, 45%, 0.80)' : 'rgba(0,0,0,0.82)',
+        color: accent && value > 0 ? 'hsla(20, 80%, 45%, 0.80)' : '#ffffff',
         fontVariantNumeric: 'tabular-nums',
       }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', marginTop: 4, letterSpacing: '0.01em' }}>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4, letterSpacing: '0.01em' }}>
         {label}
       </div>
     </div>
@@ -386,29 +391,31 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady }: {
 
   return (
     <div style={{
-      ...PANEL,
+      background: 'var(--surface-panel)',
+      border: '1px solid rgba(0,0,0,0.07)',
+      borderLeft: `4px solid ${color}`,
+      borderRadius: 12,
       padding: '16px 20px',
       minWidth: 160,
       flexShrink: 0,
-      borderLeft: `4px solid ${color}`,
       boxShadow: healthy ? `0 0 16px ${color}14` : 'none',
       transition: 'box-shadow 0.3s',
     }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(0,0,0,0.82)', marginBottom: 8, letterSpacing: '-0.01em' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 8, letterSpacing: '-0.01em' }}>
         {pod.name}
       </div>
       <div style={{ display: 'flex', gap: 12, fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-        <span style={{ color: 'rgba(0,0,0,0.45)' }}>{contactCount}</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{contactCount}</span>
         {overdueCount > 0 && (
           <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.25)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {cadence}
         </span>
         {scoreReady && (
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(0,0,0,0.45)' }}>
+          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
             {score}
           </span>
         )}
@@ -432,9 +439,9 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
       style={{
         flex: 1,
         padding: '16px 18px',
-        background: 'rgba(255, 245, 235, 0.6)',
+        background: 'var(--surface-panel)',
         border: '1px solid rgba(0,0,0,0.06)',
-        borderTop: '2px solid #FFB547',
+        borderTop: '2px solid var(--color-brand)',
         borderRadius: 14,
         cursor: 'pointer',
         textAlign: 'left',
@@ -446,15 +453,15 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <Avatar name={item.contact.name} size={28} variant="subtle" />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(0,0,0,0.82)' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           {item.contact.name}
         </span>
       </div>
-      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.50)', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
         {reason}
       </div>
       {item.pod && (
-        <div style={{ fontSize: 10, color: 'rgba(0,0,0,0.28)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {item.pod.name}
         </div>
       )}
@@ -478,18 +485,18 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
     >
       <Avatar name={contact.name} size={32} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.82)', lineHeight: 1.3 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
           {contact.name}
         </div>
         {podName && (
-          <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.30)', lineHeight: 1.4 }}>
+          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>
             {podName}
           </div>
         )}
       </div>
       <div style={{
         fontSize: 11, fontWeight: 500, flexShrink: 0,
-        color: days === null ? 'rgba(0,0,0,0.28)' : 'hsla(20, 80%, 45%, 0.80)',
+        color: days === null ? 'var(--color-text-tertiary)' : 'hsla(20, 80%, 45%, 0.80)',
         whiteSpace: 'nowrap', letterSpacing: '0.02em',
       }}>
         {days === null ? 'Never' : `${days}d`}
@@ -513,8 +520,8 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
     }}>
       <Avatar name={contact.name} size={28} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.72)' }}>{contact.name}</div>
-        <div style={{ fontSize: 10, color: 'rgba(0,0,0,0.28)' }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</div>
+        <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
           {dormancyLabel} · {days ? `${days}d` : 'Never contacted'}
         </div>
       </div>
@@ -531,7 +538,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
           <button
             type="button"
             onClick={onCancelRemove}
-            style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ fontSize: 11, color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             cancel
           </button>
@@ -552,7 +559,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
                 padding: '3px 10px', borderRadius: 100,
                 background: 'rgba(0,0,0,0.04)',
                 border: '1px solid rgba(0,0,0,0.07)',
-                color: label === 'Remove' ? 'rgba(180,40,40,0.65)' : 'rgba(0,0,0,0.45)',
+                color: label === 'Remove' ? 'rgba(180,40,40,0.65)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
