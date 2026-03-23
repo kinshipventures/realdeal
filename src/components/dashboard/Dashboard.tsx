@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact } from '../../lib/airtable'
-import { daysOverdue } from '../../lib/utils'
+import { daysOverdue, hexToRgba } from '../../lib/utils'
+import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
   indexByContact,
   podEquityScore,
@@ -63,7 +64,7 @@ export function Dashboard() {
   useEffect(() => {
     getContacts()
       .then(d => setContacts(d))
-      .catch(() => setError('Could not load contacts.'))
+      .catch(() => setError('Couldn\'t reach Airtable. Try again?'))
       .finally(() => setContactsLoading(false))
     getPods()
       .then(d => setPods(d))
@@ -181,7 +182,7 @@ export function Dashboard() {
                 <>
                   <EquityRing score={overallScore} size={80} />
                   <div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    <div aria-live="polite" style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
                       {overallScore}
                     </div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
@@ -198,7 +199,7 @@ export function Dashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                   <StatBlock label="Pods" value={pods.length} />
                   <StatBlock label="Contacts" value={contacts.length} />
-                  <StatBlock label="Reached (7d)" value={recentlyContacted} />
+                  <StatBlock label="Reached this week" value={recentlyContacted} />
                   <StatBlock label="Overdue" value={overdueContacts.length} accent />
                 </div>
               )}
@@ -222,7 +223,7 @@ export function Dashboard() {
         {/* Today's Focus */}
         {focusItems.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12 }}>
               today's focus
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -240,7 +241,7 @@ export function Dashboard() {
             borderBottom: '1px solid rgba(0,0,0,0.04)',
             display: 'flex', alignItems: 'center',
           }}>
-            <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
               needs attention
             </span>
             {overdueContacts.length > 0 && (
@@ -291,7 +292,7 @@ export function Dashboard() {
               }}
             >
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-                {dormantContacts.length} contact{dormantContacts.length !== 1 ? 's' : ''} need a decision
+                {dormantContacts.length} gone quiet
               </span>
               <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
                 ▾
@@ -387,38 +388,77 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady }: {
 }) {
   const color = pod.color ?? '#718096'
   const cadence = pod.cadence ?? 'monthly'
-  const healthy = overdueCount === 0
+  const cardRef = useRef<HTMLDivElement>(null)
+  const restShadow = '0 1px 3px rgba(0,0,0,0.06)'
+  const hoverShadow = `0 4px 16px ${hexToRgba(color, 0.15)}`
 
   return (
-    <div style={{
-      background: 'var(--surface-panel)',
-      border: '1px solid rgba(0,0,0,0.07)',
-      borderLeft: `4px solid ${color}`,
-      borderRadius: 12,
-      padding: '16px 20px',
-      minWidth: 160,
-      flexShrink: 0,
-      boxShadow: healthy ? `0 0 16px ${color}14` : 'none',
-      transition: 'box-shadow 0.3s',
-    }}>
-      <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 8, letterSpacing: '-0.01em' }}>
-        {pod.name}
+    <div
+      ref={cardRef}
+      onMouseEnter={() => {
+        if (cardRef.current) {
+          cardRef.current.style.transform = 'translateY(-2px)'
+          cardRef.current.style.boxShadow = hoverShadow
+        }
+      }}
+      onMouseLeave={() => {
+        if (cardRef.current) {
+          cardRef.current.style.transform = 'none'
+          cardRef.current.style.boxShadow = restShadow
+        }
+      }}
+      style={{
+        background: 'var(--surface-panel)',
+        border: '1px solid rgba(0,0,0,0.07)',
+        borderRadius: 12,
+        padding: '14px 16px',
+        minWidth: 155,
+        flexShrink: 0,
+        boxShadow: restShadow,
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+      }}
+    >
+      {/* Mini orb avatar */}
+      <div style={{
+        width: 30,
+        height: 30,
+        borderRadius: '50%',
+        flexShrink: 0,
+        background: `linear-gradient(135deg, ${color} 0%, ${POD_SHIFT_COLORS[color] ?? color} 100%)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 8,
+        fontWeight: 600,
+        color: 'rgba(255,255,255,0.90)',
+      }}>
+        {pod.name.slice(0, 2).toUpperCase()}
       </div>
-      <div style={{ display: 'flex', gap: 12, fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-        <span style={{ color: 'var(--color-text-secondary)' }}>{contactCount}</span>
-        {overdueCount > 0 && (
-          <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
-        )}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          {cadence}
-        </span>
-        {scoreReady && (
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-            {score}
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 4, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+          {pod.name}
+        </div>
+        <div style={{ display: 'flex', gap: 8, fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)' }}>
+          <span>{contactCount} contacts</span>
+          {overdueCount > 0 && (
+            <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {cadence}
           </span>
-        )}
+          {scoreReady && (
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+              {score}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -499,7 +539,7 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
         color: days === null ? 'var(--color-text-tertiary)' : 'hsla(20, 80%, 45%, 0.80)',
         whiteSpace: 'nowrap', letterSpacing: '0.02em',
       }}>
-        {days === null ? 'Never' : `${days}d`}
+        {days === null ? 'Never reached' : `${days}d ago`}
       </div>
     </button>
   )
@@ -510,7 +550,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
   onKeep: () => void; onReachOut: () => void; onRemove: () => void
   onConfirmRemove: () => void; onCancelRemove: () => void
 }) {
-  const dormancyLabel = (days ?? 0) >= 180 ? 'At risk' : (days ?? 0) >= 120 ? 'Going dormant' : 'Cooling off'
+  const dormancyLabel = (days ?? 0) >= 180 ? 'Slipping away' : (days ?? 0) >= 120 ? 'Going quiet' : 'Cooling off'
 
   return (
     <div style={{
@@ -522,7 +562,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</div>
         <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-          {dormancyLabel} · {days ? `${days}d` : 'Never contacted'}
+          {dormancyLabel} · {days ? `${days}d ago` : 'Never reached'}
         </div>
       </div>
 
@@ -548,7 +588,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
           {[
             { label: 'Keep', action: onKeep },
             { label: 'Reach out', action: onReachOut },
-            { label: 'Remove', action: onRemove },
+            { label: 'Let go', action: onRemove },
           ].map(({ label, action }) => (
             <button
               key={label}
@@ -559,7 +599,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
                 padding: '3px 10px', borderRadius: 100,
                 background: 'rgba(0,0,0,0.04)',
                 border: '1px solid rgba(0,0,0,0.07)',
-                color: label === 'Remove' ? 'rgba(180,40,40,0.65)' : 'var(--color-text-secondary)',
+                color: label === 'Let go' ? 'rgba(180,40,40,0.65)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
