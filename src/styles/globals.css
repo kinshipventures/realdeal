@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* Z-index scale
@@ -18,8 +18,21 @@
   --color-text-secondary: rgba(0,0,0,0.45);
   --color-text-tertiary: rgba(0,0,0,0.28);
   --color-hub-orb: #1C1C1E;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-serif: 'Fraunces', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-brand: #2ECB45;
+    --color-brand-dark: #1B8A2A;
+    --color-surface: #1a1a1a;
+    --color-bg: #111111;
+    --color-text-primary: rgba(255,255,255,0.87);
+    --color-text-secondary: rgba(255,255,255,0.45);
+    --color-text-tertiary: rgba(255,255,255,0.25);
+    --color-hub-orb: #2C2C30;
+  }
 }
 
 :root {
@@ -40,6 +53,27 @@
   --orb-shadow-base: 0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12);
   --orb-shadow-hover: 0 8px 32px rgba(0,0,0,0.24), 0 2px 8px rgba(0,0,0,0.14);
   --orb-shadow-hub: 0 8px 32px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.20);
+  --interaction-call: #2E7D32;
+  --interaction-email: #1565C0;
+  --interaction-text: #7B1FA2;
+  --interaction-meeting: #E65100;
+  --interaction-note: rgba(0,0,0,0.50);
+  --interaction-intro: #C2185B;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #111111;
+    --color-surface: #1a1a1a;
+    --surface-panel: rgba(255,255,255,0.06);
+    --surface-panel-border: 1px solid rgba(255,255,255,0.06);
+    --panel-bg: rgba(255,255,255,0.06);
+    --panel-border: rgba(255,255,255,0.06);
+    --header-band-bg: #1B8A2A;
+    --orb-shadow-base: 0 4px 20px rgba(0,0,0,0.40), 0 1px 4px rgba(0,0,0,0.30);
+    --orb-shadow-hover: 0 8px 32px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.35);
+    --orb-shadow-hub: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.40);
+  }
 }
 
 @layer base {
@@ -62,6 +96,13 @@
   h1, h2, h3, .heading {
     font-family: var(--font-serif);
   }
+}
+
+/* ── Focus ring ─────────────────────────────────────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
 
 /* ── App background ─────────────────────────────────────────────────────────── */
@@ -151,6 +192,19 @@
   transition: background 0.15s ease;
 }
 .interactive-row:hover { background: rgba(0,0,0,0.03); }
+
+/* ── Dark mode component overrides ─────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  .action-ghost { color: rgba(255,255,255,0.45); }
+  .action-ghost:hover { color: rgba(255,255,255,0.87); }
+  .action-pill:hover { background: rgba(255,255,255,0.06); }
+  .close-trigger:hover { background: rgba(255,255,255,0.06); }
+  .interactive-row:hover { background: rgba(255,255,255,0.03); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+  body::after { opacity: 0.015; }
+  .moj-orb { border: 1px solid rgba(255,255,255,0.06); }
+}
 
 /* ── Animations ────────────────────────────────────────────────────────────── */
 
@@ -244,4 +298,12 @@ body::after {
   opacity: 0.028;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-size: 300px 300px;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-enter { animation: none; }
+  .orb-interactive { transition: none; }
+  .panel-enter { animation: none; }
 }
