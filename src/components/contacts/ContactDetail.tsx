@@ -19,11 +19,11 @@ import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 
 const RING_COLORS: Record<string, string> = {
-  intro: '#7B61FF',
-  meeting: '#FF6B4A',
-  call: '#34C759',
-  text: '#FFB547',
-  email: '#5AC8FA',
+  intro: '#C2185B',
+  meeting: '#E65100',
+  call: '#2E7D32',
+  text: '#7B1FA2',
+  email: '#1565C0',
 }
 
 function SegmentedEquityRing({ breakdown, score, size = 72 }: {
@@ -408,7 +408,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     padding: 0, letterSpacing: '0.01em',
                   }}
                 >
-                  {deleting ? 'Deleting...' : 'Confirm delete'}
+                  {deleting ? 'Removing...' : 'Remove this person?'}
                 </button>
                 <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.20)' }}>·</span>
                 <button
@@ -461,7 +461,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 autoFocus
                 type="text"
                 defaultValue={draft.name ?? ''}
-                placeholder="Full name"
+                placeholder="Name"
                 onBlur={e => handleBlur('name', e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter') e.currentTarget.blur()
@@ -492,7 +492,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   padding: '2px 0',
                 }}
               >
-                {draft.name || 'Full name'}
+                {draft.name || 'Name'}
               </div>
             )}
 
@@ -549,9 +549,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
         <div style={{ marginBottom: 24 }}>
           <div style={sectionLabel}>context</div>
-          {field('specialization', 'Specialization')}
-          {field('past_clients', 'Past clients', true)}
-          {field('recommended_by', 'Recommended by')}
+          {field('specialization', 'Focus')}
+          {field('past_clients', 'Known for', true)}
+          {field('recommended_by', 'Intro\'d by')}
         </div>
 
         <div style={{ marginBottom: 24 }}>
@@ -587,7 +587,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           {birthdayField()}
           {field('milestones', 'Milestones', true)}
           {field('interests', 'Interests', true)}
-          {field('relationship_context', 'Relationship context', true)}
+          {field('relationship_context', 'Context', true)}
         </div>
 
         <div style={{ marginBottom: 24 }}>
@@ -634,7 +634,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               fontFamily: 'inherit',
             }}
           >
-            {creating ? 'Creating...' : 'Create contact'}
+            {creating ? 'Adding...' : 'Add to network'}
           </button>
         </div>
       )}

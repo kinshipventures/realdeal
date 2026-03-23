@@ -269,7 +269,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
           />
 
           <textarea
-            placeholder="Notes (optional)"
+            placeholder="What happened?"
             value={logNotes}
             onChange={e => setLogNotes(e.target.value)}
             rows={2}
@@ -303,7 +303,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
               transition: 'background 0.15s',
             }}
           >
-            {opState === 'logging' ? 'Logging...' : `Log ${TYPE_LABELS[logType]}`}
+            {opState === 'logging' ? 'Saving...' : `Log ${TYPE_LABELS[logType]}`}
           </button>
         </div>
       )}

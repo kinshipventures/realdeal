@@ -23,13 +23,13 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // ── Score thresholds ────────────────────────────────────────────────────────
 
-export type ScoreLabel = 'Thriving' | 'Healthy' | 'Cooling' | 'Dormant'
+export type ScoreLabel = 'Thriving' | 'Steady' | 'Cooling' | 'Fading'
 
 export function scoreLabel(score: number): ScoreLabel {
   if (score >= 85) return 'Thriving'
-  if (score >= 70) return 'Healthy'
+  if (score >= 70) return 'Steady'
   if (score >= 40) return 'Cooling'
-  return 'Dormant'
+  return 'Fading'
 }
 
 // ── Recency multiplier ─────────────────────────────────────────────────────
@@ -128,6 +128,12 @@ export function overallEquityScore(
 }
 
 // ── Dormancy ────────────────────────────────────────────────────────────────
+
+export function dormancyLabel(daysSince: number): string {
+  if (daysSince >= 180) return 'Slipping away'
+  if (daysSince >= 120) return 'Going quiet'
+  return 'Cooling off'
+}
 
 const DORMANT_MS = 90 * DAY_MS
 
