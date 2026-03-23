@@ -37,7 +37,10 @@ Plans:
   2. A bounded list of 3-5 specific deltas from the Trolley CRM PDF are implemented on Dashboard and key surfaces
   3. Moj can open the dashboard and confidently show it to Gwyneth without hesitation
   4. Orb map visual refresh — richer colors, bolder pod orbs
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Design tokens (CSS custom properties) + solid orb system replacing glass orbs
+- [ ] 02-02-PLAN.md — Dashboard green header band, nav redesign, contact panels, design system docs
 
 ### Phase 3: Close-Out
 **Goal**: Briell can operate the app independently after Gabe's engagement ends March 31
@@ -56,5 +59,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
-| 2. Visual Redesign | 0/TBD | Not started | - |
+| 2. Visual Redesign | 0/2 | Not started | - |
 | 3. Close-Out | 0/TBD | Not started | - |
