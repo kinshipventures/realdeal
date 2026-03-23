@@ -132,14 +132,19 @@ async function run() {
   }
   console.log(`${categoryMap.size} categories ready`)
 
-  console.log('Fetching existing contacts for dedup (email only)...')
-  const existingContacts = await fetchAll(TABLES.contacts, 'fields[]=Email')
+  console.log('Fetching existing contacts for dedup (email + name)...')
+  const existingContacts = await fetchAll(TABLES.contacts, 'fields[]=Email&fields[]=Name')
   const emailIndex = new Map(
     existingContacts
       .filter(c => c.fields.Email)
       .map(c => [(c.fields.Email as string).toLowerCase(), c.id])
   )
-  console.log(`${existingContacts.length} existing contacts indexed. Starting import of ${rows.length} rows...`)
+  const nameIndex = new Map(
+    existingContacts
+      .filter(c => c.fields.Name)
+      .map(c => [(c.fields.Name as string).toLowerCase().trim(), c.id])
+  )
+  console.log(`${existingContacts.length} existing contacts indexed (${emailIndex.size} by email, ${nameIndex.size} by name). Starting import of ${rows.length} rows...`)
 
   let imported = 0
   let updated = 0
@@ -173,7 +178,8 @@ async function run() {
     }
 
     const email = row['Email']?.trim().toLowerCase()
-    const existingId = email ? emailIndex.get(email) : undefined
+    const nameLower = name.toLowerCase()
+    const existingId = (email && emailIndex.get(email)) || nameIndex.get(nameLower)
 
     if (existingId) {
       await airtable(`${TABLES.contacts}/${existingId}`, {
@@ -187,6 +193,7 @@ async function run() {
         body: JSON.stringify({ fields }),
       })
       if (email) emailIndex.set(email, r.id)
+      if (nameLower) nameIndex.set(nameLower, r.id)
       imported++
     }
 
