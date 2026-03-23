@@ -7,6 +7,7 @@ export type ListNodeData = {
   list: Pod
   contactCount: number
   overdueCount: number
+  healthPercent?: number
   loading?: boolean
   loadError?: boolean
   animationDelay?: string
@@ -26,7 +27,7 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, loading, loadError, animationDelay, orbitStartX, orbitStartY, onClick } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, onClick } = data
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
@@ -61,6 +62,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         size={SIZE}
         color={color}
         shiftColor={shiftColor}
+        healthPercent={healthPercent}
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
         onClick={onClick}

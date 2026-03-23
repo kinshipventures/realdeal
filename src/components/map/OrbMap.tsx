@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -13,7 +13,8 @@ import {
   type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { getPods, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
+import { getPods, getCategories, getContacts, getAllInteractions, isOverdue, createCategory } from '../../lib/airtable'
+import { indexByContact, podEquityScore } from '../../lib/equity'
 import type { Category, Pod } from '../../lib/types'
 import { EmptyState } from '../empty/EmptyState'
 import { ListNodeComponent } from './ListNode'
@@ -21,7 +22,7 @@ import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { ContactPanel } from '../contacts/ContactPanel'
-import { getPositions, savePosition, clearPositionsForIds } from '../../hooks/useNodePositions'
+import { getPositions, savePosition, clearPositionsForIds, clearAllPositions } from '../../hooks/useNodePositions'
 
 const LIST_SIZE = 96
 
@@ -34,23 +35,43 @@ const nodeTypes = {
 
 const CREATE_CAT_ID = '__create-category__'
 
+// Radii for orbital rings — pods distribute across these
+const RING_RADII = [210, 330, 460]
+
 function hubLayout(
-  lists: { id: string }[],
+  lists: { id: string; is_priority?: boolean }[],
   savedPositions: Record<string, { x: number; y: number }>,
-  radius = 310
-): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }> } {
+): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }>; activeRings: number[] } {
   const mojPos = { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 }
   const listPositions = new Map<string, { x: number; y: number }>()
 
-  lists.forEach((item, i) => {
-    const angle = (i / lists.length) * 2 * Math.PI - Math.PI / 2
-    listPositions.set(item.id, savedPositions[item.id] ?? {
-      x: Math.cos(angle) * radius - LIST_SIZE / 2,
-      y: Math.sin(angle) * radius - LIST_SIZE / 2,
-    })
-  })
+  // Distribute pods across rings based on count
+  const n = lists.length
+  let rings: number[]
+  if (n <= 5) rings = [RING_RADII[0]]
+  else if (n <= 10) rings = [RING_RADII[0], RING_RADII[1]]
+  else rings = RING_RADII
 
-  return { mojPos, listPositions }
+  // Assign each pod to a ring (round-robin)
+  const ringBuckets: { id: string; is_priority?: boolean }[][] = rings.map(() => [])
+  lists.forEach((item, i) => ringBuckets[i % rings.length].push(item))
+
+  // Position each pod on its ring
+  for (let r = 0; r < rings.length; r++) {
+    const radius = rings[r]
+    const bucket = ringBuckets[r]
+    // Offset each ring's starting angle so orbs don't stack radially
+    const angleOffset = r * (Math.PI / rings.length / 2)
+    bucket.forEach((item, i) => {
+      const angle = (i / bucket.length) * 2 * Math.PI - Math.PI / 2 + angleOffset
+      listPositions.set(item.id, savedPositions[item.id] ?? {
+        x: Math.cos(angle) * radius - LIST_SIZE / 2,
+        y: Math.sin(angle) * radius - LIST_SIZE / 2,
+      })
+    })
+  }
+
+  return { mojPos, listPositions, activeRings: rings }
 }
 
 function circularLayout(
@@ -75,10 +96,11 @@ type PodCounts = { total: number; overdue: number }
 function buildHomeNodes(
   pods: Pod[],
   countsByPod: Record<string, PodCounts>,
+  equityByPod: Record<string, number>,
   savedPositions: Record<string, { x: number; y: number }>,
   onPodClick: (pod: Pod, pos: { x: number; y: number }) => void
-): Node[] {
-  const { mojPos, listPositions } = hubLayout(pods, savedPositions)
+): { nodes: Node[]; activeRings: number[] } {
+  const { mojPos, listPositions, activeRings } = hubLayout(pods, savedPositions)
 
   const mojNode: Node = {
     id: MOJ_ID,
@@ -96,7 +118,6 @@ function buildHomeNodes(
   const podNodes: Node[] = pods.map((pod, i) => {
     const pos = listPositions.get(pod.id)!
     const counts = countsByPod[pod.id] ?? { total: 0, overdue: 0 }
-    // Offset from pod center back toward hub center — orb flies FROM hub TO position
     const orbitStartX = hubCenterX - (pos.x + LIST_SIZE / 2)
     const orbitStartY = hubCenterY - (pos.y + LIST_SIZE / 2)
     return {
@@ -108,6 +129,7 @@ function buildHomeNodes(
         list: pod,
         contactCount: counts.total,
         overdueCount: counts.overdue,
+        healthPercent: equityByPod[pod.id] ?? undefined,
         loading: false,
         animationDelay: `${(i + 1) * 0.1}s`,
         orbitStartX,
@@ -117,7 +139,7 @@ function buildHomeNodes(
     }
   })
 
-  return [mojNode, ...podNodes]
+  return { nodes: [mojNode, ...podNodes], activeRings }
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
@@ -161,6 +183,7 @@ export function OrbMap() {
 
   const podsRef = useRef<Pod[]>([])
   const countsByPodRef = useRef<Record<string, PodCounts>>({})
+  const equityByPodRef = useRef<Record<string, number>>({})
   const viewRef = useRef<'lists' | 'categories'>('lists')
   const selectedPodRef = useRef<Pod | null>(null)
   // Generation counter — discards stale responses if user clicks a different list quickly
@@ -292,7 +315,9 @@ export function OrbMap() {
     setSelectedPod(null)
     setSelectedCategoryId(null)
     const savedPositions = getPositions()
-    setNodes(buildHomeNodes(podsRef.current, countsByPodRef.current, savedPositions, handlePodClick))
+    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, savedPositions, handlePodClick)
+    setNodes(homeNodes)
+    setActiveRings(rings)
     setEdges(buildHomeEdges(podsRef.current))
   }, [handlePodClick])
 
@@ -312,7 +337,7 @@ export function OrbMap() {
     let stale = false
     async function init() {
       try {
-        const [allPods, allContacts] = await Promise.all([getPods(), getContacts()])
+        const [allPods, allContacts, allInteractions] = await Promise.all([getPods(), getContacts(), getAllInteractions()])
         if (stale) return
         podsRef.current = allPods
 
@@ -326,8 +351,21 @@ export function OrbMap() {
         }
         countsByPodRef.current = countsByPod
 
+        // Compute equity score per pod for health rings
+        const byContact = indexByContact(allInteractions)
+        const equityByPod: Record<string, number> = {}
+        for (const pod of allPods) {
+          const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
+          if (podContacts.length > 0) {
+            equityByPod[pod.id] = podEquityScore(podContacts, byContact)
+          }
+        }
+        equityByPodRef.current = equityByPod
+
         const savedPositions = getPositions()
-        setNodes(buildHomeNodes(allPods, countsByPod, savedPositions, handlePodClick))
+        const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(allPods, countsByPod, equityByPod, savedPositions, handlePodClick)
+        setNodes(homeNodes)
+        setActiveRings(rings)
         setEdges(buildHomeEdges(allPods))
         if (!stale) { setPodsLoaded(true); setPodsCount(allPods.length) }
       } catch (err) {
@@ -348,7 +386,18 @@ export function OrbMap() {
   const selectedCategory = selectedCategoryNode?.data.category as Category | undefined
 
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
-  const orbitRings = useMemo(() => [200, 310, 420], [])
+  const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
+
+  const handleResetLayout = useCallback(() => {
+    clearAllPositions()
+    localStorage.removeItem(VIEWPORT_KEY)
+    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, {}, handlePodClick)
+    setNodes(homeNodes)
+    setActiveRings(rings)
+    setEdges(buildHomeEdges(podsRef.current))
+    setViewport({ x: 0, y: 0, zoom: 1 })
+    setViewportState({ x: 0, y: 0, zoom: 1 })
+  }, [handlePodClick, setViewport])
 
   return (
     <div style={{
@@ -422,6 +471,41 @@ export function OrbMap() {
         </nav>
       )}
 
+      {/* Reset layout button */}
+      {view === 'lists' && podsLoaded && podsCount > 0 && (
+        <button
+          type="button"
+          onClick={handleResetLayout}
+          title="Reset orb positions"
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 20,
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: '1px solid var(--edge)',
+            background: 'var(--nav-bg)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-text-secondary)',
+            transition: 'background 0.15s, color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 4v6h6" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+          </svg>
+        </button>
+      )}
+
       {/* Dashed orbit rings — transformed to match React Flow viewport, behind nodes */}
       {view === 'lists' && (
         <svg
@@ -436,7 +520,7 @@ export function OrbMap() {
           }}
         >
           <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
-            {orbitRings.map(r => (
+            {activeRings.map(r => (
               <circle
                 key={r}
                 cx={0}

@@ -25,3 +25,7 @@ export function clearPositionsForIds(ids: string[]) {
   for (const id of ids) delete all[id]
   localStorage.setItem(KEY, JSON.stringify(all))
 }
+
+export function clearAllPositions() {
+  localStorage.removeItem(KEY)
+}
