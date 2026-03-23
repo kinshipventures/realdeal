@@ -621,6 +621,7 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
       ? `You haven't reached out yet.`
       : `It's been ${days} days. That's not like you.`
     : `Might be a good time to check in.`
+  const tagLabel = item.reason === 'overdue' ? 'reach out' : 'check in'
 
   return (
     <button
@@ -643,8 +644,14 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <Avatar name={item.contact.name} size={28} variant="subtle" />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', flex: 1 }}>
           {item.contact.name}
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 600, color: 'var(--color-brand)',
+          background: 'rgba(37,180,57,0.08)', padding: '3px 10px', borderRadius: 12, whiteSpace: 'nowrap',
+        }}>
+          {tagLabel}
         </span>
       </div>
       <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
