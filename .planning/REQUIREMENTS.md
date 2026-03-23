@@ -7,7 +7,7 @@
 
 ### Data Import
 
-- [ ] **DATA-01**: Import script has dedup logic — checks name + email before creating contacts
+- [x] **DATA-01**: Import script has dedup logic — checks name + email before creating contacts
 - [ ] **DATA-02**: LP investor list imported and clean in Airtable
 - [ ] **DATA-03**: Talent list imported and clean in Airtable
 - [ ] **DATA-04**: Any additional lists Briell preps are imported
@@ -71,7 +71,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |

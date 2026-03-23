@@ -25,7 +25,7 @@
 **Plans:** 3 plans
 Plans:
 - [ ] 01-01-PLAN.md — Data layer + personal section (birthday, milestones, interests, relationship context)
-- [ ] 01-02-PLAN.md — Import script dedup (name + email dual-index)
+- [x] 01-02-PLAN.md — Import script dedup (name + email dual-index)
 - [ ] 01-03-PLAN.md — Equity score breakdown + segmented ring on profile
 
 ### Phase 2: Visual Redesign
