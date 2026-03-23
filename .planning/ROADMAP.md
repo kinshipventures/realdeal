@@ -8,7 +8,7 @@
 
 - [x] **Phase 1: Contact Profiles** - Enriched profile fields (birthday, milestones, interests, context) + per-contact equity score display + import dedup logic (completed 2026-03-23)
 - [x] **Phase 2: Visual Redesign** - Design tokens + Trolley CRM-aligned UI polish, demo-ready dashboard (completed 2026-03-23)
-- [ ] **Phase 02.1: Design Implementation** - Full DESIGN.md implementation: Fraunces, two-tone orbs, orbital map, dark mode, responsive, empty states, sparklines
+- [x] **Phase 02.1: Design Implementation** - Full DESIGN.md implementation: Fraunces, two-tone orbs, orbital map, dark mode, responsive, empty states, sparklines (completed 2026-03-23)
 - [ ] **Phase 3: Close-Out** - HANDOFF.md so Briell can operate the app after engagement ends
 
 ## Phase Details
@@ -57,7 +57,7 @@ Plans:
   6. All empty states use orb illustrations, ghost hints, warm copy, and one CTA
   7. Pod cards show sparkline trends and mini orb avatars
   8. Interaction timeline shows semantic type colors
-**Plans:** 6/7 plans executed
+**Plans:** 7/7 plans complete
 
 Plans:
 - [x] 02.1-01-PLAN.md — Fraunces font swap, dark mode tokens, interaction color tokens, copy/voice updates
@@ -66,7 +66,7 @@ Plans:
 - [x] 02.1-04-PLAN.md — Dashboard mini orb cards, pod-colored hover, interaction type colors
 - [x] 02.1-05-PLAN.md — Responsive nav (mobile tab bar), full-screen mobile panel, ARIA
 - [x] 02.1-06-PLAN.md — Empty states component + integration across all views
-- [ ] 02.1-07-PLAN.md — Sparklines in pod cards, loading skeleton shimmer
+- [x] 02.1-07-PLAN.md — Sparklines in pod cards, loading skeleton shimmer
 
 ### Phase 3: Close-Out
 **Goal**: Briell can operate the app independently after Gabe's engagement ends March 31
@@ -86,5 +86,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
 | 2. Visual Redesign | 2/2 | Complete   | 2026-03-23 |
-| 02.1. Design Implementation | 6/7 | In Progress|  |
+| 02.1. Design Implementation | 7/7 | Complete   | 2026-03-23 |
 | 3. Close-Out | 0/TBD | Not started | - |
