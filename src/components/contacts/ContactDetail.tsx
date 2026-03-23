@@ -1,5 +1,7 @@
-import { useState, useCallback, useRef } from 'react'
-import type { Contact } from '../../lib/types'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import type { Contact, Interaction } from '../../lib/types'
+import { getInteractions } from '../../lib/airtable'
+import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 
 function daysUntilBirthday(birthday: string | null): number | null {
   if (!birthday) return null
@@ -15,6 +17,65 @@ import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
+
+const RING_COLORS: Record<string, string> = {
+  intro: '#7B61FF',
+  meeting: '#FF6B4A',
+  call: '#34C759',
+  text: '#FFB547',
+  email: '#5AC8FA',
+}
+
+function SegmentedEquityRing({ breakdown, score, size = 72 }: {
+  breakdown: EquityBreakdown[]
+  score: number
+  size?: number
+}) {
+  const strokeWidth = 5
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+
+  if (breakdown.length === 0) {
+    return (
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+      </svg>
+    )
+  }
+
+  const totalScore = breakdown.reduce((s, b) => s + b.score, 0)
+  const filledArc = (score / 100) * circumference
+
+  let offset = 0
+  const segments = breakdown.map((b, i) => {
+    const isLast = i === breakdown.length - 1
+    const arcLength = isLast
+      ? filledArc - offset
+      : (b.score / totalScore) * filledArc
+    const segmentOffset = circumference - offset
+    offset += arcLength
+    return { ...b, arcLength, segmentOffset }
+  })
+
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={size / 2} cy={size / 2} r={radius}
+        fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+      {segments.map(seg => (
+        <circle key={seg.type}
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none"
+          stroke={RING_COLORS[seg.type] ?? 'rgba(0,0,0,0.15)'}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${seg.arcLength} ${circumference}`}
+          strokeDashoffset={seg.segmentOffset}
+          strokeLinecap="butt"
+        />
+      ))}
+    </svg>
+  )
+}
 
 interface Props {
   contact: Contact | null  // null = create mode
@@ -45,6 +106,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [deleting, setDeleting] = useState(false)
   const [saveError, setSaveError] = useState<SaveError>(null)
   const saveGenRef = useRef(0)
+  const [interactions, setInteractions] = useState<Interaction[]>([])
+
+  useEffect(() => {
+    if (!contact) return
+    getInteractions(contact.id).then(setInteractions)
+  }, [contact?.id])
+
+  const equityScore = contactEquityScore(interactions)
+  const equityBreakdown = contactEquityBreakdown(interactions)
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -483,6 +553,34 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
         <div style={{ marginBottom: 24 }}>
           <div style={sectionLabel}>personal</div>
+
+          {/* Equity score ring — existing contacts only */}
+          {!isNew && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+              <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} />
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.03em' }}>
+                  {equityScore}
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2, letterSpacing: '0.01em' }}>
+                  {scoreLabel(equityScore)}
+                </div>
+              </div>
+            </div>
+          )}
+          {!isNew && equityBreakdown.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 16 }}>
+              {equityBreakdown.map(b => (
+                <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
+                  <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.38)', letterSpacing: '0.02em' }}>
+                    {b.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {birthdayField()}
           {field('milestones', 'Milestones', true)}
           {field('interests', 'Interests', true)}
