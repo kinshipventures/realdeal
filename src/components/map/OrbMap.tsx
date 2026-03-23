@@ -144,33 +144,39 @@ function buildHomeNodes(
       },
     })
 
-    // Satellite category orbs — cluster near parent pod
+    // Satellite category orbs — cluster near parent pod, fan out on load
     const cats = categoriesByPod[pod.id] ?? []
     if (cats.length > 0) {
       const podCenterX = pos.x + LIST_SIZE / 2
       const podCenterY = pos.y + LIST_SIZE / 2
-      const satRadius = 62 + cats.length * 2 // tighten or spread based on count
+      const satRadius = 62 + cats.length * 2
       const SAT_SIZE = 20
 
       cats.forEach((cat, ci) => {
-        // Angle: spread around the outward side of the pod (away from hub)
         const podAngle = Math.atan2(podCenterY - hubCenterY, podCenterX - hubCenterX)
         const spread = Math.min(cats.length * 0.4, Math.PI * 0.8)
         const startAngle = podAngle - spread / 2
         const angle = startAngle + (ci / Math.max(cats.length - 1, 1)) * spread
         const satColor = cat.color ?? pod.color ?? '#718096'
 
+        const satX = podCenterX + Math.cos(angle) * satRadius - SAT_SIZE / 2
+        const satY = podCenterY + Math.sin(angle) * satRadius - SAT_SIZE / 2
+        // Orbit start: fly from parent pod center to final position
+        const orbitStartX = podCenterX - SAT_SIZE / 2 - satX
+        const orbitStartY = podCenterY - SAT_SIZE / 2 - satY
+
         satelliteNodes.push({
           id: `sat-${pod.id}-${cat.id}`,
           type: 'satellite',
-          position: {
-            x: podCenterX + Math.cos(angle) * satRadius - SAT_SIZE / 2,
-            y: podCenterY + Math.sin(angle) * satRadius - SAT_SIZE / 2,
-          },
+          position: { x: satX, y: satY },
           draggable: false,
           data: {
             name: cat.name,
             color: satColor,
+            orbitStartX,
+            orbitStartY,
+            // Stagger after parent pod's entrance + offset per satellite
+            animationDelay: `${(i + 1) * 0.1 + 0.3 + ci * 0.06}s`,
             onClick: () => onPodClick(pod, pos),
           },
         })
