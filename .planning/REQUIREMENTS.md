@@ -14,10 +14,10 @@
 
 ### Contact Profiles
 
-- [ ] **PROF-01**: Contact profile shows birthday field with countdown when within 30 days
-- [ ] **PROF-02**: Contact profile has milestones freeform text field
-- [ ] **PROF-03**: Contact profile has interests freeform text field
-- [ ] **PROF-04**: Contact profile has relationship context freeform text field
+- [x] **PROF-01**: Contact profile shows birthday field with countdown when within 30 days
+- [x] **PROF-02**: Contact profile has milestones freeform text field
+- [x] **PROF-03**: Contact profile has interests freeform text field
+- [x] **PROF-04**: Contact profile has relationship context freeform text field
 - [ ] **PROF-05**: Contact profile displays per-contact equity score with breakdown
 
 ### Visual Design
@@ -75,10 +75,10 @@
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |
-| PROF-01 | Phase 2 | Pending |
-| PROF-02 | Phase 2 | Pending |
-| PROF-03 | Phase 2 | Pending |
-| PROF-04 | Phase 2 | Pending |
+| PROF-01 | Phase 2 | Complete |
+| PROF-02 | Phase 2 | Complete |
+| PROF-03 | Phase 2 | Complete |
+| PROF-04 | Phase 2 | Complete |
 | PROF-05 | Phase 2 | Pending |
 | VIS-01 | Phase 3 | Pending |
 | VIS-02 | Phase 3 | Pending |
