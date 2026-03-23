@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
+import { ImportPanel } from './components/import/ImportPanel'
 
 const BG = 'var(--color-bg)'
 
@@ -168,6 +169,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
+        <Route path="import" element={<ImportPanel />} />
       </Route>
     </Routes>
   )
