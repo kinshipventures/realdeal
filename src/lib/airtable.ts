@@ -402,6 +402,10 @@ export function invalidateInteractionsCache(): void {
   _interactionsCache = null
 }
 
+export function invalidateContactsCache(): void {
+  _contactsCache = null
+}
+
 // ── Per-contact interactions (unchanged — used by InteractionSection) ────────
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
