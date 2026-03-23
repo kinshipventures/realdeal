@@ -74,9 +74,9 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'rgba(245,244,240,0.88)',
-        backdropFilter: 'blur(32px)',
-        WebkitBackdropFilter: 'blur(32px)',
+        background: 'var(--surface-panel)',
+        backdropFilter: 'var(--panel-blur)',
+        WebkitBackdropFilter: 'var(--panel-blur)',
         borderLeft: '1px solid rgba(0,0,0,0.07)',
         zIndex: 50,
       }}
@@ -85,10 +85,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       <div style={{ padding: '28px 24px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
               {categoryName ?? '—'}
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.30)', marginTop: 3, letterSpacing: '0.01em' }}>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, letterSpacing: '0.01em' }}>
               contacts
             </div>
           </div>
@@ -141,11 +141,11 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
         {loading ? (
           <Spinner />
         ) : loadError ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.38)', fontSize: 13 }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
             Could not load contacts. Check your connection and try again.
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(0,0,0,0.25)', fontSize: 13 }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
             {search ? 'No matches' : 'No contacts yet'}
           </div>
         ) : (
@@ -169,7 +169,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.25)' }}>
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           {!loading && `${filtered.length} contact${filtered.length !== 1 ? 's' : ''}`}
         </span>
         <button

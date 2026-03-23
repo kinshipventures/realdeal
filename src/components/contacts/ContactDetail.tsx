@@ -314,7 +314,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 11,
-    color: 'rgba(0,0,0,0.25)',
+    fontFamily: 'var(--font-serif)',
+    fontWeight: 600,
+    color: 'var(--color-text-tertiary)',
     marginBottom: 14,
     letterSpacing: '0.01em',
   }
@@ -380,9 +382,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'rgba(243,242,238,0.94)',
-        backdropFilter: 'blur(32px)',
-        WebkitBackdropFilter: 'blur(32px)',
+        background: 'var(--surface-panel)',
+        backdropFilter: 'var(--panel-blur)',
+        WebkitBackdropFilter: 'var(--panel-blur)',
         borderLeft: '1px solid rgba(0,0,0,0.08)',
         zIndex: 60,
       }}
@@ -483,8 +485,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 onClick={() => setEditingField('name')}
                 style={{
                   fontSize: 18, fontWeight: 600,
+                  fontFamily: 'var(--font-serif)',
                   letterSpacing: '-0.02em',
-                  color: draft.name ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.20)',
+                  color: draft.name ? 'var(--color-text-primary)' : 'rgba(0,0,0,0.20)',
                   cursor: 'text',
                   padding: '2px 0',
                 }}
@@ -559,10 +562,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
               <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} />
               <div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'rgba(0,0,0,0.85)', letterSpacing: '-0.03em' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
                   {equityScore}
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2, letterSpacing: '0.01em' }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2, letterSpacing: '0.01em' }}>
                   {scoreLabel(equityScore)}
                 </div>
               </div>

@@ -2,12 +2,7 @@ import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
 
-const BG = [
-  'radial-gradient(ellipse 70% 55% at 12% 8%,  rgba(180,160,255,0.13) 0%, transparent 60%)',
-  'radial-gradient(ellipse 55% 45% at 88% 88%, rgba(255,160,100,0.10) 0%, transparent 55%)',
-  'radial-gradient(ellipse 45% 40% at 75% 10%, rgba(140,200,255,0.08) 0%, transparent 50%)',
-  '#F5F4F0',
-].join(', ')
+const BG = 'var(--color-bg)'
 
 function AppShell() {
   const location = useLocation()
@@ -48,9 +43,9 @@ function AppShell() {
             cursor: 'pointer',
             fontFamily: 'inherit',
             transition: 'all 0.2s',
-            background: !isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-            color: !isMap ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.35)',
-            boxShadow: !isMap ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            background: !isMap ? 'var(--color-brand)' : 'transparent',
+            color: !isMap ? '#ffffff' : 'rgba(0,0,0,0.35)',
+            boxShadow: !isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
           }}
         >
           Pulse
@@ -68,9 +63,9 @@ function AppShell() {
             cursor: 'pointer',
             fontFamily: 'inherit',
             transition: 'all 0.2s',
-            background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-            color: isMap ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.35)',
-            boxShadow: isMap ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            background: isMap ? 'var(--color-brand)' : 'transparent',
+            color: isMap ? '#ffffff' : 'rgba(0,0,0,0.35)',
+            boxShadow: isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
           }}
         >
           Map

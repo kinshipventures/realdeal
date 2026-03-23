@@ -37,7 +37,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
         <div style={{
           fontSize: 13,
           fontWeight: 500,
-          color: 'rgba(0,0,0,0.82)',
+          color: 'var(--color-text-primary)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -47,7 +47,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
         {contact.company && (
           <div style={{
             fontSize: 11,
-            color: 'rgba(0,0,0,0.38)',
+            color: 'var(--color-text-secondary)',
             marginTop: 1,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
