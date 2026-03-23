@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02.1-design-implementation plan 02
-last_updated: "2026-03-23T17:51:38.218Z"
+stopped_at: Completed 02.1-design-implementation plan 01
+last_updated: "2026-03-23T17:52:00.633Z"
 progress:
   total_phases: 4
   completed_phases: 2
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 02.1 (design-implementation) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 7
 | Phase 02-visual-redesign P01 | 3 | 2 tasks | 8 files |
 | Phase 02-visual-redesign P02 | 12 | 3 tasks | 6 files |
 | Phase 02.1-design-implementation P02 | 5 | 2 tasks | 4 files |
+| Phase 02.1-design-implementation P01 | 12 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 02-visual-redesign]: Equity ring gradient white-to-white on green band — visible arc without green clash
 - [Phase 02-visual-redesign]: FocusCard accent changed from orange (#FFB547) to brand green (var(--color-brand)) for visual consistency
 - [Phase 02.1-design-implementation]: Two-tone orb gradient locked: linear-gradient(135deg, base → shift) with POD_SHIFT_COLORS map. Hover glow via ref mutation to avoid re-renders.
+- [Phase 02.1-design-implementation]: Fraunces replaces Playfair Display — heavier weight matches Trolley PDF confidence
+- [Phase 02.1-design-implementation]: Dark mode via prefers-color-scheme only, no manual toggle for v1
+- [Phase 02.1-design-implementation]: RING_COLORS aligned to DESIGN.md semantic palette (intro=pink, call=forest green, email=blue)
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T17:51:38.217Z
-Stopped at: Completed 02.1-design-implementation plan 02
+Last session: 2026-03-23T17:52:00.631Z
+Stopped at: Completed 02.1-design-implementation plan 01
 Resume file: None
