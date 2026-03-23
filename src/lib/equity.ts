@@ -68,6 +68,33 @@ export function contactEquityScore(interactions: Interaction[]): number {
   return Math.min(100, Math.round(raw * SCORE_SCALE))
 }
 
+// ── Contact equity breakdown ────────────────────────────────────────────────
+// Per-type weighted contribution, sorted highest first. Notes excluded (weight 0).
+
+export interface EquityBreakdown {
+  type: InteractionType
+  score: number    // weighted, recency-adjusted contribution
+  weight: number   // raw weight from INTERACTION_WEIGHTS
+}
+
+export function contactEquityBreakdown(interactions: Interaction[]): EquityBreakdown[] {
+  const now = Date.now()
+  const byType = new Map<InteractionType, number>()
+
+  for (const ix of interactions) {
+    const weight = INTERACTION_WEIGHTS[ix.type]
+    if (weight === 0) continue
+    const daysAgo = (now - new Date(ix.date).getTime()) / DAY_MS
+    const contribution = weight * recencyMultiplier(daysAgo)
+    byType.set(ix.type, (byType.get(ix.type) ?? 0) + contribution)
+  }
+
+  return Array.from(byType.entries())
+    .filter(([, score]) => score > 0)
+    .map(([type, score]) => ({ type, score, weight: INTERACTION_WEIGHTS[type] }))
+    .sort((a, b) => b.score - a.score)
+}
+
 // ── Pod equity score ────────────────────────────────────────────────────────
 // Average contact score across all contacts in the pod.
 
