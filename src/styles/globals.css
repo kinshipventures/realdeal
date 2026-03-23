@@ -208,13 +208,19 @@
 
 /* ── Animations ────────────────────────────────────────────────────────────── */
 
-@keyframes orb-enter {
-  from { opacity: 0; transform: scale(0.5); filter: blur(6px); }
-  to   { opacity: 1; transform: scale(1);   filter: blur(0px); }
+@keyframes orbit-slide {
+  from {
+    opacity: 0;
+    transform: translate(var(--orbit-start-x, 0px), var(--orbit-start-y, 0px)) scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 .orb-enter {
-  animation: orb-enter 0.5s cubic-bezier(0.5, 1, 0.9, 1) both;
+  animation: orbit-slide 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes pulse-ring {

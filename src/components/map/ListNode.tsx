@@ -1,3 +1,4 @@
+import type React from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
@@ -9,6 +10,8 @@ export type ListNodeData = {
   loading?: boolean
   loadError?: boolean
   animationDelay?: string
+  orbitStartX?: number
+  orbitStartY?: number
   onClick?: () => void
 }
 export type ListNodeType = Node<ListNodeData>
@@ -23,12 +26,18 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, loading, loadError, animationDelay, onClick } = data
+  const { list, contactCount, overdueCount, loading, loadError, animationDelay, orbitStartX, orbitStartY, onClick } = data
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
   return (
-    <>
+    <div
+      className="orbit-start"
+      style={{
+        '--orbit-start-x': `${orbitStartX ?? 0}px`,
+        '--orbit-start-y': `${orbitStartY ?? 0}px`,
+      } as React.CSSProperties}
+    >
       <Handle type="source" position={Position.Right}
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
       />
@@ -102,6 +111,6 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
           </div>
         )}
       </SolidOrb>
-    </>
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import {
   ReactFlow,
   Background,
@@ -88,9 +88,16 @@ function buildHomeNodes(
     data: {},
   }
 
+  // Hub center in world space (center of the moj orb)
+  const hubCenterX = mojPos.x + MOJ_SIZE / 2
+  const hubCenterY = mojPos.y + MOJ_SIZE / 2
+
   const podNodes: Node[] = pods.map((pod, i) => {
     const pos = listPositions.get(pod.id)!
     const counts = countsByPod[pod.id] ?? { total: 0, overdue: 0 }
+    // Offset from pod center back toward hub center — orb flies FROM hub TO position
+    const orbitStartX = hubCenterX - (pos.x + LIST_SIZE / 2)
+    const orbitStartY = hubCenterY - (pos.y + LIST_SIZE / 2)
     return {
       id: pod.id,
       type: 'list',
@@ -101,7 +108,9 @@ function buildHomeNodes(
         contactCount: counts.total,
         overdueCount: counts.overdue,
         loading: false,
-        animationDelay: `${i * 0.04}s`,
+        animationDelay: `${(i + 1) * 0.1}s`,
+        orbitStartX,
+        orbitStartY,
         onClick: () => onPodClick(pod, pos),
       },
     }
@@ -115,7 +124,7 @@ function buildHomeEdges(pods: Pod[]): Edge[] {
     id: `e-moj-${pod.id}`,
     source: MOJ_ID,
     target: pod.id,
-    style: { stroke: 'rgba(0,0,0,0.07)', strokeWidth: 0.75 },
+    style: { stroke: 'rgba(0,0,0,0.06)', strokeWidth: 1.5 },
     type: 'straight',
   }))
 }
@@ -134,14 +143,18 @@ export function OrbMap() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
 
-  // Persist viewport to localStorage on pan/zoom end
-  useOnViewportChange({ onEnd: (vp: Viewport) => localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp)) })
+  // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay
+  useOnViewportChange({
+    onChange: (vp: Viewport) => setViewportState(vp),
+    onEnd: (vp: Viewport) => localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp)),
+  })
 
   const [view, setView] = useState<'lists' | 'categories'>('lists')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [initError, setInitError] = useState(false)
   const [catRefresh, setCatRefresh] = useState(0)
+  const [viewport, setViewportState] = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
 
   const podsRef = useRef<Pod[]>([])
   const countsByPodRef = useRef<Record<string, PodCounts>>({})
@@ -314,7 +327,7 @@ export function OrbMap() {
         setNodes(buildHomeNodes(allPods, countsByPod, savedPositions, handlePodClick))
         setEdges(buildHomeEdges(allPods))
       } catch (err) {
-        console.error('Failed to load network:', err)
+        console.error('Couldn\'t load your network:', err)
         if (!stale) setInitError(true)
       }
     }
@@ -329,6 +342,9 @@ export function OrbMap() {
 
   const selectedCategoryNode = nodes.find(n => n.id === selectedCategoryId)
   const selectedCategory = selectedCategoryNode?.data.category as Category | undefined
+
+  // Orbit ring radii for home view — match hub layout radii from DESIGN.md
+  const orbitRings = useMemo(() => [200, 310, 420], [])
 
   return (
     <div style={{
@@ -382,6 +398,36 @@ export function OrbMap() {
         </nav>
       )}
 
+      {/* Dashed orbit rings — transformed to match React Flow viewport, behind nodes */}
+      {view === 'lists' && (
+        <svg
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 0,
+            overflow: 'visible',
+          }}
+        >
+          <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
+            {orbitRings.map(r => (
+              <circle
+                key={r}
+                cx={0}
+                cy={0}
+                r={r}
+                fill="none"
+                stroke="rgba(0,0,0,0.06)"
+                strokeWidth={1 / viewport.zoom}
+                strokeDasharray={`${8 / viewport.zoom} ${6 / viewport.zoom}`}
+              />
+            ))}
+          </g>
+        </svg>
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -391,7 +437,10 @@ export function OrbMap() {
         onNodeDragStop={handleNodeDragStop}
         onInit={() => {
           const saved = loadViewport()
-          if (saved) setViewport(saved)
+          if (saved) {
+            setViewport(saved)
+            setViewportState(saved)
+          }
         }}
         fitView={!loadViewport()}
         fitViewOptions={{ padding: 0.22 }}
