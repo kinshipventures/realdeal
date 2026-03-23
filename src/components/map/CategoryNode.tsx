@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Category, HexColor } from '../../lib/types'
-import { SolidOrb } from './SolidOrb'
+import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 
 export type CategoryNodeData = {
   category: Category
@@ -23,6 +23,7 @@ function fontSize(name: string): number {
 export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
   const { category, listColor, contactCount, animationDelay, onClick } = data
   const accentColor = (listColor ?? '#718096') as HexColor
+  const shiftColor = (POD_SHIFT_COLORS[accentColor] ?? POD_SHIFT_COLORS[accentColor.toUpperCase()]) as HexColor | undefined
 
   return (
     <>
@@ -36,6 +37,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
       <SolidOrb
         size={SIZE}
         color={accentColor}
+        shiftColor={shiftColor}
         glowIntensity="low"
         animationDelay={animationDelay}
         onClick={onClick}

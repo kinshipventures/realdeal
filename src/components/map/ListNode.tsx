@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, HexColor } from '../../lib/types'
-import { SolidOrb } from './SolidOrb'
+import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 
 export type ListNodeData = {
   list: Pod
@@ -25,6 +25,7 @@ function fontSize(name: string): number {
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
   const { list, contactCount, overdueCount, loading, loadError, animationDelay, onClick } = data
   const color = (list.color ?? '#718096') as HexColor
+  const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
   return (
     <>
@@ -50,6 +51,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
       <SolidOrb
         size={SIZE}
         color={color}
+        shiftColor={shiftColor}
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
         onClick={onClick}

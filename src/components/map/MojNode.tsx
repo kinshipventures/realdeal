@@ -7,8 +7,8 @@ export type MojNodeType = Node<MojNodeData, 'moj'>
 export const MOJ_ID = 'moj-center'
 export const MOJ_SIZE = 136
 
-const bg = '#1C1C1E'
-const shadow = 'var(--orb-shadow-hub)'
+const bg = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
+const shadow = '0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25)'
 
 export function MojNodeComponent(_: NodeProps<MojNodeType>) {
   return (
