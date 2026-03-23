@@ -12,7 +12,7 @@ import {
   todaysFocus,
 } from '../../lib/equity'
 import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/types'
-import { Spinner, Avatar } from '../ui'
+import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
 
@@ -323,7 +323,11 @@ export function Dashboard() {
           </div>
 
           {contactsLoading ? (
-            <Spinner />
+            <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[1,2].map(i => (
+                <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
+              ))}
+            </div>
           ) : error ? (
             <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
               {error}
@@ -400,6 +404,55 @@ export function Dashboard() {
 }
 
 // ── Local sub-components ────────────────────────────────────────────────────
+
+function DashboardSkeleton() {
+  return (
+    <div>
+      {/* Green band skeleton */}
+      <div style={{ background: 'var(--header-band-bg)', padding: '28px 24px 32px', borderRadius: '0 0 20px 20px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
+            <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="skeleton" style={{ width: 48, height: 28, background: 'rgba(255,255,255,0.15)' }} />
+              <div className="skeleton" style={{ width: 56, height: 14, background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 'var(--panel-radius)', padding: '20px 24px', flex: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div className="skeleton" style={{ width: 40, height: 22, background: 'rgba(255,255,255,0.15)' }} />
+                  <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.15)' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Card ghosts */}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
+        <div className="skeleton" style={{ width: 120, height: 16, marginBottom: 16 }} />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          {[1,2,3].map(i => (
+            <div key={i} className="skeleton" style={{ width: 155, height: 80, borderRadius: 12 }} />
+          ))}
+        </div>
+        <div className="skeleton" style={{ width: 100, height: 16, marginBottom: 12 }} />
+        <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 24px 14px' }}>
+            <div className="skeleton" style={{ width: 140, height: 18 }} />
+          </div>
+          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
+            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function Sparkline({ data, color, width = 60, height = 24 }: {
   data: number[]
