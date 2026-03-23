@@ -12,6 +12,18 @@ interface ContactPanelProps {
   onClose: () => void
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
+
 export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanelProps) {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -19,11 +31,12 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
   const [search, setSearch] = useState('')
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [showNewContact, setShowNewContact] = useState(false)
+  const isMobile = useIsMobile()
 
   // Panel animation fix: only animate on first mount, not when switching categories
   const wasOpen = useRef(false)
   useEffect(() => { wasOpen.current = true }, [])
-  const animateClass = wasOpen.current ? '' : 'panel-enter'
+  const animateClass = wasOpen.current ? '' : isMobile ? 'panel-enter-mobile' : 'panel-enter'
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -62,40 +75,82 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       )
     : contacts
 
+  const mobileStyle: React.CSSProperties = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 60,
+    background: 'var(--color-bg)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflowY: 'auto',
+    animation: wasOpen.current ? undefined : 'panel-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1) both',
+  }
+
+  const desktopStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    width: 360,
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    background: 'var(--surface-panel)',
+    backdropFilter: 'var(--panel-blur)',
+    WebkitBackdropFilter: 'var(--panel-blur)',
+    borderLeft: '1px solid rgba(0,0,0,0.07)',
+    zIndex: 50,
+  }
+
   return (
     <>
     <div
-      className={animateClass}
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        width: 360,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--surface-panel)',
-        backdropFilter: 'var(--panel-blur)',
-        WebkitBackdropFilter: 'var(--panel-blur)',
-        borderLeft: '1px solid rgba(0,0,0,0.07)',
-        zIndex: 50,
-      }}
+      className={isMobile ? undefined : animateClass}
+      role="dialog"
+      aria-labelledby="panel-title"
+      style={isMobile ? mobileStyle : desktopStyle}
     >
       {/* Header */}
       <div style={{ padding: '28px 24px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-              {categoryName ?? '—'}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, letterSpacing: '0.01em' }}>
-              contacts
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Back to map"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: 8, color: 'var(--color-text-primary)',
+                  minWidth: 44, minHeight: 44,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginLeft: -8,
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+              </button>
+            )}
+            <div>
+              <div
+                id="panel-title"
+                style={{ fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}
+              >
+                {categoryName ?? '—'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, letterSpacing: '0.01em' }}>
+                contacts
+              </div>
             </div>
           </div>
 
-          <div style={{ marginTop: 2 }}>
-            <CloseButton onClick={onClose} />
-          </div>
+          {!isMobile && (
+            <div style={{ marginTop: 2 }}>
+              <CloseButton onClick={onClose} />
+            </div>
+          )}
         </div>
 
         {/* Search */}
@@ -108,7 +163,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           </span>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Find someone..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
@@ -142,11 +197,11 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           <Spinner />
         ) : loadError ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
-            Could not load contacts. Check your connection and try again.
+            Couldn't reach Airtable. Try again?
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
-            {search ? 'No matches' : 'No contacts yet'}
+            {search ? 'No one by that name' : 'No one here yet'}
           </div>
         ) : (
           <div>

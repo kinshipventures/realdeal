@@ -283,6 +283,15 @@
   to   { transform: translateX(0);   opacity: 1; }
 }
 
+@keyframes panel-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.panel-enter-mobile {
+  animation: panel-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 /* ── Interaction row hover controls ────────────────────────────────────────── */
 
 .interaction-row:hover .interaction-action { opacity: 1 !important; }
