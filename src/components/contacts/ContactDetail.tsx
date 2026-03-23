@@ -1,5 +1,15 @@
 import { useState, useCallback, useRef } from 'react'
 import type { Contact } from '../../lib/types'
+
+function daysUntilBirthday(birthday: string | null): number | null {
+  if (!birthday) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const [, month, day] = birthday.split('-').map(Number)
+  const thisYear = new Date(today.getFullYear(), month - 1, day)
+  if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
+  return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
 import { updateContact, createContact, deleteContact } from '../../lib/airtable'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
@@ -239,6 +249,56 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     letterSpacing: '0.01em',
   }
 
+  function birthdayField() {
+    const val = (draft.birthday as string | null) ?? null
+    const editing = editingField === 'birthday'
+    const countdown = daysUntilBirthday(val)
+
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>
+          Birthday
+        </div>
+        {editing ? (
+          <input
+            autoFocus
+            type="date"
+            defaultValue={val ?? ''}
+            onBlur={e => handleBlur('birthday', e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
+            }}
+            style={{
+              width: '100%',
+              background: 'rgba(0,0,0,0.03)',
+              border: '1px solid rgba(0,0,0,0.10)',
+              borderRadius: 6,
+              color: 'rgba(0,0,0,0.82)',
+              fontSize: 13,
+              padding: '6px 10px',
+              outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+        ) : (
+          <div
+            onClick={() => setEditingField('birthday')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'text', padding: '2px 0', minHeight: 20 }}
+          >
+            <span style={{ fontSize: 13, color: val ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.18)' }}>
+              {val ?? 'add birthday'}
+            </span>
+            {countdown !== null && countdown <= 30 && (
+              <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)' }}>
+                {countdown === 0 ? 'today' : `in ${countdown} day${countdown === 1 ? '' : 's'}`}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div
       className="panel-enter"
@@ -419,6 +479,14 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           {field('specialization', 'Specialization')}
           {field('past_clients', 'Past clients', true)}
           {field('recommended_by', 'Recommended by')}
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <div style={sectionLabel}>personal</div>
+          {birthdayField()}
+          {field('milestones', 'Milestones', true)}
+          {field('interests', 'Interests', true)}
+          {field('relationship_context', 'Relationship context', true)}
         </div>
 
         <div style={{ marginBottom: 24 }}>
