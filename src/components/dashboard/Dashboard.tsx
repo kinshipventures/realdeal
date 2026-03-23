@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact } from '../../lib/airtable'
-import { daysOverdue, formatRelativeTime } from '../../lib/utils'
+import { daysOverdue } from '../../lib/utils'
 import {
   indexByContact,
-  contactEquityScore,
   podEquityScore,
   overallEquityScore,
   scoreLabel,
   isDormant,
   daysSinceContact,
   todaysFocus,
-  CADENCE_DAYS,
 } from '../../lib/equity'
 import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/types'
 import { Spinner, Avatar } from '../ui'

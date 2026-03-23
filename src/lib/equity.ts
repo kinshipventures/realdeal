@@ -146,7 +146,7 @@ export function daysSinceContact(contact: Contact): number | null {
 
 export function todaysFocus(
   contacts: Contact[],
-  byContact: Map<string, Interaction[]>,
+  _byContact: Map<string, Interaction[]>,
   pods: Pod[],
   limit = 3
 ): FocusItem[] {

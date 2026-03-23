@@ -17,7 +17,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     if (active) inputRef.current?.focus()
