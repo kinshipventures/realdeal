@@ -39,7 +39,7 @@ Plans:
   4. Orb map visual refresh — richer colors, bolder pod orbs
 **Plans:** 2 plans
 Plans:
-- [ ] 02-01-PLAN.md — Design tokens (CSS custom properties) + solid orb system replacing glass orbs
+- [x] 02-01-PLAN.md — Design tokens (CSS custom properties) + solid orb system replacing glass orbs
 - [ ] 02-02-PLAN.md — Dashboard green header band, nav redesign, contact panels, design system docs
 
 ### Phase 3: Close-Out

@@ -22,9 +22,9 @@
 
 ### Visual Design
 
-- [ ] **VIS-01**: Design tokens defined as CSS custom properties (colors, typography, spacing)
+- [x] **VIS-01**: Design tokens defined as CSS custom properties (colors, typography, spacing)
 - [ ] **VIS-02**: Dashboard visuals aligned with Trolley CRM PDF (scoped to 3-5 specific deltas)
-- [ ] **VIS-03**: App looks polished enough to demo to Gwyneth
+- [x] **VIS-03**: App looks polished enough to demo to Gwyneth
 
 ### Close-Out
 
@@ -80,9 +80,9 @@
 | PROF-03 | Phase 2 | Complete |
 | PROF-04 | Phase 2 | Complete |
 | PROF-05 | Phase 2 | Complete |
-| VIS-01 | Phase 3 | Pending |
+| VIS-01 | Phase 3 | Complete |
 | VIS-02 | Phase 3 | Pending |
-| VIS-03 | Phase 3 | Pending |
+| VIS-03 | Phase 3 | Complete |
 | CLOSE-01 | Phase 4 | Pending |
 
 **Coverage:**
