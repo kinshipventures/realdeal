@@ -8,6 +8,7 @@
 
 - [x] **Phase 1: Contact Profiles** - Enriched profile fields (birthday, milestones, interests, context) + per-contact equity score display + import dedup logic (completed 2026-03-23)
 - [x] **Phase 2: Visual Redesign** - Design tokens + Trolley CRM-aligned UI polish, demo-ready dashboard (completed 2026-03-23)
+- [ ] **Phase 02.1: Design Implementation** - Full DESIGN.md implementation: Fraunces, two-tone orbs, orbital map, dark mode, responsive, empty states, sparklines
 - [ ] **Phase 3: Close-Out** - HANDOFF.md so Briell can operate the app after engagement ends
 
 ## Phase Details
@@ -42,6 +43,31 @@ Plans:
 - [x] 02-01-PLAN.md — Design tokens (CSS custom properties) + solid orb system replacing glass orbs
 - [x] 02-02-PLAN.md — Dashboard green header band, nav redesign, contact panels, design system docs
 
+### Phase 02.1: Design Implementation (INSERTED)
+
+**Goal:** Implement every design decision from DESIGN.md — Fraunces font, two-tone gradient orbs, orbital map with entrance animation, dark mode, responsive mobile layout, empty states, sparklines, interaction colors, loading skeletons, copy updates
+**Requirements**: TBD
+**Depends on:** Phase 2
+**Success Criteria** (what must be TRUE):
+  1. Fraunces renders as serif font on all headings and display text
+  2. Orbs show two-tone hue-shifted gradient with colored glow halos and health ring arcs
+  3. Map entrance: orbs fly from hub center to orbital positions with staggered delay
+  4. Dark mode activates via prefers-color-scheme with correct token overrides
+  5. Mobile (<768px) shows bottom tab bar and full-screen contact panel
+  6. All empty states use orb illustrations, ghost hints, warm copy, and one CTA
+  7. Pod cards show sparkline trends and mini orb avatars
+  8. Interaction timeline shows semantic type colors
+**Plans:** 7 plans
+
+Plans:
+- [ ] 02.1-01-PLAN.md — Fraunces font swap, dark mode tokens, interaction color tokens, copy/voice updates
+- [ ] 02.1-02-PLAN.md — Two-tone gradient orbs with glow halos and health ring SVG
+- [ ] 02.1-03-PLAN.md — Orbital map layout, fly-from-hub entrance animation, dashed orbit rings
+- [ ] 02.1-04-PLAN.md — Dashboard mini orb cards, pod-colored hover, interaction type colors
+- [ ] 02.1-05-PLAN.md — Responsive nav (mobile tab bar), full-screen mobile panel, ARIA
+- [ ] 02.1-06-PLAN.md — Empty states component + integration across all views
+- [ ] 02.1-07-PLAN.md — Sparklines in pod cards, loading skeleton shimmer
+
 ### Phase 3: Close-Out
 **Goal**: Briell can operate the app independently after Gabe's engagement ends March 31
 **Depends on**: Phase 2
@@ -54,10 +80,11 @@ Plans:
 
 ## Progress
 
-**Execution Order:** 1 → 2 → 3
+**Execution Order:** 1 → 2 → 02.1 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
 | 2. Visual Redesign | 2/2 | Complete   | 2026-03-23 |
+| 02.1. Design Implementation | 0/7 | Planning complete | - |
 | 3. Close-Out | 0/TBD | Not started | - |
