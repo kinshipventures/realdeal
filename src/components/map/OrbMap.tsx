@@ -21,6 +21,7 @@ import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
+import { SatelliteNodeComponent } from './SatelliteNode'
 import { ContactPanel } from '../contacts/ContactPanel'
 import { getPositions, savePosition, clearPositionsForIds, clearAllPositions } from '../../hooks/useNodePositions'
 
@@ -31,6 +32,7 @@ const nodeTypes = {
   category: CategoryNodeComponent,
   moj: MojNodeComponent,
   'create-category': CreateCategoryNodeComponent,
+  satellite: SatelliteNodeComponent,
 }
 
 const CREATE_CAT_ID = '__create-category__'
@@ -97,6 +99,7 @@ function buildHomeNodes(
   pods: Pod[],
   countsByPod: Record<string, PodCounts>,
   equityByPod: Record<string, number>,
+  categoriesByPod: Record<string, Category[]>,
   savedPositions: Record<string, { x: number; y: number }>,
   onPodClick: (pod: Pod, pos: { x: number; y: number }) => void
 ): { nodes: Node[]; activeRings: number[] } {
@@ -111,16 +114,19 @@ function buildHomeNodes(
     data: {},
   }
 
-  // Hub center in world space (center of the moj orb)
   const hubCenterX = mojPos.x + MOJ_SIZE / 2
   const hubCenterY = mojPos.y + MOJ_SIZE / 2
 
-  const podNodes: Node[] = pods.map((pod, i) => {
+  const podNodes: Node[] = []
+  const satelliteNodes: Node[] = []
+
+  pods.forEach((pod, i) => {
     const pos = listPositions.get(pod.id)!
     const counts = countsByPod[pod.id] ?? { total: 0, overdue: 0 }
     const orbitStartX = hubCenterX - (pos.x + LIST_SIZE / 2)
     const orbitStartY = hubCenterY - (pos.y + LIST_SIZE / 2)
-    return {
+
+    podNodes.push({
       id: pod.id,
       type: 'list',
       position: pos,
@@ -136,10 +142,43 @@ function buildHomeNodes(
         orbitStartY,
         onClick: () => onPodClick(pod, pos),
       },
+    })
+
+    // Satellite category orbs — cluster near parent pod
+    const cats = categoriesByPod[pod.id] ?? []
+    if (cats.length > 0) {
+      const podCenterX = pos.x + LIST_SIZE / 2
+      const podCenterY = pos.y + LIST_SIZE / 2
+      const satRadius = 62 + cats.length * 2 // tighten or spread based on count
+      const SAT_SIZE = 20
+
+      cats.forEach((cat, ci) => {
+        // Angle: spread around the outward side of the pod (away from hub)
+        const podAngle = Math.atan2(podCenterY - hubCenterY, podCenterX - hubCenterX)
+        const spread = Math.min(cats.length * 0.4, Math.PI * 0.8)
+        const startAngle = podAngle - spread / 2
+        const angle = startAngle + (ci / Math.max(cats.length - 1, 1)) * spread
+        const satColor = cat.color ?? pod.color ?? '#718096'
+
+        satelliteNodes.push({
+          id: `sat-${pod.id}-${cat.id}`,
+          type: 'satellite',
+          position: {
+            x: podCenterX + Math.cos(angle) * satRadius - SAT_SIZE / 2,
+            y: podCenterY + Math.sin(angle) * satRadius - SAT_SIZE / 2,
+          },
+          draggable: false,
+          data: {
+            name: cat.name,
+            color: satColor,
+            onClick: () => onPodClick(pod, pos),
+          },
+        })
+      })
     }
   })
 
-  return { nodes: [mojNode, ...podNodes], activeRings }
+  return { nodes: [mojNode, ...podNodes, ...satelliteNodes], activeRings }
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
@@ -184,6 +223,7 @@ export function OrbMap() {
   const podsRef = useRef<Pod[]>([])
   const countsByPodRef = useRef<Record<string, PodCounts>>({})
   const equityByPodRef = useRef<Record<string, number>>({})
+  const categoriesByPodRef = useRef<Record<string, Category[]>>({})
   const viewRef = useRef<'lists' | 'categories'>('lists')
   const selectedPodRef = useRef<Pod | null>(null)
   // Generation counter — discards stale responses if user clicks a different list quickly
@@ -315,7 +355,7 @@ export function OrbMap() {
     setSelectedPod(null)
     setSelectedCategoryId(null)
     const savedPositions = getPositions()
-    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, savedPositions, handlePodClick)
+    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, categoriesByPodRef.current, savedPositions, handlePodClick)
     setNodes(homeNodes)
     setActiveRings(rings)
     setEdges(buildHomeEdges(podsRef.current))
@@ -337,7 +377,7 @@ export function OrbMap() {
     let stale = false
     async function init() {
       try {
-        const [allPods, allContacts, allInteractions] = await Promise.all([getPods(), getContacts(), getAllInteractions()])
+        const [allPods, allContacts, allInteractions, allCategories] = await Promise.all([getPods(), getContacts(), getAllInteractions(), getCategories()])
         if (stale) return
         podsRef.current = allPods
 
@@ -362,8 +402,16 @@ export function OrbMap() {
         }
         equityByPodRef.current = equityByPod
 
+        // Group categories by pod for satellite orbs
+        const catsByPod: Record<string, Category[]> = {}
+        for (const cat of allCategories) {
+          if (!catsByPod[cat.list_id]) catsByPod[cat.list_id] = []
+          catsByPod[cat.list_id].push(cat)
+        }
+        categoriesByPodRef.current = catsByPod
+
         const savedPositions = getPositions()
-        const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(allPods, countsByPod, equityByPod, savedPositions, handlePodClick)
+        const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(allPods, countsByPod, equityByPod, catsByPod, savedPositions, handlePodClick)
         setNodes(homeNodes)
         setActiveRings(rings)
         setEdges(buildHomeEdges(allPods))
@@ -391,7 +439,7 @@ export function OrbMap() {
   const handleResetLayout = useCallback(() => {
     clearAllPositions()
     localStorage.removeItem(VIEWPORT_KEY)
-    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, {}, handlePodClick)
+    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, categoriesByPodRef.current, {}, handlePodClick)
     setNodes(homeNodes)
     setActiveRings(rings)
     setEdges(buildHomeEdges(podsRef.current))
