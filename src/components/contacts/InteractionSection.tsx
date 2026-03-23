@@ -19,6 +19,26 @@ const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
 }
 
+const TYPE_COLORS: Record<InteractionType, string> = {
+  call: '#2E7D32',
+  email: '#1565C0',
+  text: '#7B1FA2',
+  meeting: '#E65100',
+  note: 'rgba(0,0,0,0.50)',
+  intro: '#C2185B',
+}
+
+function typePill(type: InteractionType): React.CSSProperties {
+  return {
+    fontSize: 11,
+    fontWeight: 500,
+    padding: '2px 8px',
+    borderRadius: 100,
+    background: `${TYPE_COLORS[type]}12`,
+    color: TYPE_COLORS[type],
+  }
+}
+
 // Summary bar icons — module-level to avoid re-creating on every render
 const svgProps = { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const }
 export const TYPE_ICONS: Record<string, React.ReactElement> = {
@@ -30,7 +50,6 @@ export const TYPE_ICONS: Record<string, React.ReactElement> = {
 
 // Shared timeline styles — module-level to avoid re-creating across rows
 const rowStyle: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }
-const pillStyle: React.CSSProperties = { fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.50)' }
 const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }
 
 function latestContactDate(interactions: Interaction[]): ISODate | null {
@@ -180,7 +199,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
             const never = !date
             return (
               <div key={t} style={{ textAlign: 'center' }}>
-                <div style={{ color: never ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.38)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div style={{ color: never ? 'rgba(0,0,0,0.22)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   {TYPE_ICONS[t]}
                   <span style={{ fontSize: 10 }}>{TYPE_LABELS[t]}</span>
                 </div>
@@ -236,10 +255,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                   fontSize: 11, fontWeight: 500,
                   padding: '3px 10px',
                   borderRadius: 100,
-                  background: logType === t ? 'rgba(0,0,0,0.10)' : 'rgba(0,0,0,0.04)',
+                  background: logType === t ? `${TYPE_COLORS[t]}12` : 'rgba(0,0,0,0.04)',
                   border: '1px solid',
-                  borderColor: logType === t ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.07)',
-                  color: logType === t ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.38)',
+                  borderColor: logType === t ? `${TYPE_COLORS[t]}30` : 'rgba(0,0,0,0.07)',
+                  color: logType === t ? TYPE_COLORS[t] : 'rgba(0,0,0,0.38)',
                   cursor: 'pointer',
                   transition: 'all 0.1s',
                 }}
@@ -341,10 +360,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                     style={{
                       fontSize: 10, fontWeight: 500,
                       padding: '2px 8px', borderRadius: 100,
-                      background: editingInteraction.type === t ? 'rgba(0,0,0,0.10)' : 'rgba(0,0,0,0.04)',
+                      background: editingInteraction.type === t ? `${TYPE_COLORS[t]}12` : 'rgba(0,0,0,0.04)',
                       border: '1px solid',
-                      borderColor: editingInteraction.type === t ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.07)',
-                      color: editingInteraction.type === t ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.38)',
+                      borderColor: editingInteraction.type === t ? `${TYPE_COLORS[t]}30` : 'rgba(0,0,0,0.07)',
+                      color: editingInteraction.type === t ? TYPE_COLORS[t] : 'rgba(0,0,0,0.38)',
                       cursor: 'pointer',
                     }}
                   >
@@ -392,7 +411,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
             /* Read mode */
             <div className="interaction-row" style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: interaction.notes ? 4 : 0 }}>
-                <span style={pillStyle}>{TYPE_LABELS[interaction.type]}</span>
+                <span style={typePill(interaction.type)}>{TYPE_LABELS[interaction.type]}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     onClick={() => setEditingInteraction({
