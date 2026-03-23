@@ -1,10 +1,22 @@
 import type React from 'react'
+import { useRef } from 'react'
 import { hexToRgba, hexToRgbValues } from '../../lib/utils'
 import type { HexColor } from '../../lib/types'
+
+export const POD_SHIFT_COLORS: Record<string, string> = {
+  '#E53935': '#FF6B4A',
+  '#FF6B8A': '#FF8FA5',
+  '#7E57C2': '#5C6BC0',
+  '#25B439': '#00BFA5',
+  '#F5A623': '#FFD54F',
+  '#1C1C1E': '#2C2C30',
+}
 
 interface SolidOrbProps {
   size: number
   color: HexColor
+  shiftColor?: HexColor
+  healthPercent?: number
   glowIntensity?: 'low' | 'high'
   animationDelay?: string
   onClick?: () => void
@@ -15,47 +27,109 @@ interface SolidOrbProps {
 export function SolidOrb({
   size,
   color,
-  glowIntensity = 'low',
+  shiftColor,
+  healthPercent,
+  glowIntensity,
   animationDelay,
   onClick,
   className,
   children,
 }: SolidOrbProps) {
-  // Hub orb (dark colors like #1C1C1E) — pure solid, no gradient needed
-  // Category/list orbs — single subtle radial for shape, not glass
-  const isDark = color.toLowerCase() <= '#333333'
-  const bg = isDark
-    ? color
-    : `radial-gradient(ellipse 55% 45% at 30% 25%, ${hexToRgba(color, 0.18)} 0%, transparent 100%), ${color}`
+  // glowIntensity retained for drop-in compatibility
+  void glowIntensity
+
+  const orbRef = useRef<HTMLDivElement>(null)
+  const glowSize = size >= 96 ? 28 : 20
+  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 4px 16px rgba(0,0,0,0.12)`
+  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 4px 16px rgba(0,0,0,0.12)`
+
+  const bg = shiftColor
+    ? `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`
+    : `linear-gradient(135deg, ${color} 0%, ${color} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
-  const lift = '-2px'
+  const lift = '-3px'
 
-  // glowIntensity retained in interface for drop-in compatibility — not used in solid system
-  void glowIntensity
+  // Health ring geometry
+  const containerSize = size + 8
+  const ringRadius = (containerSize - 4) / 2
+  const cx = containerSize / 2
+  const cy = containerSize / 2
+  const circumference = 2 * Math.PI * ringRadius
 
   return (
     <div
-      className={`orb-enter orb-interactive${className ? ` ${className}` : ''}`}
-      onClick={onClick}
       style={{
-        '--orb-scale': scale,
-        '--orb-lift': lift,
-        '--orb-color-rgb': hexToRgbValues(color),
-        width: size,
-        height: size,
-        borderRadius: '50%',
         position: 'relative',
-        cursor: onClick ? 'pointer' : 'default',
-        background: bg,
+        width: healthPercent !== undefined ? containerSize : size,
+        height: healthPercent !== undefined ? containerSize : size,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'hidden',
-        animationDelay,
-      } as React.CSSProperties}
+        flexShrink: 0,
+      }}
     >
-      {children}
+      {healthPercent !== undefined && (
+        <svg
+          width={containerSize}
+          height={containerSize}
+          viewBox={`0 0 ${containerSize} ${containerSize}`}
+          style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+        >
+          {/* Track circle */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={ringRadius}
+            fill="none"
+            stroke="rgba(0,0,0,0.06)"
+            strokeWidth={2}
+          />
+          {/* Fill arc */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={ringRadius}
+            fill="none"
+            stroke={color}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeDasharray={`${(healthPercent / 100) * circumference} ${circumference}`}
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        </svg>
+      )}
+
+      <div
+        ref={orbRef}
+        className={`orb-enter orb-interactive${className ? ` ${className}` : ''}`}
+        onClick={onClick}
+        onMouseEnter={() => {
+          if (orbRef.current) orbRef.current.style.boxShadow = hoverShadow
+        }}
+        onMouseLeave={() => {
+          if (orbRef.current) orbRef.current.style.boxShadow = restShadow
+        }}
+        style={{
+          '--orb-scale': scale,
+          '--orb-lift': lift,
+          '--orb-color-rgb': hexToRgbValues(color),
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          position: 'relative',
+          cursor: onClick ? 'pointer' : 'default',
+          background: bg,
+          boxShadow: restShadow,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          animationDelay,
+        } as React.CSSProperties}
+      >
+        {children}
+      </div>
     </div>
   )
 }
