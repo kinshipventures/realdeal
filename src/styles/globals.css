@@ -22,18 +22,8 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-brand: #2ECB45;
-    --color-brand-dark: #1B8A2A;
-    --color-surface: #1a1a1a;
-    --color-bg: #111111;
-    --color-text-primary: rgba(255,255,255,0.87);
-    --color-text-secondary: rgba(255,255,255,0.45);
-    --color-text-tertiary: rgba(255,255,255,0.25);
-    --color-hub-orb: #2C2C30;
-  }
-}
+/* Dark @theme overrides moved to :root dark block below —
+   Tailwind v4 @theme doesn't support @media nesting */
 
 :root {
   --orb-hub: 136px;
@@ -72,8 +62,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --color-brand: #2ECB45;
+    --color-brand-dark: #1B8A2A;
     --color-bg: #111111;
     --color-surface: #1a1a1a;
+    --color-text-primary: rgba(255,255,255,0.87);
+    --color-text-secondary: rgba(255,255,255,0.45);
+    --color-text-tertiary: rgba(255,255,255,0.25);
+    --color-hub-orb: #2C2C30;
     --surface-panel: rgba(255,255,255,0.06);
     --surface-panel-border: 1px solid rgba(255,255,255,0.06);
     --panel-bg: rgba(255,255,255,0.06);
