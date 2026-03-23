@@ -1,4 +1,5 @@
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner } from './types'
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS } from './sampleData'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
 const TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN
@@ -121,6 +122,7 @@ function mapPod(r: AirtableRecord<PodFields>): Pod {
 }
 
 export async function getPods(): Promise<Pod[]> {
+  if (isDemoMode()) return DEMO_PODS
   const records = await fetchAll<PodFields>(TABLES.lists)
   return records.map(mapPod)
 }
@@ -144,6 +146,7 @@ let _categoriesCacheTime = 0
 let _categoriesFetch: Promise<Category[]> | null = null
 
 export function getCategories(listId?: string): Promise<Category[]> {
+  if (isDemoMode()) return Promise.resolve(listId ? DEMO_CATEGORIES.filter(c => c.list_id === listId) : DEMO_CATEGORIES)
   const isExpired = !_categoriesCache || Date.now() - _categoriesCacheTime > CACHE_TTL
   const isFresh = _categoriesCache && !isExpired
 
@@ -229,6 +232,7 @@ let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
+  if (isDemoMode()) return Promise.resolve(categoryId ? DEMO_CONTACTS.filter(c => c.category_ids.includes(categoryId)) : DEMO_CONTACTS)
   const isExpired = !_contactsCache || Date.now() - _contactsCacheTime > CACHE_TTL
   const isFresh = _contactsCache && !isExpired
 
@@ -359,6 +363,7 @@ let _interactionsCacheTime = 0
 let _interactionsFetch: Promise<Interaction[]> | null = null
 
 export function getAllInteractions(): Promise<Interaction[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_INTERACTIONS)
   const isExpired = !_interactionsCache || Date.now() - _interactionsCacheTime > CACHE_TTL
   const isFresh = _interactionsCache && !isExpired
 
@@ -409,6 +414,7 @@ export function invalidateContactsCache(): void {
 // ── Per-contact interactions (unchanged — used by InteractionSection) ────────
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
+  if (isDemoMode()) return DEMO_INTERACTIONS.filter(i => i.contact_id === contactId)
   if (!/^rec[A-Za-z0-9]{14}$/.test(contactId)) throw new Error('Invalid contact ID')
   const records = await fetchAll<InteractionFields>(TABLES.interactions, {
     filterByFormula: `FIND("${contactId},", ARRAYJOIN({Contact}, ","))`,

@@ -298,29 +298,25 @@ export function Dashboard() {
         )}
 
         {/* Overdue queue */}
-        <div style={{ ...PANEL, overflow: 'hidden', marginBottom: 24 }}>
-          <div style={{
-            padding: '20px 24px 14px',
-            borderBottom: '1px solid var(--divider)',
-            display: 'flex', alignItems: 'center',
-          }}>
-            <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
-              needs attention
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+            needs attention
+          </span>
+          {overdueContacts.length > 0 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '2px 7px', borderRadius: 100,
+              background: 'hsla(20, 80%, 45%, 0.10)',
+              border: '1px solid hsla(20, 80%, 45%, 0.18)',
+              fontSize: 11, fontWeight: 500,
+              color: 'hsla(20, 80%, 45%, 0.80)',
+              letterSpacing: '0.01em', marginLeft: 8,
+            }}>
+              {overdueContacts.length}
             </span>
-            {overdueContacts.length > 0 && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center',
-                padding: '2px 7px', borderRadius: 100,
-                background: 'hsla(20, 80%, 45%, 0.10)',
-                border: '1px solid hsla(20, 80%, 45%, 0.18)',
-                fontSize: 11, fontWeight: 500,
-                color: 'hsla(20, 80%, 45%, 0.80)',
-                letterSpacing: '0.01em', marginLeft: 8,
-              }}>
-                {overdueContacts.length}
-              </span>
-            )}
-          </div>
+          )}
+        </div>
+        <div style={{ ...PANEL, overflow: 'hidden', marginBottom: 24 }}>
 
           {contactsLoading ? (
             <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>

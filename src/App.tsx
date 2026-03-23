@@ -3,6 +3,7 @@ import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
+import { isDemoMode, setDemoMode } from './lib/sampleData'
 
 const BG = 'var(--color-bg)'
 
@@ -23,6 +24,7 @@ function AppShell() {
   const navigate = useNavigate()
   const isMap = location.pathname === '/map'
   const isMobile = useIsMobile()
+  const [demo, setDemo] = useState(isDemoMode)
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
@@ -159,6 +161,38 @@ function AppShell() {
           </button>
         </nav>
       )}
+
+      {/* Demo data toggle */}
+      <button
+        type="button"
+        onClick={() => {
+          const next = !demo
+          setDemoMode(next)
+          setDemo(next)
+          window.location.reload()
+        }}
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? 56 : 52,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 100,
+          padding: '4px 12px',
+          borderRadius: 100,
+          border: `1px solid ${demo ? 'var(--color-brand)' : 'var(--edge)'}`,
+          background: demo ? 'rgba(37,180,57,0.08)' : 'var(--nav-bg)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          fontSize: 10,
+          fontWeight: 500,
+          fontFamily: 'inherit',
+          color: demo ? 'var(--color-brand)' : 'var(--text-muted)',
+          cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}
+      >
+        {demo ? 'demo on' : 'demo off'}
+      </button>
     </div>
   )
 }
