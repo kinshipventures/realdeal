@@ -9,7 +9,7 @@
 - [x] **Phase 1: Contact Profiles** - Enriched profile fields (birthday, milestones, interests, context) + per-contact equity score display + import dedup logic (completed 2026-03-23)
 - [x] **Phase 2: Visual Redesign** - Design tokens + Trolley CRM-aligned UI polish, demo-ready dashboard (completed 2026-03-23)
 - [x] **Phase 02.1: Design Implementation** - Full DESIGN.md implementation: Fraunces, two-tone orbs, orbital map, dark mode, responsive, empty states, sparklines (completed 2026-03-23)
-- [ ] **Phase 3: Close-Out** - CSV import UI + HANDOFF.md so Briell can operate the app after engagement ends
+- [x] **Phase 3: Close-Out** - CSV import UI + HANDOFF.md so Briell can operate the app after engagement ends (completed 2026-03-23)
 
 ## Phase Details
 
@@ -76,11 +76,11 @@ Plans:
   1. HANDOFF.md exists and covers: how to use the app, importing contacts via browser UI, Airtable field conventions, common issues, escalation contact
   2. Briell can import a CSV of contacts end-to-end from the browser without Gabe present
   3. Known issues and future roadmap items documented in plain language
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — CSV import UI (drag-and-drop, preview, pod selection, dedup, inline results)
-- [ ] 03-02-PLAN.md — HANDOFF.md (overview, app guide, Airtable field guide, known issues, backlog)
+- [x] 03-01-PLAN.md — CSV import UI (drag-and-drop, preview, pod selection, dedup, inline results)
+- [x] 03-02-PLAN.md — HANDOFF.md (overview, app guide, Airtable field guide, known issues, backlog)
 
 ## Progress
 
@@ -91,4 +91,4 @@ Plans:
 | 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
 | 2. Visual Redesign | 2/2 | Complete   | 2026-03-23 |
 | 02.1. Design Implementation | 7/7 | Complete    | 2026-03-23 |
-| 3. Close-Out | 0/2 | Not started | - |
+| 3. Close-Out | 2/2 | Complete   | 2026-03-23 |

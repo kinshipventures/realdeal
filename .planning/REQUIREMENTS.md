@@ -28,7 +28,7 @@
 
 ### Close-Out
 
-- [ ] **CLOSE-01**: HANDOFF.md written — Briell can operate the app independently after engagement ends
+- [x] **CLOSE-01**: HANDOFF.md written — Briell can operate the app independently after engagement ends
 
 ## v2 Requirements
 
@@ -83,7 +83,7 @@
 | VIS-01 | Phase 3 | Complete |
 | VIS-02 | Phase 3 | Complete |
 | VIS-03 | Phase 3 | Complete |
-| CLOSE-01 | Phase 4 | Pending |
+| CLOSE-01 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 13 total
