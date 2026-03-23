@@ -5,6 +5,7 @@ import { useEscape } from '../../lib/escapeStack'
 import { Spinner, CloseButton } from '../ui'
 import { ContactCard } from './ContactCard'
 import { ContactDetail } from './ContactDetail'
+import { EmptyState } from '../empty/EmptyState'
 
 interface ContactPanelProps {
   categoryId: string
@@ -200,9 +201,19 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
             Couldn't reach Airtable. Try again?
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
-            {search ? 'No one by that name' : 'No one here yet'}
-          </div>
+          search ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
+              No one by that name
+            </div>
+          ) : (
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+              heading="No one here yet"
+              ctaLabel="Add contact"
+              onCta={() => setShowNewContact(true)}
+              ghosts={3}
+            />
+          )
         ) : (
           <div>
             {filtered.map(contact => (

@@ -14,6 +14,7 @@ import {
 import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/types'
 import { Spinner, Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
+import { EmptyState } from '../empty/EmptyState'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -88,12 +89,36 @@ export function Dashboard() {
 
   // Pod stats
   const podStats = useMemo(() => {
+    const now = Date.now()
+    const WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+    const BUCKETS = 7
+    const BUCKET_MS = WINDOW_MS / BUCKETS
+
     return pods.map(pod => {
       const podContacts = contacts.filter(c => c.list_ids.includes(pod.id))
       const cadence = pod.cadence ?? 'monthly'
       const overdueCount = podContacts.filter(c => isOverdue(c, cadence)).length
       const score = podEquityScore(podContacts, byContact)
-      return { pod, contactCount: podContacts.length, overdueCount, score }
+
+      // Build sparkline: 7 buckets over last 30 days, count interactions per bucket
+      const podContactIds = new Set(podContacts.map(c => c.id))
+      const buckets = new Array<number>(BUCKETS).fill(0)
+      let hasData = false
+      for (const c of podContacts) {
+        const interactions = byContact.get(c.id) ?? []
+        for (const ix of interactions) {
+          if (!podContactIds.has(ix.contact_id)) continue
+          const age = now - new Date(ix.date).getTime()
+          if (age < 0 || age >= WINDOW_MS) continue
+          const bucketIdx = Math.floor(age / BUCKET_MS)
+          const idx = BUCKETS - 1 - Math.min(bucketIdx, BUCKETS - 1)
+          buckets[idx]++
+          hasData = true
+        }
+      }
+      const sparkline = hasData ? buckets : null
+
+      return { pod, contactCount: podContacts.length, overdueCount, score, sparkline }
     }).sort((a, b) => {
       if (a.pod.is_priority !== b.pod.is_priority) return a.pod.is_priority ? -1 : 1
       return a.pod.name.localeCompare(b.pod.name)
@@ -166,6 +191,14 @@ export function Dashboard() {
 
   const dataReady = !contactsLoading && !podsLoading
 
+  if (contactsLoading && podsLoading) {
+    return (
+      <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
+        <DashboardSkeleton />
+      </div>
+    )
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
 
@@ -177,7 +210,13 @@ export function Dashboard() {
             {/* Equity score ring — directly on green, no panel wrapper */}
             <div style={{ padding: '0', display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
               {interactionsLoading ? (
-                <Spinner size={18} padding={20} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                  <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div className="skeleton" style={{ width: 48, height: 28, background: 'rgba(255,255,255,0.15)' }} />
+                    <div className="skeleton" style={{ width: 56, height: 14, background: 'rgba(255,255,255,0.15)' }} />
+                  </div>
+                </div>
               ) : (
                 <>
                   <EquityRing score={overallScore} size={80} />
@@ -195,7 +234,16 @@ export function Dashboard() {
 
             {/* Stats — semi-transparent white panel on green */}
             <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 'var(--panel-radius)', padding: '20px 24px', flex: 1 }}>
-              {!dataReady ? <Spinner size={18} padding={16} /> : (
+              {!dataReady ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                  {[1,2,3,4].map(i => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      <div className="skeleton" style={{ width: 40, height: 22, background: 'rgba(255,255,255,0.15)' }} />
+                      <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.15)' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                   <StatBlock label="Pods" value={pods.length} />
                   <StatBlock label="Contacts" value={contacts.length} />
@@ -211,11 +259,26 @@ export function Dashboard() {
       {/* Rest of dashboard on light background */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
 
+        {/* No pulse yet — when data loaded but no pods/contacts */}
+        {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
+          <div style={{ ...PANEL, marginBottom: 24 }}>
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+              heading="No pulse yet"
+              subtext="Log your first interaction to start building your network health score."
+              ctaLabel="Log interaction"
+              onCta={() => {}}
+              orbColor="#25B439"
+              ghosts={2}
+            />
+          </div>
+        )}
+
         {/* Pod health cards */}
         {!dataReady ? null : podStats.length > 0 && (
           <div style={{ display: 'flex', gap: 12, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
-            {podStats.map(({ pod, contactCount, overdueCount, score }) => (
-              <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} />
+            {podStats.map(({ pod, contactCount, overdueCount, score, sparkline }) => (
+              <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} sparkline={sparkline} />
             ))}
           </div>
         )}
@@ -266,9 +329,12 @@ export function Dashboard() {
               {error}
             </div>
           ) : overdueContacts.length === 0 ? (
-            <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-              <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>All caught up.</span>
-            </div>
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              heading="All caught up"
+              subtext="Nothing needs attention right now"
+              orbColor="#25B439"
+            />
           ) : (
             <div style={{ maxHeight: 400, overflowY: 'auto' }}>
               {overdueContacts.map(({ contact, days, podName }) => (
@@ -335,6 +401,28 @@ export function Dashboard() {
 
 // ── Local sub-components ────────────────────────────────────────────────────
 
+function Sparkline({ data, color, width = 60, height = 24 }: {
+  data: number[]
+  color: string
+  width?: number
+  height?: number
+}) {
+  if (data.length < 2) return null
+  const max = Math.max(...data, 1)
+  const points = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * width,
+    y: height - (v / max) * height,
+  }))
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaPath = `${linePath} L${width},${height} L0,${height} Z`
+  return (
+    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
+      <path d={areaPath} fill={`${color}1F`} />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function EquityRing({ score, size }: { score: number; size: number }) {
   const strokeWidth = 6
   const radius = (size - strokeWidth) / 2
@@ -383,8 +471,9 @@ function StatBlock({ label, value, accent }: { label: string; value: number; acc
   )
 }
 
-function PodCard({ pod, contactCount, overdueCount, score, scoreReady }: {
+function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline }: {
   pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean
+  sparkline: number[] | null
 }) {
   const color = pod.color ?? '#718096'
   const cadence = pod.cadence ?? 'monthly'
@@ -417,49 +506,57 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady }: {
         boxShadow: restShadow,
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
+        flexDirection: 'column',
+        gap: 10,
       }}
     >
-      {/* Mini orb avatar */}
-      <div style={{
-        width: 30,
-        height: 30,
-        borderRadius: '50%',
-        flexShrink: 0,
-        background: `linear-gradient(135deg, ${color} 0%, ${POD_SHIFT_COLORS[color] ?? color} 100%)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 8,
-        fontWeight: 600,
-        color: 'rgba(255,255,255,0.90)',
-      }}>
-        {pod.name.slice(0, 2).toUpperCase()}
+      {/* Top row: mini orb + text */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        {/* Mini orb avatar */}
+        <div style={{
+          width: 30,
+          height: 30,
+          borderRadius: '50%',
+          flexShrink: 0,
+          background: `linear-gradient(135deg, ${color} 0%, ${POD_SHIFT_COLORS[color] ?? color} 100%)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 8,
+          fontWeight: 600,
+          color: 'rgba(255,255,255,0.90)',
+        }}>
+          {pod.name.slice(0, 2).toUpperCase()}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 4, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+            {pod.name}
+          </div>
+          <div style={{ display: 'flex', gap: 8, fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)' }}>
+            <span>{contactCount} contacts</span>
+            {overdueCount > 0 && (
+              <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
+            )}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {cadence}
+            </span>
+            {scoreReady && (
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                {score}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 4, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-          {pod.name}
-        </div>
-        <div style={{ display: 'flex', gap: 8, fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)' }}>
-          <span>{contactCount} contacts</span>
-          {overdueCount > 0 && (
-            <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
-          )}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {cadence}
-          </span>
-          {scoreReady && (
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {score}
-            </span>
-          )}
-        </div>
-      </div>
+      {/* Sparkline — 30-day interaction trend, only when data exists */}
+      {scoreReady && sparkline && (
+        <Sparkline data={sparkline} color={color} width={119} height={22} />
+      )}
     </div>
   )
 }

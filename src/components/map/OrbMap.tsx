@@ -15,6 +15,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { getPods, getCategories, getContacts, isOverdue, createCategory } from '../../lib/airtable'
 import type { Category, Pod } from '../../lib/types'
+import { EmptyState } from '../empty/EmptyState'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
@@ -153,6 +154,8 @@ export function OrbMap() {
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [initError, setInitError] = useState(false)
+  const [podsLoaded, setPodsLoaded] = useState(false)
+  const [podsCount, setPodsCount] = useState(0)
   const [catRefresh, setCatRefresh] = useState(0)
   const [viewport, setViewportState] = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
 
@@ -326,9 +329,10 @@ export function OrbMap() {
         const savedPositions = getPositions()
         setNodes(buildHomeNodes(allPods, countsByPod, savedPositions, handlePodClick))
         setEdges(buildHomeEdges(allPods))
+        if (!stale) { setPodsLoaded(true); setPodsCount(allPods.length) }
       } catch (err) {
         console.error('Couldn\'t load your network:', err)
-        if (!stale) setInitError(true)
+        if (!stale) { setInitError(true); setPodsLoaded(true) }
       }
     }
     init()
@@ -363,6 +367,26 @@ export function OrbMap() {
           <p style={{ color: 'rgba(0,0,0,0.45)', fontSize: 14 }}>
             Could not load your network. Check your connection and refresh.
           </p>
+        </div>
+      )}
+
+      {/* Empty map — no pods yet */}
+      {podsLoaded && podsCount === 0 && !initError && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+          zIndex: 10,
+        }}>
+          <div style={{ pointerEvents: 'auto' }}>
+            <EmptyState
+              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
+              heading="Your network starts here"
+              subtext="Create your first pod to start mapping relationships."
+              ctaLabel="Create first pod"
+              onCta={() => {}}
+            />
+          </div>
         </div>
       )}
 

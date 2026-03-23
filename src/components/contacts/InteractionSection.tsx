@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { EmptyState } from '../empty/EmptyState'
 import type { Contact, Interaction, InteractionType, ISODate } from '../../lib/types'
 import {
   getInteractions,
@@ -327,11 +328,15 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
         </div>
       )}
 
-      {/* Interaction list */}
+      {/* Interaction list — empty state */}
       {interactions.length === 0 && !showLogForm && !interactionsError && (
-        <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.22)', padding: '4px 0' }}>
-          no interactions yet
-        </div>
+        <EmptyState
+          icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
+          heading="No history yet"
+          ctaLabel="Log first interaction"
+          onCta={() => setShowLogForm(true)}
+          ghosts={2}
+        />
       )}
 
       {interactions.map((interaction, i) => (
