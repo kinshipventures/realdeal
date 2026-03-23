@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, HexColor } from '../../lib/types'
-import { GlassOrb } from './GlassOrb'
+import { SolidOrb } from './SolidOrb'
 
 export type ListNodeData = {
   list: Pod
@@ -47,7 +47,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         }} />
       )}
 
-      <GlassOrb
+      <SolidOrb
         size={SIZE}
         color={color}
         glowIntensity={list.is_priority ? 'high' : 'low'}
@@ -71,7 +71,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             <span style={{
               fontSize: fontSize(list.name),
               fontWeight: 600,
-              color: 'rgba(0,0,0,0.72)',
+              color: 'rgba(255,255,255,0.92)',
               textAlign: 'center',
               lineHeight: 1.3,
               letterSpacing: '-0.01em',
@@ -80,7 +80,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
               {list.name}
             </span>
             <span style={{
-              fontSize: 9, color: 'rgba(0,0,0,0.30)',
+              fontSize: 9, color: 'rgba(255,255,255,0.55)',
               letterSpacing: '0.01em', userSelect: 'none',
             }}>
               {contactCount}
@@ -99,18 +99,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             )}
           </div>
         )}
-
-        {/* Color bottom rim */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '18%',
-          right: '18%',
-          height: 2,
-          background: `linear-gradient(90deg, transparent, ${color}DD, transparent)`,
-          borderRadius: '0 0 1px 1px',
-        }} />
-      </GlassOrb>
+      </SolidOrb>
     </>
   )
 }

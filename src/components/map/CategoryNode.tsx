@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Category, HexColor } from '../../lib/types'
-import { GlassOrb } from './GlassOrb'
+import { SolidOrb } from './SolidOrb'
 
 export type CategoryNodeData = {
   category: Category
@@ -33,7 +33,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
       />
 
-      <GlassOrb
+      <SolidOrb
         size={SIZE}
         color={accentColor}
         glowIntensity="low"
@@ -47,7 +47,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
           <span style={{
             fontSize: fontSize(category.name),
             fontWeight: 500,
-            color: 'rgba(0,0,0,0.60)',
+            color: 'rgba(255,255,255,0.90)',
             textAlign: 'center',
             lineHeight: 1.3,
             letterSpacing: '-0.005em',
@@ -57,24 +57,14 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
           </span>
           {contactCount !== undefined && (
             <span style={{
-              fontSize: 8, color: 'rgba(0,0,0,0.28)',
+              fontSize: 8, color: 'rgba(255,255,255,0.50)',
               letterSpacing: '0.01em', userSelect: 'none',
             }}>
               {contactCount}
             </span>
           )}
         </div>
-
-        {/* Color rim */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '20%',
-          right: '20%',
-          height: 1.5,
-          background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
-        }} />
-      </GlassOrb>
+      </SolidOrb>
     </>
   )
 }
