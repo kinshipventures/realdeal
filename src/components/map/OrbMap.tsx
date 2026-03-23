@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
@@ -188,11 +189,12 @@ function buildHomeNodes(
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
-  return pods.map(pod => ({
+  return pods.map((pod, i) => ({
     id: `e-moj-${pod.id}`,
     source: MOJ_ID,
     target: pod.id,
-    style: { stroke: 'var(--stroke-subtle)', strokeWidth: 1.5 },
+    style: { stroke: 'var(--stroke-subtle)', strokeWidth: 1.5, '--edge-delay': `${(i + 1) * 0.1}s` } as React.CSSProperties,
+    className: 'edge-enter',
     type: 'straight',
   }))
 }
@@ -431,8 +433,31 @@ export function OrbMap() {
     return () => { stale = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Track last known pod position so we can compute drag delta for satellites
+  const lastDragPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  const handleNodeDragStart: OnNodeDrag = useCallback((_, node) => {
+    lastDragPosRef.current = { x: node.position.x, y: node.position.y }
+  }, [])
+
+  const handleNodeDrag: OnNodeDrag = useCallback((_, node) => {
+    if (node.id === MOJ_ID || !lastDragPosRef.current) return
+    const satPrefix = `sat-${node.id}-`
+    const dx = node.position.x - lastDragPosRef.current.x
+    const dy = node.position.y - lastDragPosRef.current.y
+    if (dx === 0 && dy === 0) return
+    lastDragPosRef.current = { x: node.position.x, y: node.position.y }
+
+    setNodes(prev => prev.map(n =>
+      n.id.startsWith(satPrefix)
+        ? { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }
+        : n
+    ))
+  }, [])
+
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (node.id === MOJ_ID) return
+    lastDragPosRef.current = null
     savePosition(node.id, node.position.x, node.position.y)
   }, [])
 
@@ -574,9 +599,11 @@ export function OrbMap() {
           }}
         >
           <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
-            {activeRings.map(r => (
+            {activeRings.map((r, ri) => (
               <circle
                 key={r}
+                className="ring-enter"
+                style={{ '--ring-delay': `${ri * 0.15}s` } as React.CSSProperties}
                 cx={0}
                 cy={0}
                 r={r}
@@ -596,6 +623,8 @@ export function OrbMap() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
         onInit={() => {
           const saved = loadViewport()
