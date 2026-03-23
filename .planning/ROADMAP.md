@@ -6,7 +6,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Contact Profiles** - Enriched profile fields (birthday, milestones, interests, context) + per-contact equity score display + import dedup logic
+- [x] **Phase 1: Contact Profiles** - Enriched profile fields (birthday, milestones, interests, context) + per-contact equity score display + import dedup logic (completed 2026-03-23)
 - [ ] **Phase 2: Visual Redesign** - Design tokens + Trolley CRM-aligned UI polish, demo-ready dashboard
 - [ ] **Phase 3: Close-Out** - HANDOFF.md so Briell can operate the app after engagement ends
 
@@ -22,11 +22,11 @@
   3. Contact profile has editable milestones, interests, and relationship context fields that save to Airtable
   4. Per-contact equity score (0-100) and score breakdown (by interaction type) are visible on the profile
   5. New Airtable fields follow Briell's naming conventions and are visible/editable in Airtable directly
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 01-01-PLAN.md — Data layer + personal section (birthday, milestones, interests, relationship context)
 - [x] 01-02-PLAN.md — Import script dedup (name + email dual-index)
-- [ ] 01-03-PLAN.md — Equity score breakdown + segmented ring on profile
+- [x] 01-03-PLAN.md — Equity score breakdown + segmented ring on profile
 
 ### Phase 2: Visual Redesign
 **Goal**: The app looks polished enough to demo to Gwyneth — design aligned to Trolley CRM PDF direction
@@ -55,6 +55,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Contact Profiles | 0/3 | Planning complete | - |
+| 1. Contact Profiles | 3/3 | Complete   | 2026-03-23 |
 | 2. Visual Redesign | 0/TBD | Not started | - |
 | 3. Close-Out | 0/TBD | Not started | - |
