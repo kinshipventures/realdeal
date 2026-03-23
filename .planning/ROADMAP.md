@@ -24,7 +24,7 @@
   5. New Airtable fields follow Briell's naming conventions and are visible/editable in Airtable directly
 **Plans:** 3 plans
 Plans:
-- [ ] 01-01-PLAN.md — Data layer + personal section (birthday, milestones, interests, relationship context)
+- [x] 01-01-PLAN.md — Data layer + personal section (birthday, milestones, interests, relationship context)
 - [x] 01-02-PLAN.md — Import script dedup (name + email dual-index)
 - [ ] 01-03-PLAN.md — Equity score breakdown + segmented ring on profile
 
