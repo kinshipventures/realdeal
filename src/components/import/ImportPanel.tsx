@@ -129,7 +129,7 @@ export function ImportPanel() {
               onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
               style={{
                 minHeight: 200,
-                border: `2px dashed ${dragOver ? 'var(--color-brand)' : 'var(--border, rgba(0,0,0,0.12))'}`,
+                border: `2px dashed ${dragOver ? 'var(--color-brand)' : 'var(--edge-strong)'}`,
                 borderRadius: 12,
                 display: 'flex',
                 flexDirection: 'column',
@@ -201,7 +201,7 @@ export function ImportPanel() {
                   padding: '8px 12px',
                   fontSize: 13,
                   borderRadius: 8,
-                  border: '1px solid var(--border, rgba(0,0,0,0.12))',
+                  border: '1px solid var(--edge-strong)',
                   background: 'var(--color-surface)',
                   color: 'var(--text-primary)',
                   cursor: 'pointer',
@@ -221,7 +221,7 @@ export function ImportPanel() {
               </p>
               <div style={{
                 background: 'var(--color-surface)',
-                border: '1px solid var(--border, rgba(0,0,0,0.07))',
+                border: '1px solid var(--edge)',
                 borderRadius: 8,
                 overflow: 'hidden',
               }}>
@@ -231,7 +231,7 @@ export function ImportPanel() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px 12px',
-                    borderBottom: '1px solid var(--border, rgba(0,0,0,0.05))',
+                    borderBottom: '1px solid var(--divider)',
                     fontSize: 13,
                   }}>
                     <span style={{ color: 'var(--text-primary)' }}>{csvHeader}</span>
@@ -257,7 +257,7 @@ export function ImportPanel() {
                   width: '100%',
                   borderCollapse: 'collapse',
                   background: 'var(--color-surface)',
-                  border: '1px solid var(--border, rgba(0,0,0,0.07))',
+                  border: '1px solid var(--edge)',
                   borderRadius: 8,
                   overflow: 'hidden',
                   fontSize: 13,
@@ -271,7 +271,7 @@ export function ImportPanel() {
                           fontSize: 11,
                           fontWeight: 500,
                           color: 'var(--text-secondary)',
-                          borderBottom: '1px solid var(--border, rgba(0,0,0,0.07))',
+                          borderBottom: '1px solid var(--edge)',
                           whiteSpace: 'nowrap',
                         }}>{h}</th>
                       ))}
@@ -284,7 +284,7 @@ export function ImportPanel() {
                           <td key={h} style={{
                             padding: '8px 12px',
                             color: 'var(--text-primary)',
-                            borderBottom: i < 4 ? '1px solid var(--border, rgba(0,0,0,0.05))' : 'none',
+                            borderBottom: i < 4 ? '1px solid var(--divider)' : 'none',
                             whiteSpace: 'nowrap',
                             maxWidth: 200,
                             overflow: 'hidden',
@@ -372,7 +372,7 @@ export function ImportPanel() {
             <div style={{
               padding: 16,
               background: 'var(--color-surface)',
-              border: '1px solid var(--border, rgba(0,0,0,0.07))',
+              border: '1px solid var(--edge)',
               borderRadius: 8,
             }}>
               <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: '0 0 4px', fontWeight: 500 }}>

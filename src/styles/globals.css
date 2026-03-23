@@ -59,6 +59,15 @@
   --interaction-meeting: #E65100;
   --interaction-note: rgba(0,0,0,0.50);
   --interaction-intro: #C2185B;
+  /* Adaptive alpha tokens — flip black↔white for dark mode */
+  --divider: rgba(0,0,0,0.04);
+  --edge: rgba(0,0,0,0.08);
+  --edge-strong: rgba(0,0,0,0.12);
+  --tint: rgba(0,0,0,0.04);
+  --tint-hover: rgba(0,0,0,0.06);
+  --text-muted: rgba(0,0,0,0.35);
+  --nav-bg: rgba(255,255,255,0.72);
+  --stroke-subtle: rgba(0,0,0,0.06);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,6 +82,15 @@
     --orb-shadow-base: 0 4px 20px rgba(0,0,0,0.40), 0 1px 4px rgba(0,0,0,0.30);
     --orb-shadow-hover: 0 8px 32px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.35);
     --orb-shadow-hub: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.40);
+    --divider: rgba(255,255,255,0.07);
+    --edge: rgba(255,255,255,0.10);
+    --edge-strong: rgba(255,255,255,0.16);
+    --tint: rgba(255,255,255,0.06);
+    --tint-hover: rgba(255,255,255,0.08);
+    --text-muted: rgba(255,255,255,0.40);
+    --nav-bg: rgba(30,30,30,0.85);
+    --stroke-subtle: rgba(255,255,255,0.10);
+    --interaction-note: rgba(255,255,255,0.50);
   }
 }
 

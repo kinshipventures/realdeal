@@ -125,7 +125,7 @@ function buildHomeEdges(pods: Pod[]): Edge[] {
     id: `e-moj-${pod.id}`,
     source: MOJ_ID,
     target: pod.id,
-    style: { stroke: 'rgba(0,0,0,0.06)', strokeWidth: 1.5 },
+    style: { stroke: 'var(--stroke-subtle)', strokeWidth: 1.5 },
     type: 'straight',
   }))
 }
@@ -255,7 +255,7 @@ export function OrbMap() {
         },
       }
 
-      const edgeColor = pod.color ? `${pod.color}30` : 'rgba(0,0,0,0.07)'
+      const edgeColor = pod.color ? `${pod.color}30` : 'var(--edge)'
       const catEdges: Edge[] = cats.map(cat => ({
         id: `e-${pod.id}-${cat.id}`,
         source: pod.id,
@@ -364,7 +364,7 @@ export function OrbMap() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
         }}>
-          <p style={{ color: 'rgba(0,0,0,0.45)', fontSize: 14 }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>
             Could not load your network. Check your connection and refresh.
           </p>
         </div>
@@ -402,10 +402,10 @@ export function OrbMap() {
           gap: 10,
           padding: '8px 18px',
           borderRadius: 100,
-          background: 'rgba(255,255,255,0.70)',
+          background: 'var(--surface-panel)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(0,0,0,0.07)',
+          border: '1px solid var(--edge)',
           fontSize: 12,
           letterSpacing: '0.01em',
         }}>
@@ -417,8 +417,8 @@ export function OrbMap() {
           >
             Home
           </button>
-          <span style={{ color: 'rgba(0,0,0,0.2)', fontSize: 10 }}>›</span>
-          <span style={{ color: 'rgba(0,0,0,0.8)', fontWeight: 500 }}>{selectedPod.name}</span>
+          <span style={{ color: 'var(--color-text-tertiary)', fontSize: 10 }}>›</span>
+          <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{selectedPod.name}</span>
         </nav>
       )}
 
@@ -443,7 +443,7 @@ export function OrbMap() {
                 cy={0}
                 r={r}
                 fill="none"
-                stroke="rgba(0,0,0,0.06)"
+                stroke="var(--stroke-subtle)"
                 strokeWidth={1 / viewport.zoom}
                 strokeDasharray={`${8 / viewport.zoom} ${6 / viewport.zoom}`}
               />
@@ -478,7 +478,7 @@ export function OrbMap() {
       >
         <Background
           variant={BackgroundVariant.Dots}
-          color="rgba(0,0,0,0.08)"
+          color="var(--edge)"
           gap={52}
           size={1}
         />

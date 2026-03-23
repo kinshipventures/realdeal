@@ -25,7 +25,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
         padding: '10px 20px',
         background: 'none',
         border: 'none',
-        borderBottom: '1px solid rgba(0,0,0,0.04)',
+        borderBottom: '1px solid var(--divider)',
         cursor: 'pointer',
         textAlign: 'left',
       }}
@@ -62,7 +62,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
       <div style={{
         fontSize: 10,
         fontWeight: 500,
-        color: overdue ? '#D93025' : 'rgba(0,0,0,0.28)',
+        color: overdue ? '#D93025' : 'var(--color-text-tertiary)',
         whiteSpace: 'nowrap',
         letterSpacing: '0.02em',
       }}>

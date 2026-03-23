@@ -98,7 +98,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
     background: 'var(--surface-panel)',
     backdropFilter: 'var(--panel-blur)',
     WebkitBackdropFilter: 'var(--panel-blur)',
-    borderLeft: '1px solid rgba(0,0,0,0.07)',
+    borderLeft: '1px solid var(--edge)',
     zIndex: 50,
   }
 
@@ -111,7 +111,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       style={isMobile ? mobileStyle : desktopStyle}
     >
       {/* Header */}
-      <div style={{ padding: '28px 24px 18px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '28px 24px 18px', borderBottom: '1px solid var(--divider)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isMobile && (
@@ -158,7 +158,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
         <div style={{ position: 'relative' }}>
           <span style={{
             position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-            fontSize: 12, color: 'rgba(0,0,0,0.25)', pointerEvents: 'none',
+            fontSize: 12, color: 'var(--color-text-tertiary)', pointerEvents: 'none',
           }}>
             ⌕
           </span>
@@ -170,23 +170,23 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
             style={{
               width: '100%',
               padding: '8px 12px 8px 28px',
-              background: 'rgba(0,0,0,0.03)',
-              border: '1px solid rgba(0,0,0,0.07)',
+              background: 'var(--tint)',
+              border: '1px solid var(--edge)',
               borderRadius: 8,
-              color: 'rgba(0,0,0,0.75)',
+              color: 'var(--color-text-primary)',
               fontSize: 13,
               outline: 'none',
               transition: 'border-color 0.15s, background 0.15s',
             }}
             onFocus={e => {
               const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'rgba(255,255,255,0.15)'
-              el.style.background = 'rgba(0,0,0,0.05)'
+              el.style.borderColor = 'var(--edge-strong)'
+              el.style.background = 'var(--tint-hover)'
             }}
             onBlur={e => {
               const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'rgba(0,0,0,0.07)'
-              el.style.background = 'rgba(0,0,0,0.03)'
+              el.style.borderColor = 'var(--edge)'
+              el.style.background = 'var(--tint)'
             }}
           />
         </div>
@@ -230,7 +230,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       {/* Footer */}
       <div style={{
         padding: '14px 24px',
-        borderTop: '1px solid rgba(0,0,0,0.04)',
+        borderTop: '1px solid var(--divider)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -243,10 +243,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           onClick={() => setShowNewContact(true)}
           style={{
             padding: '6px 14px',
-            background: 'rgba(0,0,0,0.05)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            background: 'var(--tint-hover)',
+            border: '1px solid var(--edge)',
             borderRadius: 7,
-            color: 'rgba(0,0,0,0.50)',
+            color: 'var(--color-text-secondary)',
             fontSize: 12, fontWeight: 500,
             cursor: 'pointer',
             transition: 'background 0.15s, color 0.15s',
@@ -254,13 +254,13 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(0,0,0,0.07)'
-            el.style.color = 'rgba(0,0,0,0.75)'
+            el.style.background = 'var(--edge)'
+            el.style.color = 'var(--color-text-primary)'
           }}
           onMouseLeave={e => {
             const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(0,0,0,0.05)'
-            el.style.color = 'rgba(0,0,0,0.50)'
+            el.style.background = 'var(--tint-hover)'
+            el.style.color = 'var(--color-text-secondary)'
           }}
         >
           + Add contact

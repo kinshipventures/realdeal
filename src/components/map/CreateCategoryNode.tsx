@@ -77,7 +77,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
           width: SIZE,
           height: SIZE,
           borderRadius: '50%',
-          border: '2px dashed rgba(0,0,0,0.15)',
+          border: '2px dashed var(--edge-strong)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -104,7 +104,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               maxLength={30}
-              placeholder="Name..."
+              placeholder="Name this group"
               disabled={submitting}
               style={{
                 width: '100%',
@@ -114,7 +114,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
                 textAlign: 'center',
                 fontSize: 10,
                 fontWeight: 500,
-                color: 'rgba(0,0,0,0.60)',
+                color: 'var(--color-text-secondary)',
                 letterSpacing: '-0.005em',
                 fontFamily: 'inherit',
               }}
@@ -132,7 +132,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
           <span style={{
             fontSize: 18,
             fontWeight: 300,
-            color: 'rgba(0,0,0,0.28)',
+            color: 'var(--color-text-tertiary)',
             userSelect: 'none',
             lineHeight: 1,
           }}>

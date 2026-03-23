@@ -301,7 +301,7 @@ export function Dashboard() {
         <div style={{ ...PANEL, overflow: 'hidden', marginBottom: 24 }}>
           <div style={{
             padding: '20px 24px 14px',
-            borderBottom: '1px solid rgba(0,0,0,0.04)',
+            borderBottom: '1px solid var(--divider)',
             display: 'flex', alignItems: 'center',
           }}>
             <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
@@ -370,7 +370,7 @@ export function Dashboard() {
             </button>
 
             {dormantExpanded && (
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.04)', maxHeight: 300, overflowY: 'auto' }}>
+              <div style={{ borderTop: '1px solid var(--divider)', maxHeight: 300, overflowY: 'auto' }}>
                 {dormantContacts.map(({ contact, days }) => (
                   <DormantRow
                     key={contact.id}
@@ -531,7 +531,7 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
   const color = pod.color ?? '#718096'
   const cadence = pod.cadence ?? 'monthly'
   const cardRef = useRef<HTMLDivElement>(null)
-  const restShadow = '0 1px 3px rgba(0,0,0,0.06)'
+  const restShadow = '0 1px 3px var(--divider)'
   const hoverShadow = `0 4px 16px ${hexToRgba(color, 0.15)}`
 
   return (
@@ -551,7 +551,7 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
       }}
       style={{
         background: 'var(--surface-panel)',
-        border: '1px solid rgba(0,0,0,0.07)',
+        border: '1px solid var(--edge)',
         borderRadius: 12,
         padding: '14px 16px',
         minWidth: 155,
@@ -630,7 +630,7 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
         flex: 1,
         padding: '16px 18px',
         background: 'var(--surface-panel)',
-        border: '1px solid rgba(0,0,0,0.06)',
+        border: '1px solid var(--divider)',
         borderTop: '2px solid var(--color-brand)',
         borderRadius: 14,
         cursor: 'pointer',
@@ -638,7 +638,7 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
         fontFamily: 'inherit',
         transition: 'transform 0.15s, box-shadow 0.15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px var(--divider)' }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -669,7 +669,7 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
         display: 'flex', alignItems: 'center', gap: 12,
         width: '100%', padding: '12px 24px',
         background: 'none', border: 'none',
-        borderBottom: '1px solid rgba(0,0,0,0.04)',
+        borderBottom: '1px solid var(--divider)',
         cursor: 'pointer', textAlign: 'left',
       }}
     >
@@ -706,7 +706,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '12px 24px',
-      borderBottom: '1px solid rgba(0,0,0,0.04)',
+      borderBottom: '1px solid var(--divider)',
     }}>
       <Avatar name={contact.name} size={28} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -747,8 +747,8 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
               style={{
                 fontSize: 10, fontWeight: 500,
                 padding: '3px 10px', borderRadius: 100,
-                background: 'rgba(0,0,0,0.04)',
-                border: '1px solid rgba(0,0,0,0.07)',
+                background: 'var(--tint)',
+                border: '1px solid var(--edge)',
                 color: label === 'Let go' ? 'rgba(180,40,40,0.65)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',

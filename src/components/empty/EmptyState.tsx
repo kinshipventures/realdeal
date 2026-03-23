@@ -104,19 +104,19 @@ export function EmptyState({
               key={i}
               style={{
                 height: 44,
-                border: '1px dashed rgba(0,0,0,0.10)',
+                border: '1px dashed var(--edge-strong)',
                 borderRadius: 10,
-                background: 'rgba(0,0,0,0.02)',
+                background: 'var(--tint)',
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0 14px',
                 gap: 10,
               }}
             >
-              <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,0,0,0.04)', flexShrink: 0 }} />
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--tint)', flexShrink: 0 }} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <div style={{ height: 7, borderRadius: 4, background: 'rgba(0,0,0,0.04)', width: `${55 + i * 12}%` }} />
-                <div style={{ height: 7, borderRadius: 4, background: 'rgba(0,0,0,0.04)', width: `${35 + i * 8}%` }} />
+                <div style={{ height: 7, borderRadius: 4, background: 'var(--tint)', width: `${55 + i * 12}%` }} />
+                <div style={{ height: 7, borderRadius: 4, background: 'var(--tint)', width: `${35 + i * 8}%` }} />
               </div>
             </div>
           ))}

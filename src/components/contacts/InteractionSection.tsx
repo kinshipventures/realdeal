@@ -25,7 +25,7 @@ const TYPE_COLORS: Record<InteractionType, string> = {
   email: '#1565C0',
   text: '#7B1FA2',
   meeting: '#E65100',
-  note: 'rgba(0,0,0,0.50)',
+  note: 'var(--color-text-secondary)',
   intro: '#C2185B',
 }
 
@@ -50,8 +50,8 @@ export const TYPE_ICONS: Record<string, React.ReactElement> = {
 }
 
 // Shared timeline styles — module-level to avoid re-creating across rows
-const rowStyle: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }
-const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }
+const rowStyle: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--divider)' }
+const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'var(--color-text-tertiary)', letterSpacing: '0.02em' }
 
 function latestContactDate(interactions: Interaction[]): ISODate | null {
   const dates = interactions
@@ -174,16 +174,16 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 11,
-    color: 'rgba(0,0,0,0.25)',
+    color: 'var(--color-text-tertiary)',
     marginBottom: 14,
     letterSpacing: '0.01em',
   }
 
   const smallInputStyle: React.CSSProperties = {
     fontSize: 12,
-    color: 'rgba(0,0,0,0.70)',
-    background: 'rgba(255,255,255,0.6)',
-    border: '1px solid rgba(0,0,0,0.08)',
+    color: 'var(--color-text-primary)',
+    background: 'var(--surface-panel)',
+    border: '1px solid var(--edge)',
     borderRadius: 5,
     outline: 'none',
     fontFamily: 'inherit',
@@ -193,18 +193,18 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
   return (
     <div>
       {/* Summary bar */}
-      <div style={{ padding: '12px 0', borderTop: '1px solid rgba(0,0,0,0.04)', marginBottom: 20 }}>
+      <div style={{ padding: '12px 0', borderTop: '1px solid var(--divider)', marginBottom: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {(['call', 'email', 'text', 'meeting'] as const).map(t => {
             const date = typeRecency[t]
             const never = !date
             return (
               <div key={t} style={{ textAlign: 'center' }}>
-                <div style={{ color: never ? 'rgba(0,0,0,0.22)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div style={{ color: never ? 'var(--color-text-tertiary)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   {TYPE_ICONS[t]}
                   <span style={{ fontSize: 10 }}>{TYPE_LABELS[t]}</span>
                 </div>
-                <div style={{ fontSize: 11, color: never ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.45)', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: never ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', marginTop: 2 }}>
                   {date ? formatRelativeTime(date) : 'Never'}
                 </div>
               </div>
@@ -240,8 +240,8 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
       {/* Log form */}
       {showLogForm && (
         <div style={{
-          background: 'rgba(0,0,0,0.03)',
-          border: '1px solid rgba(0,0,0,0.07)',
+          background: 'var(--tint)',
+          border: '1px solid var(--edge)',
           borderRadius: 8,
           padding: '12px 14px',
           marginBottom: 16,
@@ -256,10 +256,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                   fontSize: 11, fontWeight: 500,
                   padding: '3px 10px',
                   borderRadius: 100,
-                  background: logType === t ? `${TYPE_COLORS[t]}12` : 'rgba(0,0,0,0.04)',
+                  background: logType === t ? `${TYPE_COLORS[t]}12` : 'var(--tint)',
                   border: '1px solid',
-                  borderColor: logType === t ? `${TYPE_COLORS[t]}30` : 'rgba(0,0,0,0.07)',
-                  color: logType === t ? TYPE_COLORS[t] : 'rgba(0,0,0,0.38)',
+                  borderColor: logType === t ? `${TYPE_COLORS[t]}30` : 'var(--edge)',
+                  color: logType === t ? TYPE_COLORS[t] : 'var(--text-muted)',
                   cursor: 'pointer',
                   transition: 'all 0.1s',
                 }}
@@ -277,10 +277,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
               width: '100%',
               fontSize: 12,
               padding: '6px 8px',
-              background: 'rgba(255,255,255,0.6)',
-              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
               borderRadius: 6,
-              color: 'rgba(0,0,0,0.70)',
+              color: 'var(--color-text-primary)',
               marginBottom: 8,
               outline: 'none',
               fontFamily: 'inherit',
@@ -297,10 +297,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
               width: '100%',
               fontSize: 12,
               padding: '6px 8px',
-              background: 'rgba(255,255,255,0.6)',
-              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
               borderRadius: 6,
-              color: 'rgba(0,0,0,0.70)',
+              color: 'var(--color-text-primary)',
               marginBottom: 10,
               outline: 'none',
               fontFamily: 'inherit',
@@ -315,10 +315,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
             style={{
               fontSize: 12, fontWeight: 500,
               padding: '6px 16px',
-              background: 'rgba(0,0,0,0.07)',
-              border: '1px solid rgba(0,0,0,0.10)',
+              background: 'var(--edge)',
+              border: '1px solid var(--edge-strong)',
               borderRadius: 6,
-              color: opState === 'logging' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.70)',
+              color: opState === 'logging' ? 'var(--text-muted)' : 'var(--color-text-primary)',
               cursor: opState === 'logging' ? 'default' : 'pointer',
               transition: 'background 0.15s',
             }}
@@ -352,8 +352,8 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
           {editingInteraction?.id === interaction.id ? (
             /* Edit mode */
             <div style={{
-              background: 'rgba(0,0,0,0.03)',
-              border: '1px solid rgba(0,0,0,0.07)',
+              background: 'var(--tint)',
+              border: '1px solid var(--edge)',
               borderRadius: 8,
               padding: '10px 12px',
             }}>
@@ -365,10 +365,10 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                     style={{
                       fontSize: 10, fontWeight: 500,
                       padding: '2px 8px', borderRadius: 100,
-                      background: editingInteraction.type === t ? `${TYPE_COLORS[t]}12` : 'rgba(0,0,0,0.04)',
+                      background: editingInteraction.type === t ? `${TYPE_COLORS[t]}12` : 'var(--tint)',
                       border: '1px solid',
-                      borderColor: editingInteraction.type === t ? `${TYPE_COLORS[t]}30` : 'rgba(0,0,0,0.07)',
-                      color: editingInteraction.type === t ? TYPE_COLORS[t] : 'rgba(0,0,0,0.38)',
+                      borderColor: editingInteraction.type === t ? `${TYPE_COLORS[t]}30` : 'var(--edge)',
+                      color: editingInteraction.type === t ? TYPE_COLORS[t] : 'var(--text-muted)',
                       cursor: 'pointer',
                     }}
                   >
@@ -394,8 +394,8 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                   onClick={() => handleUpdateInteraction(interaction.id)}
                   style={{
                     fontSize: 11, fontWeight: 500, padding: '4px 12px',
-                    background: 'rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.10)',
-                    borderRadius: 5, color: 'rgba(0,0,0,0.70)', cursor: 'pointer',
+                    background: 'var(--edge)', border: '1px solid var(--edge-strong)',
+                    borderRadius: 5, color: 'var(--color-text-primary)', cursor: 'pointer',
                     fontFamily: 'inherit',
                   }}
                 >
@@ -404,7 +404,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                 <button
                   onClick={() => setEditingInteraction(null)}
                   style={{
-                    fontSize: 11, color: 'rgba(0,0,0,0.35)',
+                    fontSize: 11, color: 'var(--text-muted)',
                     background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
@@ -427,7 +427,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                     })}
                     className="interaction-action"
                     style={{
-                      fontSize: 10, color: 'rgba(0,0,0,0.28)',
+                      fontSize: 10, color: 'var(--color-text-tertiary)',
                       background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                       opacity: 0, transition: 'opacity 0.15s',
                     }}
@@ -438,12 +438,12 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                     onClick={() => handleDeleteInteraction(interaction.id)}
                     className="interaction-action"
                     style={{
-                      fontSize: 10, color: 'rgba(0,0,0,0.28)',
+                      fontSize: 10, color: 'var(--color-text-tertiary)',
                       background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                       opacity: 0, transition: 'opacity 0.15s',
                     }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.28)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
                   >
                     del
                   </button>
@@ -451,7 +451,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                 </div>
               </div>
               {interaction.notes && (
-                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.55)', lineHeight: 1.55, marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.55, marginTop: 4 }}>
                   {interaction.notes}
                 </div>
               )}

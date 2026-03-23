@@ -46,7 +46,7 @@ function AppShell() {
             justifyContent: 'space-around',
             alignItems: 'center',
             background: 'var(--color-surface)',
-            borderTop: '1px solid rgba(0,0,0,0.07)',
+            borderTop: '1px solid var(--edge)',
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
@@ -62,12 +62,12 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill={!isMap ? 'var(--color-brand)' : 'none'}
-              stroke={!isMap ? 'var(--color-brand)' : 'rgba(0,0,0,0.35)'}
+              stroke={!isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: !isMap ? 'var(--color-brand)' : 'rgba(0,0,0,0.35)' }}>Pulse</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: !isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pulse</span>
           </button>
           <button
             type="button"
@@ -81,7 +81,7 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill="none"
-              stroke={isMap ? 'var(--color-brand)' : 'rgba(0,0,0,0.35)'}
+              stroke={isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
               <circle cx="12" cy="12" r="10"/>
@@ -90,7 +90,7 @@ function AppShell() {
               <line x1="12" y1="6" x2="12" y2="2"/>
               <line x1="12" y1="22" x2="12" y2="18"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'rgba(0,0,0,0.35)' }}>Map</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Map</span>
           </button>
         </nav>
       ) : (
@@ -108,11 +108,11 @@ function AppShell() {
             gap: 2,
             padding: 4,
             borderRadius: 100,
-            background: 'rgba(255,255,255,0.72)',
+            background: 'var(--nav-bg)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            border: '1px solid var(--edge)',
+            boxShadow: '0 2px 12px var(--divider)',
           }}
         >
           <button
@@ -130,7 +130,7 @@ function AppShell() {
               fontFamily: 'inherit',
               transition: 'all 0.2s',
               background: !isMap ? 'var(--color-brand)' : 'transparent',
-              color: !isMap ? '#ffffff' : 'rgba(0,0,0,0.35)',
+              color: !isMap ? '#ffffff' : 'var(--text-muted)',
               boxShadow: !isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
             }}
           >
@@ -151,7 +151,7 @@ function AppShell() {
               fontFamily: 'inherit',
               transition: 'all 0.2s',
               background: isMap ? 'var(--color-brand)' : 'transparent',
-              color: isMap ? '#ffffff' : 'rgba(0,0,0,0.35)',
+              color: isMap ? '#ffffff' : 'var(--text-muted)',
               boxShadow: isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
             }}
           >

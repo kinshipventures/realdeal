@@ -82,7 +82,7 @@ export function SolidOrb({
             cy={cy}
             r={ringRadius}
             fill="none"
-            stroke="rgba(0,0,0,0.06)"
+            stroke="var(--stroke-subtle)"
             strokeWidth={2}
           />
           {/* Fill arc */}

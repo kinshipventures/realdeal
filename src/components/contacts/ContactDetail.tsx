@@ -39,7 +39,7 @@ function SegmentedEquityRing({ breakdown, score, size = 72 }: {
     return (
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <circle cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+          fill="none" stroke="var(--stroke-subtle)" strokeWidth={strokeWidth} />
       </svg>
     )
   }
@@ -61,12 +61,12 @@ function SegmentedEquityRing({ breakdown, score, size = 72 }: {
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
       <circle cx={size / 2} cy={size / 2} r={radius}
-        fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+        fill="none" stroke="var(--stroke-subtle)" strokeWidth={strokeWidth} />
       {segments.map(seg => (
         <circle key={seg.type}
           cx={size / 2} cy={size / 2} r={radius}
           fill="none"
-          stroke={RING_COLORS[seg.type] ?? 'rgba(0,0,0,0.15)'}
+          stroke={RING_COLORS[seg.type] ?? 'var(--edge-strong)'}
           strokeWidth={strokeWidth}
           strokeDasharray={`${seg.arcLength} ${circumference}`}
           strokeDashoffset={seg.segmentOffset}
@@ -154,10 +154,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
     const inputStyle = {
       width: '100%',
-      background: 'rgba(0,0,0,0.03)',
-      border: '1px solid rgba(0,0,0,0.10)',
+      background: 'var(--tint)',
+      border: '1px solid var(--edge-strong)',
       borderRadius: 6,
-      color: 'rgba(0,0,0,0.82)',
+      color: 'var(--color-text-primary)',
       fontSize: 13,
       padding: '6px 10px',
       outline: 'none',
@@ -187,7 +187,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
           <div style={{
             fontSize: 10, fontWeight: 500,
-            color: 'rgba(0,0,0,0.28)',
+            color: 'var(--color-text-tertiary)',
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
           }}>
@@ -234,7 +234,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             onClick={() => setEditingField(key)}
             style={{
               fontSize: 13,
-              color: val ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.18)',
+              color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
               cursor: 'text',
               padding: '2px 0',
               minHeight: 20,
@@ -303,9 +303,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const smallInputStyle: React.CSSProperties = {
     fontSize: 12,
-    color: 'rgba(0,0,0,0.60)',
-    background: 'rgba(0,0,0,0.03)',
-    border: '1px solid rgba(0,0,0,0.10)',
+    color: 'var(--color-text-secondary)',
+    background: 'var(--tint)',
+    border: '1px solid var(--edge-strong)',
     borderRadius: 4,
     padding: '2px 6px',
     outline: 'none',
@@ -328,7 +328,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
     return (
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(0,0,0,0.28)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>
+        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>
           Birthday
         </div>
         {editing ? (
@@ -342,10 +342,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             }}
             style={{
               width: '100%',
-              background: 'rgba(0,0,0,0.03)',
-              border: '1px solid rgba(0,0,0,0.10)',
+              background: 'var(--tint)',
+              border: '1px solid var(--edge-strong)',
               borderRadius: 6,
-              color: 'rgba(0,0,0,0.82)',
+              color: 'var(--color-text-primary)',
               fontSize: 13,
               padding: '6px 10px',
               outline: 'none',
@@ -357,11 +357,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             onClick={() => setEditingField('birthday')}
             style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'text', padding: '2px 0', minHeight: 20 }}
           >
-            <span style={{ fontSize: 13, color: val ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.18)' }}>
+            <span style={{ fontSize: 13, color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
               {val ?? 'add birthday'}
             </span>
             {countdown !== null && countdown <= 30 && (
-              <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                 {countdown === 0 ? 'today' : `in ${countdown} day${countdown === 1 ? '' : 's'}`}
               </span>
             )}
@@ -385,12 +385,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         background: 'var(--surface-panel)',
         backdropFilter: 'var(--panel-blur)',
         WebkitBackdropFilter: 'var(--panel-blur)',
-        borderLeft: '1px solid rgba(0,0,0,0.08)',
+        borderLeft: '1px solid var(--edge)',
         zIndex: 60,
       }}
     >
       {/* Header */}
-      <div style={{ padding: '24px 24px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '24px 24px 0', borderBottom: '1px solid var(--divider)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           {/* Delete control — existing contacts only */}
           {!isNew ? (
@@ -402,7 +402,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   disabled={deleting}
                   style={{
                     fontSize: 11, fontWeight: 500,
-                    color: deleting ? 'rgba(0,0,0,0.28)' : 'rgba(180,40,40,0.85)',
+                    color: deleting ? 'var(--color-text-tertiary)' : 'rgba(180,40,40,0.85)',
                     background: 'none', border: 'none',
                     cursor: deleting ? 'default' : 'pointer',
                     padding: 0, letterSpacing: '0.01em',
@@ -410,12 +410,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 >
                   {deleting ? 'Removing...' : 'Remove this person?'}
                 </button>
-                <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.20)' }}>·</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>·</span>
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
                   style={{
-                    fontSize: 11, color: 'rgba(0,0,0,0.38)',
+                    fontSize: 11, color: 'var(--text-muted)',
                     background: 'none', border: 'none',
                     cursor: 'pointer', padding: 0,
                   }}
@@ -471,10 +471,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   width: '100%',
                   fontSize: 18, fontWeight: 600,
                   letterSpacing: '-0.02em',
-                  background: 'rgba(0,0,0,0.03)',
-                  border: '1px solid rgba(0,0,0,0.10)',
+                  background: 'var(--tint)',
+                  border: '1px solid var(--edge-strong)',
                   borderRadius: 6,
-                  color: 'rgba(0,0,0,0.85)',
+                  color: 'var(--color-text-primary)',
                   padding: '3px 8px',
                   outline: 'none',
                   fontFamily: 'inherit',
@@ -487,7 +487,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   fontSize: 18, fontWeight: 600,
                   fontFamily: 'var(--font-serif)',
                   letterSpacing: '-0.02em',
-                  color: draft.name ? 'var(--color-text-primary)' : 'rgba(0,0,0,0.20)',
+                  color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                   cursor: 'text',
                   padding: '2px 0',
                 }}
@@ -509,12 +509,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               ) : (
                 <span
                   onClick={() => setEditingField('role')}
-                  style={{ fontSize: 12, color: draft.role ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)', cursor: 'text' }}
+                  style={{ fontSize: 12, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
                 >
                   {draft.role ?? 'Role'}
                 </span>
               )}
-              <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.20)' }}>at</span>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>at</span>
               {editingField === 'company' ? (
                 <input
                   autoFocus
@@ -526,7 +526,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               ) : (
                 <span
                   onClick={() => setEditingField('company')}
-                  style={{ fontSize: 12, color: draft.company ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)', cursor: 'text' }}
+                  style={{ fontSize: 12, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
                 >
                   {draft.company ?? 'Company'}
                 </span>
@@ -576,7 +576,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {equityBreakdown.map(b => (
                 <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
-                  <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.38)', letterSpacing: '0.02em' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
                     {b.type}
                   </span>
                 </div>
@@ -608,7 +608,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       {isNew && (
         <div style={{
           padding: '14px 24px',
-          borderTop: '1px solid rgba(0,0,0,0.04)',
+          borderTop: '1px solid var(--divider)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
@@ -623,10 +623,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             disabled={creating || !draft.name}
             style={{
               padding: '8px 20px',
-              background: draft.name ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.04)',
-              border: '1px solid rgba(0,0,0,0.10)',
+              background: draft.name ? 'var(--edge)' : 'var(--tint)',
+              border: '1px solid var(--edge-strong)',
               borderRadius: 7,
-              color: draft.name ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.28)',
+              color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
               fontSize: 13, fontWeight: 500,
               cursor: draft.name ? 'pointer' : 'default',
               transition: 'all 0.15s',
