@@ -46,14 +46,16 @@ Plans:
 - [x] 04-02-PLAN.md — Dashboard birthday section (Coming Up)
 
 ### Phase 5: Wrapped
-**Goal**: Moj can open a Wrapped view and celebrate her relationship activity for the month
+**Goal**: Moj sees a rotating insight card on the dashboard celebrating her weekly relationship activity
 **Depends on**: Phase 4
 **Requirements**: WRAP-01, WRAP-02
 **Success Criteria** (what must be TRUE):
   1. A Wrapped view exists showing key monthly stats: contacts reached, intros made, top pods
   2. Stats are presented as full-bleed gradient slides in the Spotify Wrapped visual style
   3. Slides use Fraunces display type and pod-colored gradients consistent with the design system
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 05-01-PLAN.md — WrappedCard component + Dashboard integration (insight card with 3 rotating stats)
 
 ### Phase 6: Campaigns
 **Goal**: Moj can track a lightweight outreach pipeline without leaving the app
@@ -74,5 +76,5 @@ Plans:
 | 02.1. Design Implementation | v1.0 | 7/7 | Complete | 2026-03-23 |
 | 3. Close-Out | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Search + Birthdays | v1.1 | 2/2 | Complete   | 2026-03-24 |
-| 5. Wrapped | v1.1 | 0/? | Not started | - |
+| 5. Wrapped | v1.1 | 0/1 | Planned | - |
 | 6. Campaigns | v1.1 | 0/? | Not started | - |
