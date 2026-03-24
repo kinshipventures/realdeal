@@ -55,7 +55,7 @@ Plans:
   3. Slides use Fraunces display type and pod-colored gradients consistent with the design system
 **Plans:** 1 plan
 Plans:
-- [ ] 05-01-PLAN.md — WrappedCard component + Dashboard integration (insight card with 3 rotating stats)
+- [x] 05-01-PLAN.md — WrappedCard component + Dashboard integration (insight card with 3 rotating stats)
 
 ### Phase 6: Campaigns
 **Goal**: Moj can track a lightweight outreach pipeline without leaving the app
