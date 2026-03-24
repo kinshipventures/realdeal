@@ -59,21 +59,21 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRCH-01 | TBD | Pending |
-| SRCH-02 | TBD | Pending |
-| WRAP-01 | TBD | Pending |
-| WRAP-02 | TBD | Pending |
-| BDAY-01 | TBD | Pending |
-| BDAY-02 | TBD | Pending |
-| CAMP-01 | TBD | Pending |
-| CAMP-02 | TBD | Pending |
-| CAMP-03 | TBD | Pending |
+| SRCH-01 | Phase 4 | Pending |
+| SRCH-02 | Phase 4 | Pending |
+| BDAY-01 | Phase 4 | Pending |
+| BDAY-02 | Phase 4 | Pending |
+| WRAP-01 | Phase 5 | Pending |
+| WRAP-02 | Phase 5 | Pending |
+| CAMP-01 | Phase 6 | Pending |
+| CAMP-02 | Phase 6 | Pending |
+| CAMP-03 | Phase 6 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after v1.1 milestone start*
+*Last updated: 2026-03-23 after v1.1 roadmap creation*
