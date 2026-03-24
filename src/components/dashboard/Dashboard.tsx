@@ -17,6 +17,8 @@ import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/ty
 import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
+import { WrappedCard } from './WrappedCard'
+import type { WrappedInsight } from './WrappedCard'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -126,6 +128,69 @@ export function Dashboard() {
       return a.pod.name.localeCompare(b.pod.name)
     })
   }, [pods, contacts, byContact])
+
+  // Wrapped insights — weekly stats for the insight card
+  const wrappedInsights = useMemo((): WrappedInsight[] => {
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+
+    const recentInteractions = allInteractions.filter(ix => new Date(ix.date).getTime() >= sevenDaysAgo)
+    const recentContactIds = new Set(recentInteractions.map(ix => ix.contact_id))
+    const peopleReached = recentContactIds.size
+
+    const podScores = pods.map(p => ({
+      pod: p,
+      score: podEquityScore(contacts.filter(c => c.list_ids.includes(p.id)), byContact),
+    }))
+    const topPodEntry = podScores.sort((a, b) => b.score - a.score)[0] ?? null
+
+    const countByContact = new Map<string, number>()
+    for (const ix of recentInteractions) {
+      countByContact.set(ix.contact_id, (countByContact.get(ix.contact_id) ?? 0) + 1)
+    }
+    let topContactId: string | null = null
+    let topCount = 0
+    for (const [id, count] of countByContact) {
+      if (count > topCount) { topCount = count; topContactId = id }
+    }
+    const topContact = topContactId ? contacts.find(c => c.id === topContactId) : null
+
+    if (peopleReached === 0) return []
+
+    const insights: WrappedInsight[] = []
+
+    insights.push({
+      type: 'people-reached',
+      stat: String(peopleReached),
+      label: 'people reached',
+      sub: 'this week',
+      color: '#25B439',
+      shiftColor: '#00BFA5',
+    })
+
+    if (topPodEntry) {
+      insights.push({
+        type: 'top-pod',
+        stat: topPodEntry.pod.name,
+        label: 'top pod',
+        sub: `${topPodEntry.score} equity score`,
+        color: topPodEntry.pod.color ?? '#718096',
+        shiftColor: POD_SHIFT_COLORS[topPodEntry.pod.color ?? ''] ?? topPodEntry.pod.color ?? '#718096',
+      })
+    }
+
+    if (topContact) {
+      insights.push({
+        type: 'most-connected',
+        stat: topContact.name.split(' ')[0],
+        label: 'most connected',
+        sub: `${topCount} interaction${topCount !== 1 ? 's' : ''} this week`,
+        color: '#25B439',
+        shiftColor: '#00BFA5',
+      })
+    }
+
+    return insights
+  }, [allInteractions, contacts, pods, byContact])
 
   // Overdue contacts
   const overdueContacts = useMemo(() => {
@@ -289,6 +354,11 @@ export function Dashboard() {
               <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} sparkline={sparkline} />
             ))}
           </div>
+        )}
+
+        {/* Wrapped insight card */}
+        {!interactionsLoading && (
+          <WrappedCard insights={wrappedInsights} />
         )}
 
         {/* Coming Up — birthdays in next 14 days */}
