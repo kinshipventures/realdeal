@@ -34,10 +34,18 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ### Active
 
-- [ ] LP investor list imported and clean in Airtable (blocked on data from Moj/Briell)
-- [ ] Talent list imported and clean in Airtable (blocked on data from stakeholder)
-- [ ] Gmail integration — email context in contact timelines (blocked on credentials)
-- [ ] Contact search (find anyone by name without navigating pods)
+- [ ] Contact search — find anyone by name without navigating pods
+- [ ] Wrapped slides — monthly/quarterly celebration views (Spotify Wrapped energy per Moj)
+- [ ] Birthday reminders — surface upcoming birthdays on dashboard
+- [ ] Campaign tracking — lightweight pipeline view for investments, events, SPVs
+
+### Deferred (blocked on external access)
+
+- [ ] LP investor list imported (blocked on data from Moj/Briell)
+- [ ] Talent list imported (blocked on data from stakeholder)
+- [ ] Gmail integration (blocked on OAuth credentials from Moj)
+- [ ] iMessage integration (blocked on Mac Mini + Apple ID setup)
+- [ ] Calendar sync (blocked on Gmail OAuth)
 
 ### Out of Scope
 
@@ -84,5 +92,32 @@ Shipped v1.0 on 2026-03-23. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 | Browser CSV import over script | Briell needs self-service after engagement ends | ✓ Good (replaces pnpm seed:csv) |
 | Dark mode via prefers-color-scheme | System-level only, no manual toggle. Minimal complexity. | ✓ Good (adaptive CSS tokens shipped) |
 
+## Current Milestone: v1.1 Polish & Features
+
+**Goal:** Ship the features Moj was most excited about that don't require external access — search, Wrapped slides, birthday reminders, and campaign tracking.
+
+**Target features:**
+- Contact search (global find by name)
+- Spotify Wrapped-style celebration slides
+- Birthday reminders on dashboard
+- Campaign/pipeline tracking view
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-23 after v1.0 milestone*
+*Last updated: 2026-03-23 after v1.1 milestone start*
