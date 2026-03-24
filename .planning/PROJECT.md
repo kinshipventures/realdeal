@@ -36,7 +36,7 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ### Active
 
-- [ ] Wrapped slides — monthly/quarterly celebration views (Spotify Wrapped energy per Moj)
+- ✓ Wrapped insight card — weekly stats (people reached, top pod, most connected) as cycling gradient dashboard card — v1.1
 - [ ] Campaign tracking — lightweight pipeline view for investments, events, SPVs
 
 ### Deferred (blocked on external access)
@@ -120,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after v1.1 milestone start*
+*Last updated: 2026-03-24 after Phase 5 (Wrapped) completion*
