@@ -40,7 +40,10 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full details.
   2. Search results show contact name, pod, and last contacted date — clicking opens the contact profile
   3. Dashboard shows a dedicated birthday section with contacts whose birthdays fall in the next 14 days
   4. Birthday row shows contact name, exact date, days until, and pod — clicking opens the profile
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Command palette search (SearchPalette + nav integration)
+- [ ] 04-02-PLAN.md — Dashboard birthday section (Coming Up)
 
 ### Phase 5: Wrapped
 **Goal**: Moj can open a Wrapped view and celebrate her relationship activity for the month
@@ -70,6 +73,6 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full details.
 | 2. Visual Redesign | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 02.1. Design Implementation | v1.0 | 7/7 | Complete | 2026-03-23 |
 | 3. Close-Out | v1.0 | 2/2 | Complete | 2026-03-23 |
-| 4. Search + Birthdays | v1.1 | 0/? | Not started | - |
+| 4. Search + Birthdays | v1.1 | 0/2 | Planning complete | - |
 | 5. Wrapped | v1.1 | 0/? | Not started | - |
 | 6. Campaigns | v1.1 | 0/? | Not started | - |
