@@ -31,12 +31,12 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 - ✓ Design token system via CSS custom properties — v1.0
 - ✓ Browser-based CSV import UI at /import — v1.0
 - ✓ HANDOFF.md operational documentation — v1.0
+- ✓ Global contact search via Cmd+K command palette — v1.1
+- ✓ Birthday reminders — "Coming Up" dashboard section with 14-day window — v1.1
 
 ### Active
 
-- [ ] Contact search — find anyone by name without navigating pods
 - [ ] Wrapped slides — monthly/quarterly celebration views (Spotify Wrapped energy per Moj)
-- [ ] Birthday reminders — surface upcoming birthdays on dashboard
 - [ ] Campaign tracking — lightweight pipeline view for investments, events, SPVs
 
 ### Deferred (blocked on external access)
