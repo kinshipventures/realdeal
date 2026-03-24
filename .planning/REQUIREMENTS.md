@@ -7,8 +7,8 @@
 
 ### Search
 
-- [ ] **SRCH-01**: User can search contacts by name from any view via a global search input
-- [ ] **SRCH-02**: Search results show contact name, pod, and last contacted date — clicking navigates to profile
+- [x] **SRCH-01**: User can search contacts by name from any view via a global search input
+- [x] **SRCH-02**: Search results show contact name, pod, and last contacted date — clicking navigates to profile
 
 ### Wrapped
 
@@ -59,8 +59,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRCH-01 | Phase 4 | Pending |
-| SRCH-02 | Phase 4 | Pending |
+| SRCH-01 | Phase 4 | Complete |
+| SRCH-02 | Phase 4 | Complete |
 | BDAY-01 | Phase 4 | Pending |
 | BDAY-02 | Phase 4 | Pending |
 | WRAP-01 | Phase 5 | Pending |
