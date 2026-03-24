@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
+import { SearchPalette } from './components/search/SearchPalette'
+import { ContactDetail } from './components/contacts/ContactDetail'
+import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
 
@@ -25,6 +28,21 @@ function AppShell() {
   const isMap = location.pathname === '/map'
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchSelectedContact, setSearchSelectedContact] = useState<Contact | null>(null)
+
+  const closeSearch = useCallback(() => setShowSearch(false), [])
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setShowSearch(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
@@ -70,6 +88,25 @@ function AppShell() {
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
             <span style={{ fontSize: 9, fontWeight: 500, color: !isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pulse</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSearch(true)}
+            aria-label="Search contacts"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24"
+              fill="none" stroke="var(--text-muted)" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>Search</span>
           </button>
           <button
             type="button"
@@ -140,6 +177,27 @@ function AppShell() {
           </button>
           <button
             type="button"
+            onClick={() => setShowSearch(true)}
+            aria-label="Search contacts"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '7px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="var(--text-muted)" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <button
+            type="button"
             aria-current={isMap ? 'page' : undefined}
             onClick={() => navigate('/map')}
             style={{
@@ -160,6 +218,26 @@ function AppShell() {
             Map
           </button>
         </nav>
+      )}
+
+      {showSearch && (
+        <SearchPalette
+          onClose={closeSearch}
+          onSelectContact={(contact) => {
+            setShowSearch(false)
+            setSearchSelectedContact(contact)
+          }}
+        />
+      )}
+
+      {searchSelectedContact && (
+        <ContactDetail
+          contact={searchSelectedContact}
+          categoryId={searchSelectedContact.category_ids[0]}
+          onClose={() => setSearchSelectedContact(null)}
+          onSaved={(updated) => setSearchSelectedContact(updated)}
+          onDeleted={() => setSearchSelectedContact(null)}
+        />
       )}
 
       {/* Demo data toggle */}
