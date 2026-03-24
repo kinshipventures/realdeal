@@ -12,13 +12,13 @@
 
 ### Wrapped
 
-- [ ] **WRAP-01**: Monthly Wrapped view shows key stats (contacts reached, intros made, top pods) as full-bleed gradient slides
-- [ ] **WRAP-02**: Wrapped slides use Fraunces display type with pod-colored gradients per the design system spec
+- [x] **WRAP-01**: Dashboard insight card shows weekly stats (people reached, top pod, most connected) as cycling gradient cards
+- [x] **WRAP-02**: Wrapped cards use Fraunces display type with pod-colored gradients per the design system spec
 
 ### Birthdays
 
-- [ ] **BDAY-01**: Dashboard surfaces contacts with birthdays in the next 14 days as a dedicated section
-- [ ] **BDAY-02**: Birthday section shows contact name, date, days until, and pod — clicking opens profile
+- [x] **BDAY-01**: Dashboard surfaces contacts with birthdays in the next 14 days as a dedicated section
+- [x] **BDAY-02**: Birthday section shows contact name, date, days until, and pod — clicking opens profile
 
 ### Campaigns
 
@@ -61,10 +61,10 @@
 |-------------|-------|--------|
 | SRCH-01 | Phase 4 | Complete |
 | SRCH-02 | Phase 4 | Complete |
-| BDAY-01 | Phase 4 | Pending |
-| BDAY-02 | Phase 4 | Pending |
-| WRAP-01 | Phase 5 | Pending |
-| WRAP-02 | Phase 5 | Pending |
+| BDAY-01 | Phase 4 | Complete |
+| BDAY-02 | Phase 4 | Complete |
+| WRAP-01 | Phase 5 | Complete |
+| WRAP-02 | Phase 5 | Complete |
 | CAMP-01 | Phase 6 | Pending |
 | CAMP-02 | Phase 6 | Pending |
 | CAMP-03 | Phase 6 | Pending |
@@ -76,4 +76,4 @@
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after v1.1 roadmap creation*
+*Last updated: 2026-03-24 after Phase 5 completion*
