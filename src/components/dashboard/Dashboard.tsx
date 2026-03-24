@@ -11,6 +11,8 @@ import {
   daysSinceContact,
   todaysFocus,
 } from '../../lib/equity'
+import { getUpcomingBirthdays, formatDaysUntil } from '../../lib/birthdays'
+import type { BirthdayItem } from '../../lib/birthdays'
 import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/types'
 import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -153,6 +155,12 @@ export function Dashboard() {
     [contacts, byContact, pods]
   )
 
+  // Upcoming birthdays
+  const upcomingBirthdays = useMemo(
+    () => getUpcomingBirthdays(contacts, pods),
+    [contacts, pods]
+  )
+
   // Dormant contacts (90+ days, not snoozed)
   const dormantContacts = useMemo(
     () => contacts
@@ -280,6 +288,23 @@ export function Dashboard() {
             {podStats.map(({ pod, contactCount, overdueCount, score, sparkline }) => (
               <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} sparkline={sparkline} />
             ))}
+          </div>
+        )}
+
+        {/* Coming Up — birthdays in next 14 days */}
+        {upcomingBirthdays.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
+              color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12
+            }}>
+              coming up
+            </div>
+            <div style={{ ...PANEL, overflow: 'hidden' }}>
+              {upcomingBirthdays.map(item => (
+                <BirthdayRow key={item.contact.id} item={item} onClick={() => setSelectedContact(item.contact)} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -694,6 +719,64 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
       }}>
         {days === null ? 'Never reached' : `${days}d ago`}
       </div>
+    </button>
+  )
+}
+
+function BirthdayRow({ item, onClick }: { item: BirthdayItem; onClick: () => void }) {
+  const podColor = item.pod?.color ?? '#718096'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="interactive-row"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', padding: '12px 24px',
+        background: item.isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
+        border: 'none',
+        borderBottom: '1px solid var(--divider)',
+        cursor: 'pointer', textAlign: 'left',
+      }}
+    >
+      {/* Pod-colored dot */}
+      <div style={{
+        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+        background: podColor,
+      }} />
+
+      {/* Name */}
+      <div style={{
+        fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
+        flex: 1, minWidth: 0,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {item.contact.name}
+      </div>
+
+      {/* Date (e.g. "Mar 28") */}
+      <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', flexShrink: 0 }}>
+        {item.date}
+      </span>
+
+      {/* Days until */}
+      <span style={{
+        fontSize: 11, fontWeight: 500, flexShrink: 0, minWidth: 32, textAlign: 'right',
+        color: item.isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
+      }}>
+        {formatDaysUntil(item.daysUntil)}
+      </span>
+
+      {/* Pod name */}
+      {item.pod && (
+        <span style={{
+          fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0,
+          textTransform: 'uppercase', letterSpacing: '0.04em',
+        }}>
+          {item.pod.name}
+        </span>
+      )}
     </button>
   )
 }
