@@ -24,7 +24,7 @@
 
 - [x] **CAMP-01**: User can create a campaign (name, type, target contacts) tracked in Airtable
 - [x] **CAMP-02**: Dashboard shows active campaigns with progress (contacted / total)
-- [ ] **CAMP-03**: Campaign detail view shows contact list with reach-out status per contact
+- [x] **CAMP-03**: Campaign detail view shows contact list with reach-out status per contact
 
 ## Future Requirements
 
@@ -67,7 +67,7 @@
 | WRAP-02 | Phase 5 | Complete |
 | CAMP-01 | Phase 6 | Complete |
 | CAMP-02 | Phase 6 | Complete |
-| CAMP-03 | Phase 6 | Pending |
+| CAMP-03 | Phase 6 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 9 total

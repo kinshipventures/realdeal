@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Polish & Features
 status: unknown
-stopped_at: Completed 06-01-PLAN.md (campaign types, data layer, and dashboard section)
-last_updated: "2026-03-25T18:41:22.670Z"
+stopped_at: Completed 06-02-PLAN.md (campaign detail panel, creation form, and ContactDetail integration)
+last_updated: "2026-03-25T18:47:07.165Z"
 last_activity: 2026-03-25
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -42,6 +42,8 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 04-search-birthdays]: formatDaysUntil simplified: Today or Nd, skips week labels for readability
 - [Phase 06-campaigns]: Placeholder Airtable table IDs used for campaigns and campaignContacts — must be replaced with real IDs after tables are created in Airtable
 - [Phase 06-campaigns]: getCampaigns() fetches both tables in one call to keep contact_ids populated without N+1 queries
+- [Phase 06-campaigns]: CampaignDetail receives campaign metadata as props to avoid redundant fetch
+- [Phase 06-campaigns]: Status toggle uses optimistic update with revert on failure
 
 ### Blockers/Concerns
 
@@ -59,6 +61,6 @@ See PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last activity: 2026-03-25
-Last session: 2026-03-25T18:41:22.668Z
-Stopped at: Completed 06-01-PLAN.md (campaign types, data layer, and dashboard section)
+Last session: 2026-03-25T18:47:07.164Z
+Stopped at: Completed 06-02-PLAN.md (campaign detail panel, creation form, and ContactDetail integration)
 Resume file: None

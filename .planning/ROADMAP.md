@@ -27,7 +27,7 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full details.
 
 - [x] **Phase 4: Search + Birthdays** - Global contact search and dashboard birthday reminders (completed 2026-03-24)
 - [ ] **Phase 5: Wrapped** - Monthly celebration view with stats and full-bleed gradient slides
-- [ ] **Phase 6: Campaigns** - Lightweight pipeline tracking for investments, events, and SPVs
+- [x] **Phase 6: Campaigns** - Lightweight pipeline tracking for investments, events, and SPVs (completed 2026-03-25)
 
 ## Phase Details
 
@@ -65,10 +65,10 @@ Plans:
   1. User can create a campaign with a name, type, and target contacts — stored in Airtable
   2. Dashboard shows all active campaigns with a contacted/total progress indicator
   3. Campaign detail view lists every target contact with their individual reach-out status
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 06-01-PLAN.md — Campaign types, Airtable data layer, and dashboard campaigns section
-- [ ] 06-02-PLAN.md — Campaign detail panel, creation form, and contact integration
+- [x] 06-02-PLAN.md — Campaign detail panel, creation form, and contact integration
 
 ## Progress
 
@@ -80,4 +80,4 @@ Plans:
 | 3. Close-Out | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Search + Birthdays | v1.1 | 2/2 | Complete   | 2026-03-24 |
 | 5. Wrapped | v1.1 | 0/1 | Planned | - |
-| 6. Campaigns | v1.1 | 1/2 | In Progress|  |
+| 6. Campaigns | v1.1 | 2/2 | Complete   | 2026-03-25 |
