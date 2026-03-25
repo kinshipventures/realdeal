@@ -11,10 +11,8 @@ export const TABLES = {
   categories: 'tblVAgv23LUXs7Q0p',
   contacts: 'tbll75mRMMVBGiNpj',
   interactions: 'tblbxLX5EM09Y6xim',
-  // Create in Airtable: Name (text), Type (single select: event/investment/outreach/other), Deadline (date), Status (single select: active/completed)
-  campaigns: 'PLACEHOLDER_CAMPAIGNS_TABLE_ID',
-  // Create in Airtable: Campaign (linked to Campaigns), Contact (linked to Contacts), Status (single select: pending/reached/responded/confirmed), Notes (long text)
-  campaignContacts: 'PLACEHOLDER_CAMPAIGN_CONTACTS_TABLE_ID',
+  campaigns: 'tblnrhkuIQgRdnt9w',
+  campaignContacts: 'tbliW2w3R21yTqTQk',
 } as const
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────
