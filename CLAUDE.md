@@ -25,8 +25,10 @@ VITE_AIRTABLE_BASE_ID=app...
 ## Architecture
 
 React app with two views behind a floating pill navigator:
-- `/` → `Dashboard` — social equity scores, overdue contacts, today's focus
+- `/` → `Dashboard` — equity ring, pod health cards, wrapped insight card, birthdays, today's focus, overdue queue, dormant cleanup
 - `/map` → `OrbMap` — React Flow node graph for visual network exploration
+
+Global overlays: `SearchPalette` (Cmd+K from any view), `ContactDetail` (slide-out panel), `ImportPanel` (/import route).
 
 No backend — Airtable is the data layer, accessed directly from the browser via REST.
 
@@ -45,7 +47,7 @@ Relationship health scoring system. Each interaction type has a weight (intro=5,
 
 - `contactEquityScore()` → individual contact score
 - `podEquityScore()` / `overallEquityScore()` → aggregates
-- `scoreLabel()` → Thriving (85+), Healthy (70+), Cooling (50+), Dormant (<50)
+- `scoreLabel()` → Thriving (85+), Steady (70+), Cooling (40+), Fading (<40)
 - `todaysFocus()` → generates prioritized list of contacts needing attention
 - `CADENCE_DAYS` → weekly=7, biweekly=14, monthly=30, quarterly=90
 
@@ -63,17 +65,15 @@ Relationship health scoring system. Each interaction type has a weight (intro=5,
 - `buildHomeNodes()` / `buildHomeEdges()` build the home graph; `handleListClick()` fetches categories and transitions to category view
 - Moj node is `draggable: false` and never has its position persisted
 
-### Glass orb visual system
+### Solid orb visual system
 
-`GlassOrb.tsx` is a shared component used by all orb node types. Three-layer radial gradient:
-1. Specular highlight (top-left, white) — simulates light entering
-2. Color refraction (bottom-right, color @ 0.14 opacity)
-3. Color ambient (center, color @ 0.07 opacity)
-4. Base: `rgba(255,255,255,0.54)`
+`SolidOrb.tsx` is the shared orb component used by all map node types. Two-tone gradient with health ring:
+- Background: `linear-gradient(135deg, color, shiftColor)` using `POD_SHIFT_COLORS` map
+- `POD_SHIFT_COLORS` (exported from `SolidOrb.tsx`) maps each pod's primary hex to a complementary shift color — also used by `PodCard` and `WrappedCard` for gradient consistency
+- Optional `healthPercent` prop renders an SVG ring around the orb
+- Hover/press interactions use CSS classes (`.orb-interactive`) with CSS custom properties (`--orb-scale`, `--orb-lift`) set inline. JS handlers only update `boxShadow` — never `transform` — because React re-renders will overwrite JS transform mutations
 
-**Rule**: color layers must never exceed `0.16` opacity — above this the orb reads as colored, not glass-tinted.
-
-Hover/press interactions use CSS classes (`.orb-interactive`) with CSS custom properties (`--orb-scale`, `--orb-lift`) set inline. JS handlers only update `boxShadow` — never `transform` — because React re-renders will overwrite JS transform mutations.
+`GlassOrb.tsx` still exists but is legacy — `SolidOrb` is the active component.
 
 ### Escape stack (`src/lib/escapeStack.ts`)
 
@@ -84,9 +84,11 @@ Module-level stack for layered Escape key handling (same pattern as Radix UI). P
 | File | Role |
 |---|---|
 | `App.tsx` | Routes, floating pill nav, background gradient |
-| `dashboard/Dashboard.tsx` | Equity scores, overdue list, today's focus |
+| `dashboard/Dashboard.tsx` | Full dashboard: equity ring, pod cards, wrapped, birthdays, focus, overdue, dormant |
+| `dashboard/WrappedCard.tsx` | Cycling gradient insight card (people reached, top pod, most connected) |
 | `map/OrbMap.tsx` | Canvas, view state, node/edge assembly |
-| `map/GlassOrb.tsx` | Shared glass orb component (size, color, glow) |
+| `map/SolidOrb.tsx` | Shared solid orb component (gradient, health ring, hover) + `POD_SHIFT_COLORS` |
+| `map/GlassOrb.tsx` | Legacy glass orb (still exists, not actively used) |
 | `map/ListNode.tsx` | 96px orb — navigates into a list |
 | `map/CategoryNode.tsx` | 64px orb — opens ContactPanel |
 | `map/CreateCategoryNode.tsx` | "+" orb for adding new categories |
@@ -95,6 +97,9 @@ Module-level stack for layered Escape key handling (same pattern as Radix UI). P
 | `contacts/ContactDetail.tsx` | Full contact view with interactions |
 | `contacts/ContactCard.tsx` | Row inside ContactPanel |
 | `contacts/InteractionSection.tsx` | Interaction history and logging |
+| `search/SearchPalette.tsx` | Cmd+K command palette — global contact search |
+| `empty/EmptyState.tsx` | Shared empty state with orb icon, heading, optional CTA |
+| `import/ImportPanel.tsx` | Browser-based CSV import UI |
 | `ui.tsx` | Shared primitives: `Spinner`, `Avatar` |
 
 ### Design system
@@ -105,7 +110,8 @@ Key tokens:
 - Background: `#F5F4F0`
 - Panel: `rgba(245,244,240,0.88)` + `backdrop-filter: blur(32px)`
 - Text primary: `rgba(0,0,0,0.82)`, secondary: `rgba(0,0,0,0.45)`, tertiary: `rgba(0,0,0,0.28)`
-- Font: DM Sans, weights 300/400/500/600
+- Body font: DM Sans, weights 300/400/500/600
+- Display serif: Fraunces (`var(--font-serif)`), weights 400/700/800/900 — used for section headings, pod card names, Wrapped card stats
 
 ### Stale files
 

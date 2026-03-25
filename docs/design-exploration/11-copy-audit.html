@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Copy Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif; --font-serif: 'Fraunces', Georgia, serif; --brand: #25B439; --bg: #f8f8f6; --surface: #fff; --text-primary: rgba(0,0,0,0.82); --text-secondary: rgba(0,0,0,0.45); --text-tertiary: rgba(0,0,0,0.28); --border: rgba(0,0,0,0.07); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; max-width: 500px; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+  .compare-label.old { color: rgba(180,40,40,0.50); }
+  .compare-label.new { color: var(--brand); }
+  .mock { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+  .mock.faded { opacity: 0.60; }
+
+  /* Shared component styles */
+  .m-hdr { background: #25B439; padding: 20px 20px 24px; display: flex; gap: 14px; align-items: flex-start; }
+  .m-ring { width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.20); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .m-ring::after { content:''; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid transparent; border-top-color: rgba(255,255,255,0.90); border-right-color: rgba(255,255,255,0.80); transform: rotate(-15deg); }
+  .m-ring .v { font-size: 16px; font-weight: 700; color: white; }
+  .m-stats { display: flex; gap: 16px; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 10px 14px; flex: 1; flex-wrap: wrap; }
+  .m-sv { font-size: 15px; font-weight: 700; color: white; }
+  .m-sl { font-size: 8px; color: rgba(255,255,255,0.55); }
+  .m-body { padding: 16px 20px 20px; }
+  .m-hd { font-family: var(--font-serif); font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.01em; }
+  .m-pod { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; min-width: 120px; flex-shrink: 0; }
+  .m-orb { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 6px; font-weight: 600; color: rgba(255,255,255,0.90); flex-shrink: 0; }
+  .m-pn { font-family: var(--font-serif); font-weight: 700; font-size: 11px; }
+  .m-pm { font-size: 9px; color: var(--text-secondary); }
+  .m-focus { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+  .m-av { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; flex-shrink: 0; }
+  .m-fn { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+  .m-fs { font-size: 9px; color: var(--text-secondary); }
+  .m-tag { font-size: 8px; font-weight: 600; padding: 2px 7px; border-radius: 8px; margin-left: auto; white-space: nowrap; color: var(--brand); background: rgba(37,180,57,0.08); }
+  .m-panel { border-radius: 10px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; margin-top: 10px; }
+  .m-panel-hdr { padding: 12px 14px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); display: flex; align-items: center; gap: 6px; }
+  .m-panel-hdr .title { font-family: var(--font-serif); font-weight: 700; font-size: 14px; }
+  .m-panel-hdr .badge { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 100px; background: hsla(20,80%,45%,0.10); color: hsla(20,80%,45%,0.80); }
+  .m-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid rgba(0,0,0,0.04); }
+  .m-row:last-child { border-bottom: none; }
+  .m-rn { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+  .m-rm { font-size: 9px; color: var(--text-secondary); }
+  .m-rt { font-size: 10px; font-weight: 500; color: hsla(20,80%,45%,0.80); margin-left: auto; white-space: nowrap; }
+  .m-empty { padding: 32px 14px; text-align: center; font-size: 12px; color: var(--text-tertiary); }
+
+  /* Dormant section */
+  .m-dormant-hdr { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .m-dormant-hdr span { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+  .m-drow { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid rgba(0,0,0,0.04); }
+  .m-dlabel { font-size: 9px; color: var(--text-tertiary); }
+  .m-dbtn { font-size: 9px; font-weight: 500; padding: 2px 8px; border-radius: 100px; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.07); }
+  .m-dbtn.danger { color: rgba(180,40,40,0.65); }
+  .m-dbtn.normal { color: var(--text-secondary); }
+
+  /* Score label */
+  .score-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+
+  /* Contact detail */
+  .m-detail { padding: 16px; }
+  .m-detail-name { font-family: var(--font-serif); font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+  .m-field { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 11px; }
+  .m-field-label { color: var(--text-tertiary); width: 80px; flex-shrink: 0; font-size: 10px; }
+  .m-field-val { color: var(--text-secondary); font-style: italic; }
+  .m-section-label { font-family: var(--font-serif); font-weight: 700; font-size: 11px; color: var(--text-primary); margin-top: 12px; margin-bottom: 6px; text-transform: lowercase; }
+
+  /* Interaction logger */
+  .m-type-pills { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+  .m-type-pill { font-size: 10px; font-weight: 500; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
+  .m-type-pill.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .m-notes-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: var(--font-sans); font-size: 11px; color: var(--text-tertiary); font-style: italic; }
+
+  /* Search */
+  .m-search { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: var(--font-sans); font-size: 11px; color: var(--text-tertiary); font-style: italic; margin-bottom: 8px; }
+
+  /* Alerts */
+  .m-alert { padding: 10px 14px; border-radius: 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .m-alert-icon { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; color: white; }
+  .m-alert.success { background: rgba(37,180,57,0.07); color: #1A8A2A; }
+  .m-alert.success .m-alert-icon { background: var(--brand); }
+  .m-alert.warning { background: rgba(255,149,0,0.07); color: #996600; }
+  .m-alert.warning .m-alert-icon { background: #FF9500; }
+  .m-alert.error { background: rgba(255,59,48,0.07); color: #CC2F27; }
+  .m-alert.error .m-alert-icon { background: #FF3B30; }
+
+  .highlight { background: rgba(37,180,57,0.08); padding: 1px 4px; border-radius: 3px; font-weight: 600; }
+
+  @media (max-width: 768px) { .compare { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Copy Audit</h1>
+    <p>Before and after — every piece of user-facing text in Kinship Brain. Current copy on the left, proposed on the right.</p>
+  </div>
+</header>
+
+<!-- ═══ DASHBOARD ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Dashboard</div>
+    <div class="section-title">Green Band + Pod Cards + Focus + Overdue</div>
+    <div class="section-desc">Stat labels, section headings, score labels, dormancy language, action buttons. Side-by-side comparison.</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label old">Current</div>
+        <div class="mock faded">
+          <div class="m-hdr">
+            <div class="m-ring"><div class="v">78</div></div>
+            <div class="m-stats">
+              <div><div class="m-sv">5</div><div class="m-sl">Pods</div></div>
+              <div><div class="m-sv">247</div><div class="m-sl">Contacts</div></div>
+              <div><div class="m-sv">14</div><div class="m-sl">Reached (7d)</div></div>
+              <div><div class="m-sv" style="color: hsla(20,80%,75%,1);">7</div><div class="m-sl">Overdue</div></div>
+            </div>
+          </div>
+          <div class="m-body">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span class="score-badge" style="background: rgba(37,180,57,0.10); color: #25B439;">Healthy</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto;">
+              <div class="m-pod"><div class="m-orb" style="background: #E53935;">M</div><div><div class="m-pn">Maps</div><div class="m-pm">42 · 3 overdue</div></div></div>
+              <div class="m-pod"><div class="m-orb" style="background: #7E57C2;">CO</div><div><div class="m-pn">Companies</div><div class="m-pm">15 contacts</div></div></div>
+            </div>
+            <div class="m-hd">today's focus</div>
+            <div class="m-focus">
+              <div class="m-av" style="background: #1E88E5;">SC</div>
+              <div><div class="m-fn">Sarah Chen</div><div class="m-fs">18d · Maps</div></div>
+            </div>
+            <div class="m-panel" style="margin-top: 12px;">
+              <div class="m-panel-hdr"><span class="title">needs attention</span><span class="badge">7</span></div>
+              <div class="m-row">
+                <div class="m-av" style="background: #E53935; width: 22px; height: 22px; font-size: 8px;">AK</div>
+                <div><div class="m-rn">Ayumi Kato</div><div class="m-rm">Maps</div></div>
+                <div class="m-rt">24d</div>
+              </div>
+              <div class="m-row">
+                <div class="m-av" style="background: #F5A623; width: 22px; height: 22px; font-size: 8px;">LW</div>
+                <div><div class="m-rn">Lisa Wang</div><div class="m-rm">Service Providers</div></div>
+                <div class="m-rt">Never</div>
+              </div>
+            </div>
+            <div class="m-panel" style="margin-top: 10px;">
+              <div class="m-dormant-hdr"><span>3 contacts need a decision</span><span style="color: var(--text-tertiary);">▾</span></div>
+              <div class="m-drow">
+                <div class="m-av" style="background: #7E57C2; width: 22px; height: 22px; font-size: 8px;">RK</div>
+                <div style="flex: 1;"><div class="m-rn" style="font-size: 11px;">Raj Kumar</div><div class="m-dlabel">At risk · 200d</div></div>
+                <div style="display: flex; gap: 4px;"><span class="m-dbtn normal">Keep</span><span class="m-dbtn normal">Reach out</span><span class="m-dbtn danger">Remove</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="compare-label new">Proposed</div>
+        <div class="mock">
+          <div class="m-hdr">
+            <div class="m-ring"><div class="v">78</div></div>
+            <div class="m-stats">
+              <div><div class="m-sv">5</div><div class="m-sl">Pods</div></div>
+              <div><div class="m-sv">247</div><div class="m-sl">Contacts</div></div>
+              <div><div class="m-sv">14</div><div class="m-sl"><span class="highlight" style="background: rgba(255,255,255,0.15); color: white;">Reached this week</span></div></div>
+              <div><div class="m-sv" style="color: hsla(20,80%,75%,1);">7</div><div class="m-sl">Overdue</div></div>
+            </div>
+          </div>
+          <div class="m-body">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span class="score-badge" style="background: rgba(37,180,57,0.10); color: #25B439;"><span class="highlight">Steady</span></span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto;">
+              <div class="m-pod"><div class="m-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div><div><div class="m-pn">Maps</div><div class="m-pm">42 · 3 overdue</div></div></div>
+              <div class="m-pod"><div class="m-orb" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">CO</div><div><div class="m-pn">Companies</div><div class="m-pm">15 contacts</div></div></div>
+            </div>
+            <div class="m-hd">today's focus</div>
+            <div class="m-focus">
+              <div class="m-av" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+              <div><div class="m-fn">Sarah Chen</div><div class="m-fs"><span class="highlight">18d ago</span> · Maps</div></div>
+            </div>
+            <div class="m-panel" style="margin-top: 12px;">
+              <div class="m-panel-hdr"><span class="title">needs attention</span><span class="badge">7</span></div>
+              <div class="m-row">
+                <div class="m-av" style="background: linear-gradient(135deg, #E53935, #FF6B4A); width: 22px; height: 22px; font-size: 8px;">AK</div>
+                <div><div class="m-rn">Ayumi Kato</div><div class="m-rm">Maps</div></div>
+                <div class="m-rt"><span class="highlight">24d ago</span></div>
+              </div>
+              <div class="m-row">
+                <div class="m-av" style="background: linear-gradient(135deg, #F5A623, #FFD54F); width: 22px; height: 22px; font-size: 8px;">LW</div>
+                <div><div class="m-rn">Lisa Wang</div><div class="m-rm">Service Providers</div></div>
+                <div class="m-rt"><span class="highlight">Never reached</span></div>
+              </div>
+            </div>
+            <div class="m-panel" style="margin-top: 10px;">
+              <div class="m-dormant-hdr"><span><span class="highlight">3 gone quiet</span></span><span style="color: var(--text-tertiary);">▾</span></div>
+              <div class="m-drow">
+                <div class="m-av" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0); width: 22px; height: 22px; font-size: 8px;">RK</div>
+                <div style="flex: 1;"><div class="m-rn" style="font-size: 11px;">Raj Kumar</div><div class="m-dlabel"><span class="highlight">Slipping away</span> · 200d</div></div>
+                <div style="display: flex; gap: 4px;"><span class="m-dbtn normal">Keep</span><span class="m-dbtn normal">Reach out</span><span class="m-dbtn danger"><span class="highlight">Let go</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SCORE LABELS ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Score Labels</div>
+    <div class="section-title">Equity Health Language</div>
+    <div class="section-desc">These appear on the dashboard and in contact details. The words should feel like relationship language, not database categories.</div>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; text-align: center; min-width: 140px;">
+        <div style="font-size: 32px; font-weight: 700; color: #25B439; letter-spacing: -0.03em;">85+</div>
+        <div style="font-size: 12px; color: var(--text-tertiary); text-decoration: line-through;">Thriving</div>
+        <div style="font-size: 14px; font-weight: 600; color: var(--brand); margin-top: 2px;">Thriving</div>
+        <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px;">no change — strong word</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; text-align: center; min-width: 140px;">
+        <div style="font-size: 32px; font-weight: 700; color: #1E88E5; letter-spacing: -0.03em;">70+</div>
+        <div style="font-size: 12px; color: var(--text-tertiary); text-decoration: line-through;">Healthy</div>
+        <div style="font-size: 14px; font-weight: 600; color: #1E88E5; margin-top: 2px;">Steady</div>
+        <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px;">"healthy" is clinical</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; text-align: center; min-width: 140px;">
+        <div style="font-size: 32px; font-weight: 700; color: #F5A623; letter-spacing: -0.03em;">40+</div>
+        <div style="font-size: 12px; color: var(--text-tertiary); text-decoration: line-through;">Cooling</div>
+        <div style="font-size: 14px; font-weight: 600; color: #F5A623; margin-top: 2px;">Cooling</div>
+        <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px;">no change — evocative</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; text-align: center; min-width: 140px;">
+        <div style="font-size: 32px; font-weight: 700; color: #E53935; letter-spacing: -0.03em;">&lt;40</div>
+        <div style="font-size: 12px; color: var(--text-tertiary); text-decoration: line-through;">Dormant</div>
+        <div style="font-size: 14px; font-weight: 600; color: #E53935; margin-top: 2px;">Fading</div>
+        <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px;">"dormant" is a database word</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT DETAIL + INTERACTION ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Contact Detail</div>
+    <div class="section-title">Fields, Sections, Interaction Logger</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label old">Current</div>
+        <div class="mock faded" style="padding: 16px;">
+          <div class="m-detail-name">Sarah Chen</div>
+          <div class="m-field"><div class="m-field-label">Full name</div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label">Specialization</div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label">Past clients</div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label">Recommended by</div><div class="m-field-val">placeholder</div></div>
+          <div class="m-section-label">relationship context</div>
+          <div class="m-section-label">notes</div>
+          <div style="margin-top: 12px;">
+            <div class="m-type-pills">
+              <span class="m-type-pill active">Call</span><span class="m-type-pill">Email</span><span class="m-type-pill">Text</span><span class="m-type-pill">Meeting</span>
+            </div>
+            <div class="m-notes-input">Notes (optional)</div>
+          </div>
+          <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary);">
+            Button: "Create contact" / "Deleting..." / "Confirm delete"
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label new">Proposed</div>
+        <div class="mock" style="padding: 16px;">
+          <div class="m-detail-name">Sarah Chen</div>
+          <div class="m-field"><div class="m-field-label"><span class="highlight">Name</span></div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label"><span class="highlight">Focus</span></div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label"><span class="highlight">Known for</span></div><div class="m-field-val">placeholder</div></div>
+          <div class="m-field"><div class="m-field-label"><span class="highlight">Intro'd by</span></div><div class="m-field-val">placeholder</div></div>
+          <div class="m-section-label"><span class="highlight">context</span></div>
+          <div class="m-section-label">notes</div>
+          <div style="margin-top: 12px;">
+            <div class="m-type-pills">
+              <span class="m-type-pill active">Call</span><span class="m-type-pill">Email</span><span class="m-type-pill">Text</span><span class="m-type-pill">Meeting</span>
+            </div>
+            <div class="m-notes-input"><span class="highlight">What happened?</span></div>
+          </div>
+          <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary);">
+            Button: "<span class="highlight">Add to network</span>" / "<span class="highlight">Removing...</span>" / "<span class="highlight">Remove this person?</span>"
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SEARCH + PANEL ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Contact Panel</div>
+    <div class="section-title">Search + Empty States</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label old">Current</div>
+        <div class="mock faded" style="padding: 16px; min-height: 200px;">
+          <div class="m-search">Search...</div>
+          <div class="m-empty">No matches</div>
+          <div style="border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px;">
+            <div class="m-empty">No contacts yet</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label new">Proposed</div>
+        <div class="mock" style="padding: 16px; min-height: 200px;">
+          <div class="m-search"><span class="highlight">Find someone...</span></div>
+          <div class="m-empty"><span class="highlight">No one by that name</span></div>
+          <div style="border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px;">
+            <div class="m-empty"><span class="highlight">No one here yet</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ALERTS ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Alerts</div>
+    <div class="section-title">Notifications + Errors</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label old">Current</div>
+        <div style="opacity: 0.6;">
+          <div class="m-alert success"><div class="m-alert-icon">&#10003;</div> (no success messages currently)</div>
+          <div class="m-alert error"><div class="m-alert-icon">&#10005;</div> Could not load contacts.</div>
+          <div class="m-alert error"><div class="m-alert-icon">&#10005;</div> Failed to load network:</div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label new">Proposed</div>
+        <div>
+          <div class="m-alert success"><div class="m-alert-icon">&#10003;</div> <span class="highlight">Logged with Sarah Chen.</span></div>
+          <div class="m-alert warning"><div class="m-alert-icon">!</div> <span class="highlight">7 people are overdue in Maps.</span></div>
+          <div class="m-alert error"><div class="m-alert-icon">&#10005;</div> <span class="highlight">Couldn't reach Airtable. Try again?</span></div>
+          <div class="m-alert error"><div class="m-alert-icon">&#10005;</div> <span class="highlight">Couldn't load your network.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MAP ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Map</div>
+    <div class="section-title">Category Creation + Errors</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label old">Current</div>
+        <div class="mock faded" style="padding: 24px; text-align: center;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Create category placeholder:</div>
+          <div class="m-search" style="max-width: 200px; margin: 0 auto;">Name...</div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label new">Proposed</div>
+        <div class="mock" style="padding: 24px; text-align: center;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Create category placeholder:</div>
+          <div class="m-search" style="max-width: 200px; margin: 0 auto;"><span class="highlight">Name this group</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: rgba(0,0,0,0.28); font-size: 12px;">
+  Kinship Brain — Copy Audit · /copywrite<br>
+  <span style="color: var(--brand);">Green highlights</span> = changed copy
+</footer>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Orb Surface + Map Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #25B439; --bg: #f8f8f6; --surface: #ffffff;
+    --text-primary: rgba(0,0,0,0.82); --text-secondary: rgba(0,0,0,0.45);
+    --text-tertiary: rgba(0,0,0,0.28); --border: rgba(0,0,0,0.07);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+  .explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .explore-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .explore-card h3 { font-family: 'Fraunces', serif; font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .explore-card .desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+  .explore-card .verdict { margin-top: 16px; font-size: 11px; color: var(--text-tertiary); padding-top: 12px; border-top: 1px solid var(--border); }
+  .orb-display { display: flex; gap: 20px; align-items: center; justify-content: center; min-height: 140px; }
+  .map-frame { border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+  .map-frame svg { display: block; width: 100%; }
+
+  /* ═══ ORB SURFACE A: Pure Flat + Rim Light ═══ */
+  .orb-rimlit {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  /* Thin bright rim on upper-left edge */
+  .orb-rimlit::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: rgba(255,255,255,0.40);
+    border-left-color: rgba(255,255,255,0.25);
+    transform: rotate(-25deg);
+  }
+  .orb-rimlit span { position: relative; z-index: 1; }
+
+  /* ═══ ORB SURFACE B: Matte + Noise Grain ═══ */
+  .orb-grain {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative; overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .orb-grain::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.08;
+    mix-blend-mode: overlay;
+  }
+  .orb-grain span { position: relative; z-index: 1; }
+
+  /* ═══ ORB SURFACE C: Two-Tone Gradient ═══ */
+  .orb-twotone {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .orb-twotone span { position: relative; z-index: 1; }
+
+  /* ═══ ORB SURFACE D: Dead Flat ═══ */
+  .orb-flat {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+  .orb-flat span { position: relative; z-index: 1; }
+
+  /* ═══ ORB SURFACE E: Inner Shadow (inset depth) ═══ */
+  .orb-inset {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    box-shadow: inset 0 -4px 12px rgba(0,0,0,0.18), inset 0 2px 6px rgba(255,255,255,0.12);
+  }
+  .orb-inset span { position: relative; z-index: 1; }
+
+  /* Breathing for demo */
+  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+  @media (max-width: 768px) { .explore-grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Orb Surface + Map Concepts</h1>
+    <p>Locked in: mini orb cards, glow halos, health rings. Exploring: orb surfaces and map ideas.</p>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════
+     SECTION 1: ORB SURFACES (no radial gradient)
+     ════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb Surfaces</div>
+    <div class="section-title">Five Alternatives to the Radial Gradient</div>
+    <div class="section-desc">The glow halo and health ring are locked — these are about what the orb surface itself looks like. Each shown with the glow halo effect applied.</div>
+
+    <div class="explore-grid">
+
+      <!-- A: Flat + Rim Light -->
+      <div class="explore-card">
+        <h3>A. Flat + Rim Light</h3>
+        <div class="desc">Pure flat color with a thin bright edge on the upper-left — like a backlit object. No interior gradient at all. The rim catches imaginary light. Minimal but dimensional.</div>
+        <div class="orb-display">
+          <div class="orb-rimlit" style="background: #E53935; box-shadow: 0 0 24px rgba(229,57,53,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>MAPS</span></div>
+          <div class="orb-rimlit" style="background: #1C1C1E; box-shadow: 0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25); width: 96px; height: 96px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-rimlit" style="background: #25B439; box-shadow: 0 0 24px rgba(37,180,57,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>TLT</span></div>
+          <div class="orb-rimlit" style="background: #7E57C2; box-shadow: 0 0 24px rgba(126,87,194,0.25), 0 4px 16px rgba(0,0,0,0.12); width: 64px; height: 64px; font-size: 9px;"><span>CO</span></div>
+        </div>
+        <div class="verdict">Clean and modern. The rim is the only "effect" — everything else is flat. Confident. Most Trolley-PDF-faithful.</div>
+      </div>
+
+      <!-- B: Matte + Grain -->
+      <div class="explore-card">
+        <h3>B. Matte + Noise Grain</h3>
+        <div class="desc">Flat color with a subtle noise texture overlay. Feels organic, tactile — like you could reach out and touch the surface. Think album art or risograph printing.</div>
+        <div class="orb-display">
+          <div class="orb-grain" style="background: #E53935; box-shadow: 0 0 24px rgba(229,57,53,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>MAPS</span></div>
+          <div class="orb-grain" style="background: #1C1C1E; box-shadow: 0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25); width: 96px; height: 96px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-grain" style="background: #F5A623; box-shadow: 0 0 24px rgba(245,166,35,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>SVC</span></div>
+          <div class="orb-grain" style="background: #00ACC1; box-shadow: 0 0 24px rgba(0,172,193,0.25), 0 4px 16px rgba(0,0,0,0.12); width: 68px; height: 68px; font-size: 9px;"><span>INV</span></div>
+        </div>
+        <div class="verdict">Gives orbs a physical, printed quality. The grain adds warmth without adding a "shiny" effect. Pairs well with the editorial serif direction.</div>
+      </div>
+
+      <!-- C: Two-Tone Shift -->
+      <div class="explore-card">
+        <h3>C. Two-Tone Color Shift</h3>
+        <div class="desc">A diagonal gradient from the base color to a slightly shifted hue — not lighter/darker, but color-shifted. Red shifts toward orange. Purple shifts toward blue. Each orb has internal color motion.</div>
+        <div class="orb-display">
+          <div class="orb-twotone" style="background: linear-gradient(135deg, #E53935 0%, #FF6B4A 100%); box-shadow: 0 0 24px rgba(229,57,53,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>MAPS</span></div>
+          <div class="orb-twotone" style="background: linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%); box-shadow: 0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25); width: 96px; height: 96px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-twotone" style="background: linear-gradient(135deg, #7E57C2 0%, #5C6BC0 100%); box-shadow: 0 0 24px rgba(126,87,194,0.25), 0 4px 16px rgba(0,0,0,0.12);"><span>CO</span></div>
+          <div class="orb-twotone" style="background: linear-gradient(135deg, #25B439 0%, #00BFA5 100%); box-shadow: 0 0 24px rgba(37,180,57,0.25), 0 4px 16px rgba(0,0,0,0.12); width: 72px; height: 72px;"><span>TLT</span></div>
+        </div>
+        <div class="verdict">More vibrant than flat, less cliche than specular. Each orb has its own internal energy. Closest to "Spotify Wrapped" for the orb surface itself.</div>
+      </div>
+
+      <!-- D: Dead Flat -->
+      <div class="explore-card">
+        <h3>D. Dead Flat (let the halo work)</h3>
+        <div class="desc">Zero surface treatment. Pure solid color, nothing else. All the visual interest comes from the glow halo and health ring — the orb itself is just a circle of color. Maximum confidence.</div>
+        <div class="orb-display">
+          <div class="orb-flat" style="background: #FF6B8A; box-shadow: 0 0 28px rgba(255,107,138,0.30), 0 4px 16px rgba(0,0,0,0.10);"><span>LPS</span></div>
+          <div class="orb-flat" style="background: #1C1C1E; box-shadow: 0 0 28px rgba(0,0,0,0.15), 0 6px 24px rgba(0,0,0,0.25); width: 96px; height: 96px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-flat" style="background: #1E88E5; box-shadow: 0 0 28px rgba(30,136,229,0.30), 0 4px 16px rgba(0,0,0,0.10);"><span>MOJ</span></div>
+          <div class="orb-flat" style="background: #F5A623; box-shadow: 0 0 28px rgba(245,166,35,0.30), 0 4px 16px rgba(0,0,0,0.10); width: 68px; height: 68px; font-size: 9px;"><span>SVC</span></div>
+        </div>
+        <div class="verdict">Truest to the Trolley PDF (which uses dead flat orbs). Lets the halo/ring system carry all the visual richness. Bold, graphic, editorial.</div>
+      </div>
+
+      <!-- E: Inset Depth -->
+      <div class="explore-card" style="grid-column: span 2;">
+        <h3>E. Inset Depth (concave impression)</h3>
+        <div class="desc">Inset box-shadow creates the feeling of a concave surface — like the color is pressed INTO the circle rather than painted on. Subtle top highlight + bottom darkening via shadow only, no gradients. Unique physicality.</div>
+        <div class="orb-display">
+          <div class="orb-inset" style="background: #E53935; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.20), inset 0 2px 8px rgba(255,255,255,0.15), 0 0 24px rgba(229,57,53,0.25), 0 4px 16px rgba(0,0,0,0.10);"><span>MAPS</span></div>
+          <div class="orb-inset" style="background: #FF6B8A; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.20), inset 0 2px 8px rgba(255,255,255,0.15), 0 0 24px rgba(255,107,138,0.25), 0 4px 16px rgba(0,0,0,0.10); width: 72px; height: 72px;"><span>LPS</span></div>
+          <div class="orb-inset" style="background: #1C1C1E; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.15), inset 0 2px 8px rgba(255,255,255,0.08), 0 0 24px rgba(0,0,0,0.15), 0 6px 24px rgba(0,0,0,0.25); width: 100px; height: 100px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-inset" style="background: #25B439; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.20), inset 0 2px 8px rgba(255,255,255,0.15), 0 0 24px rgba(37,180,57,0.25), 0 4px 16px rgba(0,0,0,0.10);"><span>TLT</span></div>
+          <div class="orb-inset" style="background: #7E57C2; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.20), inset 0 2px 8px rgba(255,255,255,0.15), 0 0 24px rgba(126,87,194,0.25), 0 4px 16px rgba(0,0,0,0.10); width: 68px; height: 68px; font-size: 9px;"><span>CO</span></div>
+          <div class="orb-inset" style="background: #F5A623; box-shadow: inset 0 -4px 12px rgba(0,0,0,0.20), inset 0 2px 8px rgba(255,255,255,0.15), 0 0 24px rgba(245,166,35,0.25), 0 4px 16px rgba(0,0,0,0.10); width: 88px; height: 88px;"><span>SVC</span></div>
+        </div>
+        <div class="verdict">Most unusual. Nobody does concave orbs. Feels like pressed color — physical but not shiny. Combined with glow halo, creates a "light is inside the orb" effect.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SECTION 2: MAP CONCEPTS
+     ════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Map Concepts</div>
+    <div class="section-title">Four Conceptually Different Canvases</div>
+    <div class="section-desc">Not color variations — different spatial metaphors for how a network feels. Each changes what "exploring your relationships" means.</div>
+
+    <div class="explore-grid">
+
+      <!-- Map A: Orbital System -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">A. Orbital System</h3>
+        <div class="desc" style="padding: 0 12px;">Concentric orbit rings emanate from the hub. Priority pods orbit closer, lower priority further out. The hub has gravity — it pulls what matters closer. Like a solar system for relationships.</div>
+        <div class="map-frame" style="background: #f8f8f6;">
+          <svg viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="os" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.15"/></filter>
+              <filter id="oh" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="10" flood-opacity="0.25"/></filter>
+            </defs>
+            <!-- Orbit rings -->
+            <circle cx="280" cy="190" r="90" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="4 6"/>
+            <circle cx="280" cy="190" r="145" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="4 6"/>
+            <circle cx="280" cy="190" r="200" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1" stroke-dasharray="4 6"/>
+            <!-- Inner orbit — priority (Maps, LPs) -->
+            <g filter="url(#os)">
+              <circle cx="195" cy="125" r="38" fill="#E53935"/>
+              <text x="195" y="129" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#os)">
+              <circle cx="370" cy="145" r="34" fill="#FF6B8A"/>
+              <text x="370" y="149" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">LPS</text>
+            </g>
+            <!-- Middle orbit (Talent, SVC) -->
+            <g filter="url(#os)">
+              <circle cx="425" cy="230" r="44" fill="#F5A623"/>
+              <text x="425" y="226" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">SERVICE</text>
+              <text x="425" y="238" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">PROVIDERS</text>
+            </g>
+            <g filter="url(#os)">
+              <circle cx="140" cy="260" r="32" fill="#25B439"/>
+              <text x="140" y="264" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">TALENT</text>
+            </g>
+            <!-- Outer orbit (CO, Maps Lite) -->
+            <g filter="url(#os)" opacity="0.80">
+              <circle cx="110" cy="100" r="26" fill="#7E57C2"/>
+              <text x="110" y="104" text-anchor="middle" fill="rgba(255,255,255,0.90)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#os)" opacity="0.75">
+              <circle cx="450" cy="340" r="24" fill="#00ACC1"/>
+              <text x="450" y="337" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7.5" font-weight="600">MAPS</text>
+              <text x="450" y="347" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7.5" font-weight="600">LITE</text>
+            </g>
+            <!-- Hub -->
+            <g filter="url(#oh)">
+              <circle cx="280" cy="190" r="50" fill="#1C1C1E"/>
+              <text x="280" y="195" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="14" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+        <div class="verdict" style="padding: 12px;">The network has gravity. What's close matters most. Drill-in could zoom to an orbit ring, expanding it into category orbs. Outer pods literally recede in importance.</div>
+      </div>
+
+      <!-- Map B: Constellation / Star Chart -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">B. Constellation Map</h3>
+        <div class="desc" style="padding: 0 12px;">Orbs as stars on a dark canvas. Dotted constellation lines connect them. A subtle coordinate grid underneath. The network is a sky you navigate — your personal star chart of relationships.</div>
+        <div class="map-frame" style="background: #0c0e14;">
+          <svg viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="star-glow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="8" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="hub-glow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="14" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Subtle grid -->
+            <g stroke="rgba(255,255,255,0.02)" stroke-width="0.5">
+              <line x1="0" y1="95" x2="560" y2="95"/><line x1="0" y1="190" x2="560" y2="190"/><line x1="0" y1="285" x2="560" y2="285"/>
+              <line x1="140" y1="0" x2="140" y2="380"/><line x1="280" y1="0" x2="280" y2="380"/><line x1="420" y1="0" x2="420" y2="380"/>
+            </g>
+            <!-- Background stars (tiny dots) -->
+            <g fill="rgba(255,255,255,0.15)">
+              <circle cx="50" cy="40" r="0.8"/><circle cx="130" cy="320" r="0.6"/><circle cx="200" cy="50" r="0.5"/>
+              <circle cx="340" cy="30" r="0.7"/><circle cx="500" cy="80" r="0.6"/><circle cx="520" cy="300" r="0.5"/>
+              <circle cx="80" cy="200" r="0.4"/><circle cx="480" cy="200" r="0.5"/><circle cx="300" cy="350" r="0.6"/>
+              <circle cx="420" cy="360" r="0.4"/><circle cx="60" cy="280" r="0.5"/><circle cx="350" cy="270" r="0.4"/>
+            </g>
+            <!-- Constellation lines (dotted) -->
+            <g stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="3 5" fill="none">
+              <line x1="280" y1="190" x2="170" y2="85"/>
+              <line x1="280" y1="190" x2="410" y2="75"/>
+              <line x1="280" y1="190" x2="460" y2="200"/>
+              <line x1="280" y1="190" x2="390" y2="300"/>
+              <line x1="280" y1="190" x2="140" y2="275"/>
+              <line x1="280" y1="190" x2="110" y2="170"/>
+              <!-- Cross-connections (orb to orb) -->
+              <line x1="170" y1="85" x2="110" y2="170"/>
+              <line x1="410" y1="75" x2="460" y2="200"/>
+              <line x1="460" y1="200" x2="390" y2="300"/>
+            </g>
+            <!-- Star orbs -->
+            <g filter="url(#star-glow)">
+              <circle cx="170" cy="85" r="28" fill="#E53935" opacity="0.90"/>
+              <text x="170" y="89" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#star-glow)">
+              <circle cx="410" cy="75" r="24" fill="#FF6B8A" opacity="0.90"/>
+              <text x="410" y="79" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">LPS</text>
+            </g>
+            <g filter="url(#star-glow)">
+              <circle cx="460" cy="200" r="22" fill="#25B439" opacity="0.90"/>
+              <text x="460" y="204" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">TLT</text>
+            </g>
+            <g filter="url(#star-glow)">
+              <circle cx="390" cy="300" r="32" fill="#F5A623" opacity="0.90"/>
+              <text x="390" y="296" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">SERVICE</text>
+              <text x="390" y="307" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">PROV</text>
+            </g>
+            <g filter="url(#star-glow)">
+              <circle cx="140" cy="275" r="20" fill="#7E57C2" opacity="0.85"/>
+              <text x="140" y="279" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#star-glow)">
+              <circle cx="110" cy="170" r="18" fill="#00ACC1" opacity="0.80"/>
+              <text x="110" y="167" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text>
+              <text x="110" y="176" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LITE</text>
+            </g>
+            <!-- Hub — brightest star -->
+            <g filter="url(#hub-glow)">
+              <circle cx="280" cy="190" r="40" fill="#1C1C1E"/>
+              <circle cx="280" cy="190" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <text x="280" y="195" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+        <div class="verdict" style="padding: 12px;">The network is a sky. Cross-connections between pods show relationships between categories (talent ↔ service providers). Drill-in could zoom into a constellation, revealing individual stars (contacts).</div>
+      </div>
+
+      <!-- Map C: Radar / Proximity -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">C. Radar Pulse</h3>
+        <div class="desc" style="padding: 0 12px;">Radar sweep emanating from the hub. Orbs appear at different distances based on recency of contact — recently touched pods pulse closer to center, neglected ones drift outward. The map IS the equity score, visualized spatially.</div>
+        <div class="map-frame" style="background: linear-gradient(180deg, #0a1a0e 0%, #0e1f12 100%);">
+          <svg viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="rg" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-opacity="0.25"/></filter>
+              <filter id="rgh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="3" stdDeviation="10" flood-opacity="0.35"/></filter>
+              <!-- Radar sweep gradient -->
+              <linearGradient id="sweep" gradientTransform="rotate(45)">
+                <stop offset="0%" stop-color="#25B439" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#25B439" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Radar rings -->
+            <circle cx="280" cy="190" r="60" fill="none" stroke="rgba(37,180,57,0.08)" stroke-width="1"/>
+            <circle cx="280" cy="190" r="110" fill="none" stroke="rgba(37,180,57,0.06)" stroke-width="1"/>
+            <circle cx="280" cy="190" r="160" fill="none" stroke="rgba(37,180,57,0.04)" stroke-width="1"/>
+            <!-- Radar cross -->
+            <line x1="280" y1="30" x2="280" y2="350" stroke="rgba(37,180,57,0.04)" stroke-width="0.5"/>
+            <line x1="100" y1="190" x2="460" y2="190" stroke="rgba(37,180,57,0.04)" stroke-width="0.5"/>
+            <!-- Sweep wedge -->
+            <path d="M280,190 L280,30 A160,160 0 0,1 393,60 Z" fill="url(#sweep)"/>
+            <!-- Radar blips (orbs) -->
+            <!-- Close to center = recently contacted -->
+            <g filter="url(#rg)">
+              <circle cx="220" cy="140" r="30" fill="#E53935"/>
+              <text x="220" y="144" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#rg)">
+              <circle cx="340" cy="155" r="26" fill="#FF6B8A"/>
+              <text x="340" y="159" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">LPS</text>
+            </g>
+            <!-- Mid distance -->
+            <g filter="url(#rg)">
+              <circle cx="390" cy="250" r="36" fill="#F5A623"/>
+              <text x="390" y="246" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">SERVICE</text>
+              <text x="390" y="257" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">PROV</text>
+            </g>
+            <g filter="url(#rg)">
+              <circle cx="180" cy="245" r="24" fill="#25B439"/>
+              <text x="180" y="249" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">TLT</text>
+            </g>
+            <!-- Far out = neglected -->
+            <g filter="url(#rg)" opacity="0.70">
+              <circle cx="130" cy="110" r="20" fill="#7E57C2"/>
+              <text x="130" y="114" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#rg)" opacity="0.60">
+              <circle cx="430" cy="100" r="18" fill="#00ACC1"/>
+              <text x="430" y="97" text-anchor="middle" fill="rgba(255,255,255,0.80)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text>
+              <text x="430" y="106" text-anchor="middle" fill="rgba(255,255,255,0.80)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LITE</text>
+            </g>
+            <!-- Hub -->
+            <g filter="url(#rgh)">
+              <circle cx="280" cy="190" r="36" fill="#1C1C1E"/>
+              <circle cx="280" cy="190" r="38" fill="none" stroke="rgba(37,180,57,0.15)" stroke-width="1.5"/>
+              <text x="280" y="195" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="12" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+        <div class="verdict" style="padding: 12px;">The map IS the data. Distance = neglect. Pods drift outward when you stop touching base. The sweep animation could reveal "pings" when interactions happen. Most functional of the concepts.</div>
+      </div>
+
+      <!-- Map D: Topographic / Terrain -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">D. Topographic Landscape</h3>
+        <div class="desc" style="padding: 0 12px;">Contour lines flow between orbs like a terrain map. Each pod is an "island" — the contours show relationship density between them. Busier paths have tighter contours. Your network has geography.</div>
+        <div class="map-frame" style="background: #f6f5f0;">
+          <svg viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="ts" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-opacity="0.12"/></filter>
+              <filter id="th" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="8" flood-opacity="0.20"/></filter>
+            </defs>
+            <!-- Contour lines flowing between nodes -->
+            <g fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1">
+              <!-- Hub contours -->
+              <ellipse cx="280" cy="190" rx="70" ry="65"/>
+              <ellipse cx="280" cy="190" rx="100" ry="90"/>
+              <ellipse cx="280" cy="190" rx="140" ry="120"/>
+              <!-- Maps contours -->
+              <ellipse cx="170" cy="90" rx="55" ry="48"/>
+              <ellipse cx="170" cy="90" rx="78" ry="66"/>
+              <!-- SVC contours -->
+              <ellipse cx="420" cy="280" rx="60" ry="52"/>
+              <ellipse cx="420" cy="280" rx="84" ry="72"/>
+              <!-- Connecting flow lines -->
+              <path d="M230,140 Q260,130 270,155" stroke="rgba(0,0,0,0.03)"/>
+              <path d="M350,230 Q380,260 400,265" stroke="rgba(0,0,0,0.03)"/>
+            </g>
+            <!-- Orbs sitting on "peaks" -->
+            <g filter="url(#ts)">
+              <circle cx="170" cy="90" r="36" fill="#E53935"/>
+              <text x="170" y="94" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#ts)">
+              <circle cx="400" cy="80" r="30" fill="#FF6B8A"/>
+              <text x="400" y="84" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">LPS</text>
+            </g>
+            <g filter="url(#ts)">
+              <circle cx="470" cy="185" r="28" fill="#25B439"/>
+              <text x="470" y="189" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">TALENT</text>
+            </g>
+            <g filter="url(#ts)">
+              <circle cx="420" cy="280" r="42" fill="#F5A623"/>
+              <text x="420" y="276" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">SERVICE</text>
+              <text x="420" y="288" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">PROV</text>
+            </g>
+            <g filter="url(#ts)">
+              <circle cx="130" cy="270" r="24" fill="#7E57C2"/>
+              <text x="130" y="274" text-anchor="middle" fill="rgba(255,255,255,0.90)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#ts)" opacity="0.80">
+              <circle cx="110" cy="175" r="22" fill="#00ACC1"/>
+              <text x="110" y="172" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text>
+              <text x="110" y="181" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LITE</text>
+            </g>
+            <!-- Hub -->
+            <g filter="url(#th)">
+              <circle cx="280" cy="190" r="48" fill="#1C1C1E"/>
+              <text x="280" y="195" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+        <div class="verdict" style="padding: 12px;">The network has terrain. Each pod is a peak with contours showing its "influence radius." Overlapping contours show where pods connect. Light canvas, editorial feel. Most unique of the four — nobody maps relationships as geography.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 12px;">
+  Kinship Brain — Exploration v3 · /design-consultation
+</footer>
+</body>
+</html>

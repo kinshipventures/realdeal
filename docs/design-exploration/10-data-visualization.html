@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Data Visualization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif; --font-serif: 'Fraunces', Georgia, serif; --brand: #25B439; --bg: #f8f8f6; --surface: #fff; --text-primary: rgba(0,0,0,0.82); --text-secondary: rgba(0,0,0,0.45); --text-tertiary: rgba(0,0,0,0.28); --border: rgba(0,0,0,0.07); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; max-width: 500px; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .card h3 { font-family: var(--font-serif); font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .card .desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+  .card .verdict { margin-top: 16px; font-size: 11px; color: var(--text-tertiary); padding-top: 12px; border-top: 1px solid var(--border); }
+
+  /* ═══ SPARKLINES ═══ */
+  .spark-row { display: flex; gap: 16px; margin-bottom: 12px; }
+  .spark-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; flex: 1; display: flex; gap: 10px; align-items: center;
+  }
+  .spark-orb {
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 7px; font-weight: 600; color: rgba(255,255,255,0.90); flex-shrink: 0;
+  }
+  .spark-info { flex: 1; min-width: 0; }
+  .spark-name { font-family: var(--font-serif); font-weight: 700; font-size: 12px; color: var(--text-primary); }
+  .spark-meta { font-size: 9px; color: var(--text-secondary); }
+  .spark-chart { flex-shrink: 0; }
+
+  /* ═══ ACTIVITY HEAT ═══ */
+  .heat-grid {
+    display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px;
+  }
+  .heat-cell {
+    aspect-ratio: 1; border-radius: 3px; position: relative;
+  }
+  .heat-cell::after {
+    content: attr(data-label); position: absolute; bottom: -14px; left: 50%;
+    transform: translateX(-50%); font-size: 7px; color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .heat-label { font-size: 8px; color: var(--text-tertiary); text-align: center; margin-top: 2px; }
+
+  /* ═══ EQUITY TREND ═══ */
+  .trend-wrapper { position: relative; }
+  .trend-labels {
+    position: absolute; left: -4px; top: 0; bottom: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-size: 8px; color: var(--text-tertiary); text-align: right; width: 20px;
+  }
+  .trend-months {
+    display: flex; justify-content: space-between; padding-left: 24px;
+    font-size: 8px; color: var(--text-tertiary); margin-top: 4px;
+  }
+
+  /* ═══ WRAPPED CARDS ═══ */
+  .wrapped-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .wrapped-card {
+    border-radius: 16px; padding: 24px 20px; text-align: center;
+    color: white; position: relative; overflow: hidden;
+  }
+  .wrapped-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 60%);
+  }
+  .wrapped-stat {
+    font-family: var(--font-serif); font-weight: 900; font-size: 48px;
+    letter-spacing: -0.04em; line-height: 1; position: relative; z-index: 1;
+  }
+  .wrapped-label {
+    font-size: 12px; font-weight: 500; opacity: 0.75; margin-top: 8px;
+    position: relative; z-index: 1;
+  }
+  .wrapped-sub {
+    font-size: 10px; opacity: 0.50; margin-top: 4px;
+    position: relative; z-index: 1;
+  }
+
+  /* ═══ FULL WRAPPED SLIDE ═══ */
+  .wrapped-slide {
+    border-radius: 20px; padding: 48px 40px; text-align: center;
+    color: white; position: relative; overflow: hidden;
+    min-height: 400px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .wrapped-slide::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 25% 15%, rgba(255,255,255,0.10) 0%, transparent 50%),
+                radial-gradient(ellipse at 75% 85%, rgba(0,0,0,0.15) 0%, transparent 50%);
+  }
+  .wrapped-slide .big-stat {
+    font-family: var(--font-serif); font-weight: 900; font-size: 96px;
+    letter-spacing: -0.05em; line-height: 1; position: relative; z-index: 1;
+  }
+  .wrapped-slide .big-label {
+    font-family: var(--font-serif); font-weight: 700; font-size: 20px;
+    opacity: 0.80; margin-top: 12px; position: relative; z-index: 1;
+    letter-spacing: -0.02em;
+  }
+  .wrapped-slide .big-sub {
+    font-size: 13px; opacity: 0.50; margin-top: 8px; max-width: 300px;
+    position: relative; z-index: 1; line-height: 1.5;
+  }
+  .wrapped-slide .orb-row {
+    display: flex; gap: 12px; margin-top: 24px; position: relative; z-index: 1;
+  }
+  .wrapped-slide .mini-orb {
+    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.90);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+  }
+
+  /* Pod health bars */
+  .health-bars { display: flex; flex-direction: column; gap: 10px; }
+  .health-row { display: flex; align-items: center; gap: 10px; }
+  .health-orb {
+    width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 7px; font-weight: 600; color: rgba(255,255,255,0.90); flex-shrink: 0;
+  }
+  .health-name { font-family: var(--font-serif); font-weight: 700; font-size: 11px; width: 80px; flex-shrink: 0; }
+  .health-track { flex: 1; height: 6px; background: rgba(0,0,0,0.04); border-radius: 3px; overflow: hidden; }
+  .health-fill { height: 100%; border-radius: 3px; }
+  .health-val { font-size: 11px; font-weight: 600; width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .wrapped-grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Data Visualization</h1>
+    <p>Sparklines, activity heat, equity trends, pod health comparisons, and the Spotify Wrapped vision for relationship data.</p>
+  </div>
+</header>
+
+<!-- ═══ 1. SPARKLINES IN POD CARDS ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Sparklines</div>
+    <div class="section-title">Equity Trend in Pod Cards</div>
+    <div class="section-desc">A tiny line chart inside each pod card showing the 30-day equity trend. Instantly see which pods are improving vs declining without opening them. The sparkline replaces the need for a separate "trends" view.</div>
+
+    <div style="max-width: 560px;">
+      <div class="spark-row">
+        <div class="spark-card">
+          <div class="spark-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div>
+          <div class="spark-info"><div class="spark-name">Maps</div><div class="spark-meta">42 contacts · 84%</div></div>
+          <div class="spark-chart">
+            <svg width="64" height="28" viewBox="0 0 64 28">
+              <polyline points="0,22 8,20 16,18 24,14 32,16 40,10 48,8 56,6 64,4" fill="none" stroke="#E53935" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,22 8,20 16,18 24,14 32,16 40,10 48,8 56,6 64,4" fill="url(#spark-r)" stroke="none"/>
+              <defs><linearGradient id="spark-r" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E53935" stop-opacity="0.12"/><stop offset="100%" stop-color="#E53935" stop-opacity="0"/></linearGradient></defs>
+            </svg>
+          </div>
+        </div>
+        <div class="spark-card">
+          <div class="spark-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div>
+          <div class="spark-info"><div class="spark-name">LPs</div><div class="spark-meta">28 contacts · 75%</div></div>
+          <div class="spark-chart">
+            <svg width="64" height="28" viewBox="0 0 64 28">
+              <polyline points="0,8 8,10 16,9 24,12 32,14 40,16 48,18 56,20 64,19" fill="none" stroke="#FF6B8A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,8 8,10 16,9 24,12 32,14 40,16 48,18 56,20 64,19 64,28 0,28" fill="url(#spark-p)" stroke="none"/>
+              <defs><linearGradient id="spark-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF6B8A" stop-opacity="0.12"/><stop offset="100%" stop-color="#FF6B8A" stop-opacity="0"/></linearGradient></defs>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="spark-row">
+        <div class="spark-card">
+          <div class="spark-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">SP</div>
+          <div class="spark-info"><div class="spark-name">Service Providers</div><div class="spark-meta">87 contacts · 95%</div></div>
+          <div class="spark-chart">
+            <svg width="64" height="28" viewBox="0 0 64 28">
+              <polyline points="0,12 8,10 16,8 24,6 32,5 40,4 48,4 56,3 64,3" fill="none" stroke="#F5A623" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,12 8,10 16,8 24,6 32,5 40,4 48,4 56,3 64,3 64,28 0,28" fill="url(#spark-o)" stroke="none"/>
+              <defs><linearGradient id="spark-o" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5A623" stop-opacity="0.12"/><stop offset="100%" stop-color="#F5A623" stop-opacity="0"/></linearGradient></defs>
+            </svg>
+          </div>
+        </div>
+        <div class="spark-card">
+          <div class="spark-orb" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">CO</div>
+          <div class="spark-info"><div class="spark-name">Companies</div><div class="spark-meta">15 contacts · 45%</div></div>
+          <div class="spark-chart">
+            <svg width="64" height="28" viewBox="0 0 64 28">
+              <polyline points="0,6 8,8 16,10 24,14 32,16 40,18 48,20 56,22 64,24" fill="none" stroke="#7E57C2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,6 8,8 16,10 24,14 32,16 40,18 48,20 56,22 64,24 64,28 0,28" fill="url(#spark-v)" stroke="none"/>
+              <defs><linearGradient id="spark-v" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7E57C2" stop-opacity="0.12"/><stop offset="100%" stop-color="#7E57C2" stop-opacity="0"/></linearGradient></defs>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px;">Upward line = equity improving. Downward = declining. The sparkline area fill uses the pod's color at 12% opacity.</div>
+  </div>
+</section>
+
+<!-- ═══ 2. ACTIVITY HEAT MAP ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Activity Heat</div>
+    <div class="section-title">12-Week Interaction Frequency</div>
+    <div class="section-desc">GitHub-style contribution grid adapted for relationship data. Each cell is a week. Darker = more interactions logged. Shows rhythm and gaps at a glance. Could live on the dashboard or inside a contact detail view.</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Network-Wide Activity</h3>
+        <div class="desc">All interactions across all pods. Shows your overall engagement rhythm.</div>
+        <div class="heat-grid" style="max-width: 320px;">
+          <!-- Row labels: Mon-Sun implied by 7 rows -->
+          <!-- 12 weeks x 7 days = 84 cells, simplified to 12 weeks x 1 row for readability -->
+          <div class="heat-cell" style="background: rgba(37,180,57,0.08);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.15);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.30);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.45);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.20);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.55);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.70);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.40);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.60);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.25);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.10);"></div>
+          <div class="heat-cell" style="background: rgba(37,180,57,0.50);"></div>
+        </div>
+        <div style="display: flex; gap: 2px; align-items: center; margin-top: 12px; font-size: 8px; color: var(--text-tertiary);">
+          Less <div style="width: 10px; height: 10px; border-radius: 2px; background: rgba(37,180,57,0.08);"></div>
+          <div style="width: 10px; height: 10px; border-radius: 2px; background: rgba(37,180,57,0.25);"></div>
+          <div style="width: 10px; height: 10px; border-radius: 2px; background: rgba(37,180,57,0.45);"></div>
+          <div style="width: 10px; height: 10px; border-radius: 2px; background: rgba(37,180,57,0.70);"></div> More
+        </div>
+        <div class="verdict">Uses brand green at varying opacities. Weeks with no activity show at 0.08 (not blank — blank would look broken).</div>
+      </div>
+
+      <div class="card">
+        <h3>Pod Health Comparison</h3>
+        <div class="desc">Horizontal bar chart comparing equity scores across pods. Instant read on which pods are thriving vs neglected. Bar color matches the pod's two-tone gradient.</div>
+        <div class="health-bars">
+          <div class="health-row">
+            <div class="health-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">SP</div>
+            <div class="health-name">Svc Prov</div>
+            <div class="health-track"><div class="health-fill" style="width: 95%; background: linear-gradient(90deg, #F5A623, #FFD54F);"></div></div>
+            <div class="health-val" style="color: #F5A623;">95</div>
+          </div>
+          <div class="health-row">
+            <div class="health-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div>
+            <div class="health-name">Maps</div>
+            <div class="health-track"><div class="health-fill" style="width: 84%; background: linear-gradient(90deg, #E53935, #FF6B4A);"></div></div>
+            <div class="health-val" style="color: #E53935;">84</div>
+          </div>
+          <div class="health-row">
+            <div class="health-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div>
+            <div class="health-name">LPs</div>
+            <div class="health-track"><div class="health-fill" style="width: 75%; background: linear-gradient(90deg, #FF6B8A, #FF8FA5);"></div></div>
+            <div class="health-val" style="color: #FF6B8A;">75</div>
+          </div>
+          <div class="health-row">
+            <div class="health-orb" style="background: linear-gradient(135deg, #25B439, #00BFA5);">T</div>
+            <div class="health-name">Talent</div>
+            <div class="health-track"><div class="health-fill" style="width: 60%; background: linear-gradient(90deg, #25B439, #00BFA5);"></div></div>
+            <div class="health-val" style="color: #25B439;">60</div>
+          </div>
+          <div class="health-row">
+            <div class="health-orb" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">CO</div>
+            <div class="health-name">Companies</div>
+            <div class="health-track"><div class="health-fill" style="width: 45%; background: linear-gradient(90deg, #7E57C2, #5C6BC0);"></div></div>
+            <div class="health-val" style="color: #7E57C2;">45</div>
+          </div>
+        </div>
+        <div class="verdict">Bars use the pod's two-tone gradient. Sorted by health (highest first). The score number is right-aligned in the pod's color for scanability.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3. EQUITY TREND LINE ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Equity Trend</div>
+    <div class="section-title">Network Health Over Time</div>
+    <div class="section-desc">A larger line chart showing overall equity score across 6 months. This could be a dashboard section or an expanded view when you tap the equity ring. The green fill area communicates "health" without needing a separate legend.</div>
+
+    <div class="card" style="max-width: 640px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+        <div>
+          <div style="font-family: var(--font-serif); font-weight: 700; font-size: 15px;">Network Health</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">6-month trend · all pods</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--brand);">78</div>
+          <div style="font-size: 10px; color: var(--brand); font-weight: 500;">+12 from 6mo ago</div>
+        </div>
+      </div>
+      <div class="trend-wrapper" style="padding-left: 24px;">
+        <div class="trend-labels"><span>100</span><span>75</span><span>50</span><span>25</span></div>
+        <svg width="100%" height="140" viewBox="0 0 560 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#25B439" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#25B439" stop-opacity="0.01"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="0" y1="0" x2="560" y2="0" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>
+          <line x1="0" y1="35" x2="560" y2="35" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>
+          <line x1="0" y1="70" x2="560" y2="70" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>
+          <line x1="0" y1="105" x2="560" y2="105" stroke="rgba(0,0,0,0.04)" stroke-width="1"/>
+          <!-- Area fill -->
+          <path d="M0,92 C40,88 80,82 120,78 C160,74 200,70 240,62 C280,54 320,48 360,42 C400,38 440,34 480,32 C520,30 540,30 560,31 L560,140 L0,140 Z" fill="url(#trend-fill)"/>
+          <!-- Line -->
+          <path d="M0,92 C40,88 80,82 120,78 C160,74 200,70 240,62 C280,54 320,48 360,42 C400,38 440,34 480,32 C520,30 540,30 560,31" fill="none" stroke="#25B439" stroke-width="2" stroke-linecap="round"/>
+          <!-- Current value dot -->
+          <circle cx="560" cy="31" r="4" fill="#25B439"/>
+          <circle cx="560" cy="31" r="7" fill="rgba(37,180,57,0.15)"/>
+        </svg>
+        <div class="trend-months"><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4. SPOTIFY WRAPPED VISION ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Wrapped</div>
+    <div class="section-title">Spotify Wrapped for Your Network</div>
+    <div class="section-desc">The "make everything bolder" endgame. Bold full-bleed color slides with oversized typography showing your relationship stats. This is the aspirational visual — a monthly or quarterly "network wrapped" that feels like a celebration of how you've shown up for your people.</div>
+
+    <!-- Stat cards -->
+    <div class="wrapped-grid" style="margin-bottom: 24px;">
+      <div class="wrapped-card" style="background: linear-gradient(135deg, #25B439, #00BFA5);">
+        <div class="wrapped-stat">147</div>
+        <div class="wrapped-label">interactions this month</div>
+        <div class="wrapped-sub">up 23% from last month</div>
+      </div>
+      <div class="wrapped-card" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">
+        <div class="wrapped-stat">12</div>
+        <div class="wrapped-label">new connections made</div>
+        <div class="wrapped-sub">across 4 pods</div>
+      </div>
+      <div class="wrapped-card" style="background: linear-gradient(135deg, #1C1C1E, #2C2C30);">
+        <div class="wrapped-stat">78</div>
+        <div class="wrapped-label">network health score</div>
+        <div class="wrapped-sub">thriving range</div>
+      </div>
+    </div>
+
+    <!-- Full slide mockup -->
+    <div class="wrapped-slide" style="background: linear-gradient(135deg, #25B439 0%, #1A8A2A 50%, #0D5C18 100%);">
+      <div class="big-stat">Sarah Chen</div>
+      <div class="big-label">Your strongest connection this quarter</div>
+      <div class="big-sub">8 interactions across 3 channels. Call, email, and 2 in-person meetings. You've been showing up.</div>
+      <div class="orb-row">
+        <div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div>
+        <div class="mini-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div>
+      </div>
+    </div>
+
+    <div style="height: 24px;"></div>
+
+    <!-- Another slide -->
+    <div class="wrapped-slide" style="background: linear-gradient(135deg, #7E57C2 0%, #5C38A8 50%, #3A1F8C 100%);">
+      <div class="big-stat" style="font-size: 72px;">Maps</div>
+      <div class="big-label">Your most active pod</div>
+      <div class="big-sub">42 contacts, 84% health. You touched base with 31 people this month. Silicon Valley and Fashion are your busiest categories.</div>
+      <div class="orb-row">
+        <div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">SV</div>
+        <div class="mini-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">F</div>
+        <div class="mini-orb" style="background: linear-gradient(135deg, #00ACC1, #4DD0E1);">A</div>
+      </div>
+    </div>
+
+    <div style="height: 24px;"></div>
+
+    <!-- Warning slide -->
+    <div class="wrapped-slide" style="background: linear-gradient(135deg, #FF6B4A 0%, #E53935 50%, #B71C1C 100%); min-height: 320px;">
+      <div class="big-stat" style="font-size: 64px;">7 people</div>
+      <div class="big-label">are drifting away</div>
+      <div class="big-sub">These contacts haven't heard from you in over 30 days. A quick text or email could bring them back into orbit.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5. CONTACT EQUITY RING ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Contact Detail</div>
+    <div class="section-title">Per-Contact Equity Visualization</div>
+    <div class="section-desc">Inside a contact's detail view, show their individual equity score with a segmented ring. Each segment represents an interaction type. The ring IS the relationship history, compressed into one shape.</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Segmented Equity Ring</h3>
+        <div class="desc">Ring segments colored by interaction type. Thicker segments = more of that type. The ring tells the story of how you communicate with this person.</div>
+        <div style="display: flex; align-items: center; gap: 24px; justify-content: center;">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <!-- Ghost track -->
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="8"/>
+            <!-- Segments: call (green), email (blue), text (purple), meeting (orange) -->
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2E7D32" stroke-width="8" stroke-dasharray="78 314" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#1565C0" stroke-width="8" stroke-dasharray="50 314" stroke-linecap="round" transform="rotate(-2 60 60)"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#7B1FA2" stroke-width="8" stroke-dasharray="35 314" stroke-linecap="round" transform="rotate(55 60 60)"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#E65100" stroke-width="8" stroke-dasharray="30 314" stroke-linecap="round" transform="rotate(95 60 60)"/>
+            <!-- Center score -->
+            <text x="60" y="56" text-anchor="middle" font-family="Plus Jakarta Sans" font-size="24" font-weight="700" fill="rgba(0,0,0,0.82)">84</text>
+            <text x="60" y="72" text-anchor="middle" font-family="Plus Jakarta Sans" font-size="9" fill="rgba(0,0,0,0.40)">equity</text>
+          </svg>
+          <div style="font-size: 11px; color: var(--text-secondary); line-height: 2;">
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #2E7D32;"></div> Calls (5)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #1565C0;"></div> Emails (3)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #7B1FA2;"></div> Texts (2)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #E65100;"></div> Meetings (2)</div>
+          </div>
+        </div>
+        <div class="verdict">Each interaction type has its own segment and color. The ring communicates channel diversity — a ring with only one color means you're over-indexed on one channel.</div>
+      </div>
+
+      <div class="card">
+        <h3>Interaction Frequency Chart</h3>
+        <div class="desc">Small bar chart showing interactions per week for the last 8 weeks. Sparse bars = cooling relationship. Dense bars = actively engaged.</div>
+        <div style="display: flex; align-items: flex-end; gap: 6px; height: 80px; justify-content: center; padding-top: 16px;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 12px; background: rgba(37,180,57,0.20); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">8w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 28px; background: rgba(37,180,57,0.30); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">7w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 8px; background: rgba(37,180,57,0.15); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">6w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 44px; background: rgba(37,180,57,0.45); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">5w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 36px; background: rgba(37,180,57,0.40); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">4w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 52px; background: rgba(37,180,57,0.55); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">3w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 64px; background: rgba(37,180,57,0.70); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">2w</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 20px; height: 40px; background: var(--brand); border-radius: 3px;"></div>
+            <div style="font-size: 7px; color: var(--text-tertiary);">1w</div>
+          </div>
+        </div>
+        <div class="verdict">Simple bar chart using brand green at varying opacities. Current week is full brand green. Gives rhythm context — "am I engaging more or less over time?"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: rgba(0,0,0,0.28); font-size: 12px;">
+  Kinship Brain — Data Visualization · /design-consultation
+</footer>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Responsive + Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif; --font-serif: 'Fraunces', Georgia, serif; --brand: #25B439; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: #f8f8f6; color: rgba(0,0,0,0.82); line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; }
+  section { padding: 48px 0; border-bottom: 1px solid rgba(0,0,0,0.07); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: rgba(0,0,0,0.45); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+
+  .device-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start; }
+  .device-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: rgba(0,0,0,0.35); margin-bottom: 8px; text-align: center; }
+
+  /* Phone frame */
+  .phone-frame {
+    width: 280px; margin: 0 auto; background: #f8f8f6; border: 1px solid rgba(0,0,0,0.10);
+    border-radius: 24px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    position: relative;
+  }
+  .phone-frame::before {
+    content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 20px; background: #f8f8f6; border-radius: 0 0 12px 12px; z-index: 10;
+    border: 1px solid rgba(0,0,0,0.08); border-top: none;
+  }
+
+  /* Tablet frame */
+  .tablet-frame {
+    width: 100%; max-width: 500px; margin: 0 auto; background: #f8f8f6; border: 1px solid rgba(0,0,0,0.10);
+    border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  /* Desktop frame */
+  .desktop-frame {
+    width: 100%; background: #f8f8f6; border: 1px solid rgba(0,0,0,0.10);
+    border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  /* Shared inner styles */
+  .m-hdr { background: #25B439; padding: 16px 16px 20px; display: flex; gap: 12px; align-items: center; }
+  .m-hdr-lg { padding: 24px 24px 28px; gap: 20px; }
+  .m-ring-sm { width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.20); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .m-ring-sm::after { content: ''; position: absolute; inset: -2.5px; border-radius: 50%; border: 2.5px solid transparent; border-top-color: rgba(255,255,255,0.90); border-right-color: rgba(255,255,255,0.80); transform: rotate(-15deg); }
+  .m-ring-sm .v { font-size: 14px; font-weight: 700; color: white; }
+  .m-stats-row { display: flex; gap: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 12px; flex: 1; }
+  .m-stat-sm .v { font-size: 14px; font-weight: 700; color: white; }
+  .m-stat-sm .l { font-size: 8px; color: rgba(255,255,255,0.55); }
+
+  .m-bd { padding: 14px 16px 70px; }
+  .m-bd-lg { padding: 20px 24px 80px; }
+  .m-hd { font-family: var(--font-serif); font-weight: 700; font-size: 13px; color: rgba(0,0,0,0.82); margin-bottom: 8px; }
+
+  .m-pod-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
+  .m-pod-card { background: white; border: 1px solid rgba(0,0,0,0.07); border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; min-width: 120px; flex-shrink: 0; }
+  .m-pod-orb { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 6px; font-weight: 600; color: rgba(255,255,255,0.90); flex-shrink: 0; }
+  .m-pod-nm { font-family: var(--font-serif); font-weight: 700; font-size: 11px; color: rgba(0,0,0,0.82); }
+  .m-pod-mt { font-size: 9px; color: rgba(0,0,0,0.45); }
+
+  .m-focus-sm { background: white; border: 1px solid rgba(0,0,0,0.07); border-radius: 10px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+  .m-av { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; flex-shrink: 0; }
+  .m-fn { font-size: 12px; font-weight: 500; color: rgba(0,0,0,0.82); }
+  .m-fs { font-size: 9px; color: rgba(0,0,0,0.45); }
+  .m-tg { font-size: 8px; font-weight: 600; color: #25B439; background: rgba(37,180,57,0.08); padding: 2px 6px; border-radius: 8px; margin-left: auto; white-space: nowrap; }
+
+  /* Nav bottom bar */
+  .m-nav-bar { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid rgba(0,0,0,0.07); padding: 8px 0; display: flex; justify-content: center; }
+  .m-tab-bar { display: flex; gap: 32px; }
+  .m-tab { text-align: center; font-size: 9px; font-weight: 500; }
+  .m-tab.active { color: #25B439; }
+  .m-tab.inactive { color: rgba(0,0,0,0.30); }
+  .m-tab-dot { width: 4px; height: 4px; border-radius: 50%; margin: 0 auto 3px; }
+
+  /* Mobile map */
+  .m-map-mobile { padding: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+
+  /* Mobile panel (full screen) */
+  .m-panel-full { background: white; position: relative; }
+  .m-panel-head { padding: 14px 16px 0; display: flex; align-items: center; gap: 10px; }
+  .m-panel-back { font-size: 11px; color: #25B439; font-weight: 600; cursor: pointer; }
+  .m-panel-t { font-family: var(--font-serif); font-weight: 700; font-size: 16px; }
+  .m-panel-search { margin: 10px 16px; padding: 8px 10px; border-radius: 8px; background: #f8f8f6; border: 1px solid rgba(0,0,0,0.07); width: calc(100% - 32px); font-family: var(--font-sans); font-size: 11px; color: rgba(0,0,0,0.82); }
+  .m-panel-row { padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .m-panel-nm { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.82); }
+  .m-panel-rl { font-size: 10px; color: rgba(0,0,0,0.45); }
+
+  .note-card {
+    background: white; border: 1px solid rgba(0,0,0,0.07); border-radius: 12px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .note-title { font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .note-text { font-size: 12px; color: rgba(0,0,0,0.45); line-height: 1.5; }
+
+  @media (max-width: 900px) { .device-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Responsive + Mobile</h1>
+    <p>How Kinship Brain adapts from desktop to tablet to phone. Touch targets, layout shifts, and what simplifies.</p>
+  </div>
+</header>
+
+<!-- ═══ DASHBOARD BREAKPOINTS ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Dashboard</div>
+    <div class="section-title">Three Breakpoints</div>
+    <div class="section-desc">Pod cards become a horizontal scroll on mobile. Stats stack vertically. Green header band stays but compresses. Nav moves from floating pill to a bottom tab bar on mobile.</div>
+
+    <div class="device-grid">
+      <!-- Phone -->
+      <div>
+        <div class="device-label">Phone (375px)</div>
+        <div class="phone-frame">
+          <div class="m-hdr" style="padding-top: 28px;">
+            <div class="m-ring-sm"><div class="v">78</div></div>
+            <div style="flex: 1;">
+              <div style="color: white; font-size: 10px; font-weight: 500;">Network Health</div>
+              <div style="display: flex; gap: 16px; margin-top: 6px;">
+                <div class="m-stat-sm"><div class="v">247</div><div class="l">contacts</div></div>
+                <div class="m-stat-sm"><div class="v" style="color: hsla(20,80%,75%,1);">7</div><div class="l">overdue</div></div>
+                <div class="m-stat-sm"><div class="v">12</div><div class="l">dormant</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="m-bd" style="position: relative;">
+            <div class="m-hd">Pods</div>
+            <div class="m-pod-scroll">
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div><div><div class="m-pod-nm">Maps</div><div class="m-pod-mt">42 · 3 overdue</div></div></div>
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div><div><div class="m-pod-nm">LPs</div><div class="m-pod-mt">28 · 1 overdue</div></div></div>
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">SP</div><div><div class="m-pod-nm">Svc Prov</div><div class="m-pod-mt">87</div></div></div>
+            </div>
+            <div class="m-hd">Today's Focus</div>
+            <div class="m-focus-sm">
+              <div class="m-av" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+              <div><div class="m-fn">Sarah Chen</div><div class="m-fs">18 days · Maps</div></div>
+              <div class="m-tg">reach out</div>
+            </div>
+            <div class="m-nav-bar">
+              <div class="m-tab-bar">
+                <div class="m-tab active"><div class="m-tab-dot" style="background: #25B439;"></div>Pulse</div>
+                <div class="m-tab inactive"><div class="m-tab-dot" style="background: rgba(0,0,0,0.15);"></div>Map</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tablet -->
+      <div>
+        <div class="device-label">Tablet (768px)</div>
+        <div class="tablet-frame">
+          <div class="m-hdr m-hdr-lg">
+            <div class="m-ring-sm" style="width: 52px; height: 52px;"><div class="v" style="font-size: 16px;">78</div></div>
+            <div class="m-stats-row">
+              <div class="m-stat-sm"><div class="v">247</div><div class="l">contacts</div></div>
+              <div class="m-stat-sm"><div class="v">18</div><div class="l">due</div></div>
+              <div class="m-stat-sm"><div class="v" style="color: hsla(20,80%,75%,1);">7</div><div class="l">overdue</div></div>
+              <div class="m-stat-sm"><div class="v">12</div><div class="l">dormant</div></div>
+            </div>
+          </div>
+          <div class="m-bd m-bd-lg" style="padding-bottom: 24px;">
+            <div class="m-hd">Pods</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div><div><div class="m-pod-nm">Maps</div><div class="m-pod-mt">42 · 3 overdue</div></div></div>
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div><div><div class="m-pod-nm">LPs</div><div class="m-pod-mt">28 · 1 overdue</div></div></div>
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">SP</div><div><div class="m-pod-nm">Service Providers</div><div class="m-pod-mt">87</div></div></div>
+              <div class="m-pod-card"><div class="m-pod-orb" style="background: linear-gradient(135deg, #25B439, #00BFA5);">T</div><div><div class="m-pod-nm">Talent</div><div class="m-pod-mt">34 · 2 overdue</div></div></div>
+            </div>
+            <div class="m-hd">Today's Focus</div>
+            <div class="m-focus-sm">
+              <div class="m-av" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+              <div><div class="m-fn">Sarah Chen</div><div class="m-fs">18 days ago · Maps / Silicon Valley</div></div>
+              <div class="m-tg">reach out</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop -->
+      <div>
+        <div class="device-label">Desktop (1200px)</div>
+        <div style="font-size: 11px; color: rgba(0,0,0,0.35); text-align: center; padding: 20px; background: white; border: 1px solid rgba(0,0,0,0.07); border-radius: 12px;">
+          See previous mockups — full layout with floating pill nav, wide pod card row, side-by-side contact panel.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ORB MAP MOBILE ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb Map</div>
+    <div class="section-title">Map on Small Screens</div>
+    <div class="section-desc">The orbital map scales down naturally — orbs get smaller, orbit rings tighten. Pinch-to-zoom lets you explore. On very small screens, you could offer a list fallback, but the map should work at phone size with touch.</div>
+
+    <div style="display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start;">
+      <div>
+        <div class="device-label">Phone Map</div>
+        <div class="phone-frame" style="padding-top: 28px;">
+          <div class="m-map-mobile" style="background: #f8f8f6;">
+            <svg viewBox="0 0 250 300" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="ms" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="1" stdDeviation="4" flood-opacity="0.12"/></filter>
+                <linearGradient id="mr" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E53935"/><stop offset="100%" stop-color="#FF6B4A"/></linearGradient>
+                <linearGradient id="mp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B8A"/><stop offset="100%" stop-color="#FF8FA5"/></linearGradient>
+                <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#25B439"/><stop offset="100%" stop-color="#00BFA5"/></linearGradient>
+                <linearGradient id="mo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A623"/><stop offset="100%" stop-color="#FFD54F"/></linearGradient>
+                <linearGradient id="mh" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1C1C1E"/><stop offset="100%" stop-color="#2C2C30"/></linearGradient>
+              </defs>
+              <circle cx="125" cy="150" r="50" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="3 4"/>
+              <circle cx="125" cy="150" r="90" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1" stroke-dasharray="3 4"/>
+              <g stroke="rgba(0,0,0,0.05)" stroke-width="1">
+                <line x1="125" y1="150" x2="80" y2="80"/><line x1="125" y1="150" x2="185" y2="75"/>
+                <line x1="125" y1="150" x2="200" y2="170"/><line x1="125" y1="150" x2="150" y2="240"/>
+                <line x1="125" y1="150" x2="50" y2="210"/>
+              </g>
+              <g filter="url(#ms)"><circle cx="80" cy="80" r="20" fill="url(#mr)"/><text x="80" y="83" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text></g>
+              <g filter="url(#ms)"><circle cx="185" cy="75" r="17" fill="url(#mp)"/><text x="185" y="78" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LPS</text></g>
+              <g filter="url(#ms)"><circle cx="200" cy="170" r="15" fill="url(#mg)"/><text x="200" y="173" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6" font-weight="600">TLT</text></g>
+              <g filter="url(#ms)"><circle cx="150" cy="240" r="22" fill="url(#mo)"/><text x="150" y="238" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6" font-weight="600">SVC</text><text x="150" y="246" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6" font-weight="600">PROV</text></g>
+              <g filter="url(#ms)" opacity="0.75"><circle cx="50" cy="210" r="14" fill="#7E57C2"/><text x="50" y="213" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="6" font-weight="600">CO</text></g>
+              <g filter="url(#ms)"><circle cx="125" cy="150" r="28" fill="url(#mh)"/><text x="125" y="154" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">MRM</text></g>
+            </svg>
+          </div>
+          <div class="m-nav-bar">
+            <div class="m-tab-bar">
+              <div class="m-tab inactive"><div class="m-tab-dot" style="background: rgba(0,0,0,0.15);"></div>Pulse</div>
+              <div class="m-tab active"><div class="m-tab-dot" style="background: #25B439;"></div>Map</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="note-card">
+          <div class="note-title">Mobile Map Adaptations</div>
+          <div class="note-text">
+            <strong>Touch targets:</strong> Minimum 44px tap area on each orb (Apple HIG). Smaller orbs get an invisible hit area expansion.<br><br>
+            <strong>Pinch-to-zoom:</strong> React Flow supports this natively. Let users zoom into dense clusters.<br><br>
+            <strong>Tap to drill:</strong> Single tap opens the pod (replaces hover). No hover states on mobile — just tap feedback (brief scale pulse).<br><br>
+            <strong>Orbit rings:</strong> Slightly tighter on mobile to keep everything in viewport without scrolling.<br><br>
+            <strong>Clustered small orbs:</strong> Categories cluster even tighter on mobile. Tap the cluster to fan them out.
+          </div>
+        </div>
+
+        <div class="note-card">
+          <div class="note-title">Contact Panel on Mobile</div>
+          <div class="note-text">
+            On desktop, the panel is a right-side drawer (340px). On mobile, it becomes a <strong>full-screen sheet</strong> that slides up from the bottom with a back button. The orb map is hidden behind it — you're either in the map or in a contact list, not both.
+          </div>
+        </div>
+
+        <div class="note-card">
+          <div class="note-title">Nav Changes</div>
+          <div class="note-text">
+            <strong>Desktop:</strong> Floating pill nav (centered, bottom-ish)<br>
+            <strong>Mobile:</strong> Fixed bottom tab bar with dots. Same two tabs (Pulse / Map). Always visible, always tappable. 48px height minimum.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MOBILE CONTACT PANEL ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Mobile Panel</div>
+    <div class="section-title">Full-Screen Contact Sheet</div>
+    <div class="section-desc">Tapping a category orb on mobile slides up a full-screen sheet. Back arrow returns to the map. Clean, focused, no split view.</div>
+
+    <div style="display: flex; gap: 24px; align-items: start; justify-content: center;">
+      <div>
+        <div class="device-label">Map → Tap orb</div>
+        <div class="phone-frame" style="padding-top: 28px;">
+          <div class="m-map-mobile" style="background: #f8f8f6; min-height: 360px;">
+            <svg viewBox="0 0 250 300" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="125" cy="150" r="50" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="3 4"/>
+              <g stroke="rgba(0,0,0,0.05)" stroke-width="1"><line x1="125" y1="150" x2="80" y2="80"/></g>
+              <g><circle cx="80" cy="80" r="20" fill="#E53935" opacity="0.3"/><text x="80" y="83" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text></g>
+              <g><circle cx="125" cy="150" r="28" fill="#1C1C1E" opacity="0.3"/><text x="125" y="154" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">MRM</text></g>
+              <!-- Highlighted tapped orb -->
+              <g><circle cx="185" cy="75" r="22" fill="#FF6B8A" style="filter: drop-shadow(0 0 12px rgba(255,107,138,0.40));"/><text x="185" y="78" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LPS</text></g>
+              <text x="185" y="108" text-anchor="middle" fill="rgba(0,0,0,0.30)" font-family="Plus Jakarta Sans" font-size="8">tap</text>
+            </svg>
+          </div>
+          <div class="m-nav-bar">
+            <div class="m-tab-bar">
+              <div class="m-tab inactive"><div class="m-tab-dot" style="background: rgba(0,0,0,0.15);"></div>Pulse</div>
+              <div class="m-tab active"><div class="m-tab-dot" style="background: #25B439;"></div>Map</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 24px; color: rgba(0,0,0,0.15); align-self: center; padding-top: 40px;">→</div>
+
+      <div>
+        <div class="device-label">Contact Sheet (full screen)</div>
+        <div class="phone-frame" style="padding-top: 28px;">
+          <div class="m-panel-full">
+            <div class="m-panel-head" style="padding-top: 28px;">
+              <div class="m-panel-back">← Map</div>
+            </div>
+            <div style="padding: 8px 16px 0;">
+              <div class="m-panel-t">LPs</div>
+            </div>
+            <input class="m-panel-search" placeholder="Search contacts..." disabled>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div><div><div class="m-panel-nm">Sarah Chen</div><div class="m-panel-rl">Partner, a16z</div></div></div>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">JR</div><div><div class="m-panel-nm">James Rivera</div><div class="m-panel-rl">CTO, Stripe</div></div></div>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">AK</div><div><div class="m-panel-nm">Ayumi Kato</div><div class="m-panel-rl">GP, Sequoia</div></div></div>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #25B439, #00BFA5);">MT</div><div><div class="m-panel-nm">Marcus Thompson</div><div class="m-panel-rl">VP Eng, Notion</div></div></div>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">LW</div><div><div class="m-panel-nm">Lisa Wang</div><div class="m-panel-rl">CEO, Jenni AI</div></div></div>
+            <div class="m-panel-row"><div class="m-av" style="background: linear-gradient(135deg, #00ACC1, #4DD0E1);">RK</div><div><div class="m-panel-nm">Raj Kumar</div><div class="m-panel-rl">Managing Dir, Tiger</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: rgba(0,0,0,0.28); font-size: 12px;">
+  Kinship Brain — Responsive + Mobile · /design-consultation
+</footer>
+</body>
+</html>

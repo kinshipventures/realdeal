@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Final Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #25B439; --brand-dark: #1A8A2A; --hub: #1C1C1E;
+    --bg: #f8f8f6; --surface: #ffffff;
+    --text-primary: rgba(0,0,0,0.82); --text-secondary: rgba(0,0,0,0.45);
+    --text-tertiary: rgba(0,0,0,0.28); --border: rgba(0,0,0,0.07);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+    --page-bg: var(--bg); --page-text: var(--text-primary);
+    --page-text-secondary: var(--text-secondary); --page-surface: var(--surface);
+    --page-border: var(--border); --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  [data-theme="dark"] {
+    --page-bg: #111; --page-text: rgba(255,255,255,0.87);
+    --page-text-secondary: rgba(255,255,255,0.50); --page-surface: #1a1a1a;
+    --page-border: rgba(255,255,255,0.08); --card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--page-bg); color: var(--page-text); line-height: 1.5; transition: background 0.3s, color 0.3s; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+  .preview-header { background: var(--brand); padding: 48px 0 56px; color: white; position: relative; }
+  .preview-header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 48px; letter-spacing: -0.03em; line-height: 1.1; }
+  .preview-header p { font-size: 15px; opacity: 0.75; margin-top: 8px; max-width: 520px; }
+  .theme-toggle { position: absolute; top: 24px; right: 32px; background: rgba(255,255,255,0.18); border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 500; }
+  .theme-toggle:hover { background: rgba(255,255,255,0.28); }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--page-border); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: var(--page-text-secondary); font-size: 14px; max-width: 600px; margin-bottom: 32px; line-height: 1.6; }
+
+  /* ═══ Orb Component ═══ */
+  .orb-palette { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; }
+  .orb-sample { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .orb-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+  .orb-ring-svg { position: absolute; z-index: 0; }
+  .orb-body {
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: rgba(255,255,255,0.92); letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.18); position: relative; z-index: 1;
+  }
+  .orb-body span { position: relative; z-index: 1; }
+  .orb-label-text { font-size: 10px; color: var(--page-text-secondary); text-align: center; }
+
+  /* ═══ Dashboard Mockup ═══ */
+  .mockup-frame { background: var(--page-surface); border: 1px solid var(--page-border); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.08); }
+  .mock-header-band { background: var(--brand); padding: 28px 28px 32px; display: flex; gap: 24px; align-items: flex-start; }
+  .mock-equity { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .mock-ring { width: 72px; height: 72px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.20); position: relative; display: flex; align-items: center; justify-content: center; }
+  .mock-ring::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,0.90); border-right-color: rgba(255,255,255,0.90); border-bottom-color: rgba(255,255,255,0.70); transform: rotate(-10deg); }
+  .mock-score { font-size: 22px; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+  .mock-score-label { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .mock-stats { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px 20px; flex: 1; display: flex; gap: 32px; }
+  .mock-stat-value { font-size: 20px; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+  .mock-stat-label { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .mock-body { padding: 24px 28px 32px; background: var(--bg); }
+  [data-theme="dark"] .mock-body { background: var(--page-bg); }
+  .mock-section-heading { font-family: var(--font-serif); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; margin-bottom: 12px; color: var(--page-text); }
+
+  /* Pod cards — mini orb avatar */
+  .mock-pod-row { display: flex; gap: 12px; margin-bottom: 24px; overflow-x: auto; }
+  .mock-pod {
+    background: var(--page-surface); border: 1px solid var(--page-border);
+    border-radius: 12px; padding: 14px 16px; min-width: 155px; flex-shrink: 0;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .mock-pod:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .mock-pod .mini-orb {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.90);
+    position: relative; overflow: hidden;
+  }
+  .mock-pod .mini-orb::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.20) 0%, transparent 50%, rgba(0,0,0,0.10) 100%);
+  }
+  .mock-pod .mini-orb span { position: relative; z-index: 1; }
+  .mock-pod .pod-name { font-family: var(--font-serif); font-weight: 700; font-size: 13px; color: var(--page-text); }
+  .mock-pod .pod-meta { font-size: 11px; color: var(--page-text-secondary); }
+
+  /* Focus card */
+  .mock-focus-card {
+    background: var(--page-surface); border: 1px solid var(--page-border);
+    border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 12px;
+  }
+  .mock-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+  .mock-focus-name { font-size: 13px; font-weight: 500; color: var(--page-text); }
+  .mock-focus-reason { font-size: 11px; color: var(--page-text-secondary); }
+  .mock-focus-tag { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--brand); background: rgba(37,180,57,0.08); padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+
+  /* Nav */
+  .mock-nav-container { display: flex; justify-content: center; margin-top: 32px; }
+  .mock-nav { display: inline-flex; gap: 4px; background: var(--page-surface); border: 1px solid var(--page-border); border-radius: 24px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .mock-nav-btn { padding: 8px 20px; border-radius: 20px; font-family: var(--font-sans); font-size: 13px; font-weight: 500; border: none; cursor: pointer; }
+  .mock-nav-btn.active { background: var(--brand); color: white; box-shadow: 0 1px 4px rgba(37,180,57,0.30); }
+  .mock-nav-btn.inactive { background: transparent; color: var(--page-text-secondary); }
+
+  /* Map */
+  .map-frame { border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.08); border: 1px solid var(--page-border); }
+  .map-frame svg { display: block; width: 100%; }
+
+  /* Contact panel */
+  .mock-panel-grid {
+    display: grid; grid-template-columns: 1fr 340px; gap: 0;
+    background: var(--page-surface); border: 1px solid var(--page-border);
+    border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.08); min-height: 400px;
+  }
+  .mock-panel-canvas { background: var(--bg); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--page-border); position: relative; }
+  [data-theme="dark"] .mock-panel-canvas { background: var(--page-bg); }
+  .mock-panel { padding: 24px; }
+  .mock-panel-title { font-family: var(--font-serif); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--page-text); }
+  .mock-input { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--page-border); background: var(--page-surface); font-family: var(--font-sans); font-size: 13px; color: var(--page-text); width: 100%; outline: none; }
+  .mock-input:focus { border-color: var(--brand); }
+  .mock-contact-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--page-border); }
+  .mock-contact-row:last-child { border-bottom: none; }
+  .mock-contact-name { font-size: 13px; font-weight: 500; color: var(--page-text); }
+  .mock-contact-role { font-size: 11px; color: var(--page-text-secondary); }
+
+  /* Components */
+  .component-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .btn { padding: 10px 20px; border-radius: 10px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+  .btn-primary { background: var(--brand); color: white; }
+  .btn-secondary { background: var(--page-surface); color: var(--page-text); border: 1px solid var(--page-border); }
+  .btn-ghost { background: transparent; color: var(--page-text-secondary); }
+  .alert { padding: 12px 16px; border-radius: 12px; font-size: 13px; margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+  .alert-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .alert-success { background: rgba(37,180,57,0.07); color: var(--brand-dark); }
+  .alert-success .alert-icon { background: var(--brand); color: white; }
+  .alert-warning { background: rgba(255,149,0,0.07); color: #996600; }
+  .alert-warning .alert-icon { background: #FF9500; color: white; }
+  .alert-error { background: rgba(255,59,48,0.07); color: #CC2F27; }
+  .alert-error .alert-icon { background: #FF3B30; color: white; }
+
+  /* Canvas mini orbs */
+  .canvas-orb { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.9); overflow: hidden; }
+  .canvas-orb::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%, rgba(0,0,0,0.08) 100%); pointer-events: none; }
+  .canvas-orb span { position: relative; z-index: 1; }
+
+  @media (max-width: 768px) { .mock-panel-grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } .preview-header h1 { font-size: 36px; } }
+</style>
+</head>
+<body>
+
+<header class="preview-header">
+  <button class="theme-toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">Light / Dark</button>
+  <div class="container">
+    <h1>Kinship Brain</h1>
+    <p>Final design system preview. Two-tone orbs, health rings, glow halos, orbital map, mini orb cards. Everything together.</p>
+  </div>
+</header>
+
+<!-- 1. Orb System -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb System</div>
+    <div class="section-title">Two-Tone + Health Ring + Glow Halo</div>
+    <div class="section-desc">Each orb has a hue-shifted diagonal gradient for internal color motion, a health ring showing equity score, and a colored glow halo casting light onto the canvas.</div>
+    <div class="orb-palette">
+      <!-- Maps: orb=84, wrap=96, ring-r=46, center=48, circ=289, 84%=243 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 96px; height: 96px;">
+          <svg class="orb-ring-svg" viewBox="0 0 96 96" style="width: 96px; height: 96px; left: 0; top: 0;">
+            <circle cx="48" cy="48" r="46" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="48" cy="48" r="46" fill="none" stroke="#E53935" stroke-width="2" stroke-dasharray="243 289" stroke-linecap="round" transform="rotate(-90 48 48)"/>
+          </svg>
+          <div class="orb-body" style="width: 84px; height: 84px; background: linear-gradient(135deg, #E53935 0%, #FF6B4A 100%); box-shadow: 0 0 28px rgba(229,57,53,0.30), 0 4px 16px rgba(0,0,0,0.12); font-size: 11px;"><span>MAPS</span></div>
+        </div>
+        <div class="orb-label-text">84% health</div>
+      </div>
+      <!-- LPs: orb=72, wrap=84, ring-r=40, center=42, circ=251, 75%=188 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 84px; height: 84px;">
+          <svg class="orb-ring-svg" viewBox="0 0 84 84" style="width: 84px; height: 84px; left: 0; top: 0;">
+            <circle cx="42" cy="42" r="40" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="42" cy="42" r="40" fill="none" stroke="#FF6B8A" stroke-width="2" stroke-dasharray="188 251" stroke-linecap="round" transform="rotate(-90 42 42)"/>
+          </svg>
+          <div class="orb-body" style="width: 72px; height: 72px; background: linear-gradient(135deg, #FF6B8A 0%, #FF8FA5 100%); box-shadow: 0 0 24px rgba(255,107,138,0.28), 0 4px 14px rgba(0,0,0,0.10); font-size: 10px;"><span>LPS</span></div>
+        </div>
+        <div class="orb-label-text">75% health</div>
+      </div>
+      <!-- Talent: orb=68, wrap=80, ring-r=38, center=40, circ=239, 60%=143 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 80px; height: 80px;">
+          <svg class="orb-ring-svg" viewBox="0 0 80 80" style="width: 80px; height: 80px; left: 0; top: 0;">
+            <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="40" cy="40" r="38" fill="none" stroke="#25B439" stroke-width="2" stroke-dasharray="143 239" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="orb-body" style="width: 68px; height: 68px; background: linear-gradient(135deg, #25B439 0%, #00BFA5 100%); box-shadow: 0 0 24px rgba(37,180,57,0.28), 0 4px 14px rgba(0,0,0,0.10); font-size: 10px;"><span>TALENT</span></div>
+        </div>
+        <div class="orb-label-text">60% health</div>
+      </div>
+      <!-- SVC: orb=84, wrap=96, ring-r=46, center=48, circ=289, 95%=275 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 96px; height: 96px;">
+          <svg class="orb-ring-svg" viewBox="0 0 96 96" style="width: 96px; height: 96px; left: 0; top: 0;">
+            <circle cx="48" cy="48" r="46" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="48" cy="48" r="46" fill="none" stroke="#F5A623" stroke-width="2" stroke-dasharray="275 289" stroke-linecap="round" transform="rotate(-90 48 48)"/>
+          </svg>
+          <div class="orb-body" style="width: 84px; height: 84px; background: linear-gradient(135deg, #F5A623 0%, #FFD54F 100%); box-shadow: 0 0 28px rgba(245,166,35,0.28), 0 4px 16px rgba(0,0,0,0.10); font-size: 9px;"><span>SVC PROV</span></div>
+        </div>
+        <div class="orb-label-text">95% health</div>
+      </div>
+      <!-- CO: orb=60, wrap=72, ring-r=34, center=36, circ=214, 45%=96 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 72px; height: 72px;">
+          <svg class="orb-ring-svg" viewBox="0 0 72 72" style="width: 72px; height: 72px; left: 0; top: 0;">
+            <circle cx="36" cy="36" r="34" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="36" cy="36" r="34" fill="none" stroke="#7E57C2" stroke-width="2" stroke-dasharray="96 214" stroke-linecap="round" transform="rotate(-90 36 36)"/>
+          </svg>
+          <div class="orb-body" style="width: 60px; height: 60px; background: linear-gradient(135deg, #7E57C2 0%, #5C6BC0 100%); box-shadow: 0 0 22px rgba(126,87,194,0.28), 0 4px 12px rgba(0,0,0,0.10); font-size: 9px;"><span>CO</span></div>
+        </div>
+        <div class="orb-label-text">45% health</div>
+      </div>
+      <!-- Hub: orb=100, wrap=112, ring-r=54, center=56, circ=339, 89%=302 -->
+      <div class="orb-sample">
+        <div class="orb-wrap" style="width: 112px; height: 112px;">
+          <svg class="orb-ring-svg" viewBox="0 0 112 112" style="width: 112px; height: 112px; left: 0; top: 0;">
+            <circle cx="56" cy="56" r="54" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle cx="56" cy="56" r="54" fill="none" stroke="#1C1C1E" stroke-width="2" stroke-dasharray="302 339" stroke-linecap="round" transform="rotate(-90 56 56)"/>
+          </svg>
+          <div class="orb-body" style="width: 100px; height: 100px; background: linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%); box-shadow: 0 0 30px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25); font-size: 14px;"><span>MRM</span></div>
+        </div>
+        <div class="orb-label-text">Hub · 89%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Orbital Map -->
+<section>
+  <div class="container">
+    <div class="section-label">Product Mockup</div>
+    <div class="section-title">Orbital Map with Clustered Small Orbs</div>
+    <div class="section-desc">Priority pods orbit closer to the hub. Connection lines link main pods. When a pod has many categories, the smaller orbs cluster into a tight group near their parent rather than scattering across the canvas.</div>
+    <div class="map-frame" style="background: var(--bg);">
+      <svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="fs" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.15"/></filter>
+          <filter id="fh" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="12" flood-opacity="0.25"/></filter>
+          <filter id="fg" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="g-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E53935"/><stop offset="100%" stop-color="#FF6B4A"/></linearGradient>
+          <linearGradient id="g-pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B8A"/><stop offset="100%" stop-color="#FF8FA5"/></linearGradient>
+          <linearGradient id="g-green" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#25B439"/><stop offset="100%" stop-color="#00BFA5"/></linearGradient>
+          <linearGradient id="g-orange" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A623"/><stop offset="100%" stop-color="#FFD54F"/></linearGradient>
+          <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7E57C2"/><stop offset="100%" stop-color="#5C6BC0"/></linearGradient>
+          <linearGradient id="g-teal" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00ACC1"/><stop offset="100%" stop-color="#4DD0E1"/></linearGradient>
+          <linearGradient id="g-hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1C1C1E"/><stop offset="100%" stop-color="#2C2C30"/></linearGradient>
+        </defs>
+
+        <!-- Orbit rings -->
+        <circle cx="350" cy="230" r="100" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="4 6"/>
+        <circle cx="350" cy="230" r="160" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1" stroke-dasharray="4 6"/>
+        <circle cx="350" cy="230" r="220" fill="none" stroke="rgba(0,0,0,0.025)" stroke-width="1" stroke-dasharray="4 6"/>
+
+        <!-- Connection lines between main orbs -->
+        <g stroke="rgba(0,0,0,0.06)" stroke-width="1.5" fill="none">
+          <!-- Hub to pods -->
+          <line x1="350" y1="230" x2="220" y2="120"/>
+          <line x1="350" y1="230" x2="500" y2="110"/>
+          <line x1="350" y1="230" x2="555" y2="240"/>
+          <line x1="350" y1="230" x2="470" y2="380"/>
+          <line x1="350" y1="230" x2="180" y2="350"/>
+          <line x1="350" y1="230" x2="145" y2="220"/>
+          <!-- Cross-connections between pods -->
+          <line x1="220" y1="120" x2="145" y2="220" stroke="rgba(0,0,0,0.03)"/>
+          <line x1="500" y1="110" x2="555" y2="240" stroke="rgba(0,0,0,0.03)"/>
+          <line x1="555" y1="240" x2="470" y2="380" stroke="rgba(0,0,0,0.03)"/>
+        </g>
+
+        <!-- Health rings + Two-tone orbs -->
+
+        <!-- Inner orbit — Maps (priority) -->
+        <g filter="url(#fg)">
+          <circle cx="220" cy="120" r="42" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="220" cy="120" r="42" fill="none" stroke="#E53935" stroke-width="2.5" stroke-dasharray="220 264" stroke-linecap="round" transform="rotate(-90 220 120)"/>
+          <circle cx="220" cy="120" r="36" fill="url(#g-red)"/>
+          <text x="220" y="124" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="11" font-weight="600">MAPS</text>
+        </g>
+
+        <!-- Inner orbit — LPs -->
+        <g filter="url(#fg)">
+          <circle cx="500" cy="110" r="36" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="500" cy="110" r="36" fill="none" stroke="#FF6B8A" stroke-width="2.5" stroke-dasharray="170 226" stroke-linecap="round" transform="rotate(-90 500 110)"/>
+          <circle cx="500" cy="110" r="30" fill="url(#g-pink)"/>
+          <text x="500" y="114" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">LPS</text>
+        </g>
+
+        <!-- Middle orbit — Talent -->
+        <g filter="url(#fg)">
+          <circle cx="555" cy="240" r="34" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="555" cy="240" r="34" fill="none" stroke="#25B439" stroke-width="2.5" stroke-dasharray="128 214" stroke-linecap="round" transform="rotate(-90 555 240)"/>
+          <circle cx="555" cy="240" r="28" fill="url(#g-green)"/>
+          <text x="555" y="244" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">TALENT</text>
+        </g>
+
+        <!-- Middle orbit — Service Providers (large) -->
+        <g filter="url(#fg)">
+          <circle cx="470" cy="380" r="48" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="470" cy="380" r="48" fill="none" stroke="#F5A623" stroke-width="2.5" stroke-dasharray="280 302" stroke-linecap="round" transform="rotate(-90 470 380)"/>
+          <circle cx="470" cy="380" r="42" fill="url(#g-orange)"/>
+          <text x="470" y="376" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">SERVICE</text>
+          <text x="470" y="388" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">PROVIDERS</text>
+        </g>
+
+        <!-- Clustered small orbs near Service Providers -->
+        <g opacity="0.85">
+          <circle cx="530" cy="415" r="11" fill="#E8A030"/><text x="530" y="418" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="5.5" font-weight="600">DESIGN</text>
+          <circle cx="553" cy="408" r="11" fill="#D4942A"/><text x="553" y="411" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="5.5" font-weight="600">DEV</text>
+          <circle cx="541" cy="432" r="11" fill="#C48820"/><text x="541" y="435" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans" font-size="5.5" font-weight="600">PR</text>
+          <circle cx="518" cy="436" r="9" fill="#DAA040" opacity="0.7"/><circle cx="560" cy="425" r="9" fill="#DAA040" opacity="0.7"/>
+          <circle cx="575" cy="415" r="7" fill="#DAA040" opacity="0.5"/><circle cx="528" cy="448" r="7" fill="#DAA040" opacity="0.5"/>
+          <circle cx="555" cy="443" r="6" fill="#DAA040" opacity="0.4"/>
+        </g>
+
+        <!-- Outer orbit — CO -->
+        <g filter="url(#fs)" opacity="0.80">
+          <circle cx="180" cy="350" r="28" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="2"/>
+          <circle cx="180" cy="350" r="28" fill="none" stroke="#7E57C2" stroke-width="2" stroke-dasharray="80 176" stroke-linecap="round" transform="rotate(-90 180 350)"/>
+          <circle cx="180" cy="350" r="23" fill="url(#g-purple)"/>
+          <text x="180" y="354" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">CO</text>
+        </g>
+
+        <!-- Outer orbit — Maps Lite -->
+        <g filter="url(#fs)" opacity="0.70">
+          <circle cx="145" cy="220" r="24" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="2"/>
+          <circle cx="145" cy="220" r="24" fill="none" stroke="#00ACC1" stroke-width="2" stroke-dasharray="60 151" stroke-linecap="round" transform="rotate(-90 145 220)"/>
+          <circle cx="145" cy="220" r="20" fill="url(#g-teal)"/>
+          <text x="145" y="217" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text>
+          <text x="145" y="226" text-anchor="middle" fill="rgba(255,255,255,0.82)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LITE</text>
+        </g>
+
+        <!-- Hub -->
+        <g filter="url(#fh)">
+          <circle cx="350" cy="230" r="56" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="3"/>
+          <circle cx="350" cy="230" r="56" fill="none" stroke="#1C1C1E" stroke-width="3" stroke-dasharray="315 352" stroke-linecap="round" transform="rotate(-90 350 230)"/>
+          <circle cx="350" cy="230" r="48" fill="url(#g-hub)"/>
+          <text x="350" y="235" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="15" font-weight="600">MRM</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Dashboard -->
+<section>
+  <div class="container">
+    <div class="section-label">Product Mockup</div>
+    <div class="section-title">Dashboard with Mini Orb Cards</div>
+    <div class="section-desc">Green header band, equity ring on green, mini orb avatar pod cards below. Fraunces serif headings throughout.</div>
+    <div class="mockup-frame">
+      <div class="mock-header-band">
+        <div class="mock-equity">
+          <div class="mock-ring"><div class="mock-score">78</div></div>
+          <div><div style="color: white; font-size: 11px; font-weight: 500;">Network Health</div><div class="mock-score-label">Healthy</div></div>
+        </div>
+        <div class="mock-stats">
+          <div><div class="mock-stat-value">247</div><div class="mock-stat-label">contacts</div></div>
+          <div><div class="mock-stat-value">18</div><div class="mock-stat-label">due this week</div></div>
+          <div><div class="mock-stat-value" style="color: hsla(20,80%,75%,1);">7</div><div class="mock-stat-label">overdue</div></div>
+          <div><div class="mock-stat-value">12</div><div class="mock-stat-label">dormant</div></div>
+        </div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-section-heading">Pods</div>
+        <div class="mock-pod-row">
+          <div class="mock-pod"><div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 2px 8px rgba(229,57,53,0.25);"><span>M</span></div><div><div class="pod-name">Maps</div><div class="pod-meta">42 contacts · 3 overdue</div></div></div>
+          <div class="mock-pod"><div class="mini-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 2px 8px rgba(255,107,138,0.25);"><span>LP</span></div><div><div class="pod-name">LPs</div><div class="pod-meta">28 contacts · 1 overdue</div></div></div>
+          <div class="mock-pod"><div class="mini-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F); box-shadow: 0 2px 8px rgba(245,166,35,0.25);"><span>SP</span></div><div><div class="pod-name">Service Providers</div><div class="pod-meta">87 contacts</div></div></div>
+          <div class="mock-pod"><div class="mini-orb" style="background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 2px 8px rgba(37,180,57,0.25);"><span>T</span></div><div><div class="pod-name">Talent</div><div class="pod-meta">34 contacts · 2 overdue</div></div></div>
+        </div>
+        <div class="mock-section-heading">Today's Focus</div>
+        <div class="mock-focus-card">
+          <div class="mock-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+          <div><div class="mock-focus-name">Sarah Chen</div><div class="mock-focus-reason">Last email 18 days ago · Maps / Silicon Valley</div></div>
+          <div class="mock-focus-tag">reach out</div>
+        </div>
+      </div>
+    </div>
+    <div class="mock-nav-container">
+      <div class="mock-nav"><button class="mock-nav-btn active">Pulse</button><button class="mock-nav-btn inactive">Map</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Contact Panel -->
+<section>
+  <div class="container">
+    <div class="section-label">Product Mockup</div>
+    <div class="section-title">Contact Panel</div>
+    <div class="mock-panel-grid">
+      <div class="mock-panel-canvas">
+        <div class="canvas-orb" style="background: linear-gradient(135deg, #1C1C1E, #2C2C30); width: 80px; height: 80px; top: 50%; left: 35%; transform: translate(-50%,-50%); box-shadow: 0 0 24px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.20); font-size: 12px;"><span>MRM</span></div>
+        <div class="canvas-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A); width: 52px; height: 52px; top: 22%; left: 18%; box-shadow: 0 0 18px rgba(229,57,53,0.25); font-size: 8px;"><span>MAPS</span></div>
+        <div class="canvas-orb" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0); width: 42px; height: 42px; bottom: 22%; left: 14%; box-shadow: 0 0 16px rgba(126,87,194,0.25); font-size: 7px;"><span>CO</span></div>
+        <div class="canvas-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5); width: 46px; height: 46px; top: 28%; left: 55%; box-shadow: 0 0 16px rgba(255,107,138,0.25); font-size: 8px;"><span>LPS</span></div>
+        <div class="canvas-orb" style="background: linear-gradient(135deg, #25B439, #00BFA5); width: 38px; height: 38px; bottom: 28%; left: 50%; box-shadow: 0 0 14px rgba(37,180,57,0.25); font-size: 7px;"><span>TLT</span></div>
+      </div>
+      <div class="mock-panel">
+        <div class="mock-panel-title">Silicon Valley / Tech</div>
+        <div style="margin-bottom: 16px;"><input type="text" class="mock-input" placeholder="Search contacts..."></div>
+        <div class="mock-contact-row"><div class="mock-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div><div><div class="mock-contact-name">Sarah Chen</div><div class="mock-contact-role">Partner, a16z</div></div></div>
+        <div class="mock-contact-row"><div class="mock-avatar" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">JR</div><div><div class="mock-contact-name">James Rivera</div><div class="mock-contact-role">CTO, Stripe</div></div></div>
+        <div class="mock-contact-row"><div class="mock-avatar" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">AK</div><div><div class="mock-contact-name">Ayumi Kato</div><div class="mock-contact-role">GP, Sequoia</div></div></div>
+        <div class="mock-contact-row"><div class="mock-avatar" style="background: linear-gradient(135deg, #25B439, #00BFA5);">MT</div><div><div class="mock-contact-name">Marcus Thompson</div><div class="mock-contact-role">VP Eng, Notion</div></div></div>
+        <div class="mock-contact-row"><div class="mock-avatar" style="background: linear-gradient(135deg, #F5A623, #FFD54F);">LW</div><div><div class="mock-contact-name">Lisa Wang</div><div class="mock-contact-role">CEO, Jenni AI</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Components -->
+<section>
+  <div class="container">
+    <div class="section-label">Components</div>
+    <div class="section-title">Buttons, Inputs, Alerts</div>
+    <div class="component-grid">
+      <button class="btn btn-primary">Log Interaction</button>
+      <button class="btn btn-secondary">View Details</button>
+      <button class="btn btn-ghost">Cancel</button>
+    </div>
+    <div style="margin-top: 24px;"><input type="text" class="mock-input" placeholder="Search contacts..." style="width: 280px;"></div>
+    <div style="margin-top: 24px;">
+      <div class="alert alert-success"><div class="alert-icon">&#10003;</div> Interaction logged for Sarah Chen.</div>
+      <div class="alert alert-warning"><div class="alert-icon">!</div> 7 contacts overdue in Maps pod.</div>
+      <div class="alert alert-error"><div class="alert-icon">&#10005;</div> Failed to sync with Airtable.</div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: var(--page-text-secondary); font-size: 12px;">
+  Kinship Brain — Final Design System · /design-consultation
+</footer>
+</body>
+</html>

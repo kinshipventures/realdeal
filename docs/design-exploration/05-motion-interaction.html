@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Motion + Interaction Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #25B439; --hub: #1C1C1E; --bg: #f8f8f6; --surface: #ffffff;
+    --text-primary: rgba(0,0,0,0.82); --text-secondary: rgba(0,0,0,0.45);
+    --text-tertiary: rgba(0,0,0,0.28); --border: rgba(0,0,0,0.07);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; max-width: 500px; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+  .explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .explore-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .explore-card h3 { font-family: var(--font-serif); font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .explore-card .desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+  .explore-card .verdict { margin-top: 16px; font-size: 11px; color: var(--text-tertiary); padding-top: 12px; border-top: 1px solid var(--border); }
+  .demo-area { display: flex; gap: 20px; align-items: center; justify-content: center; min-height: 140px; position: relative; }
+  .replay-btn {
+    display: inline-block; margin-top: 12px; padding: 6px 14px; border-radius: 8px;
+    background: rgba(0,0,0,0.04); border: 1px solid var(--border); cursor: pointer;
+    font-family: var(--font-sans); font-size: 11px; font-weight: 500; color: var(--text-secondary);
+  }
+  .replay-btn:hover { background: rgba(0,0,0,0.07); }
+  .instruction { font-size: 11px; color: var(--brand); font-weight: 600; letter-spacing: 0.04em; text-align: center; margin-bottom: 12px; }
+
+  /* ═══ Shared orb base ═══ */
+  .orb {
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: rgba(255,255,255,0.92); letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15); cursor: default; position: relative;
+  }
+
+  /* ═══ 1. ENTRANCE ANIMATIONS ═══ */
+  /* A: Radiate from center */
+  .entrance-radiate {
+    opacity: 0; transform: scale(0.3); animation: radiate-in 0.6s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  }
+  @keyframes radiate-in {
+    0% { opacity: 0; transform: scale(0.3); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* B: Float up + fade */
+  .entrance-float {
+    opacity: 0; transform: translateY(20px); animation: float-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  @keyframes float-in {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* C: Pop with overshoot */
+  .entrance-pop {
+    opacity: 0; transform: scale(0); animation: pop-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0); }
+    70% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* D: Orbit slide — orbs fly in from hub position */
+  .entrance-orbit {
+    opacity: 0; animation: orbit-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes orbit-in {
+    0% { opacity: 0; transform: translate(var(--from-x, 0), var(--from-y, 0)) scale(0.4); }
+    100% { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+
+  /* ═══ 2. HEALTH RING FILL ═══ */
+  .ring-animate circle.health-arc {
+    stroke-dashoffset: var(--ring-circ);
+    animation: ring-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: var(--ring-delay, 0.3s);
+  }
+  @keyframes ring-fill {
+    to { stroke-dashoffset: 0; }
+  }
+  .ring-snap circle.health-arc { stroke-dashoffset: 0; }
+  .ring-bounce circle.health-arc {
+    stroke-dashoffset: var(--ring-circ);
+    animation: ring-fill-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: var(--ring-delay, 0.3s);
+  }
+  @keyframes ring-fill-bounce {
+    0% { stroke-dashoffset: var(--ring-circ); }
+    70% { stroke-dashoffset: calc(var(--ring-target) * -0.06); }
+    100% { stroke-dashoffset: 0; }
+  }
+
+  /* ═══ 3. GLOW BEHAVIOR ═══ */
+  .glow-steady { box-shadow: 0 0 24px var(--glow, rgba(0,0,0,0.15)), 0 4px 16px rgba(0,0,0,0.10); }
+  .glow-breathe {
+    animation: glow-breathe 3s ease-in-out infinite;
+  }
+  @keyframes glow-breathe {
+    0%, 100% { box-shadow: 0 0 20px var(--glow, rgba(0,0,0,0.15)), 0 4px 14px rgba(0,0,0,0.10); transform: scale(1); }
+    50% { box-shadow: 0 0 32px var(--glow, rgba(0,0,0,0.25)), 0 6px 20px rgba(0,0,0,0.12); transform: scale(1.03); }
+  }
+  .glow-reactive {
+    box-shadow: 0 0 20px var(--glow, rgba(0,0,0,0.12)), 0 4px 14px rgba(0,0,0,0.10);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .glow-reactive:hover {
+    box-shadow: 0 0 40px var(--glow-hover, rgba(0,0,0,0.35)), 0 8px 24px rgba(0,0,0,0.15);
+    transform: scale(1.08);
+  }
+  .glow-pulse-on-data {
+    box-shadow: 0 0 20px var(--glow, rgba(0,0,0,0.15)), 0 4px 14px rgba(0,0,0,0.10);
+  }
+  .glow-pulse-on-data.pulsing {
+    animation: data-pulse 0.6s ease-out;
+  }
+  @keyframes data-pulse {
+    0% { box-shadow: 0 0 20px var(--glow, rgba(0,0,0,0.15)), 0 4px 14px rgba(0,0,0,0.10); transform: scale(1); }
+    30% { box-shadow: 0 0 48px var(--glow-hover, rgba(0,0,0,0.45)), 0 8px 28px rgba(0,0,0,0.18); transform: scale(1.1); }
+    100% { box-shadow: 0 0 20px var(--glow, rgba(0,0,0,0.15)), 0 4px 14px rgba(0,0,0,0.10); transform: scale(1); }
+  }
+
+  /* ═══ 4. HOVER + PRESS STATES ═══ */
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .hover-lift:hover { transform: scale(1.08) translateY(-3px); box-shadow: 0 0 36px var(--glow-hover, rgba(0,0,0,0.30)), 0 8px 24px rgba(0,0,0,0.15); }
+  .hover-lift:active { transform: scale(0.94); transition-duration: 0.08s; }
+
+  .hover-glow-only {
+    transition: box-shadow 0.25s ease;
+    cursor: pointer;
+  }
+  .hover-glow-only:hover { box-shadow: 0 0 44px var(--glow-hover, rgba(0,0,0,0.35)), 0 6px 20px rgba(0,0,0,0.12); }
+  .hover-glow-only:active { box-shadow: 0 0 16px var(--glow, rgba(0,0,0,0.10)), 0 2px 8px rgba(0,0,0,0.08); }
+
+  .hover-ring-expand {
+    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .hover-ring-expand:hover { transform: scale(1.05); }
+  .hover-ring-expand:active { transform: scale(0.95); transition-duration: 0.08s; }
+  .hover-ring-expand .ring-wrap { transition: transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1); }
+  .hover-ring-expand:hover .ring-wrap { transform: scale(1.08); }
+
+  .hover-magnetic {
+    transition: transform 0.15s ease-out;
+    cursor: pointer;
+  }
+
+  /* ═══ 5. CARD HOVER ═══ */
+  .card-hover-a {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; display: flex; gap: 12px; align-items: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+  }
+  .card-hover-a:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .card-hover-a:active { transform: translateY(0) scale(0.98); transition-duration: 0.08s; }
+
+  .card-hover-b {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; display: flex; gap: 12px; align-items: center;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-hover-b:hover { background: rgba(37,180,57,0.03); box-shadow: 0 0 0 1px rgba(37,180,57,0.12); }
+
+  .card-hover-c {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; display: flex; gap: 12px; align-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card-hover-c:hover { transform: scale(1.02); box-shadow: 0 4px 20px var(--card-glow, rgba(0,0,0,0.08)); }
+  .card-hover-c:active { transform: scale(0.98); transition-duration: 0.06s; }
+
+  .mini-orb {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.90);
+  }
+  .card-name { font-family: var(--font-serif); font-weight: 700; font-size: 13px; }
+  .card-meta { font-size: 11px; color: var(--text-secondary); }
+
+  /* ═══ 6. PANEL SLIDE ═══ */
+  .panel-demo {
+    display: grid; grid-template-columns: 1fr 200px; gap: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; height: 200px; position: relative;
+  }
+  .panel-canvas { background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-tertiary); }
+  .panel-drawer {
+    padding: 16px; border-left: 1px solid var(--border); transform: translateX(100%); opacity: 0;
+  }
+  .panel-drawer.slide-spring {
+    animation: panel-spring 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes panel-spring {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .panel-drawer.slide-fade {
+    animation: panel-fade 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes panel-fade {
+    0% { transform: translateX(40px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .panel-drawer.slide-instant {
+    animation: panel-instant 0.15s ease-out forwards;
+  }
+  @keyframes panel-instant {
+    0% { transform: translateX(8px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .panel-title { font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .panel-row { font-size: 11px; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border); }
+
+  /* ═══ 7. VIEW SWITCH ═══ */
+  .switch-demo {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; height: 180px; position: relative;
+  }
+  .switch-view {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-weight: 700; font-size: 18px; color: var(--text-tertiary);
+  }
+  .switch-view.crossfade-out { animation: crossfade-out 0.3s ease-in forwards; }
+  .switch-view.crossfade-in { animation: crossfade-in 0.3s ease-out forwards; animation-delay: 0.15s; opacity: 0; }
+  @keyframes crossfade-out { to { opacity: 0; } }
+  @keyframes crossfade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .switch-view.slide-left-out { animation: slide-l-out 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+  .switch-view.slide-left-in { animation: slide-l-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
+  @keyframes slide-l-out { to { transform: translateX(-100%); opacity: 0; } }
+  @keyframes slide-l-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .switch-nav {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px; z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .switch-nav button {
+    padding: 5px 14px; border-radius: 16px; font-family: var(--font-sans); font-size: 11px;
+    font-weight: 500; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .switch-nav button.active { background: var(--brand); color: white; }
+  .switch-nav button:not(.active) { background: transparent; color: var(--text-secondary); }
+
+  /* ═══ 8. DATA REACTION ═══ */
+  .score-display {
+    font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em; transition: color 0.3s;
+  }
+  .score-display.counting { animation: score-count 0.4s ease-out; }
+  @keyframes score-count { 0% { transform: translateY(8px); opacity: 0.5; } 100% { transform: translateY(0); opacity: 1; } }
+
+  .score-ring-demo {
+    width: 80px; height: 80px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .score-ring-demo svg { position: absolute; inset: 0; }
+  .score-ring-demo .value { font-size: 20px; font-weight: 700; position: relative; z-index: 1; }
+
+  .confetti-dot {
+    position: absolute; width: 4px; height: 4px; border-radius: 50%; opacity: 0;
+  }
+  .confetti-dot.burst {
+    animation: confetti-burst 0.6s ease-out forwards;
+  }
+  @keyframes confetti-burst {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--cx), var(--cy)) scale(0); }
+  }
+
+  /* ═══ 9. LOADING ═══ */
+  .skeleton-orb {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .skeleton-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; display: flex; gap: 12px; align-items: center;
+  }
+  .skeleton-line {
+    height: 10px; border-radius: 5px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+    background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .orb-loading-spin {
+    width: 72px; height: 72px; border-radius: 50%; position: relative;
+    background: rgba(0,0,0,0.03);
+  }
+  .orb-loading-spin::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid transparent; border-top-color: var(--brand);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .orb-loading-pulse {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(37,180,57,0.06);
+    animation: load-pulse 1s ease-in-out infinite;
+  }
+  @keyframes load-pulse {
+    0%, 100% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+
+  /* ═══ 10. CURSOR ═══ */
+  .cursor-demo {
+    display: flex; gap: 16px; align-items: center; justify-content: center; min-height: 120px;
+  }
+  .cursor-grab { cursor: grab; }
+  .cursor-grab:active { cursor: grabbing; }
+  .cursor-pointer { cursor: pointer; }
+  .cursor-crosshair { cursor: crosshair; }
+  .cursor-zoom { cursor: zoom-in; }
+
+  @media (max-width: 768px) { .explore-grid { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Motion + Interaction</h1>
+    <p>How Kinship Brain moves, responds, and feels under your fingers. Hover, click, and interact with everything on this page.</p>
+  </div>
+</header>
+
+<!-- ═══ 1. ORB ENTRANCE ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Entrance</div>
+    <div class="section-title">How Orbs Appear</div>
+    <div class="section-desc">When the map loads or you navigate to a new view. Staggered timing creates rhythm. Click "Replay" to see each again.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Radiate from Center</h3>
+        <div class="desc">Orbs burst outward from the hub position. Each one scales up from tiny to full size. Feels like the network is expanding from the center of Moj's world.</div>
+        <div class="demo-area" id="entrance-a">
+          <div class="orb entrance-radiate" style="width: 48px; height: 48px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 20px rgba(229,57,53,0.25); font-size: 8px; animation-delay: 0.1s;"><span>MAPS</span></div>
+          <div class="orb entrance-radiate" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 24px rgba(0,0,0,0.20); font-size: 12px; animation-delay: 0s;"><span>MRM</span></div>
+          <div class="orb entrance-radiate" style="width: 44px; height: 44px; background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 0 20px rgba(37,180,57,0.25); font-size: 8px; animation-delay: 0.2s;"><span>TLT</span></div>
+          <div class="orb entrance-radiate" style="width: 40px; height: 40px; background: linear-gradient(135deg, #7E57C2, #5C6BC0); box-shadow: 0 0 18px rgba(126,87,194,0.25); font-size: 7px; animation-delay: 0.3s;"><span>CO</span></div>
+        </div>
+        <button class="replay-btn" onclick="replay('entrance-a', 'entrance-radiate')">Replay</button>
+        <div class="verdict">Dramatic. Hub appears first, pods radiate outward with stagger. Best entrance for first-time load.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Pop with Overshoot</h3>
+        <div class="desc">Each orb pops in from nothing with a slight overshoot bounce — scales past 100% then settles. Playful, energetic. Like bubbles appearing.</div>
+        <div class="demo-area" id="entrance-b">
+          <div class="orb entrance-pop" style="width: 48px; height: 48px; background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 0 20px rgba(255,107,138,0.25); font-size: 8px; animation-delay: 0.15s;"><span>LPS</span></div>
+          <div class="orb entrance-pop" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 24px rgba(0,0,0,0.20); font-size: 12px; animation-delay: 0s;"><span>MRM</span></div>
+          <div class="orb entrance-pop" style="width: 52px; height: 52px; background: linear-gradient(135deg, #F5A623, #FFD54F); box-shadow: 0 0 20px rgba(245,166,35,0.25); font-size: 8px; animation-delay: 0.25s;"><span>SVC</span></div>
+          <div class="orb entrance-pop" style="width: 38px; height: 38px; background: linear-gradient(135deg, #00ACC1, #4DD0E1); box-shadow: 0 0 16px rgba(0,172,193,0.25); font-size: 7px; animation-delay: 0.35s;"><span>INV</span></div>
+        </div>
+        <button class="replay-btn" onclick="replay('entrance-b', 'entrance-pop')">Replay</button>
+        <div class="verdict">Fun, bouncy. The overshoot gives each orb personality. Best for transitions between views (e.g. drilling into a pod).</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>C. Float Up + Fade</h3>
+        <div class="desc">Orbs gently rise from below while fading in. Calm, elegant. Like objects surfacing in water. No overshoot — just smooth deceleration.</div>
+        <div class="demo-area" id="entrance-c">
+          <div class="orb entrance-float" style="width: 48px; height: 48px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 20px rgba(229,57,53,0.25); font-size: 8px; animation-delay: 0.1s;"><span>MAPS</span></div>
+          <div class="orb entrance-float" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 24px rgba(0,0,0,0.20); font-size: 12px; animation-delay: 0s;"><span>MRM</span></div>
+          <div class="orb entrance-float" style="width: 44px; height: 44px; background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 0 20px rgba(37,180,57,0.25); font-size: 8px; animation-delay: 0.2s;"><span>TLT</span></div>
+        </div>
+        <button class="replay-btn" onclick="replay('entrance-c', 'entrance-float')">Replay</button>
+        <div class="verdict">Most refined. Less personality than pop, but never feels cheap. Good default for subtle state changes.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>D. Orbit Slide</h3>
+        <div class="desc">Orbs fly in FROM the hub position and slide to their orbital position — they literally emerge from the center. Reinforces the gravitational metaphor.</div>
+        <div class="demo-area" id="entrance-d">
+          <div class="orb entrance-orbit" style="width: 48px; height: 48px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 20px rgba(229,57,53,0.25); font-size: 8px; --from-x: 50px; --from-y: 20px; animation-delay: 0.15s;"><span>MAPS</span></div>
+          <div class="orb" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 24px rgba(0,0,0,0.20); font-size: 12px;"><span>MRM</span></div>
+          <div class="orb entrance-orbit" style="width: 44px; height: 44px; background: linear-gradient(135deg, #F5A623, #FFD54F); box-shadow: 0 0 20px rgba(245,166,35,0.25); font-size: 8px; --from-x: -60px; --from-y: -10px; animation-delay: 0.25s;"><span>SVC</span></div>
+          <div class="orb entrance-orbit" style="width: 38px; height: 38px; background: linear-gradient(135deg, #7E57C2, #5C6BC0); box-shadow: 0 0 16px rgba(126,87,194,0.25); font-size: 7px; --from-x: -40px; --from-y: 30px; animation-delay: 0.35s;"><span>CO</span></div>
+        </div>
+        <button class="replay-btn" onclick="replay('entrance-d', 'entrance-orbit')">Replay</button>
+        <div class="verdict">Most conceptually connected to the orbital map. Hub stays still, pods fly out from it like being launched into orbit. Strongest metaphor.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 2. HEALTH RING FILL ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Health Ring</div>
+    <div class="section-title">How the Ring Fills</div>
+    <div class="section-desc">When the orb first appears or when equity score changes. The ring needs to communicate "this is a data value" through its motion.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Smooth Sweep</h3>
+        <div class="desc">Ring sweeps from 0 to its value with a smooth deceleration. Clinical, precise. Like a gauge filling.</div>
+        <div class="demo-area" id="ring-a">
+          <svg width="96" height="96" viewBox="0 0 96 96" class="ring-animate" style="--ring-circ: 264; --ring-delay: 0.2s;">
+            <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2.5"/>
+            <circle class="health-arc" cx="48" cy="48" r="42" fill="none" stroke="#E53935" stroke-width="2.5" stroke-dasharray="220 264" stroke-linecap="round" transform="rotate(-90 48 48)" style="--ring-circ: 264;"/>
+            <circle cx="48" cy="48" r="36" fill="url(#none)" style="fill: linear-gradient(135deg, #E53935, #FF6B4A);"/>
+          </svg>
+          <div class="orb" style="width: 72px; height: 72px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 24px rgba(229,57,53,0.25); font-size: 10px; position: absolute;"><span>MAPS</span></div>
+        </div>
+        <button class="replay-btn" onclick="replayRing('ring-a', 'ring-animate')">Replay</button>
+        <div class="verdict">Clean, professional. Easiest to read the final value. Best for initial load.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Bounce Overshoot</h3>
+        <div class="desc">Ring fills past its target then settles back — like a needle bouncing on a dial. Adds personality to a data display.</div>
+        <div class="demo-area" id="ring-b">
+          <svg width="96" height="96" viewBox="0 0 96 96" class="ring-bounce" style="--ring-circ: 264; --ring-target: 176; --ring-delay: 0.2s;">
+            <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2.5"/>
+            <circle class="health-arc" cx="48" cy="48" r="42" fill="none" stroke="#25B439" stroke-width="2.5" stroke-dasharray="176 264" stroke-linecap="round" transform="rotate(-90 48 48)" style="--ring-circ: 264; --ring-target: 176;"/>
+          </svg>
+          <div class="orb" style="width: 72px; height: 72px; background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 0 24px rgba(37,180,57,0.25); font-size: 10px; position: absolute;"><span>TLT</span></div>
+        </div>
+        <button class="replay-btn" onclick="replayRing('ring-b', 'ring-bounce')">Replay</button>
+        <div class="verdict">More energetic. The bounce makes each ring feel like a small celebration (or warning). Adds character.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3. GLOW HALO BEHAVIOR ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Glow Halo</div>
+    <div class="section-title">How the Glow Behaves</div>
+    <div class="section-desc">The colored glow around each orb. Should it be static, alive, or reactive? Interact with each to feel the difference.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Steady Glow</h3>
+        <div class="desc">Always on, never changes. Quiet confidence. The glow is environmental — it just exists.</div>
+        <div class="demo-area">
+          <div class="orb glow-steady" style="width: 72px; height: 72px; background: linear-gradient(135deg, #E53935, #FF6B4A); --glow: rgba(229,57,53,0.25); font-size: 10px;"><span>MAPS</span></div>
+        </div>
+        <div class="verdict">Most professional. Glow is a design element, not an animation. Never distracts.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Slow Breathe</h3>
+        <div class="desc">Glow gently pulses — orb subtly scales up/down. The network feels alive, like a resting heartbeat. Staggered per orb.</div>
+        <div class="demo-area">
+          <div class="orb glow-breathe" style="width: 72px; height: 72px; background: linear-gradient(135deg, #E53935, #FF6B4A); --glow: rgba(229,57,53,0.20); font-size: 10px; animation-delay: 0s;"><span>MAPS</span></div>
+          <div class="orb glow-breathe" style="width: 60px; height: 60px; background: linear-gradient(135deg, #25B439, #00BFA5); --glow: rgba(37,180,57,0.20); font-size: 9px; animation-delay: 1.2s;"><span>TLT</span></div>
+        </div>
+        <div class="verdict">Beautiful but can feel busy with 6+ orbs all breathing. Best if only 1-2 orbs breathe (e.g. the ones needing attention).</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>C. Reactive on Hover</h3>
+        <div class="desc">Glow intensifies when you hover — the orb "lights up" under your cursor. Quiet at rest, alive on interaction. Try it.</div>
+        <div class="instruction">HOVER OVER THE ORBS</div>
+        <div class="demo-area">
+          <div class="orb glow-reactive" style="width: 72px; height: 72px; background: linear-gradient(135deg, #E53935, #FF6B4A); --glow: rgba(229,57,53,0.15); --glow-hover: rgba(229,57,53,0.40); font-size: 10px;"><span>MAPS</span></div>
+          <div class="orb glow-reactive" style="width: 60px; height: 60px; background: linear-gradient(135deg, #7E57C2, #5C6BC0); --glow: rgba(126,87,194,0.15); --glow-hover: rgba(126,87,194,0.40); font-size: 9px;"><span>CO</span></div>
+        </div>
+        <div class="verdict">Best of both worlds — quiet at rest, expressive on interaction. The orb responds to YOU.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>D. Pulse on Data Change</h3>
+        <div class="desc">Glow stays steady, but when you log an interaction or equity changes, the orb does a single bright pulse. Click to simulate.</div>
+        <div class="instruction">CLICK THE ORB</div>
+        <div class="demo-area">
+          <div class="orb glow-pulse-on-data" id="pulse-orb" style="width: 72px; height: 72px; background: linear-gradient(135deg, #F5A623, #FFD54F); --glow: rgba(245,166,35,0.18); --glow-hover: rgba(245,166,35,0.50); font-size: 9px; cursor: pointer;" onclick="pulseOrb(this)"><span>SVC</span></div>
+        </div>
+        <div class="verdict">Steady by default, dramatic on events. "Something just happened to this pod." Best for data feedback loops.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4. HOVER + PRESS ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Hover + Press</div>
+    <div class="section-title">How Orbs Respond to Touch</div>
+    <div class="section-desc">The tactile feel of interacting with orbs. Hover and click each to feel the difference.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Lift + Glow</h3>
+        <div class="desc">Orb lifts up (scale + translateY), glow intensifies. Press squishes down fast. Classic, reliable, satisfying.</div>
+        <div class="instruction">HOVER AND CLICK</div>
+        <div class="demo-area">
+          <div class="orb hover-lift" style="width: 72px; height: 72px; background: linear-gradient(135deg, #E53935, #FF6B4A); --glow: rgba(229,57,53,0.15); --glow-hover: rgba(229,57,53,0.35); box-shadow: 0 0 20px rgba(229,57,53,0.15), 0 4px 14px rgba(0,0,0,0.10); font-size: 10px;"><span>MAPS</span></div>
+          <div class="orb hover-lift" style="width: 56px; height: 56px; background: linear-gradient(135deg, #25B439, #00BFA5); --glow: rgba(37,180,57,0.15); --glow-hover: rgba(37,180,57,0.35); box-shadow: 0 0 18px rgba(37,180,57,0.15), 0 4px 12px rgba(0,0,0,0.10); font-size: 9px;"><span>TLT</span></div>
+        </div>
+        <div class="verdict">Most satisfying. The lift creates depth. The press-squish gives tactile feedback. iOS-inspired.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Glow Only (no movement)</h3>
+        <div class="desc">Orb doesn't move — only the glow changes. Subtle, calm. The orb is a fixed object in space that illuminates when attended to.</div>
+        <div class="instruction">HOVER AND CLICK</div>
+        <div class="demo-area">
+          <div class="orb hover-glow-only" style="width: 72px; height: 72px; background: linear-gradient(135deg, #FF6B8A, #FF8FA5); --glow: rgba(255,107,138,0.12); --glow-hover: rgba(255,107,138,0.40); box-shadow: 0 0 20px rgba(255,107,138,0.12), 0 4px 14px rgba(0,0,0,0.10); font-size: 10px;"><span>LPS</span></div>
+          <div class="orb hover-glow-only" style="width: 56px; height: 56px; background: linear-gradient(135deg, #F5A623, #FFD54F); --glow: rgba(245,166,35,0.12); --glow-hover: rgba(245,166,35,0.40); box-shadow: 0 0 18px rgba(245,166,35,0.12), 0 4px 12px rgba(0,0,0,0.10); font-size: 9px;"><span>SVC</span></div>
+        </div>
+        <div class="verdict">Most restrained. Orbs feel like fixed celestial objects. The glow alone communicates "I see you hovering."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5. CARD HOVER ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Card Interactions</div>
+    <div class="section-title">Pod Card Hover Feel</div>
+    <div class="section-desc">How the mini-orb-avatar pod cards respond to mouse interaction. Try each.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Lift + Shadow</h3>
+        <div class="desc">Card lifts up with growing shadow. Press squishes. Same family as the orb interaction — consistent tactile language.</div>
+        <div class="instruction">HOVER AND CLICK</div>
+        <div class="card-hover-a" style="max-width: 220px; margin: 0 auto;">
+          <div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 2px 8px rgba(229,57,53,0.25);"><span style="font-size:8px;color:rgba(255,255,255,0.9)">M</span></div>
+          <div><div class="card-name">Maps</div><div class="card-meta">42 contacts</div></div>
+        </div>
+        <div class="verdict">Consistent with orb lift behavior. Card "floats" off the surface.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Tint + Border Glow</h3>
+        <div class="desc">Card background gets a subtle green tint and a soft brand-colored border appears. No movement — just color shift.</div>
+        <div class="instruction">HOVER</div>
+        <div class="card-hover-b" style="max-width: 220px; margin: 0 auto;">
+          <div class="mini-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 2px 8px rgba(255,107,138,0.25);"><span style="font-size:8px;color:rgba(255,255,255,0.9)">LP</span></div>
+          <div><div class="card-name">LPs</div><div class="card-meta">28 contacts</div></div>
+        </div>
+        <div class="verdict">More subtle. The brand color "claims" the card on hover. Good for dense layouts where lift would feel noisy.</div>
+      </div>
+
+      <div class="explore-card" style="grid-column: span 2;">
+        <h3>C. Scale + Colored Shadow</h3>
+        <div class="desc">Card scales up slightly and its shadow shifts to the pod's color — the card's glow matches its mini orb. Each card has its own color personality on hover.</div>
+        <div class="instruction">HOVER EACH CARD</div>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <div class="card-hover-c" style="min-width: 170px; --card-glow: rgba(229,57,53,0.15);">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 2px 8px rgba(229,57,53,0.25);"><span style="font-size:8px;color:rgba(255,255,255,0.9)">M</span></div>
+            <div><div class="card-name">Maps</div><div class="card-meta">42 contacts</div></div>
+          </div>
+          <div class="card-hover-c" style="min-width: 170px; --card-glow: rgba(255,107,138,0.15);">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 2px 8px rgba(255,107,138,0.25);"><span style="font-size:8px;color:rgba(255,255,255,0.9)">LP</span></div>
+            <div><div class="card-name">LPs</div><div class="card-meta">28 contacts</div></div>
+          </div>
+          <div class="card-hover-c" style="min-width: 170px; --card-glow: rgba(245,166,35,0.15);">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F); box-shadow: 0 2px 8px rgba(245,166,35,0.25);"><span style="font-size:8px;color:rgba(255,255,255,0.9)">SP</span></div>
+            <div><div class="card-name">Service Providers</div><div class="card-meta">87 contacts</div></div>
+          </div>
+        </div>
+        <div class="verdict">Each card has its own glow signature on hover. Connects dashboard cards back to their orb's color energy. Distinctive without being loud.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6. PANEL SLIDE ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Panel Transition</div>
+    <div class="section-title">Contact Panel Entrance</div>
+    <div class="section-desc">When you click a category orb, the contact panel slides in from the right. Click "Open" to trigger each.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Spring Slide</h3>
+        <div class="desc">Full slide from offscreen with a deceleration curve that feels physical — like pushing a drawer shut. 400ms.</div>
+        <div class="panel-demo" id="panel-a">
+          <div class="panel-canvas">Click Open</div>
+          <div class="panel-drawer" id="panel-a-drawer">
+            <div class="panel-title">Silicon Valley</div>
+            <div class="panel-row">Sarah Chen</div>
+            <div class="panel-row">James Rivera</div>
+            <div class="panel-row">Ayumi Kato</div>
+          </div>
+        </div>
+        <button class="replay-btn" onclick="openPanel('panel-a-drawer', 'slide-spring')">Open</button>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Soft Fade-Slide</h3>
+        <div class="desc">Shorter travel distance (40px vs full width), mostly relies on opacity. Content appears to materialize in place. 350ms.</div>
+        <div class="panel-demo" id="panel-b">
+          <div class="panel-canvas">Click Open</div>
+          <div class="panel-drawer" id="panel-b-drawer">
+            <div class="panel-title">Silicon Valley</div>
+            <div class="panel-row">Sarah Chen</div>
+            <div class="panel-row">James Rivera</div>
+            <div class="panel-row">Ayumi Kato</div>
+          </div>
+        </div>
+        <button class="replay-btn" onclick="openPanel('panel-b-drawer', 'slide-fade')">Open</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7. VIEW SWITCH ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">View Transitions</div>
+    <div class="section-title">Pulse / Map Tab Switch</div>
+    <div class="section-desc">How the two main views transition. Click the nav tabs to trigger.</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Crossfade</h3>
+        <div class="desc">Old view fades out, new view fades in. Overlap creates a smooth dissolve. 300ms total. Calm, editorial.</div>
+        <div class="switch-demo" id="switch-a">
+          <div class="switch-view" id="switch-a-pulse" style="background: rgba(37,180,57,0.04);">Pulse View</div>
+          <div class="switch-view" id="switch-a-map" style="background: rgba(0,0,0,0.02); display: none;">Map View</div>
+          <div class="switch-nav">
+            <button class="active" onclick="switchView('a','pulse')">Pulse</button>
+            <button onclick="switchView('a','map')">Map</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Directional Slide</h3>
+        <div class="desc">Old view slides left, new view slides in from right (or vice versa). Direction matches tab position. 350ms. Spatial, navigational.</div>
+        <div class="switch-demo" id="switch-b">
+          <div class="switch-view" id="switch-b-pulse" style="background: rgba(37,180,57,0.04);">Pulse View</div>
+          <div class="switch-view" id="switch-b-map" style="background: rgba(0,0,0,0.02); display: none;">Map View</div>
+          <div class="switch-nav">
+            <button class="active" onclick="switchViewSlide('b','pulse')">Pulse</button>
+            <button onclick="switchViewSlide('b','map')">Map</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8. LOADING STATES ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Loading</div>
+    <div class="section-title">What Shows While Data Loads</div>
+    <div class="section-desc">Airtable calls take 200-800ms. What does the user see in that window?</div>
+    <div class="explore-grid">
+      <div class="explore-card">
+        <h3>A. Skeleton Shimmer</h3>
+        <div class="desc">Ghost shapes of the final UI with a shimmer animation. User knows what's coming. Standard but effective.</div>
+        <div class="demo-area" style="gap: 16px;">
+          <div class="skeleton-orb"></div>
+          <div class="skeleton-orb" style="width: 56px; height: 56px;"></div>
+          <div class="skeleton-card" style="width: 160px;">
+            <div class="skeleton-orb" style="width: 30px; height: 30px;"></div>
+            <div style="flex: 1;">
+              <div class="skeleton-line" style="width: 80%; margin-bottom: 6px;"></div>
+              <div class="skeleton-line" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="verdict">Safe, familiar. Users understand "content is loading." Best for card/list views.</div>
+      </div>
+
+      <div class="explore-card">
+        <h3>B. Brand Pulse</h3>
+        <div class="desc">A single green orb gently pulses where the hub will appear. Branded, minimal. Says "the brain is waking up."</div>
+        <div class="demo-area">
+          <div class="orb-loading-pulse"></div>
+        </div>
+        <div class="verdict">On-brand and unique. Best for the orb map initial load — then the orbs radiate out from this position.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 9. CURSOR + DRAG ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Cursor + Drag</div>
+    <div class="section-title">Mouse Personality</div>
+    <div class="section-desc">Cursor changes signal what's interactive and how. Hover over each orb to see the cursor change.</div>
+    <div class="explore-grid" style="grid-template-columns: 1fr;">
+      <div class="explore-card">
+        <div class="cursor-demo">
+          <div style="text-align: center;">
+            <div class="orb cursor-pointer" style="width: 64px; height: 64px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 20px rgba(229,57,53,0.20); font-size: 9px; margin: 0 auto 6px;"><span>MAPS</span></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">pointer<br><span style="font-size:10px;color:var(--text-tertiary);">clickable orbs</span></div>
+          </div>
+          <div style="text-align: center;">
+            <div class="orb cursor-grab" style="width: 64px; height: 64px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 20px rgba(0,0,0,0.15); font-size: 10px; margin: 0 auto 6px;"><span>MRM</span></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">grab / grabbing<br><span style="font-size:10px;color:var(--text-tertiary);">draggable orbs</span></div>
+          </div>
+          <div style="text-align: center;">
+            <div class="orb cursor-crosshair" style="width: 64px; height: 64px; background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 0 20px rgba(37,180,57,0.20); font-size: 9px; margin: 0 auto 6px;"><span>TLT</span></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">crosshair<br><span style="font-size:10px;color:var(--text-tertiary);">precision placement</span></div>
+          </div>
+          <div style="text-align: center; padding: 16px 24px; background: var(--bg); border-radius: 12px; cursor: default;">
+            <div style="font-size: 11px; color: var(--text-secondary);">default<br><span style="font-size:10px;color:var(--text-tertiary);">canvas background</span></div>
+          </div>
+          <div style="text-align: center;">
+            <div class="orb cursor-zoom" style="width: 64px; height: 64px; background: linear-gradient(135deg, #7E57C2, #5C6BC0); box-shadow: 0 0 20px rgba(126,87,194,0.20); font-size: 9px; margin: 0 auto 6px;"><span>CO</span></div>
+            <div style="font-size: 11px; color: var(--text-secondary);">zoom-in<br><span style="font-size:10px;color:var(--text-tertiary);">drill into pod</span></div>
+          </div>
+        </div>
+        <div class="verdict">Recommendation: <strong>pointer</strong> for clickable orbs (drill-in), <strong>grab/grabbing</strong> for repositioning orbs on the canvas. Canvas background stays default. No crosshair or zoom-in — they feel techy, not premium.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 12px;">
+  Kinship Brain — Motion + Interaction Exploration · /design-consultation
+</footer>
+
+<script>
+function replay(containerId, className) {
+  const container = document.getElementById(containerId);
+  const orbs = container.querySelectorAll('.' + className);
+  orbs.forEach(orb => {
+    orb.classList.remove(className);
+    void orb.offsetWidth; // force reflow
+    orb.classList.add(className);
+  });
+}
+
+function replayRing(containerId, className) {
+  const container = document.getElementById(containerId);
+  const svg = container.querySelector('svg');
+  svg.classList.remove(className);
+  void svg.offsetWidth;
+  svg.classList.add(className);
+}
+
+function pulseOrb(el) {
+  el.classList.remove('pulsing');
+  void el.offsetWidth;
+  el.classList.add('pulsing');
+  setTimeout(() => el.classList.remove('pulsing'), 700);
+}
+
+function openPanel(drawerId, animClass) {
+  const drawer = document.getElementById(drawerId);
+  drawer.classList.remove('slide-spring', 'slide-fade', 'slide-instant');
+  drawer.style.transform = 'translateX(100%)';
+  drawer.style.opacity = '0';
+  void drawer.offsetWidth;
+  drawer.style.transform = '';
+  drawer.style.opacity = '';
+  drawer.classList.add(animClass);
+}
+
+function switchView(id, view) {
+  const pulse = document.getElementById('switch-' + id + '-pulse');
+  const map = document.getElementById('switch-' + id + '-map');
+  const nav = pulse.parentElement.querySelector('.switch-nav');
+  const btns = nav.querySelectorAll('button');
+
+  pulse.classList.remove('crossfade-out', 'crossfade-in');
+  map.classList.remove('crossfade-out', 'crossfade-in');
+
+  if (view === 'map') {
+    pulse.style.display = ''; pulse.classList.add('crossfade-out');
+    map.style.display = ''; map.classList.add('crossfade-in');
+    btns[0].classList.remove('active'); btns[1].classList.add('active');
+    setTimeout(() => { pulse.style.display = 'none'; }, 300);
+  } else {
+    map.style.display = ''; map.classList.add('crossfade-out');
+    pulse.style.display = ''; pulse.classList.add('crossfade-in');
+    btns[1].classList.remove('active'); btns[0].classList.add('active');
+    setTimeout(() => { map.style.display = 'none'; }, 300);
+  }
+}
+
+function switchViewSlide(id, view) {
+  const pulse = document.getElementById('switch-' + id + '-pulse');
+  const map = document.getElementById('switch-' + id + '-map');
+  const nav = pulse.parentElement.querySelector('.switch-nav');
+  const btns = nav.querySelectorAll('button');
+
+  pulse.classList.remove('slide-left-out', 'slide-left-in');
+  map.classList.remove('slide-left-out', 'slide-left-in');
+
+  if (view === 'map') {
+    pulse.style.display = ''; pulse.classList.add('slide-left-out');
+    map.style.display = ''; map.classList.add('slide-left-in');
+    btns[0].classList.remove('active'); btns[1].classList.add('active');
+    setTimeout(() => { pulse.style.display = 'none'; }, 350);
+  } else {
+    map.style.display = ''; map.classList.add('slide-left-out');
+    pulse.style.display = ''; pulse.classList.add('slide-left-in');
+    btns[1].classList.remove('active'); btns[0].classList.add('active');
+    setTimeout(() => { map.style.display = 'none'; }, 350);
+  }
+}
+</script>
+</body>
+</html>

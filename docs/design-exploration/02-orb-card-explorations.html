@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Orb + Card Explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #25B439;
+    --bg: #f8f8f6;
+    --surface: #ffffff;
+    --text-primary: rgba(0,0,0,0.82);
+    --text-secondary: rgba(0,0,0,0.45);
+    --text-tertiary: rgba(0,0,0,0.28);
+    --border: rgba(0,0,0,0.07);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  header {
+    background: var(--brand); padding: 40px 0; color: white;
+  }
+  header h1 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; }
+
+  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--brand); margin-bottom: 6px;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 24px;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .section-desc {
+    color: var(--text-secondary); font-size: 13px; max-width: 600px;
+    margin-bottom: 28px; line-height: 1.6;
+  }
+
+  /* Exploration grid */
+  .explore-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  .explore-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .explore-card h3 {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .explore-card .desc {
+    font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;
+  }
+  .explore-card .verdict {
+    margin-top: 16px; font-size: 11px; color: var(--text-tertiary);
+    padding-top: 12px; border-top: 1px solid var(--border);
+  }
+
+  /* Orb display area */
+  .orb-display {
+    display: flex; gap: 20px; align-items: center; justify-content: center;
+    min-height: 160px; position: relative;
+  }
+
+  /* ═══════════════════════════════════════════
+     ORB STYLE A: Colored glow halo
+     ═══════════════════════════════════════════ */
+  .orb-glow {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .orb-glow::before {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%;
+    background: inherit; opacity: 0.20; filter: blur(12px);
+    z-index: -1;
+  }
+  .orb-glow::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(ellipse 50% 40% at 32% 28%, rgba(255,255,255,0.35) 0%, transparent 70%);
+  }
+  .orb-glow span { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════════════════
+     ORB STYLE B: Health ring + specular
+     ═══════════════════════════════════════════ */
+  .orb-ring-wrap {
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .orb-ring-svg {
+    position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px);
+  }
+  .orb-ringed {
+    width: 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative; overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .orb-ringed::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(ellipse 50% 40% at 32% 28%, rgba(255,255,255,0.30) 0%, transparent 70%),
+                linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.10) 100%);
+  }
+  .orb-ringed span { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════════════════
+     ORB STYLE C: 3D sphere with proper lighting
+     ═══════════════════════════════════════════ */
+  .orb-3d {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative; overflow: hidden;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .orb-3d::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(ellipse 35% 25% at 30% 22%, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.15) 30%, transparent 60%),
+      radial-gradient(ellipse 80% 80% at 50% 120%, rgba(0,0,0,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(0,0,0,0.08) 100%);
+  }
+  .orb-3d span { position: relative; z-index: 1; }
+
+  /* ═══════════════════════════════════════════
+     ORB STYLE D: Breathing pulse + subtle glow
+     ═══════════════════════════════════════════ */
+  .orb-breathing {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.92);
+    letter-spacing: 0.04em; position: relative; overflow: hidden;
+    animation: breathe 3.5s ease-in-out infinite;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .orb-breathing::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(ellipse 45% 35% at 30% 25%, rgba(255,255,255,0.40) 0%, transparent 60%),
+                linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.12) 100%);
+  }
+  .orb-breathing span { position: relative; z-index: 1; }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 20px var(--glow-color, rgba(0,0,0,0.15)); }
+    50% { transform: scale(1.04); box-shadow: 0 6px 28px var(--glow-color, rgba(0,0,0,0.25)); }
+  }
+
+  /* ═══════════════════════════════════════════
+     ORB MAP EXPLORATIONS
+     ═══════════════════════════════════════════ */
+  .map-frame {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .map-frame svg { display: block; width: 100%; }
+
+  /* ═══════════════════════════════════════════
+     CARD EXPLORATIONS
+     ═══════════════════════════════════════════ */
+  .card-display {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+
+  /* Card A: Color dot */
+  .pod-dot { display: flex; gap: 12px; }
+  .pod-card-a {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .pod-card-a:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .pod-card-a .header { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .pod-card-a .dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+  .pod-card-a .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; }
+  .pod-card-a .meta { font-size: 11px; color: var(--text-secondary); padding-left: 16px; }
+
+  /* Card B: Colored shadow */
+  .pod-card-b {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .pod-card-b:hover { transform: translateY(-2px); }
+  .pod-card-b .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .pod-card-b .meta { font-size: 11px; color: var(--text-secondary); }
+
+  /* Card C: Tinted background */
+  .pod-card-c {
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .pod-card-c:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .pod-card-c .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .pod-card-c .meta { font-size: 11px; color: var(--text-secondary); }
+
+  /* Card D: Bottom bar */
+  .pod-card-d {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px 12px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    overflow: hidden; position: relative;
+  }
+  .pod-card-d:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .pod-card-d .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .pod-card-d .meta { font-size: 11px; color: var(--text-secondary); }
+  .pod-card-d .bar { position: absolute; bottom: 0; left: 12px; right: 12px; height: 3px; border-radius: 3px 3px 0 0; }
+
+  /* Card E: Mini orb avatar */
+  .pod-card-e {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .pod-card-e:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .pod-card-e .orb-mini {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.90);
+    position: relative; overflow: hidden;
+  }
+  .pod-card-e .orb-mini::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(ellipse 45% 35% at 30% 25%, rgba(255,255,255,0.35) 0%, transparent 60%),
+                linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.12) 100%);
+  }
+  .pod-card-e .orb-mini span { position: relative; z-index: 1; }
+  .pod-card-e .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; }
+  .pod-card-e .meta { font-size: 11px; color: var(--text-secondary); }
+
+  /* Card F: Color name text */
+  .pod-card-f {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 140px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .pod-card-f:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .pod-card-f .name { font-family: 'Fraunces', serif; font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+  .pod-card-f .meta { font-size: 11px; color: var(--text-secondary); }
+
+  @media (max-width: 768px) {
+    .explore-grid { grid-template-columns: 1fr; }
+    .container { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Orb + Card Explorations</h1>
+    <p>Visual variations for the two signature elements of Kinship Brain.</p>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════
+     SECTION 1: ORB TREATMENTS
+     ════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb Treatments</div>
+    <div class="section-title">Four Ways to Give Orbs Life</div>
+    <div class="section-desc">Each treatment adds depth and personality while keeping the solid-color identity from the Trolley PDF. These are composable — you can mix elements from different treatments.</div>
+
+    <div class="explore-grid">
+
+      <!-- A: Colored Glow Halo -->
+      <div class="explore-card">
+        <h3>A. Colored Glow Halo</h3>
+        <div class="desc">Each orb casts a soft colored glow onto the canvas behind it. The orb's color bleeds into its environment. Feels ambient and alive — like the network has energy.</div>
+        <div class="orb-display">
+          <div class="orb-glow" style="background: #E53935; box-shadow: 0 4px 20px rgba(229,57,53,0.30);"><span>MAPS</span></div>
+          <div class="orb-glow" style="background: #7E57C2; box-shadow: 0 4px 20px rgba(126,87,194,0.30); width: 64px; height: 64px; font-size: 9px;"><span>CO</span></div>
+          <div class="orb-glow" style="background: #1C1C1E; box-shadow: 0 6px 28px rgba(0,0,0,0.35); width: 96px; height: 96px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-glow" style="background: #25B439; box-shadow: 0 4px 20px rgba(37,180,57,0.30); width: 72px; height: 72px;"><span>TLT</span></div>
+          <div class="orb-glow" style="background: #F5A623; box-shadow: 0 4px 20px rgba(245,166,35,0.30); width: 68px; height: 68px; font-size: 9px;"><span>SVC</span></div>
+        </div>
+        <div class="verdict">Best for: making the canvas feel warm and lived-in. The glow says "this network has energy."</div>
+      </div>
+
+      <!-- B: Health Ring -->
+      <div class="explore-card">
+        <h3>B. Health Ring</h3>
+        <div class="desc">A thin arc ring around each orb shows equity health at a glance — full ring = thriving, partial = needs attention. Data encoded in the visual, not just decoration.</div>
+        <div class="orb-display">
+          <div class="orb-ring-wrap">
+            <svg class="orb-ring-svg" viewBox="0 0 84 84">
+              <circle cx="42" cy="42" r="39" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2.5"/>
+              <circle cx="42" cy="42" r="39" fill="none" stroke="#E53935" stroke-width="2.5" stroke-dasharray="210 245" stroke-dashoffset="-30" stroke-linecap="round" transform="rotate(-90 42 42)"/>
+            </svg>
+            <div class="orb-ringed" style="background: #E53935; box-shadow: 0 4px 16px rgba(229,57,53,0.25);"><span>MAPS</span></div>
+          </div>
+          <div class="orb-ring-wrap" style="width: 96px; height: 96px;">
+            <svg class="orb-ring-svg" viewBox="0 0 108 108">
+              <circle cx="54" cy="54" r="50" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2.5"/>
+              <circle cx="54" cy="54" r="50" fill="none" stroke="#1C1C1E" stroke-width="2.5" stroke-dasharray="280 314" stroke-dashoffset="-30" stroke-linecap="round" transform="rotate(-90 54 54)"/>
+            </svg>
+            <div class="orb-ringed" style="background: #1C1C1E; box-shadow: 0 6px 24px rgba(0,0,0,0.30); width: 88px; height: 88px; font-size: 12px;"><span>MRM</span></div>
+          </div>
+          <div class="orb-ring-wrap">
+            <svg class="orb-ring-svg" viewBox="0 0 84 84">
+              <circle cx="42" cy="42" r="39" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2.5"/>
+              <circle cx="42" cy="42" r="39" fill="none" stroke="#25B439" stroke-width="2.5" stroke-dasharray="145 245" stroke-dashoffset="-30" stroke-linecap="round" transform="rotate(-90 42 42)"/>
+            </svg>
+            <div class="orb-ringed" style="background: #25B439; box-shadow: 0 4px 16px rgba(37,180,57,0.25);"><span>TLT</span></div>
+          </div>
+        </div>
+        <div class="verdict">Best for: encoding data visually. You can see which pods need attention without reading numbers. Functional beauty.</div>
+      </div>
+
+      <!-- C: 3D Sphere -->
+      <div class="explore-card">
+        <h3>C. 3D Sphere</h3>
+        <div class="desc">Proper lighting model — bright specular highlight top-left, ambient shadow bottom-right, edge darkening. Feels physical and tangible, like marbles or billiard balls.</div>
+        <div class="orb-display">
+          <div class="orb-3d" style="background: #FF6B8A; box-shadow: 0 6px 24px rgba(255,107,138,0.30), 0 2px 6px rgba(0,0,0,0.10);"><span>LPS</span></div>
+          <div class="orb-3d" style="background: #1C1C1E; box-shadow: 0 8px 32px rgba(0,0,0,0.40); width: 100px; height: 100px; font-size: 13px;"><span>MRM</span></div>
+          <div class="orb-3d" style="background: #00ACC1; box-shadow: 0 6px 24px rgba(0,172,193,0.30), 0 2px 6px rgba(0,0,0,0.10);"><span>INV</span></div>
+          <div class="orb-3d" style="background: #F5A623; box-shadow: 0 6px 24px rgba(245,166,35,0.30), 0 2px 6px rgba(0,0,0,0.10); width: 88px; height: 88px; font-size: 10px;"><span>SVC<br>PROV</span></div>
+        </div>
+        <div class="verdict">Best for: making orbs feel premium and tactile. Strongest "I want to touch that" quality. Pairs well with the Trolley PDF's confident boldness.</div>
+      </div>
+
+      <!-- D: Breathing Pulse -->
+      <div class="explore-card">
+        <h3>D. Breathing Pulse</h3>
+        <div class="desc">Orbs gently breathe — scaling up and down with a soft glow pulse. The network feels alive, like a heartbeat. Urgency could modulate pulse speed (overdue = faster breathing).</div>
+        <div class="orb-display">
+          <div class="orb-breathing" style="background: #E53935; --glow-color: rgba(229,57,53,0.30); animation-delay: 0s;"><span>MAPS</span></div>
+          <div class="orb-breathing" style="background: #1C1C1E; --glow-color: rgba(0,0,0,0.25); width: 96px; height: 96px; font-size: 13px; animation-delay: 0.8s;"><span>MRM</span></div>
+          <div class="orb-breathing" style="background: #7E57C2; --glow-color: rgba(126,87,194,0.30); width: 72px; height: 72px; animation-delay: 1.6s;"><span>CO</span></div>
+          <div class="orb-breathing" style="background: #25B439; --glow-color: rgba(37,180,57,0.30); animation-delay: 2.4s;"><span>TLT</span></div>
+        </div>
+        <div class="verdict">Best for: making the map feel alive. Staggered timing creates a "neural network" effect. Each node is its own organism.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SECTION 2: ORB MAP LAYOUT
+     ════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb Map Layout</div>
+    <div class="section-title">Two Map Compositions</div>
+    <div class="section-desc">Beyond orb styling — how the whole canvas feels. Organic vs geometric, connection line treatment, depth layering.</div>
+
+    <div class="explore-grid">
+      <!-- Map A: Organic with gradient connections -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">A. Organic Layout + Gradient Connections</h3>
+        <div class="desc" style="padding: 0 12px;">Orbs cluster naturally — not in a perfect circle. Connection lines fade from hub color to orb color. Sizes driven by contact count. Feels like a brain map, not a diagram.</div>
+        <div class="map-frame">
+          <svg viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="gs1" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="8" flood-opacity="0.18"/></filter>
+              <filter id="gs1h" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="14" flood-opacity="0.30"/></filter>
+              <filter id="glow1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <radialGradient id="spec1" cx="32%" cy="28%" r="50%">
+                <stop offset="0%" stop-color="white" stop-opacity="0.45"/>
+                <stop offset="40%" stop-color="white" stop-opacity="0.10"/>
+                <stop offset="100%" stop-color="white" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="shade1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="40%" stop-color="black" stop-opacity="0"/>
+                <stop offset="100%" stop-color="black" stop-opacity="0.15"/>
+              </linearGradient>
+              <!-- Connection gradients -->
+              <linearGradient id="conn-red" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#E53935" stop-opacity="0.25"/></linearGradient>
+              <linearGradient id="conn-pink" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#FF6B8A" stop-opacity="0.25"/></linearGradient>
+              <linearGradient id="conn-green" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#25B439" stop-opacity="0.25"/></linearGradient>
+              <linearGradient id="conn-orange" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#F5A623" stop-opacity="0.25"/></linearGradient>
+              <linearGradient id="conn-purple" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#7E57C2" stop-opacity="0.25"/></linearGradient>
+              <linearGradient id="conn-teal" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#1C1C1E" stop-opacity="0.15"/><stop offset="100%" stop-color="#00ACC1" stop-opacity="0.25"/></linearGradient>
+            </defs>
+            <!-- Gradient connections -->
+            <g stroke-width="2" fill="none">
+              <path d="M280,170 Q230,100 195,72" stroke="url(#conn-red)"/>
+              <path d="M280,170 Q350,90 410,68" stroke="url(#conn-pink)"/>
+              <path d="M280,170 Q380,160 460,175" stroke="url(#conn-green)"/>
+              <path d="M280,170 Q360,250 420,280" stroke="url(#conn-orange)"/>
+              <path d="M280,170 Q210,230 155,275" stroke="url(#conn-purple)"/>
+              <path d="M280,170 Q160,170 105,155" stroke="url(#conn-teal)"/>
+            </g>
+            <!-- Satellites — organic positions, varied sizes -->
+            <g filter="url(#gs1)">
+              <circle cx="195" cy="72" r="40" fill="#E53935"/><circle cx="195" cy="72" r="40" fill="url(#spec1)"/><circle cx="195" cy="72" r="40" fill="url(#shade1)"/>
+              <text x="195" y="76" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#gs1)">
+              <circle cx="410" cy="68" r="34" fill="#FF6B8A"/><circle cx="410" cy="68" r="34" fill="url(#spec1)"/><circle cx="410" cy="68" r="34" fill="url(#shade1)"/>
+              <text x="410" y="72" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">LPS</text>
+            </g>
+            <g filter="url(#gs1)">
+              <circle cx="460" cy="175" r="32" fill="#25B439"/><circle cx="460" cy="175" r="32" fill="url(#spec1)"/><circle cx="460" cy="175" r="32" fill="url(#shade1)"/>
+              <text x="460" y="179" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">TALENT</text>
+            </g>
+            <g filter="url(#gs1)">
+              <circle cx="420" cy="280" r="46" fill="#F5A623"/><circle cx="420" cy="280" r="46" fill="url(#spec1)"/><circle cx="420" cy="280" r="46" fill="url(#shade1)"/>
+              <text x="420" y="276" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">SERVICE</text>
+              <text x="420" y="288" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">PROVIDERS</text>
+            </g>
+            <g filter="url(#gs1)">
+              <circle cx="155" cy="275" r="30" fill="#7E57C2"/><circle cx="155" cy="275" r="30" fill="url(#spec1)"/><circle cx="155" cy="275" r="30" fill="url(#shade1)"/>
+              <text x="155" y="279" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#gs1)">
+              <circle cx="105" cy="155" r="27" fill="#00ACC1"/><circle cx="105" cy="155" r="27" fill="url(#spec1)"/><circle cx="105" cy="155" r="27" fill="url(#shade1)"/>
+              <text x="105" y="152" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">MAPS</text>
+              <text x="105" y="162" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">LITE</text>
+            </g>
+            <!-- Hub -->
+            <g filter="url(#gs1h)">
+              <circle cx="280" cy="170" r="54" fill="#1C1C1E"/><circle cx="280" cy="170" r="54" fill="url(#spec1)" opacity="0.4"/>
+              <text x="280" y="175" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="14" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Map B: Depth layers + glow halos -->
+      <div class="explore-card" style="padding: 16px;">
+        <h3 style="padding: 12px 12px 0;">B. Depth Layers + Glow Halos</h3>
+        <div class="desc" style="padding: 0 12px;">Priority pods are larger and closer (sharper focus). Lower priority recedes (smaller, slightly faded). Each orb casts a colored glow. Feels like looking into a constellation.</div>
+        <div class="map-frame" style="background: #0f0f0f;">
+          <svg viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="gs2" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.3"/></filter>
+              <filter id="gs2h" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="3" stdDeviation="12" flood-opacity="0.5"/></filter>
+              <filter id="glow-red" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="16" result="b"/><feFlood flood-color="#E53935" flood-opacity="0.20"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-pink" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="14" result="b"/><feFlood flood-color="#FF6B8A" flood-opacity="0.18"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-green" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="12" result="b"/><feFlood flood-color="#25B439" flood-opacity="0.18"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-orange" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="18" result="b"/><feFlood flood-color="#F5A623" flood-opacity="0.20"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-purple" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="10" result="b"/><feFlood flood-color="#7E57C2" flood-opacity="0.15"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-hub" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="20" result="b"/><feFlood flood-color="#ffffff" flood-opacity="0.06"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <radialGradient id="spec2" cx="32%" cy="28%" r="50%">
+                <stop offset="0%" stop-color="white" stop-opacity="0.40"/>
+                <stop offset="35%" stop-color="white" stop-opacity="0.10"/>
+                <stop offset="100%" stop-color="white" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <!-- Subtle connection lines -->
+            <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+              <line x1="280" y1="170" x2="180" y2="75"/><line x1="280" y1="170" x2="420" y2="60"/>
+              <line x1="280" y1="170" x2="465" y2="180"/><line x1="280" y1="170" x2="400" y2="280"/>
+              <line x1="280" y1="170" x2="140" y2="260"/><line x1="280" y1="170" x2="100" y2="145"/>
+            </g>
+            <!-- Background (receded) orbs — smaller, faded -->
+            <g filter="url(#glow-purple)" opacity="0.70">
+              <circle cx="140" cy="260" r="24" fill="#7E57C2"/><circle cx="140" cy="260" r="24" fill="url(#spec2)"/>
+              <text x="140" y="264" text-anchor="middle" fill="rgba(255,255,255,0.80)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">CO</text>
+            </g>
+            <g filter="url(#gs2)" opacity="0.65">
+              <circle cx="100" cy="145" r="22" fill="#00ACC1"/><circle cx="100" cy="145" r="22" fill="url(#spec2)"/>
+              <text x="100" y="142" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">MAPS</text>
+              <text x="100" y="151" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">LITE</text>
+            </g>
+            <!-- Foreground (priority) orbs — larger, full opacity, glowing -->
+            <g filter="url(#glow-red)">
+              <circle cx="180" cy="75" r="42" fill="#E53935"/><circle cx="180" cy="75" r="42" fill="url(#spec2)"/>
+              <text x="180" y="79" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="11" font-weight="600">MAPS</text>
+            </g>
+            <g filter="url(#glow-pink)">
+              <circle cx="420" cy="60" r="36" fill="#FF6B8A"/><circle cx="420" cy="60" r="36" fill="url(#spec2)"/>
+              <text x="420" y="64" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">LPS</text>
+            </g>
+            <g filter="url(#glow-green)">
+              <circle cx="465" cy="180" r="34" fill="#25B439"/><circle cx="465" cy="180" r="34" fill="url(#spec2)"/>
+              <text x="465" y="184" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">TALENT</text>
+            </g>
+            <g filter="url(#glow-orange)">
+              <circle cx="400" cy="280" r="48" fill="#F5A623"/><circle cx="400" cy="280" r="48" fill="url(#spec2)"/>
+              <text x="400" y="276" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">SERVICE</text>
+              <text x="400" y="288" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="9" font-weight="600">PROVIDERS</text>
+            </g>
+            <!-- Hub -->
+            <g filter="url(#glow-hub)">
+              <circle cx="280" cy="170" r="56" fill="#1C1C1E"/><circle cx="280" cy="170" r="56" fill="url(#spec2)" opacity="0.3"/>
+              <text x="280" y="175" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="14" font-weight="600">MRM</text>
+            </g>
+          </svg>
+        </div>
+        <div class="verdict" style="margin-top: 12px;">Dark canvas makes colors pop. Glow halos create atmosphere. Priority orbs come forward while minor ones recede. Most "Spotify Wrapped" of the options.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SECTION 3: CARD TREATMENTS
+     ════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label">Card Treatments</div>
+    <div class="section-title">Six Ways to Show Pod Identity</div>
+    <div class="section-desc">How pod cards communicate their color without the left-border stripe. Each approach has a different personality.</div>
+
+    <div class="explore-grid">
+      <!-- Card A: Color dot -->
+      <div class="explore-card">
+        <h3>A. Color Dot</h3>
+        <div class="desc">Small solid circle next to the name. Minimal, connects to the orb language. The dot IS a mini orb.</div>
+        <div class="card-display">
+          <div class="pod-card-a"><div class="header"><div class="dot" style="background: #E53935;"></div><div class="name">Maps</div></div><div class="meta">42 contacts · 3 overdue</div></div>
+          <div class="pod-card-a"><div class="header"><div class="dot" style="background: #FF6B8A;"></div><div class="name">LPs</div></div><div class="meta">28 contacts · 1 overdue</div></div>
+          <div class="pod-card-a"><div class="header"><div class="dot" style="background: #F5A623;"></div><div class="name">Service Providers</div></div><div class="meta">87 contacts</div></div>
+        </div>
+        <div class="verdict">Clean and minimal. Connects to orb language without shouting.</div>
+      </div>
+
+      <!-- Card B: Colored shadow -->
+      <div class="explore-card">
+        <h3>B. Colored Shadow</h3>
+        <div class="desc">The card's drop shadow is tinted with the pod color. Subtle but distinctive — the color lives in the card's atmosphere, not on it.</div>
+        <div class="card-display">
+          <div class="pod-card-b" style="box-shadow: 0 3px 16px rgba(229,57,53,0.15), 0 1px 3px rgba(0,0,0,0.04);"><div class="name">Maps</div><div class="meta">42 contacts · 3 overdue</div></div>
+          <div class="pod-card-b" style="box-shadow: 0 3px 16px rgba(255,107,138,0.15), 0 1px 3px rgba(0,0,0,0.04);"><div class="name">LPs</div><div class="meta">28 contacts · 1 overdue</div></div>
+          <div class="pod-card-b" style="box-shadow: 0 3px 16px rgba(245,166,35,0.15), 0 1px 3px rgba(0,0,0,0.04);"><div class="name">Service Providers</div><div class="meta">87 contacts</div></div>
+        </div>
+        <div class="verdict">Elegant and unusual. The color is felt, not seen directly. Works best on hover.</div>
+      </div>
+
+      <!-- Card C: Tinted background -->
+      <div class="explore-card">
+        <h3>C. Subtle Background Tint</h3>
+        <div class="desc">The card background is a very faint wash (4-5% opacity) of the pod color. Each card has its own subtle tone.</div>
+        <div class="card-display">
+          <div class="pod-card-c" style="background: rgba(229,57,53,0.05);"><div class="name">Maps</div><div class="meta">42 contacts · 3 overdue</div></div>
+          <div class="pod-card-c" style="background: rgba(255,107,138,0.05);"><div class="name">LPs</div><div class="meta">28 contacts · 1 overdue</div></div>
+          <div class="pod-card-c" style="background: rgba(245,166,35,0.05);"><div class="name">Service Providers</div><div class="meta">87 contacts</div></div>
+        </div>
+        <div class="verdict">Warm and distinctive. Each card has its own micro-environment. Could feel muddy with many cards.</div>
+      </div>
+
+      <!-- Card D: Bottom bar -->
+      <div class="explore-card">
+        <h3>D. Bottom Accent Bar</h3>
+        <div class="desc">Thin colored bar at the bottom of the card. Grounded, like a foundation. Less generic than left-border because it's unexpected.</div>
+        <div class="card-display">
+          <div class="pod-card-d"><div class="name">Maps</div><div class="meta">42 contacts · 3 overdue</div><div class="bar" style="background: #E53935;"></div></div>
+          <div class="pod-card-d"><div class="name">LPs</div><div class="meta">28 contacts · 1 overdue</div><div class="bar" style="background: #FF6B8A;"></div></div>
+          <div class="pod-card-d"><div class="name">Service Providers</div><div class="meta">87 contacts</div><div class="bar" style="background: #F5A623;"></div></div>
+        </div>
+        <div class="verdict">Clean but still a "stripe" pattern. Better than left-border but in the same family.</div>
+      </div>
+
+      <!-- Card E: Mini orb avatar -->
+      <div class="explore-card">
+        <h3>E. Mini Orb Avatar</h3>
+        <div class="desc">A small 3D orb sits at the left of each card — same visual treatment as the map orbs. The dashboard cards mirror the map's visual language directly.</div>
+        <div class="card-display" style="flex-direction: column; gap: 8px;">
+          <div class="pod-card-e"><div class="orb-mini" style="background: #E53935; box-shadow: 0 2px 8px rgba(229,57,53,0.30);"><span>M</span></div><div><div class="name">Maps</div><div class="meta">42 contacts · 3 overdue</div></div></div>
+          <div class="pod-card-e"><div class="orb-mini" style="background: #FF6B8A; box-shadow: 0 2px 8px rgba(255,107,138,0.30);"><span>LP</span></div><div><div class="name">LPs</div><div class="meta">28 contacts · 1 overdue</div></div></div>
+          <div class="pod-card-e"><div class="orb-mini" style="background: #F5A623; box-shadow: 0 2px 8px rgba(245,166,35,0.30);"><span>SP</span></div><div><div class="name">Service Providers</div><div class="meta">87 contacts</div></div></div>
+        </div>
+        <div class="verdict">Strongest connection to the orb map. The dashboard and map share the same visual DNA. Each card IS its orb in miniature.</div>
+      </div>
+
+      <!-- Card F: Colored name text -->
+      <div class="explore-card">
+        <h3>F. Colored Name</h3>
+        <div class="desc">The pod name itself is rendered in the pod color. No extra elements — the typography carries the identity. Bold serif in color is striking.</div>
+        <div class="card-display">
+          <div class="pod-card-f"><div class="name" style="color: #E53935;">Maps</div><div class="meta">42 contacts · 3 overdue</div></div>
+          <div class="pod-card-f"><div class="name" style="color: #FF6B8A;">LPs</div><div class="meta">28 contacts · 1 overdue</div></div>
+          <div class="pod-card-f"><div class="name" style="color: #d49000;">Service Providers</div><div class="meta">87 contacts</div></div>
+        </div>
+        <div class="verdict">Most editorial. Color IS the typography. Risk: some colors may lack contrast at small sizes. Darkened variants needed for WCAG.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 12px;">
+  Kinship Brain — Orb + Card Explorations · /design-consultation
+</footer>
+
+</body>
+</html>

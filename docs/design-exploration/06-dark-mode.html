@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Dark Mode Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+    --brand: #25B439;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-sans); background: #f8f8f6; color: rgba(0,0,0,0.82); line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  header { background: var(--brand); padding: 40px 0; color: white; }
+  header h1 { font-family: var(--font-serif); font-weight: 800; font-size: 36px; letter-spacing: -0.03em; }
+  header p { font-size: 14px; opacity: 0.7; margin-top: 6px; }
+  section { padding: 48px 0; border-bottom: 1px solid rgba(0,0,0,0.07); }
+  section:last-child { border-bottom: none; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .section-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .section-desc { color: rgba(0,0,0,0.45); font-size: 13px; max-width: 640px; margin-bottom: 28px; line-height: 1.6; }
+
+  /* Side-by-side comparison */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(0,0,0,0.35); margin-bottom: 10px; text-align: center; }
+  .compare-label.on-dark { color: rgba(255,255,255,0.35); }
+
+  /* Token table */
+  .token-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 16px; }
+  .token-table th { text-align: left; font-weight: 600; padding: 8px 12px; border-bottom: 2px solid rgba(0,0,0,0.08); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(0,0,0,0.40); }
+  .token-table td { padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: middle; }
+  .token-swatch { width: 28px; height: 28px; border-radius: 6px; display: inline-block; vertical-align: middle; border: 1px solid rgba(0,0,0,0.08); }
+  .token-swatch.on-dark { border-color: rgba(255,255,255,0.08); }
+
+  /* ═══ LIGHT MOCKUP ═══ */
+  .mock-light {
+    background: #f8f8f6; border: 1px solid rgba(0,0,0,0.07); border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  /* ═══ DARK MOCKUP ═══ */
+  .mock-dark {
+    background: #111111; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  /* Dashboard pieces */
+  .m-header { padding: 24px 24px 28px; display: flex; gap: 20px; align-items: flex-start; }
+  .m-header.light { background: #25B439; }
+  .m-header.dark { background: #1B8A2A; }
+  .m-ring { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.20); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .m-ring::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid transparent; border-top-color: rgba(255,255,255,0.90); border-right-color: rgba(255,255,255,0.80); transform: rotate(-15deg); }
+  .m-ring .val { font-size: 17px; font-weight: 700; color: white; }
+  .m-stats { display: flex; gap: 24px; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px 16px; flex: 1; }
+  .m-stats.dark-stats { background: rgba(255,255,255,0.08); }
+  .m-stat-val { font-size: 16px; font-weight: 700; color: white; }
+  .m-stat-lbl { font-size: 9px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+
+  .m-body { padding: 20px 24px 24px; }
+  .m-body.light-body { background: #f8f8f6; }
+  .m-body.dark-body { background: #111111; }
+  .m-heading { font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .m-heading.light-text { color: rgba(0,0,0,0.82); }
+  .m-heading.dark-text { color: rgba(255,255,255,0.87); }
+
+  .m-pod-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .m-pod { border-radius: 10px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; min-width: 130px; flex-shrink: 0; }
+  .m-pod.light-pod { background: #ffffff; border: 1px solid rgba(0,0,0,0.07); }
+  .m-pod.dark-pod { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.06); }
+  .m-pod-orb { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 600; color: rgba(255,255,255,0.90); flex-shrink: 0; }
+  .m-pod-name { font-family: var(--font-serif); font-weight: 700; font-size: 12px; }
+  .m-pod-name.light-text { color: rgba(0,0,0,0.82); }
+  .m-pod-name.dark-text { color: rgba(255,255,255,0.87); }
+  .m-pod-meta { font-size: 10px; }
+  .m-pod-meta.light-text { color: rgba(0,0,0,0.45); }
+  .m-pod-meta.dark-text { color: rgba(255,255,255,0.45); }
+
+  .m-focus { border-radius: 10px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; }
+  .m-focus.light-focus { background: #ffffff; border: 1px solid rgba(0,0,0,0.07); }
+  .m-focus.dark-focus { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.06); }
+  .m-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; flex-shrink: 0; }
+  .m-focus-name { font-size: 12px; font-weight: 500; }
+  .m-focus-name.light-text { color: rgba(0,0,0,0.82); }
+  .m-focus-name.dark-text { color: rgba(255,255,255,0.87); }
+  .m-focus-sub { font-size: 10px; }
+  .m-focus-sub.light-text { color: rgba(0,0,0,0.45); }
+  .m-focus-sub.dark-text { color: rgba(255,255,255,0.40); }
+  .m-tag { font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 10px; margin-left: auto; white-space: nowrap; }
+  .m-tag.light-tag { color: #25B439; background: rgba(37,180,57,0.08); }
+  .m-tag.dark-tag { color: #4ADE60; background: rgba(74,222,96,0.10); }
+
+  /* Nav */
+  .m-nav { display: flex; justify-content: center; padding: 12px 0; }
+  .m-nav-pill { display: inline-flex; gap: 3px; border-radius: 20px; padding: 3px; }
+  .m-nav-pill.light-pill { background: #ffffff; border: 1px solid rgba(0,0,0,0.07); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .m-nav-pill.dark-pill { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .m-nav-btn { padding: 5px 14px; border-radius: 16px; font-family: var(--font-sans); font-size: 11px; font-weight: 500; border: none; }
+  .m-nav-btn.active { background: var(--brand); color: white; }
+  .m-nav-btn.inactive-light { background: transparent; color: rgba(0,0,0,0.35); }
+  .m-nav-btn.inactive-dark { background: transparent; color: rgba(255,255,255,0.35); }
+
+  /* Orb map */
+  .m-map { padding: 20px; min-height: 260px; display: flex; align-items: center; justify-content: center; }
+  .m-map.light-map { background: #f8f8f6; }
+  .m-map.dark-map { background: #0e0e0e; }
+
+  /* Panel */
+  .m-panel-grid { display: grid; grid-template-columns: 1fr 220px; min-height: 280px; }
+  .m-panel-canvas { display: flex; align-items: center; justify-content: center; font-size: 11px; position: relative; }
+  .m-panel-canvas.light-canvas { background: #f8f8f6; color: rgba(0,0,0,0.25); border-right: 1px solid rgba(0,0,0,0.07); }
+  .m-panel-canvas.dark-canvas { background: #0e0e0e; color: rgba(255,255,255,0.15); border-right: 1px solid rgba(255,255,255,0.06); }
+  .m-panel-side { padding: 16px; }
+  .m-panel-title { font-family: var(--font-serif); font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .m-panel-title.light-text { color: rgba(0,0,0,0.82); }
+  .m-panel-title.dark-text { color: rgba(255,255,255,0.87); }
+  .m-panel-input { width: 100%; padding: 8px 10px; border-radius: 8px; font-family: var(--font-sans); font-size: 11px; outline: none; margin-bottom: 10px; }
+  .m-panel-input.light-input { background: #ffffff; border: 1px solid rgba(0,0,0,0.07); color: rgba(0,0,0,0.82); }
+  .m-panel-input.dark-input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.87); }
+  .m-contact-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
+  .m-contact-row + .m-contact-row { border-top: 1px solid rgba(0,0,0,0.05); }
+  .m-contact-row.dark-row + .m-contact-row.dark-row { border-color: rgba(255,255,255,0.05); }
+  .m-contact-nm { font-size: 11px; font-weight: 500; }
+  .m-contact-nm.light-text { color: rgba(0,0,0,0.82); }
+  .m-contact-nm.dark-text { color: rgba(255,255,255,0.87); }
+  .m-contact-rl { font-size: 9px; }
+  .m-contact-rl.light-text { color: rgba(0,0,0,0.45); }
+  .m-contact-rl.dark-text { color: rgba(255,255,255,0.40); }
+
+  @media (max-width: 768px) { .compare { grid-template-columns: 1fr; } .container { padding: 0 20px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>Dark Mode Strategy</h1>
+    <p>Side-by-side: how every surface, token, and component adapts from light to dark.</p>
+  </div>
+</header>
+
+<!-- ═══ TOKEN MAPPING ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Token Mapping</div>
+    <div class="section-title">Light to Dark Adaptation</div>
+    <div class="section-desc">Not just "invert everything." Surfaces go dark, brand green shifts slightly for contrast, text flips to white hierarchy, orb glows get more prominent on dark canvas.</div>
+
+    <table class="token-table">
+      <thead>
+        <tr><th>Token</th><th>Light</th><th></th><th>Dark</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>--color-bg</code></td>
+          <td><span class="token-swatch" style="background: #f8f8f6;"></span> #f8f8f6</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: #111111;"></span> #111111</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Pure dark, not gray. Lets orb glows pop.</td>
+        </tr>
+        <tr>
+          <td><code>--color-surface</code></td>
+          <td><span class="token-swatch" style="background: #ffffff;"></span> #ffffff</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: #1a1a1a;"></span> #1a1a1a</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Cards, panels. One step up from bg.</td>
+        </tr>
+        <tr>
+          <td><code>--surface-panel</code></td>
+          <td><span class="token-swatch" style="background: rgba(255,255,255,0.92);"></span> rgba(255,255,255,0.92)</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: rgba(255,255,255,0.06);"></span> rgba(255,255,255,0.06)</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Frosted overlay stays translucent on both.</td>
+        </tr>
+        <tr>
+          <td><code>--color-brand</code></td>
+          <td><span class="token-swatch" style="background: #25B439;"></span> #25B439</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: #2ECB45;"></span> #2ECB45</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Slightly brighter for contrast on dark surfaces.</td>
+        </tr>
+        <tr>
+          <td><code>--header-band-bg</code></td>
+          <td><span class="token-swatch" style="background: #25B439;"></span> #25B439</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: #1B8A2A;"></span> #1B8A2A</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Darker green band. Less bright on dark bg.</td>
+        </tr>
+        <tr>
+          <td><code>--text-primary</code></td>
+          <td><span class="token-swatch" style="background: rgba(0,0,0,0.82);"></span> rgba(0,0,0,0.82)</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: rgba(255,255,255,0.87);"></span> rgba(255,255,255,0.87)</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Not pure white — 87% avoids eye strain.</td>
+        </tr>
+        <tr>
+          <td><code>--text-secondary</code></td>
+          <td><span class="token-swatch" style="background: rgba(0,0,0,0.45);"></span> rgba(0,0,0,0.45)</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: rgba(255,255,255,0.45);"></span> rgba(255,255,255,0.45)</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Same opacity, flipped base.</td>
+        </tr>
+        <tr>
+          <td><code>--border</code></td>
+          <td><span class="token-swatch" style="background: rgba(0,0,0,0.07);"></span> rgba(0,0,0,0.07)</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: rgba(255,255,255,0.06);"></span> rgba(255,255,255,0.06)</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Subtle edge definition.</td>
+        </tr>
+        <tr>
+          <td><code>--orb-glow</code></td>
+          <td style="font-size: 11px; color: rgba(0,0,0,0.45);">opacity 0.25</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td style="font-size: 11px; color: rgba(0,0,0,0.45);">opacity 0.40</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Glows intensify on dark canvas. More atmosphere.</td>
+        </tr>
+        <tr>
+          <td><code>--hub-orb</code></td>
+          <td><span class="token-swatch" style="background: #1C1C1E;"></span> #1C1C1E</td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td><span class="token-swatch on-dark" style="background: #2C2C30; border: 1px solid rgba(255,255,255,0.10);"></span> #2C2C30 + ring</td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Slightly lighter + subtle edge ring so it doesn't vanish.</td>
+        </tr>
+        <tr>
+          <td><code>accent tags</code></td>
+          <td style="font-size: 11px;"><span style="color: #25B439; background: rgba(37,180,57,0.08); padding: 2px 6px; border-radius: 6px;">reach out</span></td>
+          <td style="color: rgba(0,0,0,0.25);">→</td>
+          <td style="font-size: 11px;"><span style="color: #4ADE60; background: rgba(74,222,96,0.10); padding: 2px 6px; border-radius: 6px;">reach out</span></td>
+          <td style="color: rgba(0,0,0,0.45); font-size: 11px;">Brighter green text, slightly more opaque bg.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ DASHBOARD COMPARISON ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Dashboard</div>
+    <div class="section-title">Side-by-Side</div>
+    <div class="section-desc">The green header band darkens (not brightens) in dark mode — less eye strain. Surfaces shift to #1a1a1a. Orb mini-avatars keep their color gradients on both modes.</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label">Light</div>
+        <div class="mock-light">
+          <div class="m-header light">
+            <div class="m-ring"><div class="val">78</div></div>
+            <div class="m-stats">
+              <div><div class="m-stat-val">247</div><div class="m-stat-lbl">contacts</div></div>
+              <div><div class="m-stat-val">18</div><div class="m-stat-lbl">due</div></div>
+              <div><div class="m-stat-val" style="color: hsla(20,80%,75%,1);">7</div><div class="m-stat-lbl">overdue</div></div>
+            </div>
+          </div>
+          <div class="m-body light-body">
+            <div class="m-heading light-text">Pods</div>
+            <div class="m-pod-row">
+              <div class="m-pod light-pod"><div class="m-pod-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div><div><div class="m-pod-name light-text">Maps</div><div class="m-pod-meta light-text">42 contacts</div></div></div>
+              <div class="m-pod light-pod"><div class="m-pod-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div><div><div class="m-pod-name light-text">LPs</div><div class="m-pod-meta light-text">28 contacts</div></div></div>
+            </div>
+            <div class="m-heading light-text">Today's Focus</div>
+            <div class="m-focus light-focus">
+              <div class="m-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+              <div><div class="m-focus-name light-text">Sarah Chen</div><div class="m-focus-sub light-text">18 days ago · Maps</div></div>
+              <div class="m-tag light-tag">reach out</div>
+            </div>
+          </div>
+          <div class="m-nav" style="background: #f8f8f6;">
+            <div class="m-nav-pill light-pill"><button class="m-nav-btn active">Pulse</button><button class="m-nav-btn inactive-light">Map</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label on-dark" style="color: rgba(0,0,0,0.35);">Dark</div>
+        <div class="mock-dark">
+          <div class="m-header dark">
+            <div class="m-ring"><div class="val">78</div></div>
+            <div class="m-stats dark-stats">
+              <div><div class="m-stat-val">247</div><div class="m-stat-lbl">contacts</div></div>
+              <div><div class="m-stat-val">18</div><div class="m-stat-lbl">due</div></div>
+              <div><div class="m-stat-val" style="color: hsla(20,80%,75%,1);">7</div><div class="m-stat-lbl">overdue</div></div>
+            </div>
+          </div>
+          <div class="m-body dark-body">
+            <div class="m-heading dark-text">Pods</div>
+            <div class="m-pod-row">
+              <div class="m-pod dark-pod"><div class="m-pod-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">M</div><div><div class="m-pod-name dark-text">Maps</div><div class="m-pod-meta dark-text">42 contacts</div></div></div>
+              <div class="m-pod dark-pod"><div class="m-pod-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);">LP</div><div><div class="m-pod-name dark-text">LPs</div><div class="m-pod-meta dark-text">28 contacts</div></div></div>
+            </div>
+            <div class="m-heading dark-text">Today's Focus</div>
+            <div class="m-focus dark-focus">
+              <div class="m-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+              <div><div class="m-focus-name dark-text">Sarah Chen</div><div class="m-focus-sub dark-text">18 days ago · Maps</div></div>
+              <div class="m-tag dark-tag">reach out</div>
+            </div>
+          </div>
+          <div class="m-nav" style="background: #111111;">
+            <div class="m-nav-pill dark-pill"><button class="m-nav-btn active">Pulse</button><button class="m-nav-btn inactive-dark">Map</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ORB MAP COMPARISON ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Orb Map</div>
+    <div class="section-title">Where Dark Mode Shines</div>
+    <div class="section-desc">This is where dark mode earns its keep. Orb glows become 60% more prominent on dark canvas. The network feels like a constellation. Colors pop without competing against a light background.</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label">Light</div>
+        <div class="mock-light">
+          <div class="m-map light-map">
+            <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="ls" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-opacity="0.12"/></filter>
+                <linearGradient id="lr" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E53935"/><stop offset="100%" stop-color="#FF6B4A"/></linearGradient>
+                <linearGradient id="lp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B8A"/><stop offset="100%" stop-color="#FF8FA5"/></linearGradient>
+                <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#25B439"/><stop offset="100%" stop-color="#00BFA5"/></linearGradient>
+                <linearGradient id="lo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A623"/><stop offset="100%" stop-color="#FFD54F"/></linearGradient>
+                <linearGradient id="lh" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1C1C1E"/><stop offset="100%" stop-color="#2C2C30"/></linearGradient>
+              </defs>
+              <circle cx="200" cy="130" r="55" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="3 5"/>
+              <circle cx="200" cy="130" r="95" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1" stroke-dasharray="3 5"/>
+              <g stroke="rgba(0,0,0,0.05)" stroke-width="1"><line x1="200" y1="130" x2="130" y2="60"/><line x1="200" y1="130" x2="300" y2="55"/><line x1="200" y1="130" x2="320" y2="180"/><line x1="200" y1="130" x2="110" y2="200"/></g>
+              <g filter="url(#ls)"><circle cx="130" cy="60" r="24" fill="url(#lr)"/><text x="130" y="64" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">MAPS</text></g>
+              <g filter="url(#ls)"><circle cx="300" cy="55" r="20" fill="url(#lp)"/><text x="300" y="59" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">LPS</text></g>
+              <g filter="url(#ls)"><circle cx="320" cy="180" r="18" fill="url(#lg)"/><text x="320" y="184" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">TLT</text></g>
+              <g filter="url(#ls)"><circle cx="110" cy="200" r="28" fill="url(#lo)"/><text x="110" y="197" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6.5" font-weight="600">SVC</text><text x="110" y="206" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6.5" font-weight="600">PROV</text></g>
+              <g filter="url(#ls)"><circle cx="200" cy="130" r="32" fill="url(#lh)"/><text x="200" y="134" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">MRM</text></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label" style="color: rgba(0,0,0,0.35);">Dark</div>
+        <div class="mock-dark">
+          <div class="m-map dark-map">
+            <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="dg-r" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="10" result="b"/><feFlood flood-color="#E53935" flood-opacity="0.30"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="dg-p" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8" result="b"/><feFlood flood-color="#FF6B8A" flood-opacity="0.25"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="dg-g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feFlood flood-color="#25B439" flood-opacity="0.25"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="dg-o" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="10" result="b"/><feFlood flood-color="#F5A623" flood-opacity="0.28"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="dg-h" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="12" result="b"/><feFlood flood-color="#ffffff" flood-opacity="0.05"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <circle cx="200" cy="130" r="55" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1" stroke-dasharray="3 5"/>
+              <circle cx="200" cy="130" r="95" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1" stroke-dasharray="3 5"/>
+              <g stroke="rgba(255,255,255,0.04)" stroke-width="1"><line x1="200" y1="130" x2="130" y2="60"/><line x1="200" y1="130" x2="300" y2="55"/><line x1="200" y1="130" x2="320" y2="180"/><line x1="200" y1="130" x2="110" y2="200"/></g>
+              <g filter="url(#dg-r)"><circle cx="130" cy="60" r="24" fill="url(#lr)"/><text x="130" y="64" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">MAPS</text></g>
+              <g filter="url(#dg-p)"><circle cx="300" cy="55" r="20" fill="url(#lp)"/><text x="300" y="59" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="8" font-weight="600">LPS</text></g>
+              <g filter="url(#dg-g)"><circle cx="320" cy="180" r="18" fill="url(#lg)"/><text x="320" y="184" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="7" font-weight="600">TLT</text></g>
+              <g filter="url(#dg-o)"><circle cx="110" cy="200" r="28" fill="url(#lo)"/><text x="110" y="197" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6.5" font-weight="600">SVC</text><text x="110" y="206" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="6.5" font-weight="600">PROV</text></g>
+              <g filter="url(#dg-h)"><circle cx="200" cy="130" r="32" fill="#2C2C30"/><circle cx="200" cy="130" r="33" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/><text x="200" y="134" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans" font-size="10" font-weight="600">MRM</text></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT PANEL COMPARISON ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Contact Panel</div>
+    <div class="section-title">Panel on Dark</div>
+    <div class="compare">
+      <div>
+        <div class="compare-label">Light</div>
+        <div class="mock-light">
+          <div class="m-panel-grid">
+            <div class="m-panel-canvas light-canvas">orb canvas</div>
+            <div class="m-panel-side">
+              <div class="m-panel-title light-text">Silicon Valley</div>
+              <input class="m-panel-input light-input" placeholder="Search..." disabled>
+              <div class="m-contact-row"><div class="m-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5); width: 22px; height: 22px; font-size: 9px;">SC</div><div><div class="m-contact-nm light-text">Sarah Chen</div><div class="m-contact-rl light-text">Partner, a16z</div></div></div>
+              <div class="m-contact-row"><div class="m-avatar" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0); width: 22px; height: 22px; font-size: 9px;">JR</div><div><div class="m-contact-nm light-text">James Rivera</div><div class="m-contact-rl light-text">CTO, Stripe</div></div></div>
+              <div class="m-contact-row"><div class="m-avatar" style="background: linear-gradient(135deg, #E53935, #FF6B4A); width: 22px; height: 22px; font-size: 9px;">AK</div><div><div class="m-contact-nm light-text">Ayumi Kato</div><div class="m-contact-rl light-text">GP, Sequoia</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label" style="color: rgba(0,0,0,0.35);">Dark</div>
+        <div class="mock-dark">
+          <div class="m-panel-grid">
+            <div class="m-panel-canvas dark-canvas">orb canvas</div>
+            <div class="m-panel-side">
+              <div class="m-panel-title dark-text">Silicon Valley</div>
+              <input class="m-panel-input dark-input" placeholder="Search..." disabled>
+              <div class="m-contact-row dark-row"><div class="m-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5); width: 22px; height: 22px; font-size: 9px;">SC</div><div><div class="m-contact-nm dark-text">Sarah Chen</div><div class="m-contact-rl dark-text">Partner, a16z</div></div></div>
+              <div class="m-contact-row dark-row"><div class="m-avatar" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0); width: 22px; height: 22px; font-size: 9px;">JR</div><div><div class="m-contact-nm dark-text">James Rivera</div><div class="m-contact-rl dark-text">CTO, Stripe</div></div></div>
+              <div class="m-contact-row dark-row"><div class="m-avatar" style="background: linear-gradient(135deg, #E53935, #FF6B4A); width: 22px; height: 22px; font-size: 9px;">AK</div><div><div class="m-contact-nm dark-text">Ayumi Kato</div><div class="m-contact-rl dark-text">GP, Sequoia</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ KEY PRINCIPLES ═══ -->
+<section>
+  <div class="container">
+    <div class="section-label">Principles</div>
+    <div class="section-title">Dark Mode Rules</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="background: var(--surface); border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; padding: 20px;">
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 8px;">Orb glows intensify</div>
+        <div style="font-size: 12px; color: rgba(0,0,0,0.45); line-height: 1.5;">Glow opacity goes from 0.25 to 0.40 on dark canvas. The orb map becomes the visual hero in dark mode — colors pop against black like a constellation.</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; padding: 20px;">
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 8px;">Green band darkens, doesn't brighten</div>
+        <div style="font-size: 12px; color: rgba(0,0,0,0.45); line-height: 1.5;">Header band goes from #25B439 to #1B8A2A. A bright green band on dark bg is blinding. The darker green still reads as brand but doesn't assault the eyes.</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; padding: 20px;">
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 8px;">Hub orb gets a rim</div>
+        <div style="font-size: 12px; color: rgba(0,0,0,0.45); line-height: 1.5;">On light bg, the near-black hub has natural contrast. On dark bg, it needs a subtle rgba(255,255,255,0.06) border to remain visible against #111.</div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid rgba(0,0,0,0.07); border-radius: 12px; padding: 20px;">
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 14px; margin-bottom: 8px;">Follow system preference</div>
+        <div style="font-size: 12px; color: rgba(0,0,0,0.45); line-height: 1.5;">Use prefers-color-scheme by default. No manual toggle needed for v1 — respect the OS setting. If Moj uses her Mac in dark mode, the app follows.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; color: rgba(0,0,0,0.28); font-size: 12px;">
+  Kinship Brain — Dark Mode Strategy · /design-consultation
+</footer>
+
+</body>
+</html>

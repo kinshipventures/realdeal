@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinship Brain — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #25B439; --brand-dark: #1A8A2A;
+    --bg: #f8f8f6; --surface: #ffffff;
+    --text-1: rgba(0,0,0,0.82); --text-2: rgba(0,0,0,0.45); --text-3: rgba(0,0,0,0.28);
+    --border: rgba(0,0,0,0.07);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+    --glow-mult: 1;
+  }
+  [data-theme="dark"] {
+    --bg: #111111; --surface: #1a1a1a;
+    --text-1: rgba(255,255,255,0.87); --text-2: rgba(255,255,255,0.45); --text-3: rgba(255,255,255,0.25);
+    --border: rgba(255,255,255,0.06); --brand: #2ECB45; --brand-dark: #25B439;
+    --glow-mult: 1.6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text-1); line-height: 1.5; transition: background 0.4s, color 0.4s; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+
+  /* ═══ HERO ═══ */
+  .hero {
+    background: var(--brand); padding: 72px 0 80px; color: white; position: relative; overflow: hidden;
+    transition: background 0.4s;
+  }
+  [data-theme="dark"] .hero { background: #1B8A2A; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,0,0,0.12) 0%, transparent 50%);
+  }
+  .hero-inner { position: relative; z-index: 1; }
+  .hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; margin-bottom: 12px; }
+  .hero h1 { font-family: var(--font-serif); font-weight: 900; font-size: 56px; letter-spacing: -0.04em; line-height: 1.05; max-width: 600px; }
+  .hero p { font-size: 16px; opacity: 0.70; margin-top: 12px; max-width: 480px; line-height: 1.6; }
+  .hero-toggle {
+    position: absolute; top: 28px; right: 32px; z-index: 2;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.20); border-radius: 24px;
+    padding: 8px 18px; color: white; font-family: var(--font-sans); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .hero-toggle:hover { background: rgba(255,255,255,0.25); }
+  .hero-nav {
+    display: flex; gap: 6px; margin-top: 32px; flex-wrap: wrap;
+  }
+  .hero-nav a {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    color: rgba(255,255,255,0.75); text-decoration: none; border: 1px solid rgba(255,255,255,0.18);
+    transition: all 0.15s;
+  }
+  .hero-nav a:hover { background: rgba(255,255,255,0.12); color: white; }
+
+  /* ═══ SECTIONS ═══ */
+  section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+  .sec-label { font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--brand); margin-bottom: 8px; }
+  .sec-title { font-family: var(--font-serif); font-weight: 800; font-size: 32px; letter-spacing: -0.03em; margin-bottom: 8px; line-height: 1.15; }
+  .sec-desc { color: var(--text-2); font-size: 14px; max-width: 560px; margin-bottom: 40px; line-height: 1.7; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ═══ COLOR PALETTE ═══ */
+  .swatch-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .swatch {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .swatch-circle {
+    width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .swatch-name { font-size: 10px; font-weight: 600; color: var(--text-1); }
+  .swatch-hex { font-size: 9px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .color-group-label { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 12px; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ═══ TYPOGRAPHY ═══ */
+  .type-specimen {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; margin-bottom: 16px;
+  }
+  .type-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+
+  /* ═══ ORB SYSTEM ═══ */
+  .orb-showcase { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-end; justify-content: center; padding: 40px 0; }
+  .orb-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .orb-wrap { position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .orb-ring { position: absolute; z-index: 0; }
+  .orb-body {
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: rgba(255,255,255,0.92); letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.18); position: relative; z-index: 1;
+    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+  }
+  .orb-body span { position: relative; z-index: 1; }
+  .orb-body:hover { transform: scale(1.06) translateY(-3px); }
+  .orb-body:active { transform: scale(0.94); transition-duration: 0.08s; }
+  .orb-meta { font-size: 10px; color: var(--text-2); text-align: center; }
+
+  /* Health ring animation */
+  .health-arc { transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* ═══ MAP PREVIEW ═══ */
+  .map-frame {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
+    overflow: hidden; box-shadow: 0 8px 48px rgba(0,0,0,0.08); position: relative;
+  }
+  [data-theme="dark"] .map-frame { box-shadow: 0 8px 48px rgba(0,0,0,0.4); }
+  .map-frame svg { display: block; width: 100%; }
+
+  /* ═══ DASHBOARD MOCKUP ═══ */
+  .dash-frame {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    overflow: hidden; box-shadow: 0 8px 48px rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] .dash-frame { box-shadow: 0 8px 48px rgba(0,0,0,0.4); }
+  .dash-header { background: var(--brand); padding: 28px 28px 32px; display: flex; gap: 24px; align-items: flex-start; }
+  [data-theme="dark"] .dash-header { background: #1B8A2A; }
+  .eq-ring { width: 72px; height: 72px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.20); position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .eq-ring::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,0.90); border-right-color: rgba(255,255,255,0.90); border-bottom-color: rgba(255,255,255,0.70); transform: rotate(-10deg); }
+  .eq-score { font-size: 22px; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+  .eq-label { font-size: 11px; color: rgba(255,255,255,0.60); margin-top: 2px; }
+  .stat-bar { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px 20px; flex: 1; display: flex; gap: 32px; }
+  [data-theme="dark"] .stat-bar { background: rgba(255,255,255,0.08); }
+  .stat-val { font-size: 20px; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+  .stat-lbl { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .dash-body { padding: 24px 28px 32px; background: var(--bg); }
+  .dash-heading { font-family: var(--font-serif); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .pod-row { display: flex; gap: 12px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+  .pod-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; min-width: 155px; flex-shrink: 0;
+    cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .pod-card:hover { transform: translateY(-2px); }
+  .mini-orb {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.90); position: relative; overflow: hidden;
+  }
+  .mini-orb::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.20) 0%, transparent 50%, rgba(0,0,0,0.10) 100%);
+  }
+  .mini-orb span { position: relative; z-index: 1; }
+  .pod-name { font-family: var(--font-serif); font-weight: 700; font-size: 13px; }
+  .pod-meta { font-size: 11px; color: var(--text-2); }
+  .focus-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 12px;
+  }
+  .f-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+  .f-name { font-size: 13px; font-weight: 500; }
+  .f-reason { font-size: 11px; color: var(--text-2); }
+  .f-tag { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--brand); background: rgba(37,180,57,0.08); padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+
+  /* ═══ VOICE ═══ */
+  .voice-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 24px;
+  }
+  .voice-before { font-size: 13px; color: var(--text-3); text-decoration: line-through; margin-bottom: 6px; }
+  .voice-after { font-family: var(--font-serif); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  .voice-context { font-size: 11px; color: var(--text-2); margin-top: 8px; }
+
+  /* ═══ INTERACTION COLORS ═══ */
+  .type-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .types-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ═══ EMPTY STATE ═══ */
+  .empty-demo {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 48px 32px; text-align: center; display: flex; flex-direction: column; align-items: center;
+  }
+  .empty-orb-ill {
+    width: 72px; height: 72px; border-radius: 50%; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .empty-orb-ill::before {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%;
+    background: inherit; opacity: 0.15; filter: blur(10px);
+  }
+  .empty-orb-ill svg { width: 28px; height: 28px; position: relative; z-index: 1; }
+  .empty-title { font-family: var(--font-serif); font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+  .empty-text { font-size: 13px; color: var(--text-2); line-height: 1.6; max-width: 280px; margin-bottom: 20px; }
+  .empty-btn {
+    padding: 10px 20px; border-radius: 10px; font-family: var(--font-sans);
+    font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+    background: var(--brand); color: white; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .empty-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,180,57,0.25); }
+  .ghost-hint {
+    width: 100%; max-width: 280px; background: rgba(0,0,0,0.02); border: 1px dashed var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center;
+  }
+  [data-theme="dark"] .ghost-hint { background: rgba(255,255,255,0.02); }
+  .ghost-circle { width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.04); flex-shrink: 0; }
+  [data-theme="dark"] .ghost-circle { background: rgba(255,255,255,0.04); }
+  .ghost-line { height: 8px; border-radius: 4px; background: rgba(0,0,0,0.04); }
+  [data-theme="dark"] .ghost-line { background: rgba(255,255,255,0.04); }
+
+  /* ═══ WRAPPED SLIDE ═══ */
+  .wrapped-slide {
+    border-radius: 20px; padding: 56px 40px; text-align: center;
+    color: white; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .wrapped-slide::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 25% 15%, rgba(255,255,255,0.10) 0%, transparent 50%),
+                radial-gradient(ellipse at 75% 85%, rgba(0,0,0,0.15) 0%, transparent 50%);
+  }
+  .wrapped-big { font-family: var(--font-serif); font-weight: 900; font-size: 88px; letter-spacing: -0.05em; line-height: 1; position: relative; z-index: 1; }
+  .wrapped-label { font-family: var(--font-serif); font-weight: 700; font-size: 18px; opacity: 0.80; margin-top: 12px; position: relative; z-index: 1; }
+  .wrapped-sub { font-size: 13px; opacity: 0.50; margin-top: 8px; position: relative; z-index: 1; }
+
+  /* ═══ NAV ═══ */
+  .nav-demo { display: flex; justify-content: center; padding: 24px 0; }
+  .pill-nav {
+    display: inline-flex; gap: 4px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 24px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .pill-btn {
+    padding: 8px 20px; border-radius: 20px; font-family: var(--font-sans); font-size: 13px;
+    font-weight: 500; border: none; cursor: pointer; transition: all 0.15s;
+  }
+  .pill-btn.active { background: var(--brand); color: white; box-shadow: 0 1px 4px rgba(37,180,57,0.30); }
+  .pill-btn.inactive { background: transparent; color: var(--text-2); }
+
+  /* ═══ SPARKLINE ═══ */
+  .spark-demo { display: flex; gap: 12px; }
+  .spark-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; flex: 1; display: flex; gap: 10px; align-items: center;
+  }
+
+  /* ═══ MOTION TABLE ═══ */
+  .motion-table { width: 100%; border-collapse: collapse; }
+  .motion-table th {
+    text-align: left; font-size: 10px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .motion-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .motion-table code { font-size: 11px; color: var(--brand); background: rgba(37,180,57,0.06); padding: 2px 6px; border-radius: 4px; }
+
+  /* ═══ FOOTER ═══ */
+  .footer { padding: 48px 0; text-align: center; }
+  .footer p { font-size: 12px; color: var(--text-3); }
+  .footer .brand-mark { font-family: var(--font-serif); font-weight: 800; font-size: 20px; color: var(--brand); margin-bottom: 8px; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 36px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .container { padding: 0 20px; }
+    .orb-showcase { gap: 20px; }
+    .stat-bar { gap: 16px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <button class="hero-toggle" onclick="toggleTheme()">light / dark</button>
+  <div class="container hero-inner">
+    <div class="hero-eyebrow">Designed by Gabriel Murray</div>
+    <h1>Kinship Brain (MRM)</h1>
+    <p>Relationship intelligence OS. NOT a CRM.</p>
+    <nav class="hero-nav">
+      <a href="#color">Color</a>
+      <a href="#type">Typography</a>
+      <a href="#orbs">Orbs</a>
+      <a href="#map">Map</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#voice">Voice</a>
+      <a href="#motion">Motion</a>
+      <a href="#wrapped">Wrapped</a>
+    </nav>
+  </div>
+</div>
+
+<!-- COLOR -->
+<section id="color">
+  <div class="container">
+    <div class="sec-label">Foundation</div>
+    <div class="sec-title">Color</div>
+    <div class="sec-desc">Green as environment, not accent. Each pod owns a color. The palette adapts from warm light to atmospheric dark.</div>
+
+    <div class="color-group-label">Brand</div>
+    <div class="swatch-row">
+      <div class="swatch"><div class="swatch-circle" style="background: #25B439;"></div><div class="swatch-name">Brand</div><div class="swatch-hex">#25B439</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: #1A8A2A;"></div><div class="swatch-name">Brand Dark</div><div class="swatch-hex">#1A8A2A</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: #f8f8f6;"></div><div class="swatch-name">Background</div><div class="swatch-hex">#f8f8f6</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: #ffffff;"></div><div class="swatch-name">Surface</div><div class="swatch-hex">#ffffff</div></div>
+    </div>
+
+    <div class="color-group-label">Pod Colors</div>
+    <div class="swatch-row">
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #E53935, #FF6B4A);"></div><div class="swatch-name">Maps</div><div class="swatch-hex">red → coral</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5);"></div><div class="swatch-name">LPs</div><div class="swatch-hex">pink → rose</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);"></div><div class="swatch-name">Companies</div><div class="swatch-hex">purple → indigo</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #25B439, #00BFA5);"></div><div class="swatch-name">Talent</div><div class="swatch-hex">green → teal</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #F5A623, #FFD54F);"></div><div class="swatch-name">Service Providers</div><div class="swatch-hex">amber → gold</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background: linear-gradient(135deg, #1C1C1E, #2C2C30);"></div><div class="swatch-name">Hub</div><div class="swatch-hex">charcoal → slate</div></div>
+    </div>
+
+    <div class="color-group-label">Interaction Types</div>
+    <div class="types-row">
+      <div class="type-pill" style="background: rgba(46,125,50,0.08); color: #2E7D32;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Call
+      </div>
+      <div class="type-pill" style="background: rgba(21,101,192,0.08); color: #1565C0;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        Email
+      </div>
+      <div class="type-pill" style="background: rgba(123,31,162,0.08); color: #7B1FA2;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Text
+      </div>
+      <div class="type-pill" style="background: rgba(230,81,0,0.08); color: #E65100;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Meeting
+      </div>
+      <div class="type-pill" style="background: rgba(194,24,91,0.08); color: #C2185B;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Intro
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="type">
+  <div class="container">
+    <div class="sec-label">Foundation</div>
+    <div class="sec-title">Typography</div>
+    <div class="sec-desc">Fraunces for presence. Plus Jakarta Sans for clarity. The serif says "this is a brand." The sans says "this is useful."</div>
+
+    <div class="type-specimen">
+      <div class="type-label">Display — Fraunces 800</div>
+      <div style="font-family: var(--font-serif); font-weight: 800; font-size: 40px; letter-spacing: -0.03em; line-height: 1.1;">Your network at a glance</div>
+    </div>
+    <div class="grid-2">
+      <div class="type-specimen">
+        <div class="type-label">Heading — Fraunces 700</div>
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 18px; letter-spacing: -0.02em;">today's focus</div>
+        <div style="font-family: var(--font-serif); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; margin-top: 8px; color: var(--text-2);">needs attention</div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-label">Body — Plus Jakarta Sans</div>
+        <div style="font-size: 13px; font-weight: 400; color: var(--text-2); line-height: 1.6;">Last email 18 days ago. Maps / Silicon Valley. Relationship is cooling — reach out soon.</div>
+        <div style="font-size: 11px; font-weight: 500; color: var(--text-3); margin-top: 8px;">CAPTION · 11PX · 500</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ORB SYSTEM -->
+<section id="orbs">
+  <div class="container">
+    <div class="sec-label">Identity</div>
+    <div class="sec-title">Orb System</div>
+    <div class="sec-desc">Two-tone color shift gradients with health ring arcs and ambient glow halos. Hover them. Press them. They're alive.</div>
+
+    <div class="orb-showcase" id="orbShowcase">
+      <!-- Hub -->
+      <div class="orb-item">
+        <div class="orb-wrap" style="width: 136px; height: 136px;">
+          <svg class="orb-ring" viewBox="0 0 136 136" style="width: 136px; height: 136px; position: absolute;">
+            <circle cx="68" cy="68" r="66" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle class="health-arc" cx="68" cy="68" r="66" fill="none" stroke="#1C1C1E" stroke-width="2" stroke-dasharray="370 415" stroke-linecap="round" transform="rotate(-90 68 68)"/>
+          </svg>
+          <div class="orb-body" style="width: 120px; height: 120px; background: linear-gradient(135deg, #1C1C1E, #2C2C30); box-shadow: 0 0 36px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25); font-size: 16px;"><span>MRM</span></div>
+        </div>
+        <div class="orb-meta">Hub · 136px · 89%</div>
+      </div>
+      <!-- Maps -->
+      <div class="orb-item">
+        <div class="orb-wrap" style="width: 104px; height: 104px;">
+          <svg class="orb-ring" viewBox="0 0 104 104" style="width: 104px; height: 104px; position: absolute;">
+            <circle cx="52" cy="52" r="50" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle class="health-arc" cx="52" cy="52" r="50" fill="none" stroke="#E53935" stroke-width="2" stroke-dasharray="264 314" stroke-linecap="round" transform="rotate(-90 52 52)"/>
+          </svg>
+          <div class="orb-body" style="width: 88px; height: 88px; background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 0 28px rgba(229,57,53,0.25), 0 4px 16px rgba(0,0,0,0.12); font-size: 12px;"><span>MAPS</span></div>
+        </div>
+        <div class="orb-meta">Pod · 96px · 84%</div>
+      </div>
+      <!-- LPs -->
+      <div class="orb-item">
+        <div class="orb-wrap" style="width: 104px; height: 104px;">
+          <svg class="orb-ring" viewBox="0 0 104 104" style="width: 104px; height: 104px; position: absolute;">
+            <circle cx="52" cy="52" r="50" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle class="health-arc" cx="52" cy="52" r="50" fill="none" stroke="#FF6B8A" stroke-width="2" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 52 52)"/>
+          </svg>
+          <div class="orb-body" style="width: 88px; height: 88px; background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 0 28px rgba(255,107,138,0.25), 0 4px 16px rgba(0,0,0,0.12); font-size: 12px;"><span>LPS</span></div>
+        </div>
+        <div class="orb-meta">Pod · 96px · 75%</div>
+      </div>
+      <!-- Talent -->
+      <div class="orb-item">
+        <div class="orb-wrap" style="width: 76px; height: 76px;">
+          <svg class="orb-ring" viewBox="0 0 76 76" style="width: 76px; height: 76px; position: absolute;">
+            <circle cx="38" cy="38" r="36" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle class="health-arc" cx="38" cy="38" r="36" fill="none" stroke="#25B439" stroke-width="2" stroke-dasharray="136 226" stroke-linecap="round" transform="rotate(-90 38 38)"/>
+          </svg>
+          <div class="orb-body" style="width: 60px; height: 60px; background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 0 22px rgba(37,180,57,0.25), 0 4px 12px rgba(0,0,0,0.10); font-size: 9px;"><span>TALENT</span></div>
+        </div>
+        <div class="orb-meta">Category · 60px · 60%</div>
+      </div>
+      <!-- Companies -->
+      <div class="orb-item">
+        <div class="orb-wrap" style="width: 76px; height: 76px;">
+          <svg class="orb-ring" viewBox="0 0 76 76" style="width: 76px; height: 76px; position: absolute;">
+            <circle cx="38" cy="38" r="36" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2"/>
+            <circle class="health-arc" cx="38" cy="38" r="36" fill="none" stroke="#7E57C2" stroke-width="2" stroke-dasharray="102 226" stroke-linecap="round" transform="rotate(-90 38 38)"/>
+          </svg>
+          <div class="orb-body" style="width: 60px; height: 60px; background: linear-gradient(135deg, #7E57C2, #5C6BC0); box-shadow: 0 0 22px rgba(126,87,194,0.25), 0 4px 12px rgba(0,0,0,0.10); font-size: 9px;"><span>CO</span></div>
+        </div>
+        <div class="orb-meta">Category · 60px · 45%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAP -->
+<section id="map">
+  <div class="container">
+    <div class="sec-label">Product</div>
+    <div class="sec-title">Orbital Map</div>
+    <div class="sec-desc">Priority pods orbit closer to the hub. Dashed orbit rings create gravitational layers. Categories cluster near their parent pod.</div>
+
+    <div class="map-frame">
+      <svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="fg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="fh" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <linearGradient id="g-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E53935"/><stop offset="100%" stop-color="#FF6B4A"/></linearGradient>
+          <linearGradient id="g-pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B8A"/><stop offset="100%" stop-color="#FF8FA5"/></linearGradient>
+          <linearGradient id="g-green" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#25B439"/><stop offset="100%" stop-color="#00BFA5"/></linearGradient>
+          <linearGradient id="g-orange" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A623"/><stop offset="100%" stop-color="#FFD54F"/></linearGradient>
+          <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7E57C2"/><stop offset="100%" stop-color="#5C6BC0"/></linearGradient>
+          <linearGradient id="g-hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1C1C1E"/><stop offset="100%" stop-color="#2C2C30"/></linearGradient>
+        </defs>
+        <!-- Orbit rings -->
+        <circle cx="350" cy="230" r="100" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" stroke-dasharray="4 6"/>
+        <circle cx="350" cy="230" r="160" fill="none" stroke="rgba(0,0,0,0.03)" stroke-width="1" stroke-dasharray="4 6"/>
+        <circle cx="350" cy="230" r="220" fill="none" stroke="rgba(0,0,0,0.025)" stroke-width="1" stroke-dasharray="4 6"/>
+        <!-- Connection lines -->
+        <g stroke="rgba(0,0,0,0.06)" stroke-width="1.5" fill="none">
+          <line x1="350" y1="230" x2="220" y2="120"/><line x1="350" y1="230" x2="500" y2="110"/>
+          <line x1="350" y1="230" x2="555" y2="240"/><line x1="350" y1="230" x2="470" y2="380"/>
+          <line x1="350" y1="230" x2="180" y2="350"/>
+          <line x1="220" y1="120" x2="180" y2="350" stroke="rgba(0,0,0,0.03)"/>
+          <line x1="500" y1="110" x2="555" y2="240" stroke="rgba(0,0,0,0.03)"/>
+        </g>
+        <!-- Orbs -->
+        <g filter="url(#fg)">
+          <circle cx="220" cy="120" r="42" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="220" cy="120" r="42" fill="none" stroke="#E53935" stroke-width="2.5" stroke-dasharray="220 264" stroke-linecap="round" transform="rotate(-90 220 120)"/>
+          <circle cx="220" cy="120" r="36" fill="url(#g-red)"/>
+          <text x="220" y="124" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="11" font-weight="600">MAPS</text>
+        </g>
+        <g filter="url(#fg)">
+          <circle cx="500" cy="110" r="36" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="500" cy="110" r="36" fill="none" stroke="#FF6B8A" stroke-width="2.5" stroke-dasharray="170 226" stroke-linecap="round" transform="rotate(-90 500 110)"/>
+          <circle cx="500" cy="110" r="30" fill="url(#g-pink)"/>
+          <text x="500" y="114" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="600">LPS</text>
+        </g>
+        <g filter="url(#fg)">
+          <circle cx="555" cy="240" r="34" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="555" cy="240" r="34" fill="none" stroke="#25B439" stroke-width="2.5" stroke-dasharray="128 214" stroke-linecap="round" transform="rotate(-90 555 240)"/>
+          <circle cx="555" cy="240" r="28" fill="url(#g-green)"/>
+          <text x="555" y="244" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="600">TALENT</text>
+        </g>
+        <g filter="url(#fg)">
+          <circle cx="470" cy="380" r="48" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
+          <circle cx="470" cy="380" r="48" fill="none" stroke="#F5A623" stroke-width="2.5" stroke-dasharray="280 302" stroke-linecap="round" transform="rotate(-90 470 380)"/>
+          <circle cx="470" cy="380" r="42" fill="url(#g-orange)"/>
+          <text x="470" y="376" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">SERVICE</text>
+          <text x="470" y="388" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">PROVIDERS</text>
+        </g>
+        <!-- Clustered categories -->
+        <g opacity="0.85">
+          <circle cx="530" cy="415" r="11" fill="#E8A030"/><text x="530" y="418" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans,sans-serif" font-size="5.5" font-weight="600">DESIGN</text>
+          <circle cx="553" cy="408" r="11" fill="#D4942A"/><text x="553" y="411" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans,sans-serif" font-size="5.5" font-weight="600">DEV</text>
+          <circle cx="541" cy="432" r="11" fill="#C48820"/><text x="541" y="435" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-family="Plus Jakarta Sans,sans-serif" font-size="5.5" font-weight="600">PR</text>
+          <circle cx="518" cy="436" r="9" fill="#DAA040" opacity="0.7"/><circle cx="560" cy="425" r="9" fill="#DAA040" opacity="0.7"/>
+          <circle cx="575" cy="415" r="7" fill="#DAA040" opacity="0.5"/>
+        </g>
+        <g filter="url(#fg)" opacity="0.80">
+          <circle cx="180" cy="350" r="28" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="2"/>
+          <circle cx="180" cy="350" r="28" fill="none" stroke="#7E57C2" stroke-width="2" stroke-dasharray="80 176" stroke-linecap="round" transform="rotate(-90 180 350)"/>
+          <circle cx="180" cy="350" r="23" fill="url(#g-purple)"/>
+          <text x="180" y="354" text-anchor="middle" fill="rgba(255,255,255,0.88)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">CO</text>
+        </g>
+        <!-- Hub -->
+        <g filter="url(#fh)">
+          <circle cx="350" cy="230" r="56" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="3"/>
+          <circle cx="350" cy="230" r="56" fill="none" stroke="#1C1C1E" stroke-width="3" stroke-dasharray="315 352" stroke-linecap="round" transform="rotate(-90 350 230)"/>
+          <circle cx="350" cy="230" r="48" fill="url(#g-hub)"/>
+          <text x="350" y="235" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-family="Plus Jakarta Sans,sans-serif" font-size="15" font-weight="600">MRM</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="container">
+    <div class="sec-label">Product</div>
+    <div class="sec-title">Dashboard</div>
+    <div class="sec-desc">Green header band owns the equity score. Mini orb avatars connect the dashboard to the map's visual language. Every card glows its pod color on hover.</div>
+
+    <div class="dash-frame">
+      <div class="dash-header">
+        <div class="eq-ring"><div class="eq-score">78</div></div>
+        <div style="flex-shrink: 0;"><div style="color: white; font-size: 11px; font-weight: 500;">Network Health</div><div class="eq-label">Steady</div></div>
+        <div class="stat-bar">
+          <div><div class="stat-val">247</div><div class="stat-lbl">contacts</div></div>
+          <div><div class="stat-val">18</div><div class="stat-lbl">reached this week</div></div>
+          <div><div class="stat-val" style="color: hsla(20,80%,75%,1);">7</div><div class="stat-lbl">overdue</div></div>
+          <div><div class="stat-val">12</div><div class="stat-lbl">gone quiet</div></div>
+        </div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-heading">pods</div>
+        <div class="pod-row">
+          <div class="pod-card" onmouseover="this.style.boxShadow='0 4px 20px rgba(229,57,53,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #E53935, #FF6B4A); box-shadow: 0 2px 8px rgba(229,57,53,0.25);"><span>M</span></div>
+            <div><div class="pod-name">Maps</div><div class="pod-meta">42 contacts · 3 overdue</div></div>
+          </div>
+          <div class="pod-card" onmouseover="this.style.boxShadow='0 4px 20px rgba(255,107,138,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #FF6B8A, #FF8FA5); box-shadow: 0 2px 8px rgba(255,107,138,0.25);"><span>LP</span></div>
+            <div><div class="pod-name">LPs</div><div class="pod-meta">28 contacts · 1 overdue</div></div>
+          </div>
+          <div class="pod-card" onmouseover="this.style.boxShadow='0 4px 20px rgba(245,166,35,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #F5A623, #FFD54F); box-shadow: 0 2px 8px rgba(245,166,35,0.25);"><span>SP</span></div>
+            <div><div class="pod-name">Service Providers</div><div class="pod-meta">87 contacts</div></div>
+          </div>
+          <div class="pod-card" onmouseover="this.style.boxShadow='0 4px 20px rgba(37,180,57,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div class="mini-orb" style="background: linear-gradient(135deg, #25B439, #00BFA5); box-shadow: 0 2px 8px rgba(37,180,57,0.25);"><span>T</span></div>
+            <div><div class="pod-name">Talent</div><div class="pod-meta">34 contacts · 2 overdue</div></div>
+          </div>
+        </div>
+        <div class="dash-heading">today's focus</div>
+        <div class="focus-card">
+          <div class="f-avatar" style="background: linear-gradient(135deg, #1E88E5, #42A5F5);">SC</div>
+          <div><div class="f-name">Sarah Chen</div><div class="f-reason">Last email 18d ago · Maps / Silicon Valley</div></div>
+          <div class="f-tag">reach out</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-demo">
+      <div class="pill-nav"><button class="pill-btn active">Pulse</button><button class="pill-btn inactive">Map</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE + COPY -->
+<section id="voice">
+  <div class="container">
+    <div class="sec-label">Language</div>
+    <div class="sec-title">Voice</div>
+    <div class="sec-desc">Warm, lowercase-leaning, direct. The language a stylish CEO uses texting her team. Not corporate. Not techy. Human.</div>
+
+    <div class="grid-3" style="margin-bottom: 24px;">
+      <div class="voice-card"><div class="voice-before">Dormant</div><div class="voice-after">Fading</div><div class="voice-context">Relationship word, not a database word</div></div>
+      <div class="voice-card"><div class="voice-before">Healthy</div><div class="voice-after">Steady</div><div class="voice-context">Calm confidence, not a clinical diagnosis</div></div>
+      <div class="voice-card"><div class="voice-before">Remove contact</div><div class="voice-after">Let go</div><div class="voice-context">A human decision, not a database operation</div></div>
+    </div>
+    <div class="grid-3">
+      <div class="voice-card"><div class="voice-before">No data found</div><div class="voice-after">No one here yet</div><div class="voice-context">Warm emptiness, not error language</div></div>
+      <div class="voice-card"><div class="voice-before">Add note</div><div class="voice-after">What happened?</div><div class="voice-context">Conversation starter, not a form label</div></div>
+      <div class="voice-card"><div class="voice-before">Search contacts</div><div class="voice-after">Find someone...</div><div class="voice-context">Looking for a person, not querying a database</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- EMPTY STATES -->
+<section>
+  <div class="container">
+    <div class="sec-label">Experience</div>
+    <div class="sec-title">Empty States</div>
+    <div class="sec-desc">Every zero-data screen uses the orb visual language. A colored orb illustration, ghost hint cards showing the shape of future data, and one clear action.</div>
+
+    <div class="grid-2">
+      <div class="empty-demo">
+        <div class="empty-orb-ill" style="background: linear-gradient(135deg, #25B439, #00BFA5);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="empty-title">No pulse yet</div>
+        <div class="empty-text">Start logging interactions and your network health will come alive here.</div>
+        <button class="empty-btn">Log interaction</button>
+      </div>
+      <div class="empty-demo">
+        <div style="width: 120px; height: 120px; position: relative; margin-bottom: 20px;">
+          <div style="position: absolute; inset: 0; border-radius: 50%; border: 1px dashed rgba(0,0,0,0.06);"></div>
+          <div style="position: absolute; inset: 20px; border-radius: 50%; border: 1px dashed rgba(0,0,0,0.08);"></div>
+          <div style="position: absolute; inset: 40px; border-radius: 50%; border: 1px dashed rgba(0,0,0,0.10);"></div>
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.14));"></div>
+          <div style="position: absolute; top: 12px; right: 18px; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px dashed rgba(0,0,0,0.08);"></div>
+          <div style="position: absolute; bottom: 16px; left: 10px; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px dashed rgba(0,0,0,0.08);"></div>
+        </div>
+        <div class="empty-title">Your network starts here</div>
+        <div class="empty-text">Create your first pod to start mapping the people who matter.</div>
+        <button class="empty-btn">Create first pod</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTION -->
+<section id="motion">
+  <div class="container">
+    <div class="sec-label">Behavior</div>
+    <div class="sec-title">Motion</div>
+    <div class="sec-desc">Every animation has a purpose. Entrance reveals structure. Hover confirms interactivity. Press provides tactile feedback. Nothing decorative.</div>
+
+    <table class="motion-table">
+      <thead><tr><th>Animation</th><th>Curve</th><th>Duration</th><th>Feel</th></tr></thead>
+      <tbody>
+        <tr><td>Orb entrance</td><td><code>cubic-bezier(0.22, 1, 0.36, 1)</code></td><td>700ms</td><td>Orbs fly from hub to orbital positions</td></tr>
+        <tr><td>Orb hover</td><td><code>cubic-bezier(0.34, 1.2, 0.64, 1)</code></td><td>200ms</td><td>Lift + glow intensifies</td></tr>
+        <tr><td>Orb press</td><td><code>ease-in</code></td><td>80ms</td><td>iOS squish — scale to 0.94</td></tr>
+        <tr><td>Health ring fill</td><td><code>cubic-bezier(0.4, 0, 0.2, 1)</code></td><td>1200ms</td><td>Smooth sweep on entrance</td></tr>
+        <tr><td>Panel slide</td><td><code>cubic-bezier(0.4, 0, 0.2, 1)</code></td><td>350ms</td><td>40px travel, materializes in place</td></tr>
+        <tr><td>View switch</td><td><code>ease</code></td><td>300ms</td><td>Crossfade dissolve — calm, editorial</td></tr>
+        <tr><td>Card hover</td><td><code>ease</code></td><td>150ms</td><td>Scale 1.02 + pod-colored shadow</td></tr>
+        <tr><td>Stagger</td><td>—</td><td>100ms/orb</td><td>Sequential entrance, hub first</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- WRAPPED -->
+<section id="wrapped">
+  <div class="container">
+    <div class="sec-label">Vision</div>
+    <div class="sec-title">Wrapped</div>
+    <div class="sec-desc">Monthly and quarterly celebrations. Full-bleed color, oversized serif type. Spotify Wrapped energy for your network.</div>
+
+    <div class="grid-3">
+      <div class="wrapped-slide" style="background: linear-gradient(135deg, #E53935, #FF6B4A);">
+        <div class="wrapped-big">247</div>
+        <div class="wrapped-label">people in your orbit</div>
+        <div class="wrapped-sub">March 2026</div>
+      </div>
+      <div class="wrapped-slide" style="background: linear-gradient(135deg, #25B439, #00BFA5);">
+        <div class="wrapped-big">89</div>
+        <div class="wrapped-label">conversations this month</div>
+        <div class="wrapped-sub">up 23% from February</div>
+      </div>
+      <div class="wrapped-slide" style="background: linear-gradient(135deg, #7E57C2, #5C6BC0);">
+        <div class="wrapped-big">12</div>
+        <div class="wrapped-label">intros made</div>
+        <div class="wrapped-sub">your network is growing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="container">
+    <div class="brand-mark">Kinship Brain</div>
+    <p>Design system v1.0 · March 2026 · Designed by Gabriel Murray</p>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+</script>
+</body>
+</html>
