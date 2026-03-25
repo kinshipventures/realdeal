@@ -117,6 +117,7 @@
 *:focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.80), 0 0 0 6px var(--color-brand);
 }
 
 /* ── App background ─────────────────────────────────────────────────────────── */
