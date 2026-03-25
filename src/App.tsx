@@ -159,7 +159,7 @@ function AppShell() {
             aria-current={!isMap ? 'page' : undefined}
             onClick={() => navigate('/')}
             style={{
-              padding: '7px 20px',
+              padding: '12px 20px',
               borderRadius: 100,
               border: 'none',
               fontSize: 12,
@@ -167,7 +167,7 @@ function AppShell() {
               letterSpacing: '0.01em',
               cursor: 'pointer',
               fontFamily: 'inherit',
-              transition: 'all 0.2s',
+              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
               background: !isMap ? 'var(--color-brand)' : 'transparent',
               color: !isMap ? '#ffffff' : 'var(--text-muted)',
               boxShadow: !isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
@@ -182,7 +182,7 @@ function AppShell() {
             style={{
               background: 'none',
               border: 'none',
-              padding: '7px 12px',
+              padding: '12px 12px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -201,7 +201,7 @@ function AppShell() {
             aria-current={isMap ? 'page' : undefined}
             onClick={() => navigate('/map')}
             style={{
-              padding: '7px 20px',
+              padding: '12px 20px',
               borderRadius: 100,
               border: 'none',
               fontSize: 12,
@@ -209,7 +209,7 @@ function AppShell() {
               letterSpacing: '0.01em',
               cursor: 'pointer',
               fontFamily: 'inherit',
-              transition: 'all 0.2s',
+              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
               background: isMap ? 'var(--color-brand)' : 'transparent',
               color: isMap ? '#ffffff' : 'var(--text-muted)',
               boxShadow: isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
