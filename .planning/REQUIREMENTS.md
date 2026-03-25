@@ -22,8 +22,8 @@
 
 ### Campaigns
 
-- [ ] **CAMP-01**: User can create a campaign (name, type, target contacts) tracked in Airtable
-- [ ] **CAMP-02**: Dashboard shows active campaigns with progress (contacted / total)
+- [x] **CAMP-01**: User can create a campaign (name, type, target contacts) tracked in Airtable
+- [x] **CAMP-02**: Dashboard shows active campaigns with progress (contacted / total)
 - [ ] **CAMP-03**: Campaign detail view shows contact list with reach-out status per contact
 
 ## Future Requirements
@@ -65,8 +65,8 @@
 | BDAY-02 | Phase 4 | Complete |
 | WRAP-01 | Phase 5 | Complete |
 | WRAP-02 | Phase 5 | Complete |
-| CAMP-01 | Phase 6 | Pending |
-| CAMP-02 | Phase 6 | Pending |
+| CAMP-01 | Phase 6 | Complete |
+| CAMP-02 | Phase 6 | Complete |
 | CAMP-03 | Phase 6 | Pending |
 
 **Coverage:**

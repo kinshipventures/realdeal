@@ -65,9 +65,9 @@ Plans:
   1. User can create a campaign with a name, type, and target contacts — stored in Airtable
   2. Dashboard shows all active campaigns with a contacted/total progress indicator
   3. Campaign detail view lists every target contact with their individual reach-out status
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 06-01-PLAN.md — Campaign types, Airtable data layer, and dashboard campaigns section
+- [x] 06-01-PLAN.md — Campaign types, Airtable data layer, and dashboard campaigns section
 - [ ] 06-02-PLAN.md — Campaign detail panel, creation form, and contact integration
 
 ## Progress
@@ -80,4 +80,4 @@ Plans:
 | 3. Close-Out | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Search + Birthdays | v1.1 | 2/2 | Complete   | 2026-03-24 |
 | 5. Wrapped | v1.1 | 0/1 | Planned | - |
-| 6. Campaigns | v1.1 | 0/2 | Planned | - |
+| 6. Campaigns | v1.1 | 1/2 | In Progress|  |
