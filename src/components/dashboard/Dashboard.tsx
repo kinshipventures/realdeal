@@ -349,10 +349,17 @@ export function Dashboard() {
 
         {/* Pod health cards */}
         {!dataReady ? null : podStats.length > 0 && (
-          <div style={{ display: 'flex', gap: 12, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
-            {podStats.map(({ pod, contactCount, overdueCount, score, sparkline }) => (
-              <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} sparkline={sparkline} />
-            ))}
+          <div style={{ position: 'relative', marginBottom: 24 }}>
+            <div style={{
+              position: 'absolute', top: 0, right: 0, bottom: 0, width: 48,
+              background: 'linear-gradient(to right, transparent, var(--color-bg))',
+              pointerEvents: 'none', zIndex: 1,
+            }} />
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 6, paddingBottom: 6, scrollbarWidth: 'none' }}>
+              {podStats.map(({ pod, contactCount, overdueCount, score, sparkline }) => (
+                <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={!interactionsLoading} sparkline={sparkline} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -721,17 +728,16 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
       style={{
         flex: 1,
         padding: '16px 18px',
-        background: 'var(--surface-panel)',
-        border: '1px solid var(--divider)',
-        borderTop: '2px solid var(--color-brand)',
+        background: 'rgba(37,180,57,0.04)',
         borderRadius: 14,
         cursor: 'pointer',
         textAlign: 'left',
         fontFamily: 'inherit',
         transition: 'transform 0.15s, box-shadow 0.15s',
+        boxShadow: '0 1px 3px var(--divider)',
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px var(--divider)' }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px var(--divider)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <Avatar name={item.contact.name} size={28} variant="subtle" />
