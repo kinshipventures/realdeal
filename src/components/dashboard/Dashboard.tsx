@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact } from '../../lib/airtable'
+import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts } from '../../lib/airtable'
 import { daysOverdue, hexToRgba } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
@@ -13,7 +13,7 @@ import {
 } from '../../lib/equity'
 import { getUpcomingBirthdays, formatDaysUntil } from '../../lib/birthdays'
 import type { BirthdayItem } from '../../lib/birthdays'
-import type { Contact, Pod, Interaction, Cadence, FocusItem } from '../../lib/types'
+import type { Contact, Pod, Interaction, Cadence, FocusItem, Campaign, CampaignContact } from '../../lib/types'
 import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
@@ -64,6 +64,10 @@ export function Dashboard() {
   const [snoozedIds, setSnoozedIds] = useState(() => getSnoozedIds())
   const [dormantExpanded, setDormantExpanded] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
+  const [campaignsLoading, setCampaignsLoading] = useState(true)
+  const [showPastCampaigns, setShowPastCampaigns] = useState(false)
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -77,6 +81,13 @@ export function Dashboard() {
     getAllInteractions()
       .then(d => setAllInteractions(d))
       .finally(() => setInteractionsLoading(false))
+    getCampaigns()
+      .then(d => {
+        setCampaigns(d)
+        return Promise.all(d.map(c => getCampaignContacts(c.id)))
+      })
+      .then(results => setCampaignContacts(results.flat()))
+      .finally(() => setCampaignsLoading(false))
   }, [])
 
   // Pre-index interactions by contact — O(m) single pass
@@ -225,6 +236,10 @@ export function Dashboard() {
     () => getUpcomingBirthdays(contacts, pods),
     [contacts, pods]
   )
+
+  // Campaign segments
+  const activeCampaigns = useMemo(() => campaigns.filter(c => c.status === 'active'), [campaigns])
+  const pastCampaigns = useMemo(() => campaigns.filter(c => c.status === 'completed'), [campaigns])
 
   // Dormant contacts (90+ days, not snoozed)
   const dormantContacts = useMemo(
@@ -397,6 +412,97 @@ export function Dashboard() {
                 <FocusCard key={item.contact.id} item={item} onClick={() => setSelectedContact(item.contact)} />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Campaigns */}
+        {!campaignsLoading && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h2 style={{
+                fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
+                color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0,
+              }}>
+                campaigns
+              </h2>
+              <button
+                type="button"
+                onClick={() => { /* campaign creation — Plan 02 */ }}
+                style={{
+                  width: 24, height: 24, borderRadius: 12,
+                  background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--color-text-secondary)', fontSize: 16, lineHeight: 1,
+                }}
+              >+</button>
+            </div>
+
+            {activeCampaigns.length === 0 ? (
+              <div style={{ ...PANEL }}>
+                <EmptyState
+                  icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>}
+                  heading="No active campaigns"
+                  subtext="Create one to track your next outreach"
+                />
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {activeCampaigns.slice(0, 3).map(campaign => (
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    contacts={campaignContacts.filter(cc => cc.campaign_id === campaign.id)}
+                    onClick={() => { /* campaign detail — Plan 02 */ }}
+                  />
+                ))}
+                {activeCampaigns.length > 3 && (
+                  <button
+                    type="button"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: 13, color: 'var(--color-text-secondary)',
+                      padding: '8px 0', textAlign: 'left', fontFamily: 'inherit',
+                    }}
+                  >
+                    +{activeCampaigns.length - 3} more
+                  </button>
+                )}
+              </div>
+            )}
+
+            {pastCampaigns.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowPastCampaigns(v => !v)}
+                  style={{
+                    width: '100%', padding: '12px 0 4px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                    past campaigns ({pastCampaigns.length})
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: showPastCampaigns ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                    ▾
+                  </span>
+                </button>
+                {showPastCampaigns && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                    {pastCampaigns.map(campaign => (
+                      <CampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        contacts={campaignContacts.filter(cc => cc.campaign_id === campaign.id)}
+                        onClick={() => { /* campaign detail — Plan 02 */ }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -923,5 +1029,68 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
         </div>
       )}
     </div>
+  )
+}
+
+const TYPE_COLORS: Record<string, string> = {
+  event: 'hsla(270, 60%, 50%, 0.10)',
+  investment: 'hsla(150, 60%, 40%, 0.10)',
+  outreach: 'hsla(210, 60%, 50%, 0.10)',
+  other: 'hsla(0, 0%, 50%, 0.10)',
+}
+const TYPE_TEXT: Record<string, string> = {
+  event: 'hsla(270, 60%, 40%, 0.80)',
+  investment: 'hsla(150, 60%, 30%, 0.80)',
+  outreach: 'hsla(210, 60%, 40%, 0.80)',
+  other: 'hsla(0, 0%, 40%, 0.80)',
+}
+
+function CampaignCard({ campaign, contacts, onClick }: {
+  campaign: Campaign
+  contacts: CampaignContact[]
+  onClick: () => void
+}) {
+  const contacted = contacts.filter(c => c.status !== 'pending').length
+  const total = contacts.length
+  const progress = total > 0 ? contacted / total : 0
+
+  return (
+    <button type="button" onClick={onClick} style={{
+      ...PANEL, width: '100%', padding: '14px 20px',
+      display: 'flex', flexDirection: 'column', gap: 8,
+      cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            {campaign.name}
+          </span>
+          <span style={{
+            padding: '2px 8px', borderRadius: 100, fontSize: 11, fontWeight: 500,
+            background: TYPE_COLORS[campaign.type] ?? TYPE_COLORS.other,
+            color: TYPE_TEXT[campaign.type] ?? TYPE_TEXT.other,
+          }}>
+            {campaign.type}
+          </span>
+        </div>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+          {contacted}/{total}
+        </span>
+      </div>
+      {total > 0 && (
+        <div style={{ width: '100%', height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.06)' }}>
+          <div style={{
+            width: `${progress * 100}%`, height: '100%', borderRadius: 2,
+            background: progress === 1 ? 'hsla(150, 60%, 40%, 0.6)' : 'hsla(210, 60%, 50%, 0.4)',
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+      )}
+      {campaign.deadline && (
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+          due {new Date(campaign.deadline + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+      )}
+    </button>
   )
 }
