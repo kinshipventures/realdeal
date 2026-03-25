@@ -12,7 +12,8 @@ function daysUntilBirthday(birthday: string | null): number | null {
   if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-import { updateContact, createContact, deleteContact } from '../../lib/airtable'
+import { updateContact, createContact, deleteContact, getCampaigns, addContactToCampaign } from '../../lib/airtable'
+import type { Campaign } from '../../lib/types'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
@@ -107,11 +108,32 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [saveError, setSaveError] = useState<SaveError>(null)
   const saveGenRef = useRef(0)
   const [interactions, setInteractions] = useState<Interaction[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [showCampaignPicker, setShowCampaignPicker] = useState(false)
+  const [addingToCampaign, setAddingToCampaign] = useState(false)
+  const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!contact) return
     getInteractions(contact.id).then(setInteractions)
   }, [contact?.id])
+
+  useEffect(() => {
+    getCampaigns().then(all => setCampaigns(all.filter(c => c.status === 'active')))
+  }, [])
+
+  async function handleAddToCampaign(campaignId: string) {
+    if (!contact) return
+    setAddingToCampaign(true)
+    try {
+      await addContactToCampaign(campaignId, contact.id)
+      setShowCampaignPicker(false)
+      setAddedCampaignId(campaignId)
+      setTimeout(() => setAddedCampaignId(null), 2000)
+    } finally {
+      setAddingToCampaign(false)
+    }
+  }
 
   const equityScore = contactEquityScore(interactions)
   const equityBreakdown = contactEquityBreakdown(interactions)
@@ -594,6 +616,66 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           <div style={sectionLabel}>notes</div>
           {field('notes', 'Notes', true)}
         </div>
+
+        {/* Add to campaign — existing contacts only, when active campaigns exist */}
+        {!isNew && contact && campaigns.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            {addedCampaignId ? (
+              <div style={{ fontSize: 12, color: 'hsla(150, 60%, 35%, 0.9)', padding: '4px 0' }}>
+                added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowCampaignPicker(v => !v)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 13, color: 'var(--color-text-secondary)',
+                    padding: '6px 0', fontFamily: 'inherit',
+                  }}
+                >
+                  + add to campaign
+                </button>
+                {showCampaignPicker && (
+                  <div style={{
+                    marginTop: 6,
+                    background: 'var(--surface-panel)',
+                    border: '1px solid var(--edge)',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  }}>
+                    {campaigns.map(campaign => (
+                      <button
+                        key={campaign.id}
+                        type="button"
+                        onClick={() => handleAddToCampaign(campaign.id)}
+                        disabled={addingToCampaign}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          width: '100%', padding: '10px 14px',
+                          background: 'none', border: 'none',
+                          borderBottom: '1px solid var(--divider)',
+                          cursor: addingToCampaign ? 'default' : 'pointer',
+                          textAlign: 'left', fontFamily: 'inherit',
+                          opacity: addingToCampaign ? 0.5 : 1,
+                        }}
+                      >
+                        <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
+                          {campaign.name}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                          {campaign.type}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         {/* Interactions — existing contacts only */}
         {!isNew && contact && (
