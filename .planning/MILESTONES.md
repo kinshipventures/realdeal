@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.1 Polish & Features (Shipped: 2026-03-25)
+
+**Phases completed:** 3 phases, 5 plans, 10 tasks
+
+**Key accomplishments:**
+
+- Linear/Spotlight-style command palette for instant contact search by name, company, or role — accessible via Cmd+K or nav icon from any view
+- Birthday utility (getUpcomingBirthdays) + Dashboard "Coming Up" section showing contacts with birthdays in the next 14 days
+- Rotating gradient insight card showing weekly people reached, top pod, and most connected contact with Fraunces display type and pod-colored backgrounds
+- One-liner:
+- Campaign detail panel with status toggle cycle, inline creation form, and add-to-campaign from ContactDetail — full campaign lifecycle UI
+
+---
+
 ## v1.0 Kinship Brain MVP (Shipped: 2026-03-23)
 
 **Phases completed:** 4 phases, 14 plans, 23 tasks

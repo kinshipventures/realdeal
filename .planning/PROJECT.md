@@ -33,11 +33,12 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 - ✓ HANDOFF.md operational documentation — v1.0
 - ✓ Global contact search via Cmd+K command palette — v1.1
 - ✓ Birthday reminders — "Coming Up" dashboard section with 14-day window — v1.1
+- ✓ Wrapped insight card — weekly stats (people reached, top pod, most connected) as cycling gradient dashboard card — v1.1
+- ✓ Campaign tracking — create, track progress, manage per-contact status with Airtable persistence — v1.1
 
 ### Active
 
-- ✓ Wrapped insight card — weekly stats (people reached, top pod, most connected) as cycling gradient dashboard card — v1.1
-- [ ] Campaign tracking — lightweight pipeline view for investments, events, SPVs
+(None — next milestone requirements TBD)
 
 ### Deferred (blocked on external access)
 
@@ -61,15 +62,17 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ## Context
 
-Shipped v1.0 on 2026-03-23. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
+Shipped v1.1 on 2026-03-25. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 
-**What shipped:** Dashboard with equity scoring, visual orb map with orbital animations, enriched contact profiles, responsive layout, dark mode, CSV import UI, operational handoff documentation. 5,925 lines of TypeScript/React/CSS across 67 commits.
+**v1.0 (Mar 23):** Dashboard with equity scoring, visual orb map, enriched contact profiles, responsive layout, dark mode, CSV import UI, operational handoff. 5,925 LOC across 67 commits.
 
-**Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API. No backend server.
+**v1.1 (Mar 25):** Global Cmd+K search, birthday reminders, Wrapped insight card, campaign management. 7,731 LOC across 46 commits (3 days).
+
+**Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server.
 
 **Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin), Gwyneth (deferred)
 
-**After March 31:** No active dev planned. Briell operates independently using HANDOFF.md. CSV import UI replaces terminal scripts.
+**After March 31:** No active dev planned. Briell operates independently using HANDOFF.md. CSV import UI replaces terminal scripts. Airtable MCP server connected for future AI-assisted data management.
 
 ## Constraints
 
@@ -91,16 +94,14 @@ Shipped v1.0 on 2026-03-23. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 | Toast stays separate project | Different repo, different interface, converge later via Airtable | ✓ Good |
 | Browser CSV import over script | Briell needs self-service after engagement ends | ✓ Good (replaces pnpm seed:csv) |
 | Dark mode via prefers-color-scheme | System-level only, no manual toggle. Minimal complexity. | ✓ Good (adaptive CSS tokens shipped) |
+| Campaign junction table pattern | CampaignContacts Airtable table for many-to-many with per-contact status tracking | ✓ Good (enables status toggle without touching Contact records) |
+| Airtable MCP server | Official Airtable MCP for direct AI-to-Airtable data management | ✓ Good (enables conversational data operations) |
+| Demo mode for campaigns | In-memory mutations, no localStorage persistence — reset on refresh | ✓ Good (sufficient for demos, keeps demo mode simple) |
 
-## Current Milestone: v1.1 Polish & Features
+## Current State
 
-**Goal:** Ship the features Moj was most excited about that don't require external access — search, Wrapped slides, birthday reminders, and campaign tracking.
-
-**Target features:**
-- Contact search (global find by name)
-- Spotify Wrapped-style celebration slides
-- Birthday reminders on dashboard
-- Campaign/pipeline tracking view
+**Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features)
+**Next milestone:** TBD — engagement ends Mar 31. If continued, likely integrations (Gmail, calendar) or Phase 2 proposal scope.
 
 ## Evolution
 
@@ -120,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after Phase 5 (Wrapped) completion*
+*Last updated: 2026-03-25 after v1.1 milestone*
