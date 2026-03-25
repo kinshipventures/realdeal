@@ -51,10 +51,11 @@ See PROJECT.md Key Decisions table for full log.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260324-vb3 | Write one-page engagement memo for Moj | 2026-03-25 | 2cb5feb | [260324-vb3-write-the-one-page-engagement-memo-for-m](./quick/260324-vb3-write-the-one-page-engagement-memo-for-m/) |
+| 260325-26a | Fix three dashboard UI issues: focus card border, pod clip, scroll fade | 2026-03-25 | fb68f40 | [260325-26a-fix-three-dashboard-ui-issues-remove-foc](./quick/260325-26a-fix-three-dashboard-ui-issues-remove-foc/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260324-vb3: Write one-page engagement memo for Moj
-Last session: 2026-03-25T05:32:31.496Z
-Stopped at: Completed quick task 260324-vb3 (engagement memo)
+Last activity: 2026-03-25 - Completed quick task 260325-26a: Fix three dashboard UI issues
+Last session: 2026-03-25T06:00:00.000Z
+Stopped at: Completed quick task 260325-26a (dashboard UI fixes)
 Resume file: None
