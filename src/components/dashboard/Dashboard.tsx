@@ -273,7 +273,7 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
+    <main style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
 
       {/* Green header band */}
       <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
@@ -371,12 +371,13 @@ export function Dashboard() {
         {/* Coming Up — birthdays in next 14 days */}
         {upcomingBirthdays.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{
+            <h2 style={{
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
-              color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12
+              color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12,
+              margin: 0, marginBottom: 12,
             }}>
               coming up
-            </div>
+            </h2>
             <div style={{ ...PANEL, overflow: 'hidden' }}>
               {upcomingBirthdays.map(item => (
                 <BirthdayRow key={item.contact.id} item={item} onClick={() => setSelectedContact(item.contact)} />
@@ -388,9 +389,9 @@ export function Dashboard() {
         {/* Today's Focus */}
         {focusItems.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0, marginBottom: 12 }}>
               today's focus
-            </div>
+            </h2>
             <div style={{ display: 'flex', gap: 12 }}>
               {focusItems.map(item => (
                 <FocusCard key={item.contact.id} item={item} onClick={() => setSelectedContact(item.contact)} />
@@ -401,9 +402,9 @@ export function Dashboard() {
 
         {/* Overdue queue */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
             needs attention
-          </span>
+          </h2>
           {overdueContacts.length > 0 && (
             <span style={{
               display: 'inline-flex', alignItems: 'center',
@@ -497,7 +498,7 @@ export function Dashboard() {
           onDeleted={handleContactDeleted}
         />
       )}
-    </div>
+    </main>
   )
 }
 
