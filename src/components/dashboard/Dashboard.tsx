@@ -373,7 +373,7 @@ export function Dashboard() {
           <div style={{ marginBottom: 24 }}>
             <h2 style={{
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
-              color: 'var(--color-text-primary)', letterSpacing: '-0.01em', marginBottom: 12,
+              color: 'var(--color-text-primary)', letterSpacing: '-0.01em',
               margin: 0, marginBottom: 12,
             }}>
               coming up
