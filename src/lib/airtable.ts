@@ -1,4 +1,4 @@
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus } from './types'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS } from './sampleData'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
@@ -11,6 +11,10 @@ export const TABLES = {
   categories: 'tblVAgv23LUXs7Q0p',
   contacts: 'tbll75mRMMVBGiNpj',
   interactions: 'tblbxLX5EM09Y6xim',
+  // Create in Airtable: Name (text), Type (single select: event/investment/outreach/other), Deadline (date), Status (single select: active/completed)
+  campaigns: 'PLACEHOLDER_CAMPAIGNS_TABLE_ID',
+  // Create in Airtable: Campaign (linked to Campaigns), Contact (linked to Contacts), Status (single select: pending/reached/responded/confirmed), Notes (long text)
+  campaignContacts: 'PLACEHOLDER_CAMPAIGN_CONTACTS_TABLE_ID',
 } as const
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────
@@ -58,6 +62,20 @@ interface InteractionFields {
   Contact?: string[]
   Type?: InteractionType
   Date?: string
+  Notes?: string
+}
+
+interface CampaignFields {
+  Name: string
+  Type?: CampaignType
+  Deadline?: string
+  Status?: CampaignStatus
+}
+
+interface CampaignContactFields {
+  Campaign?: string[]    // linked record IDs (Airtable returns array)
+  Contact?: string[]     // linked record IDs
+  Status?: CampaignContactStatus
   Notes?: string
 }
 
@@ -514,5 +532,170 @@ export async function logInteraction(
   }
 
   return interaction
+}
+
+// ── Campaigns ─────────────────────────────────────────────────────────────────
+
+function mapCampaign(r: AirtableRecord<CampaignFields>): Campaign {
+  return {
+    id: r.id,
+    name: r.fields.Name,
+    type: r.fields.Type ?? 'other',
+    deadline: r.fields.Deadline ?? null,
+    status: r.fields.Status ?? 'active',
+    contact_ids: [],  // populated separately from junction
+    created_at: r.createdTime,
+  }
+}
+
+function mapCampaignContact(r: AirtableRecord<CampaignContactFields>): CampaignContact | null {
+  const campaignId = r.fields.Campaign?.[0]
+  const contactId = r.fields.Contact?.[0]
+  if (!campaignId || !contactId) return null
+  return {
+    id: r.id,
+    campaign_id: campaignId,
+    contact_id: contactId,
+    status: r.fields.Status ?? 'pending',
+    notes: r.fields.Notes ?? null,
+    created_at: r.createdTime,
+  }
+}
+
+let _campaignsCache: Campaign[] | null = null
+let _campaignsCacheTime = 0
+let _campaignsFetch: Promise<Campaign[]> | null = null
+let _campaignContactsCache: CampaignContact[] | null = null
+
+export function invalidateCampaignsCache(): void {
+  _campaignsCache = null
+  _campaignContactsCache = null
+}
+
+export async function getCampaigns(): Promise<Campaign[]> {
+  const isExpired = !_campaignsCache || Date.now() - _campaignsCacheTime > CACHE_TTL
+  const isFresh = _campaignsCache && !isExpired
+
+  if (isFresh) return Promise.resolve(_campaignsCache!)
+
+  // Stale-while-revalidate: return stale immediately, refresh in background
+  if (_campaignsCache && isExpired && !_campaignsFetch) {
+    const stale = _campaignsCache
+    _campaignsFetch = fetchAll<CampaignFields>(TABLES.campaigns)
+      .then(async records => {
+        const campaigns = records.map(mapCampaign)
+        const ccRecords = await fetchAll<CampaignContactFields>(TABLES.campaignContacts)
+        const contacts = ccRecords.flatMap(r => mapCampaignContact(r) ?? [])
+        _campaignContactsCache = contacts
+        for (const cc of contacts) {
+          const campaign = campaigns.find(c => c.id === cc.campaign_id)
+          if (campaign && !campaign.contact_ids.includes(cc.contact_id)) {
+            campaign.contact_ids.push(cc.contact_id)
+          }
+        }
+        _campaignsCache = campaigns
+        _campaignsCacheTime = Date.now()
+        _campaignsFetch = null
+        return _campaignsCache
+      })
+      .catch(err => { _campaignsFetch = null; throw err })
+    return Promise.resolve(stale)
+  }
+
+  // Cold cache — deduplicate concurrent fetches via in-flight Promise
+  if (!_campaignsFetch) {
+    _campaignsFetch = fetchAll<CampaignFields>(TABLES.campaigns)
+      .then(async records => {
+        const campaigns = records.map(mapCampaign)
+        const ccRecords = await fetchAll<CampaignContactFields>(TABLES.campaignContacts)
+        const contacts = ccRecords.flatMap(r => mapCampaignContact(r) ?? [])
+        _campaignContactsCache = contacts
+        for (const cc of contacts) {
+          const campaign = campaigns.find(c => c.id === cc.campaign_id)
+          if (campaign && !campaign.contact_ids.includes(cc.contact_id)) {
+            campaign.contact_ids.push(cc.contact_id)
+          }
+        }
+        _campaignsCache = campaigns
+        _campaignsCacheTime = Date.now()
+        _campaignsFetch = null
+        return _campaignsCache
+      })
+      .catch(err => { _campaignsFetch = null; throw err })
+  }
+  return _campaignsFetch
+}
+
+export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
+  if (_campaignContactsCache) {
+    return _campaignContactsCache.filter(cc => cc.campaign_id === campaignId)
+  }
+  // Ensure full cache is populated via getCampaigns which sets _campaignContactsCache
+  await getCampaigns()
+  const cache: CampaignContact[] = _campaignContactsCache ?? []
+  return cache.filter(cc => cc.campaign_id === campaignId)
+}
+
+export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string }): Promise<Campaign> {
+  const r = await request<AirtableRecord<CampaignFields>>(TABLES.campaigns, {
+    method: 'POST',
+    body: JSON.stringify({
+      fields: {
+        Name: data.name,
+        Type: data.type,
+        Status: 'active' as CampaignStatus,
+        Deadline: data.deadline ?? undefined,
+      },
+    }),
+  })
+  _campaignsCache = null
+  return mapCampaign(r)
+}
+
+export async function addContactToCampaign(campaignId: string, contactId: string): Promise<CampaignContact> {
+  const r = await request<AirtableRecord<CampaignContactFields>>(TABLES.campaignContacts, {
+    method: 'POST',
+    body: JSON.stringify({
+      fields: {
+        Campaign: [campaignId],
+        Contact: [contactId],
+        Status: 'pending' as CampaignContactStatus,
+      },
+    }),
+  })
+  const mapped = mapCampaignContact(r)
+  if (!mapped) throw new Error('Created campaign contact missing links')
+  _campaignsCache = null
+  _campaignContactsCache = null
+  return mapped
+}
+
+export async function updateCampaignContactStatus(id: string, status: CampaignContactStatus): Promise<CampaignContact> {
+  const r = await request<AirtableRecord<CampaignContactFields>>(`${TABLES.campaignContacts}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Status: status } }),
+  })
+  const mapped = mapCampaignContact(r)
+  if (!mapped) throw new Error('Updated campaign contact missing links')
+  // Optimistic update in cache
+  if (_campaignContactsCache) {
+    const idx = _campaignContactsCache.findIndex(cc => cc.id === id)
+    if (idx !== -1) _campaignContactsCache[idx] = mapped
+  }
+  return mapped
+}
+
+export async function completeCampaign(id: string): Promise<Campaign> {
+  const r = await request<AirtableRecord<CampaignFields>>(`${TABLES.campaigns}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Status: 'completed' as CampaignStatus } }),
+  })
+  const mapped = mapCampaign(r)
+  // Optimistic update in cache
+  if (_campaignsCache) {
+    const idx = _campaignsCache.findIndex(c => c.id === id)
+    if (idx !== -1) _campaignsCache[idx] = { ..._campaignsCache[idx], status: 'completed' }
+  }
+  return mapped
 }
 

@@ -65,3 +65,27 @@ export interface FocusItem {
   reason: FocusReason
   score: number
 }
+
+// Campaign types
+export type CampaignType = 'event' | 'investment' | 'outreach' | 'other'
+export type CampaignContactStatus = 'pending' | 'reached' | 'responded' | 'confirmed'
+export type CampaignStatus = 'active' | 'completed'
+
+export interface Campaign {
+  id: string
+  name: string
+  type: CampaignType
+  deadline: ISODate | null
+  status: CampaignStatus
+  contact_ids: string[]      // linked Contact record IDs from junction
+  created_at: string
+}
+
+export interface CampaignContact {
+  id: string                 // junction record ID
+  campaign_id: string        // linked Campaign record ID
+  contact_id: string         // linked Contact record ID
+  status: CampaignContactStatus
+  notes: string | null
+  created_at: string
+}
