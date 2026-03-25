@@ -21,13 +21,16 @@ Kinship Brain is Moj's relationship intelligence app — not a CRM. It's a visua
 - Social equity scoring per contact and per pod (0–100 scale, cadence-aware)
 - CSV import: Briell can upload a spreadsheet of contacts from the browser — no command line access needed
 - Import dedup: contacts with the same name or email are automatically skipped on re-import
+- Global search: press Cmd+K (or click the search icon) to find any contact by name from any view
+- Birthday reminders: "Coming Up" section on the dashboard shows contacts with birthdays in the next 14 days
+- Wrapped insight card: rotating card on the dashboard showing weekly stats — people reached, top pod, most connected contact
+- Campaigns: create outreach campaigns (events, investments, etc.), track progress per contact, manage from dashboard or from a contact's profile
 
 **What's NOT built**
 
 - Gmail integration — requires Moj to provide credentials and approve OAuth setup; build-ready on our end but blocked on access
 - Telegram bot integration — the Toast assistant is a separate project; the Airtable bridge to connect them is future work
 - Team accounts with per-user views — everyone sees the same data for now
-- Search — finding a specific contact requires browsing through pods and categories
 - Export — no way to get data back out as a CSV from the app today
 
 **Where it lives**
@@ -46,10 +49,13 @@ The Pulse view is the home screen. It shows:
 
 - **Overall health score** — a 0–100 aggregate of all relationship equity across all pods
 - **Pod health cards** — each pod's score with a sparkline showing recent activity
-- **Today's Focus** — contacts the app thinks need attention soon (overdue, upcoming birthdays, etc.)
-- **Overdue contacts** — anyone past their pod's cadence who hasn't been contacted
+- **Wrapped insight card** — a rotating card showing weekly stats (people reached, top pod, most connected). Tap to cycle through the three insights.
+- **Coming Up** — birthdays in the next 14 days. Click a name to open their profile.
+- **Today's Focus** — contacts the app thinks need attention soon
+- **Campaigns** — active outreach campaigns with progress bars. Click "+" to create a new one, click a campaign to see details and manage per-contact status.
+- **Needs Attention** — overdue contacts past their pod's cadence
 
-Scores update automatically as interactions are logged. Nothing to do here except read it.
+Scores update automatically as interactions are logged.
 
 ### Map
 

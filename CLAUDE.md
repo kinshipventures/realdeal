@@ -25,10 +25,10 @@ VITE_AIRTABLE_BASE_ID=app...
 ## Architecture
 
 React app with two views behind a floating pill navigator:
-- `/` → `Dashboard` — equity ring, pod health cards, wrapped insight card, birthdays, today's focus, overdue queue, dormant cleanup
+- `/` → `Dashboard` — equity ring, pod health cards, wrapped insight card, birthdays, today's focus, campaigns, overdue queue, dormant cleanup
 - `/map` → `OrbMap` — React Flow node graph for visual network exploration
 
-Global overlays: `SearchPalette` (Cmd+K from any view), `ContactDetail` (slide-out panel), `ImportPanel` (/import route).
+Global overlays: `SearchPalette` (Cmd+K from any view), `ContactDetail` (slide-out panel), `CampaignDetail` (slide-out panel), `ImportPanel` (/import route).
 
 No backend — Airtable is the data layer, accessed directly from the browser via REST.
 
@@ -40,6 +40,12 @@ No backend — Airtable is the data layer, accessed directly from the browser vi
 - Airtable linked fields return arrays of record IDs — filtering happens client-side (e.g. `getCategories(listId)` fetches all then filters)
 - Overdue = no `last_contacted_at` OR last contact > cadence days (defaults to 30)
 - `logInteraction()` wraps `createInteraction()` and auto-updates `last_contacted_at` for non-note types
+- Campaign functions: `getCampaigns()`, `getCampaignContacts()`, `createCampaign()`, `addContactToCampaign()`, `updateCampaignContactStatus()`, `completeCampaign()` — all with demo mode support
+- `_campaignsCache` / `_campaignContactsCache` follow the same stale-while-revalidate pattern as contacts
+
+### Birthdays (`src/lib/birthdays.ts`)
+
+`getUpcomingBirthdays(contacts, pods)` returns contacts with birthdays in the next N days (default 14). Parses month/day from birthday field, rolls year forward if already passed. `formatDaysUntil()` returns "Today" or "Nd".
 
 ### Social equity scoring (`src/lib/equity.ts`)
 
@@ -98,6 +104,8 @@ Module-level stack for layered Escape key handling (same pattern as Radix UI). P
 | `contacts/ContactCard.tsx` | Row inside ContactPanel |
 | `contacts/InteractionSection.tsx` | Interaction history and logging |
 | `search/SearchPalette.tsx` | Cmd+K command palette — global contact search |
+| `campaigns/CampaignDetail.tsx` | Slide-out panel with contact status tracking, search-add, mark complete |
+| `campaigns/CampaignCreate.tsx` | Inline campaign creation form (name, type, deadline) |
 | `empty/EmptyState.tsx` | Shared empty state with orb icon, heading, optional CTA |
 | `import/ImportPanel.tsx` | Browser-based CSV import UI |
 | `ui.tsx` | Shared primitives: `Spinner`, `Avatar` |
@@ -112,6 +120,10 @@ Key tokens:
 - Text primary: `rgba(0,0,0,0.82)`, secondary: `rgba(0,0,0,0.45)`, tertiary: `rgba(0,0,0,0.28)`
 - Body font: DM Sans, weights 300/400/500/600
 - Display serif: Fraunces (`var(--font-serif)`), weights 400/700/800/900 — used for section headings, pod card names, Wrapped card stats
+
+### Demo mode (`src/lib/sampleData.ts`)
+
+Toggle via "demo on/off" button in nav. When active, all airtable.ts functions return static sample data instead of hitting the API. Includes 6 pods, 14 categories, 21 contacts, 41 interactions, 3 campaigns, and 12 campaign-contact records. Write operations (create campaign, add contact, toggle status) mutate the exported arrays in-place — reset on page refresh.
 
 ### Stale files
 
