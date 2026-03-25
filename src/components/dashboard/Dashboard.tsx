@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts } from '../../lib/airtable'
+import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache } from '../../lib/airtable'
 import { daysOverdue, hexToRgba } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
@@ -16,6 +16,8 @@ import type { BirthdayItem } from '../../lib/birthdays'
 import type { Contact, Pod, Interaction, Cadence, FocusItem, Campaign, CampaignContact } from '../../lib/types'
 import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
+import { CampaignDetail } from '../campaigns/CampaignDetail'
+import { CampaignCreate } from '../campaigns/CampaignCreate'
 import { EmptyState } from '../empty/EmptyState'
 import { WrappedCard } from './WrappedCard'
 import type { WrappedInsight } from './WrappedCard'
@@ -68,6 +70,8 @@ export function Dashboard() {
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
   const [showPastCampaigns, setShowPastCampaigns] = useState(false)
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [showCampaignCreate, setShowCampaignCreate] = useState(false)
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -277,6 +281,14 @@ export function Dashboard() {
     setConfirmDeleteId(null)
   }
 
+  async function refreshCampaigns() {
+    invalidateCampaignsCache()
+    const updated = await getCampaigns()
+    setCampaigns(updated)
+    const allCc = await Promise.all(updated.map(c => getCampaignContacts(c.id)))
+    setCampaignContacts(allCc.flat())
+  }
+
   const dataReady = !contactsLoading && !podsLoading
 
   if (contactsLoading && podsLoading) {
@@ -427,7 +439,7 @@ export function Dashboard() {
               </h2>
               <button
                 type="button"
-                onClick={() => { /* campaign creation — Plan 02 */ }}
+                onClick={() => setShowCampaignCreate(true)}
                 style={{
                   width: 24, height: 24, borderRadius: 12,
                   background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer',
@@ -437,7 +449,18 @@ export function Dashboard() {
               >+</button>
             </div>
 
-            {activeCampaigns.length === 0 ? (
+            {showCampaignCreate && (
+              <CampaignCreate
+                onCreated={campaign => {
+                  setCampaigns(prev => [campaign, ...prev])
+                  setShowCampaignCreate(false)
+                  refreshCampaigns()
+                }}
+                onCancel={() => setShowCampaignCreate(false)}
+              />
+            )}
+
+            {activeCampaigns.length === 0 && !showCampaignCreate ? (
               <div style={{ ...PANEL }}>
                 <EmptyState
                   icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>}
@@ -452,7 +475,7 @@ export function Dashboard() {
                     key={campaign.id}
                     campaign={campaign}
                     contacts={campaignContacts.filter(cc => cc.campaign_id === campaign.id)}
-                    onClick={() => { /* campaign detail — Plan 02 */ }}
+                    onClick={() => setSelectedCampaignId(campaign.id)}
                   />
                 ))}
                 {activeCampaigns.length > 3 && (
@@ -496,7 +519,7 @@ export function Dashboard() {
                         key={campaign.id}
                         campaign={campaign}
                         contacts={campaignContacts.filter(cc => cc.campaign_id === campaign.id)}
-                        onClick={() => { /* campaign detail — Plan 02 */ }}
+                        onClick={() => setSelectedCampaignId(campaign.id)}
                       />
                     ))}
                   </div>
@@ -604,6 +627,24 @@ export function Dashboard() {
           onDeleted={handleContactDeleted}
         />
       )}
+
+      {selectedCampaignId && (() => {
+        const campaign = campaigns.find(c => c.id === selectedCampaignId)
+        if (!campaign) return null
+        return (
+          <CampaignDetail
+            campaignId={campaign.id}
+            campaignName={campaign.name}
+            campaignType={campaign.type}
+            campaignDeadline={campaign.deadline}
+            campaignStatus={campaign.status}
+            contacts={contacts}
+            pods={pods}
+            onClose={() => setSelectedCampaignId(null)}
+            onUpdate={refreshCampaigns}
+          />
+        )
+      })()}
     </main>
   )
 }
