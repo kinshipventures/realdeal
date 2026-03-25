@@ -1,4 +1,4 @@
-import type { Pod, Category, Contact, Interaction, InteractionType, HexColor } from './types'
+import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignType, CampaignContactStatus } from './types'
 
 const DEMO_KEY = 'kinshipbrain:demo-mode'
 
@@ -155,4 +155,42 @@ export const DEMO_INTERACTIONS: Interaction[] = [
   ix('37', '20', 'text', 0), ix('38', '20', 'meeting', 1), ix('39', '20', 'call', 2), ix('40', '20', 'text', 3),
   // Deepak — fading
   ix('41', '21', 'call', 40),
+]
+
+// ── Campaigns ──
+
+const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], deadline?: number): Campaign => ({
+  id: `demo-campaign-${id}`, name, type, status,
+  deadline: deadline !== undefined ? futureDate(deadline) : null,
+  contact_ids: contactIds.map(c => `demo-contact-${c}`),
+  created_at: daysAgo(14),
+})
+
+const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus): CampaignContact => ({
+  id: `demo-cc-${id}`, campaign_id: `demo-campaign-${campaignId}`, contact_id: `demo-contact-${contactId}`,
+  status, notes: null, created_at: daysAgo(10),
+})
+
+export const DEMO_CAMPAIGNS: Campaign[] = [
+  campaign('1', 'Fund III Launch Dinner', 'event', 'active', ['1', '4', '7', '8', '9'], 18),
+  campaign('2', 'Brand Partnership Outreach', 'outreach', 'active', ['11', '13', '14'], 30),
+  campaign('3', 'Q1 LP Check-ins', 'investment', 'completed', ['7', '8', '9', '10']),
+]
+
+export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
+  // Fund III Launch Dinner — mix of statuses
+  cc('1', '1', '1', 'confirmed'),   // Sarah — confirmed
+  cc('2', '1', '4', 'responded'),   // David — responded
+  cc('3', '1', '7', 'confirmed'),   // Emily — confirmed
+  cc('4', '1', '8', 'reached'),     // Robert — reached
+  cc('5', '1', '9', 'pending'),     // Aisha — pending
+  // Brand Partnership Outreach — early stage
+  cc('6', '2', '11', 'responded'),  // Luna — responded
+  cc('7', '2', '13', 'pending'),    // Camille — pending
+  cc('8', '2', '14', 'reached'),    // Zara — reached
+  // Q1 LP Check-ins — all done
+  cc('9', '3', '7', 'confirmed'),
+  cc('10', '3', '8', 'confirmed'),
+  cc('11', '3', '9', 'confirmed'),
+  cc('12', '3', '10', 'responded'),
 ]

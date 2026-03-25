@@ -1,5 +1,5 @@
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus } from './types'
-import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS } from './sampleData'
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS } from './sampleData'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
 const TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN
@@ -573,6 +573,7 @@ export function invalidateCampaignsCache(): void {
 }
 
 export async function getCampaigns(): Promise<Campaign[]> {
+  if (isDemoMode()) return DEMO_CAMPAIGNS.filter(c => c.status === 'active' || c.status === 'completed')
   const isExpired = !_campaignsCache || Date.now() - _campaignsCacheTime > CACHE_TTL
   const isFresh = _campaignsCache && !isExpired
 
@@ -627,6 +628,7 @@ export async function getCampaigns(): Promise<Campaign[]> {
 }
 
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
+  if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.campaign_id === campaignId)
   if (_campaignContactsCache) {
     return _campaignContactsCache.filter(cc => cc.campaign_id === campaignId)
   }
@@ -637,6 +639,11 @@ export async function getCampaignContacts(campaignId: string): Promise<CampaignC
 }
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string }): Promise<Campaign> {
+  if (isDemoMode()) {
+    const c: Campaign = { id: `demo-campaign-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', contact_ids: [], created_at: new Date().toISOString() }
+    DEMO_CAMPAIGNS.push(c)
+    return c
+  }
   const r = await request<AirtableRecord<CampaignFields>>(TABLES.campaigns, {
     method: 'POST',
     body: JSON.stringify({
@@ -653,6 +660,13 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
 }
 
 export async function addContactToCampaign(campaignId: string, contactId: string): Promise<CampaignContact> {
+  if (isDemoMode()) {
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', notes: null, created_at: new Date().toISOString() }
+    DEMO_CAMPAIGN_CONTACTS.push(cc)
+    const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
+    if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
+    return cc
+  }
   const r = await request<AirtableRecord<CampaignContactFields>>(TABLES.campaignContacts, {
     method: 'POST',
     body: JSON.stringify({
@@ -671,6 +685,11 @@ export async function addContactToCampaign(campaignId: string, contactId: string
 }
 
 export async function updateCampaignContactStatus(id: string, status: CampaignContactStatus): Promise<CampaignContact> {
+  if (isDemoMode()) {
+    const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
+    if (cc) cc.status = status
+    return cc ?? { id, campaign_id: '', contact_id: '', status, notes: null, created_at: '' }
+  }
   const r = await request<AirtableRecord<CampaignContactFields>>(`${TABLES.campaignContacts}/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ fields: { Status: status } }),
@@ -686,6 +705,11 @@ export async function updateCampaignContactStatus(id: string, status: CampaignCo
 }
 
 export async function completeCampaign(id: string): Promise<Campaign> {
+  if (isDemoMode()) {
+    const c = DEMO_CAMPAIGNS.find(c => c.id === id)
+    if (c) c.status = 'completed'
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', contact_ids: [], created_at: '' }
+  }
   const r = await request<AirtableRecord<CampaignFields>>(`${TABLES.campaigns}/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ fields: { Status: 'completed' as CampaignStatus } }),
