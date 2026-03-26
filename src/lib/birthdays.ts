@@ -11,7 +11,7 @@ export interface BirthdayItem {
 export function getUpcomingBirthdays(
   contacts: Contact[],
   pods: Pod[],
-  windowDays = 14
+  windowDays = 30
 ): BirthdayItem[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)

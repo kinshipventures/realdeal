@@ -1,4 +1,4 @@
-import type { Interaction, InteractionType, Contact, Pod, Cadence, FocusItem } from './types'
+import type { Interaction, InteractionType, Contact, Pod, Cadence, FocusItem, ContactFrequency } from './types'
 
 // ── Weights & constants ─────────────────────────────────────────────────────
 
@@ -17,6 +17,19 @@ export const CADENCE_DAYS = {
   monthly: 30,
   quarterly: 90,
 } as const satisfies Record<Cadence, number>
+
+const FREQUENCY_DAYS: Record<ContactFrequency, number> = {
+  Weekly: 7,
+  Monthly: 30,
+  Quarterly: 90,
+  Annual: 365,
+  'As Needed': 999,
+}
+
+export function contactCadenceDays(contact: Contact, podCadence: Cadence | null): number {
+  if (contact.contact_frequency) return FREQUENCY_DAYS[contact.contact_frequency]
+  return CADENCE_DAYS[podCadence ?? 'monthly']
+}
 
 const SCORE_SCALE = 5
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -167,8 +180,8 @@ export function todaysFocus(
     if (!inPriorityPod) continue
 
     const pod = contact.list_ids.map(id => podById.get(id)).find(p => p?.is_priority) ?? null
-    const cadence = pod?.cadence ?? 'monthly'
-    const thresholdMs = CADENCE_DAYS[cadence] * DAY_MS
+    const thresholdDays = contactCadenceDays(contact, pod?.cadence ?? null)
+    const thresholdMs = thresholdDays * DAY_MS
 
     if (!contact.last_contacted_at) {
       // Never contacted — high urgency
