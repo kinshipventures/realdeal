@@ -21,11 +21,11 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 
 ### Contact Card
 
-- [ ] **CARD-01**: Contact Info section displays all new fields (LinkedIn, City/Country, Global Region, Birthday, Gender)
-- [ ] **CARD-02**: Relationship section shows Introduced By, Relationship Owner, Contact Frequency, Intel/Notes prominently
-- [ ] **CARD-03**: Activity Timeline shows interaction entries with type icon, date, source label (Gmail/Granola/Manual), and full summary
-- [ ] **CARD-04**: Fund Tags section (KV Fund Investor, SPV Investor) shown only when values exist
-- [ ] **CARD-05**: Next Follow-Up pinned at bottom of timeline with date and action text
+- [x] **CARD-01**: Contact Info section displays all new fields (LinkedIn, City/Country, Global Region, Birthday, Gender)
+- [x] **CARD-02**: Relationship section shows Introduced By, Relationship Owner, Contact Frequency, Intel/Notes prominently
+- [x] **CARD-03**: Activity Timeline shows interaction entries with type icon, date, source label (Gmail/Granola/Manual), and full summary
+- [x] **CARD-04**: Fund Tags section (KV Fund Investor, SPV Investor) shown only when values exist
+- [x] **CARD-05**: Next Follow-Up pinned at bottom of timeline with date and action text
 
 ### Add Contact
 
@@ -71,11 +71,11 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 | DASH-01 | Phase 8 | Pending |
 | DASH-02 | Phase 8 | Pending |
 | DASH-03 | Phase 8 | Pending |
-| CARD-01 | Phase 8 | Pending |
-| CARD-02 | Phase 8 | Pending |
-| CARD-03 | Phase 8 | Pending |
-| CARD-04 | Phase 8 | Pending |
-| CARD-05 | Phase 8 | Pending |
+| CARD-01 | Phase 8 | Complete |
+| CARD-02 | Phase 8 | Complete |
+| CARD-03 | Phase 8 | Complete |
+| CARD-04 | Phase 8 | Complete |
+| CARD-05 | Phase 8 | Complete |
 | ADD-01 | Phase 9 | Pending |
 | ADD-02 | Phase 9 | Pending |
 
