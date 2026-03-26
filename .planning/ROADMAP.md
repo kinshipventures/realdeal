@@ -63,7 +63,11 @@ Plans:
   2. Upcoming section combines birthdays (30-day window) and this-week follow-ups in one sorted list — no separate sections
   3. Who Needs Attention reflects per-contact Contact Frequency (not just pod cadence) — a weekly contact overdue by 3 days surfaces before a monthly contact overdue by 10 days
   4. Contact detail shows all new fields in organized sections: Contact Info, Relationship, Activity Timeline, Fund Tags (conditional), Next Follow-Up pinned at bottom
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Dashboard enhancements: Recent Activity, merged Upcoming, per-contact frequency
+- [ ] 08-02-PLAN.md — Contact card enrichment: Contact Info, Relationship, Fund Tags, Follow-Up, timeline sources
 
 ### Phase 9: Add Contact
 **Goal**: Moj or Briell can add a new contact without leaving the app
@@ -86,5 +90,5 @@ Plans:
 | 5. Wrapped | v1.1 | 1/1 | Complete | 2026-03-24 |
 | 6. Campaigns | v1.1 | 2/2 | Complete | 2026-03-25 |
 | 7. Data & Schema | v1.2 | 2/3 | In Progress|  |
-| 8. UI Enrichment | v1.2 | 0/? | Not started | - |
+| 8. UI Enrichment | v1.2 | 0/2 | Not started | - |
 | 9. Add Contact | v1.2 | 0/? | Not started | - |
