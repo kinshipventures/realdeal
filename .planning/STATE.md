@@ -1,31 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Polish & Features
-status: complete
-stopped_at: v1.1 milestone complete — all 3 phases shipped, 9/9 requirements satisfied
-last_updated: "2026-03-25T20:45:00.000Z"
-last_activity: 2026-03-25
+milestone: v1.2
+milestone_name: Demo Ready
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-26T00:00:00.000Z"
+last_activity: 2026-03-26
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-25)
+See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Moj opens the app daily and it changes how she manages relationships
-**Current focus:** v1.1 complete — planning next milestone
+**Current focus:** v1.2 Demo Ready — import dummy data, expand schema, enrich UI for demo
 
 ## Current Position
 
-Milestone v1.1 (Polish & Features) — COMPLETE
-Tagged: v1.1
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-26 — Milestone v1.2 started
 
 ## Accumulated Context
 
@@ -33,34 +35,26 @@ Tagged: v1.1
 
 See PROJECT.md Key Decisions table for full log.
 
-- v1.1 scope: Search + Birthdays share Phase 4 (both dashboard/UI additions, quick to ship)
-- Wrapped gets its own phase — new view, data aggregation, distinct visual treatment
-- Campaigns gets its own phase — new Airtable table, most complex of v1.1
-- [Phase 04-search-birthdays]: No debounce on search input — filter on every keystroke since data is local/cached
-- [Phase 04-search-birthdays]: SearchPalette rendered in AppShell so Cmd+K works from both Dashboard and Map views
-- [Phase 04-search-birthdays]: Year rollover: parse month/day from birthday, advance to next year if already passed this year
-- [Phase 04-search-birthdays]: formatDaysUntil simplified: Today or Nd, skips week labels for readability
-- [Phase 06-campaigns]: Placeholder Airtable table IDs used for campaigns and campaignContacts — must be replaced with real IDs after tables are created in Airtable
-- [Phase 06-campaigns]: getCampaigns() fetches both tables in one call to keep contact_ids populated without N+1 queries
-- [Phase 06-campaigns]: CampaignDetail receives campaign metadata as props to avoid redundant fetch
-- [Phase 06-campaigns]: Status toggle uses optimistic update with revert on failure
+- v1.2 scope driven by Briell's V1 spec and dummy data spreadsheet
+- Gmail Ingest and iMessage Alerts deferred (blocked on external access)
+- Companies table deferred — contacts reference company as text field for now
+- Inbox Review queue deferred — dummy data includes 4 items but UI is future work
+- Per-contact Contact Frequency field replaces pod-level-only cadence
 
 ### Blockers/Concerns
 
-- Gmail integration blocked on Moj providing credentials — deferred
-- LP/Talent list imports blocked on data from Briell — deferred
-- Engagement ends March 31 — 3 phases need to fit in remaining time
+- Gmail integration blocked on Moj providing OAuth credentials — deferred
+- iMessage alerts require OpenClaw bot setup — deferred
+- 2-hour time constraint — scope must be tight
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260324-vb3 | Write one-page engagement memo for Moj | 2026-03-25 | 2cb5feb | [260324-vb3-write-the-one-page-engagement-memo-for-m](./quick/260324-vb3-write-the-one-page-engagement-memo-for-m/) |
-| 260325-26a | Fix three dashboard UI issues: focus card border, pod clip, scroll fade | 2026-03-25 | fb68f40 | [260325-26a-fix-three-dashboard-ui-issues-remove-foc](./quick/260325-26a-fix-three-dashboard-ui-issues-remove-foc/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25
-Last session: 2026-03-25T18:47:07.164Z
-Stopped at: Completed 06-02-PLAN.md (campaign detail panel, creation form, and ContactDetail integration)
+Last activity: 2026-03-26
+Last session: 2026-03-26
+Stopped at: Starting v1.2 milestone
 Resume file: None

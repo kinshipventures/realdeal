@@ -98,10 +98,19 @@ Shipped v1.1 on 2026-03-25. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 | Airtable MCP server | Official Airtable MCP for direct AI-to-Airtable data management | ✓ Good (enables conversational data operations) |
 | Demo mode for campaigns | In-memory mutations, no localStorage persistence — reset on refresh | ✓ Good (sufficient for demos, keeps demo mode simple) |
 
-## Current State
+## Current Milestone: v1.2 Demo Ready
+
+**Goal:** Import Briell's dummy data, expand schema to match V1 spec, enrich dashboard and contact cards, add contact creation form — everything needed for Moj to demo the app with realistic data.
+
+**Target features:**
+- Dummy data import (25 contacts, 45 interactions across 6 pods)
+- Expanded contact schema (LinkedIn, Country, Gender, Intel/Notes, Fund Tags, Follow-Up fields)
+- Recent Activity dashboard section
+- Enhanced Upcoming section (birthdays + follow-ups combined)
+- Enriched contact card with spec-aligned scrollable sections
+- Add Contact form (structured entry + brain dump path)
 
 **Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features)
-**Next milestone:** TBD — engagement ends Mar 31. If continued, likely integrations (Gmail, calendar) or Phase 2 proposal scope.
 
 ## Evolution
 
@@ -121,4 +130,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after v1.1 milestone*
+*Last updated: 2026-03-26 after v1.2 milestone started*
