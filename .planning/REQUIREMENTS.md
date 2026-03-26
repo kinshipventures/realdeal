@@ -1,0 +1,89 @@
+# Requirements: Kinship Brain
+
+**Defined:** 2026-03-26
+**Core Value:** Moj opens the app daily and it changes how she manages relationships
+
+## v1.2 Requirements
+
+Requirements for Demo Ready release. Each maps to roadmap phases.
+
+### Data Import
+
+- [ ] **DATA-01**: All 25 dummy contacts imported into Airtable across 6 pods (LPs, Maps, Maps Lite, Talent, Service Providers, Unsorted)
+- [ ] **DATA-02**: All 45 interaction log entries imported and linked to correct contacts
+- [ ] **DATA-03**: Contact schema expanded with new fields (LinkedIn, City, Country, Global Region, Gender, Introduced By, Intel/Notes, Relationship Owner, Contact Frequency, Next Follow-Up Date, Next Action, KV Fund Investor, SPV Investor, Needs Review)
+
+### Dashboard
+
+- [ ] **DASH-01**: Recent Activity section shows last 5 interactions across all contacts with type icon, name, date, and summary
+- [ ] **DASH-02**: Enhanced Upcoming section combines birthdays (30 days) and follow-ups (this week) in one list
+- [ ] **DASH-03**: Who Needs Attention shows contacts overdue based on per-contact Contact Frequency
+
+### Contact Card
+
+- [ ] **CARD-01**: Contact Info section displays all new fields (LinkedIn, City/Country, Global Region, Birthday, Gender)
+- [ ] **CARD-02**: Relationship section shows Introduced By, Relationship Owner, Contact Frequency, Intel/Notes prominently
+- [ ] **CARD-03**: Activity Timeline shows interaction entries with type icon, date, source label (Gmail/Granola/Manual), and full summary
+- [ ] **CARD-04**: Fund Tags section (KV Fund Investor, SPV Investor) shown only when values exist
+- [ ] **CARD-05**: Next Follow-Up pinned at bottom of timeline with date and action text
+
+### Add Contact
+
+- [ ] **ADD-01**: Structured entry form with required fields (First Name, Last Name, Email, Pod) and optional fields (Job Title, Company, Phone, Intel/Notes)
+- [ ] **ADD-02**: Brain dump path — free text entry that creates contact in Unsorted pod with Needs Review = true
+
+## Future Requirements
+
+### Gmail Integration
+
+- **GMAIL-01**: Gmail connected via OAuth, read-only access to sent and received emails
+- **GMAIL-02**: Inbox Review queue showing unknown contacts surfaced from Gmail
+- **GMAIL-03**: Auto-logging of email interactions for matched contacts
+
+### Automations
+
+- **AUTO-01**: iMessage follow-up reminders via OpenClaw bot
+- **AUTO-02**: Next Follow-Up Date auto-suggested based on Contact Frequency
+
+### Companies
+
+- **COMP-01**: Companies table with Company Name, Website, LinkedIn, Company Type, HQ City, Pod
+- **COMP-02**: Contacts linked to Companies via linked record field
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Gmail auto-ingestion | Blocked on OAuth credentials from Moj |
+| iMessage alerts (OpenClaw) | External system, separate project |
+| Companies table | Deferred — contacts use text field for company |
+| Inbox Review queue UI | Deferred — dummy data staged but UI is future work |
+| Team accounts / per-user views | Architecture change, not needed for demo |
+| Real authentication | Accepted tradeoff — private URL |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DATA-01 | Phase 7 | Pending |
+| DATA-02 | Phase 7 | Pending |
+| DATA-03 | Phase 7 | Pending |
+| DASH-01 | Phase 8 | Pending |
+| DASH-02 | Phase 8 | Pending |
+| DASH-03 | Phase 8 | Pending |
+| CARD-01 | Phase 8 | Pending |
+| CARD-02 | Phase 8 | Pending |
+| CARD-03 | Phase 8 | Pending |
+| CARD-04 | Phase 8 | Pending |
+| CARD-05 | Phase 8 | Pending |
+| ADD-01 | Phase 9 | Pending |
+| ADD-02 | Phase 9 | Pending |
+
+**Coverage:**
+- v1.2 requirements: 13 total
+- Mapped to phases: 13
+- Unmapped: 0
+
+---
+*Requirements defined: 2026-03-26*
+*Last updated: 2026-03-26 after initial definition*
