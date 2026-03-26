@@ -348,6 +348,96 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     letterSpacing: '0.01em',
   }
 
+  function linkedinField() {
+    const val = (draft.linkedin as string | null) ?? null
+    const editing = editingField === 'linkedin'
+    const hasSaveError = saveError?.field === 'linkedin'
+
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+          <div style={{
+            fontSize: 10, fontWeight: 500,
+            color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+          }}>
+            LinkedIn
+          </div>
+          {hasSaveError && (
+            <button
+              type="button"
+              onClick={handleRetrySave}
+              style={{
+                fontSize: 10, fontWeight: 400,
+                color: '#D93025',
+                letterSpacing: '0.01em',
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: 0,
+              }}
+            >
+              failed to save — retry
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <input
+            autoFocus
+            type="text"
+            defaultValue={val ?? ''}
+            placeholder="https://linkedin.com/in/..."
+            onBlur={e => handleBlur('linkedin', e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+              if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
+            }}
+            style={{
+              width: '100%',
+              background: 'var(--tint)',
+              border: '1px solid var(--edge-strong)',
+              borderRadius: 6,
+              color: 'var(--color-text-primary)',
+              fontSize: 13,
+              padding: '6px 10px',
+              outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+        ) : val && val.startsWith('http') ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0', minHeight: 20 }}>
+            <a
+              href={val}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 13, color: '#1565C0', textDecoration: 'none' }}
+            >
+              {val.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '') || val}
+            </a>
+            <span
+              onClick={() => setEditingField('linkedin')}
+              style={{ fontSize: 10, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}
+            >
+              edit
+            </span>
+          </div>
+        ) : (
+          <div
+            onClick={() => setEditingField('linkedin')}
+            style={{
+              fontSize: 13,
+              color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              cursor: 'text',
+              padding: '2px 0',
+              minHeight: 20,
+            }}
+          >
+            {val ?? 'add linkedin'}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function birthdayField() {
     const val = (draft.birthday as string | null) ?? null
     const editing = editingField === 'birthday'
@@ -397,6 +487,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       </div>
     )
   }
+
+  const hasFundTags = (draft.kv_fund_investor && draft.kv_fund_investor.length > 0) || (draft.spv_investor && draft.spv_investor.length > 0)
 
   return (
     <div
@@ -566,61 +658,111 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px' }}>
 
+        {/* Equity score ring — existing contacts only */}
+        {!isNew && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+            <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} />
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
+                {equityScore}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2, letterSpacing: '0.01em' }}>
+                {scoreLabel(equityScore)}
+              </div>
+            </div>
+          </div>
+        )}
+        {!isNew && equityBreakdown.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 16 }}>
+            {equityBreakdown.map(b => (
+              <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+                  {b.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>contact</div>
+          <div style={sectionLabel}>contact info</div>
           {field('email', 'Email')}
           {field('phone', 'Phone')}
+          {linkedinField()}
           {field('website', 'Website')}
           {field('location', 'Location')}
+          {field('country', 'City / Country')}
+          {birthdayField()}
+          {draft.global_region && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Region</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.global_region}</div>
+            </div>
+          )}
+          {draft.gender && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Gender</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.gender}</div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <div style={sectionLabel}>relationship</div>
+          {field('introduced_by', 'Introduced By')}
+          {field('relationship_owner', 'Relationship Owner')}
+          {draft.contact_frequency && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Contact Frequency</div>
+              <span style={{
+                fontSize: 12, fontWeight: 500,
+                padding: '3px 10px', borderRadius: 100,
+                background: 'rgba(37,180,57,0.08)',
+                color: 'var(--color-brand)',
+              }}>
+                {draft.contact_frequency}
+              </span>
+            </div>
+          )}
+          {field('intel_notes', 'Intel / Notes', true)}
         </div>
 
         <div style={{ marginBottom: 24 }}>
           <div style={sectionLabel}>context</div>
           {field('specialization', 'Focus')}
-          {field('past_clients', 'Known for', true)}
-          {field('recommended_by', 'Intro\'d by')}
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>personal</div>
-
-          {/* Equity score ring — existing contacts only */}
-          {!isNew && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} />
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
-                  {equityScore}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2, letterSpacing: '0.01em' }}>
-                  {scoreLabel(equityScore)}
-                </div>
-              </div>
-            </div>
-          )}
-          {!isNew && equityBreakdown.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 16 }}>
-              {equityBreakdown.map(b => (
-                <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
-                    {b.type}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {birthdayField()}
-          {field('milestones', 'Milestones', true)}
           {field('interests', 'Interests', true)}
           {field('relationship_context', 'Context', true)}
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>notes</div>
           {field('notes', 'Notes', true)}
         </div>
+
+        {hasFundTags && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={sectionLabel}>fund tags</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {draft.kv_fund_investor?.map(tag => (
+                <span key={tag} style={{
+                  fontSize: 11, fontWeight: 500,
+                  padding: '3px 10px', borderRadius: 100,
+                  background: 'hsla(150, 60%, 40%, 0.08)',
+                  color: 'hsla(150, 60%, 30%, 0.80)',
+                }}>
+                  KV: {tag}
+                </span>
+              ))}
+              {draft.spv_investor?.map(tag => (
+                <span key={tag} style={{
+                  fontSize: 11, fontWeight: 500,
+                  padding: '3px 10px', borderRadius: 100,
+                  background: 'hsla(210, 60%, 50%, 0.08)',
+                  color: 'hsla(210, 60%, 40%, 0.80)',
+                }}>
+                  SPV: {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Add to campaign — existing contacts only, when active campaigns exist */}
         {!isNew && contact && campaigns.length > 0 && (
@@ -690,6 +832,32 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           />
         )}
       </div>
+
+      {/* Next Follow-Up bar — pinned at bottom */}
+      {!isNew && contact && contact.next_follow_up_date && (
+        <div style={{
+          padding: '12px 24px',
+          borderTop: '1px solid var(--divider)',
+          background: 'rgba(37,180,57,0.03)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+              Next Follow-Up
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+              {contact.next_action ?? 'Follow up'}
+            </div>
+          </div>
+          <div style={{
+            fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
+            background: 'rgba(37,180,57,0.08)',
+            padding: '4px 12px', borderRadius: 8,
+          }}>
+            {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
+        </div>
+      )}
 
       {/* Create footer */}
       {isNew && (
