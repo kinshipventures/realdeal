@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache } from '../../lib/airtable'
-import { daysOverdue, hexToRgba } from '../../lib/utils'
+import { daysOverdue, hexToRgba, formatRelativeTime } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
   indexByContact,
@@ -10,10 +10,12 @@ import {
   isDormant,
   daysSinceContact,
   todaysFocus,
+  contactCadenceDays,
 } from '../../lib/equity'
-import { getUpcomingBirthdays, formatDaysUntil } from '../../lib/birthdays'
-import type { BirthdayItem } from '../../lib/birthdays'
-import type { Contact, Pod, Interaction, Cadence, FocusItem, Campaign, CampaignContact } from '../../lib/types'
+import { getUpcomingBirthdays } from '../../lib/birthdays'
+
+import type { Contact, Pod, Interaction, FocusItem, Campaign, CampaignContact } from '../../lib/types'
+import { TYPE_ICONS } from '../contacts/InteractionSection'
 import { Avatar } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { CampaignDetail } from '../campaigns/CampaignDetail'
@@ -207,26 +209,39 @@ export function Dashboard() {
     return insights
   }, [allInteractions, contacts, pods, byContact])
 
-  // Overdue contacts
+  // Recent activity — 5 most recent interactions with contact names
+  const recentActivity = useMemo(() => {
+    if (interactionsLoading || contactsLoading) return []
+    const contactMap = new Map(contacts.map(c => [c.id, c]))
+    return allInteractions
+      .slice(0, 5)
+      .map(ix => ({
+        interaction: ix,
+        contact: contactMap.get(ix.contact_id) ?? null,
+      }))
+      .filter(item => item.contact !== null)
+  }, [allInteractions, contacts, interactionsLoading, contactsLoading])
+
+  // Overdue contacts — uses per-contact frequency
   const overdueContacts = useMemo(() => {
-    const result: { contact: Contact; days: number | null; podName: string; cadence: Cadence }[] = []
+    const result: { contact: Contact; days: number | null; podName: string; overdueDays: number }[] = []
     for (const contact of contacts) {
       if (isInGracePeriod(contact)) continue
       for (const podId of contact.list_ids) {
         const pod = pods.find(p => p.id === podId)
-        const cadence = pod?.cadence ?? 'monthly'
-        if (isOverdue(contact, cadence)) {
-          result.push({ contact, days: daysOverdue(contact), podName: pod?.name ?? '', cadence })
+        const cadenceDays = contactCadenceDays(contact, pod?.cadence ?? null)
+        const elapsed = daysOverdue(contact)
+        if (elapsed === null) {
+          result.push({ contact, days: null, podName: pod?.name ?? '', overdueDays: 999 })
+          break
+        }
+        if (elapsed > cadenceDays) {
+          result.push({ contact, days: elapsed, podName: pod?.name ?? '', overdueDays: elapsed - cadenceDays })
           break
         }
       }
     }
-    return result.sort((a, b) => {
-      if (a.days === null && b.days === null) return a.contact.name.localeCompare(b.contact.name)
-      if (a.days === null) return -1
-      if (b.days === null) return 1
-      return b.days! - a.days!
-    })
+    return result.sort((a, b) => b.overdueDays - a.overdueDays)
   }, [contacts, pods])
 
   // Today's Focus
@@ -240,6 +255,59 @@ export function Dashboard() {
     () => getUpcomingBirthdays(contacts, pods),
     [contacts, pods]
   )
+
+  // Follow-ups due this week
+  const followUpItems = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const endOfWeek = new Date(today)
+    endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()))
+
+    const podMap = new Map(pods.map(p => [p.id, p]))
+
+    return contacts
+      .filter(c => c.next_follow_up_date)
+      .filter(c => {
+        const d = new Date(c.next_follow_up_date + 'T00:00:00')
+        return d >= today && d <= endOfWeek
+      })
+      .map(c => {
+        const d = new Date(c.next_follow_up_date + 'T00:00:00')
+        const daysUntil = Math.round((d.getTime() - today.getTime()) / 86400000)
+        const pod = c.list_ids[0] ? (podMap.get(c.list_ids[0]) ?? null) : null
+        return { contact: c, daysUntil, pod, type: 'follow-up' as const }
+      })
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+  }, [contacts, pods])
+
+  // Merged upcoming — birthdays + follow-ups
+  const upcomingItems = useMemo(() => {
+    const items: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }> = []
+
+    for (const b of upcomingBirthdays) {
+      items.push({
+        type: 'birthday',
+        contact: b.contact,
+        pod: b.pod,
+        daysUntil: b.daysUntil,
+        label: b.date,
+        sublabel: b.isToday ? 'Today' : `${b.daysUntil}d`,
+      })
+    }
+
+    for (const f of followUpItems) {
+      items.push({
+        type: 'follow-up',
+        contact: f.contact,
+        pod: f.pod,
+        daysUntil: f.daysUntil,
+        label: f.contact.next_action ?? 'Follow up',
+        sublabel: f.daysUntil === 0 ? 'Today' : `${f.daysUntil}d`,
+      })
+    }
+
+    return items.sort((a, b) => a.daysUntil - b.daysUntil)
+  }, [upcomingBirthdays, followUpItems])
 
   // Campaign segments
   const activeCampaigns = useMemo(() => campaigns.filter(c => c.status === 'active'), [campaigns])
@@ -395,8 +463,22 @@ export function Dashboard() {
           <WrappedCard insights={wrappedInsights} />
         )}
 
-        {/* Coming Up — birthdays in next 14 days */}
-        {upcomingBirthdays.length > 0 && (
+        {/* Recent Activity */}
+        {!interactionsLoading && recentActivity.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0, marginBottom: 12 }}>
+              recent activity
+            </h2>
+            <div style={{ ...PANEL, overflow: 'hidden' }}>
+              {recentActivity.map(({ interaction, contact }) => (
+                <RecentActivityRow key={interaction.id} interaction={interaction} contact={contact!} onClick={() => setSelectedContact(contact!)} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Coming Up — birthdays + follow-ups merged */}
+        {upcomingItems.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <h2 style={{
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
@@ -406,8 +488,8 @@ export function Dashboard() {
               coming up
             </h2>
             <div style={{ ...PANEL, overflow: 'hidden' }}>
-              {upcomingBirthdays.map(item => (
-                <BirthdayRow key={item.contact.id} item={item} onClick={() => setSelectedContact(item.contact)} />
+              {upcomingItems.map((item, i) => (
+                <UpcomingRow key={`${item.type}-${item.contact.id}-${i}`} item={item} onClick={() => setSelectedContact(item.contact)} />
               ))}
             </div>
           </div>
@@ -947,8 +1029,10 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
   )
 }
 
-function BirthdayRow({ item, onClick }: { item: BirthdayItem; onClick: () => void }) {
-  const podColor = item.pod?.color ?? '#718096'
+
+function RecentActivityRow({ interaction, contact, onClick }: { interaction: Interaction; contact: Contact; onClick: () => void }) {
+  const icon = TYPE_ICONS[interaction.type] ?? null
+  const summary = interaction.summary || interaction.notes || null
 
   return (
     <button
@@ -958,19 +1042,66 @@ function BirthdayRow({ item, onClick }: { item: BirthdayItem; onClick: () => voi
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         width: '100%', padding: '12px 24px',
-        background: item.isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
+        background: 'none', border: 'none',
+        borderBottom: '1px solid var(--divider)',
+        cursor: 'pointer', textAlign: 'left',
+      }}
+    >
+      <div style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+          {contact.name}
+        </div>
+        {summary && (
+          <div style={{
+            fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {summary}
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+          {formatRelativeTime(interaction.date)}
+        </span>
+        {interaction.source && (
+          <span style={{
+            fontSize: 10, padding: '1px 6px', borderRadius: 4,
+            background: 'rgba(0,0,0,0.04)', color: 'var(--color-text-tertiary)',
+          }}>
+            {interaction.source}
+          </span>
+        )}
+      </div>
+    </button>
+  )
+}
+
+function UpcomingRow({ item, onClick }: {
+  item: { type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }
+  onClick: () => void
+}) {
+  const dotColor = item.type === 'birthday' ? 'hsla(30, 80%, 55%, 0.9)' : 'var(--color-brand)'
+  const isToday = item.daysUntil === 0
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="interactive-row"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', padding: '12px 24px',
+        background: isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
         border: 'none',
         borderBottom: '1px solid var(--divider)',
         cursor: 'pointer', textAlign: 'left',
       }}
     >
-      {/* Pod-colored dot */}
-      <div style={{
-        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-        background: podColor,
-      }} />
-
-      {/* Name */}
+      <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
       <div style={{
         fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
         flex: 1, minWidth: 0,
@@ -978,21 +1109,18 @@ function BirthdayRow({ item, onClick }: { item: BirthdayItem; onClick: () => voi
       }}>
         {item.contact.name}
       </div>
-
-      {/* Date (e.g. "Mar 28") */}
-      <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', flexShrink: 0 }}>
-        {item.date}
+      <span style={{
+        fontSize: 11, color: 'var(--color-text-secondary)', flexShrink: 0,
+        maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {item.label}
       </span>
-
-      {/* Days until */}
       <span style={{
         fontSize: 11, fontWeight: 500, flexShrink: 0, minWidth: 32, textAlign: 'right',
-        color: item.isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
+        color: isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
       }}>
-        {formatDaysUntil(item.daysUntil)}
+        {item.sublabel}
       </span>
-
-      {/* Pod name */}
       {item.pod && (
         <span style={{
           fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0,
