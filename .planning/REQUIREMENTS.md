@@ -29,8 +29,8 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 
 ### Add Contact
 
-- [ ] **ADD-01**: Structured entry form with required fields (First Name, Last Name, Email, Pod) and optional fields (Job Title, Company, Phone, Intel/Notes)
-- [ ] **ADD-02**: Brain dump path — free text entry that creates contact in Unsorted pod with Needs Review = true
+- [x] **ADD-01**: Structured entry form with required fields (First Name, Last Name, Email, Pod) and optional fields (Job Title, Company, Phone, Intel/Notes)
+- [x] **ADD-02**: Brain dump path — free text entry that creates contact in Unsorted pod with Needs Review = true
 
 ## Future Requirements
 
@@ -76,8 +76,8 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 | CARD-03 | Phase 8 | Complete |
 | CARD-04 | Phase 8 | Complete |
 | CARD-05 | Phase 8 | Complete |
-| ADD-01 | Phase 9 | Pending |
-| ADD-02 | Phase 9 | Pending |
+| ADD-01 | Phase 9 | Complete |
+| ADD-02 | Phase 9 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 13 total

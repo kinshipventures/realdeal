@@ -79,7 +79,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 09-01-PLAN.md — AddContactModal with structured entry + brain dump, FAB on dashboard
+- [x] 09-01-PLAN.md — AddContactModal with structured entry + brain dump, FAB on dashboard
 
 ## Progress
 
