@@ -66,7 +66,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Dashboard enhancements: Recent Activity, merged Upcoming, per-contact frequency
+- [x] 08-01-PLAN.md — Dashboard enhancements: Recent Activity, merged Upcoming, per-contact frequency
 - [x] 08-02-PLAN.md — Contact card enrichment: Contact Info, Relationship, Fund Tags, Follow-Up, timeline sources
 
 ### Phase 9: Add Contact

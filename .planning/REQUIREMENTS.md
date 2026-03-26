@@ -15,9 +15,9 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 
 ### Dashboard
 
-- [ ] **DASH-01**: Recent Activity section shows last 5 interactions across all contacts with type icon, name, date, and summary
-- [ ] **DASH-02**: Enhanced Upcoming section combines birthdays (30 days) and follow-ups (this week) in one list
-- [ ] **DASH-03**: Who Needs Attention shows contacts overdue based on per-contact Contact Frequency
+- [x] **DASH-01**: Recent Activity section shows last 5 interactions across all contacts with type icon, name, date, and summary
+- [x] **DASH-02**: Enhanced Upcoming section combines birthdays (30 days) and follow-ups (this week) in one list
+- [x] **DASH-03**: Who Needs Attention shows contacts overdue based on per-contact Contact Frequency
 
 ### Contact Card
 
@@ -68,9 +68,9 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 | DATA-01 | Phase 7 | Complete |
 | DATA-02 | Phase 7 | Complete |
 | DATA-03 | Phase 7 | Complete |
-| DASH-01 | Phase 8 | Pending |
-| DASH-02 | Phase 8 | Pending |
-| DASH-03 | Phase 8 | Pending |
+| DASH-01 | Phase 8 | Complete |
+| DASH-02 | Phase 8 | Complete |
+| DASH-03 | Phase 8 | Complete |
 | CARD-01 | Phase 8 | Complete |
 | CARD-02 | Phase 8 | Complete |
 | CARD-03 | Phase 8 | Complete |
