@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache } from '../../lib/airtable'
+import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache, invalidateContactsCache } from '../../lib/airtable'
 import { daysOverdue, hexToRgba, formatRelativeTime } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
@@ -21,6 +21,7 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { CampaignDetail } from '../campaigns/CampaignDetail'
 import { CampaignCreate } from '../campaigns/CampaignCreate'
 import { EmptyState } from '../empty/EmptyState'
+import { AddContactModal } from '../contacts/AddContactModal'
 import { WrappedCard } from './WrappedCard'
 import type { WrappedInsight } from './WrappedCard'
 
@@ -74,6 +75,7 @@ export function Dashboard() {
   const [showPastCampaigns, setShowPastCampaigns] = useState(false)
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [showCampaignCreate, setShowCampaignCreate] = useState(false)
+  const [showAddContact, setShowAddContact] = useState(false)
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -699,6 +701,48 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Add Contact FAB */}
+      <button
+        type="button"
+        onClick={() => setShowAddContact(true)}
+        aria-label="Add contact"
+          style={{
+            position: 'fixed',
+            bottom: window.matchMedia('(max-width: 767px)').matches ? 112 : 80,
+            right: 24,
+            zIndex: 90,
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'var(--color-brand)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,180,57,0.45)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)' }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+
+      {showAddContact && (
+        <AddContactModal
+          onCreated={() => {
+            setShowAddContact(false)
+            invalidateContactsCache()
+            window.location.reload()
+          }}
+          onClose={() => setShowAddContact(false)}
+        />
+      )}
 
       {selectedContact && (
         <ContactDetail
