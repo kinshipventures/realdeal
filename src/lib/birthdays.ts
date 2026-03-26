@@ -23,10 +23,22 @@ export function getUpcomingBirthdays(
   for (const contact of contacts) {
     if (!contact.birthday) continue
 
-    // Parse month and day from YYYY-MM-DD — ignore year to find next occurrence
-    const [, monthStr, dayStr] = contact.birthday.split('-')
-    const month = parseInt(monthStr, 10) - 1 // 0-based
-    const day = parseInt(dayStr, 10)
+    // Parse month and day — supports "YYYY-MM-DD", "MM-DD", or "Mon DD" (e.g. "Nov 12")
+    let month: number
+    let day: number
+    const dashParts = contact.birthday.split('-')
+    if (dashParts.length >= 2 && !isNaN(parseInt(dashParts[dashParts.length - 1]))) {
+      // ISO-ish: YYYY-MM-DD or MM-DD
+      month = parseInt(dashParts[dashParts.length - 2], 10) - 1
+      day = parseInt(dashParts[dashParts.length - 1], 10)
+    } else {
+      // Human: "Nov 12", "Mar 2", "April 18"
+      const parsed = new Date(`${contact.birthday}, 2000`)
+      if (isNaN(parsed.getTime())) continue
+      month = parsed.getMonth()
+      day = parsed.getDate()
+    }
+    if (isNaN(month) || isNaN(day)) continue
 
     // Try this year's birthday
     const thisYear = new Date(today.getFullYear(), month, day)
