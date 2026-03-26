@@ -47,11 +47,11 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
   1. Dashboard shows 25 real-looking contacts distributed across 6 pods (LPs, Maps, Maps Lite, Talent, Service Providers, Unsorted)
   2. Each contact has an interaction history — pod health cards reflect actual equity scores based on 45 logged interactions
   3. Contact detail panel displays new fields: LinkedIn, City, Country, Global Region, Gender, Introduced By, Intel/Notes, Relationship Owner, Contact Frequency, Next Follow-Up Date, Next Action, KV Fund Investor, SPV Investor, Needs Review
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 07-01-PLAN.md — Expand Airtable schema + create pod records
-- [ ] 07-02-PLAN.md — Import 25 contacts and 45 interactions
+- [x] 07-02-PLAN.md — Import 25 contacts and 45 interactions
 - [ ] 07-03-PLAN.md — Update TypeScript types, mappers, and demo data
 
 ### Phase 8: UI Enrichment
@@ -85,6 +85,6 @@ Plans:
 | 4. Search + Birthdays | v1.1 | 2/2 | Complete | 2026-03-24 |
 | 5. Wrapped | v1.1 | 1/1 | Complete | 2026-03-24 |
 | 6. Campaigns | v1.1 | 2/2 | Complete | 2026-03-25 |
-| 7. Data & Schema | v1.2 | 0/3 | Not started | - |
+| 7. Data & Schema | v1.2 | 1/3 | In Progress|  |
 | 8. UI Enrichment | v1.2 | 0/? | Not started | - |
 | 9. Add Contact | v1.2 | 0/? | Not started | - |

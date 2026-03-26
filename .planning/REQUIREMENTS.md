@@ -9,8 +9,8 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 
 ### Data Import
 
-- [ ] **DATA-01**: All 25 dummy contacts imported into Airtable across 6 pods (LPs, Maps, Maps Lite, Talent, Service Providers, Unsorted)
-- [ ] **DATA-02**: All 45 interaction log entries imported and linked to correct contacts
+- [x] **DATA-01**: All 25 dummy contacts imported into Airtable across 6 pods (LPs, Maps, Maps Lite, Talent, Service Providers, Unsorted)
+- [x] **DATA-02**: All 45 interaction log entries imported and linked to correct contacts
 - [ ] **DATA-03**: Contact schema expanded with new fields (LinkedIn, City, Country, Global Region, Gender, Introduced By, Intel/Notes, Relationship Owner, Contact Frequency, Next Follow-Up Date, Next Action, KV Fund Investor, SPV Investor, Needs Review)
 
 ### Dashboard
@@ -65,8 +65,8 @@ Requirements for Demo Ready release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 7 | Pending |
-| DATA-02 | Phase 7 | Pending |
+| DATA-01 | Phase 7 | Complete |
+| DATA-02 | Phase 7 | Complete |
 | DATA-03 | Phase 7 | Pending |
 | DASH-01 | Phase 8 | Pending |
 | DASH-02 | Phase 8 | Pending |
