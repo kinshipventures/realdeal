@@ -325,6 +325,11 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
 }
 
 export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): Promise<Contact> {
+  if (isDemoMode()) {
+    const c: Contact = { ...data, id: `demo-contact-${Date.now()}`, created_at: new Date().toISOString() }
+    DEMO_CONTACTS.push(c)
+    return c
+  }
   const r = await request<AirtableRecord<ContactFields>>(TABLES.contacts, {
     method: 'POST',
     body: JSON.stringify({
