@@ -76,7 +76,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Structured form accepts First Name, Last Name, Email, Pod (required) plus optional fields — submits and contact appears in the correct pod immediately
   2. Brain dump path accepts a block of free text and creates a contact in the Unsorted pod with Needs Review flagged — no required fields to fill in
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — AddContactModal with structured entry + brain dump, FAB on dashboard
 
 ## Progress
 
@@ -90,5 +93,5 @@ Plans:
 | 5. Wrapped | v1.1 | 1/1 | Complete | 2026-03-24 |
 | 6. Campaigns | v1.1 | 2/2 | Complete | 2026-03-25 |
 | 7. Data & Schema | v1.2 | 2/3 | In Progress|  |
-| 8. UI Enrichment | v1.2 | 0/2 | Not started | - |
-| 9. Add Contact | v1.2 | 0/? | Not started | - |
+| 8. UI Enrichment | v1.2 | 2/2 | Complete | - |
+| 9. Add Contact | v1.2 | 0/1 | Not started | - |
