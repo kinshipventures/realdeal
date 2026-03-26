@@ -5,6 +5,10 @@ export type ISODate = string          // YYYY-MM-DD date string
 export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
 export type Owner = 'moj_mahdara' | 'kinship_ventures'
 export type Cadence = 'weekly' | 'biweekly' | 'monthly' | 'quarterly'
+export type GlobalRegion = 'AMER' | 'APAC' | 'ME' | 'LATAM' | 'EU'
+export type ContactFrequency = 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual' | 'As Needed'
+export type Gender = 'Male' | 'Female' | 'Non-binary' | 'Other'
+export type InteractionSource = 'Gmail' | 'Granola' | 'Manual'
 
 export interface Pod {
   id: string           // Airtable record ID
@@ -44,6 +48,22 @@ export interface Contact {
   last_contacted_at: ISODate | null
   list_ids: string[]      // linked Pod record IDs
   category_ids: string[]  // linked Category record IDs
+  // V1 expanded fields
+  first_name: string | null
+  last_name: string | null
+  linkedin: string | null
+  country: string | null
+  global_region: GlobalRegion | null
+  gender: Gender | null
+  introduced_by: string | null
+  intel_notes: string | null
+  relationship_owner: string | null
+  contact_frequency: ContactFrequency | null
+  next_follow_up_date: ISODate | null
+  next_action: string | null
+  kv_fund_investor: string[] | null
+  spv_investor: string[] | null
+  needs_review: boolean
   created_at: string
 }
 
@@ -53,6 +73,11 @@ export interface Interaction {
   type: InteractionType
   date: ISODate
   notes: string | null
+  // V1 expanded fields
+  summary: string | null
+  source: InteractionSource | null
+  email_link: string | null
+  granola_link: string | null
   created_at: string
 }
 

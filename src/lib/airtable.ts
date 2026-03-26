@@ -1,4 +1,4 @@
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource } from './types'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS } from './sampleData'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
@@ -54,6 +54,22 @@ interface ContactFields {
   Lists?: string[]
   Categories?: string[]
   Interactions?: string[]
+  // V1 expanded fields
+  'First Name'?: string
+  'Last Name'?: string
+  LinkedIn?: string
+  Country?: string
+  'Global Region'?: string
+  Gender?: string
+  'Introduced By'?: string
+  'Intel / Notes'?: string
+  'Relationship Owner'?: string
+  'Contact Frequency'?: string
+  'Next Follow-Up Date'?: string
+  'Next Action'?: string
+  'KV Fund Investor'?: unknown[]
+  'SPV Investor'?: unknown[]
+  'Needs Review'?: boolean
 }
 
 interface InteractionFields {
@@ -61,6 +77,11 @@ interface InteractionFields {
   Type?: InteractionType
   Date?: string
   Notes?: string
+  // V1 expanded fields
+  Summary?: string
+  Source?: string
+  'Email Link'?: string
+  'Granola Link'?: string
 }
 
 interface CampaignFields {
@@ -239,6 +260,21 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     last_contacted_at: r.fields['Last Contacted'] ?? null,
     list_ids: r.fields.Lists ?? [],
     category_ids: r.fields.Categories ?? [],
+    first_name: r.fields['First Name'] ?? null,
+    last_name: r.fields['Last Name'] ?? null,
+    linkedin: r.fields.LinkedIn ?? null,
+    country: r.fields.Country ?? null,
+    global_region: (r.fields['Global Region'] as GlobalRegion) ?? null,
+    gender: (r.fields.Gender as Gender) ?? null,
+    introduced_by: r.fields['Introduced By'] ?? null,
+    intel_notes: r.fields['Intel / Notes'] ?? null,
+    relationship_owner: r.fields['Relationship Owner'] ?? null,
+    contact_frequency: (r.fields['Contact Frequency'] as ContactFrequency) ?? null,
+    next_follow_up_date: r.fields['Next Follow-Up Date'] ?? null,
+    next_action: r.fields['Next Action'] ?? null,
+    kv_fund_investor: (r.fields['KV Fund Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
+    spv_investor: (r.fields['SPV Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
+    needs_review: !!r.fields['Needs Review'],
     created_at: r.createdTime,
   }
 }
@@ -311,6 +347,21 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
         'Last Contacted': data.last_contacted_at ?? undefined,
         Lists: data.list_ids.length ? data.list_ids : undefined,
         Categories: data.category_ids.length ? data.category_ids : undefined,
+        'First Name': data.first_name ?? undefined,
+        'Last Name': data.last_name ?? undefined,
+        LinkedIn: data.linkedin ?? undefined,
+        Country: data.country ?? undefined,
+        'Global Region': data.global_region ?? undefined,
+        Gender: data.gender ?? undefined,
+        'Introduced By': data.introduced_by ?? undefined,
+        'Intel / Notes': data.intel_notes ?? undefined,
+        'Relationship Owner': data.relationship_owner ?? undefined,
+        'Contact Frequency': data.contact_frequency ?? undefined,
+        'Next Follow-Up Date': data.next_follow_up_date ?? undefined,
+        'Next Action': data.next_action ?? undefined,
+        'KV Fund Investor': data.kv_fund_investor ?? undefined,
+        'SPV Investor': data.spv_investor ?? undefined,
+        'Needs Review': data.needs_review || undefined,
       },
     }),
   })
@@ -338,6 +389,21 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.last_contacted_at !== undefined) fields['Last Contacted'] = data.last_contacted_at
   if (data.list_ids !== undefined) fields.Lists = data.list_ids
   if (data.category_ids !== undefined) fields.Categories = data.category_ids
+  if (data.first_name !== undefined) fields['First Name'] = data.first_name
+  if (data.last_name !== undefined) fields['Last Name'] = data.last_name
+  if (data.linkedin !== undefined) fields.LinkedIn = data.linkedin
+  if (data.country !== undefined) fields.Country = data.country
+  if (data.global_region !== undefined) fields['Global Region'] = data.global_region
+  if (data.gender !== undefined) fields.Gender = data.gender
+  if (data.introduced_by !== undefined) fields['Introduced By'] = data.introduced_by
+  if (data.intel_notes !== undefined) fields['Intel / Notes'] = data.intel_notes
+  if (data.relationship_owner !== undefined) fields['Relationship Owner'] = data.relationship_owner
+  if (data.contact_frequency !== undefined) fields['Contact Frequency'] = data.contact_frequency
+  if (data.next_follow_up_date !== undefined) fields['Next Follow-Up Date'] = data.next_follow_up_date
+  if (data.next_action !== undefined) fields['Next Action'] = data.next_action
+  if (data.kv_fund_investor !== undefined) fields['KV Fund Investor'] = data.kv_fund_investor
+  if (data.spv_investor !== undefined) fields['SPV Investor'] = data.spv_investor
+  if (data.needs_review !== undefined) fields['Needs Review'] = data.needs_review
 
   const r = await request<AirtableRecord<ContactFields>>(`${TABLES.contacts}/${id}`, {
     method: 'PATCH',
@@ -368,6 +434,10 @@ function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | nul
     type: (r.fields.Type as string) === 'event' ? 'meeting' : (r.fields.Type?.toLowerCase() as InteractionType ?? 'note'),
     date: r.fields.Date ?? r.createdTime,
     notes: r.fields.Notes ?? null,
+    summary: r.fields.Summary ?? null,
+    source: (r.fields.Source as InteractionSource) ?? null,
+    email_link: r.fields['Email Link'] ?? null,
+    granola_link: r.fields['Granola Link'] ?? null,
     created_at: r.createdTime,
   }
 }
@@ -449,6 +519,10 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
         Type: data.type,
         Date: data.date,
         Notes: data.notes ?? undefined,
+        Summary: data.summary ?? undefined,
+        Source: data.source ?? undefined,
+        'Email Link': data.email_link ?? undefined,
+        'Granola Link': data.granola_link ?? undefined,
       },
     }),
   })

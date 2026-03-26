@@ -137,6 +137,11 @@ export async function importContacts(
         last_contacted_at: null,
         list_ids: [podId],
         category_ids: [],
+        first_name: null, last_name: null, linkedin: null,
+        country: null, global_region: null, gender: null,
+        introduced_by: null, intel_notes: null, relationship_owner: null,
+        contact_frequency: null, next_follow_up_date: null, next_action: null,
+        kv_fund_investor: null, spv_investor: null, needs_review: false,
       })
 
       // Update dedup index with newly created contact

@@ -113,6 +113,7 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
         type: logType,
         date: logDate,
         notes: logNotes.trim() || null,
+        summary: null, source: 'Manual', email_link: null, granola_link: null,
       })
       setInteractions(prev => [interaction, ...prev])
       setShowLogForm(false)
