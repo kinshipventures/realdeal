@@ -416,8 +416,24 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
           ) : (
             /* Read mode */
             <div className="interaction-row" style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: interaction.notes ? 4 : 0 }}>
-                <span style={typePill(interaction.type)}>{TYPE_LABELS[interaction.type]}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (interaction.notes || interaction.summary) ? 4 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={typePill(interaction.type)}>{TYPE_LABELS[interaction.type]}</span>
+                  {interaction.source && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 500,
+                      padding: '2px 6px', borderRadius: 4,
+                      background: interaction.source === 'Gmail' ? 'hsla(0, 70%, 50%, 0.08)'
+                        : interaction.source === 'Granola' ? 'hsla(30, 70%, 50%, 0.08)'
+                        : 'rgba(0,0,0,0.04)',
+                      color: interaction.source === 'Gmail' ? 'hsla(0, 70%, 40%, 0.80)'
+                        : interaction.source === 'Granola' ? 'hsla(30, 70%, 40%, 0.80)'
+                        : 'var(--color-text-tertiary)',
+                    }}>
+                      {interaction.source}
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     onClick={() => setEditingInteraction({
@@ -451,9 +467,30 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                   <span style={timestampStyle}>{formatRelativeTime(interaction.date)}</span>
                 </div>
               </div>
-              {interaction.notes && (
+              {interaction.summary && (
                 <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.55, marginTop: 4 }}>
+                  {interaction.summary}
+                </div>
+              )}
+              {interaction.notes && interaction.notes !== interaction.summary && (
+                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.55, marginTop: 2, fontStyle: 'italic' }}>
                   {interaction.notes}
+                </div>
+              )}
+              {(interaction.email_link || interaction.granola_link) && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  {interaction.email_link && (
+                    <a href={interaction.email_link} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textDecoration: 'none' }}>
+                      view email
+                    </a>
+                  )}
+                  {interaction.granola_link && (
+                    <a href={interaction.granola_link} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textDecoration: 'none' }}>
+                      view notes
+                    </a>
+                  )}
                 </div>
               )}
             </div>
