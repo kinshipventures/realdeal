@@ -13,7 +13,18 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        serif: ["'Fraunces'", "Georgia", "serif"],
+        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      },
       colors: {
+        brand: "var(--color-brand)",
+        "brand-dark": "var(--color-brand-dark)",
+        bg: "var(--color-bg)",
+        surface: "var(--color-surface)",
+        "text-primary": "var(--color-text-primary)",
+        "text-secondary": "var(--color-text-secondary)",
+        "text-tertiary": "var(--color-text-tertiary)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
