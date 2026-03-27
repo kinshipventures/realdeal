@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Kinship Brain MVP** — Phases 1-3 + 02.1 (shipped 2026-03-23)
 - ✅ **v1.1 Polish & Features** — Phases 4-6 (shipped 2026-03-25)
-- 🔄 **v1.2 Demo Ready** — Phases 7-9 (in progress)
+- ✅ **v1.2 Demo Ready** — Phases 7-9 (shipped 2026-03-27)
 
 ## Phases
 
@@ -33,9 +33,9 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 
 ### v1.2 Demo Ready
 
-- [ ] **Phase 7: Data & Schema** - Import dummy data, expand Airtable schema with new fields
-- [ ] **Phase 8: UI Enrichment** - Recent Activity, Enhanced Upcoming, enriched contact card, per-contact frequency
-- [ ] **Phase 9: Add Contact** - Structured entry form and brain dump path
+- [x] **Phase 7: Data & Schema** - Import dummy data, expand Airtable schema with new fields
+- [x] **Phase 8: UI Enrichment** - Recent Activity, Enhanced Upcoming, enriched contact card, per-contact frequency
+- [x] **Phase 9: Add Contact** - Structured entry form and brain dump path
 
 ## Phase Details
 
@@ -50,7 +50,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 **Plans:** 2/3 plans executed
 
 Plans:
-- [ ] 07-01-PLAN.md — Expand Airtable schema + create pod records
+- [x] 07-01-PLAN.md — Expand Airtable schema + create pod records
 - [x] 07-02-PLAN.md — Import 25 contacts and 45 interactions
 - [x] 07-03-PLAN.md — Update TypeScript types, mappers, and demo data
 
@@ -92,6 +92,6 @@ Plans:
 | 4. Search + Birthdays | v1.1 | 2/2 | Complete | 2026-03-24 |
 | 5. Wrapped | v1.1 | 1/1 | Complete | 2026-03-24 |
 | 6. Campaigns | v1.1 | 2/2 | Complete | 2026-03-25 |
-| 7. Data & Schema | v1.2 | 2/3 | In Progress|  |
-| 8. UI Enrichment | v1.2 | 2/2 | Complete | - |
-| 9. Add Contact | v1.2 | 0/1 | Not started | - |
+| 7. Data & Schema | v1.2 | 3/3 | Complete | 2026-03-26 |
+| 8. UI Enrichment | v1.2 | 2/2 | Complete | 2026-03-26 |
+| 9. Add Contact | v1.2 | 1/1 | Complete | 2026-03-26 |
