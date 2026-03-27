@@ -8,7 +8,7 @@ import { Avatar } from '../ui'
 import { ContactDetail } from './ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
 
-type SortCol = 'name' | 'company' | 'equity' | 'last_contacted'
+type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
 
 const EQUITY_BADGE: Record<string, { bg: string; color: string }> = {
@@ -92,7 +92,11 @@ export function CategoryTable() {
       result = result.filter(c =>
         c.name.toLowerCase().includes(q) ||
         (c.company ?? '').toLowerCase().includes(q) ||
-        (c.role ?? '').toLowerCase().includes(q)
+        (c.role ?? '').toLowerCase().includes(q) ||
+        (c.email ?? '').toLowerCase().includes(q) ||
+        (c.location ?? '').toLowerCase().includes(q) ||
+        (c.country ?? '').toLowerCase().includes(q) ||
+        (c.introduced_by ?? '').toLowerCase().includes(q)
       )
     }
 
@@ -113,6 +117,22 @@ export function CategoryTable() {
           const bT = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0
           return dir * (aT - bT)
         }
+        case 'location': {
+          const aL = [a.location, a.country].filter(Boolean).join(', ')
+          const bL = [b.location, b.country].filter(Boolean).join(', ')
+          return dir * aL.localeCompare(bL)
+        }
+        case 'follow_up': {
+          const aF = a.next_follow_up_date ? new Date(a.next_follow_up_date).getTime() : Infinity
+          const bF = b.next_follow_up_date ? new Date(b.next_follow_up_date).getTime() : Infinity
+          return dir * (aF - bF)
+        }
+        case 'frequency':
+          return dir * (a.contact_frequency ?? '').localeCompare(b.contact_frequency ?? '')
+        case 'introduced_by':
+          return dir * (a.introduced_by ?? '').localeCompare(b.introduced_by ?? '')
+        case 'email':
+          return dir * (a.email ?? '').localeCompare(b.email ?? '')
       }
     })
   }, [contacts, equityMap, search, filterOverdue, filterCooling, sort, cadence])
@@ -138,6 +158,11 @@ export function CategoryTable() {
     { key: 'company',       label: 'Company' },
     { key: 'equity',        label: 'Equity' },
     { key: 'last_contacted', label: 'Last Contact' },
+    { key: 'location',      label: 'Location' },
+    { key: 'follow_up',     label: 'Follow-Up' },
+    { key: 'frequency',     label: 'Frequency' },
+    { key: 'introduced_by', label: 'Intro By' },
+    { key: 'email',         label: 'Email' },
   ]
 
   return (
@@ -368,6 +393,46 @@ export function CategoryTable() {
                         ? formatRelativeTime(contact.last_contacted_at)
                         : <span style={{ color: 'var(--color-text-tertiary)' }}>Never</span>
                       }
+                    </td>
+
+                    <td style={{ padding: '12px 12px', color: 'var(--color-text-secondary)', fontSize: 13, whiteSpace: 'nowrap' }}>
+                      {[contact.location, contact.country].filter(Boolean).join(', ') || <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
+                    </td>
+
+                    <td style={{ padding: '12px 12px', fontSize: 13 }}>
+                      {contact.next_follow_up_date ? (
+                        <span style={{
+                          color: new Date(contact.next_follow_up_date) < new Date() ? '#dc2626' : 'var(--color-text-secondary)',
+                        }}>
+                          {new Date(contact.next_follow_up_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      ) : <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
+                    </td>
+
+                    <td style={{ padding: '12px 12px' }}>
+                      {contact.contact_frequency ? (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: 100,
+                          fontSize: 11,
+                          fontWeight: 500,
+                          background: 'var(--color-surface)',
+                          color: 'var(--color-text-secondary)',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {contact.contact_frequency}
+                        </span>
+                      ) : <span style={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}>—</span>}
+                    </td>
+
+                    <td style={{ padding: '12px 12px', color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                      {contact.introduced_by || <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
+                    </td>
+
+                    <td style={{ padding: '12px 12px', color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                      {contact.email ? (
+                        <span style={{ opacity: 0.8 }}>{contact.email}</span>
+                      ) : <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
                     </td>
 
                     <td style={{ padding: '12px 12px', textAlign: 'center' }}>
