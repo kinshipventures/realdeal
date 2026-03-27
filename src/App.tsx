@@ -3,6 +3,7 @@ import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
+import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
 import { SearchPalette } from './components/search/SearchPalette'
 import { ContactDetail } from './components/contacts/ContactDetail'
@@ -281,6 +282,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
+        <Route path="category/:id" element={<CategoryTable />} />
         <Route path="import" element={<ImportPanel />} />
       </Route>
     </Routes>
