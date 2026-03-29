@@ -21,8 +21,8 @@ created: 2026-03-29
 | Preset | default — style: default, baseColor: slate, cssVariables: true |
 | Component library | Radix UI (via shadcn) |
 | Icon library | None declared — use inline SVG or text symbols consistent with existing codebase |
-| Font (sans) | Plus Jakarta Sans — weights 400, 500, 600 |
-| Font (serif) | Fraunces — weights 700, 800 (headings, record name) |
+| Font (sans) | Plus Jakarta Sans — weights 400, 700 |
+| Font (serif) | Fraunces — weights 400, 700 (headings, record name) |
 
 *Source: components.json, tailwind.config.ts, docs/design-system.md*
 
@@ -57,16 +57,16 @@ Exceptions:
 | Role | Size | Weight | Font | Line Height | Usage |
 |------|------|--------|------|-------------|-------|
 | Record name (display) | 22px | 700 | Serif (Fraunces) | 1.2 | Name in RecordHeader — editable h1 |
-| Section heading | 16px | 600 | Serif (Fraunces) | 1.2 | Widget card titles, timeline section label |
+| Section heading | 16px | 700 | Serif (Fraunces) | 1.2 | Widget card titles, timeline section label |
 | Body / field value | 13px | 400 | Sans (Plus Jakarta Sans) | 1.5 | All editable field values, timeline entry body |
-| Label / metadata | 11px | 600 | Sans (Plus Jakarta Sans) | 1.4 | Field labels, type badge, status badge, timestamps |
+| Label / metadata | 11px | 700 | Sans (Plus Jakarta Sans) | 1.4 | Field labels, type badge, status badge, timestamps |
 
 Additional rules:
 - Letter-spacing on serif headings: `-0.02em`
 - Letter-spacing on metadata labels: `0.02em` (uppercase-style tracking)
-- Pod badge text on colored chips: 11px / weight 600 / Sans — always white `rgba(255,255,255,0.92)`
+- Pod badge text on colored chips: 11px / weight 700 / Sans — always white `rgba(255,255,255,0.92)`
 
-*Source: docs/design-system.md typography scale — condensed to 4 roles for this phase*
+*Source: docs/design-system.md typography scale — condensed to 4 roles, 2 weights for this phase*
 
 ---
 
@@ -120,7 +120,7 @@ Additional rules:
 | Component | Change |
 |-----------|--------|
 | `ContactPanel.tsx` | Slim to preview card list. Remove heavy JSX, keep contact rows, add "Open Record" button per row. |
-| `ContactCard.tsx` | New shape: Avatar + name/role + "Open" navigation button. Remove inline edit fields. |
+| `ContactCard.tsx` | New shape: Avatar + name/role + "Open Record" navigation button. Remove inline edit fields. |
 | `AddContactModal.tsx` | Superseded by CreateRecordModal. Keep file, deprecate, or refactor into new modal. |
 
 ### Reused as-is
@@ -195,7 +195,7 @@ borderLeft: 4px solid {pod.color}
 - Background: `var(--surface-panel)`, border-bottom: `1px solid rgba(0,0,0,0.07)`
 - Padding: 28px 32px 24px
 - Name editable inline on click — transforms to `<input>` with brand underline focus
-- Type badge: pill, 11px / weight 600 / `rgba(0,0,0,0.45)` text, `rgba(0,0,0,0.06)` background, border-radius 100px
+- Type badge: pill, 11px / weight 700 / `rgba(0,0,0,0.45)` text, `rgba(0,0,0,0.06)` background, border-radius 100px
 - Status badge: same pill style; Active = `rgba(37,180,57,0.12)` bg + `#1A8A2A` text; Pending = amber; Archived = `rgba(0,0,0,0.06)` bg
 
 ### CreateRecordModal — Step 1 (Type Picker)
@@ -266,7 +266,7 @@ Modal dimensions: max-width 480px, centered, surface-panel background, border-ra
 
 - All contact/company navigation goes to `/record/:id` (no slide-out)
 - Back: `← Back` button in RecordHeader, uses `navigate(-1)` (browser history)
-- ContactPanel preview cards: each row has "Open" text button right-aligned that calls `navigate('/record/:id')`
+- ContactPanel preview cards: each row has "Open Record" text button right-aligned that calls `navigate('/record/:id')`
 - SearchPalette: result selection navigates to `/record/:id`
 
 ### Conditional field rendering
@@ -307,7 +307,7 @@ Modal dimensions: max-width 480px, centered, surface-panel background, border-ra
 
 | Action | Trigger | Confirmation |
 |--------|---------|--------------|
-| Delete record | "..." overflow menu in RecordHeader | Inline confirmation: "Delete [name]? This cannot be undone." with "Delete" (red) and "Cancel" buttons. No modal. |
+| Delete record | "..." overflow menu in RecordHeader | Inline confirmation: "Delete [name]? This cannot be undone." with "Delete" (red) and "Keep Record" buttons. No modal. |
 
 ---
 
