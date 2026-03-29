@@ -8,6 +8,7 @@ import { isDemoMode, setDemoMode } from './lib/sampleData'
 import { SearchPalette } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
+import { PodDetailPage } from './components/pods/PodDetailPage'
 import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
@@ -311,6 +312,7 @@ export default function App() {
         <Route path="map" element={<OrbMap />} />
         <Route path="category/:id" element={<CategoryTable />} />
         <Route path="record/:id" element={<RecordPage />} />
+        <Route path="pod/:id" element={<PodDetailPage />} />
         <Route path="import" element={<ImportPanel />} />
       </Route>
     </Routes>
