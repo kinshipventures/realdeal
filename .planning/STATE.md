@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-29T20:31:56.986Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-29T20:37:48.973Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 11 (relationship-records) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Plan: 2 of 3
 | Phase 10-data-architecture-rebuild P01 | 8 | 1 tasks | 2 files |
 | Phase 10-data-architecture-rebuild P02 | 3 | 3 tasks | 3 files |
 | Phase 11-relationship-records P01 | 45 | 3 tasks | 14 files |
+| Phase 11-relationship-records P02 | 20 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 10-data-architecture-rebuild]: Contact keeps company text field for backward compat; company_record_id is the v2 linked field
 - [Phase 11-relationship-records]: RecordPage loads contact via getContacts().find(id) — no separate getContactById endpoint needed
 - [Phase 11-relationship-records]: ContactPanel ContactDetail overlay removed — ContactCard Open button navigates directly to /record/:id
+- [Phase 11-relationship-records]: CreateRecordModal uses two-step type-first flow — type picker then type-appropriate form
+- [Phase 11-relationship-records]: Inline company creation from Contact form typeahead avoids leaving the flow
 
 ### Architecture Notes
 
@@ -80,6 +83,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-29
-Last session: 2026-03-29T20:31:56.985Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-29T20:37:48.971Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None

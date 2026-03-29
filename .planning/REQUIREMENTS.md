@@ -17,10 +17,10 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Relationship Records
 
-- [ ] **REC-01**: User can create a Contact (person) record with fields: name, email, phone, role/title, company affiliation
-- [ ] **REC-02**: User can create a Company (organization) record with fields: name, industry, stage, listed status, ticker, domain
+- [x] **REC-01**: User can create a Contact (person) record with fields: name, email, phone, role/title, company affiliation
+- [x] **REC-02**: User can create a Company (organization) record with fields: name, industry, stage, listed status, ticker, domain
 - [x] **REC-03**: Record type controls available fields, required fields, and UI behavior
-- [ ] **REC-04**: User can associate contacts with companies (and vice versa) via linked records
+- [x] **REC-04**: User can associate contacts with companies (and vice versa) via linked records
 - [x] **REC-05**: Each record shows in one place: all pods, timeline of interactions/updates, linked pipelines/investments, linked projects, linked companies/people, important dates, and custom fields
 - [x] **REC-06**: Record layout includes central timeline + side/top widgets (data highlights, recent activity, relationship health, pod-based context)
 - [x] **REC-07**: Fields are type-specific (Contact vs Company) AND pod-aware (certain fields appear only when relevant pods are present)
@@ -44,10 +44,10 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Relationship Creation
 
-- [ ] **CRE-01**: User can create a single relationship manually with required fields enforced
+- [x] **CRE-01**: User can create a single relationship manually with required fields enforced
 - [ ] **CRE-02**: User can create multiple relationships at once
 - [ ] **CRE-03**: User can bulk import relationships via CSV with required field enforcement
-- [ ] **CRE-04**: No partial or invalid records allowed into the system
+- [x] **CRE-04**: No partial or invalid records allowed into the system
 
 ### Custom Fields
 
@@ -205,19 +205,19 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | ARCH-02 | Phase 10 | Complete |
 | ARCH-03 | Phase 10 | Complete |
 | ARCH-04 | Phase 10 | Complete |
-| REC-01 | Phase 11 | Pending |
-| REC-02 | Phase 11 | Pending |
+| REC-01 | Phase 11 | Complete |
+| REC-02 | Phase 11 | Complete |
 | REC-03 | Phase 11 | Complete |
-| REC-04 | Phase 11 | Pending |
+| REC-04 | Phase 11 | Complete |
 | REC-05 | Phase 11 | Complete |
 | REC-06 | Phase 11 | Complete |
 | REC-07 | Phase 11 | Complete |
 | REC-08 | Phase 11 | Complete |
 | REC-09 | Phase 11 | Complete |
-| CRE-01 | Phase 11 | Pending |
+| CRE-01 | Phase 11 | Complete |
 | CRE-02 | Phase 11 | Pending |
 | CRE-03 | Phase 11 | Pending |
-| CRE-04 | Phase 11 | Pending |
+| CRE-04 | Phase 11 | Complete |
 | FLD-01 | Phase 11 | Pending |
 | FLD-02 | Phase 11 | Pending |
 | FLD-03 | Phase 11 | Pending |
