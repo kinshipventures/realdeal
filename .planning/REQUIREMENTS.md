@@ -10,10 +10,10 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Core Architecture
 
-- [ ] **ARCH-01**: Relationship record is the only core object — a single unified "Relationship Record" (person or company)
-- [ ] **ARCH-02**: Pipelines, projects, and campaigns reference relationships via linked records (no copying, no new instances)
-- [ ] **ARCH-03**: No duplicate or shadow records created anywhere in the system
-- [ ] **ARCH-04**: Every record acts as the canonical hub for all its associations (pods, pipelines, projects, companies/people, emails, meetings)
+- [x] **ARCH-01**: Relationship record is the only core object — a single unified "Relationship Record" (person or company)
+- [x] **ARCH-02**: Pipelines, projects, and campaigns reference relationships via linked records (no copying, no new instances)
+- [x] **ARCH-03**: No duplicate or shadow records created anywhere in the system
+- [x] **ARCH-04**: Every record acts as the canonical hub for all its associations (pods, pipelines, projects, companies/people, emails, meetings)
 
 ### Relationship Records
 
@@ -201,10 +201,10 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARCH-01 | Phase 10 | Pending |
-| ARCH-02 | Phase 10 | Pending |
-| ARCH-03 | Phase 10 | Pending |
-| ARCH-04 | Phase 10 | Pending |
+| ARCH-01 | Phase 10 | Complete |
+| ARCH-02 | Phase 10 | Complete |
+| ARCH-03 | Phase 10 | Complete |
+| ARCH-04 | Phase 10 | Complete |
 | REC-01 | Phase 11 | Pending |
 | REC-02 | Phase 11 | Pending |
 | REC-03 | Phase 11 | Pending |
