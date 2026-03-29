@@ -361,7 +361,7 @@ async function main() {
         type: 'multipleRecordLinks',
         options: { linkedTableId: CONTACTS_TABLE_ID },
       },
-      { name: 'Notes', type: 'multipleLineText' },
+      { name: 'Notes', type: 'multilineText' },
       {
         name: 'Priority',
         type: 'singleSelect',
@@ -388,7 +388,7 @@ async function main() {
   } else {
     const result = await createTableIfMissing('Projects', [
       { name: 'Name', type: 'singleLineText' },
-      { name: 'Description', type: 'multipleLineText' },
+      { name: 'Description', type: 'multilineText' },
       { name: 'Owner', type: 'singleLineText' },
       {
         name: 'Relationships',
@@ -400,7 +400,7 @@ async function main() {
         type: 'multipleRecordLinks',
         options: { linkedTableId: opportunitiesTableId },
       },
-      { name: 'Notes', type: 'multipleLineText' },
+      { name: 'Notes', type: 'multilineText' },
     ], existingTableNames)
     projectsTableId = result.id
     console.log(`  Projects table created: ${projectsTableId}`)
