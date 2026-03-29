@@ -7,6 +7,8 @@ import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
 import { SearchPalette } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
+import { CreateRecordModal } from './components/records/CreateRecordModal'
+import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
 
@@ -29,6 +31,7 @@ function AppShell() {
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
 
@@ -228,6 +231,42 @@ function AppShell() {
           }}
         />
       )}
+
+      {/* FAB — create new record */}
+      <button
+        type="button"
+        onClick={() => setShowCreate(true)}
+        aria-label="New relationship"
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? 64 : 72,
+          right: 24,
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          background: '#25B439',
+          border: 'none',
+          color: '#fff',
+          fontSize: 24,
+          lineHeight: '48px',
+          textAlign: 'center',
+          cursor: 'pointer',
+          zIndex: 99,
+          boxShadow: '0 4px 16px rgba(37,180,57,0.35)',
+          fontFamily: 'inherit',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        +
+      </button>
+
+      <CreateRecordModal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={(_contact: Contact) => setShowCreate(false)}
+      />
 
       {/* Demo data toggle */}
       <button
