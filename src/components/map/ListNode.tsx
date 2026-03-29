@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useNavigate } from 'react-router'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
@@ -13,7 +14,8 @@ export type ListNodeData = {
   animationDelay?: string
   orbitStartX?: number
   orbitStartY?: number
-  onClick?: () => void
+  capacity?: number | null
+  memberCount?: number
 }
 export type ListNodeType = Node<ListNodeData>
 
@@ -27,7 +29,8 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, onClick } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount } = data
+  const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
@@ -65,7 +68,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         healthPercent={healthPercent}
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
-        onClick={onClick}
+        onClick={() => navigate(`/pod/${list.id}`)}
         className={loadError ? 'orb-error-flash' : undefined}
       >
         {loading ? (
@@ -98,6 +101,14 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             }}>
               {contactCount}
             </span>
+            {capacity != null && (
+              <span style={{
+                fontSize: 10, color: 'rgba(255,255,255,0.45)',
+                letterSpacing: '0.01em', userSelect: 'none',
+              }}>
+                {memberCount ?? 0}/{capacity}
+              </span>
+            )}
             {overdueCount > 0 && (
               <span style={{
                 fontSize: 9, color: 'hsla(20, 80%, 45%, 0.80)',
