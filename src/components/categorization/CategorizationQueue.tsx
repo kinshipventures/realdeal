@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getFieldConfigs } from '../../lib/fieldConfig'
@@ -205,7 +206,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
   }
 
   if (queue.length === 0) {
-    return (
+    return createPortal(
       <div style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(0,0,0,0.5)',
@@ -250,13 +251,14 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             Done
           </button>
         </div>
-      </div>
+      </div>,
+      document.body,
     )
   }
 
   const visibleCards = queue.slice(currentIndex, currentIndex + 3)
 
-  return (
+  return createPortal(
     <>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 200,
@@ -375,6 +377,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           onClose={() => setCategorizingContact(null)}
         />
       )}
-    </>
+    </>,
+    document.body,
   )
 }

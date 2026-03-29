@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { updateContact, createInteraction, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
@@ -233,7 +234,7 @@ export function CategorizationModal({
     )
   }
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 300,
       background: 'rgba(0,0,0,0.6)',
@@ -459,6 +460,7 @@ export function CategorizationModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
