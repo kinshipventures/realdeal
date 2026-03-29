@@ -375,8 +375,7 @@ export function Dashboard() {
   }
 
   return (
-    <main style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
-
+    <>
       {showQueue && (
         <CategorizationQueue
           contacts={pendingContacts}
@@ -387,6 +386,7 @@ export function Dashboard() {
           }}
         />
       )}
+    <main style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
 
       {/* Green header band */}
       <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
@@ -794,6 +794,7 @@ export function Dashboard() {
         )
       })()}
     </main>
+    </>
   )
 }
 
