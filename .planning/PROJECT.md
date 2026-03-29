@@ -2,11 +2,29 @@
 
 ## What This Is
 
-A relationship intelligence app for Moj Mahdara (CEO, Kinship Ventures) and her team. Visual pod-based network explorer with social equity scoring, enriched contact profiles, and self-service CSV import. Not a CRM — an Oura ring for relationships that helps Moj invest in her network through consistent micro-habits of care.
+A relationship-first operating system for founders and operators. Not a CRM — a single, high-context source of truth for people and companies that replaces fragmented tools (CRMs, inboxes, memory, spreadsheets). The relationship record is the only core object. Pipelines, campaigns, follow-ups, and projects attach to relationships, never replace them. The system behaves like a trusted relationship manager, not a sales tool.
 
 ## Core Value
 
-Moj opens the app daily and it changes how she manages her relationships — giving more than taking, building social equity, preventing relationship debt.
+One place where every relationship lives with full context — so founders never lose track of who matters, what happened, or what's next.
+
+## Current Milestone: v2.0 Kinship Brain MVP
+
+**Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive Kinship Brain product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
+
+**Target features:**
+- Company record type alongside people (two record types, one relationship object)
+- Pods as behavioral containers (intake fields, trigger logic, sub-pods, multi-pod with primary)
+- Pipelines — Kanban workflow boards that reference relationships (fundraising, events, outreach, partnerships)
+- Custom fields system (user-created, per record type and pod, required/optional)
+- Enhanced relationship timeline as single source of truth for all activity
+- Follow-ups as dashboard signals (needs attention / due soon / stale), not tasks
+- Gmail Chrome extension for relationship creation and logging
+- Copilot — read-only AI synthesis layer (meeting briefs, relationship summaries)
+- Cross-module navigation with zero context loss
+- Reporting with filters, saved reports, bulk actions
+- AI enrichment via web search (never overrides silently)
+- Dashboard as primary operating surface (pod nav, follow-ups, calendar reminders, active pipelines/campaigns)
 
 ## Requirements
 
@@ -46,7 +64,18 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ### Active
 
-(None — next milestone requirements TBD)
+- [ ] Relationship record as only core object (person + company types)
+- [ ] Pods as behavioral containers with intake fields, cadence, trigger logic, sub-pods
+- [ ] Pipelines — Kanban boards referencing relationships
+- [ ] Custom fields system (per record type, per pod, required/optional)
+- [ ] Relationship timeline as single source of truth
+- [ ] Follow-ups as dashboard-led signals
+- [ ] Gmail Chrome extension for relationship creation/logging
+- [ ] Copilot read-only AI synthesis layer
+- [ ] Cross-module navigation (zero context loss)
+- [ ] Reporting with filters and saved reports
+- [ ] AI enrichment via web search
+- [ ] Enhanced dashboard as primary operating surface
 
 ### Deferred (blocked on external access)
 
@@ -70,19 +99,17 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ## Context
 
-Shipped v1.2 on 2026-03-29. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
+Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Now rebuilding as the real product based on comprehensive Kinship Brain MVP spec (docs/Kinship Brain — MVP.pdf).
 
-**v1.0 (Mar 23):** Dashboard with equity scoring, visual orb map, enriched contact profiles, responsive layout, dark mode, CSV import UI, operational handoff. 5,925 LOC across 67 commits.
+**Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
-**v1.1 (Mar 25):** Global Cmd+K search, birthday reminders, Wrapped insight card, campaign management. 7,731 LOC across 46 commits (3 days).
+**v2.0 course correction:** The prototype validated the concept but used a contact-centric model. The spec demands a relationship-first architecture where the relationship record is the only core object, pipelines and campaigns reference relationships (no duplication), and pods are behavioral containers (not folders).
 
-**v1.2 (Mar 27):** Demo-ready data import, expanded V1 schema, enriched dashboard (Recent Activity, merged Upcoming, per-contact frequency), enriched contact cards, Add Contact modal. 9,481 LOC across 27 files changed (+3,645/-199).
+**Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server. Gmail Chrome extension (new for v2.0).
 
-**Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server.
+**Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin)
 
-**Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin), Gwyneth (deferred)
-
-**After March 31:** No active dev planned. Briell operates independently using HANDOFF.md. CSV import UI replaces terminal scripts. Airtable MCP server connected for future AI-assisted data management.
+**Source of truth:** docs/Kinship Brain — MVP.pdf — comprehensive product spec with philosophy, data model, feature requirements, and MVP checklist.
 
 ## Constraints
 
@@ -111,6 +138,7 @@ Shipped v1.2 on 2026-03-29. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 | Modal state in Dashboard | AddContactModal managed by Dashboard, not App, due to React Router Outlet pattern | ✓ Good (avoids routing complexity) |
 
 **Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features), v1.2 (Demo Ready)
+**Active milestone:** v2.0 (Kinship Brain MVP — full rebuild)
 
 ## Evolution
 
@@ -130,4 +158,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.2 milestone completed*
+*Last updated: 2026-03-29 after v2.0 milestone started*

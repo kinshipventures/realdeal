@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Demo Ready
-status: complete
-stopped_at: Milestone v1.2 archived
-last_updated: "2026-03-29T07:53:33.198Z"
+milestone: v2.0
+milestone_name: Kinship Brain MVP
+status: defining_requirements
+stopped_at: Milestone v2.0 started — defining requirements
+last_updated: "2026-03-29T08:00:00.000Z"
 last_activity: 2026-03-29
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -19,25 +19,28 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-03-29)
 
-**Core value:** Moj opens the app daily and it changes how she manages relationships
-**Current focus:** v1.2 archived — planning next milestone
+**Core value:** One place where every relationship lives with full context
+**Current focus:** v2.0 Kinship Brain MVP — defining requirements
 
 ## Current Position
 
-Milestone: v1.2 Demo Ready — ARCHIVED
-All phases shipped and archived (7, 8, 9)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-29 — Milestone v2.0 started
 
 ## Accumulated Context
 
 ### Decisions
 
 See PROJECT.md Key Decisions table for full log.
-Milestone-specific decisions archived to milestones/v1.2-ROADMAP.md.
+Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 
 ### Blockers/Concerns
 
-- Gmail integration blocked on Moj providing OAuth credentials — deferred
-- iMessage alerts require OpenClaw bot setup — deferred
+- Gmail Chrome extension requires Chrome extension development (new skillset)
+- Copilot AI layer requires LLM API integration
+- Gmail integration blocked on Moj providing OAuth credentials — deferred from v1.x
 
 ### Quick Tasks Completed
 
@@ -48,5 +51,5 @@ Milestone-specific decisions archived to milestones/v1.2-ROADMAP.md.
 
 Last activity: 2026-03-29
 Last session: 2026-03-29
-Stopped at: Milestone v1.2 archived
+Stopped at: Milestone v2.0 started — defining requirements
 Resume file: None
