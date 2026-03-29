@@ -81,45 +81,30 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
           }} />
         ) : (
           <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            position: 'relative', zIndex: 1, padding: '0 10px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            position: 'relative', zIndex: 1, padding: '0 12px',
+            width: '100%', height: '100%',
           }}>
             <span style={{
               fontSize: fontSize(list.name),
               fontWeight: 600,
-              color: 'rgba(255,255,255,0.92)',
+              color: 'rgba(255,255,255,0.95)',
               textAlign: 'center',
-              lineHeight: 1.3,
+              lineHeight: 1.25,
               letterSpacing: '-0.01em',
               userSelect: 'none',
             }}>
               {list.name}
             </span>
-            <span style={{
-              fontSize: 9, color: 'rgba(255,255,255,0.55)',
-              letterSpacing: '0.01em', userSelect: 'none',
-            }}>
-              {contactCount}
-            </span>
-            {capacity != null && (
-              <span style={{
-                fontSize: 10, color: 'rgba(255,255,255,0.45)',
-                letterSpacing: '0.01em', userSelect: 'none',
-              }}>
-                {memberCount ?? 0}/{capacity}
-              </span>
-            )}
             {overdueCount > 0 && (
-              <span style={{
-                fontSize: 9, color: 'hsla(20, 80%, 45%, 0.80)',
-                display: 'flex', alignItems: 'center', gap: 3, userSelect: 'none',
-              }}>
-                <span style={{
-                  width: 4, height: 4, borderRadius: '50%',
-                  background: 'hsla(20, 80%, 45%, 0.80)', flexShrink: 0,
-                }} />
-                {overdueCount}
-              </span>
+              <div style={{
+                position: 'absolute',
+                top: -2, right: 4,
+                width: 8, height: 8,
+                borderRadius: '50%',
+                background: '#FF3B30',
+                border: '1.5px solid rgba(255,255,255,0.9)',
+              }} />
             )}
           </div>
         )}

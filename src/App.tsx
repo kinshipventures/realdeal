@@ -153,8 +153,8 @@ function AppShell() {
             background: 'var(--nav-bg)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid var(--edge)',
-            boxShadow: '0 2px 12px var(--divider)',
+            border: '1px solid var(--edge-strong)',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
           }}
         >
           <button
@@ -172,7 +172,7 @@ function AppShell() {
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
               background: !isMap ? 'var(--color-brand)' : 'transparent',
-              color: !isMap ? '#ffffff' : 'var(--text-muted)',
+              color: !isMap ? '#ffffff' : 'rgba(0,0,0,0.55)',
               boxShadow: !isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
             }}
           >
@@ -192,7 +192,7 @@ function AppShell() {
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="var(--text-muted)" strokeWidth="1.5"
+              fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8"/>
@@ -214,7 +214,7 @@ function AppShell() {
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
               background: isMap ? 'var(--color-brand)' : 'transparent',
-              color: isMap ? '#ffffff' : 'var(--text-muted)',
+              color: isMap ? '#ffffff' : 'rgba(0,0,0,0.55)',
               boxShadow: isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
             }}
           >
