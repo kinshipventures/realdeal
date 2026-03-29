@@ -1,3 +1,4 @@
+import type { RelationshipType } from './types'
 import { getContacts, createContact } from './airtable'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -76,11 +77,28 @@ function delay(ms: number) {
   return new Promise(r => setTimeout(r, ms))
 }
 
+export function countInvalidRows(
+  rows: Record<string, string>[],
+  type: RelationshipType
+): number {
+  return rows.filter(row => {
+    if (type === 'Company') {
+      const name = (row['Name'] ?? row['Agency'] ?? row['Company Name'] ?? '').trim()
+      return !name
+    }
+    const name = (row['Name'] ?? row['Agency'] ?? '').trim()
+    return !name
+  }).length
+}
+
 export async function importContacts(
   rows: Record<string, string>[],
   podId: string,
-  onProgress?: (progress: ImportProgress) => void
+  onProgress?: (progress: ImportProgress) => void,
+  options?: { type?: RelationshipType; podIds?: string[] }
 ): Promise<ImportResult> {
+  const recordType: RelationshipType = options?.type ?? 'Contact'
+  const listIds: string[] = options?.podIds ?? [podId]
   const existing = await getContacts()
 
   // Build dual dedup index
@@ -98,8 +116,13 @@ export async function importContacts(
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
 
-    // Resolve name — support both 'Name' and 'Agency' columns
-    const name = (row['Name'] ?? row['Agency'] ?? '').trim()
+    // Resolve name — support different column conventions
+    const name = (
+      recordType === 'Company'
+        ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
+        : (row['Name'] ?? row['Agency'] ?? '')
+    ).trim()
+
     if (!name) {
       skipped++
       onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
@@ -120,6 +143,8 @@ export async function importContacts(
     try {
       const contact = await createContact({
         name,
+        type: recordType,
+        status: 'Active',
         email: email || null,
         phone: (row['Phone'] ?? row['Contact Info'] ?? '').trim() || null,
         company: (row['Company'] ?? '').trim() || null,
@@ -130,18 +155,24 @@ export async function importContacts(
         recommended_by: (row['Recommended By'] ?? '').trim() || null,
         specialization: (row['Specialization'] ?? '').trim() || null,
         past_clients: (row['Past Clients'] ?? '').trim() || null,
+        industry: (row['Industry'] ?? '').trim() || null,
+        domain: (row['Domain'] ?? '').trim() || null,
+        stage: (row['Stage'] ?? '').trim() || null,
+        ticker: (row['Ticker'] ?? '').trim() || null,
+        linkedin: (row['LinkedIn'] ?? row['Linkedin'] ?? '').trim() || null,
         birthday: null,
         milestones: null,
         interests: null,
         relationship_context: null,
         last_contacted_at: null,
-        list_ids: [podId],
+        list_ids: listIds,
         category_ids: [],
-        first_name: null, last_name: null, linkedin: null,
+        first_name: null, last_name: null,
         country: null, global_region: null, gender: null,
         introduced_by: null, intel_notes: null, relationship_owner: null,
         contact_frequency: null, next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
+        company_record_id: null, custom_fields: {},
       })
 
       // Update dedup index with newly created contact

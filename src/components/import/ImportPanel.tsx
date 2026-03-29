@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, invalidateContactsCache } from '../../lib/airtable'
-import { parseCSV, detectColumns, importContacts } from '../../lib/csvImport'
+import { parseCSV, detectColumns, importContacts, countInvalidRows } from '../../lib/csvImport'
 import type { Pod } from '../../lib/types'
+import type { RelationshipType } from '../../lib/types'
 import type { ImportProgress, ImportResult } from '../../lib/csvImport'
+import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 
 type ImportState = 'upload' | 'preview' | 'importing' | 'done'
 
@@ -12,7 +14,8 @@ export function ImportPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [pods, setPods] = useState<Pod[]>([])
-  const [selectedPodId, setSelectedPodId] = useState('')
+  const [selectedPodIds, setSelectedPodIds] = useState<string[]>([])
+  const [recordType, setRecordType] = useState<RelationshipType>('Contact')
   const [state, setState] = useState<ImportState>('upload')
   const [dragOver, setDragOver] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -25,11 +28,12 @@ export function ImportPanel() {
   const [result, setResult] = useState<ImportResult | null>(null)
 
   useEffect(() => {
-    getPods().then(data => {
-      setPods(data)
-      if (data.length > 0) setSelectedPodId(data[0].id)
-    })
+    getPods().then(data => setPods(data))
   }, [])
+
+  function togglePod(id: string) {
+    setSelectedPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
+  }
 
   function processFile(file: File) {
     setFileError(null)
@@ -73,11 +77,16 @@ export function ImportPanel() {
   }
 
   async function handleImport() {
-    if (!selectedPodId) return
+    if (selectedPodIds.length === 0) return
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
-    const res = await importContacts(parsedRows, selectedPodId, (p) => setProgress(p))
+    const res = await importContacts(
+      parsedRows,
+      selectedPodIds[0],
+      (p) => setProgress(p),
+      { type: recordType, podIds: selectedPodIds }
+    )
     invalidateContactsCache()
     setResult(res)
     setState('done')
@@ -91,10 +100,13 @@ export function ImportPanel() {
     setParsedRows([])
     setProgress(null)
     setResult(null)
+    setSelectedPodIds([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const columnMapping = detectColumns(parsedHeaders)
+  const invalidCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType) : 0
+  const validCount = parsedRows.length - invalidCount
 
   return (
     <div style={{
@@ -113,7 +125,7 @@ export function ImportPanel() {
           color: 'var(--color-text-primary)',
           margin: '0 0 32px',
         }}>
-          Import Contacts
+          Import Records
         </h1>
 
         {/* State 1: Upload */}
@@ -182,36 +194,70 @@ export function ImportPanel() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>{fileName}</p>
 
-            {/* Pod selector */}
+            {/* Record type selector */}
             <div>
-              <label style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--color-text-primary)',
-                marginBottom: 8,
-              }}>
-                Import into pod:
-              </label>
-              <select
-                value={selectedPodId}
-                onChange={(e) => setSelectedPodId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  fontSize: 13,
-                  borderRadius: 8,
-                  border: '1px solid var(--edge-strong)',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-primary)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {pods.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
+                Import as:
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['Contact', 'Company'] as RelationshipType[]).map(rt => (
+                  <button
+                    key={rt}
+                    type="button"
+                    onClick={() => setRecordType(rt)}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: 8,
+                      border: '1px solid',
+                      borderColor: recordType === rt ? 'var(--color-brand)' : 'var(--edge-strong)',
+                      background: recordType === rt ? 'rgba(37,180,57,0.08)' : 'transparent',
+                      color: recordType === rt ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                      fontSize: 13,
+                      fontWeight: recordType === rt ? 600 : 400,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.12s',
+                    }}
+                  >
+                    {rt === 'Contact' ? 'Contacts' : 'Companies'}
+                  </button>
                 ))}
-              </select>
+              </div>
+            </div>
+
+            {/* Pod multi-select */}
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
+                Import into pod(s): <span style={{ color: '#25B439' }}>*</span>
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {pods.map(p => {
+                  const isSelected = selectedPodIds.includes(p.id)
+                  const shift = p.color ? (POD_SHIFT_COLORS[p.color] ?? p.color) : '#25B439'
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => togglePod(p.id)}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 100,
+                        border: '1px solid',
+                        borderColor: isSelected ? (p.color ?? '#25B439') : 'rgba(0,0,0,0.1)',
+                        background: isSelected ? shift : 'transparent',
+                        color: isSelected ? '#fff' : 'rgba(0,0,0,0.55)',
+                        fontSize: 11,
+                        fontWeight: isSelected ? 700 : 400,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.12s',
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Column mapping */}
@@ -297,8 +343,14 @@ export function ImportPanel() {
                 </table>
               </div>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '8px 0 0' }}>
-                {parsedRows.length} contacts ready to import
+                {validCount} {recordType === 'Company' ? 'companies' : 'contacts'} ready to import
+                {invalidCount > 0 && ` · ${parsedRows.length} total rows`}
               </p>
+              {invalidCount > 0 && (
+                <p style={{ fontSize: 12, color: '#CC7700', margin: '4px 0 0', background: 'rgba(255,149,0,0.06)', padding: '6px 10px', borderRadius: 6 }}>
+                  {invalidCount} row{invalidCount !== 1 ? 's' : ''} will be skipped (missing required name field)
+                </p>
+              )}
             </div>
 
             {/* Actions */}
@@ -306,7 +358,7 @@ export function ImportPanel() {
               <button
                 type="button"
                 onClick={handleImport}
-                disabled={!selectedPodId}
+                disabled={selectedPodIds.length === 0 || validCount === 0}
                 style={{
                   padding: '8px 24px',
                   background: 'var(--color-brand)',
@@ -315,12 +367,12 @@ export function ImportPanel() {
                   borderRadius: 8,
                   fontSize: 13,
                   fontWeight: 500,
-                  cursor: selectedPodId ? 'pointer' : 'not-allowed',
-                  opacity: selectedPodId ? 1 : 0.5,
+                  cursor: selectedPodIds.length > 0 && validCount > 0 ? 'pointer' : 'not-allowed',
+                  opacity: selectedPodIds.length > 0 && validCount > 0 ? 1 : 0.5,
                   fontFamily: 'inherit',
                 }}
               >
-                Import
+                Import {validCount > 0 ? `${validCount} ` : ''}{recordType === 'Company' ? 'Companies' : 'Contacts'}
               </button>
               <button
                 type="button"
@@ -376,7 +428,7 @@ export function ImportPanel() {
               borderRadius: 8,
             }}>
               <p style={{ fontSize: 13, color: 'var(--color-text-primary)', margin: '0 0 4px', fontWeight: 500 }}>
-                Imported {result.imported} contacts, skipped {result.skipped} duplicates
+                Imported {result.imported} {recordType === 'Company' ? 'companies' : 'contacts'}, skipped {result.skipped} duplicates
               </p>
               {result.errors.length > 0 && (
                 <div style={{ marginTop: 8 }}>
