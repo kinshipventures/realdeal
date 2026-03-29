@@ -1,5 +1,3 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "installCommand": "npm i -g pnpm@latest && pnpm install",
-  "buildCommand": "pnpm build"
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
