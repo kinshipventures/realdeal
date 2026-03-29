@@ -36,7 +36,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 ### Incoming Contact Categorization
 
 - [ ] **CAT-01**: All unsorted contacts appear in a Pending Categorization tray before entering the CRM
-- [ ] **CAT-02**: Pending records can come from: manual entry, email parsing, CSV import, meeting note-taker summaries
+- [x] **CAT-02**: Pending records can come from: manual entry, email parsing, CSV import, meeting note-taker summaries
 - [ ] **CAT-03**: Categorization modal allows user to: select one or more pods, complete pod-specific required questions, add contextual notes, assign primary pod
 - [ ] **CAT-04**: A record cannot be added to a pod until required questions for that pod are answered
 - [ ] **CAT-05**: Save moves the record from Pending into the CRM
@@ -70,14 +70,14 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 ### Pods
 
 - [ ] **POD-01**: User can create unlimited pods to organize relationships (e.g., Maps, LPs, Talent, Service Providers)
-- [ ] **POD-02**: User can customize each pod with name, color, and description
+- [x] **POD-02**: User can customize each pod with name, color, and description
 - [ ] **POD-03**: Pods support unlimited sub-pods (e.g., Maps → Music / Tech / Fashion)
-- [ ] **POD-04**: Relationships can belong to multiple pods with one marked as Primary
+- [x] **POD-04**: Relationships can belong to multiple pods with one marked as Primary
 - [ ] **POD-05**: Each pod defines required questions that must be answered during categorization
 - [ ] **POD-06**: Pods drive: required fields, follow-up cadence/sequencing, inclusion in external lists
-- [ ] **POD-07**: Capacity-limited pods supported (e.g., Maps limited to ~150 to force curation)
-- [ ] **POD-08**: System supports workflows for "managing people up or out" of capacity-limited pods
-- [ ] **POD-09**: Individual records can override pod-level cadence
+- [x] **POD-07**: Capacity-limited pods supported (e.g., Maps limited to ~150 to force curation)
+- [x] **POD-08**: System supports workflows for "managing people up or out" of capacity-limited pods
+- [x] **POD-09**: Individual records can override pod-level cadence
 - [ ] **POD-10**: Pod bubbles UI is fixed and scalable for large pod systems
 
 ### Pipelines
@@ -225,17 +225,17 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | FLD-05 | Phase 11 | Complete |
 | FLD-06 | Phase 11 | Complete |
 | POD-01 | Phase 12 | Pending |
-| POD-02 | Phase 12 | Pending |
+| POD-02 | Phase 12 | Complete |
 | POD-03 | Phase 12 | Pending |
-| POD-04 | Phase 12 | Pending |
+| POD-04 | Phase 12 | Complete |
 | POD-05 | Phase 12 | Pending |
 | POD-06 | Phase 12 | Pending |
-| POD-07 | Phase 12 | Pending |
-| POD-08 | Phase 12 | Pending |
-| POD-09 | Phase 12 | Pending |
+| POD-07 | Phase 12 | Complete |
+| POD-08 | Phase 12 | Complete |
+| POD-09 | Phase 12 | Complete |
 | POD-10 | Phase 12 | Pending |
 | CAT-01 | Phase 12 | Pending |
-| CAT-02 | Phase 12 | Pending |
+| CAT-02 | Phase 12 | Complete |
 | CAT-03 | Phase 12 | Pending |
 | CAT-04 | Phase 12 | Pending |
 | CAT-05 | Phase 12 | Pending |
