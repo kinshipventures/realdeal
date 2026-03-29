@@ -1,4 +1,4 @@
-import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource } from './types'
+import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Pipeline, PipelineStage, Opportunity, Project, PipelineStatus, OpportunityStatus, OpportunityPriority } from './types'
 
 const DEMO_KEY = 'kinshipbrain:demo-mode'
 
@@ -39,6 +39,10 @@ const contact = (id: string, name: string, opts: {
   contact_frequency?: ContactFrequency, next_follow_up_date?: number,
   next_action?: string, kv_fund_investor?: string[], spv_investor?: string[],
   needs_review?: boolean,
+  // v2 fields
+  type?: 'Contact' | 'Company', status?: 'Active' | 'Pending' | 'Archived',
+  company_record_id?: string | null, industry?: string | null,
+  stage?: string | null, ticker?: string | null, domain?: string | null,
 }): Contact => ({
   id: `demo-contact-${id}`, name, email: opts.email ?? null,
   phone: null, company: opts.company ?? null, role: opts.role ?? null,
@@ -64,6 +68,13 @@ const contact = (id: string, name: string, opts: {
   kv_fund_investor: opts.kv_fund_investor ?? null,
   spv_investor: opts.spv_investor ?? null,
   needs_review: opts.needs_review ?? false,
+  type: opts.type ?? 'Contact',
+  status: opts.status ?? 'Active',
+  company_record_id: opts.company_record_id ?? null,
+  industry: opts.industry ?? null,
+  stage: opts.stage ?? null,
+  ticker: opts.ticker ?? null,
+  domain: opts.domain ?? null,
   created_at: '2026-01-15T00:00:00.000Z',
 })
 
@@ -141,6 +152,9 @@ export const DEMO_CONTACTS: Contact[] = [
   contact('19', 'Gwyneth Paltrow', { email: 'gp@goop.com', company: 'Goop', role: 'Founder', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 2, birthday: futureDate(28), interests: 'Wellness, clean beauty, conscious business', context: 'Close friend. Exploring collab on relationship tools for Goop ecosystem.', first_name: 'Gwyneth', last_name: 'Paltrow', linkedin: 'https://linkedin.com/in/gwynethpaltrow', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Close friend. Exploring Goop x Kinship collab on relationship wellness tools.', contact_frequency: 'Weekly', next_follow_up_date: 5, next_action: 'Share app prototype' }),
   contact('20', 'Briell Santos', { email: 'briell@kinship.vc', company: 'Kinship Ventures', role: 'Operations', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 0, context: 'Right hand. Manages Airtable, contacts, day-to-day ops.', first_name: 'Briell', last_name: 'Santos', country: 'United States', global_region: 'AMER', gender: 'Female', relationship_owner: 'Moj', intel_notes: 'Right hand for everything ops. Manages Airtable and contact data.', contact_frequency: 'Weekly' }),
   contact('21', 'Deepak Chopra', { email: 'deepak@chopra.com', company: 'Chopra Global', role: 'Founder', location: 'San Diego', podIds: ['friends'], catIds: ['mentors'], lastContacted: 40, milestones: 'New book launching Q2', interests: 'Consciousness, meditation, quantum healing', first_name: 'Deepak', last_name: 'Chopra', linkedin: 'https://linkedin.com/in/deepakchopra', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Mentor figure. New book Q2 — send congrats when it drops.', contact_frequency: 'Quarterly', next_action: 'Reconnect — been too long', needs_review: true }),
+  // Company records (type='Company')
+  contact('company_1', 'Andreessen Horowitz', { podIds: ['companies'], catIds: ['brand'], type: 'Company', status: 'Active', industry: 'Venture Capital', stage: 'Growth', domain: 'a16z.com', lastContacted: null }),
+  contact('company_2', 'Sequoia Capital', { podIds: ['companies'], catIds: ['portfolio'], type: 'Company', status: 'Active', industry: 'Venture Capital', stage: 'Growth', domain: 'sequoiacap.com', lastContacted: null }),
 ]
 
 // ── Interactions (last 30 days) ──
@@ -237,4 +251,39 @@ export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
   cc('10', '3', '8', 'confirmed'),
   cc('11', '3', '9', 'confirmed'),
   cc('12', '3', '10', 'responded'),
+]
+
+// ── Pipelines ──
+
+export const DEMO_PIPELINES: Pipeline[] = [
+  { id: 'rec_demo_pipe_1', name: 'LP Fundraising', status: 'active' as PipelineStatus, created_at: '2026-01-15T00:00:00.000Z' },
+  { id: 'rec_demo_pipe_2', name: 'Deal Flow', status: 'active' as PipelineStatus, created_at: '2026-02-01T00:00:00.000Z' },
+  { id: 'rec_demo_pipe_3', name: 'Talent Pipeline', status: 'hidden' as PipelineStatus, created_at: '2026-02-15T00:00:00.000Z' },
+]
+
+// ── Pipeline Stages ──
+
+export const DEMO_PIPELINE_STAGES: PipelineStage[] = [
+  { id: 'rec_demo_stage_1', pipeline_id: 'rec_demo_pipe_1', name: 'Identified', color: '#718096', order: 1, created_at: '2026-01-15T00:00:00.000Z' },
+  { id: 'rec_demo_stage_2', pipeline_id: 'rec_demo_pipe_1', name: 'Outreach', color: '#4299E1', order: 2, created_at: '2026-01-15T00:00:00.000Z' },
+  { id: 'rec_demo_stage_3', pipeline_id: 'rec_demo_pipe_1', name: 'In Diligence', color: '#ECC94B', order: 3, created_at: '2026-01-15T00:00:00.000Z' },
+  { id: 'rec_demo_stage_4', pipeline_id: 'rec_demo_pipe_1', name: 'Committed', color: '#48BB78', order: 4, created_at: '2026-01-15T00:00:00.000Z' },
+  { id: 'rec_demo_stage_5', pipeline_id: 'rec_demo_pipe_2', name: 'Sourced', color: '#718096', order: 1, created_at: '2026-02-01T00:00:00.000Z' },
+  { id: 'rec_demo_stage_6', pipeline_id: 'rec_demo_pipe_2', name: 'Reviewing', color: '#ECC94B', order: 2, created_at: '2026-02-01T00:00:00.000Z' },
+]
+
+// ── Opportunities ──
+
+export const DEMO_OPPORTUNITIES: Opportunity[] = [
+  { id: 'rec_demo_opp_1', name: 'Series A - Fund III', stage_id: 'rec_demo_stage_3', relationship_ids: ['demo-contact-1'], notes: 'Strong interest, awaiting IC review', priority: 'high' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-02-10T00:00:00.000Z' },
+  { id: 'rec_demo_opp_2', name: 'Co-invest Opportunity', stage_id: 'rec_demo_stage_2', relationship_ids: ['demo-contact-2'], notes: null, priority: 'medium' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-02-20T00:00:00.000Z' },
+  { id: 'rec_demo_opp_3', name: 'LP Commit - $500K', stage_id: 'rec_demo_stage_4', relationship_ids: ['demo-contact-3'], notes: 'Verbal commit received', priority: 'high' as OpportunityPriority, status: 'won' as OpportunityStatus, created_at: '2026-01-20T00:00:00.000Z' },
+  { id: 'rec_demo_opp_4', name: 'Seed Deal Review', stage_id: 'rec_demo_stage_6', relationship_ids: ['demo-contact-4', 'demo-contact-company_1'], notes: 'Intro from a16z partner', priority: 'low' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-03-01T00:00:00.000Z' },
+]
+
+// ── Projects ──
+
+export const DEMO_PROJECTS: Project[] = [
+  { id: 'rec_demo_proj_1', name: 'Fund III Launch', description: 'Fundraising campaign for Fund III', owner: 'moj_mahdara', relationship_ids: ['demo-contact-1', 'demo-contact-3'], opportunity_ids: ['rec_demo_opp_1', 'rec_demo_opp_3'], notes: null, created_at: '2026-01-10T00:00:00.000Z' },
+  { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], opportunity_ids: [], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
 ]
