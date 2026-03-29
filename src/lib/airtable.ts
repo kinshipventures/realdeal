@@ -1,5 +1,5 @@
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource } from './types'
-import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS } from './sampleData'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, RelationshipType, RelationshipStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus } from './types'
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
 
 const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
 const TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN
@@ -13,6 +13,10 @@ export const TABLES = {
   interactions: 'tblbxLX5EM09Y6xim',
   campaigns: 'tblnrhkuIQgRdnt9w',
   campaignContacts: 'tbliW2w3R21yTqTQk',
+  pipelines: 'tblf2LPzPIyfrthQa',
+  pipelineStages: 'tblt5AY61E2fnH6Jr',
+  opportunities: 'tbl7RSU66DHpTL9G9',
+  projects: 'tblbjT4J1gqJw0w2a',
 } as const
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────
@@ -70,6 +74,14 @@ interface ContactFields {
   'KV Fund Investor'?: unknown[]
   'SPV Investor'?: unknown[]
   'Needs Review'?: boolean
+  // v2 relationship fields
+  Type?: 'Contact' | 'Company'
+  Status?: 'Active' | 'Pending' | 'Archived'
+  'Company Record'?: string[]
+  Industry?: string
+  Stage?: string
+  Ticker?: string
+  Domain?: string
 }
 
 interface InteractionFields {
@@ -95,6 +107,36 @@ interface CampaignContactFields {
   Campaign?: string[]    // linked record IDs (Airtable returns array)
   Contact?: string[]     // linked record IDs
   Status?: CampaignContactStatus
+  Notes?: string
+}
+
+interface PipelineFields {
+  Name: string
+  'Pipeline Status'?: 'active' | 'hidden'
+}
+
+interface PipelineStageFields {
+  Name: string
+  Color?: string
+  Order?: number
+  Pipeline?: string[]
+}
+
+interface OpportunityFields {
+  Name: string
+  Stage?: string[]
+  Relationships?: string[]
+  Notes?: string
+  Priority?: 'high' | 'medium' | 'low'
+  'Opportunity Status'?: 'open' | 'won' | 'lost' | 'archived'
+}
+
+interface ProjectFields {
+  Name: string
+  Description?: string
+  Owner?: string
+  Relationships?: string[]
+  Opportunities?: string[]
   Notes?: string
 }
 
@@ -275,6 +317,13 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     kv_fund_investor: (r.fields['KV Fund Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
     spv_investor: (r.fields['SPV Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
     needs_review: !!r.fields['Needs Review'],
+    type: (r.fields.Type ?? 'Contact') as RelationshipType,
+    status: (r.fields.Status ?? 'Active') as RelationshipStatus,
+    company_record_id: r.fields['Company Record']?.[0] ?? null,
+    industry: r.fields.Industry ?? null,
+    stage: r.fields.Stage ?? null,
+    ticker: r.fields.Ticker ?? null,
+    domain: r.fields.Domain ?? null,
     created_at: r.createdTime,
   }
 }
@@ -798,5 +847,269 @@ export async function completeCampaign(id: string): Promise<Campaign> {
     if (idx !== -1) _campaignsCache[idx] = { ..._campaignsCache[idx], status: 'completed' }
   }
   return mapped
+}
+
+// ── Pipelines ─────────────────────────────────────────────────────────────────
+
+function mapPipeline(r: AirtableRecord<PipelineFields>): Pipeline {
+  return {
+    id: r.id,
+    name: r.fields.Name,
+    status: (r.fields['Pipeline Status'] ?? 'active') as PipelineStatus,
+    created_at: r.createdTime,
+  }
+}
+
+let _pipelinesCache: Pipeline[] | null = null
+let _pipelinesCacheTime = 0
+let _pipelinesFetch: Promise<Pipeline[]> | null = null
+
+export function invalidatePipelinesCache(): void {
+  _pipelinesCache = null
+}
+
+export function getPipelines(): Promise<Pipeline[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_PIPELINES)
+  const isExpired = !_pipelinesCache || Date.now() - _pipelinesCacheTime > CACHE_TTL
+  const isFresh = _pipelinesCache && !isExpired
+
+  if (isFresh) return Promise.resolve(_pipelinesCache!)
+
+  if (_pipelinesCache && isExpired && !_pipelinesFetch) {
+    const stale = _pipelinesCache
+    _pipelinesFetch = fetchAll<PipelineFields>(TABLES.pipelines)
+      .then(records => {
+        _pipelinesCache = records.map(mapPipeline)
+        _pipelinesCacheTime = Date.now()
+        _pipelinesFetch = null
+        return _pipelinesCache
+      })
+      .catch(err => { _pipelinesFetch = null; throw err })
+    return Promise.resolve(stale)
+  }
+
+  if (!_pipelinesFetch) {
+    _pipelinesFetch = fetchAll<PipelineFields>(TABLES.pipelines)
+      .then(records => {
+        _pipelinesCache = records.map(mapPipeline)
+        _pipelinesCacheTime = Date.now()
+        _pipelinesFetch = null
+        return _pipelinesCache
+      })
+      .catch(err => { _pipelinesFetch = null; throw err })
+  }
+  return _pipelinesFetch
+}
+
+export async function createPipeline(name: string): Promise<Pipeline> {
+  const r = await request<AirtableRecord<PipelineFields>>(TABLES.pipelines, {
+    method: 'POST',
+    body: JSON.stringify({ fields: { Name: name, 'Pipeline Status': 'active' } }),
+  })
+  _pipelinesCache = null
+  return mapPipeline(r)
+}
+
+// ── Pipeline Stages ───────────────────────────────────────────────────────────
+
+function mapPipelineStage(r: AirtableRecord<PipelineStageFields>): PipelineStage {
+  return {
+    id: r.id,
+    pipeline_id: r.fields.Pipeline?.[0] ?? '',
+    name: r.fields.Name,
+    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
+    order: r.fields.Order ?? 0,
+    created_at: r.createdTime,
+  }
+}
+
+let _pipelineStagesCache: PipelineStage[] | null = null
+let _pipelineStagesCacheTime = 0
+let _pipelineStagesFetch: Promise<PipelineStage[]> | null = null
+
+export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]> {
+  if (isDemoMode()) return Promise.resolve(pipelineId ? DEMO_PIPELINE_STAGES.filter(s => s.pipeline_id === pipelineId) : DEMO_PIPELINE_STAGES)
+  const isExpired = !_pipelineStagesCache || Date.now() - _pipelineStagesCacheTime > CACHE_TTL
+  const isFresh = _pipelineStagesCache && !isExpired
+
+  if (isFresh) {
+    return Promise.resolve(pipelineId ? _pipelineStagesCache!.filter(s => s.pipeline_id === pipelineId) : _pipelineStagesCache!)
+  }
+
+  if (_pipelineStagesCache && isExpired && !_pipelineStagesFetch) {
+    const stale = _pipelineStagesCache
+    _pipelineStagesFetch = fetchAll<PipelineStageFields>(TABLES.pipelineStages)
+      .then(records => {
+        _pipelineStagesCache = records.map(mapPipelineStage)
+        _pipelineStagesCacheTime = Date.now()
+        _pipelineStagesFetch = null
+        return _pipelineStagesCache
+      })
+      .catch(err => { _pipelineStagesFetch = null; throw err })
+    return Promise.resolve(pipelineId ? stale.filter(s => s.pipeline_id === pipelineId) : stale)
+  }
+
+  if (!_pipelineStagesFetch) {
+    _pipelineStagesFetch = fetchAll<PipelineStageFields>(TABLES.pipelineStages)
+      .then(records => {
+        _pipelineStagesCache = records.map(mapPipelineStage)
+        _pipelineStagesCacheTime = Date.now()
+        _pipelineStagesFetch = null
+        return _pipelineStagesCache
+      })
+      .catch(err => { _pipelineStagesFetch = null; throw err })
+  }
+  return _pipelineStagesFetch.then(all => pipelineId ? all.filter(s => s.pipeline_id === pipelineId) : all)
+}
+
+export async function createPipelineStage(name: string, pipelineId: string, order: number, color?: string): Promise<PipelineStage> {
+  const r = await request<AirtableRecord<PipelineStageFields>>(TABLES.pipelineStages, {
+    method: 'POST',
+    body: JSON.stringify({ fields: { Name: name, Pipeline: [pipelineId], Order: order, ...(color ? { Color: color } : {}) } }),
+  })
+  _pipelineStagesCache = null
+  return mapPipelineStage(r)
+}
+
+// ── Opportunities ─────────────────────────────────────────────────────────────
+
+function mapOpportunity(r: AirtableRecord<OpportunityFields>): Opportunity {
+  return {
+    id: r.id,
+    name: r.fields.Name,
+    stage_id: r.fields.Stage?.[0] ?? '',
+    relationship_ids: r.fields.Relationships ?? [],
+    notes: r.fields.Notes ?? null,
+    priority: (r.fields.Priority ?? null) as OpportunityPriority | null,
+    status: (r.fields['Opportunity Status'] ?? 'open') as OpportunityStatus,
+    created_at: r.createdTime,
+  }
+}
+
+let _opportunitiesCache: Opportunity[] | null = null
+let _opportunitiesCacheTime = 0
+let _opportunitiesFetch: Promise<Opportunity[]> | null = null
+
+export function invalidateOpportunitiesCache(): void {
+  _opportunitiesCache = null
+}
+
+export function getOpportunities(): Promise<Opportunity[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_OPPORTUNITIES)
+  const isExpired = !_opportunitiesCache || Date.now() - _opportunitiesCacheTime > CACHE_TTL
+  const isFresh = _opportunitiesCache && !isExpired
+
+  if (isFresh) return Promise.resolve(_opportunitiesCache!)
+
+  if (_opportunitiesCache && isExpired && !_opportunitiesFetch) {
+    const stale = _opportunitiesCache
+    _opportunitiesFetch = fetchAll<OpportunityFields>(TABLES.opportunities)
+      .then(records => {
+        _opportunitiesCache = records.map(mapOpportunity)
+        _opportunitiesCacheTime = Date.now()
+        _opportunitiesFetch = null
+        return _opportunitiesCache
+      })
+      .catch(err => { _opportunitiesFetch = null; throw err })
+    return Promise.resolve(stale)
+  }
+
+  if (!_opportunitiesFetch) {
+    _opportunitiesFetch = fetchAll<OpportunityFields>(TABLES.opportunities)
+      .then(records => {
+        _opportunitiesCache = records.map(mapOpportunity)
+        _opportunitiesCacheTime = Date.now()
+        _opportunitiesFetch = null
+        return _opportunitiesCache
+      })
+      .catch(err => { _opportunitiesFetch = null; throw err })
+  }
+  return _opportunitiesFetch
+}
+
+export async function createOpportunity(name: string, stageId: string, relationshipIds: string[]): Promise<Opportunity> {
+  const r = await request<AirtableRecord<OpportunityFields>>(TABLES.opportunities, {
+    method: 'POST',
+    body: JSON.stringify({ fields: { Name: name, Stage: [stageId], Relationships: relationshipIds, 'Opportunity Status': 'open' as OpportunityStatus } }),
+  })
+  _opportunitiesCache = null
+  return mapOpportunity(r)
+}
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+
+function mapProject(r: AirtableRecord<ProjectFields>): Project {
+  return {
+    id: r.id,
+    name: r.fields.Name,
+    description: r.fields.Description ?? null,
+    owner: r.fields.Owner ?? null,
+    relationship_ids: r.fields.Relationships ?? [],
+    opportunity_ids: r.fields.Opportunities ?? [],
+    notes: r.fields.Notes ?? null,
+    created_at: r.createdTime,
+  }
+}
+
+let _projectsCache: Project[] | null = null
+let _projectsCacheTime = 0
+let _projectsFetch: Promise<Project[]> | null = null
+
+export function invalidateProjectsCache(): void {
+  _projectsCache = null
+}
+
+export function getProjects(): Promise<Project[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_PROJECTS)
+  const isExpired = !_projectsCache || Date.now() - _projectsCacheTime > CACHE_TTL
+  const isFresh = _projectsCache && !isExpired
+
+  if (isFresh) return Promise.resolve(_projectsCache!)
+
+  if (_projectsCache && isExpired && !_projectsFetch) {
+    const stale = _projectsCache
+    _projectsFetch = fetchAll<ProjectFields>(TABLES.projects)
+      .then(records => {
+        _projectsCache = records.map(mapProject)
+        _projectsCacheTime = Date.now()
+        _projectsFetch = null
+        return _projectsCache
+      })
+      .catch(err => { _projectsFetch = null; throw err })
+    return Promise.resolve(stale)
+  }
+
+  if (!_projectsFetch) {
+    _projectsFetch = fetchAll<ProjectFields>(TABLES.projects)
+      .then(records => {
+        _projectsCache = records.map(mapProject)
+        _projectsCacheTime = Date.now()
+        _projectsFetch = null
+        return _projectsCache
+      })
+      .catch(err => { _projectsFetch = null; throw err })
+  }
+  return _projectsFetch
+}
+
+export async function createProject(name: string, description?: string): Promise<Project> {
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects, {
+    method: 'POST',
+    body: JSON.stringify({ fields: { Name: name, ...(description ? { Description: description } : {}) } }),
+  })
+  _projectsCache = null
+  return mapProject(r)
+}
+
+// ── Contact filter helpers ────────────────────────────────────────────────────
+
+export async function getContactsByType(type: RelationshipType): Promise<Contact[]> {
+  const all = await getContacts()
+  return all.filter(c => c.type === type)
+}
+
+export async function getActiveContacts(): Promise<Contact[]> {
+  const all = await getContacts()
+  return all.filter(c => c.status === 'Active')
 }
 
