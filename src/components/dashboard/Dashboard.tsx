@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache, invalidateContactsCache } from '../../lib/airtable'
+import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache, invalidateContactsCache, getPendingContacts } from '../../lib/airtable'
 import { daysOverdue, hexToRgba, formatRelativeTime } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
@@ -24,6 +24,8 @@ import { EmptyState } from '../empty/EmptyState'
 import { AddContactModal } from '../contacts/AddContactModal'
 import { WrappedCard } from './WrappedCard'
 import type { WrappedInsight } from './WrappedCard'
+import { PendingTrayWidget } from '../categorization/PendingTrayWidget'
+import { CategorizationQueue } from '../categorization/CategorizationQueue'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -76,6 +78,8 @@ export function Dashboard() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [showCampaignCreate, setShowCampaignCreate] = useState(false)
   const [showAddContact, setShowAddContact] = useState(false)
+  const [pendingContacts, setPendingContacts] = useState<Contact[]>([])
+  const [showQueue, setShowQueue] = useState(false)
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -96,6 +100,7 @@ export function Dashboard() {
       })
       .then(results => setCampaignContacts(results.flat()))
       .finally(() => setCampaignsLoading(false))
+    getPendingContacts().then(d => setPendingContacts(d))
   }, [])
 
   // Pre-index interactions by contact — O(m) single pass
@@ -372,6 +377,17 @@ export function Dashboard() {
   return (
     <main style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
 
+      {showQueue && (
+        <CategorizationQueue
+          contacts={pendingContacts}
+          onClose={() => setShowQueue(false)}
+          onCategorized={(id) => {
+            setPendingContacts(prev => prev.filter(c => c.id !== id))
+            invalidateContactsCache()
+          }}
+        />
+      )}
+
       {/* Green header band */}
       <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 24px 32px' }}>
@@ -443,6 +459,12 @@ export function Dashboard() {
             />
           </div>
         )}
+
+        {/* Pending categorization tray */}
+        <PendingTrayWidget
+          pendingContacts={pendingContacts}
+          onReview={() => setShowQueue(true)}
+        />
 
         {/* Pod health cards */}
         {!dataReady ? null : podStats.length > 0 && (
