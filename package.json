@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "seed:lists": "tsx --env-file=.env.local src/scripts/seedLists.ts",
-    "seed:csv": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts"
+    "seed:csv": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts",
+    "migrate:schema": "tsx --env-file=.env.local src/scripts/migrateSchema.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
