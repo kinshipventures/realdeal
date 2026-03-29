@@ -927,6 +927,11 @@ let _pipelineStagesCache: PipelineStage[] | null = null
 let _pipelineStagesCacheTime = 0
 let _pipelineStagesFetch: Promise<PipelineStage[]> | null = null
 
+export function invalidatePipelineStagesCache(): void {
+  _pipelineStagesCache = null
+  _pipelineStagesFetch = null
+}
+
 export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]> {
   if (isDemoMode()) return Promise.resolve(pipelineId ? DEMO_PIPELINE_STAGES.filter(s => s.pipeline_id === pipelineId) : DEMO_PIPELINE_STAGES)
   const isExpired = !_pipelineStagesCache || Date.now() - _pipelineStagesCacheTime > CACHE_TTL
