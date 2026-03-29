@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 .vercel
 .gstack/
+package-lock.json
+bun.lock
+bun.lockb
