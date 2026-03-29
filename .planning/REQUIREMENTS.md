@@ -45,18 +45,18 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 ### Relationship Creation
 
 - [x] **CRE-01**: User can create a single relationship manually with required fields enforced
-- [ ] **CRE-02**: User can create multiple relationships at once
-- [ ] **CRE-03**: User can bulk import relationships via CSV with required field enforcement
+- [x] **CRE-02**: User can create multiple relationships at once
+- [x] **CRE-03**: User can bulk import relationships via CSV with required field enforcement
 - [x] **CRE-04**: No partial or invalid records allowed into the system
 
 ### Custom Fields
 
-- [ ] **FLD-01**: User can create custom fields on relationship records
-- [ ] **FLD-02**: Fields can be assigned by record type (Contact vs Company)
-- [ ] **FLD-03**: Fields can be assigned by pod (appear only when that pod is present)
-- [ ] **FLD-04**: User can mark fields as required or optional
-- [ ] **FLD-05**: Pod "questions" are structured fields — answers live on the record, visible in pod-specific sections, usable by AI later
-- [ ] **FLD-06**: Fields are reusable for filtering and reporting
+- [x] **FLD-01**: User can create custom fields on relationship records
+- [x] **FLD-02**: Fields can be assigned by record type (Contact vs Company)
+- [x] **FLD-03**: Fields can be assigned by pod (appear only when that pod is present)
+- [x] **FLD-04**: User can mark fields as required or optional
+- [x] **FLD-05**: Pod "questions" are structured fields — answers live on the record, visible in pod-specific sections, usable by AI later
+- [x] **FLD-06**: Fields are reusable for filtering and reporting
 
 ### Relationship Timeline
 
@@ -215,15 +215,15 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | REC-08 | Phase 11 | Complete |
 | REC-09 | Phase 11 | Complete |
 | CRE-01 | Phase 11 | Complete |
-| CRE-02 | Phase 11 | Pending |
-| CRE-03 | Phase 11 | Pending |
+| CRE-02 | Phase 11 | Complete |
+| CRE-03 | Phase 11 | Complete |
 | CRE-04 | Phase 11 | Complete |
-| FLD-01 | Phase 11 | Pending |
-| FLD-02 | Phase 11 | Pending |
-| FLD-03 | Phase 11 | Pending |
-| FLD-04 | Phase 11 | Pending |
-| FLD-05 | Phase 11 | Pending |
-| FLD-06 | Phase 11 | Pending |
+| FLD-01 | Phase 11 | Complete |
+| FLD-02 | Phase 11 | Complete |
+| FLD-03 | Phase 11 | Complete |
+| FLD-04 | Phase 11 | Complete |
+| FLD-05 | Phase 11 | Complete |
+| FLD-06 | Phase 11 | Complete |
 | POD-01 | Phase 12 | Pending |
 | POD-02 | Phase 12 | Pending |
 | POD-03 | Phase 12 | Pending |

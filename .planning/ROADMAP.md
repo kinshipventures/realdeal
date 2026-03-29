@@ -46,7 +46,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 ### v2.0 Kinship Brain MVP
 
 - [x] **Phase 10: Data Architecture Rebuild** — Establish relationship-first Airtable schema as the foundation for the entire v2.0 system (completed 2026-03-29)
-- [ ] **Phase 11: Relationship Records** — Full record system with Contact + Company types, custom fields, and conditional field behavior
+- [x] **Phase 11: Relationship Records** — Full record system with Contact + Company types, custom fields, and conditional field behavior (completed 2026-03-29)
 - [ ] **Phase 12: Pods Overhaul + Categorization** — Behavioral pods with required questions and intake workflow from pending tray to CRM
 - [ ] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions
 - [ ] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards
@@ -79,11 +79,11 @@ Plans:
   3. Fields only appear when relevant — Contact-only fields hide on Company records, pod-specific fields hide until that pod is assigned
   4. User can associate a contact with a company and see the relationship reflected on both records
   5. User can define custom fields scoped to a record type or pod, mark them required or optional, and filter/report using those fields
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 11-01-PLAN.md — RecordPage UI + data layer fixes + Field Config migration + navigation wiring
 - [x] 11-02-PLAN.md — CreateRecordModal + company-contact linking (typeahead + Associated People widget)
-- [ ] 11-03-PLAN.md — Custom fields system (PodFieldsWidget + Add field) + bulk creation + CSV import
+- [x] 11-03-PLAN.md — Custom fields system (PodFieldsWidget + Add field) + bulk creation + CSV import
 
 ### Phase 12: Pods Overhaul + Categorization
 **Goal**: Pods are behavioral containers with required questions, and all new records pass through a categorization workflow before entering the CRM
@@ -160,7 +160,7 @@ Plans:
 | 8. UI Enrichment | v1.2 | 2/2 | Complete | 2026-03-26 |
 | 9. Add Contact | v1.2 | 1/1 | Complete | 2026-03-26 |
 | 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 11. Relationship Records | v2.0 | 2/3 | In Progress|  |
+| 11. Relationship Records | v2.0 | 3/3 | Complete   | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 0/? | Not started | — |
 | 13. Timeline + Records List | v2.0 | 0/? | Not started | — |
 | 14. Pipelines | v2.0 | 0/? | Not started | — |
