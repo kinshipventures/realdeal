@@ -155,7 +155,7 @@ Plans:
 | 7. Data & Schema | v1.2 | 3/3 | Complete | 2026-03-26 |
 | 8. UI Enrichment | v1.2 | 2/2 | Complete | 2026-03-26 |
 | 9. Add Contact | v1.2 | 1/1 | Complete | 2026-03-26 |
-| 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete   | 2026-03-29 |
+| 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 11. Relationship Records | v2.0 | 0/? | Not started | — |
 | 12. Pods Overhaul + Categorization | v2.0 | 0/? | Not started | — |
 | 13. Timeline + Records List | v2.0 | 0/? | Not started | — |
