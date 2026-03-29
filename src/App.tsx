@@ -171,9 +171,9 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: !isMap ? 'var(--color-brand)' : 'transparent',
-              color: !isMap ? '#ffffff' : 'rgba(0,0,0,0.55)',
-              boxShadow: !isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
+              background: !isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: !isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: !isMap ? 600 : 500,
             }}
           >
             Pulse
@@ -213,9 +213,9 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isMap ? 'var(--color-brand)' : 'transparent',
-              color: isMap ? '#ffffff' : 'rgba(0,0,0,0.55)',
-              boxShadow: isMap ? '0 1px 4px rgba(37,180,57,0.30)' : 'none',
+              background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isMap ? 600 : 500,
             }}
           >
             Map
