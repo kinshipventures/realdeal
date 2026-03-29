@@ -69,16 +69,16 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Pods
 
-- [ ] **POD-01**: User can create unlimited pods to organize relationships (e.g., Maps, LPs, Talent, Service Providers)
+- [x] **POD-01**: User can create unlimited pods to organize relationships (e.g., Maps, LPs, Talent, Service Providers)
 - [x] **POD-02**: User can customize each pod with name, color, and description
-- [ ] **POD-03**: Pods support unlimited sub-pods (e.g., Maps → Music / Tech / Fashion)
+- [x] **POD-03**: Pods support unlimited sub-pods (e.g., Maps → Music / Tech / Fashion)
 - [x] **POD-04**: Relationships can belong to multiple pods with one marked as Primary
 - [x] **POD-05**: Each pod defines required questions that must be answered during categorization
 - [x] **POD-06**: Pods drive: required fields, follow-up cadence/sequencing, inclusion in external lists
 - [x] **POD-07**: Capacity-limited pods supported (e.g., Maps limited to ~150 to force curation)
 - [x] **POD-08**: System supports workflows for "managing people up or out" of capacity-limited pods
 - [x] **POD-09**: Individual records can override pod-level cadence
-- [ ] **POD-10**: Pod bubbles UI is fixed and scalable for large pod systems
+- [x] **POD-10**: Pod bubbles UI is fixed and scalable for large pod systems
 
 ### Pipelines
 
@@ -224,16 +224,16 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | FLD-04 | Phase 11 | Complete |
 | FLD-05 | Phase 11 | Complete |
 | FLD-06 | Phase 11 | Complete |
-| POD-01 | Phase 12 | Pending |
+| POD-01 | Phase 12 | Complete |
 | POD-02 | Phase 12 | Complete |
-| POD-03 | Phase 12 | Pending |
+| POD-03 | Phase 12 | Complete |
 | POD-04 | Phase 12 | Complete |
 | POD-05 | Phase 12 | Complete |
 | POD-06 | Phase 12 | Complete |
 | POD-07 | Phase 12 | Complete |
 | POD-08 | Phase 12 | Complete |
 | POD-09 | Phase 12 | Complete |
-| POD-10 | Phase 12 | Pending |
+| POD-10 | Phase 12 | Complete |
 | CAT-01 | Phase 12 | Complete |
 | CAT-02 | Phase 12 | Complete |
 | CAT-03 | Phase 12 | Complete |
