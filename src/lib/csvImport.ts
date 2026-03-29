@@ -144,7 +144,7 @@ export async function importContacts(
       const contact = await createContact({
         name,
         type: recordType,
-        status: 'Active',
+        status: 'Pending',
         email: email || null,
         phone: (row['Phone'] ?? row['Contact Info'] ?? '').trim() || null,
         company: (row['Company'] ?? '').trim() || null,
@@ -173,6 +173,7 @@ export async function importContacts(
         contact_frequency: null, next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
         company_record_id: null, custom_fields: {},
+        primary_list_id: null, cadence_override: null,
       })
 
       // Update dedup index with newly created contact

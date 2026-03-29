@@ -27,6 +27,7 @@ const FREQUENCY_DAYS: Record<ContactFrequency, number> = {
 }
 
 export function contactCadenceDays(contact: Contact, podCadence: Cadence | null): number {
+  if (contact.cadence_override) return CADENCE_DAYS[contact.cadence_override]
   if (contact.contact_frequency) return FREQUENCY_DAYS[contact.contact_frequency]
   return CADENCE_DAYS[podCadence ?? 'monthly']
 }
