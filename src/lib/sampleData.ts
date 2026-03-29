@@ -11,8 +11,8 @@ export function setDemoMode(on: boolean) {
 }
 
 // Stable IDs so relationships stay consistent
-const pod = (id: string, name: string, color: HexColor, priority: boolean, cadence: 'weekly' | 'biweekly' | 'monthly' | 'quarterly'): Pod => ({
-  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description: null, capacity: null, created_at: '2026-01-15T00:00:00.000Z',
+const pod = (id: string, name: string, color: HexColor, priority: boolean, cadence: 'weekly' | 'biweekly' | 'monthly' | 'quarterly', description: string | null = null, capacity: number | null = null): Pod => ({
+  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description, capacity, created_at: '2026-01-15T00:00:00.000Z',
 })
 
 const cat = (id: string, podId: string, name: string, color: HexColor | null = null): Category => ({
@@ -43,6 +43,7 @@ const contact = (id: string, name: string, opts: {
   type?: 'Contact' | 'Company', status?: 'Active' | 'Pending' | 'Archived',
   company_record_id?: string | null, industry?: string | null,
   stage?: string | null, ticker?: string | null, domain?: string | null,
+  primary_pod?: string, cadence_override?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly',
 }): Contact => ({
   id: `demo-contact-${id}`, name, email: opts.email ?? null,
   phone: null, company: opts.company ?? null, role: opts.role ?? null,
@@ -76,8 +77,8 @@ const contact = (id: string, name: string, opts: {
   ticker: opts.ticker ?? null,
   domain: opts.domain ?? null,
   custom_fields: {},
-  primary_list_id: null,
-  cadence_override: null,
+  primary_list_id: opts.primary_pod ? `demo-pod-${opts.primary_pod}` : null,
+  cadence_override: opts.cadence_override ?? null,
   created_at: '2026-01-15T00:00:00.000Z',
 })
 
@@ -96,12 +97,12 @@ const ix = (id: string, contactId: string, type: InteractionType, daysBack: numb
 // ── Pods ──
 
 export const DEMO_PODS: Pod[] = [
-  pod('maps', 'MAPS', '#E53935', true, 'biweekly'),
-  pod('lps', 'LPs', '#FF6B8A', true, 'monthly'),
-  pod('companies', 'Companies', '#7E57C2', false, 'monthly'),
-  pod('talent', 'Talent & Influencers', '#25B439', false, 'quarterly'),
-  pod('service', 'Services for Founders', '#F5A623', false, 'monthly'),
-  pod('friends', 'Family & Friends', '#DAA520', true, 'biweekly'),
+  pod('maps', 'MAPS', '#E53935', true, 'biweekly', 'Key investors, partners, and strategic relationships across major markets', 25),
+  pod('lps', 'LPs', '#FF6B8A', true, 'monthly', 'Limited partners — current and prospective Fund III investors', 15),
+  pod('companies', 'Companies', '#7E57C2', false, 'monthly', 'Brand partners, portfolio companies, and corporate relationships'),
+  pod('talent', 'Talent & Influencers', '#25B439', false, 'quarterly', 'Creator partners, talent managers, and influencer relationships', 20),
+  pod('service', 'Services for Founders', '#F5A623', false, 'monthly', 'Design, legal, PR, and dev partners who support portfolio companies'),
+  pod('friends', 'Family & Friends', '#DAA520', true, 'biweekly', 'Inner circle, mentors, and close personal relationships', 10),
 ]
 
 // ── Categories ──
@@ -127,7 +128,7 @@ export const DEMO_CATEGORIES: Category[] = [
 
 export const DEMO_CONTACTS: Contact[] = [
   // MAPS — Silicon Valley
-  contact('1', 'Sarah Chen', { email: 'sarah@acme.vc', company: 'Acme Ventures', role: 'Partner', location: 'San Francisco', podIds: ['maps'], catIds: ['sv'], lastContacted: 3, birthday: futureDate(12), milestones: 'Led Series B for Notion. Keynote at Disrupt 2025.', interests: 'AI infrastructure, climbing, contemporary art', context: 'Met at Founders Fund dinner. Strong connector — introduced us to 3 LPs.', first_name: 'Sarah', last_name: 'Chen', linkedin: 'https://linkedin.com/in/sarahchen', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Peter Thiel', intel_notes: 'Strong LP connector. Has co-invested with Sequoia twice. Interested in consumer social.', contact_frequency: 'Weekly', next_follow_up_date: 7, next_action: 'Send Fund III deck', kv_fund_investor: ['Fund I', 'Fund II'] }),
+  contact('1', 'Sarah Chen', { email: 'sarah@acme.vc', company: 'Acme Ventures', role: 'Partner', location: 'San Francisco', podIds: ['maps'], catIds: ['sv'], lastContacted: 3, birthday: futureDate(12), milestones: 'Led Series B for Notion. Keynote at Disrupt 2025.', interests: 'AI infrastructure, climbing, contemporary art', context: 'Met at Founders Fund dinner. Strong connector — introduced us to 3 LPs.', first_name: 'Sarah', last_name: 'Chen', linkedin: 'https://linkedin.com/in/sarahchen', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Peter Thiel', intel_notes: 'Strong LP connector. Has co-invested with Sequoia twice. Interested in consumer social.', contact_frequency: 'Weekly', next_follow_up_date: 7, next_action: 'Send Fund III deck', kv_fund_investor: ['Fund I', 'Fund II'], primary_pod: 'maps' }),
   contact('2', 'Marcus Rivera', { email: 'marcus@kinship.vc', company: 'Kinship Ventures', role: 'Principal', location: 'Palo Alto', podIds: ['maps'], catIds: ['sv'], lastContacted: 1, interests: 'DeFi, running, sci-fi novels', first_name: 'Marcus', last_name: 'Rivera', country: 'United States', global_region: 'AMER', gender: 'Male', relationship_owner: 'Moj', contact_frequency: 'Weekly' }),
   contact('3', 'Priya Patel', { email: 'priya@techstars.com', company: 'Techstars', role: 'MD', location: 'San Jose', podIds: ['maps'], catIds: ['sv'], lastContacted: 18, context: 'Old friend from Stanford. Always has deal flow.', first_name: 'Priya', last_name: 'Patel', linkedin: 'https://linkedin.com/in/priyapatel', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Stanford network', intel_notes: 'Deep in hardware + climate. Good pulse on early seed.', contact_frequency: 'Monthly', next_follow_up_date: 3, next_action: 'Catch up call — overdue' }),
   // MAPS — New York
@@ -136,7 +137,7 @@ export const DEMO_CONTACTS: Contact[] = [
   // MAPS — LA
   contact('6', 'Jordan Hayes', { email: 'jordan@a16z.com', company: 'Andreessen Horowitz', role: 'Partner', location: 'Los Angeles', podIds: ['maps'], catIds: ['la'], lastContacted: 45, context: 'Haven\'t connected since the retreat. Need to re-engage.', first_name: 'Jordan', last_name: 'Hayes', linkedin: 'https://linkedin.com/in/jordanhayes', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Went cold after the retreat. Was warm on consumer social thesis. Worth re-engaging.', contact_frequency: 'Monthly', next_action: 'Re-engage — send a relevant deal or article', needs_review: true }),
   // LPs
-  contact('7', 'Emily Tran', { email: 'emily@tran.family', company: 'Tran Family Office', role: 'CIO', location: 'San Francisco', podIds: ['lps'], catIds: ['family-office'], lastContacted: 4, milestones: 'Committed $2M to Fund II', interests: 'Impact investing, wine, tennis', first_name: 'Emily', last_name: 'Tran', linkedin: 'https://linkedin.com/in/emilytran', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Committed $2M to Fund II. Strong advocate. Interested in impact metrics.', contact_frequency: 'Monthly', next_follow_up_date: 14, next_action: 'Send Q1 LP update', kv_fund_investor: ['Fund II'], spv_investor: ['SPV-Glossier'] }),
+  contact('7', 'Emily Tran', { email: 'emily@tran.family', company: 'Tran Family Office', role: 'CIO', location: 'San Francisco', podIds: ['lps'], catIds: ['family-office'], lastContacted: 4, milestones: 'Committed $2M to Fund II', interests: 'Impact investing, wine, tennis', first_name: 'Emily', last_name: 'Tran', linkedin: 'https://linkedin.com/in/emilytran', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Committed $2M to Fund II. Strong advocate. Interested in impact metrics.', contact_frequency: 'Monthly', next_follow_up_date: 14, next_action: 'Send Q1 LP update', kv_fund_investor: ['Fund II'], spv_investor: ['SPV-Glossier'], primary_pod: 'lps', cadence_override: 'biweekly' }),
   contact('8', 'Robert Okafor', { email: 'robert@okafor.capital', company: 'Okafor Capital', role: 'Founder', location: 'Chicago', podIds: ['lps'], catIds: ['angels'], lastContacted: 35, context: 'Warm but slow mover. Needs quarterly check-ins.', first_name: 'Robert', last_name: 'Okafor', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Slow decision maker but loyal once committed. Prefers quarterly cadence.', contact_frequency: 'Quarterly', next_follow_up_date: 5, next_action: 'Quarterly check-in call', kv_fund_investor: ['Fund I'] }),
   contact('9', 'Aisha Benali', { email: 'aisha@benali.vc', company: 'Benali Ventures', role: 'GP', location: 'Miami', podIds: ['lps'], catIds: ['series-a'], lastContacted: 12, birthday: futureDate(22), first_name: 'Aisha', last_name: 'Benali', linkedin: 'https://linkedin.com/in/aishabenali', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Active GP in Miami. Strong LATAM network. Potential co-invest partner.', contact_frequency: 'Monthly', kv_fund_investor: ['Fund II'] }),
   contact('10', 'James Whitfield', { email: 'james@whitfield.fam', company: 'Whitfield Trust', role: 'Trustee', location: 'Boston', podIds: ['lps'], catIds: ['family-office'], lastContacted: null, first_name: 'James', last_name: 'Whitfield', country: 'United States', global_region: 'AMER', gender: 'Male', introduced_by: 'Sarah Chen', intel_notes: 'Intro from Sarah. Never contacted — need to reach out.', contact_frequency: 'Quarterly', next_action: 'Initial outreach email', needs_review: true }),
@@ -148,16 +149,23 @@ export const DEMO_CONTACTS: Contact[] = [
   contact('14', 'Zara Mohammed', { email: 'zara@instagram.com', company: 'Instagram', role: 'Creator Partnerships', location: 'Los Angeles', podIds: ['talent'], lastContacted: 9, interests: 'Sustainable fashion, photography', first_name: 'Zara', last_name: 'Mohammed', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Key connector for influencer campaigns. Great taste in creators.', contact_frequency: 'Monthly' }),
   contact('15', 'Kai Nakamura', { email: 'kai@youtube.com', company: 'YouTube', role: 'Talent Manager', location: 'Los Angeles', podIds: ['talent'], lastContacted: 22, first_name: 'Kai', last_name: 'Nakamura', country: 'Japan', global_region: 'APAC', gender: 'Male', intel_notes: 'Based in LA but strong APAC creator network.', contact_frequency: 'Quarterly' }),
   // Services
-  contact('16', 'Olivia Grant', { email: 'olivia@pentagram.com', company: 'Pentagram', role: 'Partner', location: 'New York', podIds: ['service'], catIds: ['design'], lastContacted: 7, context: 'Redesigned our deck. Incredible eye.', first_name: 'Olivia', last_name: 'Grant', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Redesigned Fund II deck. Best design partner we have.', contact_frequency: 'As Needed' }),
+  contact('16', 'Olivia Grant', { email: 'olivia@pentagram.com', company: 'Pentagram', role: 'Partner', location: 'New York', podIds: ['service'], catIds: ['design'], lastContacted: 7, context: 'Redesigned our deck. Incredible eye.', first_name: 'Olivia', last_name: 'Grant', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Redesigned Fund II deck. Best design partner we have.', contact_frequency: 'As Needed', primary_pod: 'service' }),
   contact('17', 'Tom Bradley', { email: 'tom@launchsquad.com', company: 'LaunchSquad', role: 'MD', location: 'San Francisco', podIds: ['service'], catIds: ['pr'], lastContacted: 20, first_name: 'Tom', last_name: 'Bradley', country: 'United States', global_region: 'AMER', gender: 'Male', contact_frequency: 'As Needed' }),
   contact('18', 'Mia Chen', { email: 'mia@cooley.com', company: 'Cooley LLP', role: 'Partner', location: 'Palo Alto', podIds: ['service'], catIds: ['legal'], lastContacted: 30, milestones: 'Handled our Series A docs', first_name: 'Mia', last_name: 'Chen', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Go-to legal counsel. Handled Series A + Fund I docs.', contact_frequency: 'As Needed' }),
   // Friends
-  contact('19', 'Gwyneth Paltrow', { email: 'gp@goop.com', company: 'Goop', role: 'Founder', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 2, birthday: futureDate(28), interests: 'Wellness, clean beauty, conscious business', context: 'Close friend. Exploring collab on relationship tools for Goop ecosystem.', first_name: 'Gwyneth', last_name: 'Paltrow', linkedin: 'https://linkedin.com/in/gwynethpaltrow', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Close friend. Exploring Goop x Kinship collab on relationship wellness tools.', contact_frequency: 'Weekly', next_follow_up_date: 5, next_action: 'Share app prototype' }),
+  contact('19', 'Gwyneth Paltrow', { email: 'gp@goop.com', company: 'Goop', role: 'Founder', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 2, birthday: futureDate(28), interests: 'Wellness, clean beauty, conscious business', context: 'Close friend. Exploring collab on relationship tools for Goop ecosystem.', first_name: 'Gwyneth', last_name: 'Paltrow', linkedin: 'https://linkedin.com/in/gwynethpaltrow', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Close friend. Exploring Goop x Kinship collab on relationship wellness tools.', contact_frequency: 'Weekly', next_follow_up_date: 5, next_action: 'Share app prototype', primary_pod: 'friends', cadence_override: 'weekly' }),
   contact('20', 'Briell Santos', { email: 'briell@kinship.vc', company: 'Kinship Ventures', role: 'Operations', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 0, context: 'Right hand. Manages Airtable, contacts, day-to-day ops.', first_name: 'Briell', last_name: 'Santos', country: 'United States', global_region: 'AMER', gender: 'Female', relationship_owner: 'Moj', intel_notes: 'Right hand for everything ops. Manages Airtable and contact data.', contact_frequency: 'Weekly' }),
   contact('21', 'Deepak Chopra', { email: 'deepak@chopra.com', company: 'Chopra Global', role: 'Founder', location: 'San Diego', podIds: ['friends'], catIds: ['mentors'], lastContacted: 40, milestones: 'New book launching Q2', interests: 'Consciousness, meditation, quantum healing', first_name: 'Deepak', last_name: 'Chopra', linkedin: 'https://linkedin.com/in/deepakchopra', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Mentor figure. New book Q2 — send congrats when it drops.', contact_frequency: 'Quarterly', next_action: 'Reconnect — been too long', needs_review: true }),
   // Company records (type='Company')
   contact('company_1', 'Andreessen Horowitz', { podIds: ['companies'], catIds: ['brand'], type: 'Company', status: 'Active', industry: 'Venture Capital', stage: 'Growth', domain: 'a16z.com', lastContacted: null }),
   contact('company_2', 'Sequoia Capital', { podIds: ['companies'], catIds: ['portfolio'], type: 'Company', status: 'Active', industry: 'Venture Capital', stage: 'Growth', domain: 'sequoiacap.com', lastContacted: null }),
+  // Pending contacts — uncategorized, show in pending tray + categorization queue
+  contact('pending_1', 'Rina Takahashi', { email: 'rina@softbank.com', company: 'SoftBank Vision Fund', role: 'Associate', location: 'Tokyo', podIds: [], status: 'Pending', first_name: 'Rina', last_name: 'Takahashi', country: 'Japan', global_region: 'APAC', gender: 'Female', lastContacted: null }),
+  contact('pending_2', 'Marco Bellini', { email: 'marco@lvmh.com', company: 'LVMH', role: 'VP Digital Strategy', location: 'Milan', podIds: [], status: 'Pending', first_name: 'Marco', last_name: 'Bellini', country: 'Italy', global_region: 'EU', gender: 'Male', lastContacted: null, intel_notes: 'Met at Milan Design Week. Interested in luxury x tech.' }),
+  contact('pending_3', 'Amara Osei', { email: 'amara@stripe.com', company: 'Stripe', role: 'Head of Partnerships', location: 'San Francisco', podIds: [], status: 'Pending', first_name: 'Amara', last_name: 'Osei', country: 'United States', global_region: 'AMER', gender: 'Female', lastContacted: null }),
+  contact('pending_4', 'Yuki Tanaka', { email: 'yuki@uniqlo.com', company: 'Uniqlo', role: 'Innovation Lead', location: 'Tokyo', podIds: [], status: 'Pending', first_name: 'Yuki', last_name: 'Tanaka', country: 'Japan', global_region: 'APAC', gender: 'Female', lastContacted: null, context: 'Warm intro from Kai — interested in creator economy.' }),
+  contact('pending_5', 'Omar Hassan', { email: 'omar@checkout.com', company: 'Checkout.com', role: 'CTO', location: 'London', podIds: [], status: 'Pending', first_name: 'Omar', last_name: 'Hassan', country: 'United Kingdom', global_region: 'EU', gender: 'Male', lastContacted: null }),
+  contact('pending_6', 'Sofia Reyes', { email: 'sofia@kavak.com', company: 'Kavak', role: 'Co-founder', location: 'Mexico City', podIds: [], status: 'Pending', first_name: 'Sofia', last_name: 'Reyes', country: 'Mexico', global_region: 'LATAM', gender: 'Female', lastContacted: null, intel_notes: 'LATAM unicorn founder. Potential LP or portfolio connection.' }),
 ]
 
 // ── Interactions (last 30 days) ──
