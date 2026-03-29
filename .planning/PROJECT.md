@@ -13,18 +13,18 @@ One place where every relationship lives with full context — so founders never
 **Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive Kinship Brain product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
 
 **Target features:**
-- Company record type alongside people (two record types, one relationship object)
-- Pods as behavioral containers (intake fields, trigger logic, sub-pods, multi-pod with primary)
-- Pipelines — Kanban workflow boards that reference relationships (fundraising, events, outreach, partnerships)
-- Custom fields system (user-created, per record type and pod, required/optional)
+- Company record type alongside contacts (two record types, one unified Relationship Record)
+- Record layout with central timeline + side widgets (highlights, health, pod context)
+- Records List with advanced filtering and bulk actions
+- Incoming Contact Categorization workflow (Pending tray → categorization modal → CRM)
+- Pods as behavioral containers (required questions, cadence, sub-pods, multi-pod, capacity limits)
+- Custom fields system (user-created, per record type and pod, required/optional, conditional)
+- Pipelines — Kanban boards with Relationship Opportunity cards (own fields, sync to timeline)
+- Projects module — initiative containers distinct from pipelines (context/scope/collection)
 - Enhanced relationship timeline as single source of truth for all activity
-- Follow-ups as dashboard signals (needs attention / due soon / stale), not tasks
-- Gmail Chrome extension for relationship creation and logging
-- Copilot — read-only AI synthesis layer (meeting briefs, relationship summaries)
+- Nurturing & Maintenance Hub (important dates, stale relationships, maintenance queue, suggestions)
+- Modular dashboard (configurable widgets, multiple views, show/hide/reorder)
 - Cross-module navigation with zero context loss
-- Reporting with filters, saved reports, bulk actions
-- AI enrichment via web search (never overrides silently)
-- Dashboard as primary operating surface (pod nav, follow-ups, calendar reminders, active pipelines/campaigns)
 
 ## Requirements
 
@@ -109,7 +109,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Now rebuilding as the real pr
 
 **Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin)
 
-**Source of truth:** docs/Kinship Brain — MVP.pdf — comprehensive product spec with philosophy, data model, feature requirements, and MVP checklist.
+**Source of truth:** docs/Kinship Brain — Initial Outline (Lovable).pdf — comprehensive system structure with 12 modules (Appendix A). Secondary reference: docs/Kinship Brain — MVP (Moj Mar 28).pdf for philosophy and MVP checklist.
 
 ## Constraints
 
