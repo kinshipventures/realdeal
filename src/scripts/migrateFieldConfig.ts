@@ -73,7 +73,7 @@ async function main() {
           type: 'multipleRecordLinks',
           options: { linkedTableId: LISTS_TABLE_ID },
         },
-        { name: 'Required', type: 'checkbox' },
+        { name: 'Required', type: 'checkbox', options: { icon: 'check', color: 'greenBright' } },
         { name: 'Display Order', type: 'number', options: { precision: 0 } },
       ],
     }),

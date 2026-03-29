@@ -5,7 +5,6 @@ import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { Contact, Pod, Cadence } from '../../lib/types'
 import { formatRelativeTime } from '../../lib/utils'
 import { Avatar } from '../ui'
-import { ContactDetail } from './ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
@@ -33,7 +32,6 @@ export function CategoryTable() {
   const [podName, setPodName] = useState('')
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [loading, setLoading] = useState(true)
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir }>({ col: 'equity', dir: 'desc' })
   const [filterOverdue, setFilterOverdue] = useState(false)
@@ -343,7 +341,7 @@ export function CategoryTable() {
                 return (
                   <tr
                     key={contact.id}
-                    onClick={() => setSelectedContact(contact)}
+                    onClick={() => navigate(`/record/${contact.id}`)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
@@ -456,15 +454,6 @@ export function CategoryTable() {
         </div>
       )}
 
-      {selectedContact && (
-        <ContactDetail
-          contact={selectedContact}
-          categoryId={id!}
-          onClose={() => setSelectedContact(null)}
-          onSaved={updated => setSelectedContact(updated)}
-          onDeleted={() => setSelectedContact(null)}
-        />
-      )}
     </div>
   )
 }

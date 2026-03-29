@@ -17,7 +17,7 @@ export const TABLES = {
   pipelineStages: 'tblt5AY61E2fnH6Jr',
   opportunities: 'tbl7RSU66DHpTL9G9',
   projects: 'tblbjT4J1gqJw0w2a',
-  fieldConfig: '', // Set after running pnpm migrate:fieldconfig
+  fieldConfig: 'tblzxWJVXgxb8n2Sn',
 } as const
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────

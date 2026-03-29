@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
   ReactFlow,
   Background,
@@ -23,7 +24,6 @@ import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { SatelliteNodeComponent } from './SatelliteNode'
-import { ContactPanel } from '../contacts/ContactPanel'
 import { getPositions, savePosition, clearPositionsForIds, clearAllPositions } from '../../hooks/useNodePositions'
 
 const LIST_SIZE = 96
@@ -209,6 +209,7 @@ function loadViewport(): Viewport | null {
 }
 
 export function OrbMap() {
+  const navigate = useNavigate()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
@@ -221,7 +222,6 @@ export function OrbMap() {
 
   const [view, setView] = useState<'lists' | 'categories'>('lists')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [initError, setInitError] = useState(false)
   const [podsLoaded, setPodsLoaded] = useState(false)
   const [podsCount, setPodsCount] = useState(0)
@@ -254,7 +254,7 @@ export function OrbMap() {
     selectedPodRef.current = pod
     setSelectedPod(pod)
     setView('categories')
-    setSelectedCategoryId(null)
+
 
     setNodes(prev => prev.map(n =>
       n.id === pod.id ? { ...n, data: { ...n.data, loading: true } } : n
@@ -305,7 +305,7 @@ export function OrbMap() {
           listColor: pod.color,
           contactCount: countsByCategory[cat.id] ?? 0,
           animationDelay: `${i * 0.03}s`,
-          onClick: () => setSelectedCategoryId(cat.id),
+          onClick: () => navigate(`/category/${cat.id}`),
         },
       }))
 
@@ -361,7 +361,7 @@ export function OrbMap() {
     selectedPodRef.current = null
     setView('lists')
     setSelectedPod(null)
-    setSelectedCategoryId(null)
+
     const savedPositions = getPositions()
     const { nodes: homeNodes, activeRings: rings } = buildHomeNodes(podsRef.current, countsByPodRef.current, equityByPodRef.current, categoriesByPodRef.current, savedPositions, handlePodClick)
     setNodes(homeNodes)
@@ -461,8 +461,6 @@ export function OrbMap() {
     savePosition(node.id, node.position.x, node.position.y)
   }, [])
 
-  const selectedCategoryNode = nodes.find(n => n.id === selectedCategoryId)
-  const selectedCategory = selectedCategoryNode?.data.category as Category | undefined
 
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
   const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
@@ -651,13 +649,6 @@ export function OrbMap() {
         />
       </ReactFlow>
 
-      {selectedCategoryId && selectedCategory && (
-        <ContactPanel
-          categoryId={selectedCategoryId}
-          categoryName={selectedCategory.name}
-          onClose={() => setSelectedCategoryId(null)}
-        />
-      )}
     </div>
   )
 }
