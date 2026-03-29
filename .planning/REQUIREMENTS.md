@@ -19,13 +19,13 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 - [ ] **REC-01**: User can create a Contact (person) record with fields: name, email, phone, role/title, company affiliation
 - [ ] **REC-02**: User can create a Company (organization) record with fields: name, industry, stage, listed status, ticker, domain
-- [ ] **REC-03**: Record type controls available fields, required fields, and UI behavior
+- [x] **REC-03**: Record type controls available fields, required fields, and UI behavior
 - [ ] **REC-04**: User can associate contacts with companies (and vice versa) via linked records
-- [ ] **REC-05**: Each record shows in one place: all pods, timeline of interactions/updates, linked pipelines/investments, linked projects, linked companies/people, important dates, and custom fields
-- [ ] **REC-06**: Record layout includes central timeline + side/top widgets (data highlights, recent activity, relationship health, pod-based context)
-- [ ] **REC-07**: Fields are type-specific (Contact vs Company) AND pod-aware (certain fields appear only when relevant pods are present)
-- [ ] **REC-08**: Fields are conditional — only show if relevant for that record type + pod combination
-- [ ] **REC-09**: Fields are grouped by pod in the record view (e.g., LP fields grouped together)
+- [x] **REC-05**: Each record shows in one place: all pods, timeline of interactions/updates, linked pipelines/investments, linked projects, linked companies/people, important dates, and custom fields
+- [x] **REC-06**: Record layout includes central timeline + side/top widgets (data highlights, recent activity, relationship health, pod-based context)
+- [x] **REC-07**: Fields are type-specific (Contact vs Company) AND pod-aware (certain fields appear only when relevant pods are present)
+- [x] **REC-08**: Fields are conditional — only show if relevant for that record type + pod combination
+- [x] **REC-09**: Fields are grouped by pod in the record view (e.g., LP fields grouped together)
 
 ### Records List & Bulk Actions
 
@@ -207,13 +207,13 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | ARCH-04 | Phase 10 | Complete |
 | REC-01 | Phase 11 | Pending |
 | REC-02 | Phase 11 | Pending |
-| REC-03 | Phase 11 | Pending |
+| REC-03 | Phase 11 | Complete |
 | REC-04 | Phase 11 | Pending |
-| REC-05 | Phase 11 | Pending |
-| REC-06 | Phase 11 | Pending |
-| REC-07 | Phase 11 | Pending |
-| REC-08 | Phase 11 | Pending |
-| REC-09 | Phase 11 | Pending |
+| REC-05 | Phase 11 | Complete |
+| REC-06 | Phase 11 | Complete |
+| REC-07 | Phase 11 | Complete |
+| REC-08 | Phase 11 | Complete |
+| REC-09 | Phase 11 | Complete |
 | CRE-01 | Phase 11 | Pending |
 | CRE-02 | Phase 11 | Pending |
 | CRE-03 | Phase 11 | Pending |

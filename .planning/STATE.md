@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Phase 11 UI-SPEC approved
-last_updated: "2026-03-29T19:11:19.862Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-29T20:31:56.986Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 10 — data-architecture-rebuild
+**Current focus:** Phase 11 — relationship-records
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
+Phase: 11 (relationship-records) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Plan: Not started
 | Requirements mapped | 68/68 |
 | Phase 10-data-architecture-rebuild P01 | 8 | 1 tasks | 2 files |
 | Phase 10-data-architecture-rebuild P02 | 3 | 3 tasks | 3 files |
+| Phase 11-relationship-records P01 | 45 | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -54,6 +55,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 10-data-architecture-rebuild]: Self-referencing Company Record linked field attempted via API first with clear manual fallback if unsupported
 - [Phase 10-data-architecture-rebuild]: Company records live in same Contacts table with Type=Company (D-01 single-table approach)
 - [Phase 10-data-architecture-rebuild]: Contact keeps company text field for backward compat; company_record_id is the v2 linked field
+- [Phase 11-relationship-records]: RecordPage loads contact via getContacts().find(id) — no separate getContactById endpoint needed
+- [Phase 11-relationship-records]: ContactPanel ContactDetail overlay removed — ContactCard Open button navigates directly to /record/:id
 
 ### Architecture Notes
 
@@ -77,6 +80,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-29
-Last session: 2026-03-29T19:11:19.856Z
-Stopped at: Phase 11 UI-SPEC approved
-Resume file: .planning/phases/11-relationship-records/11-UI-SPEC.md
+Last session: 2026-03-29T20:31:56.985Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None
