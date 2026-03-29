@@ -10,6 +10,12 @@ export type ContactFrequency = 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual' | '
 export type Gender = 'Male' | 'Female' | 'Non-binary' | 'Other'
 export type InteractionSource = 'Gmail' | 'Granola' | 'Manual'
 
+export type RelationshipType = 'Contact' | 'Company'
+export type RelationshipStatus = 'Active' | 'Pending' | 'Archived'
+export type PipelineStatus = 'active' | 'hidden'
+export type OpportunityStatus = 'open' | 'won' | 'lost' | 'archived'
+export type OpportunityPriority = 'high' | 'medium' | 'low'
+
 export interface Pod {
   id: string           // Airtable record ID
   name: string
@@ -64,6 +70,14 @@ export interface Contact {
   kv_fund_investor: string[] | null
   spv_investor: string[] | null
   needs_review: boolean
+  // v2 relationship fields
+  type: RelationshipType
+  status: RelationshipStatus
+  company_record_id: string | null
+  industry: string | null
+  stage: string | null
+  ticker: string | null
+  domain: string | null
   created_at: string
 }
 
@@ -111,6 +125,44 @@ export interface CampaignContact {
   campaign_id: string        // linked Campaign record ID
   contact_id: string         // linked Contact record ID
   status: CampaignContactStatus
+  notes: string | null
+  created_at: string
+}
+
+export interface Pipeline {
+  id: string
+  name: string
+  status: PipelineStatus
+  created_at: string
+}
+
+export interface PipelineStage {
+  id: string
+  pipeline_id: string
+  name: string
+  color: HexColor | null
+  order: number
+  created_at: string
+}
+
+export interface Opportunity {
+  id: string
+  name: string
+  stage_id: string
+  relationship_ids: string[]
+  notes: string | null
+  priority: OpportunityPriority | null
+  status: OpportunityStatus
+  created_at: string
+}
+
+export interface Project {
+  id: string
+  name: string
+  description: string | null
+  owner: string | null
+  relationship_ids: string[]
+  opportunity_ids: string[]
   notes: string | null
   created_at: string
 }
