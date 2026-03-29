@@ -445,7 +445,7 @@ export function CategorizationModal({
             disabled={!canSave}
             style={{
               flex: 2,
-              background: canSave ? 'var(--color-accent)' : 'var(--tint)',
+              background: canSave ? 'var(--color-brand)' : 'var(--tint)',
               border: 'none',
               color: canSave ? '#fff' : 'var(--color-text-tertiary)',
               borderRadius: 8, padding: '10px',

@@ -236,7 +236,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             type="button"
             onClick={onClose}
             style={{
-              background: 'var(--color-accent)',
+              background: 'var(--color-brand)',
               color: '#fff',
               border: 'none',
               borderRadius: 8,
@@ -352,7 +352,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             onClick={handleCategorize}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'var(--color-accent)', border: 'none',
+              background: 'var(--color-brand)', border: 'none',
               color: '#fff', borderRadius: 10, padding: '10px 24px',
               fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             }}

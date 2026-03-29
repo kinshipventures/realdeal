@@ -61,7 +61,7 @@ export function PendingTrayWidget({ pendingContacts, onReview }: PendingTrayWidg
             type="button"
             onClick={onReview}
             style={{
-              background: 'var(--color-accent)',
+              background: 'var(--color-brand)',
               color: '#fff',
               border: 'none',
               borderRadius: 8,
