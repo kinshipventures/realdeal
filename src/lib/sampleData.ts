@@ -12,7 +12,7 @@ export function setDemoMode(on: boolean) {
 
 // Stable IDs so relationships stay consistent
 const pod = (id: string, name: string, color: HexColor, priority: boolean, cadence: 'weekly' | 'biweekly' | 'monthly' | 'quarterly'): Pod => ({
-  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, created_at: '2026-01-15T00:00:00.000Z',
+  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description: null, capacity: null, created_at: '2026-01-15T00:00:00.000Z',
 })
 
 const cat = (id: string, podId: string, name: string, color: HexColor | null = null): Category => ({
@@ -76,6 +76,8 @@ const contact = (id: string, name: string, opts: {
   ticker: opts.ticker ?? null,
   domain: opts.domain ?? null,
   custom_fields: {},
+  primary_list_id: null,
+  cadence_override: null,
   created_at: '2026-01-15T00:00:00.000Z',
 })
 

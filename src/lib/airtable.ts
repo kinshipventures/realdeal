@@ -28,6 +28,8 @@ interface PodFields {
   Owner?: Owner
   'Is Priority'?: boolean
   Cadence?: Cadence
+  Description?: string
+  Capacity?: number
   Categories?: string[]
   Contacts?: string[]
 }
@@ -83,6 +85,8 @@ interface ContactFields {
   Stage?: string
   Ticker?: string
   Domain?: string
+  'Primary Pod'?: string
+  'Cadence Override'?: string
 }
 
 interface InteractionFields {
@@ -197,6 +201,8 @@ function mapPod(r: AirtableRecord<PodFields>): Pod {
     owner: r.fields.Owner ?? null,
     is_priority: r.fields['Is Priority'] ?? false,
     cadence: r.fields.Cadence ?? null,
+    description: r.fields.Description ?? null,
+    capacity: r.fields.Capacity != null ? Number(r.fields.Capacity) : null,
     created_at: r.createdTime,
   }
 }
@@ -205,6 +211,80 @@ export async function getPods(): Promise<Pod[]> {
   if (isDemoMode()) return DEMO_PODS
   const records = await fetchAll<PodFields>(TABLES.lists)
   return records.map(mapPod)
+}
+
+let _listsCache: Pod[] | null = null
+
+export async function createPod(data: {
+  name: string
+  color?: string | null
+  owner?: Owner | null
+  is_priority?: boolean
+  cadence?: Cadence | null
+  description?: string | null
+  capacity?: number | null
+}): Promise<Pod> {
+  if (isDemoMode()) {
+    const p: Pod = {
+      id: `demo-pod-${Date.now()}`,
+      name: data.name,
+      color: (data.color ?? null) as import('./types').HexColor | null,
+      owner: data.owner ?? null,
+      is_priority: data.is_priority ?? false,
+      cadence: data.cadence ?? null,
+      description: data.description ?? null,
+      capacity: data.capacity ?? null,
+      created_at: new Date().toISOString(),
+    }
+    DEMO_PODS.push(p)
+    return p
+  }
+  const r = await request<AirtableRecord<PodFields>>(TABLES.lists, {
+    method: 'POST',
+    body: JSON.stringify({
+      fields: {
+        Name: data.name,
+        Color: data.color ?? undefined,
+        Owner: data.owner ?? undefined,
+        'Is Priority': data.is_priority ?? undefined,
+        Cadence: data.cadence ?? undefined,
+        Description: data.description ?? undefined,
+        Capacity: data.capacity ?? undefined,
+      },
+    }),
+  })
+  _listsCache = null
+  return mapPod(r)
+}
+
+export async function updatePod(id: string, data: Partial<{
+  name: string
+  color: string | null
+  owner: Owner | null
+  is_priority: boolean
+  cadence: Cadence | null
+  description: string | null
+  capacity: number | null
+}>): Promise<Pod> {
+  if (isDemoMode()) {
+    const pod = DEMO_PODS.find(p => p.id === id)
+    if (pod) Object.assign(pod, data)
+    return pod ?? ({ id, ...data } as Pod)
+  }
+  const fields: Record<string, unknown> = {}
+  if (data.name !== undefined) fields.Name = data.name
+  if (data.color !== undefined) fields.Color = data.color
+  if (data.owner !== undefined) fields.Owner = data.owner
+  if (data.is_priority !== undefined) fields['Is Priority'] = data.is_priority
+  if (data.cadence !== undefined) fields.Cadence = data.cadence
+  if (data.description !== undefined) fields.Description = data.description
+  if (data.capacity !== undefined) fields.Capacity = data.capacity
+  const r = await request<AirtableRecord<PodFields>>(`${TABLES.lists}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
+  })
+  _listsCache = null
+  return mapPod(r)
 }
 
 // ── Categories ───────────────────────────────────────────────────────────────
@@ -325,8 +405,10 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     stage: r.fields.Stage ?? null,
     ticker: r.fields.Ticker ?? null,
     domain: r.fields.Domain ?? null,
+    primary_list_id: r.fields['Primary Pod'] ?? null,
+    cadence_override: (r.fields['Cadence Override'] as import('./types').Cadence) ?? null,
     custom_fields: (() => {
-      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain'])
+      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain', 'Primary Pod', 'Cadence Override'])
       const result: Record<string, unknown> = {}
       for (const [key, value] of Object.entries(r.fields)) {
         if (!knownFields.has(key) && value !== undefined && value !== null) {
@@ -434,6 +516,8 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
         Stage: data.stage ?? undefined,
         Ticker: data.ticker ?? undefined,
         Domain: data.domain ?? undefined,
+        'Primary Pod': data.primary_list_id ?? undefined,
+        'Cadence Override': data.cadence_override ?? undefined,
       },
     }),
   })
@@ -483,6 +567,8 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.stage !== undefined) fields.Stage = data.stage
   if (data.ticker !== undefined) fields.Ticker = data.ticker
   if (data.domain !== undefined) fields.Domain = data.domain
+  if (data.primary_list_id !== undefined) fields['Primary Pod'] = data.primary_list_id
+  if (data.cadence_override !== undefined) fields['Cadence Override'] = data.cadence_override
   if (data.custom_fields !== undefined) {
     for (const [key, value] of Object.entries(data.custom_fields)) {
       fields[key] = value
@@ -1146,5 +1232,10 @@ export async function getContactsByType(type: RelationshipType): Promise<Contact
 export async function getActiveContacts(): Promise<Contact[]> {
   const all = await getContacts()
   return all.filter(c => c.status === 'Active')
+}
+
+export async function getPendingContacts(): Promise<Contact[]> {
+  const all = await getContacts()
+  return all.filter(c => c.status === 'Pending')
 }
 

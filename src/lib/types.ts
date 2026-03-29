@@ -23,6 +23,8 @@ export interface Pod {
   owner: Owner | null
   is_priority: boolean
   cadence: Cadence | null  // null = default monthly
+  description: string | null
+  capacity: number | null  // null = unlimited
   created_at: string   // Airtable createdTime
 }
 
@@ -54,6 +56,8 @@ export interface Contact {
   last_contacted_at: ISODate | null
   list_ids: string[]      // linked Pod record IDs
   category_ids: string[]  // linked Category record IDs
+  primary_list_id: string | null  // primary pod (raw record ID, not linked)
+  cadence_override: Cadence | null  // per-contact cadence override
   // V1 expanded fields
   first_name: string | null
   last_name: string | null
