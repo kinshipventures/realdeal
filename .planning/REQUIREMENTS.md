@@ -199,16 +199,93 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ## Traceability
 
-Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| ARCH-01 | Phase 10 | Pending |
+| ARCH-02 | Phase 10 | Pending |
+| ARCH-03 | Phase 10 | Pending |
+| ARCH-04 | Phase 10 | Pending |
+| REC-01 | Phase 11 | Pending |
+| REC-02 | Phase 11 | Pending |
+| REC-03 | Phase 11 | Pending |
+| REC-04 | Phase 11 | Pending |
+| REC-05 | Phase 11 | Pending |
+| REC-06 | Phase 11 | Pending |
+| REC-07 | Phase 11 | Pending |
+| REC-08 | Phase 11 | Pending |
+| REC-09 | Phase 11 | Pending |
+| CRE-01 | Phase 11 | Pending |
+| CRE-02 | Phase 11 | Pending |
+| CRE-03 | Phase 11 | Pending |
+| CRE-04 | Phase 11 | Pending |
+| FLD-01 | Phase 11 | Pending |
+| FLD-02 | Phase 11 | Pending |
+| FLD-03 | Phase 11 | Pending |
+| FLD-04 | Phase 11 | Pending |
+| FLD-05 | Phase 11 | Pending |
+| FLD-06 | Phase 11 | Pending |
+| POD-01 | Phase 12 | Pending |
+| POD-02 | Phase 12 | Pending |
+| POD-03 | Phase 12 | Pending |
+| POD-04 | Phase 12 | Pending |
+| POD-05 | Phase 12 | Pending |
+| POD-06 | Phase 12 | Pending |
+| POD-07 | Phase 12 | Pending |
+| POD-08 | Phase 12 | Pending |
+| POD-09 | Phase 12 | Pending |
+| POD-10 | Phase 12 | Pending |
+| CAT-01 | Phase 12 | Pending |
+| CAT-02 | Phase 12 | Pending |
+| CAT-03 | Phase 12 | Pending |
+| CAT-04 | Phase 12 | Pending |
+| CAT-05 | Phase 12 | Pending |
+| CAT-06 | Phase 12 | Pending |
+| TL-01 | Phase 13 | Pending |
+| TL-02 | Phase 13 | Pending |
+| TL-03 | Phase 13 | Pending |
+| TL-04 | Phase 13 | Pending |
+| TL-05 | Phase 13 | Pending |
+| TL-06 | Phase 13 | Pending |
+| LIST-01 | Phase 13 | Pending |
+| LIST-02 | Phase 13 | Pending |
+| LIST-03 | Phase 13 | Pending |
+| PIPE-01 | Phase 14 | Pending |
+| PIPE-02 | Phase 14 | Pending |
+| PIPE-03 | Phase 14 | Pending |
+| PIPE-04 | Phase 14 | Pending |
+| PIPE-05 | Phase 14 | Pending |
+| PIPE-06 | Phase 14 | Pending |
+| PIPE-07 | Phase 14 | Pending |
+| PIPE-08 | Phase 14 | Pending |
+| PIPE-09 | Phase 14 | Pending |
+| PROJ-01 | Phase 15 | Pending |
+| PROJ-02 | Phase 15 | Pending |
+| PROJ-03 | Phase 15 | Pending |
+| PROJ-04 | Phase 15 | Pending |
+| PROJ-05 | Phase 15 | Pending |
+| PROJ-06 | Phase 15 | Pending |
+| NAV-01 | Phase 15 | Pending |
+| NAV-02 | Phase 15 | Pending |
+| NAV-03 | Phase 15 | Pending |
+| NAV-04 | Phase 15 | Pending |
+| DASH-01 | Phase 16 | Pending |
+| DASH-02 | Phase 16 | Pending |
+| DASH-03 | Phase 16 | Pending |
+| DASH-04 | Phase 16 | Pending |
+| DASH-05 | Phase 16 | Pending |
+| DASH-06 | Phase 16 | Pending |
+| NURT-01 | Phase 16 | Pending |
+| NURT-02 | Phase 16 | Pending |
+| NURT-03 | Phase 16 | Pending |
+| NURT-04 | Phase 16 | Pending |
+| NURT-05 | Phase 16 | Pending |
+| NURT-06 | Phase 16 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 68 total
-- Mapped to phases: 0
-- Unmapped: 68
+- Mapped to phases: 68
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after source PDF corrected to Initial Outline*
+*Last updated: 2026-03-29 — traceability complete after v2.0 roadmap*
