@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.2 Demo Ready (Shipped: 2026-03-29)
+
+**Phases completed:** 3 phases, 6 plans, 11 tasks
+
+**Key accomplishments:**
+
+- 25 contacts and 45 interactions imported into Airtable across 6 pods with full field data including LinkedIn, Country, Gender, Intel/Notes, Fund tags, and follow-up fields
+- 15 new Contact fields + 4 Interaction fields with Airtable mappers and enriched demo data for V1 schema
+- Recent Activity feed, merged birthdays+follow-ups Upcoming section, and per-contact frequency in overdue queue
+- Enriched ContactDetail panel with 4 organized sections (Contact Info, Relationship, Fund Tags, Follow-Up) and interaction timeline with source labels and summaries
+- Add Contact modal with structured form (name/email/pod validation) and brain dump path (free text to Unsorted), triggered by dashboard FAB
+
+---
+
 ## v1.1 Polish & Features (Shipped: 2026-03-25)
 
 **Phases completed:** 3 phases, 5 plans, 10 tasks

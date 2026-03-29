@@ -35,6 +35,14 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 - ✓ Birthday reminders — "Coming Up" dashboard section with 14-day window — v1.1
 - ✓ Wrapped insight card — weekly stats (people reached, top pod, most connected) as cycling gradient dashboard card — v1.1
 - ✓ Campaign tracking — create, track progress, manage per-contact status with Airtable persistence — v1.1
+- ✓ Dummy data import (25 contacts, 45 interactions across 6 pods with full field data) — v1.2
+- ✓ Expanded contact schema (LinkedIn, City, Country, Gender, Intel/Notes, Fund Tags, Follow-Up, Contact Frequency, etc.) — v1.2
+- ✓ Recent Activity dashboard feed — v1.2
+- ✓ Enhanced Upcoming section (birthdays + follow-ups merged) — v1.2
+- ✓ Per-contact frequency in overdue queue and equity scoring — v1.2
+- ✓ Enriched ContactDetail with organized sections (Contact Info, Relationship, Fund Tags, Follow-Up) — v1.2
+- ✓ Interaction timeline with source labels and summaries — v1.2
+- ✓ Add Contact modal with structured form and brain dump path — v1.2
 
 ### Active
 
@@ -62,11 +70,13 @@ Moj opens the app daily and it changes how she manages her relationships — giv
 
 ## Context
 
-Shipped v1.1 on 2026-03-25. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
+Shipped v1.2 on 2026-03-29. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 
 **v1.0 (Mar 23):** Dashboard with equity scoring, visual orb map, enriched contact profiles, responsive layout, dark mode, CSV import UI, operational handoff. 5,925 LOC across 67 commits.
 
 **v1.1 (Mar 25):** Global Cmd+K search, birthday reminders, Wrapped insight card, campaign management. 7,731 LOC across 46 commits (3 days).
+
+**v1.2 (Mar 27):** Demo-ready data import, expanded V1 schema, enriched dashboard (Recent Activity, merged Upcoming, per-contact frequency), enriched contact cards, Add Contact modal. 9,481 LOC across 27 files changed (+3,645/-199).
 
 **Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server.
 
@@ -97,20 +107,10 @@ Shipped v1.1 on 2026-03-25. 6-week engagement (Feb 17 – Mar 31), 15hrs/week.
 | Campaign junction table pattern | CampaignContacts Airtable table for many-to-many with per-contact status tracking | ✓ Good (enables status toggle without touching Contact records) |
 | Airtable MCP server | Official Airtable MCP for direct AI-to-Airtable data management | ✓ Good (enables conversational data operations) |
 | Demo mode for campaigns | In-memory mutations, no localStorage persistence — reset on refresh | ✓ Good (sufficient for demos, keeps demo mode simple) |
+| Per-contact Contact Frequency | Overrides pod-level cadence for individual contacts | ✓ Good (more granular relationship management) |
+| Modal state in Dashboard | AddContactModal managed by Dashboard, not App, due to React Router Outlet pattern | ✓ Good (avoids routing complexity) |
 
-## Current Milestone: v1.2 Demo Ready
-
-**Goal:** Import Briell's dummy data, expand schema to match V1 spec, enrich dashboard and contact cards, add contact creation form — everything needed for Moj to demo the app with realistic data.
-
-**Target features:**
-- Dummy data import (25 contacts, 45 interactions across 6 pods)
-- Expanded contact schema (LinkedIn, Country, Gender, Intel/Notes, Fund Tags, Follow-Up fields)
-- Recent Activity dashboard section
-- Enhanced Upcoming section (birthdays + follow-ups combined)
-- Enriched contact card with spec-aligned scrollable sections
-- Add Contact form (structured entry + brain dump path)
-
-**Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features)
+**Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features), v1.2 (Demo Ready)
 
 ## Evolution
 
@@ -130,4 +130,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v1.2 milestone started*
+*Last updated: 2026-03-29 after v1.2 milestone completed*
