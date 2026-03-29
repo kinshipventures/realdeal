@@ -142,6 +142,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
       next_action: null, kv_fund_investor: null, spv_investor: null,
       needs_review: false, company_record_id: null,
       industry: null, stage: null, ticker: null, domain: null,
+      custom_fields: {},
     })
     return newCo
   }
@@ -162,7 +163,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
         next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
         company_record_id: null, industry: null, stage: null,
-        ticker: null, domain: null,
+        ticker: null, domain: null, custom_fields: {},
       }
 
       let created: Contact

@@ -325,6 +325,16 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     stage: r.fields.Stage ?? null,
     ticker: r.fields.Ticker ?? null,
     domain: r.fields.Domain ?? null,
+    custom_fields: (() => {
+      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain'])
+      const result: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(r.fields)) {
+        if (!knownFields.has(key) && value !== undefined && value !== null) {
+          result[key] = value
+        }
+      }
+      return result
+    })(),
     created_at: r.createdTime,
   }
 }
@@ -473,6 +483,11 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.stage !== undefined) fields.Stage = data.stage
   if (data.ticker !== undefined) fields.Ticker = data.ticker
   if (data.domain !== undefined) fields.Domain = data.domain
+  if (data.custom_fields !== undefined) {
+    for (const [key, value] of Object.entries(data.custom_fields)) {
+      fields[key] = value
+    }
+  }
 
   const r = await request<AirtableRecord<ContactFields>>(`${TABLES.contacts}/${id}`, {
     method: 'PATCH',

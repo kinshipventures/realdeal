@@ -75,6 +75,7 @@ const contact = (id: string, name: string, opts: {
   stage: opts.stage ?? null,
   ticker: opts.ticker ?? null,
   domain: opts.domain ?? null,
+  custom_fields: {},
   created_at: '2026-01-15T00:00:00.000Z',
 })
 

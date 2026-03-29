@@ -112,6 +112,7 @@ export function RecordPage() {
           interactions={interactions}
           fieldConfigs={fieldConfigs}
           onUpdate={handleUpdate}
+          onFieldConfigsRefresh={setFieldConfigs}
         />
       </div>
     </div>
