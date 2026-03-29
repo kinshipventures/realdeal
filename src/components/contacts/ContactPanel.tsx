@@ -4,7 +4,6 @@ import type { Contact } from '../../lib/types'
 import { useEscape } from '../../lib/escapeStack'
 import { Spinner, CloseButton } from '../ui'
 import { ContactCard } from './ContactCard'
-import { ContactDetail } from './ContactDetail'
 import { EmptyState } from '../empty/EmptyState'
 
 interface ContactPanelProps {
@@ -30,7 +29,6 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [search, setSearch] = useState('')
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [showNewContact, setShowNewContact] = useState(false)
   const isMobile = useIsMobile()
 
@@ -47,7 +45,6 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
     setLoading(true)
     setLoadError(false)
     setSearch('')
-    setSelectedContact(null)
     setShowNewContact(false)
     getContacts(categoryId)
       .then(data => { if (!canceled) setContacts(data) })
@@ -55,19 +52,6 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       .finally(() => { if (!canceled) setLoading(false) })
     return () => { canceled = true }
   }, [categoryId])
-
-  function handleSaved(updated: Contact) {
-    setContacts(prev => {
-      const idx = prev.findIndex(c => c.id === updated.id)
-      if (idx === -1) {
-        return updated.category_ids.includes(categoryId) ? [...prev, updated] : prev
-      }
-      const next = [...prev]
-      next[idx] = updated
-      return next
-    })
-    setSelectedContact(prev => prev?.id === updated.id ? updated : prev)
-  }
 
   const filtered = search.trim()
     ? contacts.filter(c =>
@@ -216,11 +200,10 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           )
         ) : (
           <div>
-            {filtered.map(contact => (
+            {filtered.map(c => (
               <ContactCard
-                key={contact.id}
-                contact={contact}
-                onClick={() => setSelectedContact(contact)}
+                key={c.id}
+                contact={c}
               />
             ))}
           </div>
@@ -268,19 +251,6 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
       </div>
     </div>
 
-    {/* Contact detail — stacked over the list */}
-    {(selectedContact || showNewContact) && (
-      <ContactDetail
-        contact={selectedContact}
-        categoryId={categoryId}
-        onClose={() => { setSelectedContact(null); setShowNewContact(false) }}
-        onSaved={handleSaved}
-        onDeleted={() => {
-          if (selectedContact) setContacts(prev => prev.filter(c => c.id !== selectedContact.id))
-          setSelectedContact(null)
-        }}
-      />
-    )}
     </>
   )
 }

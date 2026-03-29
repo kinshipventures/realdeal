@@ -1,6 +1,5 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
   ReactFlow,
   Background,
@@ -210,7 +209,6 @@ function loadViewport(): Viewport | null {
 }
 
 export function OrbMap() {
-  const navigate = useNavigate()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
@@ -307,7 +305,7 @@ export function OrbMap() {
           listColor: pod.color,
           contactCount: countsByCategory[cat.id] ?? 0,
           animationDelay: `${i * 0.03}s`,
-          onClick: () => navigate(`/category/${cat.id}`),
+          onClick: () => setSelectedCategoryId(cat.id),
         },
       }))
 

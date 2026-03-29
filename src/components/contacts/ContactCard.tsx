@@ -1,85 +1,86 @@
+import { useNavigate } from 'react-router'
 import type { Contact } from '../../lib/types'
-import { formatRelativeTime } from '../../lib/utils'
-import { isOverdue } from '../../lib/airtable'
 import { Avatar } from '../ui'
 
 interface ContactCardProps {
   contact: Contact
-  onClick: () => void
+  onClick?: () => void
 }
 
 export function ContactCard({ contact, onClick }: ContactCardProps) {
-  const overdue = isOverdue(contact)
-  const lastSeen = formatRelativeTime(contact.last_contacted_at)
+  const navigate = useNavigate()
+
+  const subtitle = contact.type === 'Company'
+    ? contact.industry
+    : contact.role
+
+  function handleOpen(e: React.MouseEvent) {
+    e.stopPropagation()
+    navigate(`/record/${contact.id}`)
+  }
 
   return (
-    <button
-      type="button"
+    <div
       onClick={onClick}
-      className="interactive-row"
       style={{
         width: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         padding: '10px 20px',
-        background: 'none',
-        border: 'none',
         borderBottom: '1px solid var(--divider)',
-        cursor: 'pointer',
-        textAlign: 'left',
+        minHeight: 44,
+        cursor: onClick ? 'pointer' : 'default',
+        boxSizing: 'border-box',
       }}
     >
       <Avatar name={contact.name} size={34} />
 
-      {/* Name + company */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13,
-          fontWeight: 500,
-          color: 'var(--color-text-primary)',
+          fontWeight: 400,
+          color: 'rgba(0,0,0,0.82)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}>
           {contact.name}
         </div>
-        {contact.company && (
+        {subtitle && (
           <div style={{
             fontSize: 11,
-            color: 'var(--color-text-secondary)',
+            color: 'rgba(0,0,0,0.45)',
             marginTop: 1,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}>
-            {contact.company}
+            {subtitle}
           </div>
         )}
       </div>
 
-      {/* Last contacted */}
-      <div style={{
-        fontSize: 10,
-        fontWeight: 500,
-        color: overdue ? '#D93025' : 'var(--color-text-tertiary)',
-        whiteSpace: 'nowrap',
-        letterSpacing: '0.02em',
-      }}>
-        {lastSeen}
-      </div>
-
-      {/* Overdue dot */}
-      {overdue && (
-        <div style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: '#FF3B30',
+      <button
+        type="button"
+        onClick={handleOpen}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: '4px 0',
+          cursor: 'pointer',
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#25B439',
+          fontFamily: 'inherit',
           flexShrink: 0,
-          boxShadow: '0 0 6px rgba(255,59,48,0.45)',
-        }} />
-      )}
-    </button>
+          minHeight: 44,
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        Open
+      </button>
+    </div>
   )
 }

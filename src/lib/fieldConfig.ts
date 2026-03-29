@@ -1,5 +1,5 @@
 import type { RelationshipType } from './types'
-import { isDemoMode } from './sampleData'
+import { isDemoMode, DEMO_FIELD_CONFIGS } from './sampleData'
 import { TABLES } from './airtable'
 
 export interface FieldConfig {
@@ -69,14 +69,8 @@ async function fetchAllFieldConfigs(): Promise<FieldConfig[]> {
   return records
 }
 
-// Lazy import to avoid circular dependency: sampleData -> fieldConfig -> airtable -> sampleData
-async function getDemoFieldConfigs(): Promise<FieldConfig[]> {
-  const { DEMO_FIELD_CONFIGS } = await import('./sampleData')
-  return DEMO_FIELD_CONFIGS as FieldConfig[]
-}
-
 export function getFieldConfigs(): Promise<FieldConfig[]> {
-  if (isDemoMode()) return getDemoFieldConfigs()
+  if (isDemoMode()) return Promise.resolve(DEMO_FIELD_CONFIGS as FieldConfig[])
 
   const isExpired = !_fieldConfigCache || Date.now() - _fieldConfigCacheTime > CACHE_TTL
   const isFresh = _fieldConfigCache && !isExpired

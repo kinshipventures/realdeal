@@ -6,8 +6,7 @@ import { ImportPanel } from './components/import/ImportPanel'
 import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
 import { SearchPalette } from './components/search/SearchPalette'
-import { ContactDetail } from './components/contacts/ContactDetail'
-import type { Contact } from './lib/types'
+import { RecordPage } from './components/records/RecordPage'
 
 const BG = 'var(--color-bg)'
 
@@ -30,7 +29,6 @@ function AppShell() {
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
-  const [searchSelectedContact, setSearchSelectedContact] = useState<Contact | null>(null)
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
 
@@ -226,18 +224,8 @@ function AppShell() {
           onClose={closeSearch}
           onSelectContact={(contact) => {
             setShowSearch(false)
-            setSearchSelectedContact(contact)
+            navigate(`/record/${contact.id}`)
           }}
-        />
-      )}
-
-      {searchSelectedContact && (
-        <ContactDetail
-          contact={searchSelectedContact}
-          categoryId={searchSelectedContact.category_ids[0]}
-          onClose={() => setSearchSelectedContact(null)}
-          onSaved={(updated) => setSearchSelectedContact(updated)}
-          onDeleted={() => setSearchSelectedContact(null)}
         />
       )}
 
@@ -283,6 +271,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
         <Route path="category/:id" element={<CategoryTable />} />
+        <Route path="record/:id" element={<RecordPage />} />
         <Route path="import" element={<ImportPanel />} />
       </Route>
     </Routes>
