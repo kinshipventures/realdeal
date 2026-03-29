@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-03-29T22:16:17.196Z"
+stopped_at: "Completed 12-04-PLAN.md — checkpoint:human-verify pending"
+last_updated: "2026-03-29T22:21:25.033Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -43,6 +43,7 @@ Plan: 4 of 4
 | Phase 12-pods-overhaul-categorization P01 | 12 | 2 tasks | 6 files |
 | Phase 12-pods-overhaul-categorization P02 | 18 | 2 tasks | 4 files |
 | Phase 12-pods-overhaul-categorization P03 | 10 | 2 tasks | 3 files |
+| Phase 12-pods-overhaul-categorization P04 | 5 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 12-pods-overhaul-categorization]: Primary pod auto-selects first pod at 1 selection; radio UI only appears at 2+ to reduce single-pod flow noise
 - [Phase 12-pods-overhaul-categorization]: PodDetailPage uses inline edit on blur for settings — consistent with RecordPage pattern
 - [Phase 12-pods-overhaul-categorization]: Sub-pod creation uses existing createCategory() inline — no separate route needed
+- [Phase 12-pods-overhaul-categorization]: ListNode uses useNavigate directly — removes onClick prop dependency, cleaner separation
 
 ### Architecture Notes
 
@@ -95,6 +97,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-29
-Last session: 2026-03-29T22:16:17.194Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-03-29T22:21:25.031Z
+Stopped at: Completed 12-04-PLAN.md — checkpoint:human-verify pending
 Resume file: None
