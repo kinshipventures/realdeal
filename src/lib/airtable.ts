@@ -17,6 +17,7 @@ export const TABLES = {
   pipelineStages: 'tblt5AY61E2fnH6Jr',
   opportunities: 'tbl7RSU66DHpTL9G9',
   projects: 'tblbjT4J1gqJw0w2a',
+  fieldConfig: '', // Set after running pnpm migrate:fieldconfig
 } as const
 
 // ── Raw Airtable field shapes ────────────────────────────────────────────────
@@ -416,6 +417,13 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
         'KV Fund Investor': data.kv_fund_investor ?? undefined,
         'SPV Investor': data.spv_investor ?? undefined,
         'Needs Review': data.needs_review || undefined,
+        Type: data.type ?? 'Contact',
+        Status: data.status ?? 'Active',
+        'Company Record': data.company_record_id ? [data.company_record_id] : undefined,
+        Industry: data.industry ?? undefined,
+        Stage: data.stage ?? undefined,
+        Ticker: data.ticker ?? undefined,
+        Domain: data.domain ?? undefined,
       },
     }),
   })
@@ -458,6 +466,13 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.kv_fund_investor !== undefined) fields['KV Fund Investor'] = data.kv_fund_investor
   if (data.spv_investor !== undefined) fields['SPV Investor'] = data.spv_investor
   if (data.needs_review !== undefined) fields['Needs Review'] = data.needs_review
+  if (data.type !== undefined) fields.Type = data.type
+  if (data.status !== undefined) fields.Status = data.status
+  if (data.company_record_id !== undefined) fields['Company Record'] = data.company_record_id ? [data.company_record_id] : []
+  if (data.industry !== undefined) fields.Industry = data.industry
+  if (data.stage !== undefined) fields.Stage = data.stage
+  if (data.ticker !== undefined) fields.Ticker = data.ticker
+  if (data.domain !== undefined) fields.Domain = data.domain
 
   const r = await request<AirtableRecord<ContactFields>>(`${TABLES.contacts}/${id}`, {
     method: 'PATCH',

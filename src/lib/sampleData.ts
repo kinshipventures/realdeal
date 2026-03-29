@@ -287,3 +287,24 @@ export const DEMO_PROJECTS: Project[] = [
   { id: 'rec_demo_proj_1', name: 'Fund III Launch', description: 'Fundraising campaign for Fund III', owner: 'moj_mahdara', relationship_ids: ['demo-contact-1', 'demo-contact-3'], opportunity_ids: ['rec_demo_opp_1', 'rec_demo_opp_3'], notes: null, created_at: '2026-01-10T00:00:00.000Z' },
   { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], opportunity_ids: [], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
 ]
+
+// ── Field Configs ──
+// Note: FieldConfig type is defined in fieldConfig.ts — using inline type here to avoid circular dep
+
+interface FieldConfigShape {
+  id: string
+  name: string
+  airtable_field_id: string
+  field_type: 'text' | 'multiline' | 'number' | 'select' | 'date' | 'checkbox'
+  scope_type: 'Contact' | 'Company' | 'Both'
+  scope_pod_id: string | null
+  required: boolean
+  display_order: number
+}
+
+export const DEMO_FIELD_CONFIGS: FieldConfigShape[] = [
+  { id: 'demo-fc-1', name: 'Commit Amount', airtable_field_id: 'fld_demo_1', field_type: 'number', scope_type: 'Both', scope_pod_id: 'demo-pod-lps', required: true, display_order: 1 },
+  { id: 'demo-fc-2', name: 'Fund Name', airtable_field_id: 'fld_demo_2', field_type: 'text', scope_type: 'Company', scope_pod_id: 'demo-pod-lps', required: false, display_order: 2 },
+  { id: 'demo-fc-3', name: 'Sector Focus', airtable_field_id: 'fld_demo_3', field_type: 'select', scope_type: 'Both', scope_pod_id: null, required: false, display_order: 3 },
+  { id: 'demo-fc-4', name: 'Notes on Intro', airtable_field_id: 'fld_demo_4', field_type: 'multiline', scope_type: 'Contact', scope_pod_id: null, required: false, display_order: 4 },
+]
