@@ -61,18 +61,18 @@ One place where every relationship lives with full context — so founders never
 - ✓ Enriched ContactDetail with organized sections (Contact Info, Relationship, Fund Tags, Follow-Up) — v1.2
 - ✓ Interaction timeline with source labels and summaries — v1.2
 - ✓ Add Contact modal with structured form and brain dump path — v1.2
+- ✓ Relationship record as only core object (person + company types) — Phase 11
+- ✓ Custom fields system (per record type, per pod, required/optional) — Phase 11
+- ✓ Cross-module navigation (zero context loss) — Phase 11
 
 ### Active
 
-- [ ] Relationship record as only core object (person + company types)
 - [ ] Pods as behavioral containers with intake fields, cadence, trigger logic, sub-pods
 - [ ] Pipelines — Kanban boards referencing relationships
-- [ ] Custom fields system (per record type, per pod, required/optional)
 - [ ] Relationship timeline as single source of truth
 - [ ] Follow-ups as dashboard-led signals
 - [ ] Gmail Chrome extension for relationship creation/logging
 - [ ] Copilot read-only AI synthesis layer
-- [ ] Cross-module navigation (zero context loss)
 - [ ] Reporting with filters and saved reports
 - [ ] AI enrichment via web search
 - [ ] Enhanced dashboard as primary operating surface
@@ -99,7 +99,7 @@ One place where every relationship lives with full context — so founders never
 
 ## Context
 
-Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Now rebuilding as the real product based on comprehensive Kinship Brain MVP spec (docs/Kinship Brain — MVP.pdf).
+Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Rebuilding as the real product based on comprehensive Kinship Brain MVP spec. Phase 11 complete — relationship records with per-type layouts, custom fields, company-contact linking, and creation flows shipped.
 
 **Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
@@ -158,4 +158,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v2.0 milestone started*
+*Last updated: 2026-03-29 after Phase 11 (relationship-records) completed*
