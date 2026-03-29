@@ -45,7 +45,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 
 ### v2.0 Kinship Brain MVP
 
-- [ ] **Phase 10: Data Architecture Rebuild** — Establish relationship-first Airtable schema as the foundation for the entire v2.0 system
+- [x] **Phase 10: Data Architecture Rebuild** — Establish relationship-first Airtable schema as the foundation for the entire v2.0 system (completed 2026-03-29)
 - [ ] **Phase 11: Relationship Records** — Full record system with Contact + Company types, custom fields, and conditional field behavior
 - [ ] **Phase 12: Pods Overhaul + Categorization** — Behavioral pods with required questions and intake workflow from pending tray to CRM
 - [ ] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions
@@ -64,10 +64,10 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
   2. Pipelines, projects, and campaigns link to relationship records via Airtable linked fields — no record data is copied or shadowed
   3. Every association (pod membership, pipeline card, project attachment) points back to one canonical record with no duplicates
   4. All existing contact data from v1.x is migrated or mapped to the new schema without data loss
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 10-01-PLAN.md — Airtable schema migration script (add fields, create Company records, create new tables)
-- [ ] 10-02-PLAN.md — TypeScript data layer update (types, airtable.ts CRUD, demo data)
+- [x] 10-02-PLAN.md — TypeScript data layer update (types, airtable.ts CRUD, demo data)
 
 ### Phase 11: Relationship Records
 **Goal**: Users can create, view, and manage Contact and Company records with a full layout including timeline, widgets, and conditional custom fields
@@ -155,7 +155,7 @@ Plans:
 | 7. Data & Schema | v1.2 | 3/3 | Complete | 2026-03-26 |
 | 8. UI Enrichment | v1.2 | 2/2 | Complete | 2026-03-26 |
 | 9. Add Contact | v1.2 | 1/1 | Complete | 2026-03-26 |
-| 10. Data Architecture Rebuild | v2.0 | 1/2 | In Progress|  |
+| 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete   | 2026-03-29 |
 | 11. Relationship Records | v2.0 | 0/? | Not started | — |
 | 12. Pods Overhaul + Categorization | v2.0 | 0/? | Not started | — |
 | 13. Timeline + Records List | v2.0 | 0/? | Not started | — |
