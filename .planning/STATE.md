@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-30T07:57:24.897Z"
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-30T18:12:25.794Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 21
+  completed_plans: 19
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 15 — projects
+**Current focus:** Phase 16 — dashboard-nurturing
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
+Phase: 16 (dashboard-nurturing) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 15-projects P01 | 12 | 2 tasks | 3 files |
 | Phase 15-projects P03 | 8 | 2 tasks | 5 files |
 | Phase 15-projects P02 | 5 | 3 tasks | 5 files |
+| Phase 16-dashboard-nurturing P01 | 35 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 15-projects]: ProjectsWidget uses inline picker dropdown (not modal import) — self-contained per plan spec
 - [Phase 15-projects]: Contact rows in project detail open ContactDetail slide-out (not navigate()) — preserves project context per NAV-03/NAV-04
 - [Phase 15-projects]: Notes loaded via getAllInteractions() filtered client-side by project_event type + event_detail.project_id — no new API function needed
+- [Phase 16-dashboard-nurturing]: Widget components are props-only — Dashboard.tsx is sole data orchestrator. QuickLinksWidget documented exception for pipelines.
+- [Phase 16-dashboard-nurturing]: useDashboardConfig visible Set is always authoritative — applyPreset overwrites, not deltas.
+- [Phase 16-dashboard-nurturing]: NeedsAttentionWidget merges overdue + dormant per D-04: overdue group with orange badge, dormant below as collapsible gone quiet section.
 
 ### Architecture Notes
 
@@ -125,6 +129,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T07:53:27.639Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-30T18:12:25.792Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None

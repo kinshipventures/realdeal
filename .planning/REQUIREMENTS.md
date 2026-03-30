@@ -96,19 +96,19 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 - [x] **PROJ-01**: User can create projects to organize multi-record initiatives (podcast outreach, philanthropy campaigns, SPV outreach, events)
 - [x] **PROJ-02**: Each project has: name, description, owner, associated records, associated opportunities, notes/updates
-- [ ] **PROJ-03**: Projects are distinct from pipelines — projects focus on context/scope/collection, pipelines focus on stages/movement
+- [x] **PROJ-03**: Projects are distinct from pipelines — projects focus on context/scope/collection, pipelines focus on stages/movement
 - [x] **PROJ-04**: User can attach records and opportunities to projects
 - [x] **PROJ-05**: Projects are visible from the relationship record view
-- [ ] **PROJ-06**: Project has a simple overview page
+- [x] **PROJ-06**: Project has a simple overview page
 
 ### Dashboard
 
-- [ ] **DASH-01**: Modular dashboard with configurable widgets: total records, pod totals, pending categorizations, recently updated records, quick links to pipelines/projects/nurturing hub
-- [ ] **DASH-02**: User can show/hide widgets and reorder them
-- [ ] **DASH-03**: User can create multiple dashboard views (personal vs workspace default)
-- [ ] **DASH-04**: Dashboard surfaces pending follow-ups and stale relationships
-- [ ] **DASH-05**: Dashboard shows important dates (birthdays, anniversaries, key dates)
-- [ ] **DASH-06**: Dashboard is the primary operating surface — founders live here
+- [x] **DASH-01**: Modular dashboard with configurable widgets: total records, pod totals, pending categorizations, recently updated records, quick links to pipelines/projects/nurturing hub
+- [x] **DASH-02**: User can show/hide widgets and reorder them
+- [x] **DASH-03**: User can create multiple dashboard views (personal vs workspace default)
+- [x] **DASH-04**: Dashboard surfaces pending follow-ups and stale relationships
+- [x] **DASH-05**: Dashboard shows important dates (birthdays, anniversaries, key dates)
+- [x] **DASH-06**: Dashboard is the primary operating surface — founders live here
 
 ### Nurturing & Maintenance Hub
 
@@ -260,20 +260,20 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | PIPE-09 | Phase 14 | Complete |
 | PROJ-01 | Phase 15 | Complete |
 | PROJ-02 | Phase 15 | Complete |
-| PROJ-03 | Phase 15 | Pending |
+| PROJ-03 | Phase 15 | Complete |
 | PROJ-04 | Phase 15 | Complete |
 | PROJ-05 | Phase 15 | Complete |
-| PROJ-06 | Phase 15 | Pending |
+| PROJ-06 | Phase 15 | Complete |
 | NAV-01 | Phase 15 | Complete |
 | NAV-02 | Phase 15 | Complete |
 | NAV-03 | Phase 15 | Complete |
 | NAV-04 | Phase 15 | Complete |
-| DASH-01 | Phase 16 | Pending |
-| DASH-02 | Phase 16 | Pending |
-| DASH-03 | Phase 16 | Pending |
-| DASH-04 | Phase 16 | Pending |
-| DASH-05 | Phase 16 | Pending |
-| DASH-06 | Phase 16 | Pending |
+| DASH-01 | Phase 16 | Complete |
+| DASH-02 | Phase 16 | Complete |
+| DASH-03 | Phase 16 | Complete |
+| DASH-04 | Phase 16 | Complete |
+| DASH-05 | Phase 16 | Complete |
+| DASH-06 | Phase 16 | Complete |
 | NURT-01 | Phase 16 | Pending |
 | NURT-02 | Phase 16 | Pending |
 | NURT-03 | Phase 16 | Pending |
