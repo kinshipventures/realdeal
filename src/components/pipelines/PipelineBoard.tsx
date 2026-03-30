@@ -6,10 +6,11 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { updateOpportunity } from '../../lib/airtable'
+import { createInteraction, updateOpportunity } from '../../lib/airtable'
 import type { Contact, Opportunity, OpportunityPriority, Pipeline, PipelineStage } from '../../lib/types'
 import { PipelineStageColumn } from './PipelineStageColumn'
 import { OpportunityCard } from './OpportunityCard'
+import { OpportunityDetail } from './OpportunityDetail'
 
 interface Props {
   pipeline: Pipeline
@@ -27,16 +28,27 @@ interface UndoToast {
 }
 
 export function PipelineBoard({
+  pipeline,
   stages,
   opportunities,
   contacts,
   onOpportunitiesChange,
   onStagesChange,
-  initialOpenOpportunityId: _initialOpenOpportunityId,
+  initialOpenOpportunityId,
 }: Props) {
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
+  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Open opportunity from URL param on mount
+  useEffect(() => {
+    if (initialOpenOpportunityId) {
+      const found = opportunities.find(o => o.id === initialOpenOpportunityId)
+      if (found) setSelectedOpportunity(found)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOpenOpportunityId])
 
   // Track if toast is mounted for animation
   const [toastVisible, setToastVisible] = useState(false)
@@ -94,18 +106,38 @@ export function PipelineBoard({
       updateOpportunity(activeId, { stage_id: prevStageId }).catch(console.error)
     })
 
-    updateOpportunity(activeId, { stage_id: newStageId }).catch(() => {
-      onOpportunitiesChange(prevOpps)
-    })
+    // Write pipeline_event in .then() — avoids double-write if action is undone (Pitfall 3)
+    updateOpportunity(activeId, { stage_id: newStageId })
+      .then(() => {
+        draggedOpp.relationship_ids.forEach(relId => {
+          createInteraction({
+            contact_id: relId,
+            type: 'pipeline_event',
+            date: new Date().toISOString().slice(0, 10),
+            notes: null,
+            summary: null,
+            source: null,
+            email_link: null,
+            granola_link: null,
+            event_detail: JSON.stringify({
+              pipeline: pipeline.name,
+              from_stage: stages.find(s => s.id === prevStageId)?.name,
+              to_stage: stages.find(s => s.id === newStageId)?.name,
+            }),
+            actor: 'You',
+          }).catch(console.error)
+        })
+      })
+      .catch(() => {
+        onOpportunitiesChange(prevOpps)
+      })
   }
 
   function handleStageUpdate(id: string, data: Partial<Pick<PipelineStage, 'name' | 'color'>>) {
     onStagesChange(stages.map(s => s.id === id ? { ...s, ...data } : s))
-    // Note: actual persistence (updatePipelineStage) ships in Plan 02
   }
 
   function handleCreateOpportunity(name: string, stageId: string, _contactIds: string[]) {
-    // Optimistic add — real persistence with createOpportunity ships in Plan 02
     const newOpp: Opportunity = {
       id: 'temp-' + Date.now(),
       name,
@@ -119,106 +151,198 @@ export function PipelineBoard({
     onOpportunitiesChange([...opportunities, newOpp])
   }
 
-  // onPriorityChange and onArchive are intentional stubs — real implementations ship in Plan 02
-  function handlePriorityChange(_id: string, _priority: OpportunityPriority) {
-    // stub: Plan 02
+  function handlePriorityChange(id: string, newPriority: OpportunityPriority) {
+    const opp = opportunities.find(o => o.id === id)
+    if (!opp) return
+    const oldPriority = opp.priority
+    const prevOpps = [...opportunities]
+
+    // Optimistic
+    onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, priority: newPriority } : o))
+
+    showUndoToast(`${opp.name} priority changed to ${newPriority}. `, () => {
+      onOpportunitiesChange(prevOpps)
+      updateOpportunity(id, { priority: oldPriority ?? undefined }).catch(console.error)
+    })
+
+    updateOpportunity(id, { priority: newPriority })
+      .then(() => {
+        opp.relationship_ids.forEach(relId => {
+          createInteraction({
+            contact_id: relId,
+            type: 'pipeline_event',
+            date: new Date().toISOString().slice(0, 10),
+            notes: null,
+            summary: null,
+            source: null,
+            email_link: null,
+            granola_link: null,
+            event_detail: JSON.stringify({
+              pipeline: pipeline.name,
+              field: 'priority',
+              old_value: oldPriority,
+              new_value: newPriority,
+            }),
+            actor: 'You',
+          }).catch(console.error)
+        })
+      })
+      .catch(() => {
+        onOpportunitiesChange(prevOpps)
+      })
   }
 
-  function handleArchive(_id: string) {
-    // stub: Plan 02
+  function handleArchive(id: string) {
+    const opp = opportunities.find(o => o.id === id)
+    if (!opp) return
+    const prevOpps = [...opportunities]
+
+    // Optimistic: remove from view (status = archived, filtered out in column)
+    onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, status: 'archived' } : o))
+
+    showUndoToast(`${opp.name} archived.`, () => {
+      onOpportunitiesChange(prevOpps)
+      updateOpportunity(id, { status: 'open' }).catch(console.error)
+    })
+
+    updateOpportunity(id, { status: 'archived' })
+      .then(() => {
+        opp.relationship_ids.forEach(relId => {
+          createInteraction({
+            contact_id: relId,
+            type: 'pipeline_event',
+            date: new Date().toISOString().slice(0, 10),
+            notes: null,
+            summary: null,
+            source: null,
+            email_link: null,
+            granola_link: null,
+            event_detail: JSON.stringify({
+              pipeline: pipeline.name,
+              action: 'archived',
+            }),
+            actor: 'You',
+          }).catch(console.error)
+        })
+      })
+      .catch(() => {
+        onOpportunitiesChange(prevOpps)
+      })
   }
 
-  function handleCardClick(_opp: Opportunity) {
-    // stub: Plan 02 (OpportunityDetail panel)
+  function handleCardClick(opp: Opportunity) {
+    setSelectedOpportunity(opp)
+  }
+
+  function handleOpportunityUpdate(id: string, data: Partial<Opportunity>) {
+    // Optimistic local update
+    onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, ...data } : o))
+    // Also keep selectedOpportunity in sync
+    setSelectedOpportunity(prev => prev && prev.id === id ? { ...prev, ...data } : prev)
+    updateOpportunity(id, data as Parameters<typeof updateOpportunity>[1]).catch(console.error)
   }
 
   return (
-    <DndContext
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div
-        style={{
-          display: 'flex',
-          gap: 16,
-          overflowX: 'auto',
-          padding: '24px 0 32px',
-          alignItems: 'flex-start',
-        }}
+    <>
+      <DndContext
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        {sortedStages.map(stage => {
-          const stageOpps = opportunities
-            .filter(o => o.stage_id === stage.id && o.status !== 'archived')
-          return (
-            <PipelineStageColumn
-              key={stage.id}
-              stage={stage}
-              opportunities={stageOpps}
-              contacts={contacts}
-              onStageUpdate={handleStageUpdate}
-              onCardClick={handleCardClick}
-              onCreateOpportunity={handleCreateOpportunity}
-              onPriorityChange={handlePriorityChange}
-              onArchive={handleArchive}
-            />
-          )
-        })}
-      </div>
-
-      {/* Ghost card during drag */}
-      <DragOverlay>
-        {activeDragOpp ? (
-          <OpportunityCard
-            opportunity={activeDragOpp}
-            contacts={contacts}
-            onPriorityChange={handlePriorityChange}
-            onArchive={handleArchive}
-            onClick={() => {}}
-            isDragOverlay
-          />
-        ) : null}
-      </DragOverlay>
-
-      {/* Undo toast */}
-      {undoToast && (
         <div
-          role="status"
-          aria-live="polite"
           style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 300,
-            background: 'rgba(0,0,0,0.82)',
-            color: '#ffffff',
-            borderRadius: 10,
-            padding: '8px 16px',
             display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            opacity: toastVisible ? 1 : 0,
-            transform: toastVisible ? 'translateY(0)' : 'translateY(8px)',
-            transition: 'opacity 200ms ease-out, transform 200ms ease-out',
+            gap: 16,
+            overflowX: 'auto',
+            padding: '24px 0 32px',
+            alignItems: 'flex-start',
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 400 }}>{undoToast.message}</span>
-          <button
-            onClick={() => { undoToast.onUndo(); setUndoToast(null) }}
+          {sortedStages.map(stage => {
+            const stageOpps = opportunities
+              .filter(o => o.stage_id === stage.id && o.status !== 'archived')
+            return (
+              <PipelineStageColumn
+                key={stage.id}
+                stage={stage}
+                opportunities={stageOpps}
+                contacts={contacts}
+                onStageUpdate={handleStageUpdate}
+                onCardClick={handleCardClick}
+                onCreateOpportunity={handleCreateOpportunity}
+                onPriorityChange={handlePriorityChange}
+                onArchive={handleArchive}
+              />
+            )
+          })}
+        </div>
+
+        {/* Ghost card during drag */}
+        <DragOverlay>
+          {activeDragOpp ? (
+            <OpportunityCard
+              opportunity={activeDragOpp}
+              contacts={contacts}
+              onPriorityChange={handlePriorityChange}
+              onArchive={handleArchive}
+              onClick={() => {}}
+              isDragOverlay
+            />
+          ) : null}
+        </DragOverlay>
+
+        {/* Undo toast */}
+        {undoToast && (
+          <div
+            role="status"
+            aria-live="polite"
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-brand)',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 300,
+              background: 'rgba(0,0,0,0.82)',
+              color: '#ffffff',
+              borderRadius: 10,
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              opacity: toastVisible ? 1 : 0,
+              transform: toastVisible ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 200ms ease-out, transform 200ms ease-out',
             }}
           >
-            Undo
-          </button>
-        </div>
+            <span style={{ fontSize: 13, fontWeight: 400 }}>{undoToast.message}</span>
+            <button
+              onClick={() => { undoToast.onUndo(); setUndoToast(null) }}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--color-brand)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              Undo
+            </button>
+          </div>
+        )}
+      </DndContext>
+
+      {/* Opportunity detail slide-out */}
+      {selectedOpportunity && (
+        <OpportunityDetail
+          opportunity={selectedOpportunity}
+          pipeline={pipeline}
+          stages={stages}
+          contacts={contacts}
+          onClose={() => setSelectedOpportunity(null)}
+          onUpdate={handleOpportunityUpdate}
+        />
       )}
-    </DndContext>
+    </>
   )
 }

@@ -1,7 +1,7 @@
 import { Archive } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import type { Contact, Opportunity, OpportunityPriority } from '../../lib/types'
 import { Avatar } from '../ui'
 
