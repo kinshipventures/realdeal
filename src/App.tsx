@@ -7,6 +7,7 @@ import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
 import { SearchPalette } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
+import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
 import type { Contact } from './lib/types'
@@ -29,6 +30,8 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const isMap = location.pathname === '/map'
+  const isRecords = location.pathname === '/records'
+  const isPulse = !isMap && !isRecords && location.pathname === '/'
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
@@ -75,7 +78,7 @@ function AppShell() {
         >
           <button
             type="button"
-            aria-current={!isMap ? 'page' : undefined}
+            aria-current={isPulse ? 'page' : undefined}
             onClick={() => navigate('/')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -84,13 +87,37 @@ function AppShell() {
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
-              fill={!isMap ? 'var(--color-brand)' : 'none'}
-              stroke={!isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
+              fill={isPulse ? 'var(--color-brand)' : 'none'}
+              stroke={isPulse ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: !isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pulse</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isPulse ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pulse</span>
+          </button>
+          <button
+            type="button"
+            aria-current={isRecords ? 'page' : undefined}
+            onClick={() => navigate('/records')}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24"
+              fill="none"
+              stroke={isRecords ? 'var(--color-brand)' : 'var(--text-muted)'}
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isRecords ? 'var(--color-brand)' : 'var(--text-muted)' }}>Records</span>
           </button>
           <button
             type="button"
@@ -159,24 +186,43 @@ function AppShell() {
         >
           <button
             type="button"
-            aria-current={!isMap ? 'page' : undefined}
+            aria-current={isPulse ? 'page' : undefined}
             onClick={() => navigate('/')}
             style={{
               padding: '12px 20px',
               borderRadius: 100,
               border: 'none',
               fontSize: 12,
-              fontWeight: 500,
               letterSpacing: '0.01em',
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: !isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: !isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
-              fontWeight: !isMap ? 600 : 500,
+              background: isPulse ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isPulse ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isPulse ? 600 : 500,
             }}
           >
             Pulse
+          </button>
+          <button
+            type="button"
+            aria-current={isRecords ? 'page' : undefined}
+            onClick={() => navigate('/records')}
+            style={{
+              padding: '12px 20px',
+              borderRadius: 100,
+              border: 'none',
+              fontSize: 12,
+              letterSpacing: '0.01em',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+              background: isRecords ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isRecords ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isRecords ? 600 : 500,
+            }}
+          >
+            Records
           </button>
           <button
             type="button"
@@ -309,6 +355,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
+        <Route path="records" element={<RecordsList />} />
         <Route path="category/:id" element={<CategoryTable />} />
         <Route path="record/:id" element={<RecordPage />} />
         <Route path="pod/:id" element={<PodDetailPage />} />
