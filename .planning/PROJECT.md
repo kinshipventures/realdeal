@@ -16,9 +16,9 @@ One place where every relationship lives with full context — so founders never
 
 **V1 modules (9):** Relationship Records, Pods + Subpods, Pending Categorization Tray, Pipelines (Kanban), Projects (foundational), Basic Enrichment, Reporting, Nurturing/Maintenance Hub, Sharing + Exports.
 
-**Completed (Phases 10-13):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list.
+**Completed (Phases 10-14):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list, pipelines Kanban.
 
-**Remaining (Phases 14-19):** Pipelines, Projects, Basic Enrichment, Reporting + Exports, Nurturing + Dashboard, Sharing + Polish.
+**Remaining (Phases 15-19):** Projects, Basic Enrichment, Reporting + Exports, Nurturing + Dashboard, Sharing + Polish.
 
 ## Requirements
 
@@ -61,7 +61,7 @@ One place where every relationship lives with full context — so founders never
 
 ### Active (V1 — must ship)
 
-- [ ] Pipelines — Kanban boards with custom stages, opportunity cards referencing relationships (Phase 14)
+- ✓ Pipelines — Kanban boards with custom stages, opportunity cards referencing relationships — Phase 14
 - [ ] Projects — initiative containers with attached contacts/opportunities/notes (Phase 15)
 - [ ] Basic enrichment — email metadata, opt-in web search enrichment (Phase 16)
 - [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 17)
@@ -109,7 +109,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real produc
 
 **Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
-**v2.0 rebuild:** Phases 10-13 established the relationship-first foundation. Phases 14-19 build the remaining V1 modules: pipelines, projects, enrichment, reporting, nurturing, and sharing.
+**v2.0 rebuild:** Phases 10-14 established the relationship-first foundation + pipelines. Phases 15-19 build the remaining V1 modules: projects, enrichment, reporting, nurturing, and sharing.
 
 **Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server. Gmail Chrome extension (new for v2.0).
 
@@ -144,7 +144,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real produc
 | Modal state in Dashboard | AddContactModal managed by Dashboard, not App, due to React Router Outlet pattern | ✓ Good (avoids routing complexity) |
 
 **Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features), v1.2 (Demo Ready)
-**Active milestone:** v2.0 (Kinship Brain MVP — 10 phases, 39 requirements, 4/10 phases complete)
+**Active milestone:** v2.0 (Kinship Brain MVP — 10 phases, 39 requirements, 5/10 phases complete)
 
 ## Evolution
 
@@ -164,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — aligned with Kinship Brain MVP.pdf, Phases 14-19 defined*
+*Last updated: 2026-03-30 — Phase 14 (Pipelines) complete, 5/10 phases done*
