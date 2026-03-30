@@ -1024,9 +1024,31 @@ export function getPipelines(): Promise<Pipeline[]> {
 }
 
 export async function createPipeline(name: string): Promise<Pipeline> {
+  if (isDemoMode()) {
+    const p: Pipeline = { id: 'demo-pipe-' + Date.now(), name, status: 'active', created_at: new Date().toISOString() }
+    DEMO_PIPELINES.push(p)
+    return p
+  }
   const r = await request<AirtableRecord<PipelineFields>>(TABLES.pipelines, {
     method: 'POST',
     body: JSON.stringify({ fields: { Name: name, 'Pipeline Status': 'active' } }),
+  })
+  _pipelinesCache = null
+  return mapPipeline(r)
+}
+
+export async function updatePipeline(id: string, data: Partial<Pick<Pipeline, 'name' | 'status'>>): Promise<Pipeline> {
+  const fields: Record<string, unknown> = {}
+  if (data.name !== undefined) fields.Name = data.name
+  if (data.status !== undefined) fields['Pipeline Status'] = data.status
+  if (isDemoMode()) {
+    const idx = DEMO_PIPELINES.findIndex(p => p.id === id)
+    if (idx >= 0) Object.assign(DEMO_PIPELINES[idx], data)
+    return DEMO_PIPELINES[idx]
+  }
+  const r = await request<AirtableRecord<PipelineFields>>(`${TABLES.pipelines}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
   })
   _pipelinesCache = null
   return mapPipeline(r)
@@ -1090,11 +1112,34 @@ export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]>
 }
 
 export async function createPipelineStage(name: string, pipelineId: string, order: number, color?: string): Promise<PipelineStage> {
+  if (isDemoMode()) {
+    const s: PipelineStage = { id: 'demo-stage-' + Date.now(), pipeline_id: pipelineId, name, color: (color ?? null) as import('./types').HexColor | null, order, created_at: new Date().toISOString() }
+    DEMO_PIPELINE_STAGES.push(s)
+    return s
+  }
   const r = await request<AirtableRecord<PipelineStageFields>>(TABLES.pipelineStages, {
     method: 'POST',
     body: JSON.stringify({ fields: { Name: name, Pipeline: [pipelineId], Order: order, ...(color ? { Color: color } : {}) } }),
   })
   _pipelineStagesCache = null
+  return mapPipelineStage(r)
+}
+
+export async function updatePipelineStage(id: string, data: Partial<Pick<PipelineStage, 'name' | 'color' | 'order'>>): Promise<PipelineStage> {
+  const fields: Record<string, unknown> = {}
+  if (data.name !== undefined) fields.Name = data.name
+  if (data.color !== undefined) fields.Color = data.color
+  if (data.order !== undefined) fields.Order = data.order
+  if (isDemoMode()) {
+    const idx = DEMO_PIPELINE_STAGES.findIndex(s => s.id === id)
+    if (idx >= 0) Object.assign(DEMO_PIPELINE_STAGES[idx], data)
+    return DEMO_PIPELINE_STAGES[idx]
+  }
+  const r = await request<AirtableRecord<PipelineStageFields>>(`${TABLES.pipelineStages}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
+  })
+  invalidatePipelineStagesCache()
   return mapPipelineStage(r)
 }
 
@@ -1155,9 +1200,34 @@ export function getOpportunities(): Promise<Opportunity[]> {
 }
 
 export async function createOpportunity(name: string, stageId: string, relationshipIds: string[]): Promise<Opportunity> {
+  if (isDemoMode()) {
+    const o: Opportunity = { id: 'demo-opp-' + Date.now(), name, stage_id: stageId, relationship_ids: relationshipIds, notes: null, priority: null, status: 'open', created_at: new Date().toISOString() }
+    DEMO_OPPORTUNITIES.push(o)
+    return o
+  }
   const r = await request<AirtableRecord<OpportunityFields>>(TABLES.opportunities, {
     method: 'POST',
     body: JSON.stringify({ fields: { Name: name, Stage: [stageId], Relationships: relationshipIds, 'Opportunity Status': 'open' as OpportunityStatus } }),
+  })
+  _opportunitiesCache = null
+  return mapOpportunity(r)
+}
+
+export async function updateOpportunity(id: string, data: Partial<Pick<Opportunity, 'name' | 'stage_id' | 'notes' | 'priority' | 'status'>>): Promise<Opportunity> {
+  const fields: Record<string, unknown> = {}
+  if (data.name !== undefined) fields.Name = data.name
+  if (data.stage_id !== undefined) fields.Stage = [data.stage_id]
+  if (data.notes !== undefined) fields.Notes = data.notes
+  if (data.priority !== undefined) fields.Priority = data.priority
+  if (data.status !== undefined) fields['Opportunity Status'] = data.status
+  if (isDemoMode()) {
+    const idx = DEMO_OPPORTUNITIES.findIndex(o => o.id === id)
+    if (idx >= 0) Object.assign(DEMO_OPPORTUNITIES[idx], data)
+    return DEMO_OPPORTUNITIES[idx]
+  }
+  const r = await request<AirtableRecord<OpportunityFields>>(`${TABLES.opportunities}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
   })
   _opportunitiesCache = null
   return mapOpportunity(r)
