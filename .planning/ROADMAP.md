@@ -112,7 +112,11 @@ Plans:
   3. User can filter the timeline to focus on specific event types (e.g., hide system events, show only meetings)
   4. Records List shows all relationships filterable by pod, record type, activity recency, and any custom field
   5. User can select multiple records and perform bulk actions (add to project, add to pipeline, bulk field update, export), then save the filter config for reuse
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 14: Pipelines
 **Goal**: Users can manage relationship-linked opportunities through customizable Kanban pipelines
@@ -124,7 +128,11 @@ Plans:
   3. Moving a card between stages, adding a note, or archiving a card writes an event to the linked relationship's timeline
   4. User can open the full relationship record directly from any pipeline card
   5. User can hide a pipeline without deleting it — hidden pipelines maintain all record connections
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 15: Projects + Navigation
 **Goal**: Users can organize multi-record initiatives in projects, and navigate between all modules without losing context
@@ -136,7 +144,11 @@ Plans:
   3. A relationship record shows all projects it belongs to; clicking any project opens it without navigating away (slide-out or modal)
   4. User can open a full relationship record from any pipeline card, project, or campaign — and navigate back without losing their place
   5. All navigation uses slide-out panels or contextual overlays — no full page reloads that reset context
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 16: Dashboard + Nurturing Hub
 **Goal**: The dashboard is the primary daily operating surface and the nurturing hub surfaces everything requiring relationship attention
@@ -148,7 +160,11 @@ Plans:
   3. Nurturing Hub has a dedicated view listing: upcoming important dates, stale relationships (no interaction in N days), maintenance queue for capacity-limited pods, and records with missing required fields
   4. Basic suggestions appear in the hub — contacts with milestones this week, records with no recent interaction
   5. Nurturing signals from the hub also surface as alerts on individual record views, pipeline cards, and dashboard widgets
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ## Progress
 
@@ -167,7 +183,7 @@ Plans:
 | 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 11. Relationship Records | v2.0 | 3/3 | Complete    | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
-| 13. Timeline + Records List | v2.0 | 0/? | Not started | — |
+| 13. Timeline + Records List | v2.0 | 0/3 | Planning complete | — |
 | 14. Pipelines | v2.0 | 0/? | Not started | — |
 | 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
