@@ -18,11 +18,6 @@ function useDialogRef(onClose: () => void): RefObject<HTMLDialogElement | null> 
   return ref
 }
 
-const DIALOG_STYLE: React.CSSProperties = {
-  position: 'fixed', inset: 0, width: '100vw', height: '100vh',
-  maxWidth: '100vw', maxHeight: '100vh',
-  margin: 0, padding: 0, border: 'none', background: 'transparent',
-}
 
 interface CategorizationQueueProps {
   contacts: Contact[]
@@ -225,12 +220,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
 
   if (queue.length === 0) {
     return (
-      <dialog ref={dialogRef} style={DIALOG_STYLE}>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+      <dialog ref={dialogRef} className="overlay-dialog" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{
           background: 'var(--surface-panel)',
           backdropFilter: 'var(--panel-blur)',
@@ -270,7 +260,6 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             Done
           </button>
         </div>
-      </div>
       </dialog>
     )
   }
@@ -278,13 +267,10 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
   const visibleCards = queue.slice(currentIndex, currentIndex + 3)
 
   return (
-    <dialog ref={dialogRef} style={DIALOG_STYLE}>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px',
-      }}>
+    <dialog ref={dialogRef} className="overlay-dialog" style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '24px 16px',
+    }}>
 
         {/* Close button */}
         <button
@@ -384,7 +370,6 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             Categorize
           </button>
         </div>
-      </div>
 
       {categorizingContact && (
         <CategorizationModal

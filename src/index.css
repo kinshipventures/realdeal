@@ -85,8 +85,8 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
-  dialog::backdrop { background: transparent; }
-  dialog[open] { display: contents; }
+  dialog.overlay-dialog { border: none; padding: 0; margin: 0; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; background: transparent; outline: none; }
+  dialog.overlay-dialog::backdrop { background: rgba(0,0,0,0.5); }
 
   html, body, #root {
     height: 100%;

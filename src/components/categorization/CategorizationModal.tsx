@@ -13,12 +13,6 @@ interface CategorizationModalProps {
   onClose: () => void
 }
 
-const DIALOG_STYLE: React.CSSProperties = {
-  position: 'fixed', inset: 0, width: '100vw', height: '100vh',
-  maxWidth: '100vw', maxHeight: '100vh',
-  margin: 0, padding: 0, border: 'none', background: 'transparent',
-}
-
 const inputStyle: React.CSSProperties = {
   width: '100%',
   background: 'var(--tint)',
@@ -249,12 +243,8 @@ export function CategorizationModal({
   }
 
   return (
-    <dialog ref={dialogRef} style={DIALOG_STYLE}>
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 300,
-      background: 'rgba(0,0,0,0.6)',
+    <dialog ref={dialogRef} className="overlay-dialog" style={{
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '0',
     }}>
       <div style={{
         background: 'var(--color-bg)',
@@ -475,7 +465,6 @@ export function CategorizationModal({
           </button>
         </div>
       </div>
-    </div>
     </dialog>
   )
 }
