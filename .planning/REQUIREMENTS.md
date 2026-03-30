@@ -112,11 +112,11 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Nurturing & Maintenance Hub
 
-- [ ] **NURT-01**: Dedicated view showing important dates and milestones (birthdays, anniversaries, fund join dates, key deal events, custom dates)
-- [ ] **NURT-02**: Surfaces stale relationships ("No interaction for 90 days", "No update since last meeting")
-- [ ] **NURT-03**: Maintenance queue for capacity-limited pods — contacts that may need to be "managed up" or "managed out"
-- [ ] **NURT-04**: Surfaces contacts missing essential context or pod-required fields
-- [ ] **NURT-05**: Basic suggestions: "These people have milestones this week", "These records haven't had any interaction lately"
+- [x] **NURT-01**: Dedicated view showing important dates and milestones (birthdays, anniversaries, fund join dates, key deal events, custom dates)
+- [x] **NURT-02**: Surfaces stale relationships ("No interaction for 90 days", "No update since last meeting")
+- [x] **NURT-03**: Maintenance queue for capacity-limited pods — contacts that may need to be "managed up" or "managed out"
+- [x] **NURT-04**: Surfaces contacts missing essential context or pod-required fields
+- [x] **NURT-05**: Basic suggestions: "These people have milestones this week", "These records haven't had any interaction lately"
 - [x] **NURT-06**: All nurturing signals visible in the hub AND surfaced across dashboard widgets, record-level alerts, and pipeline/project views
 
 ### Navigation
@@ -274,11 +274,11 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | DASH-04 | Phase 16 | Complete |
 | DASH-05 | Phase 16 | Complete |
 | DASH-06 | Phase 16 | Complete |
-| NURT-01 | Phase 16 | Pending |
-| NURT-02 | Phase 16 | Pending |
-| NURT-03 | Phase 16 | Pending |
-| NURT-04 | Phase 16 | Pending |
-| NURT-05 | Phase 16 | Pending |
+| NURT-01 | Phase 16 | Complete |
+| NURT-02 | Phase 16 | Complete |
+| NURT-03 | Phase 16 | Complete |
+| NURT-04 | Phase 16 | Complete |
+| NURT-05 | Phase 16 | Complete |
 | NURT-06 | Phase 16 | Complete |
 
 **Coverage:**
