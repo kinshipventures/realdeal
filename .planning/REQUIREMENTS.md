@@ -94,11 +94,11 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Projects
 
-- [ ] **PROJ-01**: User can create projects to organize multi-record initiatives (podcast outreach, philanthropy campaigns, SPV outreach, events)
-- [ ] **PROJ-02**: Each project has: name, description, owner, associated records, associated opportunities, notes/updates
+- [x] **PROJ-01**: User can create projects to organize multi-record initiatives (podcast outreach, philanthropy campaigns, SPV outreach, events)
+- [x] **PROJ-02**: Each project has: name, description, owner, associated records, associated opportunities, notes/updates
 - [ ] **PROJ-03**: Projects are distinct from pipelines — projects focus on context/scope/collection, pipelines focus on stages/movement
-- [ ] **PROJ-04**: User can attach records and opportunities to projects
-- [ ] **PROJ-05**: Projects are visible from the relationship record view
+- [x] **PROJ-04**: User can attach records and opportunities to projects
+- [x] **PROJ-05**: Projects are visible from the relationship record view
 - [ ] **PROJ-06**: Project has a simple overview page
 
 ### Dashboard
@@ -121,10 +121,10 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Navigation
 
-- [ ] **NAV-01**: User can open full relationship record from any pipeline card, project, or campaign
-- [ ] **NAV-02**: User can open pipeline/project/campaign detail from a relationship record's associations
-- [ ] **NAV-03**: All navigation preserves context (slide-out panels, no full page reloads)
-- [ ] **NAV-04**: Zero context loss when moving between modules
+- [x] **NAV-01**: User can open full relationship record from any pipeline card, project, or campaign
+- [x] **NAV-02**: User can open pipeline/project/campaign detail from a relationship record's associations
+- [x] **NAV-03**: All navigation preserves context (slide-out panels, no full page reloads)
+- [x] **NAV-04**: Zero context loss when moving between modules
 
 ## v2.1+ Requirements (Deferred)
 
@@ -258,16 +258,16 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | PIPE-07 | Phase 14 | Complete |
 | PIPE-08 | Phase 14 | Complete |
 | PIPE-09 | Phase 14 | Complete |
-| PROJ-01 | Phase 15 | Pending |
-| PROJ-02 | Phase 15 | Pending |
+| PROJ-01 | Phase 15 | Complete |
+| PROJ-02 | Phase 15 | Complete |
 | PROJ-03 | Phase 15 | Pending |
-| PROJ-04 | Phase 15 | Pending |
-| PROJ-05 | Phase 15 | Pending |
+| PROJ-04 | Phase 15 | Complete |
+| PROJ-05 | Phase 15 | Complete |
 | PROJ-06 | Phase 15 | Pending |
-| NAV-01 | Phase 15 | Pending |
-| NAV-02 | Phase 15 | Pending |
-| NAV-03 | Phase 15 | Pending |
-| NAV-04 | Phase 15 | Pending |
+| NAV-01 | Phase 15 | Complete |
+| NAV-02 | Phase 15 | Complete |
+| NAV-03 | Phase 15 | Complete |
+| NAV-04 | Phase 15 | Complete |
 | DASH-01 | Phase 16 | Pending |
 | DASH-02 | Phase 16 | Pending |
 | DASH-03 | Phase 16 | Pending |
