@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 14 is a pure UI phase. The entire data layer (types, Airtable CRUD, caching, and demo data) was built in Phase 10 and is already in production. No schema work, no new Airtable tables, no type changes needed. The only data layer additions are `updateOpportunity()`, `updatePipelineStage()`, and `pipeline_event` writes via the existing `logInteraction()`.
+Phase 14 is a pure UI phase. The entire data layer (types, Airtable CRUD, caching, and demo data) was built in Phase 10 and is already in production. No schema work, no new Airtable tables, no type changes needed. The only data layer additions are `updateOpportunity()`, `updatePipelineStage()`, and `pipeline_event` writes via `createInteraction()` (NOT `logInteraction()` — avoids bumping `last_contacted_at`).
 
 The codebase has strong established patterns for every UI primitive this phase needs: slide-out panels (CampaignDetail), right-column widgets (RecordWidgets), bulk action bar (RecordsList), inline-edit-on-blur (PodDetailPage), and escape stack management. The planner should map each UI feature directly to its existing pattern counterpart, not invent new patterns.
 
@@ -73,7 +73,7 @@ The one true discretion item is drag-and-drop library choice. **Use `@dnd-kit/co
 | PIPE-03 | Pipeline cards are "Relationship Opportunities" — linked to one or more relationship records | `Opportunity.relationship_ids` already in type. `createOpportunity()` exists. UI: card + contact avatars. |
 | PIPE-04 | Each opportunity card has its own fields: notes, stage, priority, status | All fields exist in `Opportunity` type. `updateOpportunity()` needed. Slide-out panel exposes all fields. |
 | PIPE-05 | Cards show project/investment name in pipeline view, linked back to person/company in record view | Opportunity name on card face. Contact avatar click → `/record/:id`. PipelinesWidget on RecordPage shows back-link. |
-| PIPE-06 | All pipeline changes (stage, notes, status, archive) sync to relationship record timeline | `logInteraction()` with type `pipeline_event` + `event_detail` JSON. Already defined in InteractionType. |
+| PIPE-06 | All pipeline changes (stage, notes, status, archive) sync to relationship record timeline | `createInteraction()` with type `pipeline_event` + `event_detail` JSON. Already defined in InteractionType. |
 | PIPE-07 | User can hide pipelines without deleting them (hidden pipelines maintain record connections) | `PipelineStatus = 'active' | 'hidden'` exists. `updatePipeline()` needed. Hidden tab section in tab bar. |
 | PIPE-08 | User can open full relationship record from any pipeline card | Avatar click on card + link in slide-out → `navigate('/record/:id')`. |
 | PIPE-09 | User can see and navigate to all pipeline associations from a relationship record | PipelinesWidget in RecordWidgets right column. Click → `/pipelines?pipeline=X&opportunity=Y`. |
@@ -150,7 +150,7 @@ setOpportunities(prev => prev.map(opp =>
 ))
 // Background write
 updateOpportunity(activeId, { stage_id: overId })
-  .then(() => logInteraction(/* pipeline_event */))
+  .then(() => createInteraction(/* pipeline_event — use createInteraction, NOT logInteraction */))
   .catch(() => {
     setOpportunities(prev => /* revert to pre-move state */)
     dismissUndoToast()
@@ -261,7 +261,7 @@ The following functions do NOT currently exist and must be added in Wave 0 of th
 | `updateOpportunity(id, patch)` | PATCH opportunity (stage_id, priority, status, notes) | `invalidateOpportunitiesCache()` |
 | `updatePipelineStage(id, patch)` | PATCH stage (name, color, order) | `invalidatePipelineStagesCache()` |
 | `updatePipeline(id, patch)` | PATCH pipeline (status: 'hidden'/'active') | `_pipelinesCache = null` |
-| `pipeline_event logInteraction call` | Write Interaction with type='pipeline_event' + event_detail JSON | Uses existing `logInteraction()` — no new function needed |
+| `pipeline_event createInteraction call` | Write Interaction with type='pipeline_event' + event_detail JSON | Uses `createInteraction()` directly — NOT `logInteraction()` (avoids bumping last_contacted_at) |
 
 Demo mode mutations also needed in `sampleData.ts`:
 - Move opportunity between stages (update `stage_id` on DEMO_OPPORTUNITIES entry)
@@ -285,7 +285,7 @@ Demo mode mutations also needed in `sampleData.ts`:
 
 ### Pitfall 3: Double timeline writes
 **What goes wrong:** `pipeline_event` written twice per stage change — once in `onDragEnd` and once in the async update callback.
-**Why it happens:** Forgetting that `logInteraction` is already called inside a wrapper, or calling it in two places.
+**Why it happens:** Calling `logInteraction()` instead of `createInteraction()` directly, or calling it in two places. `logInteraction()` updates `last_contacted_at` which is incorrect for pipeline system events.
 **How to avoid:** Write timeline events only in the `.then()` callback of `updateOpportunity()`, after the Airtable write succeeds. Never write in `onDragEnd` directly.
 **Warning signs:** Duplicate `pipeline_event` entries appearing in the relationship timeline.
 
@@ -310,6 +310,9 @@ Demo mode mutations also needed in `sampleData.ts`:
 ## Code Examples
 
 ### dnd-kit Kanban: Cross-container card move
+
+> **CAUTION:** This example uses `createInteraction()` directly -- NOT `logInteraction()`. Using `logInteraction()` would incorrectly bump `last_contacted_at` on pipeline stage moves. Executors MUST follow this pattern.
+
 ```typescript
 // Source: https://dndkit.com/overview + LogRocket kanban tutorial
 function handleDragEnd(event: DragEndEvent) {
@@ -345,12 +348,22 @@ function handleDragEnd(event: DragEndEvent) {
     )
   })
 
-  // Persist
+  // Persist — CAUTION: use createInteraction() directly, NOT logInteraction().
+  // logInteraction() updates last_contacted_at which incorrectly bumps contact
+  // recency on pipeline stage moves.
   updateOpportunity(activeOppId, { stage_id: newStageId })
     .then(() => {
       // Write timeline event for each linked relationship
       activeOpp.relationship_ids.forEach(relId => {
-        logInteraction(relId, 'pipeline_event', new Date().toISOString().slice(0, 10), null, {
+        createInteraction({
+          contact_id: relId,
+          type: 'pipeline_event',
+          date: new Date().toISOString().slice(0, 10),
+          notes: null,
+          summary: null,
+          source: null,
+          email_link: null,
+          granola_link: null,
           event_detail: JSON.stringify({
             pipeline: pipeline.name,
             from_stage: stages.find(s => s.id === prevStageId)?.name,
@@ -367,6 +380,7 @@ function handleDragEnd(event: DragEndEvent) {
       dismissUndoToast()
     })
 }
+
 ```
 
 ### Priority badge cycling (D-10)
