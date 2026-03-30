@@ -240,7 +240,7 @@ function AppShell() {
         aria-label="New relationship"
         style={{
           position: 'fixed',
-          bottom: isMobile ? 64 : 72,
+          bottom: isMobile ? 72 : 84,
           right: 24,
           width: 48,
           height: 48,
