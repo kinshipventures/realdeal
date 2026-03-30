@@ -14,15 +14,17 @@ interface RecordWidgetsProps {
   fieldConfigs: FieldConfig[]
   onUpdate: (data: Partial<Contact>) => void
   onFieldConfigsRefresh?: (configs: FieldConfig[]) => void
+  upcomingBirthday?: { daysUntil: number; date: string } | null
+  missingFieldCount?: number
 }
 
-export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpdate, onFieldConfigsRefresh }: RecordWidgetsProps) {
+export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpdate, onFieldConfigsRefresh, upcomingBirthday, missingFieldCount }: RecordWidgetsProps) {
   const assignedPods = pods.filter(p => contact.list_ids.includes(p.id))
 
   return (
     <div>
       <DetailsWidget contact={contact} onUpdate={onUpdate} />
-      <HealthWidget contact={contact} interactions={interactions} pods={pods} />
+      <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
       {assignedPods.map(pod => (
         <PodFieldsWidget
           key={pod.id}
