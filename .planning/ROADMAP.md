@@ -130,9 +130,9 @@ Plans:
   5. User can hide a pipeline without deleting it — hidden pipelines maintain all record connections
 **Plans:** 3 plans
 Plans:
-- [x] 13-01-PLAN.md — Timeline data layer + system events + filter UI
-- [x] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
-- [ ] 13-03-PLAN.md — Bulk actions + human verification
+- [ ] 14-01-PLAN.md — Data layer + dnd-kit + core Kanban board (tabs, columns, cards, drag-and-drop)
+- [ ] 14-02-PLAN.md — OpportunityDetail slide-out + pipeline event timeline writes + quick actions
+- [ ] 14-03-PLAN.md — Nav wiring + PipelinesWidget on RecordPage + AddToPipelineModal + bulk action
 
 ### Phase 15: Projects + Navigation
 **Goal**: Users can organize multi-record initiatives in projects, and navigate between all modules without losing context
@@ -144,11 +144,7 @@ Plans:
   3. A relationship record shows all projects it belongs to; clicking any project opens it without navigating away (slide-out or modal)
   4. User can open a full relationship record from any pipeline card, project, or campaign — and navigate back without losing their place
   5. All navigation uses slide-out panels or contextual overlays — no full page reloads that reset context
-**Plans:** 3 plans
-Plans:
-- [x] 13-01-PLAN.md — Timeline data layer + system events + filter UI
-- [x] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
-- [ ] 13-03-PLAN.md — Bulk actions + human verification
+**Plans:** [To be planned]
 
 ### Phase 16: Dashboard + Nurturing Hub
 **Goal**: The dashboard is the primary daily operating surface and the nurturing hub surfaces everything requiring relationship attention
@@ -160,11 +156,7 @@ Plans:
   3. Nurturing Hub has a dedicated view listing: upcoming important dates, stale relationships (no interaction in N days), maintenance queue for capacity-limited pods, and records with missing required fields
   4. Basic suggestions appear in the hub — contacts with milestones this week, records with no recent interaction
   5. Nurturing signals from the hub also surface as alerts on individual record views, pipeline cards, and dashboard widgets
-**Plans:** 3 plans
-Plans:
-- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
-- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
-- [ ] 13-03-PLAN.md — Bulk actions + human verification
+**Plans:** [To be planned]
 
 ## Progress
 
@@ -184,6 +176,6 @@ Plans:
 | 11. Relationship Records | v2.0 | 3/3 | Complete    | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
-| 14. Pipelines | v2.0 | 0/? | Not started | — |
+| 14. Pipelines | v2.0 | 0/3 | Planned | — |
 | 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
