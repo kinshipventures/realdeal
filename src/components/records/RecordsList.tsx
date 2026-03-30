@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getContacts, getPods, getAllInteractions } from '../../lib/airtable'
+import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache } from '../../lib/airtable'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
+import { logSystemEvent } from '../../lib/timeline'
 import type { Contact, Pod, RelationshipType, RelationshipStatus } from '../../lib/types'
 import type { Interaction } from '../../lib/types'
 
@@ -127,6 +128,16 @@ export function RecordsList() {
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
+  // Bulk actions
+  const [showPodPicker, setShowPodPicker] = useState(false)
+  const [showFieldUpdate, setShowFieldUpdate] = useState(false)
+  const [updateField, setUpdateField] = useState('')
+  const [updateValue, setUpdateValue] = useState('')
+  const [bulkOperating, setBulkOperating] = useState(false)
+
+  const podPickerRef = useRef<HTMLDivElement>(null)
+  const fieldUpdateRef = useRef<HTMLDivElement>(null)
+
   // Saved views
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadViews)
   const [showViewsDropdown, setShowViewsDropdown] = useState(false)
@@ -174,6 +185,12 @@ export function RecordsList() {
       }
       if (columnsRef.current && !columnsRef.current.contains(e.target as Node)) {
         setShowColumnsDropdown(false)
+      }
+      if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
+        setShowPodPicker(false)
+      }
+      if (fieldUpdateRef.current && !fieldUpdateRef.current.contains(e.target as Node)) {
+        setShowFieldUpdate(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -337,6 +354,110 @@ export function RecordsList() {
   }, [])
 
   const hasActiveFilters = filters.search || filters.pod || filters.type || filters.status || filters.recency !== 'any'
+
+  // ── Bulk action handlers ──────────────────────────────────────────────────
+
+  async function handleBulkAddToPod(podId: string) {
+    setShowPodPicker(false)
+    setBulkOperating(true)
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    const pod = pods.find(p => p.id === podId)
+    for (const contact of selected) {
+      if (contact.list_ids.includes(podId)) continue
+      const newListIds = [...contact.list_ids, podId]
+      const primaryId = contact.primary_list_id ?? podId
+      await updateContact(contact.id, { list_ids: newListIds, primary_list_id: primaryId })
+      await logSystemEvent({
+        contactId: contact.id,
+        type: 'pod_change',
+        detail: { action: 'added', pod: pod?.name ?? podId, podId },
+        notes: `Added to ${pod?.name ?? 'pod'}`,
+      })
+    }
+    invalidateContactsCache()
+    const fresh = await getContacts()
+    setContacts(fresh)
+    setSelectedIds(new Set())
+    setBulkOperating(false)
+  }
+
+  async function handleBulkFieldUpdate() {
+    setShowFieldUpdate(false)
+    setBulkOperating(true)
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    for (const contact of selected) {
+      await updateContact(contact.id, { [updateField]: updateValue } as Partial<Contact>)
+      await logSystemEvent({
+        contactId: contact.id,
+        type: 'field_update',
+        detail: { field: updateField, newValue: updateValue },
+        notes: `Updated ${updateField} to "${updateValue}"`,
+      })
+    }
+    invalidateContactsCache()
+    const fresh = await getContacts()
+    setContacts(fresh)
+    setSelectedIds(new Set())
+    setUpdateField('')
+    setUpdateValue('')
+    setBulkOperating(false)
+  }
+
+  function handleExportCsv() {
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    const visibleColsSnap = COLUMNS.filter(c => visibleColumns.has(c.id))
+    const headers = visibleColsSnap.map(c => c.label)
+
+    function cellValue(contact: Contact, colId: ColumnId): string {
+      switch (colId) {
+        case 'name': return contact.name
+        case 'company': return contact.company ?? ''
+        case 'pod': { const p = contact.primary_list_id ? podMap[contact.primary_list_id] : null; return p?.name ?? '' }
+        case 'equity': return String(equityMap[contact.id] ?? 0)
+        case 'type': return contact.type
+        case 'status': return contact.status
+        case 'last_contact': return contact.last_contacted_at ?? ''
+        case 'cadence': return contact.cadence_override ?? contact.contact_frequency ?? ''
+        case 'location': return contact.location ?? ''
+        case 'follow_up': return contact.next_follow_up_date ?? ''
+        default: return ''
+      }
+    }
+
+    const rows = selected.map(c => visibleColsSnap.map(col => {
+      const val = cellValue(c, col.id)
+      return `"${val.replace(/"/g, '""')}"`
+    }).join(','))
+
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `records-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function handleBulkArchive() {
+    if (!window.confirm(`Archive ${selectedIds.size} record(s)? This is reversible.`)) return
+    setBulkOperating(true)
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    for (const contact of selected) {
+      await updateContact(contact.id, { status: 'Archived' })
+      await logSystemEvent({
+        contactId: contact.id,
+        type: 'field_update',
+        detail: { field: 'status', oldValue: contact.status, newValue: 'Archived' },
+        notes: 'Archived',
+      })
+    }
+    invalidateContactsCache()
+    const fresh = await getContacts()
+    setContacts(fresh)
+    setSelectedIds(new Set())
+    setBulkOperating(false)
+  }
 
   const visibleCols = COLUMNS.filter(c => visibleColumns.has(c.id))
 
@@ -550,19 +671,146 @@ export function RecordsList() {
       {selectedIds.size > 0 && (
         <div style={{
           margin: '0 40px 8px',
-          padding: '8px 16px',
-          borderRadius: 8,
-          background: 'rgba(37,180,57,0.08)',
-          border: '1px solid rgba(37,180,57,0.2)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          fontSize: 13,
-          color: 'var(--color-text-primary)',
+          padding: '8px 16px',
+          background: 'rgba(0,0,0,0.04)',
+          borderRadius: 8,
           flexShrink: 0,
         }}>
-          <span style={{ fontWeight: 600 }}>{selectedIds.size} selected</span>
-          <span style={{ color: 'var(--color-text-tertiary)' }}>Bulk actions coming...</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            {bulkOperating ? 'Working...' : `${selectedIds.size} selected`}
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {/* Add to pod */}
+            <div ref={podPickerRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => { setShowPodPicker(v => !v); setShowFieldUpdate(false) }}
+                disabled={bulkOperating}
+                style={bulkBtnStyle}
+              >
+                Add to pod
+              </button>
+              {showPodPicker && (
+                <div style={{ ...dropdownStyle, minWidth: 160 }}>
+                  {pods.map(pod => (
+                    <div
+                      key={pod.id}
+                      onClick={() => handleBulkAddToPod(pod.id)}
+                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8 }}
+                    >
+                      {pod.color && (
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />
+                      )}
+                      {pod.name}
+                    </div>
+                  ))}
+                  {pods.length === 0 && (
+                    <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No pods</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Field update */}
+            <div ref={fieldUpdateRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => { setShowFieldUpdate(v => !v); setShowPodPicker(false) }}
+                disabled={bulkOperating}
+                style={bulkBtnStyle}
+              >
+                Update field
+              </button>
+              {showFieldUpdate && (
+                <div style={{ ...dropdownStyle, minWidth: 200, padding: 8 }}>
+                  <select
+                    value={updateField}
+                    onChange={e => setUpdateField(e.target.value)}
+                    style={{ ...selectStyle, width: '100%', marginBottom: 6 }}
+                  >
+                    <option value="">Select field...</option>
+                    <option value="company">Company</option>
+                    <option value="role">Role</option>
+                    <option value="location">Location</option>
+                    <option value="status">Status</option>
+                  </select>
+                  {updateField === 'status' ? (
+                    <select
+                      value={updateValue}
+                      onChange={e => setUpdateValue(e.target.value)}
+                      style={{ ...selectStyle, width: '100%', marginBottom: 6 }}
+                    >
+                      <option value="">Select status...</option>
+                      <option value="Active">Active</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Archived">Archived</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="New value..."
+                      value={updateValue}
+                      onChange={e => setUpdateValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && updateField && updateValue) handleBulkFieldUpdate() }}
+                      style={{
+                        width: '100%',
+                        height: 28,
+                        padding: '0 8px',
+                        borderRadius: 6,
+                        border: '1px solid var(--edge)',
+                        background: 'var(--color-bg)',
+                        fontSize: 12,
+                        color: 'var(--color-text-primary)',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        marginBottom: 6,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { if (updateField && updateValue) handleBulkFieldUpdate() }}
+                    disabled={!updateField || !updateValue}
+                    style={{
+                      width: '100%',
+                      padding: '5px 0',
+                      borderRadius: 6,
+                      background: '#25B439',
+                      border: 'none',
+                      color: '#fff',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: updateField && updateValue ? 'pointer' : 'not-allowed',
+                      opacity: updateField && updateValue ? 1 : 0.5,
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={bulkOperating}
+              style={bulkBtnStyle}
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkArchive}
+              disabled={bulkOperating}
+              style={{ ...bulkBtnStyle, color: '#D93025' }}
+            >
+              Archive
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
@@ -849,4 +1097,16 @@ const dropdownItemStyle: React.CSSProperties = {
   fontSize: 13,
   color: 'var(--color-text-primary)',
   cursor: 'pointer',
+}
+
+const bulkBtnStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 500,
+  padding: '4px 12px',
+  borderRadius: 6,
+  background: 'var(--surface-panel)',
+  border: '1px solid var(--edge)',
+  cursor: 'pointer',
+  color: 'var(--color-text-primary)',
+  fontFamily: 'inherit',
 }
