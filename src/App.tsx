@@ -13,6 +13,7 @@ import { PodDetailPage } from './components/pods/PodDetailPage'
 import { PipelinesPage } from './components/pipelines/PipelinesPage'
 import { ProjectsPage } from './components/projects/ProjectsPage'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
+import { NurturingHub } from './components/nurturing/NurturingHub'
 import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
@@ -36,7 +37,8 @@ function AppShell() {
   const isContacts = location.pathname === '/contacts'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
-  const isPulse = !isMap && !isContacts && !isPipelines && !isProjects && location.pathname === '/'
+  const isPulse = !isMap && !isContacts && !isPipelines && !isProjects
+    && (location.pathname === '/' || location.pathname.startsWith('/pulse'))
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
@@ -438,6 +440,7 @@ export default function App() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
+        <Route path="pulse/nurturing" element={<NurturingHub />} />
         <Route path="map" element={<OrbMap />} />
         <Route path="contacts" element={<RecordsList />} />
         <Route path="pipelines" element={<PipelinesPage />} />
