@@ -1,11 +1,28 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useCallback, useEffect, useRef, type RefObject } from 'react'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { getPods } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { CategorizationModal } from './CategorizationModal'
+
+function useDialogRef(onClose: () => void): RefObject<HTMLDialogElement | null> {
+  const ref = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (el && !el.open) el.showModal()
+    const handleCancel = (e: Event) => { e.preventDefault(); onClose() }
+    el?.addEventListener('cancel', handleCancel)
+    return () => el?.removeEventListener('cancel', handleCancel)
+  }, [onClose])
+  return ref
+}
+
+const DIALOG_STYLE: React.CSSProperties = {
+  position: 'fixed', inset: 0, width: '100vw', height: '100vh',
+  maxWidth: '100vw', maxHeight: '100vh',
+  margin: 0, padding: 0, border: 'none', background: 'transparent',
+}
 
 interface CategorizationQueueProps {
   contacts: Contact[]
@@ -125,6 +142,7 @@ function ContactCard({
 }
 
 export function CategorizationQueue({ contacts: initialContacts, onClose, onCategorized }: CategorizationQueueProps) {
+  const dialogRef = useDialogRef(onClose)
   const [queue, setQueue] = useState<Contact[]>(initialContacts)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -206,7 +224,8 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
   }
 
   if (queue.length === 0) {
-    return createPortal(
+    return (
+      <dialog ref={dialogRef} style={DIALOG_STYLE}>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(0,0,0,0.5)',
@@ -251,15 +270,15 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             Done
           </button>
         </div>
-      </div>,
-      document.body,
+      </div>
+      </dialog>
     )
   }
 
   const visibleCards = queue.slice(currentIndex, currentIndex + 3)
 
-  return createPortal(
-    <>
+  return (
+    <dialog ref={dialogRef} style={DIALOG_STYLE}>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(0,0,0,0.5)',
@@ -377,7 +396,6 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           onClose={() => setCategorizingContact(null)}
         />
       )}
-    </>,
-    document.body,
+    </dialog>
   )
 }

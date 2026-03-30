@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { updateContact, createInteraction, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
@@ -12,6 +11,12 @@ interface CategorizationModalProps {
   onCategorized: (contactId: string) => void
   onSkip: () => void
   onClose: () => void
+}
+
+const DIALOG_STYLE: React.CSSProperties = {
+  position: 'fixed', inset: 0, width: '100vw', height: '100vh',
+  maxWidth: '100vw', maxHeight: '100vh',
+  margin: 0, padding: 0, border: 'none', background: 'transparent',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -45,6 +50,15 @@ export function CategorizationModal({
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
+
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const el = dialogRef.current
+    if (el && !el.open) el.showModal()
+    const handleCancel = (e: Event) => { e.preventDefault(); onClose() }
+    el?.addEventListener('cancel', handleCancel)
+    return () => el?.removeEventListener('cancel', handleCancel)
+  }, [onClose])
 
   function togglePod(podId: string, pod: Pod) {
     setSelectedPodIds(prev => {
@@ -234,7 +248,8 @@ export function CategorizationModal({
     )
   }
 
-  return createPortal(
+  return (
+    <dialog ref={dialogRef} style={DIALOG_STYLE}>
     <div style={{
       position: 'fixed', inset: 0, zIndex: 300,
       background: 'rgba(0,0,0,0.6)',
@@ -460,7 +475,7 @@ export function CategorizationModal({
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
+    </dialog>
   )
 }
