@@ -21,7 +21,7 @@ interface InteractionSectionProps {
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
-  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline',
+  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline', project_event: 'Project',
 }
 
 const TYPE_COLORS: Record<InteractionType, string> = {
@@ -35,6 +35,7 @@ const TYPE_COLORS: Record<InteractionType, string> = {
   field_update: 'rgba(0,0,0,0.35)',
   categorization: 'rgba(0,0,0,0.35)',
   pipeline_event: 'rgba(0,0,0,0.35)',
+  project_event: 'rgba(0,0,0,0.35)',
 }
 
 function typePill(type: InteractionType): React.CSSProperties {
@@ -374,7 +375,17 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 background: 'rgba(0,0,0,0.15)', flexShrink: 0,
               }} />
               <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flex: 1 }}>
-                {interaction.notes ?? TYPE_LABELS[interaction.type]}
+                {(() => {
+                  if (interaction.type === 'project_event' && interaction.event_detail) {
+                    try {
+                      const detail = JSON.parse(interaction.event_detail) as { project_name?: string; action?: string }
+                      if (detail.action === 'added_to_project') return `Added to ${detail.project_name}`
+                      if (detail.action === 'removed_from_project') return `Removed from ${detail.project_name}`
+                      if (detail.action === 'project_note') return `Project note on ${detail.project_name}${interaction.notes ? `: ${interaction.notes}` : ''}`
+                    } catch { /* fall through */ }
+                  }
+                  return interaction.notes ?? TYPE_LABELS[interaction.type]
+                })()}
               </span>
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0, display: 'flex', gap: 4 }}>
                 {interaction.actor && <span>{interaction.actor}</span>}

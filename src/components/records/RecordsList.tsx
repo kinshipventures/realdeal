@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache } from '../../lib/airtable'
+import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
-import type { Contact, Pod, RelationshipType, RelationshipStatus } from '../../lib/types'
+import type { Contact, Pod, Project, RelationshipType, RelationshipStatus } from '../../lib/types'
 import type { Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -136,6 +136,9 @@ export function RecordsList() {
   const [updateValue, setUpdateValue] = useState('')
   const [bulkOperating, setBulkOperating] = useState(false)
   const [showBulkPipelineModal, setShowBulkPipelineModal] = useState(false)
+  const [showAddToProject, setShowAddToProject] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
@@ -154,15 +157,17 @@ export function RecordsList() {
   useEffect(() => {
     let stale = false
     async function load() {
-      const [allContacts, allPods, allInteractions] = await Promise.all([
+      const [allContacts, allPods, allInteractions, allProjects] = await Promise.all([
         getContacts(),
         getPods(),
         getAllInteractions(),
+        getProjects(),
       ])
       if (stale) return
 
       setPods(allPods)
       setContacts(allContacts)
+      setProjects(allProjects)
 
       const eqMap: Record<string, number> = {}
       for (const contact of allContacts) {
@@ -459,6 +464,17 @@ export function RecordsList() {
     setContacts(fresh)
     setSelectedIds(new Set())
     setBulkOperating(false)
+  }
+
+  async function handleAddToProject() {
+    if (!selectedProjectId) return
+    for (const id of selectedIds) {
+      await addRecordToProject(selectedProjectId, id)
+    }
+    invalidateProjectsCache()
+    setSelectedIds(new Set())
+    setShowAddToProject(false)
+    setSelectedProjectId(null)
   }
 
   const visibleCols = COLUMNS.filter(c => visibleColumns.has(c.id))
@@ -820,6 +836,14 @@ export function RecordsList() {
             >
               Add to Pipeline
             </button>
+            <button
+              type="button"
+              onClick={() => setShowAddToProject(true)}
+              disabled={bulkOperating}
+              style={bulkBtnStyle}
+            >
+              Add to Project
+            </button>
           </div>
           <button
             type="button"
@@ -838,6 +862,47 @@ export function RecordsList() {
           contactIds={Array.from(selectedIds)}
           onCreated={() => { setShowBulkPipelineModal(false); setSelectedIds(new Set()) }}
         />
+      )}
+
+      {showAddToProject && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setShowAddToProject(false)} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}>
+            <h3 style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600 }}>Add to Project</h3>
+            {projects.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No projects available.</p>
+            ) : (
+              projects.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedProjectId(p.id)}
+                  style={{
+                    padding: '8px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
+                    background: selectedProjectId === p.id ? 'rgba(0,0,0,0.06)' : 'transparent',
+                  }}
+                  onMouseEnter={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,0,0,0.03)' }}
+                  onMouseLeave={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{p.name}</div>
+                  {p.description && <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{p.description}</div>}
+                </div>
+              ))
+            )}
+            <button
+              disabled={!selectedProjectId}
+              onClick={handleAddToProject}
+              style={{
+                marginTop: 12, width: '100%', padding: '8px 16px', borderRadius: 8, border: 'none',
+                background: selectedProjectId ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.12)',
+                color: selectedProjectId ? '#fff' : 'rgba(0,0,0,0.3)',
+                cursor: selectedProjectId ? 'pointer' : 'default',
+                fontSize: 14, fontWeight: 500,
+              }}
+            >
+              Add {selectedIds.size} record{selectedIds.size !== 1 ? 's' : ''}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Table area */}
