@@ -144,7 +144,11 @@ Plans:
   3. A relationship record shows all projects it belongs to; clicking any project opens it without navigating away (slide-out or modal)
   4. User can open a full relationship record from any pipeline card, project, or campaign — and navigate back without losing their place
   5. All navigation uses slide-out panels or contextual overlays — no full page reloads that reset context
-**Plans:** [To be planned]
+**Plans:** 3 plans
+Plans:
+- [ ] 15-01-PLAN.md — Data layer: project_event type, CRUD functions, timeline writes, demo mode
+- [ ] 15-02-PLAN.md — ProjectsPage card grid, ProjectDetailPage with tabs, CreateProjectModal, nav/routes
+- [ ] 15-03-PLAN.md — ProjectsWidget on RecordPage, "Add to Project" bulk action, project_event timeline renderer
 
 ### Phase 16: Dashboard + Nurturing Hub
 **Goal**: The dashboard is the primary daily operating surface and the nurturing hub surfaces everything requiring relationship attention
@@ -177,5 +181,5 @@ Plans:
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
 | 14. Pipelines | v2.0 | 3/3 | Complete    | 2026-03-30 |
-| 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
+| 15. Projects + Navigation | v2.0 | 0/3 | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
