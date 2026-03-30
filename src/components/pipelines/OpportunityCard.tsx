@@ -1,4 +1,5 @@
-import { Archive } from 'lucide-react'
+import { useState } from 'react'
+import { Archive, MessageSquare } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router'
@@ -10,6 +11,7 @@ interface Props {
   contacts: Contact[]
   onPriorityChange: (id: string, priority: OpportunityPriority) => void
   onArchive: (id: string) => void
+  onInlineNote?: (id: string, note: string) => void
   onClick: () => void
   isDragOverlay?: boolean
 }
@@ -26,9 +28,11 @@ const PRIORITY_CYCLE: Record<OpportunityPriority, OpportunityPriority> = {
   high: 'low',
 }
 
-export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArchive, onClick, isDragOverlay }: Props) {
+export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArchive, onInlineNote, onClick, isDragOverlay }: Props) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: opportunity.id })
+  const [showNoteInput, setShowNoteInput] = useState(false)
+  const [noteValue, setNoteValue] = useState('')
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -57,6 +61,33 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
   function handleAvatarClick(e: React.MouseEvent, contactId: string) {
     e.stopPropagation()
     navigate(`/record/${contactId}`)
+  }
+
+  function handleNoteToggle(e: React.MouseEvent) {
+    e.stopPropagation()
+    setShowNoteInput(prev => !prev)
+  }
+
+  function handleNoteKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation()
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()
+    }
+    if (e.key === 'Escape') {
+      setNoteValue('')
+      setShowNoteInput(false)
+    }
+  }
+
+  function handleNoteSave() {
+    const trimmed = noteValue.trim()
+    if (!trimmed) {
+      setShowNoteInput(false)
+      return
+    }
+    onInlineNote?.(opportunity.id, trimmed)
+    setNoteValue('')
+    setShowNoteInput(false)
   }
 
   const priority = opportunity.priority
@@ -156,30 +187,81 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
             )}
           </div>
 
-          {/* Priority badge */}
-          {priority && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Note toggle */}
             <button
-              onClick={handlePriorityClick}
+              onClick={handleNoteToggle}
+              aria-label="Add a note"
+              className="opp-note-btn"
               style={{
-                padding: '2px 8px',
-                borderRadius: 20,
+                padding: 3,
                 border: 'none',
-                background: PRIORITY_STYLES[priority].bg,
-                color: PRIORITY_STYLES[priority].color,
-                fontSize: 11,
-                fontWeight: 400,
+                background: 'transparent',
                 cursor: 'pointer',
-                flexShrink: 0,
+                color: showNoteInput ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: showNoteInput ? 1 : 0,
+                transition: 'opacity 120ms',
               }}
             >
-              {PRIORITY_STYLES[priority].label}
+              <MessageSquare size={13} />
             </button>
-          )}
+
+            {/* Priority badge */}
+            {priority && (
+              <button
+                onClick={handlePriorityClick}
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: 20,
+                  border: 'none',
+                  background: PRIORITY_STYLES[priority].bg,
+                  color: PRIORITY_STYLES[priority].color,
+                  fontSize: 11,
+                  fontWeight: 400,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                {PRIORITY_STYLES[priority].label}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Inline note input */}
+      {showNoteInput && (
+        <div onClick={e => e.stopPropagation()} style={{ marginTop: 8 }}>
+          <input
+            autoFocus
+            type="text"
+            value={noteValue}
+            onChange={e => setNoteValue(e.target.value)}
+            onKeyDown={handleNoteKeyDown}
+            onBlur={handleNoteSave}
+            placeholder="Add a note..."
+            style={{
+              width: '100%',
+              fontSize: 13,
+              fontWeight: 400,
+              padding: '5px 8px',
+              borderRadius: 6,
+              border: '1px solid var(--edge)',
+              background: 'var(--tint)',
+              color: 'var(--color-text-primary)',
+              outline: 'none',
+              fontFamily: 'inherit',
+              boxSizing: 'border-box',
+            }}
+          />
         </div>
       )}
 
       <style>{`
         .opp-card:hover .opp-archive-btn { opacity: 1 !important; }
+        .opp-card:hover .opp-note-btn { opacity: 1 !important; }
         .opp-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
       `}</style>
     </div>

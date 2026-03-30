@@ -17,6 +17,7 @@ interface Props {
   onCreateOpportunity: (name: string, stageId: string, contactIds: string[]) => void
   onPriorityChange: (id: string, priority: OpportunityPriority) => void
   onArchive: (id: string) => void
+  onInlineNote?: (id: string, note: string) => void
 }
 
 export function PipelineStageColumn({
@@ -28,6 +29,7 @@ export function PipelineStageColumn({
   onCreateOpportunity,
   onPriorityChange,
   onArchive,
+  onInlineNote,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -235,6 +237,7 @@ export function PipelineStageColumn({
                 contacts={contacts}
                 onPriorityChange={onPriorityChange}
                 onArchive={onArchive}
+                onInlineNote={onInlineNote}
                 onClick={() => onCardClick(opp)}
               />
             ))

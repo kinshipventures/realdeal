@@ -230,6 +230,33 @@ export function PipelineBoard({
       })
   }
 
+  function handleInlineNote(id: string, note: string) {
+    const opp = opportunities.find(o => o.id === id)
+    if (!opp) return
+    const newNotes = opp.notes ? `${opp.notes}\n${note}` : note
+
+    onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, notes: newNotes } : o))
+
+    updateOpportunity(id, { notes: newNotes })
+      .then(() => {
+        opp.relationship_ids.forEach(relId => {
+          createInteraction({
+            contact_id: relId,
+            type: 'pipeline_event',
+            date: new Date().toISOString().slice(0, 10),
+            notes: null,
+            summary: null,
+            source: null,
+            email_link: null,
+            granola_link: null,
+            event_detail: JSON.stringify({ pipeline: pipeline.name, action: 'note_added' }),
+            actor: 'You',
+          }).catch(console.error)
+        })
+      })
+      .catch(console.error)
+  }
+
   function handleCardClick(opp: Opportunity) {
     setSelectedOpportunity(opp)
   }
@@ -272,6 +299,7 @@ export function PipelineBoard({
                 onCreateOpportunity={handleCreateOpportunity}
                 onPriorityChange={handlePriorityChange}
                 onArchive={handleArchive}
+                onInlineNote={handleInlineNote}
               />
             )
           })}
