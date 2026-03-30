@@ -160,7 +160,11 @@ Plans:
   3. Nurturing Hub has a dedicated view listing: upcoming important dates, stale relationships (no interaction in N days), maintenance queue for capacity-limited pods, and records with missing required fields
   4. Basic suggestions appear in the hub — contacts with milestones this week, records with no recent interaction
   5. Nurturing signals from the hub also surface as alerts on individual record views, pipeline cards, and dashboard widgets
-**Plans:** [To be planned]
+**Plans:** 3 plans
+Plans:
+- [ ] 16-01-PLAN.md — Dashboard decomposition: widget extraction, config hook, settings panel, presets
+- [ ] 16-02-PLAN.md — Nurturing Hub: /pulse/nurturing sub-route with sections and row actions
+- [ ] 16-03-PLAN.md — Signal propagation: RecordPage banner, HealthWidget badges, OpportunityCard dots
 
 ## Progress
 
