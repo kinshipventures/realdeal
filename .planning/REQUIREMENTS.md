@@ -117,7 +117,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 - [ ] **NURT-03**: Maintenance queue for capacity-limited pods — contacts that may need to be "managed up" or "managed out"
 - [ ] **NURT-04**: Surfaces contacts missing essential context or pod-required fields
 - [ ] **NURT-05**: Basic suggestions: "These people have milestones this week", "These records haven't had any interaction lately"
-- [ ] **NURT-06**: All nurturing signals visible in the hub AND surfaced across dashboard widgets, record-level alerts, and pipeline/project views
+- [x] **NURT-06**: All nurturing signals visible in the hub AND surfaced across dashboard widgets, record-level alerts, and pipeline/project views
 
 ### Navigation
 
@@ -279,7 +279,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | NURT-03 | Phase 16 | Pending |
 | NURT-04 | Phase 16 | Pending |
 | NURT-05 | Phase 16 | Pending |
-| NURT-06 | Phase 16 | Pending |
+| NURT-06 | Phase 16 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 68 total

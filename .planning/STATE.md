@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-30T18:12:25.794Z"
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-30T18:17:53.316Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 19
+  completed_plans: 21
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 16 (dashboard-nurturing) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -54,6 +54,8 @@ Plan: 2 of 3
 | Phase 15-projects P03 | 8 | 2 tasks | 5 files |
 | Phase 15-projects P02 | 5 | 3 tasks | 5 files |
 | Phase 16-dashboard-nurturing P01 | 35 | 2 tasks | 12 files |
+| Phase 16-dashboard-nurturing P03 | 17 | 2 tasks | 4 files |
+| Phase 16-dashboard-nurturing P02 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -106,6 +108,10 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 16-dashboard-nurturing]: Widget components are props-only — Dashboard.tsx is sole data orchestrator. QuickLinksWidget documented exception for pipelines.
 - [Phase 16-dashboard-nurturing]: useDashboardConfig visible Set is always authoritative — applyPreset overwrites, not deltas.
 - [Phase 16-dashboard-nurturing]: NeedsAttentionWidget merges overdue + dormant per D-04: overdue group with orange badge, dormant below as collapsible gone quiet section.
+- [Phase 16-dashboard-nurturing]: missingFieldCount computed inline via useMemo from already-loaded fieldConfigs — no new useEffect needed
+- [Phase 16-dashboard-nurturing]: OpportunityCard uses isOverdue(contact, monthly) default cadence — no pods prop needed in card component
+- [Phase 16-dashboard-nurturing]: NurturingHub imports getFieldConfigs from fieldConfig.ts (not airtable.ts) — function lives in separate module created in Phase 11
+- [Phase 16-dashboard-nurturing]: NurturingRow log interaction uses call/email/text/meeting only — intro and note excluded from quick-action pills to match quick-action intent
 
 ### Architecture Notes
 
@@ -129,6 +135,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T18:12:25.792Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-30T18:17:53.314Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None

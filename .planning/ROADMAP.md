@@ -51,7 +51,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 - [x] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions (completed 2026-03-30)
 - [x] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards (completed 2026-03-30)
 - [x] **Phase 15: Projects + Navigation** — Project containers and zero-context-loss cross-module navigation (completed 2026-03-30)
-- [ ] **Phase 16: Dashboard + Nurturing Hub** — Modular operating dashboard and dedicated relationship maintenance surface
+- [x] **Phase 16: Dashboard + Nurturing Hub** — Modular operating dashboard and dedicated relationship maintenance surface (completed 2026-03-30)
 
 ## Phase Details
 
@@ -160,11 +160,11 @@ Plans:
   3. Nurturing Hub has a dedicated view listing: upcoming important dates, stale relationships (no interaction in N days), maintenance queue for capacity-limited pods, and records with missing required fields
   4. Basic suggestions appear in the hub — contacts with milestones this week, records with no recent interaction
   5. Nurturing signals from the hub also surface as alerts on individual record views, pipeline cards, and dashboard widgets
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 16-01-PLAN.md — Dashboard decomposition: widget extraction, config hook, settings panel, presets
-- [ ] 16-02-PLAN.md — Nurturing Hub: /pulse/nurturing sub-route with sections and row actions
-- [ ] 16-03-PLAN.md — Signal propagation: RecordPage banner, HealthWidget badges, OpportunityCard dots
+- [x] 16-02-PLAN.md — Nurturing Hub: /pulse/nurturing sub-route with sections and row actions
+- [x] 16-03-PLAN.md — Signal propagation: RecordPage banner, HealthWidget badges, OpportunityCard dots
 
 ## Progress
 
@@ -186,4 +186,4 @@ Plans:
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
 | 14. Pipelines | v2.0 | 3/3 | Complete    | 2026-03-30 |
 | 15. Projects + Navigation | v2.0 | 3/3 | Complete    | 2026-03-30 |
-| 16. Dashboard + Nurturing Hub | v2.0 | 1/3 | In Progress|  |
+| 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete   | 2026-03-30 |
