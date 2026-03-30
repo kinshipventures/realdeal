@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: "Checkpoint: Task 2 of 13-03-PLAN.md (human-verify)"
-last_updated: "2026-03-30T01:31:35.083Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-30T05:50:17.873Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 13 — timeline-records-list
+**Current focus:** Phase 14 — pipelines
 
 ## Current Position
 
-Phase: 13 (timeline-records-list) — EXECUTING
-Plan: 3 of 3
+Phase: 14 (pipelines) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 3 of 3
 | Phase 13-timeline-records-list P01 | 15 | 2 tasks | 7 files |
 | Phase 13-timeline-records-list P02 | 3 | 2 tasks | 2 files |
 | Phase 13-timeline-records-list P03 | 5 | 1 tasks | 1 files |
+| Phase 14-pipelines P01 | 35 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 13-timeline-records-list]: isPulse variable introduced alongside isRecords/isMap to fix Pulse active state when on /records
 - [Phase 13-timeline-records-list]: Saved views store FilterState + visibleColumns + sort in localStorage for deterministic restoration
 - [Phase 13-timeline-records-list]: bulkBtnStyle as module-level const, consistent with existing filterBtnStyle/selectStyle/dropdownStyle pattern in RecordsList
+- [Phase 14-pipelines]: closestCorners (not closestCenter) chosen for Kanban DnD — better cross-column drop detection
+- [Phase 14-pipelines]: onPriorityChange and onArchive are intentional stubs in Plan 01 — real implementations ship in Plan 02
+- [Phase 14-pipelines]: D-12 column drag-reorder deferred per user approval; inline rename + color picker ship as partial delivery
 
 ### Architecture Notes
 
@@ -106,6 +110,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T01:31:22.455Z
-Stopped at: Checkpoint: Task 2 of 13-03-PLAN.md (human-verify)
+Last session: 2026-03-30T05:50:17.871Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
