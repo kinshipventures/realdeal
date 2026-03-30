@@ -50,7 +50,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 - [x] **Phase 12: Pods Overhaul + Categorization** — Behavioral pods with required questions and intake workflow from pending tray to CRM (completed 2026-03-29)
 - [x] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions (completed 2026-03-30)
 - [x] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards (completed 2026-03-30)
-- [ ] **Phase 15: Projects + Navigation** — Project containers and zero-context-loss cross-module navigation
+- [x] **Phase 15: Projects + Navigation** — Project containers and zero-context-loss cross-module navigation (completed 2026-03-30)
 - [ ] **Phase 16: Dashboard + Nurturing Hub** — Modular operating dashboard and dedicated relationship maintenance surface
 
 ## Phase Details
@@ -144,11 +144,11 @@ Plans:
   3. A relationship record shows all projects it belongs to; clicking any project opens it without navigating away (slide-out or modal)
   4. User can open a full relationship record from any pipeline card, project, or campaign — and navigate back without losing their place
   5. All navigation uses slide-out panels or contextual overlays — no full page reloads that reset context
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 15-01-PLAN.md — Data layer: project_event type, CRUD functions, timeline writes, demo mode
-- [ ] 15-02-PLAN.md — ProjectsPage card grid, ProjectDetailPage with tabs, CreateProjectModal, nav/routes
-- [ ] 15-03-PLAN.md — ProjectsWidget on RecordPage, "Add to Project" bulk action, project_event timeline renderer
+- [x] 15-01-PLAN.md — Data layer: project_event type, CRUD functions, timeline writes, demo mode
+- [x] 15-02-PLAN.md — ProjectsPage card grid, ProjectDetailPage with tabs, CreateProjectModal, nav/routes
+- [x] 15-03-PLAN.md — ProjectsWidget on RecordPage, "Add to Project" bulk action, project_event timeline renderer
 
 ### Phase 16: Dashboard + Nurturing Hub
 **Goal**: The dashboard is the primary daily operating surface and the nurturing hub surfaces everything requiring relationship attention
@@ -181,5 +181,5 @@ Plans:
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
 | 14. Pipelines | v2.0 | 3/3 | Complete    | 2026-03-30 |
-| 15. Projects + Navigation | v2.0 | 0/3 | Not started | — |
+| 15. Projects + Navigation | v2.0 | 3/3 | Complete    | 2026-03-30 |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
