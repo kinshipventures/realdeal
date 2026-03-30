@@ -308,6 +308,16 @@ export const DEMO_PROJECTS: Project[] = [
   { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], opportunity_ids: [], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
 ]
 
+export const DEMO_PROJECT_INTERACTIONS: Interaction[] = [
+  ix('proj-1', '1', 'project_event' as InteractionType, 79, '', { event_detail: JSON.stringify({ project_name: 'Fund III Launch', project_id: 'rec_demo_proj_1', action: 'added_to_project' }) }),
+  ix('proj-2', '3', 'project_event' as InteractionType, 79, '', { event_detail: JSON.stringify({ project_name: 'Fund III Launch', project_id: 'rec_demo_proj_1', action: 'added_to_project' }) }),
+  ix('proj-3', '5', 'project_event' as InteractionType, 43, '', { event_detail: JSON.stringify({ project_name: 'Podcast Outreach S2', project_id: 'rec_demo_proj_2', action: 'added_to_project' }) }),
+  ix('proj-4', '6', 'project_event' as InteractionType, 43, '', { event_detail: JSON.stringify({ project_name: 'Podcast Outreach S2', project_id: 'rec_demo_proj_2', action: 'added_to_project' }) }),
+]
+
+// Merge project interactions into the main interactions array
+DEMO_PROJECT_INTERACTIONS.forEach(i => DEMO_INTERACTIONS.push(i))
+
 // ── Field Configs ──
 // Note: FieldConfig type is defined in fieldConfig.ts — using inline type here to avoid circular dep
 
