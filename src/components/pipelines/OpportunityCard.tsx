@@ -4,6 +4,8 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router'
 import type { Contact, Opportunity, OpportunityPriority } from '../../lib/types'
+import { isOverdue } from '../../lib/airtable'
+import { isDormant } from '../../lib/equity'
 import { Avatar } from '../ui'
 
 interface Props {
@@ -14,6 +16,16 @@ interface Props {
   onInlineNote?: (id: string, note: string) => void
   onClick: () => void
   isDragOverlay?: boolean
+}
+
+function getContactSignal(contact: Contact): { color: string; reason: string } | null {
+  if (isOverdue(contact, 'monthly')) {
+    return { color: '#FF3B30', reason: 'Overdue for contact' }
+  }
+  if (isDormant(contact)) {
+    return { color: 'hsla(20, 80%, 45%, 1)', reason: 'No recent contact' }
+  }
+  return null
 }
 
 const PRIORITY_STYLES: Record<OpportunityPriority, { bg: string; color: string; label: string }> = {
@@ -155,16 +167,32 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
           {/* Avatars */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            {displayContacts.map((contact, i) => (
-              <div
-                key={contact.id}
-                onClick={e => handleAvatarClick(e, contact.id)}
-                title={contact.name}
-                style={{ marginLeft: i === 0 ? 0 : -8, cursor: 'pointer', zIndex: displayContacts.length - i }}
-              >
-                <Avatar name={contact.name} size={24} />
-              </div>
-            ))}
+            {displayContacts.map((contact, i) => {
+              const signal = getContactSignal(contact)
+              return (
+                <div
+                  key={contact.id}
+                  onClick={e => handleAvatarClick(e, contact.id)}
+                  title={signal ? `${contact.name} — ${signal.reason}` : contact.name}
+                  style={{ marginLeft: i === 0 ? 0 : -8, cursor: 'pointer', zIndex: displayContacts.length - i, position: 'relative' }}
+                >
+                  <Avatar name={contact.name} size={24} />
+                  {signal && (
+                    <div style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -2,
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: signal.color,
+                      border: '1.5px solid var(--surface-panel)',
+                      zIndex: 1,
+                    }} />
+                  )}
+                </div>
+              )
+            })}
             {overflow > 0 && (
               <div
                 style={{
