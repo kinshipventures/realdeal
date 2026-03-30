@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 15-03-PLAN.md
-last_updated: "2026-03-30T07:51:29.101Z"
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-30T07:53:27.642Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -52,6 +52,7 @@ Plan: 3 of 3
 | Phase 14-pipelines P03 | 18 | 2 tasks | 6 files |
 | Phase 15-projects P01 | 12 | 2 tasks | 3 files |
 | Phase 15-projects P03 | 8 | 2 tasks | 5 files |
+| Phase 15-projects P02 | 5 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 15-projects]: DEMO_PROJECT_INTERACTIONS merged into DEMO_INTERACTIONS at module load via forEach push — keeps single mutable array for runtime demo mutations
 - [Phase 15-projects]: ProjectDetailPage stub created as Rule 3 auto-fix — parallel plan 02 imported it in App.tsx before creating the file
 - [Phase 15-projects]: ProjectsWidget uses inline picker dropdown (not modal import) — self-contained per plan spec
+- [Phase 15-projects]: Contact rows in project detail open ContactDetail slide-out (not navigate()) — preserves project context per NAV-03/NAV-04
+- [Phase 15-projects]: Notes loaded via getAllInteractions() filtered client-side by project_event type + event_detail.project_id — no new API function needed
 
 ### Architecture Notes
 
@@ -122,6 +125,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T07:51:29.099Z
-Stopped at: Completed 15-03-PLAN.md
+Last session: 2026-03-30T07:53:27.639Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
