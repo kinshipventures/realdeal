@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache } from '../../lib/airtable'
+import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
@@ -134,6 +135,7 @@ export function RecordsList() {
   const [updateField, setUpdateField] = useState('')
   const [updateValue, setUpdateValue] = useState('')
   const [bulkOperating, setBulkOperating] = useState(false)
+  const [showBulkPipelineModal, setShowBulkPipelineModal] = useState(false)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
@@ -810,6 +812,14 @@ export function RecordsList() {
             >
               Archive
             </button>
+            <button
+              type="button"
+              onClick={() => setShowBulkPipelineModal(true)}
+              disabled={bulkOperating}
+              style={bulkBtnStyle}
+            >
+              Add to Pipeline
+            </button>
           </div>
           <button
             type="button"
@@ -819,6 +829,15 @@ export function RecordsList() {
             Clear
           </button>
         </div>
+      )}
+
+      {showBulkPipelineModal && (
+        <AddToPipelineModal
+          open={showBulkPipelineModal}
+          onClose={() => setShowBulkPipelineModal(false)}
+          contactIds={Array.from(selectedIds)}
+          onCreated={() => { setShowBulkPipelineModal(false); setSelectedIds(new Set()) }}
+        />
       )}
 
       {/* Table area */}
