@@ -82,15 +82,15 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Pipelines
 
-- [ ] **PIPE-01**: User can create unlimited pipelines (LP fundraising, deal flow, talent outreach, partnerships)
-- [ ] **PIPE-02**: Each pipeline has customizable stages (name + color) displayed as Kanban board
-- [ ] **PIPE-03**: Pipeline cards are "Relationship Opportunities" — linked to one or more relationship records
+- [x] **PIPE-01**: User can create unlimited pipelines (LP fundraising, deal flow, talent outreach, partnerships)
+- [x] **PIPE-02**: Each pipeline has customizable stages (name + color) displayed as Kanban board
+- [x] **PIPE-03**: Pipeline cards are "Relationship Opportunities" — linked to one or more relationship records
 - [ ] **PIPE-04**: Each opportunity card has its own fields: notes, stage, priority, status
-- [ ] **PIPE-05**: Cards show project/investment name in pipeline view, linked back to person/company in record view
-- [ ] **PIPE-06**: All pipeline changes (stage, notes, status, archive) sync to the relationship record timeline
-- [ ] **PIPE-07**: User can hide pipelines without deleting them (hidden pipelines maintain record connections)
-- [ ] **PIPE-08**: User can open full relationship record from any pipeline card
-- [ ] **PIPE-09**: User can see and navigate to all pipeline associations from a relationship record
+- [x] **PIPE-05**: Cards show project/investment name in pipeline view, linked back to person/company in record view
+- [x] **PIPE-06**: All pipeline changes (stage, notes, status, archive) sync to the relationship record timeline
+- [x] **PIPE-07**: User can hide pipelines without deleting them (hidden pipelines maintain record connections)
+- [x] **PIPE-08**: User can open full relationship record from any pipeline card
+- [x] **PIPE-09**: User can see and navigate to all pipeline associations from a relationship record
 
 ### Projects
 
@@ -249,15 +249,15 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | LIST-01 | Phase 13 | Complete |
 | LIST-02 | Phase 13 | Complete |
 | LIST-03 | Phase 13 | Complete |
-| PIPE-01 | Phase 14 | Pending |
-| PIPE-02 | Phase 14 | Pending |
-| PIPE-03 | Phase 14 | Pending |
+| PIPE-01 | Phase 14 | Complete |
+| PIPE-02 | Phase 14 | Complete |
+| PIPE-03 | Phase 14 | Complete |
 | PIPE-04 | Phase 14 | Pending |
-| PIPE-05 | Phase 14 | Pending |
-| PIPE-06 | Phase 14 | Pending |
-| PIPE-07 | Phase 14 | Pending |
-| PIPE-08 | Phase 14 | Pending |
-| PIPE-09 | Phase 14 | Pending |
+| PIPE-05 | Phase 14 | Complete |
+| PIPE-06 | Phase 14 | Complete |
+| PIPE-07 | Phase 14 | Complete |
+| PIPE-08 | Phase 14 | Complete |
+| PIPE-09 | Phase 14 | Complete |
 | PROJ-01 | Phase 15 | Pending |
 | PROJ-02 | Phase 15 | Pending |
 | PROJ-03 | Phase 15 | Pending |

@@ -1,5 +1,33 @@
 # Milestones
 
+## v2.0 Kinship Brain MVP (In Progress)
+
+**Goal:** Ship a usable V1 that supports Kinship's real workflows — organizing relationships, maintaining them, running pipelines + projects, pulling reports, and sharing lists.
+
+**Source of Truth:** docs/Kinship Brain — MVP.pdf (Mar 28)
+
+**Phases completed:** 4 of 10 (Phases 10-13)
+- Phase 10: Data Architecture Rebuild (2 plans)
+- Phase 11: Relationship Records (3 plans)
+- Phase 12: Pods Overhaul + Categorization (4 plans)
+- Phase 13: Timeline + Records List (3 plans)
+
+**Phases remaining:** 6 (Phases 14-19)
+- Phase 14: Pipelines (Kanban boards)
+- Phase 15: Projects (initiative containers)
+- Phase 16: Basic Enrichment
+- Phase 17: Reporting + Exports
+- Phase 18: Nurturing + Dashboard
+- Phase 19: Sharing + Polish
+
+**Key accomplishments so far:**
+- Relationship-first Airtable schema with Pipelines, Opportunities, Projects, PipelineStages tables
+- Record detail pages with per-type field layouts (Person vs Company), custom fields, company-contact linking
+- Pods as behavioral containers with unlimited sub-pods, categorization tray, pod detail pages
+- Unified activity timeline with system events, filterable records list with bulk actions, CSV export
+
+---
+
 ## v1.2 Demo Ready (Shipped: 2026-03-29)
 
 **Phases completed:** 3 phases, 6 plans, 11 tasks

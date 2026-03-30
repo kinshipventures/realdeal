@@ -12,19 +12,13 @@ One place where every relationship lives with full context — so founders never
 
 **Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive Kinship Brain product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
 
-**Target features:**
-- Company record type alongside contacts (two record types, one unified Relationship Record)
-- Record layout with central timeline + side widgets (highlights, health, pod context)
-- Records List with advanced filtering and bulk actions
-- Incoming Contact Categorization workflow (Pending tray → categorization modal → CRM)
-- Pods as behavioral containers (required questions, cadence, sub-pods, multi-pod, capacity limits)
-- Custom fields system (user-created, per record type and pod, required/optional, conditional)
-- Pipelines — Kanban boards with Relationship Opportunity cards (own fields, sync to timeline)
-- Projects module — initiative containers distinct from pipelines (context/scope/collection)
-- Enhanced relationship timeline as single source of truth for all activity
-- Nurturing & Maintenance Hub (important dates, stale relationships, maintenance queue, suggestions)
-- Modular dashboard (configurable widgets, multiple views, show/hide/reorder)
-- Cross-module navigation with zero context loss
+**Definition of Done (from PDF):** Moj + team can import people, organize them into pods, see context and follow-ups, run pipelines and projects, pull reports, and share lists — without workarounds.
+
+**V1 modules (9):** Relationship Records, Pods + Subpods, Pending Categorization Tray, Pipelines (Kanban), Projects (foundational), Basic Enrichment, Reporting, Nurturing/Maintenance Hub, Sharing + Exports.
+
+**Completed (Phases 10-13):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list.
+
+**Remaining (Phases 14-19):** Pipelines, Projects, Basic Enrichment, Reporting + Exports, Nurturing + Dashboard, Sharing + Polish.
 
 ## Requirements
 
@@ -65,25 +59,36 @@ One place where every relationship lives with full context — so founders never
 - ✓ Custom fields system (per record type, per pod, required/optional) — Phase 11
 - ✓ Cross-module navigation (zero context loss) — Phase 11
 
-### Active
+### Active (V1 — must ship)
 
-- [ ] Pods as behavioral containers with intake fields, cadence, trigger logic, sub-pods
-- [ ] Pipelines — Kanban boards referencing relationships
-- [ ] Relationship timeline as single source of truth
-- [ ] Follow-ups as dashboard-led signals
-- [ ] Gmail Chrome extension for relationship creation/logging
-- [ ] Copilot read-only AI synthesis layer
-- [ ] Reporting with filters and saved reports
-- [ ] AI enrichment via web search
-- [ ] Enhanced dashboard as primary operating surface
+- [ ] Pipelines — Kanban boards with custom stages, opportunity cards referencing relationships (Phase 14)
+- [ ] Projects — initiative containers with attached contacts/opportunities/notes (Phase 15)
+- [ ] Basic enrichment — email metadata, opt-in web search enrichment (Phase 16)
+- [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 17)
+- [ ] Nurturing / Maintenance Hub — stale relationships, upcoming milestones, follow-up signals (Phase 18)
+- [ ] Sharing + Exports — read-only share links for curated lists (Phase 19)
+- [ ] Follow-ups as dashboard-led signals (not tasks) with pod cadence + record overrides (Phase 18)
+- [ ] Remove sub-pod cap (currently blocked at 3, per PDF this is a blocker)
+- [ ] Multiple emails per contact + basic merge support
+
+### Deferred to V2 (per MVP PDF scope boundary)
+
+- Copilot AI — read-only synthesis layer (V2, additive and safe)
+- Gmail Chrome extension (full) — V2 Optional Extension
+- Granular permissions — pod/project/pipeline/record-level (V2)
+- Full Projects — dashboards, milestones, linked pods + analytics (V2)
+- Advanced Reporting — custom builder, scheduled exports, dedupe + cleanup (V2)
+- Social graph visualization (V2)
+- Workspace architecture — team/personal workspaces (V2, but don't block)
+- Auto-categorization (V2)
 
 ### Deferred (blocked on external access)
 
-- [ ] LP investor list imported (blocked on data from Moj/Briell)
-- [ ] Talent list imported (blocked on data from stakeholder)
-- [ ] Gmail integration (blocked on OAuth credentials from Moj)
-- [ ] iMessage integration (blocked on Mac Mini + Apple ID setup)
-- [ ] Calendar sync (blocked on Gmail OAuth)
+- LP investor list imported (blocked on data from Moj/Briell)
+- Talent list imported (blocked on data from stakeholder)
+- Gmail integration (blocked on OAuth credentials from Moj)
+- iMessage integration (blocked on Mac Mini + Apple ID setup)
+- Calendar sync (blocked on Gmail OAuth)
 
 ### Out of Scope
 
@@ -94,22 +99,23 @@ One place where every relationship lives with full context — so founders never
 - Mobile app — works in mobile browser, not optimized
 - Real authentication — acceptable risk, private URL
 - API proxy server — Airtable token in browser is accepted risk
-- AI auto-categorization — future
 - External enrichment APIs — anti-feature per Moj
+- Voice-to-text context capture — ideal but not required for MVP
+- Intake queue + auto-ingest — not required for MVP per PDF
 
 ## Context
 
-Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Rebuilding as the real product based on comprehensive Kinship Brain MVP spec. Phase 11 complete — relationship records with per-type layouts, custom fields, company-contact linking, and creation flows shipped.
+Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real product based on Kinship Brain MVP spec. Phases 10-13 complete — data architecture, relationship records, pods overhaul, timeline + records list all shipped.
 
 **Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
-**v2.0 course correction:** The prototype validated the concept but used a contact-centric model. The spec demands a relationship-first architecture where the relationship record is the only core object, pipelines and campaigns reference relationships (no duplication), and pods are behavioral containers (not folders).
+**v2.0 rebuild:** Phases 10-13 established the relationship-first foundation. Phases 14-19 build the remaining V1 modules: pipelines, projects, enrichment, reporting, nurturing, and sharing.
 
 **Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server. Gmail Chrome extension (new for v2.0).
 
 **Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin)
 
-**Source of truth:** docs/Kinship Brain — Initial Outline (Lovable).pdf — comprehensive system structure with 12 modules (Appendix A). Secondary reference: docs/Kinship Brain — MVP (Moj Mar 28).pdf for philosophy and MVP checklist.
+**Source of truth:** docs/Kinship Brain — MVP.pdf (Mar 28) — updated product outline, MVP development checklist, and V1 vs V2 scope boundary. This supersedes the Initial Outline (Lovable) PDF. The V1 vs V2 scope section is the definitive shipping boundary.
 
 ## Constraints
 
@@ -138,7 +144,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 29). Rebuilding as the real produc
 | Modal state in Dashboard | AddContactModal managed by Dashboard, not App, due to React Router Outlet pattern | ✓ Good (avoids routing complexity) |
 
 **Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features), v1.2 (Demo Ready)
-**Active milestone:** v2.0 (Kinship Brain MVP — full rebuild)
+**Active milestone:** v2.0 (Kinship Brain MVP — 10 phases, 39 requirements, 4/10 phases complete)
 
 ## Evolution
 
@@ -158,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after Phase 11 (relationship-records) completed*
+*Last updated: 2026-03-29 — aligned with Kinship Brain MVP.pdf, Phases 14-19 defined*

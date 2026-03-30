@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-30T05:56:25.246Z"
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-03-30T05:56:59.349Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 3 of 3
 | Phase 13-timeline-records-list P03 | 5 | 1 tasks | 1 files |
 | Phase 14-pipelines P01 | 35 | 3 tasks | 7 files |
 | Phase 14-pipelines P02 | 18 | 2 tasks | 4 files |
+| Phase 14-pipelines P03 | 18 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 14-pipelines]: D-12 column drag-reorder deferred per user approval; inline rename + color picker ship as partial delivery
 - [Phase 14-pipelines]: createInteraction() in .then() callbacks only — avoids double timeline writes on undo
 - [Phase 14-pipelines]: OpportunityDetail loads stage history by fetching all interactions for linked contacts then filtering client-side by pipeline name
+- [Phase 14-pipelines]: PipelinesWidget fetches all opportunities/stages/pipelines on mount — no separate per-pipeline load needed
+- [Phase 14-pipelines]: AddToPipelineModal fetches stages on selectedPipelineId change, auto-selects first stage for UX
 
 ### Architecture Notes
 
@@ -113,6 +116,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T05:56:25.244Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-30T05:56:59.347Z
+Stopped at: Completed 14-03-PLAN.md
 Resume file: None

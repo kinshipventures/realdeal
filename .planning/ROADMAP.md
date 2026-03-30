@@ -49,7 +49,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 - [x] **Phase 11: Relationship Records** — Full record system with Contact + Company types, custom fields, and conditional field behavior (completed 2026-03-29)
 - [x] **Phase 12: Pods Overhaul + Categorization** — Behavioral pods with required questions and intake workflow from pending tray to CRM (completed 2026-03-29)
 - [x] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions (completed 2026-03-30)
-- [ ] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards
+- [x] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards (completed 2026-03-30)
 - [ ] **Phase 15: Projects + Navigation** — Project containers and zero-context-loss cross-module navigation
 - [ ] **Phase 16: Dashboard + Nurturing Hub** — Modular operating dashboard and dedicated relationship maintenance surface
 
@@ -128,11 +128,11 @@ Plans:
   3. Moving a card between stages, adding a note, or archiving a card writes an event to the linked relationship's timeline
   4. User can open the full relationship record directly from any pipeline card
   5. User can hide a pipeline without deleting it — hidden pipelines maintain all record connections
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 14-01-PLAN.md — Data layer + dnd-kit + core Kanban board (tabs, columns, cards, drag-and-drop)
-- [ ] 14-02-PLAN.md — OpportunityDetail slide-out + pipeline event timeline writes + quick actions
-- [ ] 14-03-PLAN.md — Nav wiring + PipelinesWidget on RecordPage + AddToPipelineModal + bulk action
+- [x] 14-01-PLAN.md — Data layer + dnd-kit + core Kanban board (tabs, columns, cards, drag-and-drop)
+- [x] 14-02-PLAN.md — OpportunityDetail slide-out + pipeline event timeline writes + quick actions
+- [x] 14-03-PLAN.md — Nav wiring + PipelinesWidget on RecordPage + AddToPipelineModal + bulk action
 
 ### Phase 15: Projects + Navigation
 **Goal**: Users can organize multi-record initiatives in projects, and navigate between all modules without losing context
@@ -176,6 +176,6 @@ Plans:
 | 11. Relationship Records | v2.0 | 3/3 | Complete    | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
-| 14. Pipelines | v2.0 | 0/3 | Planned | — |
+| 14. Pipelines | v2.0 | 3/3 | Complete   | 2026-03-30 |
 | 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
