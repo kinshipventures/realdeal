@@ -10,6 +10,7 @@ import { RecordPage } from './components/records/RecordPage'
 import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
+import { PipelinesPage } from './components/pipelines/PipelinesPage'
 import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
@@ -31,7 +32,8 @@ function AppShell() {
   const navigate = useNavigate()
   const isMap = location.pathname === '/map'
   const isContacts = location.pathname === '/contacts'
-  const isPulse = !isMap && !isContacts && location.pathname === '/'
+  const isPipelines = location.pathname.startsWith('/pipelines')
+  const isPulse = !isMap && !isContacts && !isPipelines && location.pathname === '/'
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
@@ -97,6 +99,29 @@ function AppShell() {
           </button>
           <button
             type="button"
+            aria-current={isMap ? 'page' : undefined}
+            onClick={() => navigate('/map')}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24"
+              fill="none"
+              stroke={isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="22" y1="12" x2="18" y2="12"/>
+              <line x1="6" y1="12" x2="2" y2="12"/>
+              <line x1="12" y1="6" x2="12" y2="2"/>
+              <line x1="12" y1="22" x2="12" y2="18"/>
+            </svg>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Map</span>
+          </button>
+          <button
+            type="button"
             aria-current={isContacts ? 'page' : undefined}
             onClick={() => navigate('/contacts')}
             style={{
@@ -140,8 +165,8 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isMap ? 'page' : undefined}
-            onClick={() => navigate('/map')}
+            aria-current={isPipelines ? 'page' : undefined}
+            onClick={() => navigate('/pipelines')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
@@ -150,16 +175,14 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill="none"
-              stroke={isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
+              stroke={isPipelines ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="22" y1="12" x2="18" y2="12"/>
-              <line x1="6" y1="12" x2="2" y2="12"/>
-              <line x1="12" y1="6" x2="12" y2="2"/>
-              <line x1="12" y1="22" x2="12" y2="18"/>
+              <rect x="2" y="3" width="5" height="18" rx="1"/>
+              <rect x="9.5" y="6" width="5" height="15" rx="1"/>
+              <rect x="17" y="9" width="5" height="12" rx="1"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Map</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isPipelines ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pipelines</span>
           </button>
         </nav>
       ) : (
@@ -206,6 +229,26 @@ function AppShell() {
           </button>
           <button
             type="button"
+            aria-current={isMap ? 'page' : undefined}
+            onClick={() => navigate('/map')}
+            style={{
+              padding: '12px 20px',
+              borderRadius: 100,
+              border: 'none',
+              fontSize: 12,
+              letterSpacing: '0.01em',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+              background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isMap ? 600 : 500,
+            }}
+          >
+            Map
+          </button>
+          <button
+            type="button"
             aria-current={isContacts ? 'page' : undefined}
             onClick={() => navigate('/contacts')}
             style={{
@@ -247,24 +290,23 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isMap ? 'page' : undefined}
-            onClick={() => navigate('/map')}
+            aria-current={isPipelines ? 'page' : undefined}
+            onClick={() => navigate('/pipelines')}
             style={{
               padding: '12px 20px',
               borderRadius: 100,
               border: 'none',
               fontSize: 12,
-              fontWeight: 500,
               letterSpacing: '0.01em',
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
-              fontWeight: isMap ? 600 : 500,
+              background: isPipelines ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isPipelines ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isPipelines ? 600 : 500,
             }}
           >
-            Map
+            Pipelines
           </button>
         </nav>
       )}
@@ -356,6 +398,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
         <Route path="contacts" element={<RecordsList />} />
+        <Route path="pipelines" element={<PipelinesPage />} />
         <Route path="category/:id" element={<CategoryTable />} />
         <Route path="contact/:id" element={<RecordPage />} />
         <Route path="pod/:id" element={<PodDetailPage />} />
