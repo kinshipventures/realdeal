@@ -211,7 +211,7 @@ export function RecordsList() {
     if (filters.search.trim()) {
       const q = filters.search.toLowerCase()
       result = result.filter(c =>
-        c.name.toLowerCase().includes(q) ||
+        (c.name ?? '').toLowerCase().includes(q) ||
         (c.company ?? '').toLowerCase().includes(q) ||
         (c.email ?? '').toLowerCase().includes(q)
       )
