@@ -12,15 +12,7 @@ import type { Contact, Opportunity, Pipeline, PipelineStage } from '../../lib/ty
 import { Spinner } from '../ui'
 import { PipelineTabBar } from './PipelineTabBar'
 import { CreatePipelineModal } from './CreatePipelineModal'
-
-// PipelineBoard is created in Task 2b — placeholder until then
-function PipelineBoardPlaceholder({ name }: { name: string }) {
-  return (
-    <div style={{ padding: 32, color: 'var(--color-text-secondary)', fontSize: 13 }}>
-      Board for {name}
-    </div>
-  )
-}
+import { PipelineBoard } from './PipelineBoard'
 
 export function PipelinesPage() {
   const [searchParams] = useSearchParams()
@@ -119,7 +111,17 @@ export function PipelinesPage() {
       />
 
       {activePipeline ? (
-        <PipelineBoardPlaceholder name={activePipeline.name} />
+        <PipelineBoard
+          pipeline={activePipeline}
+          stages={stages.filter(s => s.pipeline_id === activePipeline.id)}
+          opportunities={opportunities.filter(o =>
+            stages.filter(s => s.pipeline_id === activePipeline.id).some(s => s.id === o.stage_id)
+          )}
+          contacts={contacts}
+          onOpportunitiesChange={setOpportunities}
+          onStagesChange={setStages}
+          initialOpenOpportunityId={initialOpenOpportunityId}
+        />
       ) : (
         <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
           No active pipeline. Create one to get started.
