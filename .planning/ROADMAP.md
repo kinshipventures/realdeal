@@ -48,7 +48,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 - [x] **Phase 10: Data Architecture Rebuild** — Establish relationship-first Airtable schema as the foundation for the entire v2.0 system (completed 2026-03-29)
 - [x] **Phase 11: Relationship Records** — Full record system with Contact + Company types, custom fields, and conditional field behavior (completed 2026-03-29)
 - [x] **Phase 12: Pods Overhaul + Categorization** — Behavioral pods with required questions and intake workflow from pending tray to CRM (completed 2026-03-29)
-- [ ] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions
+- [x] **Phase 13: Timeline + Records List** — Unified activity timeline and filterable records list with bulk actions (completed 2026-03-30)
 - [ ] **Phase 14: Pipelines** — Kanban pipeline boards with relationship-linked opportunity cards
 - [ ] **Phase 15: Projects + Navigation** — Project containers and zero-context-loss cross-module navigation
 - [ ] **Phase 16: Dashboard + Nurturing Hub** — Modular operating dashboard and dedicated relationship maintenance surface
@@ -112,11 +112,11 @@ Plans:
   3. User can filter the timeline to focus on specific event types (e.g., hide system events, show only meetings)
   4. Records List shows all relationships filterable by pod, record type, activity recency, and any custom field
   5. User can select multiple records and perform bulk actions (add to project, add to pipeline, bulk field update, export), then save the filter config for reuse
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 13-01-PLAN.md — Timeline data layer + system events + filter UI
 - [x] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
-- [ ] 13-03-PLAN.md — Bulk actions + human verification
+- [x] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 14: Pipelines
 **Goal**: Users can manage relationship-linked opportunities through customizable Kanban pipelines
@@ -146,8 +146,8 @@ Plans:
   5. All navigation uses slide-out panels or contextual overlays — no full page reloads that reset context
 **Plans:** 3 plans
 Plans:
-- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
-- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [x] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [x] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
 - [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 16: Dashboard + Nurturing Hub
@@ -183,7 +183,7 @@ Plans:
 | 10. Data Architecture Rebuild | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 11. Relationship Records | v2.0 | 3/3 | Complete    | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
-| 13. Timeline + Records List | v2.0 | 2/3 | In Progress|  |
+| 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
 | 14. Pipelines | v2.0 | 0/? | Not started | — |
 | 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |

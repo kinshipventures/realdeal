@@ -30,7 +30,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 ### Records List & Bulk Actions
 
 - [x] **LIST-01**: User can view a Records List with filters: pod/subpod, record type, activity recency, investment status, sector, geography, any field
-- [ ] **LIST-02**: User can select multiple records and perform bulk actions: add to projects, add to pipelines, bulk update fields, bulk export
+- [x] **LIST-02**: User can select multiple records and perform bulk actions: add to projects, add to pipelines, bulk update fields, bulk export
 - [x] **LIST-03**: User can save filter configurations for reuse
 
 ### Incoming Contact Categorization
@@ -247,7 +247,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | TL-05 | Phase 13 | Complete |
 | TL-06 | Phase 13 | Complete |
 | LIST-01 | Phase 13 | Complete |
-| LIST-02 | Phase 13 | Pending |
+| LIST-02 | Phase 13 | Complete |
 | LIST-03 | Phase 13 | Complete |
 | PIPE-01 | Phase 14 | Pending |
 | PIPE-02 | Phase 14 | Pending |
