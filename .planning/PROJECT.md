@@ -16,9 +16,9 @@ One place where every relationship lives with full context — so founders never
 
 **V1 modules (9):** Relationship Records, Pods + Subpods, Pending Categorization Tray, Pipelines (Kanban), Projects (foundational), Basic Enrichment, Reporting, Nurturing/Maintenance Hub, Sharing + Exports.
 
-**Completed (Phases 10-14):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list, pipelines Kanban.
+**Completed (Phases 10-15):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list, pipelines Kanban, projects.
 
-**Remaining (Phases 15-19):** Projects, Basic Enrichment, Reporting + Exports, Nurturing + Dashboard, Sharing + Polish.
+**Remaining (Phases 16-19):** Basic Enrichment, Reporting + Exports, Nurturing + Dashboard, Sharing + Polish.
 
 ## Requirements
 
@@ -62,7 +62,7 @@ One place where every relationship lives with full context — so founders never
 ### Active (V1 — must ship)
 
 - ✓ Pipelines — Kanban boards with custom stages, opportunity cards referencing relationships — Phase 14
-- [ ] Projects — initiative containers with attached contacts/opportunities/notes (Phase 15)
+- ✓ Projects — initiative containers with attached contacts/opportunities/notes — Phase 15
 - [ ] Basic enrichment — email metadata, opt-in web search enrichment (Phase 16)
 - [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 17)
 - [ ] Nurturing / Maintenance Hub — stale relationships, upcoming milestones, follow-up signals (Phase 18)
