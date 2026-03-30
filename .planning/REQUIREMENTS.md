@@ -60,12 +60,12 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Relationship Timeline
 
-- [ ] **TL-01**: Each relationship has one chronological timeline showing all activity
-- [ ] **TL-02**: Timeline logs: emails, meetings, notes, projects, pipelines, news alerts, pod changes, categorization actions, field updates
-- [ ] **TL-03**: Each timeline entry includes source (email, meeting, user, AI, system), timestamp, and actor
-- [ ] **TL-04**: Nothing changes on a relationship without being visible in the timeline
-- [ ] **TL-05**: Pipeline events (stage changes, notes, status updates, archived) sync to the relationship timeline
-- [ ] **TL-06**: Timeline supports filtering to manage signal vs noise
+- [x] **TL-01**: Each relationship has one chronological timeline showing all activity
+- [x] **TL-02**: Timeline logs: emails, meetings, notes, projects, pipelines, news alerts, pod changes, categorization actions, field updates
+- [x] **TL-03**: Each timeline entry includes source (email, meeting, user, AI, system), timestamp, and actor
+- [x] **TL-04**: Nothing changes on a relationship without being visible in the timeline
+- [x] **TL-05**: Pipeline events (stage changes, notes, status updates, archived) sync to the relationship timeline
+- [x] **TL-06**: Timeline supports filtering to manage signal vs noise
 
 ### Pods
 
@@ -240,12 +240,12 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 | CAT-04 | Phase 12 | Complete |
 | CAT-05 | Phase 12 | Complete |
 | CAT-06 | Phase 12 | Complete |
-| TL-01 | Phase 13 | Pending |
-| TL-02 | Phase 13 | Pending |
-| TL-03 | Phase 13 | Pending |
-| TL-04 | Phase 13 | Pending |
-| TL-05 | Phase 13 | Pending |
-| TL-06 | Phase 13 | Pending |
+| TL-01 | Phase 13 | Complete |
+| TL-02 | Phase 13 | Complete |
+| TL-03 | Phase 13 | Complete |
+| TL-04 | Phase 13 | Complete |
+| TL-05 | Phase 13 | Complete |
+| TL-06 | Phase 13 | Complete |
 | LIST-01 | Phase 13 | Pending |
 | LIST-02 | Phase 13 | Pending |
 | LIST-03 | Phase 13 | Pending |
