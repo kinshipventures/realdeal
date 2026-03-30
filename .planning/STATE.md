@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-30T05:50:17.873Z"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-30T05:56:25.246Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 14 (pipelines) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 2 of 3
 | Phase 13-timeline-records-list P02 | 3 | 2 tasks | 2 files |
 | Phase 13-timeline-records-list P03 | 5 | 1 tasks | 1 files |
 | Phase 14-pipelines P01 | 35 | 3 tasks | 7 files |
+| Phase 14-pipelines P02 | 18 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 14-pipelines]: closestCorners (not closestCenter) chosen for Kanban DnD — better cross-column drop detection
 - [Phase 14-pipelines]: onPriorityChange and onArchive are intentional stubs in Plan 01 — real implementations ship in Plan 02
 - [Phase 14-pipelines]: D-12 column drag-reorder deferred per user approval; inline rename + color picker ship as partial delivery
+- [Phase 14-pipelines]: createInteraction() in .then() callbacks only — avoids double timeline writes on undo
+- [Phase 14-pipelines]: OpportunityDetail loads stage history by fetching all interactions for linked contacts then filtering client-side by pipeline name
 
 ### Architecture Notes
 
@@ -110,6 +113,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T05:50:17.871Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-30T05:56:25.244Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
