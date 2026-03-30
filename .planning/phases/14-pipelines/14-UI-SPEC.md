@@ -22,7 +22,7 @@ created: 2026-03-29
 | Component library | Radix UI (via shadcn) | components.json |
 | Icon library | lucide-react 1.7.0 | RESEARCH.md |
 | Body font | Plus Jakarta Sans 400/600 | design-system.md / index.css |
-| Heading font | Fraunces (serif) 700 | design-system.md / index.css |
+| Heading font | Fraunces (serif) 400/600 | design-system.md / index.css |
 
 ---
 
@@ -50,21 +50,21 @@ Exceptions:
 
 ## Typography
 
-Source: design-system.md, index.css. Two fonts in use: Plus Jakarta Sans (sans) and Fraunces (serif).
+Source: design-system.md, index.css. Two fonts in use: Plus Jakarta Sans (sans) and Fraunces (serif). Two weights only: 400 (regular) and 600 (bold).
 
 | Role | Size | Weight | Font | Line Height | Usage in Phase 14 |
 |------|------|--------|------|-------------|-------------------|
 | Body | 13px | 400 | Plus Jakarta Sans | 1.5 | Card opportunity name, column card list, notes text in slide-out, inline note input |
 | Label | 11px | 400 | Plus Jakarta Sans | 1.4 | Contact name under avatar, priority badge label, timestamp/metadata, custom fields on card face |
 | Heading | 16px | 600 | Fraunces (serif) | 1.2 | Stage column header name, pipeline tab bar selected label, slide-out panel heading |
-| Display | 18px | 700 | Fraunces (serif) | 1.2 | Opportunity name in slide-out detail panel header |
+| Display | 18px | 600 | Fraunces (serif) | 1.2 | Opportunity name in slide-out detail panel header |
 
 Additional type notes:
 - Letter-spacing on all serif headings: `-0.02em`
 - Section labels (e.g., "LINKED RECORDS", "STAGE HISTORY"): 11px, weight 600, serif, uppercase, `letter-spacing: 0.04em`
 - Muted/empty-state copy: 13px, weight 400, `var(--color-text-secondary)`
 - Active pipeline tab text: weight 600 (Plus Jakarta Sans). Inactive tab text: weight 400.
-- Priority badge text: 11px, weight 400. No weight 500 anywhere in this phase.
+- Priority badge text: 11px, weight 400. No weight other than 400 or 600 anywhere in this phase.
 
 ---
 
@@ -130,6 +130,8 @@ Components to build. Follow indicated pattern reference exactly.
 
 ### PipelineBoard (Kanban)
 
+Primary focal point: the stage column header with its color accent stripe and Fraunces heading.
+
 - Columns display side by side with `gap: 16px` horizontal scroll on overflow.
 - Each stage column: minimum width 280px, no maximum. Background `var(--surface-panel)`, `border-radius: 12px`, `border: 1px solid var(--edge)`.
 - Column header: stage name in Fraunces 16px/600, left accent stripe 3px wide in stage color. Rename on click — inline input, save on blur, escape cancels. Drag handle on header for column reorder.
@@ -155,7 +157,7 @@ Components to build. Follow indicated pattern reference exactly.
 - Entry animation: `translateX(100%) → translateX(0)`, `cubic-bezier(0.87, 0, 0.13, 1)`, 350ms. Source: `ease-panel` token.
 - Background: `var(--surface-panel)` with `backdrop-filter: blur(32px)`.
 - Escape closes (via `useEscape` from `src/lib/escapeStack.ts`). Dim overlay behind panel: `rgba(0,0,0,0.08)`.
-- Header: opportunity name in Fraunces 18px/700. Pipeline name + current stage in 13px/400, `var(--color-text-secondary)`.
+- Header: opportunity name in Fraunces 18px/600. Pipeline name + current stage in 13px/400, `var(--color-text-secondary)`.
 - Sections (in order): Linked Records, Priority + Status, Notes, Stage History, Custom Fields.
 - Section labels: 11px, weight 600, Fraunces, uppercase, `letter-spacing: 0.04em`, `var(--color-text-tertiary)`.
 - All editable fields: inline-edit-on-click pattern (same as PodDetailPage). Save on blur.
