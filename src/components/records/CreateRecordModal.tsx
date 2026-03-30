@@ -250,7 +250,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
 
       reset()
       onCreated(created)
-      navigate(`/record/${created.id}`)
+      navigate(`/contact/${created.id}`)
     } catch {
       setError("Couldn't create the record. Check your connection and try again.")
     } finally {
@@ -316,7 +316,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
     if (lastCreated) {
       reset()
       onCreated(lastCreated)
-      navigate(`/record/${lastCreated.id}`)
+      navigate(`/contact/${lastCreated.id}`)
     }
   }
 
@@ -565,7 +565,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}>
                       <span>A company named "{duplicateWarning.name}" already exists. Link to it instead?</span>
-                      <button type="button" onClick={() => { handleClose(); navigate(`/record/${duplicateWarning.id}`) }}
+                      <button type="button" onClick={() => { handleClose(); navigate(`/contact/${duplicateWarning.id}`) }}
                         style={{ background: 'none', border: 'none', padding: 0, color: '#CC7700', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                         Link
                       </button>

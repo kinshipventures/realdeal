@@ -16,7 +16,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
 
   function handleOpen(e: React.MouseEvent) {
     e.stopPropagation()
-    navigate(`/record/${contact.id}`)
+    navigate(`/contact/${contact.id}`)
   }
 
   return (

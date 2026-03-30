@@ -113,7 +113,7 @@ export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
       {contact.company_record_id ? (
         <span
           style={{ cursor: 'pointer', color: '#25B439', textDecoration: 'none' }}
-          onClick={() => navigate(`/record/${contact.company_record_id}`)}
+          onClick={() => navigate(`/contact/${contact.company_record_id}`)}
         >
           {contact.company || 'Company'}
         </span>

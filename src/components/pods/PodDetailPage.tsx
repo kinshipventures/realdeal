@@ -362,7 +362,7 @@ export function PodDetailPage() {
               Manage fields from a{' '}
               <button
                 type="button"
-                onClick={() => navigate(`/record/${members[0].id}`)}
+                onClick={() => navigate(`/contact/${members[0].id}`)}
                 style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
               >
                 member's record
@@ -490,7 +490,7 @@ export function PodDetailPage() {
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => navigate(`/record/${m.id}`)}
+                    onClick={() => navigate(`/contact/${m.id}`)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

@@ -56,7 +56,7 @@ type SortDir = 'asc' | 'desc'
 
 // ── Saved views ──────────────────────────────────────────────────────────────
 
-const VIEWS_KEY = 'kinshipbrain:records-views'
+const VIEWS_KEY = 'kinshipbrain:contacts-views'
 
 interface SavedView {
   name: string
@@ -434,13 +434,13 @@ export function RecordsList() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `records-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
 
   async function handleBulkArchive() {
-    if (!window.confirm(`Archive ${selectedIds.size} record(s)? This is reversible.`)) return
+    if (!window.confirm(`Archive ${selectedIds.size} contact(s)? This is reversible.`)) return
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
     for (const contact of selected) {
@@ -482,10 +482,10 @@ export function RecordsList() {
             margin: 0,
             color: 'var(--color-text-primary)',
           }}>
-            Records
+            Contacts
           </h1>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'record' : 'records'}
+            {filtered.length} {filtered.length === 1 ? 'contact' : 'contacts'}
           </span>
         </div>
 
@@ -508,7 +508,7 @@ export function RecordsList() {
                   onClick={() => applyView(null)}
                   style={dropdownItemStyle}
                 >
-                  All Records
+                  All Contacts
                 </div>
                 {savedViews.map(view => (
                   <div
@@ -824,7 +824,7 @@ export function RecordsList() {
       {/* Table area */}
       {filtered.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No records match your filters</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No contacts match your filters</span>
           {hasActiveFilters && (
             <button
               type="button"
@@ -896,7 +896,7 @@ export function RecordsList() {
                 return (
                   <tr
                     key={contact.id}
-                    onClick={() => navigate(`/record/${contact.id}`)}
+                    onClick={() => navigate(`/contact/${contact.id}`)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',

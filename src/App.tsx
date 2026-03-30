@@ -30,8 +30,8 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const isMap = location.pathname === '/map'
-  const isRecords = location.pathname === '/records'
-  const isPulse = !isMap && !isRecords && location.pathname === '/'
+  const isContacts = location.pathname === '/contacts'
+  const isPulse = !isMap && !isContacts && location.pathname === '/'
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
@@ -97,8 +97,8 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isRecords ? 'page' : undefined}
-            onClick={() => navigate('/records')}
+            aria-current={isContacts ? 'page' : undefined}
+            onClick={() => navigate('/contacts')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
@@ -107,7 +107,7 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill="none"
-              stroke={isRecords ? 'var(--color-brand)' : 'var(--text-muted)'}
+              stroke={isContacts ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
               <line x1="8" y1="6" x2="21" y2="6"/>
@@ -117,7 +117,7 @@ function AppShell() {
               <line x1="3" y1="12" x2="3.01" y2="12"/>
               <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isRecords ? 'var(--color-brand)' : 'var(--text-muted)' }}>Records</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isContacts ? 'var(--color-brand)' : 'var(--text-muted)' }}>Contacts</span>
           </button>
           <button
             type="button"
@@ -206,8 +206,8 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isRecords ? 'page' : undefined}
-            onClick={() => navigate('/records')}
+            aria-current={isContacts ? 'page' : undefined}
+            onClick={() => navigate('/contacts')}
             style={{
               padding: '12px 20px',
               borderRadius: 100,
@@ -217,12 +217,12 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isRecords ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isRecords ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
-              fontWeight: isRecords ? 600 : 500,
+              background: isContacts ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isContacts ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isContacts ? 600 : 500,
             }}
           >
-            Records
+            Contacts
           </button>
           <button
             type="button"
@@ -274,7 +274,7 @@ function AppShell() {
           onClose={closeSearch}
           onSelectContact={(contact) => {
             setShowSearch(false)
-            navigate(`/record/${contact.id}`)
+            navigate(`/contact/${contact.id}`)
           }}
         />
       )}
@@ -355,9 +355,9 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="map" element={<OrbMap />} />
-        <Route path="records" element={<RecordsList />} />
+        <Route path="contacts" element={<RecordsList />} />
         <Route path="category/:id" element={<CategoryTable />} />
-        <Route path="record/:id" element={<RecordPage />} />
+        <Route path="contact/:id" element={<RecordPage />} />
         <Route path="pod/:id" element={<PodDetailPage />} />
         <Route path="import" element={<ImportPanel />} />
       </Route>

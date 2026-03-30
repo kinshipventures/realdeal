@@ -96,7 +96,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
           {people.map(person => (
             <div
               key={person.id}
-              onClick={() => navigate(`/record/${person.id}`)}
+              onClick={() => navigate(`/contact/${person.id}`)}
               style={{
                 display: 'flex',
                 alignItems: 'center',

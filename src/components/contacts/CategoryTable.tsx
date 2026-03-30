@@ -341,7 +341,7 @@ export function CategoryTable() {
                 return (
                   <tr
                     key={contact.id}
-                    onClick={() => navigate(`/record/${contact.id}`)}
+                    onClick={() => navigate(`/contact/${contact.id}`)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
