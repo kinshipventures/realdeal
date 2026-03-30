@@ -11,6 +11,8 @@ import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
 import { PipelinesPage } from './components/pipelines/PipelinesPage'
+import { ProjectsPage } from './components/projects/ProjectsPage'
+import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import type { Contact } from './lib/types'
 
 const BG = 'var(--color-bg)'
@@ -33,7 +35,8 @@ function AppShell() {
   const isMap = location.pathname === '/map'
   const isContacts = location.pathname === '/contacts'
   const isPipelines = location.pathname.startsWith('/pipelines')
-  const isPulse = !isMap && !isContacts && !isPipelines && location.pathname === '/'
+  const isProjects = location.pathname.startsWith('/projects')
+  const isPulse = !isMap && !isContacts && !isPipelines && !isProjects && location.pathname === '/'
   const isMobile = useIsMobile()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
@@ -184,6 +187,25 @@ function AppShell() {
             </svg>
             <span style={{ fontSize: 9, fontWeight: 500, color: isPipelines ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pipelines</span>
           </button>
+          <button
+            type="button"
+            aria-current={isProjects ? 'page' : undefined}
+            onClick={() => navigate('/projects')}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24"
+              fill="none"
+              stroke={isProjects ? 'var(--color-brand)' : 'var(--text-muted)'}
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isProjects ? 'var(--color-brand)' : 'var(--text-muted)' }}>Projects</span>
+          </button>
         </nav>
       ) : (
         /* Desktop — floating pill navigator */
@@ -308,6 +330,26 @@ function AppShell() {
           >
             Pipelines
           </button>
+          <button
+            type="button"
+            aria-current={isProjects ? 'page' : undefined}
+            onClick={() => navigate('/projects')}
+            style={{
+              padding: '12px 20px',
+              borderRadius: 100,
+              border: 'none',
+              fontSize: 12,
+              letterSpacing: '0.01em',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+              background: isProjects ? 'rgba(0,0,0,0.08)' : 'transparent',
+              color: isProjects ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              fontWeight: isProjects ? 600 : 500,
+            }}
+          >
+            Projects
+          </button>
         </nav>
       )}
 
@@ -399,6 +441,8 @@ export default function App() {
         <Route path="map" element={<OrbMap />} />
         <Route path="contacts" element={<RecordsList />} />
         <Route path="pipelines" element={<PipelinesPage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:id" element={<ProjectDetailPage />} />
         <Route path="category/:id" element={<CategoryTable />} />
         <Route path="contact/:id" element={<RecordPage />} />
         <Route path="pod/:id" element={<PodDetailPage />} />
