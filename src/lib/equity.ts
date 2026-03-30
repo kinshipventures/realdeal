@@ -9,6 +9,10 @@ export const INTERACTION_WEIGHTS = {
   text: 2,
   email: 2,
   note: 0,
+  pod_change: 0,
+  field_update: 0,
+  categorization: 0,
+  pipeline_event: 0,
 } as const satisfies Record<InteractionType, number>
 
 export const CADENCE_DAYS = {

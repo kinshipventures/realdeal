@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { updateContact, createInteraction, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
+import { updateContact, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
+import { logSystemEvent } from '../../lib/timeline'
 import { useEscape } from '../../lib/escapeStack'
 
 interface CategorizationModalProps {
@@ -115,15 +116,11 @@ export function CategorizationModal({
       const primaryPodName = pods.find(p => p.id === primaryPodId)?.name ?? primaryPodId ?? ''
       const noteText = `Categorized into: ${podNames.join(', ')}. Primary: ${primaryPodName}.${notes ? ` Notes: ${notes}` : ''}`
 
-      await createInteraction({
-        contact_id: contact.id,
-        type: 'note',
-        date: new Date().toISOString().split('T')[0],
+      await logSystemEvent({
+        contactId: contact.id,
+        type: 'categorization',
+        detail: { pods: selectedPodIds, primaryPod: primaryPodId, answeredFields: Object.keys(answers) },
         notes: noteText,
-        summary: null,
-        source: null,
-        email_link: null,
-        granola_link: null,
       })
 
       invalidateContactsCache()

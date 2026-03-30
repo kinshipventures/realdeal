@@ -2,7 +2,11 @@
 export type HexColor = `#${string}`  // hex color string, e.g. "#718096"
 export type ISODate = string          // YYYY-MM-DD date string
 
-export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
+export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note' | 'pod_change' | 'field_update' | 'categorization' | 'pipeline_event'
+export type HumanInteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
+export type SystemEventType = 'pod_change' | 'field_update' | 'categorization' | 'pipeline_event'
+export const HUMAN_TYPES: HumanInteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
+export const SYSTEM_TYPES: SystemEventType[] = ['pod_change', 'field_update', 'categorization', 'pipeline_event']
 export type Owner = 'moj_mahdara' | 'kinship_ventures'
 export type Cadence = 'weekly' | 'biweekly' | 'monthly' | 'quarterly'
 export type GlobalRegion = 'AMER' | 'APAC' | 'ME' | 'LATAM' | 'EU'
@@ -97,6 +101,8 @@ export interface Interaction {
   source: InteractionSource | null
   email_link: string | null
   granola_link: string | null
+  event_detail: string | null    // JSON string for system event metadata
+  actor: string | null           // "You" for now, future multi-user
   created_at: string
 }
 

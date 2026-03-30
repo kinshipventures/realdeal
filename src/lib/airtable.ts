@@ -99,6 +99,8 @@ interface InteractionFields {
   Source?: string
   'Email Link'?: string
   'Granola Link'?: string
+  'Event Detail'?: string
+  'Actor'?: string
 }
 
 interface CampaignFields {
@@ -608,6 +610,8 @@ function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | nul
     source: (r.fields.Source as InteractionSource) ?? null,
     email_link: r.fields['Email Link'] ?? null,
     granola_link: r.fields['Granola Link'] ?? null,
+    event_detail: r.fields['Event Detail'] ?? null,
+    actor: r.fields['Actor'] ?? null,
     created_at: r.createdTime,
   }
 }
@@ -693,6 +697,8 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
         Source: data.source ?? undefined,
         'Email Link': data.email_link ?? undefined,
         'Granola Link': data.granola_link ?? undefined,
+        'Event Detail': data.event_detail ?? undefined,
+        'Actor': data.actor ?? undefined,
       },
     }),
   })

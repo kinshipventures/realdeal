@@ -84,13 +84,16 @@ const contact = (id: string, name: string, opts: {
 
 const ix = (id: string, contactId: string, type: InteractionType, daysBack: number, notes?: string, extra?: {
   summary?: string, source?: InteractionSource, email_link?: string, granola_link?: string,
+  event_detail?: string, actor?: string,
 }): Interaction => ({
   id: `demo-ix-${id}`, contact_id: `demo-contact-${contactId}`, type,
   date: daysAgo(daysBack), notes: notes ?? null,
   summary: extra?.summary ?? null,
-  source: extra?.source ?? 'Manual',
+  source: extra?.source ?? (type === 'pod_change' || type === 'field_update' || type === 'categorization' || type === 'pipeline_event' ? null : 'Manual'),
   email_link: extra?.email_link ?? null,
   granola_link: extra?.granola_link ?? null,
+  event_detail: extra?.event_detail ?? null,
+  actor: extra?.actor ?? null,
   created_at: daysAgo(daysBack),
 })
 
@@ -224,6 +227,12 @@ export const DEMO_INTERACTIONS: Interaction[] = [
   ix('40', '20', 'text', 3),
   // Deepak — fading
   ix('41', '21', 'call', 40, null!, { summary: 'Checked in about new book. He mentioned wanting to reconnect more.', source: 'Manual' }),
+  // System events — interleaved across contacts
+  ix('42', '7', 'categorization', 5, 'Categorized into: LPs. Primary: LPs.', { event_detail: '{"pods":["demo-pod-lps"],"primaryPod":"demo-pod-lps","answeredFields":[]}', actor: 'You' }),
+  ix('43', '1', 'pod_change', 10, 'Added to MAPS pod', { event_detail: '{"action":"added","pod":"MAPS"}', actor: 'You' }),
+  ix('44', '4', 'field_update', 22, 'Updated industry to "Venture Capital"', { event_detail: '{"field":"industry","oldValue":null,"newValue":"Venture Capital"}', actor: 'You' }),
+  ix('45', '9', 'pipeline_event', 13, 'Stage changed to Due Diligence', { event_detail: '{"pipeline":"LP Fundraising","stage":"Due Diligence"}', actor: 'You' }),
+  ix('46', '19', 'field_update', 4, 'Updated next follow-up to 7 days', { event_detail: '{"field":"next_follow_up_date","oldValue":null,"newValue":"2026-04-05"}', actor: 'You' }),
 ]
 
 // ── Campaigns ──
