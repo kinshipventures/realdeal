@@ -21,8 +21,8 @@ created: 2026-03-29
 | Preset | slate base color, cssVariables: true | components.json |
 | Component library | Radix UI (via shadcn) | components.json |
 | Icon library | lucide-react 1.7.0 | RESEARCH.md |
-| Body font | Plus Jakarta Sans 400/500/600 | design-system.md / index.css |
-| Heading font | Fraunces (serif) 700/800 | design-system.md / index.css |
+| Body font | Plus Jakarta Sans 400/600 | design-system.md / index.css |
+| Heading font | Fraunces (serif) 700 | design-system.md / index.css |
 
 ---
 
@@ -54,8 +54,8 @@ Source: design-system.md, index.css. Two fonts in use: Plus Jakarta Sans (sans) 
 
 | Role | Size | Weight | Font | Line Height | Usage in Phase 14 |
 |------|------|--------|------|-------------|-------------------|
-| Body | 13px | 400 | Plus Jakarta Sans | 1.5 | Card opportunity name, column card list, notes text in slide-out |
-| Label | 11px | 500 | Plus Jakarta Sans | 1.4 | Contact name under avatar, priority badge label, timestamp/metadata |
+| Body | 13px | 400 | Plus Jakarta Sans | 1.5 | Card opportunity name, column card list, notes text in slide-out, inline note input |
+| Label | 11px | 400 | Plus Jakarta Sans | 1.4 | Contact name under avatar, priority badge label, timestamp/metadata, custom fields on card face |
 | Heading | 16px | 600 | Fraunces (serif) | 1.2 | Stage column header name, pipeline tab bar selected label, slide-out panel heading |
 | Display | 18px | 700 | Fraunces (serif) | 1.2 | Opportunity name in slide-out detail panel header |
 
@@ -63,6 +63,8 @@ Additional type notes:
 - Letter-spacing on all serif headings: `-0.02em`
 - Section labels (e.g., "LINKED RECORDS", "STAGE HISTORY"): 11px, weight 600, serif, uppercase, `letter-spacing: 0.04em`
 - Muted/empty-state copy: 13px, weight 400, `var(--color-text-secondary)`
+- Active pipeline tab text: weight 600 (Plus Jakarta Sans). Inactive tab text: weight 400.
+- Priority badge text: 11px, weight 400. No weight 500 anywhere in this phase.
 
 ---
 
@@ -120,11 +122,11 @@ Components to build. Follow indicated pattern reference exactly.
 ### PipelineTabBar
 
 - Tabs: one per active pipeline. Fixed height 40px. Bottom-border indicator in `--color-brand` for active tab.
-- Inactive tab text: `var(--color-text-secondary)`. Active tab text: `var(--color-text-primary)`, weight 600.
+- Inactive tab text: `var(--color-text-secondary)`, weight 400. Active tab text: `var(--color-text-primary)`, weight 600.
 - Tab overflow (more than 5 pipelines): horizontal scroll with no visible scrollbar. Fade mask at right edge.
 - Hidden pipelines: muted section at end of tab bar with reduced opacity (0.45). Label "Hidden" separator in `var(--color-text-tertiary)`.
-- "+" tab at the far right: icon-only (`Plus` from lucide-react), same height as tabs, opens `CreatePipelineModal`.
-- Kebab menu on each tab (visible on hover): contains single action "Hide pipeline". Uses `MoreHorizontal` icon, 16px.
+- "+" tab at the far right: icon-only (`Plus` from lucide-react), same height as tabs, `aria-label="New pipeline"`, opens `CreatePipelineModal`.
+- Kebab menu on each tab (visible on hover): contains single action "Hide pipeline". Uses `MoreHorizontal` icon, 16px, `aria-label="Pipeline options"`.
 
 ### PipelineBoard (Kanban)
 
@@ -138,14 +140,14 @@ Components to build. Follow indicated pattern reference exactly.
 
 ### OpportunityCard
 
-- Surface: `var(--surface-panel)`, `border-radius: 10px`, `border: 1px solid var(--edge)`, `padding: 12px 16px`.
+- Surface: `var(--surface-panel)`, `border-radius: 10px`, `border: 1px solid var(--edge)`, `padding: 8px 16px`.
 - Drag: lift shadow on active drag — `box-shadow: 0 8px 24px rgba(0,0,0,0.12)`. Use dnd-kit `DragOverlay` for drag ghost.
 - Hover state: `box-shadow: 0 2px 8px rgba(0,0,0,0.08)`. Reveal archive button (top-right, `Archive` icon 14px, `var(--color-text-tertiary)`).
-- Opportunity name: 13px, weight 500, `var(--color-text-primary)`. Single line, truncate with ellipsis.
+- Opportunity name: 13px, weight 400, `var(--color-text-primary)`. Single line, truncate with ellipsis.
 - Contact avatars: stacked row, 24px each (from `Avatar` in `src/components/ui.tsx`). Max 3 shown, "+N" overflow count. Names below avatars: 11px, weight 400, `var(--color-text-secondary)`. Click avatar navigates to `/record/:id`.
-- Priority badge: right-aligned pill, 11px, weight 500. Colors per priority as declared in Color section. Click cycles `low → medium → high → low`. No confirmation.
+- Priority badge: right-aligned pill, 11px, weight 400. Colors per priority as declared in Color section. Click cycles `low → medium → high → low`. No confirmation.
 - Custom fields marked "show on card": displayed below contact row, 11px, weight 400, `var(--color-text-secondary)`. Max 2 visible on card face.
-- Inline note input: appears below card content on click (not hover). Single-line text input, 12px. Press Enter or blur to save. Writes `pipeline_event` on save.
+- Inline note input: appears below card content on click (not hover). Single-line text input, 13px, weight 400. Press Enter or blur to save. Writes `pipeline_event` on save.
 
 ### OpportunityDetail (slide-out panel)
 
@@ -163,8 +165,8 @@ Components to build. Follow indicated pattern reference exactly.
 ### UndoToast
 
 - Position: fixed, bottom-right, `bottom: 24px`, `right: 24px`.
-- Surface: `rgba(0,0,0,0.82)` (dark), `color: #ffffff`, `border-radius: 10px`, `padding: 12px 16px`.
-- Text: "{Opportunity name} moved to {stage name}" in 13px/400. "Undo" button in 13px/500, `--color-brand` text.
+- Surface: `rgba(0,0,0,0.82)` (dark), `color: #ffffff`, `border-radius: 10px`, `padding: 8px 16px`.
+- Text: "{Opportunity name} moved to {stage name}" in 13px/400. "Undo" button in 13px/600, `--color-brand` text.
 - Duration: 5 seconds auto-dismiss. `setTimeout` with cleanup on undo click.
 - One toast at a time — new action replaces existing toast and resets timer.
 - Archive toast: same treatment — "{Opportunity name} archived. Undo".
@@ -173,15 +175,15 @@ Components to build. Follow indicated pattern reference exactly.
 
 - Widget container: matches existing widget pattern in `RecordWidgets.tsx`.
 - Header: "Pipelines" label in 11px/600/Fraunces uppercase. "+" icon button right-aligned opens `AddToPipelineModal`.
-- Empty: "No pipeline associations" in `var(--color-text-tertiary)`, 12px, centered.
-- Opportunity row: opportunity name (13px/500) + pipeline name + stage name (11px/400, `var(--color-text-secondary)`). Custom fields marked "show on card" appear as smaller text below.
+- Empty: "No pipeline associations" in `var(--color-text-tertiary)`, 13px, centered.
+- Opportunity row: opportunity name (13px/400) + pipeline name + stage name (11px/400, `var(--color-text-secondary)`). Custom fields marked "show on card" appear as smaller text below.
 - Row click: navigate to `/pipelines?pipeline={id}&opportunity={id}` (D-17). Opens board with that pipeline tab active and OpportunityDetail open.
 
 ### AddToPipelineModal
 
 - Triggered from: (1) "+" in PipelinesWidget, (2) "Add to pipeline" bulk action in RecordsList.
 - Layout: small centered modal or bottom sheet (not slide-out). Width 400px, `border-radius: 16px`.
-- Fields: Pipeline dropdown (select), Stage dropdown (select — populated from selected pipeline). "Create" button in `--color-brand`.
+- Fields: Pipeline dropdown (select), Stage dropdown (select — populated from selected pipeline). "Add Opportunity" button in `--color-brand`.
 - Bulk variant: shows count "Adding to pipeline for {N} contacts" before the dropdowns.
 - Escape closes. Click outside closes.
 
@@ -189,7 +191,7 @@ Components to build. Follow indicated pattern reference exactly.
 
 - Small centered modal, width 360px.
 - Single field: pipeline name text input, autofocused.
-- "Create" button + Escape to cancel.
+- "Create Pipeline" button + Escape to cancel.
 - On submit: calls `createPipeline()`, adds new tab to PipelineTabBar, sets new pipeline as active.
 
 ---
@@ -214,8 +216,8 @@ Source: design-system.md motion tokens.
 
 | Element | Copy | Context |
 |---------|------|---------|
-| Primary CTA (create pipeline) | "New Pipeline" | "+" tab in tab bar opens modal with this as submit label |
-| Primary CTA (create opportunity) | "Add Opportunity" | Footer button in stage column; inline form submit label |
+| Primary CTA (create pipeline) | "Create Pipeline" | Submit button in CreatePipelineModal |
+| Primary CTA (create opportunity) | "Add Opportunity" | Footer button in stage column; submit button in AddToPipelineModal |
 | Primary CTA (add to pipeline from record) | "Add to Pipeline" | "+" button in PipelinesWidget header |
 | Primary CTA (bulk action) | "Add to Pipeline" | Bulk action bar in RecordsList |
 | Empty board heading | "No opportunities in this stage" | Inside an empty stage column |
@@ -252,6 +254,8 @@ No third-party registries. dnd-kit is an npm package, not a shadcn registry bloc
 - Undo toast: `role="status"` and `aria-live="polite"` for screen reader announcement.
 - Empty state text in columns: `var(--color-text-tertiary)` at 13px — meets WCAG AA for normal text (3.2:1 is borderline; use 13px minimum, not 11px for empty state body copy).
 - OpportunityDetail close button: `aria-label="Close opportunity detail"`.
+- "+" tab in PipelineTabBar: `aria-label="New pipeline"`.
+- Kebab menu button on each pipeline tab: `aria-label="Pipeline options"`.
 
 ---
 
