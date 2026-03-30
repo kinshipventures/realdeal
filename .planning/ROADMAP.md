@@ -176,6 +176,6 @@ Plans:
 | 11. Relationship Records | v2.0 | 3/3 | Complete    | 2026-03-29 |
 | 12. Pods Overhaul + Categorization | v2.0 | 4/4 | Complete   | 2026-03-29 |
 | 13. Timeline + Records List | v2.0 | 3/3 | Complete   | 2026-03-30 |
-| 14. Pipelines | v2.0 | 3/3 | Complete   | 2026-03-30 |
+| 14. Pipelines | v2.0 | 3/3 | Complete    | 2026-03-30 |
 | 15. Projects + Navigation | v2.0 | 0/? | Not started | — |
 | 16. Dashboard + Nurturing Hub | v2.0 | 0/? | Not started | — |
