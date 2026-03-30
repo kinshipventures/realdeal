@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-03-30T06:01:48.166Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-30T07:46:15.013Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 18
+  completed_plans: 16
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 14 — pipelines
+**Current focus:** Phase 15 — projects
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
+Phase: 15 (projects) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 14-pipelines P01 | 35 | 3 tasks | 7 files |
 | Phase 14-pipelines P02 | 18 | 2 tasks | 4 files |
 | Phase 14-pipelines P03 | 18 | 2 tasks | 6 files |
+| Phase 15-projects P01 | 12 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 14-pipelines]: OpportunityDetail loads stage history by fetching all interactions for linked contacts then filtering client-side by pipeline name
 - [Phase 14-pipelines]: PipelinesWidget fetches all opportunities/stages/pipelines on mount — no separate per-pipeline load needed
 - [Phase 14-pipelines]: AddToPipelineModal fetches stages on selectedPipelineId change, auto-selects first stage for UX
+- [Phase 15-projects]: addProjectNote writes project_event for every linked record so project notes appear in each contact timeline
+- [Phase 15-projects]: DEMO_PROJECT_INTERACTIONS merged into DEMO_INTERACTIONS at module load via forEach push — keeps single mutable array for runtime demo mutations
 
 ### Architecture Notes
 
@@ -116,6 +119,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T05:56:59.347Z
-Stopped at: Completed 14-03-PLAN.md
+Last session: 2026-03-30T07:46:15.011Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
