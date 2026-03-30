@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-30T01:27:32.925Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-03-30T01:27:43.201Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
@@ -78,6 +78,9 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 12-pods-overhaul-categorization]: ListNode uses useNavigate directly — removes onClick prop dependency, cleaner separation
 - [Phase 13-timeline-records-list]: System events render as compact dot-lines (not cards) to preserve visual hierarchy in timeline
 - [Phase 13-timeline-records-list]: Filter state (activeFilters, showSystemEvents) owned by RecordTimeline, not InteractionSection
+- [Phase 13-timeline-records-list]: RecordsList loads all contacts via getContacts() with no filter — full relationship scope
+- [Phase 13-timeline-records-list]: isPulse variable introduced alongside isRecords/isMap to fix Pulse active state when on /records
+- [Phase 13-timeline-records-list]: Saved views store FilterState + visibleColumns + sort in localStorage for deterministic restoration
 
 ### Architecture Notes
 
@@ -101,6 +104,6 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 ## Session Continuity
 
 Last activity: 2026-03-30
-Last session: 2026-03-30T01:27:28.129Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-03-30T01:27:43.198Z
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None

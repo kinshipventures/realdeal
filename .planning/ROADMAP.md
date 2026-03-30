@@ -130,8 +130,8 @@ Plans:
   5. User can hide a pipeline without deleting it — hidden pipelines maintain all record connections
 **Plans:** 3 plans
 Plans:
-- [ ] 13-01-PLAN.md — Timeline data layer + system events + filter UI
-- [ ] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
+- [x] 13-01-PLAN.md — Timeline data layer + system events + filter UI
+- [x] 13-02-PLAN.md — Records List view with table, filters, saved views, nav wiring
 - [ ] 13-03-PLAN.md — Bulk actions + human verification
 
 ### Phase 15: Projects + Navigation
