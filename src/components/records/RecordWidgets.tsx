@@ -5,6 +5,7 @@ import { HealthWidget } from './HealthWidget'
 import { AssociatedPeopleWidget } from './AssociatedPeopleWidget'
 import { PodFieldsWidget } from './PodFieldsWidget'
 import { PipelinesWidget } from './PipelinesWidget'
+import { ProjectsWidget } from './ProjectsWidget'
 
 interface RecordWidgetsProps {
   contact: Contact
@@ -36,6 +37,7 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
         <AssociatedPeopleWidget contact={contact} />
       )}
       <PipelinesWidget contact={contact} />
+      <ProjectsWidget contact={contact} />
     </div>
   )
 }
