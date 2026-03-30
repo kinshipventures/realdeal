@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { EmptyState } from '../empty/EmptyState'
-import type { Contact, Interaction, InteractionType, ISODate } from '../../lib/types'
+import type { Contact, Interaction, InteractionType, ISODate, SystemEventType } from '../../lib/types'
+import { SYSTEM_TYPES } from '../../lib/types'
 import {
   getInteractions,
   logInteraction,
@@ -13,11 +14,14 @@ import { formatRelativeTime } from '../../lib/utils'
 interface InteractionSectionProps {
   contact: Contact
   onContactUpdated: (contact: Contact) => void  // fires after any mutation that changes the contact
+  activeFilters?: Set<InteractionType>           // which human types to show (undefined = show all)
+  showSystemEvents?: boolean                     // system events toggle
 }
 
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
+  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline',
 }
 
 const TYPE_COLORS: Record<InteractionType, string> = {
@@ -27,6 +31,10 @@ const TYPE_COLORS: Record<InteractionType, string> = {
   meeting: '#E65100',
   note: 'var(--color-text-secondary)',
   intro: '#C2185B',
+  pod_change: 'rgba(0,0,0,0.35)',
+  field_update: 'rgba(0,0,0,0.35)',
+  categorization: 'rgba(0,0,0,0.35)',
+  pipeline_event: 'rgba(0,0,0,0.35)',
 }
 
 function typePill(type: InteractionType): React.CSSProperties {
@@ -68,7 +76,7 @@ type EditingInteraction = {
   notes: string | null
 } | null
 
-export function InteractionSection({ contact, onContactUpdated }: InteractionSectionProps) {
+export function InteractionSection({ contact, onContactUpdated, activeFilters, showSystemEvents = false }: InteractionSectionProps) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [interactionsError, setInteractionsError] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
@@ -103,6 +111,16 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
     }
     return recency
   }, [interactions])
+
+  // Filtered view — apply activeFilters and showSystemEvents
+  const filtered = useMemo(() => {
+    return interactions.filter(i => {
+      const isSystem = SYSTEM_TYPES.includes(i.type as SystemEventType)
+      if (isSystem) return showSystemEvents
+      if (activeFilters && !activeFilters.has(i.type)) return false
+      return true
+    })
+  }, [interactions, activeFilters, showSystemEvents])
 
   async function handleLog() {
     if (opState !== 'idle') return
@@ -340,12 +358,39 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
         />
       )}
 
-      {interactions.map((interaction, i) => (
+      {filtered.map((interaction, i) => {
+        const isSystem = SYSTEM_TYPES.includes(interaction.type as SystemEventType)
+
+        // Compact system event line
+        if (isSystem) {
+          return (
+            <div key={interaction.id} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 0',
+              borderBottom: i < filtered.length - 1 ? '1px solid var(--divider)' : 'none',
+            }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.15)', flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flex: 1 }}>
+                {interaction.notes ?? TYPE_LABELS[interaction.type]}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0, display: 'flex', gap: 4 }}>
+                {interaction.actor && <span>{interaction.actor}</span>}
+                <span>{formatRelativeTime(interaction.date)}</span>
+              </span>
+            </div>
+          )
+        }
+
+        // Human interaction card
+        return (
         <div
           key={interaction.id}
           style={{
             ...rowStyle,
-            borderBottom: i < interactions.length - 1 ? rowStyle.borderBottom : 'none',
+            borderBottom: i < filtered.length - 1 ? rowStyle.borderBottom : 'none',
             opacity: deletingId === interaction.id ? 0.4 : 1,
             transition: 'opacity 0.15s',
           }}
@@ -464,6 +509,11 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
                   >
                     del
                   </button>
+                  {interaction.actor && (
+                    <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginRight: 4 }}>
+                      {interaction.actor}
+                    </span>
+                  )}
                   <span style={timestampStyle}>{formatRelativeTime(interaction.date)}</span>
                 </div>
               </div>
@@ -496,7 +546,8 @@ export function InteractionSection({ contact, onContactUpdated }: InteractionSec
             </div>
           )}
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
