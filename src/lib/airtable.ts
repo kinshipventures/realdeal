@@ -1290,12 +1290,163 @@ export function getProjects(): Promise<Project[]> {
 }
 
 export async function createProject(name: string, description?: string): Promise<Project> {
+  if (isDemoMode()) {
+    const p: Project = { id: 'demo-proj-' + Date.now(), name, description: description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: new Date().toISOString() }
+    DEMO_PROJECTS.push(p)
+    return p
+  }
   const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects, {
     method: 'POST',
     body: JSON.stringify({ fields: { Name: name, ...(description ? { Description: description } : {}) } }),
   })
   _projectsCache = null
   return mapProject(r)
+}
+
+export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'owner'>>): Promise<Project> {
+  if (isDemoMode()) {
+    const idx = DEMO_PROJECTS.findIndex(p => p.id === id)
+    if (idx >= 0) Object.assign(DEMO_PROJECTS[idx], data)
+    return DEMO_PROJECTS[idx]
+  }
+  const fields: Record<string, unknown> = {}
+  if (data.name !== undefined) fields.Name = data.name
+  if (data.description !== undefined) fields.Description = data.description
+  if (data.owner !== undefined) fields.Owner = data.owner
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + id, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields }),
+  })
+  _projectsCache = null
+  return mapProject(r)
+}
+
+export async function addRecordToProject(projectId: string, recordId: string): Promise<Project> {
+  const projects = await getProjects()
+  const project = projects.find(p => p.id === projectId)
+  if (!project) throw new Error('Project not found')
+  if (project.relationship_ids.includes(recordId)) return project
+  if (isDemoMode()) {
+    project.relationship_ids.push(recordId)
+    DEMO_INTERACTIONS.push({
+      id: 'demo-ix-proj-' + Date.now(),
+      contact_id: recordId,
+      type: 'project_event',
+      date: new Date().toISOString(),
+      notes: null,
+      summary: null,
+      source: null,
+      email_link: null,
+      granola_link: null,
+      event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }),
+      actor: null,
+      created_at: new Date().toISOString(),
+    })
+    return project
+  }
+  const updated = [...project.relationship_ids, recordId]
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Relationships: updated } }),
+  })
+  _projectsCache = null
+  await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }), actor: null })
+  return mapProject(r)
+}
+
+export async function removeRecordFromProject(projectId: string, recordId: string): Promise<Project> {
+  const projects = await getProjects()
+  const project = projects.find(p => p.id === projectId)
+  if (!project) throw new Error('Project not found')
+  if (isDemoMode()) {
+    project.relationship_ids = project.relationship_ids.filter(id => id !== recordId)
+    DEMO_INTERACTIONS.push({
+      id: 'demo-ix-proj-' + Date.now(),
+      contact_id: recordId,
+      type: 'project_event',
+      date: new Date().toISOString(),
+      notes: null,
+      summary: null,
+      source: null,
+      email_link: null,
+      granola_link: null,
+      event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'removed_from_project' }),
+      actor: null,
+      created_at: new Date().toISOString(),
+    })
+    return project
+  }
+  const updated = project.relationship_ids.filter(id => id !== recordId)
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Relationships: updated } }),
+  })
+  _projectsCache = null
+  await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'removed_from_project' }), actor: null })
+  return mapProject(r)
+}
+
+export async function addOpportunityToProject(projectId: string, opportunityId: string): Promise<Project> {
+  const projects = await getProjects()
+  const project = projects.find(p => p.id === projectId)
+  if (!project) throw new Error('Project not found')
+  if (project.opportunity_ids.includes(opportunityId)) return project
+  if (isDemoMode()) {
+    project.opportunity_ids.push(opportunityId)
+    return project
+  }
+  const updated = [...project.opportunity_ids, opportunityId]
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Opportunities: updated } }),
+  })
+  _projectsCache = null
+  return mapProject(r)
+}
+
+export async function removeOpportunityFromProject(projectId: string, opportunityId: string): Promise<Project> {
+  const projects = await getProjects()
+  const project = projects.find(p => p.id === projectId)
+  if (!project) throw new Error('Project not found')
+  if (isDemoMode()) {
+    project.opportunity_ids = project.opportunity_ids.filter(id => id !== opportunityId)
+    return project
+  }
+  const updated = project.opportunity_ids.filter(id => id !== opportunityId)
+  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { Opportunities: updated } }),
+  })
+  _projectsCache = null
+  return mapProject(r)
+}
+
+export async function addProjectNote(projectId: string, note: string): Promise<void> {
+  const projects = await getProjects()
+  const project = projects.find(p => p.id === projectId)
+  if (!project) throw new Error('Project not found')
+  if (isDemoMode()) {
+    for (const recordId of project.relationship_ids) {
+      DEMO_INTERACTIONS.push({
+        id: 'demo-ix-proj-' + Date.now() + '-' + recordId,
+        contact_id: recordId,
+        type: 'project_event',
+        date: new Date().toISOString(),
+        notes: note,
+        summary: null,
+        source: null,
+        email_link: null,
+        granola_link: null,
+        event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'project_note' }),
+        actor: null,
+        created_at: new Date().toISOString(),
+      })
+    }
+    return
+  }
+  for (const recordId of project.relationship_ids) {
+    await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: note, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'project_note' }), actor: null })
+  }
 }
 
 // ── Contact filter helpers ────────────────────────────────────────────────────
