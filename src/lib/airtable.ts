@@ -707,6 +707,15 @@ export async function getInteractions(contactId: string): Promise<Interaction[]>
 }
 
 export async function createInteraction(data: Omit<Interaction, 'id' | 'created_at'>): Promise<Interaction> {
+  if (isDemoMode()) {
+    const interaction: Interaction = {
+      ...data,
+      id: `demo-int-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    }
+    DEMO_INTERACTIONS.unshift(interaction)
+    return interaction
+  }
   const r = await request<AirtableRecord<InteractionFields>>(TABLES.interactions, {
     method: 'POST',
     body: JSON.stringify({
@@ -726,7 +735,6 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
   })
   const mapped = mapInteraction(r)
   if (!mapped) throw new Error('Created interaction missing Contact link')
-  // Optimistic append — avoids full re-fetch
   if (_interactionsCache) _interactionsCache.unshift(mapped)
   return mapped
 }
@@ -735,6 +743,12 @@ export async function updateInteraction(
   id: string,
   data: Partial<Pick<Interaction, 'type' | 'date' | 'notes'>>
 ): Promise<Interaction> {
+  if (isDemoMode()) {
+    const idx = DEMO_INTERACTIONS.findIndex(i => i.id === id)
+    if (idx === -1) throw new Error('Interaction not found')
+    Object.assign(DEMO_INTERACTIONS[idx], data)
+    return DEMO_INTERACTIONS[idx]
+  }
   const fields: Record<string, unknown> = {}
   if (data.type !== undefined) fields.Type = data.type
   if (data.date !== undefined) fields.Date = data.date
@@ -749,6 +763,11 @@ export async function updateInteraction(
 }
 
 export async function deleteInteraction(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_INTERACTIONS.findIndex(i => i.id === id)
+    if (idx !== -1) DEMO_INTERACTIONS.splice(idx, 1)
+    return
+  }
   await request(`${TABLES.interactions}/${id}`, { method: 'DELETE' })
   if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
 }
