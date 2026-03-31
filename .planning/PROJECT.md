@@ -8,17 +8,16 @@ A relationship-first operating system for founders and operators. Not a CRM — 
 
 One place where every relationship lives with full context — so founders never lose track of who matters, what happened, or what's next.
 
-## Current Milestone: v2.0 RealDeal MVP
+## Current Milestone: v2.1 MVP Completion
 
-**Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive RealDeal product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
+**Goal:** Close the remaining gaps from the Kinship Brain MVP PDF -- reporting, share links, enrichment, follow-up flow, and authentication.
 
-**Definition of Done (from PDF):** Moj + team can import people, organize them into pods, see context and follow-ups, run pipelines and projects, pull reports, and share lists — without workarounds.
-
-**V1 modules (9):** Relationship Records, Pods + Subpods, Pending Categorization Tray, Pipelines (Kanban), Projects (foundational), Basic Enrichment, Reporting, Nurturing/Maintenance Hub, Sharing + Exports.
-
-**Completed (Phases 10-16):** Data architecture, relationship records with per-type layouts + custom fields, pods overhaul + categorization, timeline + records list, pipelines Kanban, projects, dashboard widget architecture + nurturing hub.
-
-**Remaining (Phases 17-19):** Basic Enrichment, Reporting + Exports, Sharing + Polish.
+**Target features:**
+- Reporting module (pod distribution, pipeline velocity, engagement, export, saved reports)
+- Read-only share links for curated lists
+- Web-sourced enrichment with timeline logging and per-contact/pod opt-in
+- Dedicated follow-up creation flow from nurturing hub
+- User authentication (via Lovable/Supabase)
 
 ## Requirements
 
