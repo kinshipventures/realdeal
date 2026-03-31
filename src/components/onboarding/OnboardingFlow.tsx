@@ -107,7 +107,7 @@ function StepPods({ onNext }: { onNext: () => void }) {
       </p>
       <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
         {pods.map(p => (
-          <div key={p.name} onClick={handleOrbClick} style={{ cursor: 'pointer' }}>
+          <div key={p.name} style={{ cursor: 'pointer' }}>
             <SolidOrb size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
               <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
             </SolidOrb>
