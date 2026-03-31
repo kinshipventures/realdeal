@@ -118,15 +118,14 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  // Build cumulative arc offsets
+  // Build cumulative arc offsets - no gaps, segments touch
   let cumOffset = 0
   const arcs = interactions.map((inter, i) => {
     const fraction = inter.weight / totalWeight
     const arcLen = fraction * circ
-    const gap = 4
     const offset = cumOffset
-    cumOffset += arcLen + gap
-    return { ...inter, arcLen: Math.max(0, arcLen - gap), offset: offset + gap / 2, visible: i <= animStep }
+    cumOffset += arcLen
+    return { ...inter, arcLen, offset, visible: i <= animStep }
   })
 
   return (
