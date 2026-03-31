@@ -96,20 +96,14 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
     { icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 0 0 6.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 0 0 6.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3', label: 'Relationship debt is real', stat: '5% monthly neglect compounds to 46% annual relationship loss.' },
   ]
 
-  const labels = [
-    { text: 'Thriving', color: '#25B439' },
-    { text: 'Steady', color: '#6366F1' },
-    { text: 'Cooling', color: '#F59E0B' },
-    { text: 'Fading', color: '#EF4444' },
+  const interactions = [
+    { label: 'Intro', weight: 5, color: '#25B439' },
+    { label: 'Meeting', weight: 4, color: '#22A835' },
+    { label: 'Call', weight: 3, color: '#6366F1' },
+    { label: 'Text / Email', weight: 2, color: '#F59E0B' },
   ]
 
-  // 70% filled ring
-  const size = 100
-  const strokeWidth = 8
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const fillPercent = 0.7
-  const dashOffset = circumference * (1 - fillPercent)
+  const maxWeight = 5
 
   return (
     <>
@@ -144,31 +138,33 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         ))}
       </div>
 
-      {/* Static equity ring */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={strokeWidth}
-          />
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke="#25B439" strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-          />
-        </svg>
-        <div style={{ display: 'flex', gap: 16 }}>
-          {labels.map(l => (
-            <span key={l.text} style={{
-              fontSize: 11, fontWeight: 600, color: l.color, fontFamily: 'var(--font-sans)',
-            }}>
-              {l.text}
-            </span>
+      {/* Interaction weights */}
+      <div style={{
+        width: '100%', padding: '16px 20px', borderRadius: 12,
+        background: 'rgba(0,0,0,0.03)',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Every interaction builds equity
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {interactions.map(i => (
+            <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', width: 72, flexShrink: 0 }}>
+                {i.label}
+              </span>
+              <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.06)' }}>
+                <div style={{
+                  width: `${(i.weight / maxWeight) * 100}%`, height: '100%',
+                  borderRadius: 3, background: i.color,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: i.color, fontFamily: 'var(--font-sans)', width: 16, textAlign: 'right' }}>
+                +{i.weight}
+              </span>
+            </div>
           ))}
         </div>
-      </div>
 
       <button type="button" onClick={onNext} style={primaryBtnStyle}>
         Next
