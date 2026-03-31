@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Kinship Brain MVP
 status: unknown
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-03-30T18:17:53.316Z"
-last_activity: 2026-03-30
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-31T07:58:05.633Z"
+last_activity: 2026-03-31
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 23
+  completed_plans: 22
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 16 — dashboard-nurturing
+**Current focus:** Phase 17 — polish-operations
 
 ## Current Position
 
-Phase: 16 (dashboard-nurturing) — EXECUTING
-Plan: 3 of 3
+Phase: 17 (polish-operations) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -56,8 +56,13 @@ Plan: 3 of 3
 | Phase 16-dashboard-nurturing P01 | 35 | 2 tasks | 12 files |
 | Phase 16-dashboard-nurturing P03 | 17 | 2 tasks | 4 files |
 | Phase 16-dashboard-nurturing P02 | 15 | 2 tasks | 3 files |
+| Phase 17-polish-operations P01 | 35 | 3 tasks | 9 files |
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 17 added: Polish + Operations — close visible functional gaps (contact CRUD, sub-pod cap, clickable fields, share links)
 
 ### Decisions
 
@@ -112,6 +117,8 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 - [Phase 16-dashboard-nurturing]: OpportunityCard uses isOverdue(contact, monthly) default cadence — no pods prop needed in card component
 - [Phase 16-dashboard-nurturing]: NurturingHub imports getFieldConfigs from fieldConfig.ts (not airtable.ts) — function lives in separate module created in Phase 11
 - [Phase 16-dashboard-nurturing]: NurturingRow log interaction uses call/email/text/meeting only — intro and note excluded from quick-action pills to match quick-action intent
+- [Phase 17-polish-operations]: email_2/email_3 as direct Contact fields per D-06 three-field spec; enrichment_opt_in at pod level only per D-04
+- [Phase 17-polish-operations]: Toolbar export targets filtered array (WYSIWYG); bulk bar export targets selected rows
 
 ### Architecture Notes
 
@@ -134,7 +141,7 @@ Previous milestone decisions archived to milestones/v1.2-ROADMAP.md.
 
 ## Session Continuity
 
-Last activity: 2026-03-30
-Last session: 2026-03-30T18:17:53.314Z
-Stopped at: Completed 16-02-PLAN.md
+Last activity: 2026-03-31
+Last session: 2026-03-31T07:58:05.631Z
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
