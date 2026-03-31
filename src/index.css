@@ -180,8 +180,7 @@
 }
 
 .onboarding-orb.orb-interactive:hover {
-  --orb-scale: 1.2 !important;
-  --orb-lift: -8px !important;
+  transform: scale(1.2) translateY(-8px) !important;
   filter: brightness(1.15);
 }
 
