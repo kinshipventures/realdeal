@@ -171,6 +171,13 @@
   transition-timing-function: ease-in !important;
 }
 
+/* ── Onboarding orb hover boost ────────────────────────────────────────────── */
+.onboarding-orb.orb-interactive:hover {
+  --orb-scale: 1.18 !important;
+  --orb-lift: -6px !important;
+  filter: brightness(1.15);
+}
+
 /* ── Hover interaction classes ──────────────────────────────────────────────── */
 /* Naming follows behavioral taxonomy: what the element does, not what it looks like */
 
