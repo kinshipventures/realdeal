@@ -1,5 +1,35 @@
 # Milestones
 
+## v2.0 RealDeal MVP (Shipped: 2026-03-31)
+
+**Phases completed:** 8 phases, 23 plans, 37 tasks
+
+**Key accomplishments:**
+
+- Idempotent Airtable migration script that adds Type/Status/company fields to Contacts, creates Company records from existing text values, links them via self-referencing linked field, and creates Pipelines/Pipeline Stages/Opportunities/Projects tables — migration ran successfully against live base
+- Updated types.ts, airtable.ts, and sampleData.ts with full v2 schema support — 5 new type aliases, 4 new interfaces, extended Contact, 4 new TABLES entries, field interfaces, mappers, stale-while-revalidate caches, CRUD functions, and demo data for all new entity types
+- Full-page RecordPage at /record/:id with conditional Contact/Company field rendering, Field Config data layer, and navigation wired from search/map/panel to record view
+- Type-first CreateRecordModal with Contact/Company forms, company typeahead linking, and AssociatedPeopleWidget for bidirectional company-contact relationships
+- Per-pod custom field cards with Airtable Metadata API field creation, multi-entry modal mode, and CSV import with type/pod assignment
+- Extended Pod and Contact interfaces with 4 new Airtable fields, added pod CRUD, routed CSV imports through Pending status, and wired cadence_override into equity scoring
+- Tinder-style swipe intake queue with all-in-one categorization modal: pending tray widget on dashboard, pointer-gesture card stack, pod multi-select with required field enforcement, capacity warnings, and timeline entry on save
+- Pod orb clicks navigate to /pod/:id, category-drill fully removed, capacity indicators on orbs, '+' orb opens PodCreateModal
+- Type System (src/lib/types.ts)
+- Filterable, sortable records table at /records with saved views, column visibility, multi-select, and recency filter — accessible from both desktop pill nav and mobile tab bar
+- Working bulk action bar with 4 operations (add to pod, field update, CSV export, archive), each writing appropriate system events to affected records' timelines
+- Kanban pipeline board with dnd-kit drag-and-drop, tab switching, undo toast, stage columns with inline edit/color picker, and opportunity cards with priority/avatar/archive — wired to Airtable data layer
+- OpportunityDetail.tsx
+- Pipelines wired into nav (Pulse|Map|Contacts|Pipelines), RecordPage widget with opportunity deep-links, and shared AddToPipelineModal for single + bulk contact flows
+- Project CRUD API with timeline event writes, opportunity linking, notes, and full demo mode support for all mutations
+- Full project UI: card grid landing page, tabbed detail page with contact slide-out overlay, creation and attach modals, nav pill entry and routes
+- ProjectsWidget on record pages, Add to Project bulk action in Records List, and project_event timeline rendering — projects fully integrated across all relationship record surfaces
+- 500-line monolithic Dashboard.tsx decomposed into 8 toggleable widget components with localStorage-backed config, full/focus presets, and a slide-in settings panel
+- NurturingRow
+- RecordPage banner strip:
+- email_2/email_3 on Contact, enrichment_opt_in on Pod, clickable website links, status badge, no-pod hygiene signal, and toolbar WYSIWYG export with copy-to-clipboard across 9 files
+
+---
+
 ## v2.0 Kinship Brain MVP (In Progress)
 
 **Goal:** Ship a usable V1 that supports Kinship's real workflows — organizing relationships, maintaining them, running pipelines + projects, pulling reports, and sharing lists.
@@ -7,12 +37,14 @@
 **Source of Truth:** docs/Kinship Brain — MVP.pdf (Mar 28)
 
 **Phases completed:** 4 of 10 (Phases 10-13)
+
 - Phase 10: Data Architecture Rebuild (2 plans)
 - Phase 11: Relationship Records (3 plans)
 - Phase 12: Pods Overhaul + Categorization (4 plans)
 - Phase 13: Timeline + Records List (3 plans)
 
 **Phases remaining:** 6 (Phases 14-19)
+
 - Phase 14: Pipelines (Kanban boards)
 - Phase 15: Projects (initiative containers)
 - Phase 16: Basic Enrichment
@@ -21,6 +53,7 @@
 - Phase 19: Sharing + Polish
 
 **Key accomplishments so far:**
+
 - Relationship-first Airtable schema with Pipelines, Opportunities, Projects, PipelineStages tables
 - Record detail pages with per-type field layouts (Person vs Company), custom fields, company-contact linking
 - Pods as behavioral containers with unlimited sub-pods, categorization tray, pod detail pages
