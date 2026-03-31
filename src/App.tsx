@@ -494,6 +494,7 @@ export default function App() {
           <Route path="contact/:id" element={<RecordPage />} />
           <Route path="pod/:id" element={<PodDetailPage />} />
           <Route path="import" element={<ImportPanel />} />
+          <Route path="onboarding" element={<OnboardingFlow onComplete={() => window.history.back()} />} />
         </Route>
       </Route>
     </Routes>
