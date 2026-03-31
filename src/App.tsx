@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { supabase } from '@/integrations/supabase/client'
 import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { LoginPage } from './components/auth/LoginPage'
