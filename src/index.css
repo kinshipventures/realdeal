@@ -192,12 +192,12 @@
 }
 
 @keyframes orb-bounce {
-  0%   { transform: scale(1); }
-  15%  { transform: scale(0.82) translateY(3px); }
-  40%  { transform: scale(1.18) translateY(-8px); }
-  60%  { transform: scale(0.96) translateY(1px); }
-  78%  { transform: scale(1.06) translateY(-2px); }
-  100% { transform: scale(1); }
+  0%   { transform: scale(1.2) translateY(-8px); }
+  18%  { transform: scale(0.88) translateY(3px); }
+  42%  { transform: scale(1.24) translateY(-6px); }
+  62%  { transform: scale(1.14) translateY(-2px); }
+  80%  { transform: scale(1.22) translateY(-4px); }
+  100% { transform: scale(1.2) translateY(-8px); }
 }
 
 .onboarding-orb.orb-bouncing {
