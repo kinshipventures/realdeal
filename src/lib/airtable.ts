@@ -1462,6 +1462,155 @@ export async function addProjectNote(projectId: string, note: string): Promise<v
   }
 }
 
+// ── Merge records ─────────────────────────────────────────────────────────────
+
+export async function mergeRecords(
+  survivorId: string,
+  loserId: string,
+  fieldOverrides: Partial<Contact>
+): Promise<Contact> {
+  if (isDemoMode()) {
+    // Demo mode: in-place array mutations
+    const sIdx = DEMO_CONTACTS.findIndex(c => c.id === survivorId)
+    const lIdx = DEMO_CONTACTS.findIndex(c => c.id === loserId)
+    if (sIdx === -1 || lIdx === -1) throw new Error('Record not found in demo data')
+    const loser = DEMO_CONTACTS[lIdx]
+    const survivor = DEMO_CONTACTS[sIdx]
+    // Apply field overrides and union associations
+    Object.assign(survivor, fieldOverrides)
+    survivor.list_ids = [...new Set([...survivor.list_ids, ...loser.list_ids])]
+    survivor.category_ids = [...new Set([...survivor.category_ids, ...loser.category_ids])]
+    if (!survivor.primary_list_id && loser.primary_list_id) {
+      survivor.primary_list_id = loser.primary_list_id
+    }
+    // Update opportunity references
+    DEMO_OPPORTUNITIES.forEach(opp => {
+      if (opp.relationship_ids.includes(loserId)) {
+        opp.relationship_ids = opp.relationship_ids
+          .filter(id => id !== loserId)
+          .concat(opp.relationship_ids.includes(survivorId) ? [] : [survivorId])
+      }
+    })
+    // Update project references
+    DEMO_PROJECTS.forEach(proj => {
+      if (proj.relationship_ids.includes(loserId)) {
+        proj.relationship_ids = proj.relationship_ids
+          .filter(id => id !== loserId)
+          .concat(proj.relationship_ids.includes(survivorId) ? [] : [survivorId])
+      }
+    })
+    // Update campaign contact references
+    DEMO_CAMPAIGN_CONTACTS.forEach(cc => {
+      if (cc.contact_id === loserId) cc.contact_id = survivorId
+    })
+    // Reassign loser interactions to survivor
+    DEMO_INTERACTIONS.forEach(ix => {
+      if (ix.contact_id === loserId) ix.contact_id = survivorId
+    })
+    // Write merge_event on survivor
+    DEMO_INTERACTIONS.push({
+      id: 'demo-ix-merge-' + Date.now(),
+      contact_id: survivorId,
+      type: 'merge_event',
+      date: new Date().toISOString().split('T')[0],
+      notes: `Merged with ${loser.name} (record deleted)`,
+      summary: null, source: null, email_link: null, granola_link: null,
+      event_detail: JSON.stringify({ merged_name: loser.name, merged_id: loserId }),
+      actor: null,
+      created_at: new Date().toISOString(),
+    })
+    // Remove loser
+    DEMO_CONTACTS.splice(lIdx > sIdx ? lIdx : lIdx, 1)
+    return survivor
+  }
+
+  const contacts = await getContacts()
+  const survivor = contacts.find(c => c.id === survivorId)
+  const loser = contacts.find(c => c.id === loserId)
+  if (!survivor || !loser) throw new Error('One or both records not found')
+
+  // Build merged field set
+  const mergedFields: Partial<Contact> = {
+    ...fieldOverrides,
+    list_ids: [...new Set([...survivor.list_ids, ...loser.list_ids])],
+    category_ids: [...new Set([...survivor.category_ids, ...loser.category_ids])],
+    primary_list_id: survivor.primary_list_id ?? loser.primary_list_id,
+  }
+
+  try {
+    // Update opportunity references
+    const opportunities = await getOpportunities()
+    for (const opp of opportunities) {
+      if (opp.relationship_ids.includes(loserId)) {
+        const updated = opp.relationship_ids.filter(id => id !== loserId)
+        if (!updated.includes(survivorId)) updated.push(survivorId)
+        await request(`${TABLES.opportunities}/${opp.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ fields: { Relationships: updated } }),
+        })
+      }
+    }
+
+    // Update project references
+    const projects = await getProjects()
+    for (const proj of projects) {
+      if (proj.relationship_ids.includes(loserId)) {
+        const updated = proj.relationship_ids.filter(id => id !== loserId)
+        if (!updated.includes(survivorId)) updated.push(survivorId)
+        await request(`${TABLES.projects}/${proj.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ fields: { Relationships: updated } }),
+        })
+      }
+    }
+
+    // Update campaign contact references
+    await getCampaigns()
+    const allCc = _campaignContactsCache ?? []
+    for (const cc of allCc) {
+      if (cc.contact_id === loserId) {
+        await request(`${TABLES.campaignContacts}/${cc.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ fields: { Contact: [survivorId] } }),
+        })
+      }
+    }
+
+    // Move loser interactions to survivor
+    const loserInteractions = await getInteractions(loserId)
+    for (const ix of loserInteractions) {
+      await request(`${TABLES.interactions}/${ix.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ fields: { Contact: [survivorId] } }),
+      })
+    }
+
+    // Update survivor record
+    const updated = await updateContact(survivorId, mergedFields)
+
+    // Write merge timeline event
+    await createInteraction({
+      contact_id: survivorId,
+      type: 'merge_event',
+      date: new Date().toISOString().split('T')[0],
+      notes: `Merged with ${loser.name} (record deleted)`,
+      summary: null, source: null, email_link: null, granola_link: null,
+      event_detail: JSON.stringify({ merged_name: loser.name, merged_id: loserId }),
+      actor: null,
+    })
+
+    // Delete loser
+    await deleteContact(loserId)
+
+    invalidateContactsCache()
+    invalidateInteractionsCache()
+
+    return updated
+  } catch (err) {
+    throw new Error(`Merge failed: ${err instanceof Error ? err.message : String(err)}`)
+  }
+}
+
 // ── Contact filter helpers ────────────────────────────────────────────────────
 
 export async function getContactsByType(type: RelationshipType): Promise<Contact[]> {
