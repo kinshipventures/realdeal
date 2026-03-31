@@ -21,7 +21,7 @@ interface InteractionSectionProps {
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
-  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline', project_event: 'Project',
+  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline', project_event: 'Project', merge_event: 'Merge',
 }
 
 const TYPE_COLORS: Record<InteractionType, string> = {
@@ -36,6 +36,7 @@ const TYPE_COLORS: Record<InteractionType, string> = {
   categorization: 'rgba(0,0,0,0.35)',
   pipeline_event: 'rgba(0,0,0,0.35)',
   project_event: 'rgba(0,0,0,0.35)',
+  merge_event: 'rgba(0,0,0,0.35)',
 }
 
 function typePill(type: InteractionType): React.CSSProperties {
