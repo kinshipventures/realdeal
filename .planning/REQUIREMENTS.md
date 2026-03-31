@@ -67,31 +67,31 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RPT-01 | - | Pending |
-| RPT-02 | - | Pending |
-| RPT-03 | - | Pending |
-| RPT-04 | - | Pending |
-| RPT-05 | - | Pending |
-| SHR-01 | - | Pending |
-| SHR-02 | - | Pending |
-| SHR-03 | - | Pending |
-| ENR-01 | - | Pending |
-| ENR-02 | - | Pending |
-| ENR-03 | - | Pending |
-| ENR-04 | - | Pending |
-| FLW-01 | - | Pending |
-| FLW-02 | - | Pending |
-| FLW-03 | - | Pending |
-| FLW-04 | - | Pending |
-| AUTH-01 | - | Pending |
-| AUTH-02 | - | Pending |
-| AUTH-03 | - | Pending |
+| AUTH-01 | Phase 18 | Pending |
+| AUTH-02 | Phase 18 | Pending |
+| AUTH-03 | Phase 18 | Pending |
+| ENR-01 | Phase 19 | Pending |
+| ENR-02 | Phase 19 | Pending |
+| ENR-03 | Phase 19 | Pending |
+| ENR-04 | Phase 19 | Pending |
+| FLW-01 | Phase 19 | Pending |
+| FLW-02 | Phase 19 | Pending |
+| FLW-03 | Phase 19 | Pending |
+| FLW-04 | Phase 19 | Pending |
+| RPT-01 | Phase 20 | Pending |
+| RPT-02 | Phase 20 | Pending |
+| RPT-03 | Phase 20 | Pending |
+| RPT-04 | Phase 20 | Pending |
+| RPT-05 | Phase 20 | Pending |
+| SHR-01 | Phase 21 | Pending |
+| SHR-02 | Phase 21 | Pending |
+| SHR-03 | Phase 21 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after PDF gap analysis*
+*Last updated: 2026-03-31 -- all 19 requirements mapped to Phases 18-21*
