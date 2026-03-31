@@ -95,6 +95,15 @@ function StepPods({ onNext }: { onNext: () => void }) {
     { name: 'LPs', color: '#F59E0B' },
     { name: 'Advisors', color: '#EC4899' },
   ]
+
+  const handleOrbClick = (e: React.MouseEvent) => {
+    const orb = e.currentTarget.querySelector('.onboarding-orb') as HTMLElement | null
+    if (!orb) return
+    orb.classList.remove('orb-bouncing')
+    void orb.offsetWidth // force reflow to restart animation
+    orb.classList.add('orb-bouncing')
+  }
+
   return (
     <>
       <h2 style={headingStyle}>Organize with Pods</h2>
@@ -103,9 +112,11 @@ function StepPods({ onNext }: { onNext: () => void }) {
       </p>
       <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
         {pods.map(p => (
-          <SolidOrb key={p.name} size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
-            <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
-          </SolidOrb>
+          <div key={p.name} onClick={handleOrbClick} style={{ cursor: 'pointer' }}>
+            <SolidOrb size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
+              <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
+            </SolidOrb>
+          </div>
         ))}
       </div>
       <button type="button" onClick={onNext} style={primaryBtnStyle}>
