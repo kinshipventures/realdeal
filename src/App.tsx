@@ -74,6 +74,7 @@ function AppShell() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
+      {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
       <div style={{ paddingBottom: isMobile ? 56 : 0, height: '100%' }}>
         <Outlet />
       </div>
