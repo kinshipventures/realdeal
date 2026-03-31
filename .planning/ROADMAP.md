@@ -64,7 +64,7 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
 
 **Milestone Goal:** Close the remaining MVP gaps -- reporting, share links, enrichment, follow-up flow, and authentication.
 
-- [ ] **Phase 18: Authentication** - Supabase auth wiring, login/signup routing, session persistence
+- [x] **Phase 18: Authentication** - Supabase auth wiring, login/signup routing, session persistence (completed 2026-03-31)
 - [ ] **Phase 19: Enrichment + Follow-ups** - Web enrichment with opt-in and timeline logging, follow-up creation flow from nurturing hub
 - [ ] **Phase 20: Reporting** - Pod distribution, pipeline velocity, engagement reports with CSV export and saved configurations
 - [ ] **Phase 21: Sharing** - Read-only share links for curated lists with revocation
@@ -82,7 +82,7 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 18-01-PLAN.md -- Auth context, route guard, splash screen, login shell, route wiring
+- [x] 18-01-PLAN.md -- Auth context, route guard, splash screen, login shell, route wiring
 
 ### Phase 19: Enrichment + Follow-ups
 **Goal**: Contacts get richer automatically and follow-ups drive action from the nurturing hub
@@ -151,7 +151,7 @@ Plans:
 | 15. Projects + Navigation | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
-| 18. Authentication | v2.1 | 0/1 | Planning | - |
+| 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |

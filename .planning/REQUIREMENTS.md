@@ -37,9 +37,9 @@ Requirements for MVP completion. Closes gaps identified in Kinship Brain MVP PDF
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign up and log in (email/password, Google, or Apple via Supabase)
-- [ ] **AUTH-02**: Unauthenticated users are redirected to login
-- [ ] **AUTH-03**: User session persists across browser refresh
+- [x] **AUTH-01**: User can sign up and log in (email/password, Google, or Apple via Supabase)
+- [x] **AUTH-02**: Unauthenticated users are redirected to login
+- [x] **AUTH-03**: User session persists across browser refresh
 
 ## v2.2 Requirements
 
@@ -67,9 +67,9 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 18 | Pending |
-| AUTH-02 | Phase 18 | Pending |
-| AUTH-03 | Phase 18 | Pending |
+| AUTH-01 | Phase 18 | Complete |
+| AUTH-02 | Phase 18 | Complete |
+| AUTH-03 | Phase 18 | Complete |
 | ENR-01 | Phase 19 | Pending |
 | ENR-02 | Phase 19 | Pending |
 | ENR-03 | Phase 19 | Pending |
