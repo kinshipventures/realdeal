@@ -12,7 +12,7 @@ export function setDemoMode(on: boolean) {
 
 // Stable IDs so relationships stay consistent
 const pod = (id: string, name: string, color: HexColor, priority: boolean, cadence: 'weekly' | 'biweekly' | 'monthly' | 'quarterly', description: string | null = null, capacity: number | null = null): Pod => ({
-  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description, capacity, created_at: '2026-01-15T00:00:00.000Z',
+  id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description, capacity, enrichment_opt_in: false, created_at: '2026-01-15T00:00:00.000Z',
 })
 
 const cat = (id: string, podId: string, name: string, color: HexColor | null = null): Category => ({
@@ -30,7 +30,8 @@ function futureDate(n: number): string {
 }
 
 const contact = (id: string, name: string, opts: {
-  email?: string, company?: string, role?: string, location?: string,
+  email?: string, email_2?: string, email_3?: string,
+  company?: string, role?: string, location?: string,
   podIds: string[], catIds?: string[], lastContacted?: number | null,
   birthday?: string, milestones?: string, interests?: string, context?: string,
   first_name?: string, last_name?: string, linkedin?: string,
@@ -46,6 +47,7 @@ const contact = (id: string, name: string, opts: {
   primary_pod?: string, cadence_override?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly',
 }): Contact => ({
   id: `demo-contact-${id}`, name, email: opts.email ?? null,
+  email_2: opts.email_2 ?? null, email_3: opts.email_3 ?? null,
   phone: null, company: opts.company ?? null, role: opts.role ?? null,
   location: opts.location ?? null, website: null, notes: null,
   recommended_by: null, specialization: null, past_clients: null,
@@ -131,7 +133,7 @@ export const DEMO_CATEGORIES: Category[] = [
 
 export const DEMO_CONTACTS: Contact[] = [
   // MAPS — Silicon Valley
-  contact('1', 'Sarah Chen', { email: 'sarah@acme.vc', company: 'Acme Ventures', role: 'Partner', location: 'San Francisco', podIds: ['maps'], catIds: ['sv'], lastContacted: 3, birthday: futureDate(12), milestones: 'Led Series B for Notion. Keynote at Disrupt 2025.', interests: 'AI infrastructure, climbing, contemporary art', context: 'Met at Founders Fund dinner. Strong connector — introduced us to 3 LPs.', first_name: 'Sarah', last_name: 'Chen', linkedin: 'https://linkedin.com/in/sarahchen', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Peter Thiel', intel_notes: 'Strong LP connector. Has co-invested with Sequoia twice. Interested in consumer social.', contact_frequency: 'Weekly', next_follow_up_date: 7, next_action: 'Send Fund III deck', kv_fund_investor: ['Fund I', 'Fund II'], primary_pod: 'maps' }),
+  contact('1', 'Sarah Chen', { email: 'sarah@acme.vc', email_2: 'sarah.chen@gmail.com', company: 'Acme Ventures', role: 'Partner', location: 'San Francisco', podIds: ['maps'], catIds: ['sv'], lastContacted: 3, birthday: futureDate(12), milestones: 'Led Series B for Notion. Keynote at Disrupt 2025.', interests: 'AI infrastructure, climbing, contemporary art', context: 'Met at Founders Fund dinner. Strong connector — introduced us to 3 LPs.', first_name: 'Sarah', last_name: 'Chen', linkedin: 'https://linkedin.com/in/sarahchen', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Peter Thiel', intel_notes: 'Strong LP connector. Has co-invested with Sequoia twice. Interested in consumer social.', contact_frequency: 'Weekly', next_follow_up_date: 7, next_action: 'Send Fund III deck', kv_fund_investor: ['Fund I', 'Fund II'], primary_pod: 'maps' }),
   contact('2', 'Marcus Rivera', { email: 'marcus@kinship.vc', company: 'Kinship Ventures', role: 'Principal', location: 'Palo Alto', podIds: ['maps'], catIds: ['sv'], lastContacted: 1, interests: 'DeFi, running, sci-fi novels', first_name: 'Marcus', last_name: 'Rivera', country: 'United States', global_region: 'AMER', gender: 'Male', relationship_owner: 'Moj', contact_frequency: 'Weekly' }),
   contact('3', 'Priya Patel', { email: 'priya@techstars.com', company: 'Techstars', role: 'MD', location: 'San Jose', podIds: ['maps'], catIds: ['sv'], lastContacted: 18, context: 'Old friend from Stanford. Always has deal flow.', first_name: 'Priya', last_name: 'Patel', linkedin: 'https://linkedin.com/in/priyapatel', country: 'United States', global_region: 'AMER', gender: 'Female', introduced_by: 'Stanford network', intel_notes: 'Deep in hardware + climate. Good pulse on early seed.', contact_frequency: 'Monthly', next_follow_up_date: 3, next_action: 'Catch up call — overdue' }),
   // MAPS — New York
@@ -140,7 +142,7 @@ export const DEMO_CONTACTS: Contact[] = [
   // MAPS — LA
   contact('6', 'Jordan Hayes', { email: 'jordan@a16z.com', company: 'Andreessen Horowitz', role: 'Partner', location: 'Los Angeles', podIds: ['maps'], catIds: ['la'], lastContacted: 45, context: 'Haven\'t connected since the retreat. Need to re-engage.', first_name: 'Jordan', last_name: 'Hayes', linkedin: 'https://linkedin.com/in/jordanhayes', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Went cold after the retreat. Was warm on consumer social thesis. Worth re-engaging.', contact_frequency: 'Monthly', next_action: 'Re-engage — send a relevant deal or article', needs_review: true }),
   // LPs
-  contact('7', 'Emily Tran', { email: 'emily@tran.family', company: 'Tran Family Office', role: 'CIO', location: 'San Francisco', podIds: ['lps'], catIds: ['family-office'], lastContacted: 4, milestones: 'Committed $2M to Fund II', interests: 'Impact investing, wine, tennis', first_name: 'Emily', last_name: 'Tran', linkedin: 'https://linkedin.com/in/emilytran', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Committed $2M to Fund II. Strong advocate. Interested in impact metrics.', contact_frequency: 'Monthly', next_follow_up_date: 14, next_action: 'Send Q1 LP update', kv_fund_investor: ['Fund II'], spv_investor: ['SPV-Glossier'], primary_pod: 'lps', cadence_override: 'biweekly' }),
+  contact('7', 'Emily Tran', { email: 'emily@tran.family', email_2: 'emily.tran@personal.com', company: 'Tran Family Office', role: 'CIO', location: 'San Francisco', podIds: ['lps'], catIds: ['family-office'], lastContacted: 4, milestones: 'Committed $2M to Fund II', interests: 'Impact investing, wine, tennis', first_name: 'Emily', last_name: 'Tran', linkedin: 'https://linkedin.com/in/emilytran', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Committed $2M to Fund II. Strong advocate. Interested in impact metrics.', contact_frequency: 'Monthly', next_follow_up_date: 14, next_action: 'Send Q1 LP update', kv_fund_investor: ['Fund II'], spv_investor: ['SPV-Glossier'], primary_pod: 'lps', cadence_override: 'biweekly' }),
   contact('8', 'Robert Okafor', { email: 'robert@okafor.capital', company: 'Okafor Capital', role: 'Founder', location: 'Chicago', podIds: ['lps'], catIds: ['angels'], lastContacted: 35, context: 'Warm but slow mover. Needs quarterly check-ins.', first_name: 'Robert', last_name: 'Okafor', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Slow decision maker but loyal once committed. Prefers quarterly cadence.', contact_frequency: 'Quarterly', next_follow_up_date: 5, next_action: 'Quarterly check-in call', kv_fund_investor: ['Fund I'] }),
   contact('9', 'Aisha Benali', { email: 'aisha@benali.vc', company: 'Benali Ventures', role: 'GP', location: 'Miami', podIds: ['lps'], catIds: ['series-a'], lastContacted: 12, birthday: futureDate(22), first_name: 'Aisha', last_name: 'Benali', linkedin: 'https://linkedin.com/in/aishabenali', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Active GP in Miami. Strong LATAM network. Potential co-invest partner.', contact_frequency: 'Monthly', kv_fund_investor: ['Fund II'] }),
   contact('10', 'James Whitfield', { email: 'james@whitfield.fam', company: 'Whitfield Trust', role: 'Trustee', location: 'Boston', podIds: ['lps'], catIds: ['family-office'], lastContacted: null, first_name: 'James', last_name: 'Whitfield', country: 'United States', global_region: 'AMER', gender: 'Male', introduced_by: 'Sarah Chen', intel_notes: 'Intro from Sarah. Never contacted — need to reach out.', contact_frequency: 'Quarterly', next_action: 'Initial outreach email', needs_review: true }),

@@ -30,6 +30,7 @@ interface PodFields {
   Cadence?: Cadence
   Description?: string
   Capacity?: number
+  'Enrichment Opt-In'?: boolean
   Categories?: string[]
   Contacts?: string[]
 }
@@ -87,6 +88,8 @@ interface ContactFields {
   Domain?: string
   'Primary Pod'?: string
   'Cadence Override'?: string
+  'Email 2'?: string
+  'Email 3'?: string
 }
 
 interface InteractionFields {
@@ -205,6 +208,7 @@ function mapPod(r: AirtableRecord<PodFields>): Pod {
     cadence: r.fields.Cadence ?? null,
     description: r.fields.Description ?? null,
     capacity: r.fields.Capacity != null ? Number(r.fields.Capacity) : null,
+    enrichment_opt_in: r.fields['Enrichment Opt-In'] === true,
     created_at: r.createdTime,
   }
 }
@@ -236,6 +240,7 @@ export async function createPod(data: {
       cadence: data.cadence ?? null,
       description: data.description ?? null,
       capacity: data.capacity ?? null,
+      enrichment_opt_in: false,
       created_at: new Date().toISOString(),
     }
     DEMO_PODS.push(p)
@@ -267,6 +272,7 @@ export async function updatePod(id: string, data: Partial<{
   cadence: Cadence | null
   description: string | null
   capacity: number | null
+  enrichment_opt_in: boolean
 }>): Promise<Pod> {
   if (isDemoMode()) {
     const pod = DEMO_PODS.find(p => p.id === id)
@@ -281,6 +287,7 @@ export async function updatePod(id: string, data: Partial<{
   if (data.cadence !== undefined) fields.Cadence = data.cadence
   if (data.description !== undefined) fields.Description = data.description
   if (data.capacity !== undefined) fields.Capacity = data.capacity
+  if (data.enrichment_opt_in !== undefined) fields['Enrichment Opt-In'] = data.enrichment_opt_in
   const r = await request<AirtableRecord<PodFields>>(`${TABLES.lists}/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ fields }),
@@ -409,8 +416,10 @@ function mapContact(r: AirtableRecord<ContactFields>): Contact {
     domain: r.fields.Domain ?? null,
     primary_list_id: r.fields['Primary Pod'] ?? null,
     cadence_override: (r.fields['Cadence Override'] as import('./types').Cadence) ?? null,
+    email_2: r.fields['Email 2'] ?? null,
+    email_3: r.fields['Email 3'] ?? null,
     custom_fields: (() => {
-      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain', 'Primary Pod', 'Cadence Override'])
+      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain', 'Primary Pod', 'Cadence Override', 'Email 2', 'Email 3'])
       const result: Record<string, unknown> = {}
       for (const [key, value] of Object.entries(r.fields)) {
         if (!knownFields.has(key) && value !== undefined && value !== null) {
@@ -520,6 +529,8 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
         Domain: data.domain ?? undefined,
         'Primary Pod': data.primary_list_id ?? undefined,
         'Cadence Override': data.cadence_override ?? undefined,
+        ...(data.email_2 ? { 'Email 2': data.email_2 } : {}),
+        ...(data.email_3 ? { 'Email 3': data.email_3 } : {}),
       },
     }),
   })
@@ -571,6 +582,8 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.domain !== undefined) fields.Domain = data.domain
   if (data.primary_list_id !== undefined) fields['Primary Pod'] = data.primary_list_id
   if (data.cadence_override !== undefined) fields['Cadence Override'] = data.cadence_override
+  if (data.email_2 !== undefined) fields['Email 2'] = data.email_2
+  if (data.email_3 !== undefined) fields['Email 3'] = data.email_3
   if (data.custom_fields !== undefined) {
     for (const [key, value] of Object.entries(data.custom_fields)) {
       fields[key] = value

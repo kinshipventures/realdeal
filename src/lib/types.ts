@@ -29,6 +29,7 @@ export interface Pod {
   cadence: Cadence | null  // null = default monthly
   description: string | null
   capacity: number | null  // null = unlimited
+  enrichment_opt_in: boolean
   created_at: string   // Airtable createdTime
 }
 
@@ -86,6 +87,8 @@ export interface Contact {
   stage: string | null
   ticker: string | null
   domain: string | null
+  email_2: string | null
+  email_3: string | null
   custom_fields: Record<string, unknown>
   created_at: string
 }
