@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import type { HexColor } from '../../lib/types'
@@ -98,12 +98,36 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
 
   const interactions = [
     { label: 'Intro', weight: 5, color: '#25B439' },
-    { label: 'Meeting', weight: 4, color: '#22A835' },
-    { label: 'Call', weight: 3, color: '#6366F1' },
+    { label: 'Meeting', weight: 4, color: '#6366F1' },
+    { label: 'Call', weight: 3, color: '#EC4899' },
     { label: 'Text / Email', weight: 2, color: '#F59E0B' },
   ]
 
-  const maxWeight = 5
+  const totalWeight = interactions.reduce((s, i) => s + i.weight, 0)
+  const ringSize = 120
+  const strokeW = 10
+  const r = (ringSize - strokeW) / 2
+  const circ = 2 * Math.PI * r
+
+  // Animate segments in sequentially
+  const [animStep, setAnimStep] = useState(-1)
+  useEffect(() => {
+    const timers = interactions.map((_, i) =>
+      setTimeout(() => setAnimStep(i), 400 + i * 500)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  // Build cumulative arc offsets
+  let cumOffset = 0
+  const arcs = interactions.map((inter, i) => {
+    const fraction = inter.weight / totalWeight
+    const arcLen = fraction * circ
+    const gap = 4
+    const offset = cumOffset
+    cumOffset += arcLen + gap
+    return { ...inter, arcLen: Math.max(0, arcLen - gap), offset: offset + gap / 2, visible: i <= animStep }
+  })
 
   return (
     <>
@@ -138,29 +162,48 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         ))}
       </div>
 
-      {/* Interaction weights */}
-      <div style={{
-        width: '100%', padding: '16px 20px', borderRadius: 12,
-        background: 'rgba(0,0,0,0.03)',
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Every interaction builds equity
+      {/* Animated equity ring */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{ position: 'relative', width: ringSize, height: ringSize, flexShrink: 0 }}>
+          <svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ transform: 'rotate(-90deg)' }}>
+            <circle
+              cx={ringSize / 2} cy={ringSize / 2} r={r}
+              fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeW}
+            />
+            {arcs.map(a => (
+              <circle
+                key={a.label}
+                cx={ringSize / 2} cy={ringSize / 2} r={r}
+                fill="none" stroke={a.color} strokeWidth={strokeW}
+                strokeLinecap="round"
+                strokeDasharray={`${a.visible ? a.arcLen : 0} ${circ}`}
+                strokeDashoffset={-a.offset}
+                style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+              />
+            ))}
+          </svg>
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
+              Equity
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {interactions.map(i => (
-            <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', width: 72, flexShrink: 0 }}>
-                {i.label}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {interactions.map((inter, i) => (
+            <div key={inter.label} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              opacity: i <= animStep ? 1 : 0.3,
+              transition: 'opacity 0.4s ease',
+            }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: inter.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
+                {inter.label}
               </span>
-              <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.06)' }}>
-                <div style={{
-                  width: `${(i.weight / maxWeight) * 100}%`, height: '100%',
-                  borderRadius: 3, background: i.color,
-                  transition: 'width 0.3s ease',
-                }} />
-              </div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: i.color, fontFamily: 'var(--font-sans)', width: 16, textAlign: 'right' }}>
-                +{i.weight}
+              <span style={{ fontSize: 10, fontWeight: 600, color: inter.color, fontFamily: 'var(--font-sans)' }}>
+                +{inter.weight}
               </span>
             </div>
           ))}
