@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import type { HexColor } from '../../lib/types'
