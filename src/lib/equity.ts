@@ -142,7 +142,8 @@ export function overallEquityScore(
     const podContacts = contacts.filter(c => c.list_ids.includes(pod.id))
     sum += podEquityScore(podContacts, byContact)
   }
-  return Math.round(sum / priorityPods.length)
+  const result = Math.round(sum / priorityPods.length)
+  return Number.isFinite(result) ? result : 0
 }
 
 // ── Dormancy ────────────────────────────────────────────────────────────────

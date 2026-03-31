@@ -2,10 +2,11 @@ import React from 'react'
 import { scoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
+  const safeScore = Number.isFinite(score) ? score : 0
   const strokeWidth = 6
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
+  const offset = circumference - (safeScore / 100) * circumference
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
@@ -75,7 +76,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
             <EquityRing score={overallScore} size={80} />
             <div>
               <div aria-live="polite" style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                {overallScore}
+                {Number.isFinite(overallScore) ? overallScore : 0}
               </div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
                 {scoreLabel(overallScore)}
