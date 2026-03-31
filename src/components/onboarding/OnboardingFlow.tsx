@@ -101,14 +101,9 @@ function StepPods({ onNext }: { onNext: () => void }) {
       </p>
       <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
         {pods.map(p => (
-          <div key={p.name} style={{
-            width: 72, height: 72, borderRadius: '50%',
-            background: p.color,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: `0 4px 16px ${p.color}44`,
-          }}>
+          <SolidOrb key={p.name} size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor}>
             <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
-          </div>
+          </SolidOrb>
         ))}
       </div>
       <button type="button" onClick={onNext} style={primaryBtnStyle}>
