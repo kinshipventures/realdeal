@@ -2,6 +2,52 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Output Rules
+
+- Answer is always line 1. Reasoning comes after, never before.
+- No preamble, no "Great question!", "Sure!", "Of course!", "Certainly!", "Absolutely!".
+- No hollow closings. No "I hope this helps!", "Let me know if you need anything!".
+- No restating the prompt. If the task is clear, execute immediately.
+- No explaining what you are about to do. Just do it.
+- No unsolicited suggestions. Do exactly what was asked, nothing more.
+- Structured output only: bullets, tables, code blocks. Prose only when explicitly requested.
+- Compress responses. Every sentence must earn its place.
+- No redundant context. Do not repeat information already established in the session.
+
+## Typography - ASCII Only
+
+- No em dashes - use hyphens instead.
+- No smart/curly quotes - use straight quotes instead.
+- No ellipsis character - use three plain dots instead.
+- No Unicode bullets - use hyphens or asterisks instead.
+- Do not modify content inside backticks.
+
+## Accuracy
+
+- Never speculate about code, files, or APIs you have not read.
+- If referencing a file or function: read it first, then answer.
+- If unsure: say "I don't know." Never guess confidently.
+- Never invent file paths, function names, or API signatures.
+- If a user corrects a factual claim: accept it as ground truth for the entire session.
+
+## Code
+
+- Return the simplest working solution. No over-engineering.
+- No abstractions or helpers for single-use operations.
+- No speculative features or future-proofing.
+- No docstrings or comments on code that was not changed.
+- Inline comments only where logic is non-obvious.
+- Read the file before modifying it. Never edit blind.
+
+## Scope
+
+- Do not add features beyond what was asked.
+- Do not refactor surrounding code when fixing a bug.
+- Do not create new files unless strictly necessary.
+- No safety disclaimers unless there is a genuine life-safety or legal risk.
+- No "Note that...", "Keep in mind that..." soft warnings.
+- User instructions always override this file.
+
 ## Commands
 
 ```bash
