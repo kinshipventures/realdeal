@@ -20,7 +20,7 @@ interface Props {
 
 function getContactSignal(contact: Contact): { color: string; reason: string } | null {
   if (isOverdue(contact, 'monthly')) {
-    return { color: '#FF3B30', reason: 'Overdue for contact' }
+    return { color: '#FF3B30', reason: 'Consider reaching out' }
   }
   if (isDormant(contact)) {
     return { color: 'hsla(20, 80%, 45%, 1)', reason: 'No recent contact' }
@@ -38,6 +38,12 @@ const PRIORITY_CYCLE: Record<OpportunityPriority, OpportunityPriority> = {
   low: 'medium',
   medium: 'high',
   high: 'low',
+}
+
+const STATUS_BADGE_STYLES: Partial<Record<string, { bg: string; color: string; label: string }>> = {
+  won:      { bg: 'hsla(140, 60%, 45%, 0.15)', color: 'hsla(140, 60%, 35%, 1)', label: 'Won' },
+  lost:     { bg: 'rgba(0,0,0,0.07)', color: 'rgba(0,0,0,0.45)', label: 'Lost' },
+  archived: { bg: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.35)', label: 'Archived' },
 }
 
 export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArchive, onInlineNote, onClick, isDragOverlay }: Props) {
@@ -103,6 +109,7 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
   }
 
   const priority = opportunity.priority
+  const statusBadge = opportunity.status !== 'open' ? STATUS_BADGE_STYLES[opportunity.status] : null
 
   return (
     <div
@@ -256,6 +263,22 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Status badge for non-open statuses */}
+      {statusBadge && (
+        <div style={{ marginTop: 6 }}>
+          <span style={{
+            fontSize: 10,
+            padding: '2px 6px',
+            borderRadius: 4,
+            background: statusBadge.bg,
+            color: statusBadge.color,
+            fontWeight: 400,
+          }}>
+            {statusBadge.label}
+          </span>
         </div>
       )}
 

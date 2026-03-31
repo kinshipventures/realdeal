@@ -215,6 +215,9 @@ export function NurturingHub() {
       }
     }
 
+    // No pod assigned
+    const noPod: Contact[] = contacts.filter(c => c.list_ids.length === 0 && c.status !== 'Archived')
+
     // Pods at capacity
     const podsAtCapacity: { pod: Pod; currentCount: number; capacity: number }[] = []
     for (const pod of pods) {
@@ -225,10 +228,10 @@ export function NurturingHub() {
       }
     }
 
-    return { missingFields, podsAtCapacity }
+    return { missingFields, noPod, podsAtCapacity }
   }, [contacts, pods, fieldConfigs])
 
-  const hygieneCount = dataHygieneItems.missingFields.length + dataHygieneItems.podsAtCapacity.length
+  const hygieneCount = dataHygieneItems.missingFields.length + dataHygieneItems.noPod.length + dataHygieneItems.podsAtCapacity.length
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -418,6 +421,40 @@ export function NurturingHub() {
                       onSnooze={handleSnooze}
                       onInteractionLogged={handleInteractionLogged}
                     />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No pod assigned */}
+            {dataHygieneItems.noPod.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, letterSpacing: '0.01em' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'hsla(30, 90%, 50%, 0.8)', flexShrink: 0, display: 'inline-block' }} />
+                  no pod assigned ({dataHygieneItems.noPod.length})
+                </div>
+                <div style={PANEL}>
+                  {dataHygieneItems.noPod.map(contact => (
+                    <div
+                      key={contact.id}
+                      onClick={() => navigate(`/record/${contact.id}`)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '10px 16px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(0,0,0,0.05)',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.02)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
+                    >
+                      <Avatar name={contact.name} size={28} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>Not assigned to any pod</div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

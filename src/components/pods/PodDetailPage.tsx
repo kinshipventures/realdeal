@@ -325,6 +325,20 @@ export function PodDetailPage() {
             />
             <label htmlFor="is-priority" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Priority pod</label>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                id="enrichment-opt-in"
+                checked={pod.enrichment_opt_in}
+                onChange={e => save({ enrichment_opt_in: e.target.checked })}
+                style={{ width: 14, height: 14, cursor: 'pointer' }}
+              />
+              <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
+            </div>
+            <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
+          </div>
         </div>
 
         <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginBottom: 32 }} />

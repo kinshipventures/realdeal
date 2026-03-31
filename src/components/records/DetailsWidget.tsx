@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 import type { Contact } from '../../lib/types'
 
 const WIDGET_STYLE: React.CSSProperties = {
@@ -12,9 +13,10 @@ const WIDGET_STYLE: React.CSSProperties = {
 interface DetailsWidgetProps {
   contact: Contact
   onUpdate: (data: Partial<Contact>) => void
+  requiredFieldKeys?: Set<string>
 }
 
-export function DetailsWidget({ contact, onUpdate }: DetailsWidgetProps) {
+export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsWidgetProps) {
   const [editingField, setEditingField] = useState<keyof Contact | null>(null)
 
   const inputStyle: React.CSSProperties = {
@@ -57,16 +59,64 @@ export function DetailsWidget({ contact, onUpdate }: DetailsWidgetProps) {
   function field(key: keyof Contact, label: string, multi = false) {
     const val = (contact[key] as string | null | undefined) ?? null
     const editing = editingField === key
+    const isRequired = requiredFieldKeys?.has(key as string) ?? false
+    const isMissingRequired = isRequired && !val
+
+    const displayStyle: React.CSSProperties = isMissingRequired
+      ? {
+          fontSize: 13,
+          fontWeight: 400,
+          color: 'rgba(0,0,0,0.35)',
+          cursor: 'text',
+          minHeight: 20,
+          lineHeight: '20px',
+          borderBottom: '1px dashed rgba(0,0,0,0.2)',
+          display: 'inline-block',
+        }
+      : {
+          fontSize: 13,
+          fontWeight: 400,
+          color: val ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.28)',
+          cursor: 'text',
+          minHeight: 20,
+          lineHeight: '20px',
+        }
+
+    function renderValue() {
+      if (key === 'website' && val) {
+        const href = val.startsWith('http') ? val : `https://${val}`
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ color: 'rgba(0,0,0,0.82)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              {val}
+            </a>
+            <ExternalLink size={11} style={{ color: 'rgba(0,0,0,0.35)', flexShrink: 0 }} />
+          </div>
+        )
+      }
+      if (isMissingRequired) return 'Add...'
+      return val ?? '\u2014'
+    }
 
     return (
       <div style={{ marginBottom: 14 }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700,
-          color: 'rgba(0,0,0,0.45)',
-          letterSpacing: '0.02em',
-          marginBottom: 3,
-          textTransform: 'uppercase',
-        }}>
+        <div
+          onClick={() => { if (key !== 'website' || !val) setEditingField(key) }}
+          style={{
+            fontSize: 11, fontWeight: 700,
+            color: 'rgba(0,0,0,0.45)',
+            letterSpacing: '0.02em',
+            marginBottom: 3,
+            textTransform: 'uppercase',
+            cursor: 'text',
+          }}
+        >
           {label}
         </div>
         {editing ? (
@@ -92,16 +142,9 @@ export function DetailsWidget({ contact, onUpdate }: DetailsWidgetProps) {
         ) : (
           <div
             onClick={() => setEditingField(key)}
-            style={{
-              fontSize: 13,
-              fontWeight: 400,
-              color: val ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.28)',
-              cursor: 'text',
-              minHeight: 20,
-              lineHeight: '20px',
-            }}
+            style={displayStyle}
           >
-            {val ?? '\u2014'}
+            {renderValue()}
           </div>
         )}
       </div>
@@ -141,6 +184,9 @@ export function DetailsWidget({ contact, onUpdate }: DetailsWidgetProps) {
         </>
       )}
 
+      {field('email', 'Email')}
+      {field('email_2', 'Email 2')}
+      {field('email_3', 'Email 3')}
       {field('website', 'Website')}
       {field('notes', 'Notes', true)}
     </div>

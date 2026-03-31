@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type { Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { DetailsWidget } from './DetailsWidget'
@@ -21,9 +22,16 @@ interface RecordWidgetsProps {
 export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpdate, onFieldConfigsRefresh, upcomingBirthday, missingFieldCount }: RecordWidgetsProps) {
   const assignedPods = pods.filter(p => contact.list_ids.includes(p.id))
 
+  const requiredFieldKeys = useMemo(() => {
+    const keys = fieldConfigs
+      .filter(fc => fc.required && (fc.scope_pod_id === null || contact.list_ids.includes(fc.scope_pod_id)))
+      .map(fc => fc.name)
+    return new Set(keys)
+  }, [fieldConfigs, contact.list_ids])
+
   return (
     <div>
-      <DetailsWidget contact={contact} onUpdate={onUpdate} />
+      <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
       <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
       {assignedPods.map(pod => (
         <PodFieldsWidget
