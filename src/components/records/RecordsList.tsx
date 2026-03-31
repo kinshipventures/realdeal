@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { Download } from 'lucide-react'
 import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
@@ -150,8 +151,12 @@ export function RecordsList() {
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState(false)
+
   const viewsRef = useRef<HTMLDivElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
 
   // Load data
   useEffect(() => {
@@ -192,6 +197,9 @@ export function RecordsList() {
       }
       if (columnsRef.current && !columnsRef.current.contains(e.target as Node)) {
         setShowColumnsDropdown(false)
+      }
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExportDropdown(false)
       }
       if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
         setShowPodPicker(false)
@@ -410,33 +418,32 @@ export function RecordsList() {
     setBulkOperating(false)
   }
 
-  function handleExportCsv() {
-    const selected = contacts.filter(c => selectedIds.has(c.id))
+  function cellValue(contact: Contact, colId: ColumnId): string {
+    switch (colId) {
+      case 'name': return contact.name
+      case 'company': return contact.company ?? ''
+      case 'pod': { const p = contact.primary_list_id ? podMap[contact.primary_list_id] : null; return p?.name ?? '' }
+      case 'equity': return String(equityMap[contact.id] ?? 0)
+      case 'type': return contact.type
+      case 'status': return contact.status
+      case 'last_contact': return contact.last_contacted_at ?? ''
+      case 'cadence': return contact.cadence_override ?? contact.contact_frequency ?? ''
+      case 'location': return contact.location ?? ''
+      case 'follow_up': return contact.next_follow_up_date ?? ''
+      default: return ''
+    }
+  }
+
+  function handleExportCsv(rows: Contact[] = contacts.filter(c => selectedIds.has(c.id))) {
     const visibleColsSnap = COLUMNS.filter(c => visibleColumns.has(c.id))
     const headers = visibleColsSnap.map(c => c.label)
 
-    function cellValue(contact: Contact, colId: ColumnId): string {
-      switch (colId) {
-        case 'name': return contact.name
-        case 'company': return contact.company ?? ''
-        case 'pod': { const p = contact.primary_list_id ? podMap[contact.primary_list_id] : null; return p?.name ?? '' }
-        case 'equity': return String(equityMap[contact.id] ?? 0)
-        case 'type': return contact.type
-        case 'status': return contact.status
-        case 'last_contact': return contact.last_contacted_at ?? ''
-        case 'cadence': return contact.cadence_override ?? contact.contact_frequency ?? ''
-        case 'location': return contact.location ?? ''
-        case 'follow_up': return contact.next_follow_up_date ?? ''
-        default: return ''
-      }
-    }
-
-    const rows = selected.map(c => visibleColsSnap.map(col => {
+    const csvRows = rows.map(c => visibleColsSnap.map(col => {
       const val = cellValue(c, col.id)
       return `"${val.replace(/"/g, '""')}"`
     }).join(','))
 
-    const csv = [headers.join(','), ...rows].join('\n')
+    const csv = [headers.join(','), ...csvRows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -444,6 +451,15 @@ export function RecordsList() {
     a.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function handleCopyToClipboard(rows: Contact[]) {
+    const cols = COLUMNS.filter(c => visibleColumns.has(c.id))
+    const headers = cols.map(c => c.label).join('\t')
+    const lines = rows.map(c => cols.map(col => cellValue(c, col.id)).join('\t'))
+    await navigator.clipboard.writeText([headers, ...lines].join('\n'))
+    setCopyFeedback(true)
+    setTimeout(() => setCopyFeedback(false), 2000)
   }
 
   async function handleBulkArchive() {
@@ -679,6 +695,35 @@ export function RecordsList() {
                     <span style={{ fontSize: 13 }}>{col.label}</span>
                   </label>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* Toolbar export */}
+          <div ref={exportRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowExportDropdown(v => !v)}
+              style={{ ...filterBtnStyle(showExportDropdown), display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <Download size={13} />
+              Export
+              <span style={{ marginLeft: 2, opacity: 0.5 }}>▾</span>
+            </button>
+            {showExportDropdown && (
+              <div style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
+                <div
+                  onClick={() => { handleExportCsv(filtered); setShowExportDropdown(false) }}
+                  style={dropdownItemStyle}
+                >
+                  Download CSV
+                </div>
+                <div
+                  onClick={() => { void handleCopyToClipboard(filtered); setShowExportDropdown(false) }}
+                  style={dropdownItemStyle}
+                >
+                  {copyFeedback ? 'Copied!' : 'Copy to clipboard'}
+                </div>
               </div>
             )}
           </div>
