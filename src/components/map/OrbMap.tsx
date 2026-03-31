@@ -178,24 +178,7 @@ function buildHomeNodes({
     }
   })
 
-  // '+' orb to create a new pod — placed at bottom of innermost ring
-  const firstRingRadius = activeRings[0]
-  const createPodNode: Node = {
-    id: CREATE_POD_ID,
-    type: 'create-category',
-    position: savedPositions[CREATE_POD_ID] ?? {
-      x: 0 - 32,
-      y: firstRingRadius - 32,
-    },
-    draggable: false,
-    style: { overflow: 'visible' },
-    data: {
-      animationDelay: `${(pods.length + 1) * 0.1}s`,
-      onCreate: async () => { onCreatePod() },
-    },
-  }
-
-  return { nodes: [mojNode, ...podNodes, ...satelliteNodes, createPodNode], activeRings }
+  return { nodes: [mojNode, ...podNodes, ...satelliteNodes], activeRings }
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
@@ -546,6 +529,46 @@ export function OrbMap() {
           size={1}
         />
       </ReactFlow>
+
+      {/* FAB: Add Pod */}
+      {podsLoaded && (
+        <button
+          type="button"
+          onClick={() => setShowCreatePod(true)}
+          title="Create new pod"
+          style={{
+            position: 'absolute',
+            bottom: 24,
+            right: 24,
+            zIndex: 20,
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            border: 'none',
+            background: 'var(--green-band)',
+            color: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+            fontSize: 24,
+            fontWeight: 300,
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.1)'
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,180,57,0.45)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)'
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)'
+          }}
+        >
+          +
+        </button>
+      )}
 
       <PodCreateModal
         isOpen={showCreatePod}
