@@ -96,13 +96,8 @@ function StepPods({ onNext }: { onNext: () => void }) {
     { name: 'Advisors', color: '#EC4899' },
   ]
 
-  const handleOrbClick = (e: React.MouseEvent) => {
-    const orb = e.currentTarget.querySelector('.onboarding-orb') as HTMLElement | null
-    if (!orb) return
-    orb.classList.remove('orb-bouncing')
-    void orb.offsetWidth // force reflow to restart animation
-    orb.classList.add('orb-bouncing')
-  }
+
+
 
   return (
     <>
