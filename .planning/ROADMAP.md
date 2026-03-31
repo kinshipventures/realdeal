@@ -1,16 +1,16 @@
-# Roadmap: Kinship Brain
+# Roadmap: RealDeal
 
 ## Milestones
 
-- ✅ **v1.0 Kinship Brain MVP** -- Phases 1-3 + 02.1 (shipped 2026-03-23)
+- ✅ **v1.0 RealDeal MVP** -- Phases 1-3 + 02.1 (shipped 2026-03-23)
 - ✅ **v1.1 Polish & Features** -- Phases 4-6 (shipped 2026-03-25)
 - ✅ **v1.2 Demo Ready** -- Phases 7-9 (shipped 2026-03-29)
-- 🔄 **v2.0 Kinship Brain MVP** -- Phases 10-17 (active)
+- 🔄 **v2.0 RealDeal MVP** -- Phases 10-17 (active)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Kinship Brain MVP (4 phases, 14 plans) -- SHIPPED 2026-03-23</summary>
+<summary>✅ v1.0 RealDeal MVP (4 phases, 14 plans) -- SHIPPED 2026-03-23</summary>
 
 - [x] Phase 1: Contact Profiles (3/3 plans) -- completed 2026-03-23
 - [x] Phase 2: Visual Redesign (2/2 plans) -- completed 2026-03-23
@@ -43,7 +43,7 @@ See: `.planning/milestones/v1.2-ROADMAP.md` for full details.
 
 </details>
 
-### v2.0 Kinship Brain MVP
+### v2.0 RealDeal MVP
 
 - [x] **Phase 10: Data Architecture Rebuild** -- Establish relationship-first Airtable schema as the foundation for the entire v2.0 system (completed 2026-03-29)
 - [x] **Phase 11: Relationship Records** -- Full record system with Contact + Company types, custom fields, and conditional field behavior (completed 2026-03-29)

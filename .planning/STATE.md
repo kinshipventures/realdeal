@@ -1,7 +1,7 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: Kinship Brain MVP
+milestone_name: RealDeal MVP
 status: unknown
 stopped_at: Completed 17-01-PLAN.md
 last_updated: "2026-03-31T15:55:42.637Z"

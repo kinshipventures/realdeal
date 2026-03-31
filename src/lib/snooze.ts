@@ -1,4 +1,4 @@
-const SNOOZE_KEY = 'kinshipbrain:dormant-snooze'
+const SNOOZE_KEY = 'realdeal:dormant-snooze'
 
 export function getSnoozedIds(): Set<string> {
   try {

@@ -1,12 +1,12 @@
-# Requirements: Kinship Brain
+# Requirements: RealDeal
 
 **Defined:** 2026-03-29
 **Core Value:** One place where every relationship lives with full context — so founders never lose track of who matters, what happened, or what's next.
-**Source:** docs/Kinship Brain — Initial Outline (Lovable).pdf
+**Source:** docs/RealDeal — Initial Outline (Lovable).pdf
 
 ## v2.0 Requirements
 
-Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
+Requirements for the RealDeal rebuild. Each maps to roadmap phases.
 
 ### Core Architecture
 
@@ -172,7 +172,7 @@ Requirements for the Kinship Brain rebuild. Each maps to roadmap phases.
 
 ### Lovable Mini App Spin-Offs
 
-- **MINI-01**: Non-technical users can build micro apps on top of Kinship Brain data
+- **MINI-01**: Non-technical users can build micro apps on top of RealDeal data
 - **MINI-02**: Mini apps query records, pods, pipelines, projects via API
 - **MINI-03**: Mini apps write back notes, status changes, tags, timeline events
 

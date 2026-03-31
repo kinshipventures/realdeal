@@ -1,4 +1,4 @@
-# Kinship Brain — Design System
+# RealDeal — Design System
 
 ## Principles
 

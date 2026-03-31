@@ -80,7 +80,7 @@ export function RecordPage() {
   // Sync banner dismissed state when contact changes
   useEffect(() => {
     if (contact) {
-      setIsBannerDismissed(sessionStorage.getItem(`kinshipbrain:signal-dismissed:${contact.id}`) === '1')
+      setIsBannerDismissed(sessionStorage.getItem(`realdeal:signal-dismissed:${contact.id}`) === '1')
     }
   }, [contact?.id])
 
@@ -159,7 +159,7 @@ export function RecordPage() {
           <span>{urgentSignal.message}</span>
           <button
             onClick={() => {
-              sessionStorage.setItem(`kinshipbrain:signal-dismissed:${contact.id}`, '1')
+              sessionStorage.setItem(`realdeal:signal-dismissed:${contact.id}`, '1')
               setIsBannerDismissed(true)
             }}
             style={{

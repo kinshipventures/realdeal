@@ -30,7 +30,7 @@ export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'quick-links'],
 }
 
-const STORAGE_KEY = 'kinshipbrain:dashboard-config:v1'
+const STORAGE_KEY = 'realdeal:dashboard-config:v1'
 
 interface StoredConfig {
   preset: Preset

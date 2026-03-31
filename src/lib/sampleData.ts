@@ -1,6 +1,6 @@
 import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Pipeline, PipelineStage, Opportunity, Project, PipelineStatus, OpportunityStatus, OpportunityPriority } from './types'
 
-const DEMO_KEY = 'kinshipbrain:demo-mode'
+const DEMO_KEY = 'realdeal:demo-mode'
 
 export function isDemoMode(): boolean {
   return localStorage.getItem(DEMO_KEY) === 'true'

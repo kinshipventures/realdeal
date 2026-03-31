@@ -59,7 +59,7 @@ type SortDir = 'asc' | 'desc'
 
 // ── Saved views ──────────────────────────────────────────────────────────────
 
-const VIEWS_KEY = 'kinshipbrain:contacts-views'
+const VIEWS_KEY = 'realdeal:contacts-views'
 
 interface SavedView {
   name: string

@@ -1,4 +1,4 @@
-# Kinship Brain
+# RealDeal
 
 ## What This Is
 
@@ -8,9 +8,9 @@ A relationship-first operating system for founders and operators. Not a CRM — 
 
 One place where every relationship lives with full context — so founders never lose track of who matters, what happened, or what's next.
 
-## Current Milestone: v2.0 Kinship Brain MVP
+## Current Milestone: v2.0 RealDeal MVP
 
-**Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive Kinship Brain product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
+**Goal:** Rebuild the app as a true relationship-first operating system based on the comprehensive RealDeal product spec — relationship records as the only core object, with pods, pipelines, campaigns, follow-ups, and AI copilot all referencing relationships.
 
 **Definition of Done (from PDF):** Moj + team can import people, organize them into pods, see context and follow-ups, run pipelines and projects, pull reports, and share lists — without workarounds.
 
@@ -106,7 +106,7 @@ One place where every relationship lives with full context — so founders never
 
 ## Context
 
-Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real product based on Kinship Brain MVP spec. Phases 10-13 complete — data architecture, relationship records, pods overhaul, timeline + records list all shipped.
+Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real product based on RealDeal MVP spec. Phases 10-13 complete — data architecture, relationship records, pods overhaul, timeline + records list all shipped.
 
 **Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
@@ -116,7 +116,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real produc
 
 **Stakeholders:** Moj (CEO, product owner), Briell (ops, Airtable admin)
 
-**Source of truth:** docs/Kinship Brain — MVP.pdf (Mar 28) — updated product outline, MVP development checklist, and V1 vs V2 scope boundary. This supersedes the Initial Outline (Lovable) PDF. The V1 vs V2 scope section is the definitive shipping boundary.
+**Source of truth:** docs/RealDeal — MVP.pdf (Mar 28) — updated product outline, MVP development checklist, and V1 vs V2 scope boundary. This supersedes the Initial Outline (Lovable) PDF. The V1 vs V2 scope section is the definitive shipping boundary.
 
 ## Constraints
 
@@ -145,7 +145,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real produc
 | Modal state in Dashboard | AddContactModal managed by Dashboard, not App, due to React Router Outlet pattern | ✓ Good (avoids routing complexity) |
 
 **Milestones shipped:** v1.0 (MVP), v1.1 (Polish & Features), v1.2 (Demo Ready)
-**Active milestone:** v2.0 (Kinship Brain MVP — 10 phases, 39 requirements, 7/10 phases complete)
+**Active milestone:** v2.0 (RealDeal MVP — 10 phases, 39 requirements, 7/10 phases complete)
 
 ## Evolution
 

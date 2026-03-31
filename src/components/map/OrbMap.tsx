@@ -209,7 +209,7 @@ function buildHomeEdges(pods: Pod[]): Edge[] {
   }))
 }
 
-const VIEWPORT_KEY = 'kinshipbrain:map-viewport'
+const VIEWPORT_KEY = 'realdeal:map-viewport'
 
 function loadViewport(): Viewport | null {
   try {
