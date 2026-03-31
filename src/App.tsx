@@ -18,6 +18,8 @@ import { ProjectsPage } from './components/projects/ProjectsPage'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import { NurturingHub } from './components/nurturing/NurturingHub'
 import type { Contact } from './lib/types'
+import { useAuth } from './contexts/AuthContext'
+import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 
 const BG = 'var(--color-bg)'
 
