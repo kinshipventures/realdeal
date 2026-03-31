@@ -1503,6 +1503,10 @@ export async function mergeRecords(
     DEMO_CAMPAIGN_CONTACTS.forEach(cc => {
       if (cc.contact_id === loserId) cc.contact_id = survivorId
     })
+    // Update company_record_id backlinks
+    DEMO_CONTACTS.forEach(c => {
+      if (c.company_record_id === loserId) c.company_record_id = survivorId
+    })
     // Reassign loser interactions to survivor
     DEMO_INTERACTIONS.forEach(ix => {
       if (ix.contact_id === loserId) ix.contact_id = survivorId
@@ -1573,6 +1577,14 @@ export async function mergeRecords(
           method: 'PATCH',
           body: JSON.stringify({ fields: { Contact: [survivorId] } }),
         })
+      }
+    }
+
+    // Update company_record_id backlinks (contacts pointing to loser as their company)
+    const allContacts = await getContacts()
+    for (const c of allContacts) {
+      if (c.company_record_id === loserId) {
+        await updateContact(c.id, { company_record_id: survivorId })
       }
     }
 

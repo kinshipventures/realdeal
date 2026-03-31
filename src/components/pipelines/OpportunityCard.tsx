@@ -78,7 +78,7 @@ export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArc
 
   function handleAvatarClick(e: React.MouseEvent, contactId: string) {
     e.stopPropagation()
-    navigate(`/record/${contactId}`)
+    navigate(`/contact/${contactId}`)
   }
 
   function handleNoteToggle(e: React.MouseEvent) {

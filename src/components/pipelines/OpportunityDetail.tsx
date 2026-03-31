@@ -249,7 +249,7 @@ export function OpportunityDetail({ opportunity, pipeline, stages, contacts, onC
                   <button
                     key={contact.id}
                     type="button"
-                    onClick={() => navigate(`/record/${contact.id}`)}
+                    onClick={() => navigate(`/contact/${contact.id}`)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

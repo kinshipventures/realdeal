@@ -437,7 +437,7 @@ export function NurturingHub() {
                   {dataHygieneItems.noPod.map(contact => (
                     <div
                       key={contact.id}
-                      onClick={() => navigate(`/record/${contact.id}`)}
+                      onClick={() => navigate(`/contact/${contact.id}`)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
