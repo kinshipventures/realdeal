@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
+import { RequireAuth } from './components/auth/RequireAuth'
+import { LoginPage } from './components/auth/LoginPage'
 import { OrbMap } from './components/map/OrbMap'
 import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
@@ -440,18 +442,21 @@ function AppShell() {
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
-        <Route index element={<Dashboard />} />
-        <Route path="pulse/nurturing" element={<NurturingHub />} />
-        <Route path="map" element={<OrbMap />} />
-        <Route path="contacts" element={<RecordsList />} />
-        <Route path="pipelines" element={<PipelinesPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="projects/:id" element={<ProjectDetailPage />} />
-        <Route path="category/:id" element={<CategoryTable />} />
-        <Route path="contact/:id" element={<RecordPage />} />
-        <Route path="pod/:id" element={<PodDetailPage />} />
-        <Route path="import" element={<ImportPanel />} />
+      <Route path="login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<AppShell />}>
+          <Route index element={<Dashboard />} />
+          <Route path="pulse/nurturing" element={<NurturingHub />} />
+          <Route path="map" element={<OrbMap />} />
+          <Route path="contacts" element={<RecordsList />} />
+          <Route path="pipelines" element={<PipelinesPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="category/:id" element={<CategoryTable />} />
+          <Route path="contact/:id" element={<RecordPage />} />
+          <Route path="pod/:id" element={<PodDetailPage />} />
+          <Route path="import" element={<ImportPanel />} />
+        </Route>
       </Route>
     </Routes>
   )
