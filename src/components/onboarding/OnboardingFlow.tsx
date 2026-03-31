@@ -165,6 +165,7 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
             </div>
           ))}
         </div>
+      </div>
 
       <button type="button" onClick={onNext} style={primaryBtnStyle}>
         Next
