@@ -101,9 +101,9 @@ function StepPods({ onNext }: { onNext: () => void }) {
       <p style={bodyStyle}>
         Pods are groups for your relationships - like "Talent", "Investors", or "Advisors". Each pod tracks health, cadence, and equity so you know who needs attention.
       </p>
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
         {pods.map(p => (
-          <SolidOrb key={p.name} size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor}>
+          <SolidOrb key={p.name} size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
             <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
           </SolidOrb>
         ))}
