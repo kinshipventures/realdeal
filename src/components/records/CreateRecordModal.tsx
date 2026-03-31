@@ -189,13 +189,15 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
     website: null, notes: null, recommended_by: null, specialization: null,
     past_clients: null, birthday: null, milestones: null, interests: null,
     relationship_context: null, last_contacted_at: null,
+    primary_list_id: null, cadence_override: null,
     first_name: null, last_name: null, linkedin: null, country: null,
     global_region: null, gender: null, introduced_by: null,
     intel_notes: null, relationship_owner: null, contact_frequency: null,
     next_follow_up_date: null, next_action: null,
     kv_fund_investor: null, spv_investor: null, needs_review: false,
     company_record_id: null, industry: null, stage: null,
-    ticker: null, domain: null, custom_fields: {},
+    ticker: null, domain: null, email_2: null, email_3: null,
+    custom_fields: {},
   }
 
   async function createCompanyInline(name: string): Promise<Contact> {

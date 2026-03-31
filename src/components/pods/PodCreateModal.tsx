@@ -135,7 +135,6 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
             onClick={handleClose}
             aria-label="Close"
             style={{
-              background: 'none',
               border: 'none',
               width: 28,
               height: 28,
