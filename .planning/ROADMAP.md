@@ -79,10 +79,10 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
   1. User can sign up with email/password and log in via Google or Apple
   2. Unauthenticated visitors see only a login page -- no app content leaks
   3. User can close browser, reopen, and remain logged in without re-authenticating
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 18-01: TBD
+- [ ] 18-01-PLAN.md -- Auth context, route guard, splash screen, login shell, route wiring
 
 ### Phase 19: Enrichment + Follow-ups
 **Goal**: Contacts get richer automatically and follow-ups drive action from the nurturing hub
@@ -151,7 +151,7 @@ Plans:
 | 15. Projects + Navigation | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
-| 18. Authentication | v2.1 | 0/? | Not started | - |
+| 18. Authentication | v2.1 | 0/1 | Planning | - |
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
