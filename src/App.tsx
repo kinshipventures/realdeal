@@ -45,9 +45,19 @@ function AppShell() {
   const isPulse = !isMap && !isContacts && !isPipelines && !isProjects
     && (location.pathname === '/' || location.pathname.startsWith('/pulse'))
   const isMobile = useIsMobile()
+  const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (isDemoMode()) return false
+    return !localStorage.getItem('realdeal:onboarding-complete')
+  })
+
+  const completeOnboarding = useCallback(() => {
+    localStorage.setItem('realdeal:onboarding-complete', '1')
+    setShowOnboarding(false)
+  }, [])
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
 
