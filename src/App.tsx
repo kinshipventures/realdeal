@@ -18,6 +18,8 @@ import { ProjectsPage } from './components/projects/ProjectsPage'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import { NurturingHub } from './components/nurturing/NurturingHub'
 import type { Contact } from './lib/types'
+import { useAuth } from './contexts/AuthContext'
+import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 
 const BG = 'var(--color-bg)'
 
@@ -43,9 +45,19 @@ function AppShell() {
   const isPulse = !isMap && !isContacts && !isPipelines && !isProjects
     && (location.pathname === '/' || location.pathname.startsWith('/pulse'))
   const isMobile = useIsMobile()
+  const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (isDemoMode()) return false
+    return !localStorage.getItem('realdeal:onboarding-complete')
+  })
+
+  const completeOnboarding = useCallback(() => {
+    localStorage.setItem('realdeal:onboarding-complete', '1')
+    setShowOnboarding(false)
+  }, [])
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
 
@@ -62,6 +74,7 @@ function AppShell() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
+      {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
       <div style={{ paddingBottom: isMobile ? 56 : 0, height: '100%' }}>
         <Outlet />
       </div>
