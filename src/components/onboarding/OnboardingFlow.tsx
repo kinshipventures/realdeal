@@ -118,15 +118,14 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  // Build cumulative arc offsets
+  // Build cumulative arc offsets - no gaps, segments touch
   let cumOffset = 0
   const arcs = interactions.map((inter, i) => {
     const fraction = inter.weight / totalWeight
     const arcLen = fraction * circ
-    const gap = 4
     const offset = cumOffset
-    cumOffset += arcLen + gap
-    return { ...inter, arcLen: Math.max(0, arcLen - gap), offset: offset + gap / 2, visible: i <= animStep }
+    cumOffset += arcLen
+    return { ...inter, arcLen, offset, visible: i <= animStep }
   })
 
   return (
@@ -175,7 +174,6 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
                 key={a.label}
                 cx={ringSize / 2} cy={ringSize / 2} r={r}
                 fill="none" stroke={a.color} strokeWidth={strokeW}
-                strokeLinecap="round"
                 strokeDasharray={`${a.visible ? a.arcLen : 0} ${circ}`}
                 strokeDashoffset={-a.offset}
                 style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
