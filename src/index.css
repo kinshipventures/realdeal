@@ -172,10 +172,23 @@
 }
 
 /* ── Onboarding orb hover boost ────────────────────────────────────────────── */
+.onboarding-orb.orb-interactive {
+  transition:
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.3s ease,
+    filter 0.3s ease;
+}
+
 .onboarding-orb.orb-interactive:hover {
-  --orb-scale: 1.18 !important;
-  --orb-lift: -6px !important;
+  --orb-scale: 1.2 !important;
+  --orb-lift: -8px !important;
   filter: brightness(1.15);
+}
+
+.onboarding-orb.orb-interactive:active {
+  transform: scale(0.88) !important;
+  transition-duration: 0.1s !important;
+  transition-timing-function: cubic-bezier(0.6, -0.28, 0.735, 0.045) !important;
 }
 
 /* ── Hover interaction classes ──────────────────────────────────────────────── */
