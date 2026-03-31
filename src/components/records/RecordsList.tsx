@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Download } from 'lucide-react'
 import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
+import { MergeModal } from '../merge/MergeModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
@@ -115,6 +116,7 @@ export function RecordsList() {
   const [pods, setPods] = useState<Pod[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Filters
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
@@ -137,6 +139,7 @@ export function RecordsList() {
   const [updateValue, setUpdateValue] = useState('')
   const [bulkOperating, setBulkOperating] = useState(false)
   const [showBulkPipelineModal, setShowBulkPipelineModal] = useState(false)
+  const [showMergeModal, setShowMergeModal] = useState(false)
   const [showAddToProject, setShowAddToProject] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
@@ -187,7 +190,7 @@ export function RecordsList() {
       if (!stale) setLoading(false)
     })
     return () => { stale = true }
-  }, [])
+  }, [refreshKey])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -857,6 +860,17 @@ export function RecordsList() {
               )}
             </div>
 
+            {selectedIds.size === 2 && (
+              <button
+                type="button"
+                onClick={() => setShowMergeModal(true)}
+                disabled={bulkOperating}
+                style={bulkBtnStyle}
+              >
+                Merge
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleExportCsv}
@@ -908,6 +922,27 @@ export function RecordsList() {
           onCreated={() => { setShowBulkPipelineModal(false); setSelectedIds(new Set()) }}
         />
       )}
+
+      {showMergeModal && selectedIds.size === 2 && (() => {
+        const ids = Array.from(selectedIds)
+        const a = contacts.find(c => c.id === ids[0])
+        const b = contacts.find(c => c.id === ids[1])
+        if (!a || !b) return null
+        return (
+          <MergeModal
+            recordA={a}
+            recordB={b}
+            pods={pods}
+            onClose={() => setShowMergeModal(false)}
+            onMerged={() => {
+              setShowMergeModal(false)
+              setSelectedIds(new Set())
+              invalidateContactsCache()
+              setRefreshKey(k => k + 1)
+            }}
+          />
+        )
+      })()}
 
       {showAddToProject && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

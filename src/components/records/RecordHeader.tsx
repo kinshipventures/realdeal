@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
+import { MoreHorizontal } from 'lucide-react'
 import type { Contact, Pod } from '../../lib/types'
-import { getContactsByType, createContact } from '../../lib/airtable'
+import { getContactsByType, getContacts, createContact, deleteContact, invalidateContactsCache } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
+import { MergeModal } from '../merge/MergeModal'
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   Active: { bg: 'rgba(37,180,57,0.12)', color: '#1A8A2A' },
@@ -25,10 +27,21 @@ interface RecordHeaderProps {
   onUpdate: (data: Partial<Contact>) => void
 }
 
-export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
+export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   const navigate = useNavigate()
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(contact.name)
+
+  // Overflow menu state
+  const [showOverflow, setShowOverflow] = useState(false)
+  const overflowRef = useRef<HTMLDivElement>(null)
+
+  // Merge state
+  const [mergeSearchOpen, setMergeSearchOpen] = useState(false)
+  const [mergeQuery, setMergeQuery] = useState('')
+  const [mergeResults, setMergeResults] = useState<Contact[]>([])
+  const [mergeTarget, setMergeTarget] = useState<Contact | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Company typeahead state (Contact type only)
   const [showTypeahead, setShowTypeahead] = useState(false)
@@ -76,6 +89,36 @@ export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
     }, 150)
     return () => clearTimeout(t)
   }, [companyQuery, showTypeahead])
+
+  // Outside-click for overflow menu
+  useEffect(() => {
+    if (!showOverflow) return
+    function handleClick(e: MouseEvent) {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) setShowOverflow(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showOverflow])
+
+  // Merge target search
+  useEffect(() => {
+    if (!mergeSearchOpen || mergeQuery.length < 1) { setMergeResults([]); return }
+    const t = setTimeout(async () => {
+      const all = await getContacts()
+      setMergeResults(
+        all.filter(c => c.id !== contact.id && c.name.toLowerCase().includes(mergeQuery.toLowerCase())).slice(0, 6)
+      )
+    }, 150)
+    return () => clearTimeout(t)
+  }, [mergeQuery, mergeSearchOpen, contact.id])
+
+  async function handleDelete() {
+    try {
+      await deleteContact(contact.id)
+      invalidateContactsCache()
+      navigate(-1)
+    } catch { /* surface nothing - navigation handles it */ }
+  }
 
   async function handleSelectCompany(c: Contact) {
     setShowTypeahead(false)
@@ -160,7 +203,7 @@ export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
         ← Back
       </button>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>
         {editingName ? (
           <input
             autoFocus
@@ -216,6 +259,53 @@ export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
         }}>
           {status}
         </span>
+
+        {/* Overflow menu */}
+        <div ref={overflowRef} style={{ marginLeft: 'auto', position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setShowOverflow(v => !v)}
+            style={{
+              background: showOverflow ? 'rgba(0,0,0,0.06)' : 'none',
+              border: 'none', borderRadius: 6, cursor: 'pointer',
+              padding: '4px 6px', display: 'flex', alignItems: 'center',
+              color: 'rgba(0,0,0,0.35)',
+            }}
+          >
+            <MoreHorizontal size={18} />
+          </button>
+          {showOverflow && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, marginTop: 4,
+              background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(0,0,0,0.07)',
+              borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+              zIndex: 50, minWidth: 160, overflow: 'hidden',
+            }}>
+              <div
+                onClick={() => { setShowOverflow(false); setMergeSearchOpen(true); setMergeQuery('') }}
+                style={{
+                  padding: '10px 14px', fontSize: 13, cursor: 'pointer',
+                  color: 'rgba(0,0,0,0.82)', minHeight: 40, display: 'flex', alignItems: 'center',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Merge with...
+              </div>
+              <div
+                onClick={() => { setShowOverflow(false); setConfirmDelete(true) }}
+                style={{
+                  padding: '10px 14px', fontSize: 13, cursor: 'pointer',
+                  color: '#D93025', minHeight: 40, display: 'flex', alignItems: 'center',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(217,48,37,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Delete
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {companySubtitle && (
@@ -350,6 +440,115 @@ export function RecordHeader({ contact, onUpdate }: RecordHeaderProps) {
               </a>
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Merge target search */}
+      {mergeSearchOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setMergeSearchOpen(false)} />
+          <div style={{
+            position: 'relative', background: '#fff', borderRadius: 12,
+            padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.82)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
+              Merge "{contact.name}" with...
+            </div>
+            <input
+              autoFocus
+              type="text"
+              value={mergeQuery}
+              onChange={e => setMergeQuery(e.target.value)}
+              placeholder="Search records..."
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: 8,
+                border: '1px solid rgba(0,0,0,0.12)', fontSize: 13,
+                fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            {mergeResults.length > 0 && (
+              <div style={{ marginTop: 8, maxHeight: 240, overflowY: 'auto' }}>
+                {mergeResults.map(r => (
+                  <div
+                    key={r.id}
+                    onClick={() => { setMergeSearchOpen(false); setMergeTarget(r) }}
+                    style={{
+                      padding: '10px 12px', cursor: 'pointer', borderRadius: 6,
+                      fontSize: 13, color: 'rgba(0,0,0,0.82)', minHeight: 40,
+                      display: 'flex', flexDirection: 'column', gap: 2,
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span style={{ fontWeight: 500 }}>{r.name}</span>
+                    {r.company && <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)' }}>{r.company}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Merge modal */}
+      {mergeTarget && (
+        <MergeModal
+          recordA={contact}
+          recordB={mergeTarget}
+          pods={pods}
+          onClose={() => setMergeTarget(null)}
+          onMerged={(survivor) => {
+            setMergeTarget(null)
+            invalidateContactsCache()
+            navigate(`/contact/${survivor.id}`, { replace: true })
+          }}
+        />
+      )}
+
+      {/* Delete confirm */}
+      {confirmDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setConfirmDelete(false)} />
+          <div style={{
+            position: 'relative', background: '#fff', borderRadius: 12,
+            padding: 24, width: 320, textAlign: 'center',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.82)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
+              Delete "{contact.name}"?
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)', marginBottom: 20 }}>
+              This cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                type="button" onClick={() => setConfirmDelete(false)}
+                style={{
+                  padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid rgba(0,0,0,0.12)',
+                  fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.6)', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button" onClick={handleDelete}
+                style={{
+                  padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
+                  background: '#D93025', border: 'none',
+                  fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'inherit',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
