@@ -178,24 +178,7 @@ function buildHomeNodes({
     }
   })
 
-  // '+' orb to create a new pod — placed at bottom of innermost ring
-  const firstRingRadius = activeRings[0]
-  const createPodNode: Node = {
-    id: CREATE_POD_ID,
-    type: 'create-category',
-    position: savedPositions[CREATE_POD_ID] ?? {
-      x: 0 - 32,
-      y: firstRingRadius - 32,
-    },
-    draggable: false,
-    style: { overflow: 'visible' },
-    data: {
-      animationDelay: `${(pods.length + 1) * 0.1}s`,
-      onCreate: async () => { onCreatePod() },
-    },
-  }
-
-  return { nodes: [mojNode, ...podNodes, ...satelliteNodes, createPodNode], activeRings }
+  return { nodes: [mojNode, ...podNodes, ...satelliteNodes], activeRings }
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
