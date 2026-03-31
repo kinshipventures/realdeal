@@ -50,6 +50,8 @@ export function NurturingRow({ contact, signal, signalColor, onSnooze, onInterac
         source: 'Manual',
         email_link: null,
         granola_link: null,
+        event_detail: null,
+        actor: null,
       })
       setShowLog(false)
       onInteractionLogged()

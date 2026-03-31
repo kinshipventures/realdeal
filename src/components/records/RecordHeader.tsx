@@ -136,6 +136,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       recommended_by: null, specialization: null, past_clients: null,
       birthday: null, milestones: null, interests: null,
       relationship_context: null, last_contacted_at: null,
+      primary_list_id: null, cadence_override: null,
       first_name: null, last_name: null, linkedin: null,
       country: null, global_region: null, gender: null,
       introduced_by: null, intel_notes: null, relationship_owner: null,
@@ -143,6 +144,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       next_action: null, kv_fund_investor: null, spv_investor: null,
       needs_review: false, company_record_id: null,
       industry: null, stage: null, ticker: null, domain: null,
+      email_2: null, email_3: null, custom_fields: {},
     })
     onUpdate({ company_record_id: newCo.id, company: newCo.name })
   }

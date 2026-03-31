@@ -162,7 +162,7 @@ export function AddToProjectModal({ open, onClose, projectId, mode, existingIds,
                   style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--color-brand)', flexShrink: 0 }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', truncate: 'true' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {contact ? contact.name : opp?.name}
                   </div>
                   {contact && (contact.company || contact.email) && (

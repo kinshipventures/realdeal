@@ -419,9 +419,9 @@ function ContactsTab({ contacts, onRemove, onSelect, onAdd }: {
                 style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
               >
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</div>
-                {(contact.company || contact.title) && (
+                {(contact.company || contact.role) && (
                   <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 1 }}>
-                    {[contact.title, contact.company].filter(Boolean).join(' · ')}
+                    {[contact.role, contact.company].filter(Boolean).join(' · ')}
                   </div>
                 )}
               </div>

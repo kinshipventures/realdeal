@@ -1,8 +1,9 @@
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, RelationshipType, RelationshipStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus } from './types'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
 
-const BASE_URL = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}`
-const TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+const PROXY_URL = `${SUPABASE_URL}/functions/v1/airtable-proxy`
 
 // ── Table IDs ────────────────────────────────────────────────────────────────
 
@@ -164,13 +165,19 @@ interface AirtableListResponse<T> {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}/${path}`, {
-    ...options,
+  const method = options?.method || 'GET'
+  let body: unknown = undefined
+  if (options?.body && typeof options.body === 'string') {
+    try { body = JSON.parse(options.body) } catch { body = options.body }
+  }
+
+  const res = await fetch(PROXY_URL, {
+    method: 'POST',
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
       'Content-Type': 'application/json',
-      ...options?.headers,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
+    body: JSON.stringify({ path, method, body }),
   })
   if (!res.ok) {
     const text = await res.text()
@@ -184,11 +191,13 @@ async function fetchAll<T>(table: string, params?: Record<string, string>): Prom
   let offset: string | undefined
 
   do {
-    const url = new URL(`${BASE_URL}/${table}`)
-    if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
-    if (offset) url.searchParams.set('offset', offset)
+    const qp = new URLSearchParams()
+    if (params) Object.entries(params).forEach(([k, v]) => qp.set(k, v))
+    if (offset) qp.set('offset', offset)
+    const qs = qp.toString()
+    const path = qs ? `${table}?${qs}` : table
 
-    const data = await request<AirtableListResponse<T>>(url.toString().replace(`${BASE_URL}/`, ''))
+    const data = await request<AirtableListResponse<T>>(path)
     all.push(...data.records)
     offset = data.offset
   } while (offset)

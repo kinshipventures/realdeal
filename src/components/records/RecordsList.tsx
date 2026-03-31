@@ -873,7 +873,7 @@ export function RecordsList() {
 
             <button
               type="button"
-              onClick={handleExportCsv}
+              onClick={() => handleExportCsv()}
               disabled={bulkOperating}
               style={bulkBtnStyle}
             >

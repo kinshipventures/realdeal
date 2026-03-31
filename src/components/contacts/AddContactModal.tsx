@@ -80,16 +80,21 @@ export function AddContactModal({ onCreated, onClose }: Props) {
     try {
       const base: Omit<Contact, 'id' | 'created_at'> = {
         name: '',
+        type: 'Contact', status: 'Active',
         email: null, phone: null, company: null, role: null,
         location: null, website: null, notes: null, recommended_by: null,
         specialization: null, past_clients: null, birthday: null,
         milestones: null, interests: null, relationship_context: null,
         last_contacted_at: null, list_ids: [], category_ids: [],
+        primary_list_id: null, cadence_override: null,
         first_name: null, last_name: null, linkedin: null, country: null,
         global_region: null, gender: null, introduced_by: null,
         intel_notes: null, relationship_owner: null, contact_frequency: null,
         next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
+        company_record_id: null, industry: null, stage: null,
+        ticker: null, domain: null, email_2: null, email_3: null,
+        custom_fields: {},
       }
 
       let data: Omit<Contact, 'id' | 'created_at'>

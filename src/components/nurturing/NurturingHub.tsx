@@ -206,7 +206,7 @@ export function NurturingHub() {
           fc.scope_pod_id === null || contact.list_ids.includes(fc.scope_pod_id)
         )
         const missing = relevant.filter(fc => {
-          const val = (contact as Record<string, unknown>)[fc.name] ?? contact.custom_fields?.[fc.name]
+          const val = (contact as unknown as Record<string, unknown>)[fc.name] ?? contact.custom_fields?.[fc.name]
           return val === null || val === undefined || val === ''
         })
         if (missing.length > 0) {
