@@ -131,7 +131,7 @@ export function RecordPage() {
   if (notFound || !contact) {
     return (
       <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
-        <EmptyState heading="Record not found" />
+        <EmptyState icon={null} heading="Record not found" />
       </div>
     )
   }
