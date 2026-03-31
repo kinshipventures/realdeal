@@ -54,6 +54,10 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 18-authentication]: Single onAuthStateChange subscription - no getSession() call to avoid double-fetch anti-pattern
 - [Phase 18-authentication]: LoginPage is a shell only - lovable-auth div is mount point for Lovable auth UI drop-in
 
+### Roadmap Evolution
+
+- Phase 22 added: Airtable to Supabase data migration
+
 ### Blockers/Concerns
 
 - AUTH: User implements via Lovable -- Phase 18 scope is wiring/routing only, not building auth UI

@@ -155,3 +155,13 @@ Plans:
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
+
+### Phase 22: Airtable to Supabase data migration
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 21
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 22 to break down)
