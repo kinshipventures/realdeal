@@ -548,6 +548,12 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
 }
 
 export async function updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
+  if (isDemoMode()) {
+    const idx = DEMO_CONTACTS.findIndex(c => c.id === id)
+    if (idx === -1) throw new Error('Contact not found')
+    Object.assign(DEMO_CONTACTS[idx], data)
+    return DEMO_CONTACTS[idx]
+  }
   const fields: Record<string, unknown> = {}
   if (data.name !== undefined) fields.Name = data.name
   if (data.email !== undefined) fields.Email = data.email
@@ -613,6 +619,11 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
 }
 
 export async function deleteContact(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_CONTACTS.findIndex(c => c.id === id)
+    if (idx !== -1) DEMO_CONTACTS.splice(idx, 1)
+    return
+  }
   await request(`${TABLES.contacts}/${id}`, { method: 'DELETE' })
   if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
 }
