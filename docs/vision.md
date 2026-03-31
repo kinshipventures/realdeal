@@ -46,17 +46,27 @@ The app helps you see which is which, and invest accordingly.
 ### 1. Give more than you take
 The app is about contributing to relationships, not extracting from them. Build equity so when you need something, you've already invested. "90% of the time I'm going to talk to you is not for me to sell you something. It's for you to sell me something, so that when the one time I need something from you, you give it to me."
 
+**The research:** In a study of engineers, those rated highest for both quality and quantity of work were consistently the ones who gave more to colleagues than they received (Grant, 2013). A meta-analysis of 38 studies across 3,611 work units found that teams where people share knowledge and help others outperform on every measurable metric - results, satisfaction, retention (Grant, Wharton). Generosity compounds.
+
 ### 2. Trust is built on small micro habits, not grand gestures
 Consistent check-ins, a quick congrats, reposting someone's content - these compound over time. The app should make those habits effortless and visible.
+
+**The research:** Emotional closeness declines measurably within just a few months without contact. It takes roughly 3 years of zero contact for someone to drop out of your 150-person network entirely (Roberts & Dunbar, 2015). A LinkedIn experiment across 20 million users confirmed that moderately weak ties - the ones most people let fade - increased job mobility the most (Rajkumar et al., *Science*, 2022). The relationships you lose first are often the most valuable.
 
 ### 3. Trigger dopamine
 The best relationships happen when people associate you with positivity, good news, shared passions, and excitement. The app should help you be that person.
 
+**The research:** Gottman predicted relationship stability with over 90% accuracy based on one metric: the ratio of positive to negative interactions. Stable relationships maintain a 5:1 ratio (Gottman & Levenson). Separately, Spontaneous Trait Transference research showed that when you share good news about someone, listeners unconsciously associate those positive traits with you - being the bearer of good news literally changes how people perceive you (Skowronski et al., 1998, *Journal of Personality and Social Psychology*).
+
 ### 4. Curate ruthlessly
 A smaller, healthier network beats a large neglected one. Max 20 per list. If someone hasn't been contacted in 3+ months and neither side is investing, they should be removed. "This isn't about how big this list is. This is about how small this is."
 
+**The research:** Dunbar's number - ~150 stable relationships - is structured in layers: 5 intimate, 15 close, 50 friends, 150 meaningful contacts. Validated by 23 studies and 20+ neuroimaging studies linking network size to neocortex volume. A study of entrepreneurs found peak performance at roughly 19 contacts per group - beyond that, more contacts actually hurt results (Springer, SME performance study). Gore-Tex caps buildings at 150 people after discovering social problems emerge above that threshold.
+
 ### 5. Relationship debt is real
 Like Oura's sleep debt - if you're not investing, you're withdrawing. The app makes that visible. You can quantify it. You can fix it.
+
+**The research:** Increasing relationship retention by just 5% increases value by 25-95% (Bain & Company / HBR). Building new relationships costs 5-25x more than maintaining existing ones. 85% of jobs are filled via networking, but peripheral connections - often the most professionally valuable - are the first to fade without intentional effort (LinkedIn). A 5% monthly neglect rate compounds to 46% annual loss.
 
 ---
 
