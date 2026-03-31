@@ -1,47 +1,44 @@
 
 
-# Guided Onboarding Flow
+# Enhanced Onboarding Flow - 5 Steps
 
 ## Overview
+Add two new/modified steps to the onboarding flow, keeping total at 5 steps.
 
-4-step fullscreen onboarding overlay shown once after first Google sign-in. Uses `localStorage` key `realdeal:onboarding-complete` to track completion.
+## Step Order
 
-## Detection (in AppShell)
+1. **Welcome** - no changes
+2. **"This isn't a CRM"** - NEW
+3. **Pods + Cadence** - ENHANCED
+4. **Import** - no changes
+5. **Quick Tour** - no changes
 
-Check order in `AppShell`, after auth resolves:
-1. `isDemoMode()` -- if true, skip onboarding entirely
-2. `session` must be non-null (authenticated)
-3. `localStorage.getItem('realdeal:onboarding-complete')` must be absent
+## Step 2: "This isn't a CRM"
 
-Only when all three conditions align does the onboarding render.
+- Heading: "This isn't a CRM"
+- Body: one sentence - "We track relationship health, not sales pipelines."
+- 3 principles as compact icon+label rows:
+  - "Give more than you take"
+  - "Trust is built on micro-habits"
+  - "Relationship debt is real"
+- Below: a static SVG circular progress ring, 70% filled with brand green arc on a light gray track. Four text labels below it in a row: Thriving / Steady / Cooling / Fading (each in its corresponding color from the design system).
+- Single "Next" button
 
-## Flow Steps
+## Step 3: Pods + Cadence
 
-1. **Welcome** -- "Welcome to RealDeal" with app description, animated orb visual, "Get Started" button
-2. **Pods** -- Explain pods as relationship groups, show example orb visuals, option to create first pod inline or skip
-3. **Import contacts** -- Explain the value of importing contacts, single CTA button that sets `localStorage` key and navigates to existing `/import` route. No second import UI built -- just a link. Also offers "I'll do this later" skip.
-4. **Quick tour** -- Icons + one-line descriptions for Pulse, Map, Contacts, Pipelines, Projects. "Let's go" finishes onboarding.
+- Keep existing three example pod orbs (Talent, LPs, Advisors)
+- Add cadence picker below orbs: 4 pill-shaped radio buttons in a row (Weekly / Biweekly / Monthly / Quarterly), Monthly pre-selected
+- Body copy: "Pods group your relationships. Set how often you want to check in."
+- Selection stored in local component state only - no persistence
+- Single "Next" button
 
-## Files
+## Technical Details
 
-### New
-- `src/components/onboarding/OnboardingFlow.tsx` -- step state, progress dots, back/skip/next navigation, all 4 screens
-
-### Modified
-- `src/App.tsx` -- inside `AppShell`, after auth loading resolves, render `<OnboardingFlow>` gated by the three checks above. Pass `onComplete` callback that sets localStorage and dismisses.
-
-## Design
-
-- Fullscreen overlay, z-index above nav
-- Centered card, max-width ~480px, `--color-bg` background
-- Fraunces headings, DM Sans body, `--color-brand` accents
-- Step indicator dots at bottom
-- "Skip" on every step, "Back" from step 2+
-- Fade/slide transitions between steps
-
-## Key constraints
-
-- No new import UI -- step 3 links to existing `/import`
-- No database migration -- localStorage only
-- Demo mode users never see onboarding
+- **Single file**: `src/components/onboarding/OnboardingFlow.tsx`
+- Update `STEP_COUNT` from 4 to 5
+- New component: `StepPhilosophy` - presentational only
+- Modified component: `StepPods` - add cadence pill selector with `useState`
+- Step index mapping: 0=Welcome, 1=Philosophy, 2=Pods+Cadence, 3=Import, 4=Tour
+- No database migrations, no new files, no new dependencies
+- Equity ring is a plain hand-drawn SVG (circle + arc), not imported from EquityWidget
 
