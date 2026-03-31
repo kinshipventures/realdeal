@@ -165,13 +165,19 @@ interface AirtableListResponse<T> {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}/${path}`, {
-    ...options,
+  const method = options?.method || 'GET'
+  let body: unknown = undefined
+  if (options?.body && typeof options.body === 'string') {
+    try { body = JSON.parse(options.body) } catch { body = options.body }
+  }
+
+  const res = await fetch(PROXY_URL, {
+    method: 'POST',
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
       'Content-Type': 'application/json',
-      ...options?.headers,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
+    body: JSON.stringify({ path, method, body }),
   })
   if (!res.ok) {
     const text = await res.text()
@@ -185,11 +191,13 @@ async function fetchAll<T>(table: string, params?: Record<string, string>): Prom
   let offset: string | undefined
 
   do {
-    const url = new URL(`${BASE_URL}/${table}`)
-    if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
-    if (offset) url.searchParams.set('offset', offset)
+    const qp = new URLSearchParams()
+    if (params) Object.entries(params).forEach(([k, v]) => qp.set(k, v))
+    if (offset) qp.set('offset', offset)
+    const qs = qp.toString()
+    const path = qs ? `${table}?${qs}` : table
 
-    const data = await request<AirtableListResponse<T>>(url.toString().replace(`${BASE_URL}/`, ''))
+    const data = await request<AirtableListResponse<T>>(path)
     all.push(...data.records)
     offset = data.offset
   } while (offset)

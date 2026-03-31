@@ -134,6 +134,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
         date: logDate,
         notes: logNotes.trim() || null,
         summary: null, source: 'Manual', email_link: null, granola_link: null,
+        event_detail: null, actor: null,
       })
       setInteractions(prev => [interaction, ...prev])
       setShowLogForm(false)

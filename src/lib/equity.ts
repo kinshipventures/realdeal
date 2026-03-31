@@ -13,6 +13,8 @@ export const INTERACTION_WEIGHTS = {
   field_update: 0,
   categorization: 0,
   pipeline_event: 0,
+  project_event: 0,
+  merge_event: 0,
 } as const satisfies Record<InteractionType, number>
 
 export const CADENCE_DAYS = {
