@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { supabase } from '@/integrations/supabase/client'
 import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { LoginPage } from './components/auth/LoginPage'
@@ -353,6 +354,30 @@ function AppShell() {
             }}
           >
             Projects
+          </button>
+          <div style={{ width: 1, height: 20, background: 'var(--edge)', margin: '0 4px', alignSelf: 'center' }} />
+          <button
+            type="button"
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+            aria-label="Sign out"
+            title="Sign out"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '12px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
           </button>
         </nav>
       )}
