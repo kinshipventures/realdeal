@@ -39,7 +39,7 @@ function StatBlock({ label, value, accent }: { label: string; value: number; acc
         color: accent && value > 0 ? 'hsla(20, 80%, 45%, 0.80)' : '#ffffff',
         fontVariantNumeric: 'tabular-nums',
       }}>
-        {value}
+        {Number.isFinite(value) ? value : 0}
       </div>
       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4, letterSpacing: '0.01em' }}>
         {label}
