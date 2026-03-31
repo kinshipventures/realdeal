@@ -91,9 +91,9 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
 
 function StepPhilosophy({ onNext }: { onNext: () => void }) {
   const principles = [
-    { icon: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z', label: 'Give more than you take' },
-    { icon: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', label: 'Trust is built on micro-habits' },
-    { icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 0 0 6.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 0 0 6.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3', label: 'Relationship debt is real' },
+    { icon: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z', label: 'Give more than you take', stat: 'Teams where people give more outperform on every measurable metric.' },
+    { icon: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', label: 'Trust is built on micro-habits', stat: 'Emotional closeness fades within months without contact.' },
+    { icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 0 0 6.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 0 0 6.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3', label: 'Relationship debt is real', stat: '5% monthly neglect compounds to 46% annual relationship loss.' },
   ]
 
   const labels = [
@@ -121,20 +121,25 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', textAlign: 'left' }}>
         {principles.map(p => (
           <div key={p.label} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px',
+            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 16px',
             borderRadius: 10, background: 'rgba(0,0,0,0.03)',
           }}>
             <div style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+              width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginTop: 2,
               background: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d={p.icon} />
               </svg>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
-              {p.label}
-            </span>
+            <div>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
+                {p.label}
+              </span>
+              <div style={{ fontSize: 11, fontStyle: 'italic', color: 'var(--color-text-secondary)', lineHeight: 1.4, marginTop: 2 }}>
+                {p.stat}
+              </div>
+            </div>
           </div>
         ))}
       </div>
