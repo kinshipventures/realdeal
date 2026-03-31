@@ -177,11 +177,11 @@ Plans:
   4. Users can export filtered record views as CSV or copy-to-clipboard
   5. Users can merge two duplicate records with field-by-field comparison and no data loss
   6. Enrichment opt-in stub exists at pod level for future enrichment integration
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 17-01-PLAN.md -- Data model extensions + polish fixes (website link, status badge, missing-field indicators, emails, enrichment toggle, export refactor)
-- [ ] 17-02-PLAN.md -- Record merge: mergeRecords() data function, MergeModal, entry points in header and bulk bar
+- [x] 17-02-PLAN.md -- Record merge: mergeRecords() data function, MergeModal, entry points in header and bulk bar
 
 ## Progress
 
@@ -204,4 +204,4 @@ Plans:
 | 14. Pipelines | v2.0 | 3/3 | Complete    | 2026-03-30 |
 | 15. Projects + Navigation | v2.0 | 3/3 | Complete    | 2026-03-30 |
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete    | 2026-03-30 |
-| 17. Polish + Operations | v2.0 | 1/2 | In Progress|  |
+| 17. Polish + Operations | v2.0 | 2/2 | Complete    | 2026-03-31 |
