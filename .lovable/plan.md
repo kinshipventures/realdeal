@@ -1,44 +1,28 @@
 
 
-# Enhanced Onboarding Flow - 5 Steps
+# Add Research Stats to Onboarding Philosophy Step
 
-## Overview
-Add two new/modified steps to the onboarding flow, keeping total at 5 steps.
+## What changes
 
-## Step Order
+The `StepPhilosophy` component currently shows 3 principles as icon + label rows. Add a single punchy research stat line beneath each label - the most compelling data point from each principle's research.
 
-1. **Welcome** - no changes
-2. **"This isn't a CRM"** - NEW
-3. **Pods + Cadence** - ENHANCED
-4. **Import** - no changes
-5. **Quick Tour** - no changes
+## Principle stats (one line each)
 
-## Step 2: "This isn't a CRM"
+1. **Give more than you take** - "Teams where people give more outperform on every measurable metric."
+2. **Trust is built on micro-habits** - "Emotional closeness fades within months without contact."
+3. **Relationship debt is real** - "5% monthly neglect compounds to 46% annual relationship loss."
 
-- Heading: "This isn't a CRM"
-- Body: one sentence - "We track relationship health, not sales pipelines."
-- 3 principles as compact icon+label rows:
-  - "Give more than you take"
-  - "Trust is built on micro-habits"
-  - "Relationship debt is real"
-- Below: a static SVG circular progress ring, 70% filled with brand green arc on a light gray track. Four text labels below it in a row: Thriving / Steady / Cooling / Fading (each in its corresponding color from the design system).
-- Single "Next" button
+## Implementation
 
-## Step 3: Pods + Cadence
+**File**: `src/components/onboarding/OnboardingFlow.tsx` - `StepPhilosophy` only
 
-- Keep existing three example pod orbs (Talent, LPs, Advisors)
-- Add cadence picker below orbs: 4 pill-shaped radio buttons in a row (Weekly / Biweekly / Monthly / Quarterly), Monthly pre-selected
-- Body copy: "Pods group your relationships. Set how often you want to check in."
-- Selection stored in local component state only - no persistence
-- Single "Next" button
+- Add a `stat` field to each principle object in the `principles` array
+- Render it as a second line beneath the label: smaller font (11px), italic, muted color (`var(--color-text-secondary)`)
+- The principle row height grows slightly to accommodate the second line - no layout changes needed
 
-## Technical Details
+## What stays the same
 
-- **Single file**: `src/components/onboarding/OnboardingFlow.tsx`
-- Update `STEP_COUNT` from 4 to 5
-- New component: `StepPhilosophy` - presentational only
-- Modified component: `StepPods` - add cadence pill selector with `useState`
-- Step index mapping: 0=Welcome, 1=Philosophy, 2=Pods+Cadence, 3=Import, 4=Tour
-- No database migrations, no new files, no new dependencies
-- Equity ring is a plain hand-drawn SVG (circle + arc), not imported from EquityWidget
+- 5 steps, same order
+- No new files, no new dependencies
+- Equity ring, labels, button all unchanged
 
