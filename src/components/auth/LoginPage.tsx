@@ -51,7 +51,7 @@ export function LoginPage() {
         </h1>
         <p style={{
           fontSize: 14,
-          color: 'rgba(0,0,0,0.45)',
+          color: 'var(--color-text-secondary)',
           margin: '8px 0 0',
         }}>
           Sign in to continue
