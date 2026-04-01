@@ -135,29 +135,37 @@ Deno.serve(async (req) => {
       if (step === "1") return json({ success: true, logs, errors });
     }
 
-    // STEP 2: companies + contacts
+    // STEP 2: companies + contacts (supports offset/limit for batching)
     if (step === "2" || step === "all") {
       const contactRecs = await fetchTable("Contacts");
-      // Companies first
-      const companies = contactRecs.filter((r) => r.fields["Type"] === "Company");
-      for (const r of companies) {
-        const { data, error } = await supabase.from("companies").insert({
-          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
-          industry: (r.fields["Industry"] as string | null) ?? null,
-          stage: (r.fields["Stage"] as string | null) ?? null,
-          ticker: (r.fields["Ticker"] as string | null) ?? null,
-          domain: (r.fields["Domain"] as string | null) ?? null,
-          website: (r.fields["Website"] as string | null) ?? null,
-          location: (r.fields["Location"] as string | null) ?? null,
-          notes: (r.fields["Notes"] as string | null) ?? null,
-          custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? null,
-        }).select("id").single();
-        if (error) { errors.push({ table: "companies", id: r.id, msg: error.message }); continue; }
-        if (data) await saveMapping(r.id, "companies", data.id);
+      const batchOffset = body.offset ?? 0;
+      const batchLimit = body.limit ?? 100;
+      // Companies first (only on first batch)
+      if (batchOffset === 0) {
+        const companies = contactRecs.filter((r) => r.fields["Type"] === "Company");
+        for (const r of companies) {
+          if (resolve(r.id)) continue; // skip already migrated
+          const { data, error } = await supabase.from("companies").insert({
+            user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+            industry: (r.fields["Industry"] as string | null) ?? null,
+            stage: (r.fields["Stage"] as string | null) ?? null,
+            ticker: (r.fields["Ticker"] as string | null) ?? null,
+            domain: (r.fields["Domain"] as string | null) ?? null,
+            website: (r.fields["Website"] as string | null) ?? null,
+            location: (r.fields["Location"] as string | null) ?? null,
+            notes: (r.fields["Notes"] as string | null) ?? null,
+            custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? null,
+          }).select("id").single();
+          if (error) { errors.push({ table: "companies", id: r.id, msg: error.message }); continue; }
+          if (data) await saveMapping(r.id, "companies", data.id);
+        }
+        log(`Companies: ${companies.length}`);
       }
-      log(`Companies: ${companies.length}`);
-      // Contacts
-      for (const r of contactRecs) {
+      // Filter out already-migrated contacts, then slice batch
+      const unmigrated = contactRecs.filter(r => !resolve(r.id));
+      const batch = unmigrated.slice(batchOffset, batchOffset + batchLimit);
+      log(`Contacts total: ${contactRecs.length}, already migrated: ${contactRecs.length - unmigrated.length}, batch offset: ${batchOffset}, batch size: ${batch.length}, remaining: ${Math.max(0, unmigrated.length - batchOffset - batch.length)}`);
+      for (const r of batch) {
         const companyLinked = r.fields["Company Record"] as string[] | undefined;
         const companyId = companyLinked?.[0] ? resolve(companyLinked[0]) : undefined;
         const kvFund = r.fields["KV Fund Investor"];
@@ -209,8 +217,8 @@ Deno.serve(async (req) => {
         if (error) { errors.push({ table: "contacts", id: r.id, msg: error.message }); continue; }
         if (data) await saveMapping(r.id, "contacts", data.id);
       }
-      log(`Contacts: ${contactRecs.length}`);
-      if (step === "2") return json({ success: true, logs, errors });
+      const remaining = Math.max(0, unmigrated.length - batchOffset - batch.length);
+      if (step === "2") return json({ success: true, logs, errors, remaining, total: contactRecs.length, migrated: contactRecs.length - unmigrated.length + batch.length });
     }
 
     // STEP 3: junctions (contact_pods, contact_categories)
