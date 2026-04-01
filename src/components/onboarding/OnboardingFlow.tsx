@@ -116,23 +116,67 @@ export function OnboardingFlow({ onComplete }: Props) {
 /* ---------- individual steps ---------- */
 
 function StepWelcome({ onNext }: { onNext: () => void }) {
+  const orbs = [
+    { color: '#6366F1', size: 12, r: 72, dur: 12, delay: 0 },
+    { color: '#EC4899', size: 10, r: 72, dur: 15, delay: -4 },
+    { color: '#F59E0B', size: 9, r: 72, dur: 18, delay: -8 },
+    { color: '#14B8A6', size: 8, r: 56, dur: 20, delay: -6 },
+    { color: '#8B5CF6', size: 7, r: 56, dur: 14, delay: -2 },
+    { color: '#F97316', size: 6, r: 56, dur: 22, delay: -10 },
+  ]
+
   return (
     <>
-      <div style={{
-        width: 96, height: 96, borderRadius: '50%',
-        background: 'linear-gradient(135deg, #25B439, #1A8A2A)',
-        boxShadow: '0 8px 32px rgba(37,180,57,0.30)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      {/* Orbital visual */}
+      <div style={{ position: 'relative', width: 180, height: 180, opacity: 0, animation: 'onboard-enter 0.6s ease-out 0.1s forwards' }}>
+        {/* Orbit rings */}
+        <svg width="180" height="180" viewBox="0 0 180 180" style={{ position: 'absolute', inset: 0 }}>
+          <circle cx="90" cy="90" r="56" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1" />
+          <circle cx="90" cy="90" r="72" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1" />
         </svg>
+
+        {/* Orbiting dots */}
+        {orbs.map((o, i) => (
+          <div key={i} style={{
+            position: 'absolute', left: 90 - o.size / 2, top: 90 - o.size / 2,
+            width: o.size, height: o.size, borderRadius: '50%',
+            background: o.color, opacity: 0.7,
+            // @ts-ignore
+            '--orbit-r': `${o.r}px`,
+            animation: `orbit ${o.dur}s linear infinite`,
+            animationDelay: `${o.delay}s`,
+          } as React.CSSProperties} />
+        ))}
+
+        {/* Center orb */}
+        <div style={{
+          position: 'absolute', left: 90 - 40, top: 90 - 40,
+          width: 80, height: 80, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #25B439, #1A8A2A)',
+          animation: 'welcome-pulse 3s ease-in-out infinite',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
       </div>
-      <h1 style={headingStyle}>Feed what feeds you</h1>
-      <p style={bodyStyle}>
-        RealDeal helps you invest in the relationships that actually matter. Not more contacts - deeper ones.
+
+      <h1 style={{
+        ...headingStyle, fontSize: 34, letterSpacing: '-0.03em',
+        opacity: 0, animation: 'welcome-heading 0.5s ease-out 0.3s forwards',
+      }}>
+        Feed what feeds you
+      </h1>
+      <p style={{
+        ...bodyStyle, fontSize: 15, lineHeight: 1.7, maxWidth: 340,
+        opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.5s forwards',
+      }}>
+        The relationships that matter most are the ones you invest in. This is your system to make that effortless.
       </p>
-      <button type="button" onClick={onNext} style={primaryBtnStyle}>
+      <button type="button" onClick={onNext} style={{
+        ...primaryBtnStyle, opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.7s forwards',
+      }}>
         Get Started
       </button>
     </>
