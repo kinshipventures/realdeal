@@ -126,9 +126,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
             <>
               <EquityRing score={overallScore} size={96} />
               <div>
-                <div aria-live="polite" style={{ fontSize: 36, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: 'var(--font-serif)' }}>
-                  <AnimatedNumber value={Number.isFinite(overallScore) ? overallScore : 0} />
-                </div>
+                <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
                 <div className="widget-tooltip-wrap" style={{ fontSize: 13, color: 'rgba(255,255,255,0.70)', marginTop: 6, letterSpacing: '0.01em' }}>
                   {scoreLabel(overallScore)}
                   <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
