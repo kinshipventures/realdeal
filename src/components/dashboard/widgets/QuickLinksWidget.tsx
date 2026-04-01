@@ -25,9 +25,7 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <h3 className="dashboard-subheading" style={{ marginBottom: 12 }}>
-        quick links
-      </h3>
+      <WidgetHeading title="quick links" tooltip="Jump to your active campaigns and pipelines." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {activeCampaigns.map(campaign => {
           const cc = campaignContacts.filter(c => c.campaign_id === campaign.id)

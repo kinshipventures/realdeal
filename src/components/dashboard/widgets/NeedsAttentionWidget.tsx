@@ -122,9 +122,7 @@ export function NeedsAttentionWidget({
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h3 className="dashboard-subheading">
-            needs attention
-          </h3>
+          <WidgetHeading title="needs attention" tooltip="Contacts past their cadence deadline or going dormant. Reach out to keep relationships healthy." />
           {overdueContacts.length > 0 && (
             <span style={{
               display: 'inline-flex', alignItems: 'center',
