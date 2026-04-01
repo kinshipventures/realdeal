@@ -1,234 +1,69 @@
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, RelationshipType, RelationshipStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus } from './types'
+import { supabase } from '@/integrations/supabase/client'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-const PROXY_URL = `${SUPABASE_URL}/functions/v1/airtable-proxy`
+// Re-export TABLES for backward compat (some imports reference it)
+export const TABLES = {} as Record<string, string>
 
-// ── Table IDs ────────────────────────────────────────────────────────────────
+// ── Helper ──────────────────────────────────────────────────────────────────
 
-export const TABLES = {
-  lists: 'tblnsxNUscKApvMsV',
-  categories: 'tblVAgv23LUXs7Q0p',
-  contacts: 'tbll75mRMMVBGiNpj',
-  interactions: 'tblbxLX5EM09Y6xim',
-  campaigns: 'tblnrhkuIQgRdnt9w',
-  campaignContacts: 'tbliW2w3R21yTqTQk',
-  pipelines: 'tblf2LPzPIyfrthQa',
-  pipelineStages: 'tblt5AY61E2fnH6Jr',
-  opportunities: 'tbl7RSU66DHpTL9G9',
-  projects: 'tblbjT4J1gqJw0w2a',
-  fieldConfig: 'tblzxWJVXgxb8n2Sn',
-} as const
-
-// ── Raw Airtable field shapes ────────────────────────────────────────────────
-
-interface PodFields {
-  Name: string
-  Color?: string
-  Owner?: Owner
-  'Is Priority'?: boolean
-  Cadence?: Cadence
-  Description?: string
-  Capacity?: number
-  'Enrichment Opt-In'?: boolean
-  Categories?: string[]
-  Contacts?: string[]
+async function getUserId(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  return user.id
 }
 
-interface CategoryFields {
-  Name: string
-  List?: string[]
-  Color?: string
-  Contacts?: string[]
-}
+const CACHE_TTL = 5 * 60 * 1000
 
-interface ContactFields {
-  Name: string
-  Email?: string
-  Phone?: string
-  Company?: string
-  Role?: string
-  Location?: string
-  Website?: string
-  Notes?: string
-  'Recommended By'?: string
-  Specialization?: string
-  'Past Clients'?: string
-  Birthday?: string
-  Milestones?: string
-  Interests?: string
-  'Relationship Context'?: string
-  'Last Contacted'?: string
-  Lists?: string[]
-  Categories?: string[]
-  Interactions?: string[]
-  // V1 expanded fields
-  'First Name'?: string
-  'Last Name'?: string
-  LinkedIn?: string
-  Country?: string
-  'Global Region'?: string
-  Gender?: string
-  'Introduced By'?: string
-  'Intel / Notes'?: string
-  'Relationship Owner'?: string
-  'Contact Frequency'?: string
-  'Next Follow-Up Date'?: string
-  'Next Action'?: string
-  'KV Fund Investor'?: unknown[]
-  'SPV Investor'?: unknown[]
-  'Needs Review'?: boolean
-  // v2 relationship fields
-  Type?: 'Contact' | 'Company'
-  Status?: 'Active' | 'Pending' | 'Archived'
-  'Company Record'?: string[]
-  Industry?: string
-  Stage?: string
-  Ticker?: string
-  Domain?: string
-  'Primary Pod'?: string
-  'Cadence Override'?: string
-  'Email 2'?: string
-  'Email 3'?: string
-}
+// ── Pods ─────────────────────────────────────────────────────────────────────
 
-interface InteractionFields {
-  Contact?: string[]
-  Type?: InteractionType
-  Date?: string
-  Notes?: string
-  // V1 expanded fields
-  Summary?: string
-  Source?: string
-  'Email Link'?: string
-  'Granola Link'?: string
-  'Event Detail'?: string
-  'Actor'?: string
-}
-
-interface CampaignFields {
-  Name: string
-  Type?: CampaignType
-  Deadline?: string
-  Status?: CampaignStatus
-}
-
-interface CampaignContactFields {
-  Campaign?: string[]    // linked record IDs (Airtable returns array)
-  Contact?: string[]     // linked record IDs
-  Status?: CampaignContactStatus
-  Notes?: string
-}
-
-interface PipelineFields {
-  Name: string
-  'Pipeline Status'?: 'active' | 'hidden'
-}
-
-interface PipelineStageFields {
-  Name: string
-  Color?: string
-  Order?: number
-  Pipeline?: string[]
-}
-
-interface OpportunityFields {
-  Name: string
-  Stage?: string[]
-  Relationships?: string[]
-  Notes?: string
-  Priority?: 'high' | 'medium' | 'low'
-  'Opportunity Status'?: 'open' | 'won' | 'lost' | 'archived'
-}
-
-interface ProjectFields {
-  Name: string
-  Description?: string
-  Owner?: string
-  Relationships?: string[]
-  Opportunities?: string[]
-  Notes?: string
-}
-
-// ── Fetch helpers ────────────────────────────────────────────────────────────
-
-interface AirtableRecord<T> {
-  id: string
-  fields: T
-  createdTime: string
-}
-
-interface AirtableListResponse<T> {
-  records: AirtableRecord<T>[]
-  offset?: string
-}
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const method = options?.method || 'GET'
-  let body: unknown = undefined
-  if (options?.body && typeof options.body === 'string') {
-    try { body = JSON.parse(options.body) } catch { body = options.body }
-  }
-
-  const res = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ path, method, body }),
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Airtable ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<T>
-}
-
-async function fetchAll<T>(table: string, params?: Record<string, string>): Promise<AirtableRecord<T>[]> {
-  const all: AirtableRecord<T>[] = []
-  let offset: string | undefined
-
-  do {
-    const qp = new URLSearchParams()
-    if (params) Object.entries(params).forEach(([k, v]) => qp.set(k, v))
-    if (offset) qp.set('offset', offset)
-    const qs = qp.toString()
-    const path = qs ? `${table}?${qs}` : table
-
-    const data = await request<AirtableListResponse<T>>(path)
-    all.push(...data.records)
-    offset = data.offset
-  } while (offset)
-
-  return all
-}
-
-// ── Lists ────────────────────────────────────────────────────────────────────
-
-function mapPod(r: AirtableRecord<PodFields>): Pod {
+function mapPod(r: any): Pod {
   return {
     id: r.id,
-    name: r.fields.Name,
-    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
-    owner: r.fields.Owner ?? null,
-    is_priority: r.fields['Is Priority'] ?? false,
-    cadence: r.fields.Cadence ?? null,
-    description: r.fields.Description ?? null,
-    capacity: r.fields.Capacity != null ? Number(r.fields.Capacity) : null,
-    enrichment_opt_in: r.fields['Enrichment Opt-In'] === true,
-    created_at: r.createdTime,
+    name: r.name,
+    color: (r.color ?? null) as HexColor | null,
+    owner: r.owner ?? null,
+    is_priority: r.is_priority ?? false,
+    cadence: r.cadence ?? null,
+    description: r.description ?? null,
+    capacity: r.capacity ?? null,
+    enrichment_opt_in: r.enrichment_opt_in ?? false,
+    created_at: r.created_at,
   }
 }
 
-export async function getPods(): Promise<Pod[]> {
-  if (isDemoMode()) return DEMO_PODS
-  const records = await fetchAll<PodFields>(TABLES.lists)
-  return records.map(mapPod)
-}
+let _podsCache: Pod[] | null = null
+let _podsCacheTime = 0
+let _podsFetch: Promise<Pod[]> | null = null
 
-let _listsCache: Pod[] | null = null
+export function getPods(): Promise<Pod[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_PODS)
+  const isExpired = !_podsCache || Date.now() - _podsCacheTime > CACHE_TTL
+  if (_podsCache && !isExpired) return Promise.resolve(_podsCache!)
+
+  if (_podsCache && isExpired && !_podsFetch) {
+    const stale = _podsCache
+    _podsFetch = supabase.from('pods').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _podsCache = (data ?? []).map(mapPod)
+      _podsCacheTime = Date.now()
+      _podsFetch = null
+      return _podsCache
+    })
+    return Promise.resolve(stale)
+  }
+
+  if (!_podsFetch) {
+    _podsFetch = supabase.from('pods').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _podsCache = (data ?? []).map(mapPod)
+      _podsCacheTime = Date.now()
+      _podsFetch = null
+      return _podsCache
+    })
+  }
+  return _podsFetch
+}
 
 export async function createPod(data: {
   name: string
@@ -241,83 +76,56 @@ export async function createPod(data: {
 }): Promise<Pod> {
   if (isDemoMode()) {
     const p: Pod = {
-      id: `demo-pod-${Date.now()}`,
-      name: data.name,
-      color: (data.color ?? null) as import('./types').HexColor | null,
-      owner: data.owner ?? null,
-      is_priority: data.is_priority ?? false,
-      cadence: data.cadence ?? null,
-      description: data.description ?? null,
-      capacity: data.capacity ?? null,
-      enrichment_opt_in: false,
+      id: `demo-pod-${Date.now()}`, name: data.name, color: (data.color ?? null) as HexColor | null,
+      owner: data.owner ?? null, is_priority: data.is_priority ?? false, cadence: data.cadence ?? null,
+      description: data.description ?? null, capacity: data.capacity ?? null, enrichment_opt_in: false,
       created_at: new Date().toISOString(),
     }
     DEMO_PODS.push(p)
     return p
   }
-  const r = await request<AirtableRecord<PodFields>>(TABLES.lists, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Name: data.name,
-        Color: data.color ?? undefined,
-        Owner: data.owner ?? undefined,
-        'Is Priority': data.is_priority ?? undefined,
-        Cadence: data.cadence ?? undefined,
-        Description: data.description ?? undefined,
-        Capacity: data.capacity ?? undefined,
-      },
-    }),
-  })
-  _listsCache = null
-  return mapPod(r)
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('pods').insert({
+    user_id: userId,
+    name: data.name,
+    color: data.color ?? null,
+    owner: data.owner ?? null,
+    is_priority: data.is_priority ?? false,
+    cadence: data.cadence ?? null,
+    description: data.description ?? null,
+    capacity: data.capacity ?? null,
+  }).select().single()
+  if (error) throw error
+  _podsCache = null
+  return mapPod(row)
 }
 
 export async function updatePod(id: string, data: Partial<{
-  name: string
-  color: string | null
-  owner: Owner | null
-  is_priority: boolean
-  cadence: Cadence | null
-  description: string | null
-  capacity: number | null
-  enrichment_opt_in: boolean
+  name: string; color: string | null; owner: Owner | null; is_priority: boolean
+  cadence: Cadence | null; description: string | null; capacity: number | null; enrichment_opt_in: boolean
 }>): Promise<Pod> {
   if (isDemoMode()) {
     const pod = DEMO_PODS.find(p => p.id === id)
     if (pod) Object.assign(pod, data)
     return pod ?? ({ id, ...data } as Pod)
   }
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.color !== undefined) fields.Color = data.color
-  if (data.owner !== undefined) fields.Owner = data.owner
-  if (data.is_priority !== undefined) fields['Is Priority'] = data.is_priority
-  if (data.cadence !== undefined) fields.Cadence = data.cadence
-  if (data.description !== undefined) fields.Description = data.description
-  if (data.capacity !== undefined) fields.Capacity = data.capacity
-  if (data.enrichment_opt_in !== undefined) fields['Enrichment Opt-In'] = data.enrichment_opt_in
-  const r = await request<AirtableRecord<PodFields>>(`${TABLES.lists}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
-  _listsCache = null
-  return mapPod(r)
+  const { data: row, error } = await supabase.from('pods').update(data).eq('id', id).select().single()
+  if (error) throw error
+  _podsCache = null
+  return mapPod(row)
 }
 
 // ── Categories ───────────────────────────────────────────────────────────────
 
-function mapCategory(r: AirtableRecord<CategoryFields>): Category {
+function mapCategory(r: any): Category {
   return {
     id: r.id,
-    list_id: r.fields.List?.[0] ?? '',
-    name: r.fields.Name,
-    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
-    created_at: r.createdTime,
+    list_id: r.pod_id,
+    name: r.name,
+    color: (r.color ?? null) as HexColor | null,
+    created_at: r.created_at,
   }
 }
-
-const CACHE_TTL = 5 * 60 * 1000
 
 let _categoriesCache: Category[] | null = null
 let _categoriesCacheTime = 0
@@ -326,118 +134,128 @@ let _categoriesFetch: Promise<Category[]> | null = null
 export function getCategories(listId?: string): Promise<Category[]> {
   if (isDemoMode()) return Promise.resolve(listId ? DEMO_CATEGORIES.filter(c => c.list_id === listId) : DEMO_CATEGORIES)
   const isExpired = !_categoriesCache || Date.now() - _categoriesCacheTime > CACHE_TTL
-  const isFresh = _categoriesCache && !isExpired
-
-  if (isFresh) {
-    return Promise.resolve(
-      listId ? _categoriesCache!.filter(c => c.list_id === listId) : _categoriesCache!
-    )
+  if (_categoriesCache && !isExpired) {
+    return Promise.resolve(listId ? _categoriesCache!.filter(c => c.list_id === listId) : _categoriesCache!)
   }
 
-  // Stale-while-revalidate: return stale immediately, refresh in background
   if (_categoriesCache && isExpired && !_categoriesFetch) {
     const stale = _categoriesCache
-    _categoriesFetch = fetchAll<CategoryFields>(TABLES.categories)
-      .then(records => {
-        _categoriesCache = records.map(mapCategory)
-        _categoriesCacheTime = Date.now()
-        _categoriesFetch = null
-        return _categoriesCache
-      })
-      .catch(err => { _categoriesFetch = null; throw err })
-    return Promise.resolve(
-      listId ? stale.filter(c => c.list_id === listId) : stale
-    )
+    _categoriesFetch = supabase.from('categories').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _categoriesCache = (data ?? []).map(mapCategory)
+      _categoriesCacheTime = Date.now()
+      _categoriesFetch = null
+      return _categoriesCache
+    })
+    return Promise.resolve(listId ? stale.filter(c => c.list_id === listId) : stale)
   }
 
-  // Cold cache — deduplicate concurrent fetches via in-flight Promise
   if (!_categoriesFetch) {
-    _categoriesFetch = fetchAll<CategoryFields>(TABLES.categories)
-      .then(records => {
-        _categoriesCache = records.map(mapCategory)
-        _categoriesCacheTime = Date.now()
-        _categoriesFetch = null
-        return _categoriesCache
-      })
-      .catch(err => { _categoriesFetch = null; throw err })
+    _categoriesFetch = supabase.from('categories').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _categoriesCache = (data ?? []).map(mapCategory)
+      _categoriesCacheTime = Date.now()
+      _categoriesFetch = null
+      return _categoriesCache
+    })
   }
   return _categoriesFetch.then(all => listId ? all.filter(c => c.list_id === listId) : all)
 }
 
 export async function createCategory(name: string, listId: string): Promise<Category> {
-  const r = await request<AirtableRecord<CategoryFields>>(TABLES.categories, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Name: name,
-        List: [listId],
-      },
-    }),
-  })
+  if (isDemoMode()) {
+    const c: Category = { id: `demo-cat-${Date.now()}`, list_id: listId, name, color: null, created_at: new Date().toISOString() }
+    DEMO_CATEGORIES.push(c)
+    return c
+  }
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('categories').insert({
+    user_id: userId, name, pod_id: listId,
+  }).select().single()
+  if (error) throw error
   _categoriesCache = null
-  return mapCategory(r)
+  return mapCategory(row)
 }
 
 // ── Contacts ─────────────────────────────────────────────────────────────────
 
-function mapContact(r: AirtableRecord<ContactFields>): Contact {
+async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
+  if (contacts.length === 0) return []
+  const contactIds = contacts.map(c => c.id)
+
+  // Fetch junction tables in parallel
+  const [podJunctions, catJunctions] = await Promise.all([
+    supabase.from('contact_pods').select('contact_id, pod_id, is_primary').in('contact_id', contactIds),
+    supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', contactIds),
+  ])
+
+  const podMap = new Map<string, { pod_ids: string[]; primary: string | null }>()
+  for (const jp of podJunctions.data ?? []) {
+    let entry = podMap.get(jp.contact_id)
+    if (!entry) { entry = { pod_ids: [], primary: null }; podMap.set(jp.contact_id, entry) }
+    entry.pod_ids.push(jp.pod_id)
+    if (jp.is_primary) entry.primary = jp.pod_id
+  }
+
+  const catMap = new Map<string, string[]>()
+  for (const jc of catJunctions.data ?? []) {
+    let arr = catMap.get(jc.contact_id)
+    if (!arr) { arr = []; catMap.set(jc.contact_id, arr) }
+    arr.push(jc.category_id)
+  }
+
+  return contacts.map(r => mapContact(r, podMap.get(r.id), catMap.get(r.id)))
+}
+
+function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | null }, catIds?: string[]): Contact {
   return {
     id: r.id,
-    name: r.fields.Name,
-    email: r.fields.Email ?? null,
-    phone: r.fields.Phone ?? null,
-    company: r.fields.Company ?? null,
-    role: r.fields.Role ?? null,
-    location: r.fields.Location ?? null,
-    website: r.fields.Website ?? null,
-    notes: r.fields.Notes ?? null,
-    recommended_by: r.fields['Recommended By'] ?? null,
-    specialization: r.fields.Specialization ?? null,
-    past_clients: r.fields['Past Clients'] ?? null,
-    birthday: r.fields.Birthday ?? null,
-    milestones: r.fields.Milestones ?? null,
-    interests: r.fields.Interests ?? null,
-    relationship_context: r.fields['Relationship Context'] ?? null,
-    last_contacted_at: r.fields['Last Contacted'] ?? null,
-    list_ids: r.fields.Lists ?? [],
-    category_ids: r.fields.Categories ?? [],
-    first_name: r.fields['First Name'] ?? null,
-    last_name: r.fields['Last Name'] ?? null,
-    linkedin: r.fields.LinkedIn ?? null,
-    country: r.fields.Country ?? null,
-    global_region: (r.fields['Global Region'] as GlobalRegion) ?? null,
-    gender: (r.fields.Gender as Gender) ?? null,
-    introduced_by: r.fields['Introduced By'] ?? null,
-    intel_notes: r.fields['Intel / Notes'] ?? null,
-    relationship_owner: r.fields['Relationship Owner'] ?? null,
-    contact_frequency: (r.fields['Contact Frequency'] as ContactFrequency) ?? null,
-    next_follow_up_date: r.fields['Next Follow-Up Date'] ?? null,
-    next_action: r.fields['Next Action'] ?? null,
-    kv_fund_investor: (r.fields['KV Fund Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
-    spv_investor: (r.fields['SPV Investor'] as any[] || []).map((v: any) => typeof v === 'string' ? v : v.name) || null,
-    needs_review: !!r.fields['Needs Review'],
-    type: (r.fields.Type ?? 'Contact') as RelationshipType,
-    status: (r.fields.Status ?? 'Active') as RelationshipStatus,
-    company_record_id: r.fields['Company Record']?.[0] ?? null,
-    industry: r.fields.Industry ?? null,
-    stage: r.fields.Stage ?? null,
-    ticker: r.fields.Ticker ?? null,
-    domain: r.fields.Domain ?? null,
-    primary_list_id: r.fields['Primary Pod'] ?? null,
-    cadence_override: (r.fields['Cadence Override'] as import('./types').Cadence) ?? null,
-    email_2: r.fields['Email 2'] ?? null,
-    email_3: r.fields['Email 3'] ?? null,
-    custom_fields: (() => {
-      const knownFields = new Set(['Name', 'Email', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Notes', 'Recommended By', 'Specialization', 'Past Clients', 'Birthday', 'Milestones', 'Interests', 'Relationship Context', 'Last Contacted', 'Lists', 'Categories', 'Interactions', 'First Name', 'Last Name', 'LinkedIn', 'Country', 'Global Region', 'Gender', 'Introduced By', 'Intel / Notes', 'Relationship Owner', 'Contact Frequency', 'Next Follow-Up Date', 'Next Action', 'KV Fund Investor', 'SPV Investor', 'Needs Review', 'Type', 'Status', 'Company Record', 'Industry', 'Stage', 'Ticker', 'Domain', 'Primary Pod', 'Cadence Override', 'Email 2', 'Email 3'])
-      const result: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(r.fields)) {
-        if (!knownFields.has(key) && value !== undefined && value !== null) {
-          result[key] = value
-        }
-      }
-      return result
-    })(),
-    created_at: r.createdTime,
+    name: r.name,
+    email: r.email ?? null,
+    phone: r.phone ?? null,
+    company: r.company ?? null,
+    role: r.role ?? null,
+    location: r.location ?? null,
+    website: r.website ?? null,
+    notes: r.notes ?? null,
+    recommended_by: r.recommended_by ?? null,
+    specialization: r.specialization ?? null,
+    past_clients: r.past_clients ?? null,
+    birthday: r.birthday ?? null,
+    milestones: r.milestones ?? null,
+    interests: r.interests ?? null,
+    relationship_context: r.relationship_context ?? null,
+    last_contacted_at: r.last_contacted_at ?? null,
+    list_ids: podInfo?.pod_ids ?? [],
+    category_ids: catIds ?? [],
+    primary_list_id: podInfo?.primary ?? null,
+    cadence_override: r.cadence_override ?? null,
+    first_name: r.first_name ?? null,
+    last_name: r.last_name ?? null,
+    linkedin: r.linkedin ?? null,
+    country: r.country ?? null,
+    global_region: r.global_region ?? null,
+    gender: r.gender ?? null,
+    introduced_by: r.introduced_by ?? null,
+    intel_notes: r.intel_notes ?? null,
+    relationship_owner: r.relationship_owner ?? null,
+    contact_frequency: r.contact_frequency ?? null,
+    next_follow_up_date: r.next_follow_up_date ?? null,
+    next_action: r.next_action ?? null,
+    kv_fund_investor: r.kv_fund_investor ?? null,
+    spv_investor: r.spv_investor ?? null,
+    needs_review: r.needs_review ?? false,
+    type: r.type ?? 'Contact',
+    status: r.status ?? 'Active',
+    company_record_id: r.company_id ?? null,
+    industry: r.industry ?? null,
+    stage: r.stage ?? null,
+    ticker: r.ticker ?? null,
+    domain: r.domain ?? null,
+    email_2: r.email_2 ?? null,
+    email_3: r.email_3 ?? null,
+    custom_fields: r.custom_fields ?? {},
+    created_at: r.created_at,
   }
 }
 
@@ -448,40 +266,30 @@ let _contactsFetch: Promise<Contact[]> | null = null
 export function getContacts(categoryId?: string): Promise<Contact[]> {
   if (isDemoMode()) return Promise.resolve(categoryId ? DEMO_CONTACTS.filter(c => c.category_ids.includes(categoryId)) : DEMO_CONTACTS)
   const isExpired = !_contactsCache || Date.now() - _contactsCacheTime > CACHE_TTL
-  const isFresh = _contactsCache && !isExpired
-
-  if (isFresh) {
-    return Promise.resolve(
-      categoryId ? _contactsCache!.filter(c => c.category_ids.includes(categoryId)) : _contactsCache!
-    )
+  if (_contactsCache && !isExpired) {
+    return Promise.resolve(categoryId ? _contactsCache!.filter(c => c.category_ids.includes(categoryId)) : _contactsCache!)
   }
 
-  // Stale-while-revalidate: return stale immediately, refresh in background
   if (_contactsCache && isExpired && !_contactsFetch) {
     const stale = _contactsCache
-    _contactsFetch = fetchAll<ContactFields>(TABLES.contacts)
-      .then(records => {
-        _contactsCache = records.map(mapContact)
-        _contactsCacheTime = Date.now()
-        _contactsFetch = null
-        return _contactsCache
-      })
-      .catch(err => { _contactsFetch = null; throw err })
-    return Promise.resolve(
-      categoryId ? stale.filter(c => c.category_ids.includes(categoryId)) : stale
-    )
+    _contactsFetch = supabase.from('contacts').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _contactsCache = await enrichContactJunctions(data ?? [])
+      _contactsCacheTime = Date.now()
+      _contactsFetch = null
+      return _contactsCache
+    })
+    return Promise.resolve(categoryId ? stale.filter(c => c.category_ids.includes(categoryId)) : stale)
   }
 
-  // Cold cache — deduplicate concurrent fetches via in-flight Promise
   if (!_contactsFetch) {
-    _contactsFetch = fetchAll<ContactFields>(TABLES.contacts)
-      .then(records => {
-        _contactsCache = records.map(mapContact)
-        _contactsCacheTime = Date.now()
-        _contactsFetch = null
-        return _contactsCache
-      })
-      .catch(err => { _contactsFetch = null; throw err })
+    _contactsFetch = supabase.from('contacts').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _contactsCache = await enrichContactJunctions(data ?? [])
+      _contactsCacheTime = Date.now()
+      _contactsFetch = null
+      return _contactsCache
+    })
   }
   return _contactsFetch.then(all => categoryId ? all.filter(c => c.category_ids.includes(categoryId)) : all)
 }
@@ -492,59 +300,46 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     DEMO_CONTACTS.push(c)
     return c
   }
-  const r = await request<AirtableRecord<ContactFields>>(TABLES.contacts, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Name: data.name,
-        Email: data.email ?? undefined,
-        Phone: data.phone ?? undefined,
-        Company: data.company ?? undefined,
-        Role: data.role ?? undefined,
-        Location: data.location ?? undefined,
-        Website: data.website ?? undefined,
-        Notes: data.notes ?? undefined,
-        'Recommended By': data.recommended_by ?? undefined,
-        Specialization: data.specialization ?? undefined,
-        'Past Clients': data.past_clients ?? undefined,
-        Birthday: data.birthday ?? undefined,
-        Milestones: data.milestones ?? undefined,
-        Interests: data.interests ?? undefined,
-        'Relationship Context': data.relationship_context ?? undefined,
-        'Last Contacted': data.last_contacted_at ?? undefined,
-        Lists: data.list_ids.length ? data.list_ids : undefined,
-        Categories: data.category_ids.length ? data.category_ids : undefined,
-        'First Name': data.first_name ?? undefined,
-        'Last Name': data.last_name ?? undefined,
-        LinkedIn: data.linkedin ?? undefined,
-        Country: data.country ?? undefined,
-        'Global Region': data.global_region ?? undefined,
-        Gender: data.gender ?? undefined,
-        'Introduced By': data.introduced_by ?? undefined,
-        'Intel / Notes': data.intel_notes ?? undefined,
-        'Relationship Owner': data.relationship_owner ?? undefined,
-        'Contact Frequency': data.contact_frequency ?? undefined,
-        'Next Follow-Up Date': data.next_follow_up_date ?? undefined,
-        'Next Action': data.next_action ?? undefined,
-        'KV Fund Investor': data.kv_fund_investor ?? undefined,
-        'SPV Investor': data.spv_investor ?? undefined,
-        'Needs Review': data.needs_review || undefined,
-        Type: data.type ?? 'Contact',
-        Status: data.status ?? 'Active',
-        'Company Record': data.company_record_id ? [data.company_record_id] : undefined,
-        Industry: data.industry ?? undefined,
-        Stage: data.stage ?? undefined,
-        Ticker: data.ticker ?? undefined,
-        Domain: data.domain ?? undefined,
-        'Primary Pod': data.primary_list_id ?? undefined,
-        'Cadence Override': data.cadence_override ?? undefined,
-        ...(data.email_2 ? { 'Email 2': data.email_2 } : {}),
-        ...(data.email_3 ? { 'Email 3': data.email_3 } : {}),
-      },
-    }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('contacts').insert({
+    user_id: userId,
+    name: data.name,
+    email: data.email, phone: data.phone, company: data.company, role: data.role,
+    location: data.location, website: data.website, notes: data.notes,
+    recommended_by: data.recommended_by, specialization: data.specialization,
+    past_clients: data.past_clients, birthday: data.birthday, milestones: data.milestones,
+    interests: data.interests, relationship_context: data.relationship_context,
+    last_contacted_at: data.last_contacted_at,
+    first_name: data.first_name, last_name: data.last_name, linkedin: data.linkedin,
+    country: data.country, global_region: data.global_region, gender: data.gender,
+    introduced_by: data.introduced_by, intel_notes: data.intel_notes,
+    relationship_owner: data.relationship_owner, contact_frequency: data.contact_frequency,
+    next_follow_up_date: data.next_follow_up_date, next_action: data.next_action,
+    kv_fund_investor: data.kv_fund_investor, spv_investor: data.spv_investor,
+    needs_review: data.needs_review, type: data.type, status: data.status,
+    company_id: data.company_record_id, industry: data.industry, stage: data.stage,
+    ticker: data.ticker, domain: data.domain, cadence_override: data.cadence_override,
+    email_2: data.email_2, email_3: data.email_3, custom_fields: data.custom_fields ?? {},
+  }).select().single()
+  if (error) throw error
+
+  // Create junction records for pods and categories
+  if (data.list_ids.length) {
+    await supabase.from('contact_pods').insert(
+      data.list_ids.map((pod_id, i) => ({
+        user_id: userId, contact_id: row.id, pod_id,
+        is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
+      }))
+    )
+  }
+  if (data.category_ids.length) {
+    await supabase.from('contact_categories').insert(
+      data.category_ids.map(category_id => ({ user_id: userId, contact_id: row.id, category_id }))
+    )
+  }
+
   _contactsCache = null
-  return mapContact(r)
+  return mapContact(row, { pod_ids: data.list_ids, primary: data.primary_list_id }, data.category_ids)
 }
 
 export async function updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
@@ -554,62 +349,65 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     Object.assign(DEMO_CONTACTS[idx], data)
     return DEMO_CONTACTS[idx]
   }
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.email !== undefined) fields.Email = data.email
-  if (data.phone !== undefined) fields.Phone = data.phone
-  if (data.company !== undefined) fields.Company = data.company
-  if (data.role !== undefined) fields.Role = data.role
-  if (data.location !== undefined) fields.Location = data.location
-  if (data.website !== undefined) fields.Website = data.website
-  if (data.notes !== undefined) fields.Notes = data.notes
-  if (data.recommended_by !== undefined) fields['Recommended By'] = data.recommended_by
-  if (data.specialization !== undefined) fields.Specialization = data.specialization
-  if (data.past_clients !== undefined) fields['Past Clients'] = data.past_clients
-  if (data.birthday !== undefined) fields.Birthday = data.birthday
-  if (data.milestones !== undefined) fields.Milestones = data.milestones
-  if (data.interests !== undefined) fields.Interests = data.interests
-  if (data.relationship_context !== undefined) fields['Relationship Context'] = data.relationship_context
-  if (data.last_contacted_at !== undefined) fields['Last Contacted'] = data.last_contacted_at
-  if (data.list_ids !== undefined) fields.Lists = data.list_ids
-  if (data.category_ids !== undefined) fields.Categories = data.category_ids
-  if (data.first_name !== undefined) fields['First Name'] = data.first_name
-  if (data.last_name !== undefined) fields['Last Name'] = data.last_name
-  if (data.linkedin !== undefined) fields.LinkedIn = data.linkedin
-  if (data.country !== undefined) fields.Country = data.country
-  if (data.global_region !== undefined) fields['Global Region'] = data.global_region
-  if (data.gender !== undefined) fields.Gender = data.gender
-  if (data.introduced_by !== undefined) fields['Introduced By'] = data.introduced_by
-  if (data.intel_notes !== undefined) fields['Intel / Notes'] = data.intel_notes
-  if (data.relationship_owner !== undefined) fields['Relationship Owner'] = data.relationship_owner
-  if (data.contact_frequency !== undefined) fields['Contact Frequency'] = data.contact_frequency
-  if (data.next_follow_up_date !== undefined) fields['Next Follow-Up Date'] = data.next_follow_up_date
-  if (data.next_action !== undefined) fields['Next Action'] = data.next_action
-  if (data.kv_fund_investor !== undefined) fields['KV Fund Investor'] = data.kv_fund_investor
-  if (data.spv_investor !== undefined) fields['SPV Investor'] = data.spv_investor
-  if (data.needs_review !== undefined) fields['Needs Review'] = data.needs_review
-  if (data.type !== undefined) fields.Type = data.type
-  if (data.status !== undefined) fields.Status = data.status
-  if (data.company_record_id !== undefined) fields['Company Record'] = data.company_record_id ? [data.company_record_id] : []
-  if (data.industry !== undefined) fields.Industry = data.industry
-  if (data.stage !== undefined) fields.Stage = data.stage
-  if (data.ticker !== undefined) fields.Ticker = data.ticker
-  if (data.domain !== undefined) fields.Domain = data.domain
-  if (data.primary_list_id !== undefined) fields['Primary Pod'] = data.primary_list_id
-  if (data.cadence_override !== undefined) fields['Cadence Override'] = data.cadence_override
-  if (data.email_2 !== undefined) fields['Email 2'] = data.email_2
-  if (data.email_3 !== undefined) fields['Email 3'] = data.email_3
-  if (data.custom_fields !== undefined) {
-    for (const [key, value] of Object.entries(data.custom_fields)) {
-      fields[key] = value
+
+  // Build update payload - only include fields that are in the contacts table
+  const update: Record<string, unknown> = {}
+  const directFields = [
+    'name', 'email', 'phone', 'company', 'role', 'location', 'website', 'notes',
+    'recommended_by', 'specialization', 'past_clients', 'birthday', 'milestones',
+    'interests', 'relationship_context', 'last_contacted_at', 'first_name', 'last_name',
+    'linkedin', 'country', 'global_region', 'gender', 'introduced_by', 'intel_notes',
+    'relationship_owner', 'contact_frequency', 'next_follow_up_date', 'next_action',
+    'kv_fund_investor', 'spv_investor', 'needs_review', 'type', 'status',
+    'industry', 'stage', 'ticker', 'domain', 'cadence_override', 'email_2', 'email_3',
+    'custom_fields',
+  ] as const
+
+  for (const key of directFields) {
+    if ((data as any)[key] !== undefined) update[key] = (data as any)[key]
+  }
+  if (data.company_record_id !== undefined) update.company_id = data.company_record_id
+
+  const { data: row, error } = await supabase.from('contacts').update(update).eq('id', id).select().single()
+  if (error) throw error
+
+  // Handle junction updates for list_ids
+  if (data.list_ids !== undefined) {
+    const userId = await getUserId()
+    await supabase.from('contact_pods').delete().eq('contact_id', id)
+    if (data.list_ids.length) {
+      await supabase.from('contact_pods').insert(
+        data.list_ids.map((pod_id, i) => ({
+          user_id: userId, contact_id: id, pod_id,
+          is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
+        }))
+      )
     }
   }
 
-  const r = await request<AirtableRecord<ContactFields>>(`${TABLES.contacts}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
-  const updated = mapContact(r)
+  // Handle junction updates for category_ids
+  if (data.category_ids !== undefined) {
+    const userId = await getUserId()
+    await supabase.from('contact_categories').delete().eq('contact_id', id)
+    if (data.category_ids.length) {
+      await supabase.from('contact_categories').insert(
+        data.category_ids.map(category_id => ({ user_id: userId, contact_id: id, category_id }))
+      )
+    }
+  }
+
+  // Re-fetch junction data for the updated contact
+  const [podJ, catJ] = await Promise.all([
+    supabase.from('contact_pods').select('pod_id, is_primary').eq('contact_id', id),
+    supabase.from('contact_categories').select('category_id').eq('contact_id', id),
+  ])
+  const podInfo = {
+    pod_ids: (podJ.data ?? []).map(j => j.pod_id),
+    primary: (podJ.data ?? []).find(j => j.is_primary)?.pod_id ?? null,
+  }
+  const catIds = (catJ.data ?? []).map(j => j.category_id)
+
+  const updated = mapContact(row, podInfo, catIds)
   if (_contactsCache) {
     const idx = _contactsCache.findIndex(c => c.id === id)
     if (idx !== -1) _contactsCache[idx] = updated
@@ -624,32 +422,29 @@ export async function deleteContact(id: string): Promise<void> {
     if (idx !== -1) DEMO_CONTACTS.splice(idx, 1)
     return
   }
-  await request(`${TABLES.contacts}/${id}`, { method: 'DELETE' })
+  // Junction rows cascade-deleted via FK
+  await supabase.from('contacts').delete().eq('id', id)
   if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
 }
 
 // ── Interactions ─────────────────────────────────────────────────────────────
 
-function mapInteraction(r: AirtableRecord<InteractionFields>): Interaction | null {
-  const contact_id = r.fields.Contact?.[0]
-  if (!contact_id) return null
+function mapInteraction(r: any): Interaction {
   return {
     id: r.id,
-    contact_id,
-    type: (r.fields.Type as string) === 'event' ? 'meeting' : (r.fields.Type?.toLowerCase() as InteractionType ?? 'note'),
-    date: r.fields.Date ?? r.createdTime,
-    notes: r.fields.Notes ?? null,
-    summary: r.fields.Summary ?? null,
-    source: (r.fields.Source as InteractionSource) ?? null,
-    email_link: r.fields['Email Link'] ?? null,
-    granola_link: r.fields['Granola Link'] ?? null,
-    event_detail: r.fields['Event Detail'] ?? null,
-    actor: r.fields['Actor'] ?? null,
-    created_at: r.createdTime,
+    contact_id: r.contact_id,
+    type: r.type as InteractionType,
+    date: r.date,
+    notes: r.notes ?? null,
+    summary: r.summary ?? null,
+    source: r.source ?? null,
+    email_link: r.email_link ?? null,
+    granola_link: r.granola_link ?? null,
+    event_detail: r.event_detail ?? null,
+    actor: r.actor ?? null,
+    created_at: r.created_at,
   }
 }
-
-// ── All interactions cache (90-day window for dashboard scoring) ─────────────
 
 let _interactionsCache: Interaction[] | null = null
 let _interactionsCacheTime = 0
@@ -658,94 +453,76 @@ let _interactionsFetch: Promise<Interaction[]> | null = null
 export function getAllInteractions(): Promise<Interaction[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_INTERACTIONS)
   const isExpired = !_interactionsCache || Date.now() - _interactionsCacheTime > CACHE_TTL
-  const isFresh = _interactionsCache && !isExpired
-
-  if (isFresh) return Promise.resolve(_interactionsCache!)
+  if (_interactionsCache && !isExpired) return Promise.resolve(_interactionsCache!)
 
   if (_interactionsCache && isExpired && !_interactionsFetch) {
     const stale = _interactionsCache
-    _interactionsFetch = fetchAll<InteractionFields>(TABLES.interactions, {
-      filterByFormula: `IS_AFTER({Date}, DATEADD(TODAY(), -90, 'days'))`,
-      'sort[0][field]': 'Date',
-      'sort[0][direction]': 'desc',
-    })
-      .then(records => {
-        _interactionsCache = records.flatMap(r => mapInteraction(r) ?? [])
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 90)
+    _interactionsFetch = supabase.from('interactions').select('*')
+      .gte('date', cutoff.toISOString().split('T')[0])
+      .order('date', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) throw error
+        _interactionsCache = (data ?? []).map(mapInteraction)
         _interactionsCacheTime = Date.now()
         _interactionsFetch = null
         return _interactionsCache
       })
-      .catch(err => { _interactionsFetch = null; throw err })
     return Promise.resolve(stale)
   }
 
   if (!_interactionsFetch) {
-    _interactionsFetch = fetchAll<InteractionFields>(TABLES.interactions, {
-      filterByFormula: `IS_AFTER({Date}, DATEADD(TODAY(), -90, 'days'))`,
-      'sort[0][field]': 'Date',
-      'sort[0][direction]': 'desc',
-    })
-      .then(records => {
-        _interactionsCache = records.flatMap(r => mapInteraction(r) ?? [])
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 90)
+    _interactionsFetch = supabase.from('interactions').select('*')
+      .gte('date', cutoff.toISOString().split('T')[0])
+      .order('date', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) throw error
+        _interactionsCache = (data ?? []).map(mapInteraction)
         _interactionsCacheTime = Date.now()
         _interactionsFetch = null
         return _interactionsCache
       })
-      .catch(err => { _interactionsFetch = null; throw err })
   }
   return _interactionsFetch
 }
 
-export function invalidateInteractionsCache(): void {
-  _interactionsCache = null
-}
-
-export function invalidateContactsCache(): void {
-  _contactsCache = null
-}
-
-// ── Per-contact interactions (unchanged — used by InteractionSection) ────────
+export function invalidateInteractionsCache(): void { _interactionsCache = null }
+export function invalidateContactsCache(): void { _contactsCache = null }
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
   if (isDemoMode()) return DEMO_INTERACTIONS.filter(i => i.contact_id === contactId)
-  if (!/^rec[A-Za-z0-9]{14}$/.test(contactId)) throw new Error('Invalid contact ID')
-  const records = await fetchAll<InteractionFields>(TABLES.interactions, {
-    filterByFormula: `FIND("${contactId},", ARRAYJOIN({Contact}, ","))`,
-    'sort[0][field]': 'Date',
-    'sort[0][direction]': 'desc',
-  })
-  return records.flatMap(r => mapInteraction(r) ?? [])
+  const { data, error } = await supabase.from('interactions').select('*')
+    .eq('contact_id', contactId)
+    .order('date', { ascending: false })
+  if (error) throw error
+  return (data ?? []).map(mapInteraction)
 }
 
 export async function createInteraction(data: Omit<Interaction, 'id' | 'created_at'>): Promise<Interaction> {
   if (isDemoMode()) {
-    const interaction: Interaction = {
-      ...data,
-      id: `demo-int-${Date.now()}`,
-      created_at: new Date().toISOString(),
-    }
+    const interaction: Interaction = { ...data, id: `demo-int-${Date.now()}`, created_at: new Date().toISOString() }
     DEMO_INTERACTIONS.unshift(interaction)
     return interaction
   }
-  const r = await request<AirtableRecord<InteractionFields>>(TABLES.interactions, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Contact: [data.contact_id],
-        Type: data.type,
-        Date: data.date,
-        Notes: data.notes ?? undefined,
-        Summary: data.summary ?? undefined,
-        Source: data.source ?? undefined,
-        'Email Link': data.email_link ?? undefined,
-        'Granola Link': data.granola_link ?? undefined,
-        'Event Detail': data.event_detail ?? undefined,
-        'Actor': data.actor ?? undefined,
-      },
-    }),
-  })
-  const mapped = mapInteraction(r)
-  if (!mapped) throw new Error('Created interaction missing Contact link')
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('interactions').insert({
+    user_id: userId,
+    contact_id: data.contact_id,
+    type: data.type,
+    date: data.date,
+    notes: data.notes,
+    summary: data.summary,
+    source: data.source,
+    email_link: data.email_link,
+    granola_link: data.granola_link,
+    event_detail: data.event_detail,
+    actor: data.actor,
+  }).select().single()
+  if (error) throw error
+  const mapped = mapInteraction(row)
   if (_interactionsCache) _interactionsCache.unshift(mapped)
   return mapped
 }
@@ -760,17 +537,9 @@ export async function updateInteraction(
     Object.assign(DEMO_INTERACTIONS[idx], data)
     return DEMO_INTERACTIONS[idx]
   }
-  const fields: Record<string, unknown> = {}
-  if (data.type !== undefined) fields.Type = data.type
-  if (data.date !== undefined) fields.Date = data.date
-  if (data.notes !== undefined) fields.Notes = data.notes ?? undefined
-  const r = await request<AirtableRecord<InteractionFields>>(`${TABLES.interactions}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
-  const mapped = mapInteraction(r)
-  if (!mapped) throw new Error('Updated interaction missing Contact link')
-  return mapped
+  const { data: row, error } = await supabase.from('interactions').update(data).eq('id', id).select().single()
+  if (error) throw error
+  return mapInteraction(row)
 }
 
 export async function deleteInteraction(id: string): Promise<void> {
@@ -779,17 +548,16 @@ export async function deleteInteraction(id: string): Promise<void> {
     if (idx !== -1) DEMO_INTERACTIONS.splice(idx, 1)
     return
   }
-  await request(`${TABLES.interactions}/${id}`, { method: 'DELETE' })
+  await supabase.from('interactions').delete().eq('id', id)
   if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
 }
 
 export async function getRecentInteractions(limit: number): Promise<Interaction[]> {
-  const records = await fetchAll<InteractionFields>(TABLES.interactions, {
-    'sort[0][field]': 'Date',
-    'sort[0][direction]': 'desc',
-    maxRecords: String(limit),
-  })
-  return records.flatMap(r => mapInteraction(r) ?? [])
+  if (isDemoMode()) return DEMO_INTERACTIONS.slice(0, limit)
+  const { data, error } = await supabase.from('interactions').select('*')
+    .order('date', { ascending: false }).limit(limit)
+  if (error) throw error
+  return (data ?? []).map(mapInteraction)
 }
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────
@@ -818,47 +586,39 @@ export async function getOverdueContacts(podId: string, cadence: Cadence = 'mont
   return contacts.filter(c => c.list_ids.includes(podId) && isOverdue(c, cadence))
 }
 
-// ── Interaction side-effect: update last_contacted_at ────────────────────────
-
 export async function logInteraction(
   contactId: string,
   data: Omit<Interaction, 'id' | 'created_at' | 'contact_id'>
 ): Promise<Interaction> {
   const interaction = await createInteraction({ ...data, contact_id: contactId })
-
-  // Update last_contacted_at for all types except internal notes
   if (data.type !== 'note') {
     await updateContact(contactId, { last_contacted_at: data.date })
   }
-
   return interaction
 }
 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
-function mapCampaign(r: AirtableRecord<CampaignFields>): Campaign {
+function mapCampaign(r: any, contactIds: string[] = []): Campaign {
   return {
     id: r.id,
-    name: r.fields.Name,
-    type: r.fields.Type ?? 'other',
-    deadline: r.fields.Deadline ?? null,
-    status: r.fields.Status ?? 'active',
-    contact_ids: [],  // populated separately from junction
-    created_at: r.createdTime,
+    name: r.name,
+    type: r.type ?? 'other',
+    deadline: r.deadline ?? null,
+    status: r.status ?? 'active',
+    contact_ids: contactIds,
+    created_at: r.created_at,
   }
 }
 
-function mapCampaignContact(r: AirtableRecord<CampaignContactFields>): CampaignContact | null {
-  const campaignId = r.fields.Campaign?.[0]
-  const contactId = r.fields.Contact?.[0]
-  if (!campaignId || !contactId) return null
+function mapCampaignContact(r: any): CampaignContact {
   return {
     id: r.id,
-    campaign_id: campaignId,
-    contact_id: contactId,
-    status: r.fields.Status ?? 'pending',
-    notes: r.fields.Notes ?? null,
-    created_at: r.createdTime,
+    campaign_id: r.campaign_id,
+    contact_id: r.contact_id,
+    status: r.status ?? 'pending',
+    notes: r.notes ?? null,
+    created_at: r.created_at,
   }
 }
 
@@ -867,96 +627,61 @@ let _campaignsCacheTime = 0
 let _campaignsFetch: Promise<Campaign[]> | null = null
 let _campaignContactsCache: CampaignContact[] | null = null
 
-export function invalidateCampaignsCache(): void {
-  _campaignsCache = null
-  _campaignContactsCache = null
-}
+export function invalidateCampaignsCache(): void { _campaignsCache = null; _campaignContactsCache = null }
 
 export async function getCampaigns(): Promise<Campaign[]> {
   if (isDemoMode()) return DEMO_CAMPAIGNS.filter(c => c.status === 'active' || c.status === 'completed')
   const isExpired = !_campaignsCache || Date.now() - _campaignsCacheTime > CACHE_TTL
-  const isFresh = _campaignsCache && !isExpired
+  if (_campaignsCache && !isExpired) return Promise.resolve(_campaignsCache!)
 
-  if (isFresh) return Promise.resolve(_campaignsCache!)
-
-  // Stale-while-revalidate: return stale immediately, refresh in background
   if (_campaignsCache && isExpired && !_campaignsFetch) {
     const stale = _campaignsCache
-    _campaignsFetch = fetchAll<CampaignFields>(TABLES.campaigns)
-      .then(async records => {
-        const campaigns = records.map(mapCampaign)
-        const ccRecords = await fetchAll<CampaignContactFields>(TABLES.campaignContacts)
-        const contacts = ccRecords.flatMap(r => mapCampaignContact(r) ?? [])
-        _campaignContactsCache = contacts
-        for (const cc of contacts) {
-          const campaign = campaigns.find(c => c.id === cc.campaign_id)
-          if (campaign && !campaign.contact_ids.includes(cc.contact_id)) {
-            campaign.contact_ids.push(cc.contact_id)
-          }
-        }
-        _campaignsCache = campaigns
-        _campaignsCacheTime = Date.now()
-        _campaignsFetch = null
-        return _campaignsCache
-      })
-      .catch(err => { _campaignsFetch = null; throw err })
+    _campaignsFetch = _fetchCampaigns()
     return Promise.resolve(stale)
   }
-
-  // Cold cache — deduplicate concurrent fetches via in-flight Promise
-  if (!_campaignsFetch) {
-    _campaignsFetch = fetchAll<CampaignFields>(TABLES.campaigns)
-      .then(async records => {
-        const campaigns = records.map(mapCampaign)
-        const ccRecords = await fetchAll<CampaignContactFields>(TABLES.campaignContacts)
-        const contacts = ccRecords.flatMap(r => mapCampaignContact(r) ?? [])
-        _campaignContactsCache = contacts
-        for (const cc of contacts) {
-          const campaign = campaigns.find(c => c.id === cc.campaign_id)
-          if (campaign && !campaign.contact_ids.includes(cc.contact_id)) {
-            campaign.contact_ids.push(cc.contact_id)
-          }
-        }
-        _campaignsCache = campaigns
-        _campaignsCacheTime = Date.now()
-        _campaignsFetch = null
-        return _campaignsCache
-      })
-      .catch(err => { _campaignsFetch = null; throw err })
-  }
+  if (!_campaignsFetch) _campaignsFetch = _fetchCampaigns()
   return _campaignsFetch
+}
+
+async function _fetchCampaigns(): Promise<Campaign[]> {
+  const [campRes, ccRes] = await Promise.all([
+    supabase.from('campaigns').select('*'),
+    supabase.from('campaign_contacts').select('*'),
+  ])
+  if (campRes.error) throw campRes.error
+  const contacts = (ccRes.data ?? []).map(mapCampaignContact)
+  _campaignContactsCache = contacts
+
+  const campaigns = (campRes.data ?? []).map(r => {
+    const ids = contacts.filter(cc => cc.campaign_id === r.id).map(cc => cc.contact_id)
+    return mapCampaign(r, [...new Set(ids)])
+  })
+  _campaignsCache = campaigns
+  _campaignsCacheTime = Date.now()
+  _campaignsFetch = null
+  return campaigns
 }
 
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
   if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.campaign_id === campaignId)
-  if (_campaignContactsCache) {
-    return _campaignContactsCache.filter(cc => cc.campaign_id === campaignId)
-  }
-  // Ensure full cache is populated via getCampaigns which sets _campaignContactsCache
+  // Ensure cache is populated
   await getCampaigns()
-  const cache: CampaignContact[] = _campaignContactsCache ?? []
-  return cache.filter(cc => cc.campaign_id === campaignId)
+  return (_campaignContactsCache ?? []).filter(cc => cc.campaign_id === campaignId)
 }
 
-export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string }): Promise<Campaign> {
+export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-campaign-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', contact_ids: [], created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', contact_ids: [], created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
-  const r = await request<AirtableRecord<CampaignFields>>(TABLES.campaigns, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Name: data.name,
-        Type: data.type,
-        Status: 'active' as CampaignStatus,
-        Deadline: data.deadline ?? undefined,
-      },
-    }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('campaigns').insert({
+    user_id: userId, name: data.name, type: data.type, deadline: data.deadline ?? null,
+  }).select().single()
+  if (error) throw error
   _campaignsCache = null
-  return mapCampaign(r)
+  return mapCampaign(row)
 }
 
 export async function addContactToCampaign(campaignId: string, contactId: string): Promise<CampaignContact> {
@@ -967,21 +692,13 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
     return cc
   }
-  const r = await request<AirtableRecord<CampaignContactFields>>(TABLES.campaignContacts, {
-    method: 'POST',
-    body: JSON.stringify({
-      fields: {
-        Campaign: [campaignId],
-        Contact: [contactId],
-        Status: 'pending' as CampaignContactStatus,
-      },
-    }),
-  })
-  const mapped = mapCampaignContact(r)
-  if (!mapped) throw new Error('Created campaign contact missing links')
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('campaign_contacts').insert({
+    user_id: userId, campaign_id: campaignId, contact_id: contactId,
+  }).select().single()
+  if (error) throw error
   _campaignsCache = null
-  _campaignContactsCache = null
-  return mapped
+  return mapCampaignContact(row)
 }
 
 export async function updateCampaignContactStatus(id: string, status: CampaignContactStatus): Promise<CampaignContact> {
@@ -990,18 +707,13 @@ export async function updateCampaignContactStatus(id: string, status: CampaignCo
     if (cc) cc.status = status
     return cc ?? { id, campaign_id: '', contact_id: '', status, notes: null, created_at: '' }
   }
-  const r = await request<AirtableRecord<CampaignContactFields>>(`${TABLES.campaignContacts}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Status: status } }),
-  })
-  const mapped = mapCampaignContact(r)
-  if (!mapped) throw new Error('Updated campaign contact missing links')
-  // Optimistic update in cache
+  const { data: row, error } = await supabase.from('campaign_contacts').update({ status }).eq('id', id).select().single()
+  if (error) throw error
   if (_campaignContactsCache) {
     const idx = _campaignContactsCache.findIndex(cc => cc.id === id)
-    if (idx !== -1) _campaignContactsCache[idx] = mapped
+    if (idx !== -1) _campaignContactsCache[idx] = mapCampaignContact(row)
   }
-  return mapped
+  return mapCampaignContact(row)
 }
 
 export async function completeCampaign(id: string): Promise<Campaign> {
@@ -1010,67 +722,52 @@ export async function completeCampaign(id: string): Promise<Campaign> {
     if (c) c.status = 'completed'
     return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', contact_ids: [], created_at: '' }
   }
-  const r = await request<AirtableRecord<CampaignFields>>(`${TABLES.campaigns}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Status: 'completed' as CampaignStatus } }),
-  })
-  const mapped = mapCampaign(r)
-  // Optimistic update in cache
+  const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as CampaignStatus }).eq('id', id).select().single()
+  if (error) throw error
   if (_campaignsCache) {
     const idx = _campaignsCache.findIndex(c => c.id === id)
     if (idx !== -1) _campaignsCache[idx] = { ..._campaignsCache[idx], status: 'completed' }
   }
-  return mapped
+  return mapCampaign(row)
 }
 
 // ── Pipelines ─────────────────────────────────────────────────────────────────
 
-function mapPipeline(r: AirtableRecord<PipelineFields>): Pipeline {
-  return {
-    id: r.id,
-    name: r.fields.Name,
-    status: (r.fields['Pipeline Status'] ?? 'active') as PipelineStatus,
-    created_at: r.createdTime,
-  }
+function mapPipeline(r: any): Pipeline {
+  return { id: r.id, name: r.name, status: r.status ?? 'active', created_at: r.created_at }
 }
 
 let _pipelinesCache: Pipeline[] | null = null
 let _pipelinesCacheTime = 0
 let _pipelinesFetch: Promise<Pipeline[]> | null = null
 
-export function invalidatePipelinesCache(): void {
-  _pipelinesCache = null
-}
+export function invalidatePipelinesCache(): void { _pipelinesCache = null }
 
 export function getPipelines(): Promise<Pipeline[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_PIPELINES)
   const isExpired = !_pipelinesCache || Date.now() - _pipelinesCacheTime > CACHE_TTL
-  const isFresh = _pipelinesCache && !isExpired
-
-  if (isFresh) return Promise.resolve(_pipelinesCache!)
+  if (_pipelinesCache && !isExpired) return Promise.resolve(_pipelinesCache!)
 
   if (_pipelinesCache && isExpired && !_pipelinesFetch) {
     const stale = _pipelinesCache
-    _pipelinesFetch = fetchAll<PipelineFields>(TABLES.pipelines)
-      .then(records => {
-        _pipelinesCache = records.map(mapPipeline)
-        _pipelinesCacheTime = Date.now()
-        _pipelinesFetch = null
-        return _pipelinesCache
-      })
-      .catch(err => { _pipelinesFetch = null; throw err })
+    _pipelinesFetch = supabase.from('pipelines').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _pipelinesCache = (data ?? []).map(mapPipeline)
+      _pipelinesCacheTime = Date.now()
+      _pipelinesFetch = null
+      return _pipelinesCache
+    })
     return Promise.resolve(stale)
   }
 
   if (!_pipelinesFetch) {
-    _pipelinesFetch = fetchAll<PipelineFields>(TABLES.pipelines)
-      .then(records => {
-        _pipelinesCache = records.map(mapPipeline)
-        _pipelinesCacheTime = Date.now()
-        _pipelinesFetch = null
-        return _pipelinesCache
-      })
-      .catch(err => { _pipelinesFetch = null; throw err })
+    _pipelinesFetch = supabase.from('pipelines').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _pipelinesCache = (data ?? []).map(mapPipeline)
+      _pipelinesCacheTime = Date.now()
+      _pipelinesFetch = null
+      return _pipelinesCache
+    })
   }
   return _pipelinesFetch
 }
@@ -1081,41 +778,31 @@ export async function createPipeline(name: string): Promise<Pipeline> {
     DEMO_PIPELINES.push(p)
     return p
   }
-  const r = await request<AirtableRecord<PipelineFields>>(TABLES.pipelines, {
-    method: 'POST',
-    body: JSON.stringify({ fields: { Name: name, 'Pipeline Status': 'active' } }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, name }).select().single()
+  if (error) throw error
   _pipelinesCache = null
-  return mapPipeline(r)
+  return mapPipeline(row)
 }
 
 export async function updatePipeline(id: string, data: Partial<Pick<Pipeline, 'name' | 'status'>>): Promise<Pipeline> {
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.status !== undefined) fields['Pipeline Status'] = data.status
   if (isDemoMode()) {
     const idx = DEMO_PIPELINES.findIndex(p => p.id === id)
     if (idx >= 0) Object.assign(DEMO_PIPELINES[idx], data)
     return DEMO_PIPELINES[idx]
   }
-  const r = await request<AirtableRecord<PipelineFields>>(`${TABLES.pipelines}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
+  const { data: row, error } = await supabase.from('pipelines').update(data).eq('id', id).select().single()
+  if (error) throw error
   _pipelinesCache = null
-  return mapPipeline(r)
+  return mapPipeline(row)
 }
 
 // ── Pipeline Stages ───────────────────────────────────────────────────────────
 
-function mapPipelineStage(r: AirtableRecord<PipelineStageFields>): PipelineStage {
+function mapPipelineStage(r: any): PipelineStage {
   return {
-    id: r.id,
-    pipeline_id: r.fields.Pipeline?.[0] ?? '',
-    name: r.fields.Name,
-    color: (r.fields.Color ?? null) as import('./types').HexColor | null,
-    order: r.fields.Order ?? 0,
-    created_at: r.createdTime,
+    id: r.id, pipeline_id: r.pipeline_id, name: r.name,
+    color: (r.color ?? null) as HexColor | null, order: r.order ?? 0, created_at: r.created_at,
   }
 }
 
@@ -1123,130 +810,117 @@ let _pipelineStagesCache: PipelineStage[] | null = null
 let _pipelineStagesCacheTime = 0
 let _pipelineStagesFetch: Promise<PipelineStage[]> | null = null
 
-export function invalidatePipelineStagesCache(): void {
-  _pipelineStagesCache = null
-  _pipelineStagesFetch = null
-}
+export function invalidatePipelineStagesCache(): void { _pipelineStagesCache = null; _pipelineStagesFetch = null }
 
 export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]> {
   if (isDemoMode()) return Promise.resolve(pipelineId ? DEMO_PIPELINE_STAGES.filter(s => s.pipeline_id === pipelineId) : DEMO_PIPELINE_STAGES)
   const isExpired = !_pipelineStagesCache || Date.now() - _pipelineStagesCacheTime > CACHE_TTL
-  const isFresh = _pipelineStagesCache && !isExpired
-
-  if (isFresh) {
+  if (_pipelineStagesCache && !isExpired) {
     return Promise.resolve(pipelineId ? _pipelineStagesCache!.filter(s => s.pipeline_id === pipelineId) : _pipelineStagesCache!)
   }
 
   if (_pipelineStagesCache && isExpired && !_pipelineStagesFetch) {
     const stale = _pipelineStagesCache
-    _pipelineStagesFetch = fetchAll<PipelineStageFields>(TABLES.pipelineStages)
-      .then(records => {
-        _pipelineStagesCache = records.map(mapPipelineStage)
-        _pipelineStagesCacheTime = Date.now()
-        _pipelineStagesFetch = null
-        return _pipelineStagesCache
-      })
-      .catch(err => { _pipelineStagesFetch = null; throw err })
+    _pipelineStagesFetch = supabase.from('pipeline_stages').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _pipelineStagesCache = (data ?? []).map(mapPipelineStage)
+      _pipelineStagesCacheTime = Date.now()
+      _pipelineStagesFetch = null
+      return _pipelineStagesCache
+    })
     return Promise.resolve(pipelineId ? stale.filter(s => s.pipeline_id === pipelineId) : stale)
   }
 
   if (!_pipelineStagesFetch) {
-    _pipelineStagesFetch = fetchAll<PipelineStageFields>(TABLES.pipelineStages)
-      .then(records => {
-        _pipelineStagesCache = records.map(mapPipelineStage)
-        _pipelineStagesCacheTime = Date.now()
-        _pipelineStagesFetch = null
-        return _pipelineStagesCache
-      })
-      .catch(err => { _pipelineStagesFetch = null; throw err })
+    _pipelineStagesFetch = supabase.from('pipeline_stages').select('*').then(({ data, error }) => {
+      if (error) throw error
+      _pipelineStagesCache = (data ?? []).map(mapPipelineStage)
+      _pipelineStagesCacheTime = Date.now()
+      _pipelineStagesFetch = null
+      return _pipelineStagesCache
+    })
   }
   return _pipelineStagesFetch.then(all => pipelineId ? all.filter(s => s.pipeline_id === pipelineId) : all)
 }
 
 export async function createPipelineStage(name: string, pipelineId: string, order: number, color?: string): Promise<PipelineStage> {
   if (isDemoMode()) {
-    const s: PipelineStage = { id: 'demo-stage-' + Date.now(), pipeline_id: pipelineId, name, color: (color ?? null) as import('./types').HexColor | null, order, created_at: new Date().toISOString() }
+    const s: PipelineStage = { id: 'demo-stage-' + Date.now(), pipeline_id: pipelineId, name, color: (color ?? null) as HexColor | null, order, created_at: new Date().toISOString() }
     DEMO_PIPELINE_STAGES.push(s)
     return s
   }
-  const r = await request<AirtableRecord<PipelineStageFields>>(TABLES.pipelineStages, {
-    method: 'POST',
-    body: JSON.stringify({ fields: { Name: name, Pipeline: [pipelineId], Order: order, ...(color ? { Color: color } : {}) } }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('pipeline_stages').insert({
+    user_id: userId, name, pipeline_id: pipelineId, order, color: color ?? null,
+  }).select().single()
+  if (error) throw error
   _pipelineStagesCache = null
-  return mapPipelineStage(r)
+  return mapPipelineStage(row)
 }
 
 export async function updatePipelineStage(id: string, data: Partial<Pick<PipelineStage, 'name' | 'color' | 'order'>>): Promise<PipelineStage> {
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.color !== undefined) fields.Color = data.color
-  if (data.order !== undefined) fields.Order = data.order
   if (isDemoMode()) {
     const idx = DEMO_PIPELINE_STAGES.findIndex(s => s.id === id)
     if (idx >= 0) Object.assign(DEMO_PIPELINE_STAGES[idx], data)
     return DEMO_PIPELINE_STAGES[idx]
   }
-  const r = await request<AirtableRecord<PipelineStageFields>>(`${TABLES.pipelineStages}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
+  const { data: row, error } = await supabase.from('pipeline_stages').update(data).eq('id', id).select().single()
+  if (error) throw error
   invalidatePipelineStagesCache()
-  return mapPipelineStage(r)
+  return mapPipelineStage(row)
 }
 
 // ── Opportunities ─────────────────────────────────────────────────────────────
 
-function mapOpportunity(r: AirtableRecord<OpportunityFields>): Opportunity {
-  return {
-    id: r.id,
-    name: r.fields.Name,
-    stage_id: r.fields.Stage?.[0] ?? '',
-    relationship_ids: r.fields.Relationships ?? [],
-    notes: r.fields.Notes ?? null,
-    priority: (r.fields.Priority ?? null) as OpportunityPriority | null,
-    status: (r.fields['Opportunity Status'] ?? 'open') as OpportunityStatus,
-    created_at: r.createdTime,
+async function enrichOpportunities(rows: any[]): Promise<Opportunity[]> {
+  if (rows.length === 0) return []
+  const oppIds = rows.map(r => r.id)
+  const { data: junctions } = await supabase.from('opportunity_contacts').select('opportunity_id, contact_id').in('opportunity_id', oppIds)
+  const relMap = new Map<string, string[]>()
+  for (const j of junctions ?? []) {
+    let arr = relMap.get(j.opportunity_id)
+    if (!arr) { arr = []; relMap.set(j.opportunity_id, arr) }
+    arr.push(j.contact_id)
   }
+  return rows.map(r => ({
+    id: r.id, name: r.name, stage_id: r.stage_id ?? '',
+    relationship_ids: relMap.get(r.id) ?? [],
+    notes: r.notes ?? null, priority: r.priority ?? null,
+    status: r.status ?? 'open', created_at: r.created_at,
+  }))
 }
 
 let _opportunitiesCache: Opportunity[] | null = null
 let _opportunitiesCacheTime = 0
 let _opportunitiesFetch: Promise<Opportunity[]> | null = null
 
-export function invalidateOpportunitiesCache(): void {
-  _opportunitiesCache = null
-}
+export function invalidateOpportunitiesCache(): void { _opportunitiesCache = null }
 
 export function getOpportunities(): Promise<Opportunity[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_OPPORTUNITIES)
   const isExpired = !_opportunitiesCache || Date.now() - _opportunitiesCacheTime > CACHE_TTL
-  const isFresh = _opportunitiesCache && !isExpired
-
-  if (isFresh) return Promise.resolve(_opportunitiesCache!)
+  if (_opportunitiesCache && !isExpired) return Promise.resolve(_opportunitiesCache!)
 
   if (_opportunitiesCache && isExpired && !_opportunitiesFetch) {
     const stale = _opportunitiesCache
-    _opportunitiesFetch = fetchAll<OpportunityFields>(TABLES.opportunities)
-      .then(records => {
-        _opportunitiesCache = records.map(mapOpportunity)
-        _opportunitiesCacheTime = Date.now()
-        _opportunitiesFetch = null
-        return _opportunitiesCache
-      })
-      .catch(err => { _opportunitiesFetch = null; throw err })
+    _opportunitiesFetch = supabase.from('opportunities').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _opportunitiesCache = await enrichOpportunities(data ?? [])
+      _opportunitiesCacheTime = Date.now()
+      _opportunitiesFetch = null
+      return _opportunitiesCache
+    })
     return Promise.resolve(stale)
   }
 
   if (!_opportunitiesFetch) {
-    _opportunitiesFetch = fetchAll<OpportunityFields>(TABLES.opportunities)
-      .then(records => {
-        _opportunitiesCache = records.map(mapOpportunity)
-        _opportunitiesCacheTime = Date.now()
-        _opportunitiesFetch = null
-        return _opportunitiesCache
-      })
-      .catch(err => { _opportunitiesFetch = null; throw err })
+    _opportunitiesFetch = supabase.from('opportunities').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _opportunitiesCache = await enrichOpportunities(data ?? [])
+      _opportunitiesCacheTime = Date.now()
+      _opportunitiesFetch = null
+      return _opportunitiesCache
+    })
   }
   return _opportunitiesFetch
 }
@@ -1257,86 +931,101 @@ export async function createOpportunity(name: string, stageId: string, relations
     DEMO_OPPORTUNITIES.push(o)
     return o
   }
-  const r = await request<AirtableRecord<OpportunityFields>>(TABLES.opportunities, {
-    method: 'POST',
-    body: JSON.stringify({ fields: { Name: name, Stage: [stageId], Relationships: relationshipIds, 'Opportunity Status': 'open' as OpportunityStatus } }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('opportunities').insert({
+    user_id: userId, name, stage_id: stageId,
+  }).select().single()
+  if (error) throw error
+
+  if (relationshipIds.length) {
+    await supabase.from('opportunity_contacts').insert(
+      relationshipIds.map(contact_id => ({ user_id: userId, opportunity_id: row.id, contact_id }))
+    )
+  }
+
   _opportunitiesCache = null
-  return mapOpportunity(r)
+  return { id: row.id, name: row.name, stage_id: row.stage_id ?? '', relationship_ids: relationshipIds, notes: null, priority: null, status: 'open', created_at: row.created_at }
 }
 
 export async function updateOpportunity(id: string, data: Partial<Pick<Opportunity, 'name' | 'stage_id' | 'notes' | 'priority' | 'status'>>): Promise<Opportunity> {
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.stage_id !== undefined) fields.Stage = [data.stage_id]
-  if (data.notes !== undefined) fields.Notes = data.notes
-  if (data.priority !== undefined) fields.Priority = data.priority
-  if (data.status !== undefined) fields['Opportunity Status'] = data.status
   if (isDemoMode()) {
     const idx = DEMO_OPPORTUNITIES.findIndex(o => o.id === id)
     if (idx >= 0) Object.assign(DEMO_OPPORTUNITIES[idx], data)
     return DEMO_OPPORTUNITIES[idx]
   }
-  const r = await request<AirtableRecord<OpportunityFields>>(`${TABLES.opportunities}/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
+  const { data: row, error } = await supabase.from('opportunities').update(data).eq('id', id).select().single()
+  if (error) throw error
   _opportunitiesCache = null
-  return mapOpportunity(r)
+  // Re-fetch relationship_ids
+  const { data: junctions } = await supabase.from('opportunity_contacts').select('contact_id').eq('opportunity_id', id)
+  return {
+    id: row.id, name: row.name, stage_id: row.stage_id ?? '',
+    relationship_ids: (junctions ?? []).map(j => j.contact_id),
+    notes: row.notes ?? null, priority: row.priority ?? null,
+    status: row.status ?? 'open', created_at: row.created_at,
+  }
 }
 
 // ── Projects ──────────────────────────────────────────────────────────────────
 
-function mapProject(r: AirtableRecord<ProjectFields>): Project {
-  return {
-    id: r.id,
-    name: r.fields.Name,
-    description: r.fields.Description ?? null,
-    owner: r.fields.Owner ?? null,
-    relationship_ids: r.fields.Relationships ?? [],
-    opportunity_ids: r.fields.Opportunities ?? [],
-    notes: r.fields.Notes ?? null,
-    created_at: r.createdTime,
+async function enrichProjects(rows: any[]): Promise<Project[]> {
+  if (rows.length === 0) return []
+  const projIds = rows.map(r => r.id)
+  const [pcRes, poRes] = await Promise.all([
+    supabase.from('project_contacts').select('project_id, contact_id').in('project_id', projIds),
+    supabase.from('project_opportunities').select('project_id, opportunity_id').in('project_id', projIds),
+  ])
+  const relMap = new Map<string, string[]>()
+  for (const j of pcRes.data ?? []) {
+    let arr = relMap.get(j.project_id)
+    if (!arr) { arr = []; relMap.set(j.project_id, arr) }
+    arr.push(j.contact_id)
   }
+  const oppMap = new Map<string, string[]>()
+  for (const j of poRes.data ?? []) {
+    let arr = oppMap.get(j.project_id)
+    if (!arr) { arr = []; oppMap.set(j.project_id, arr) }
+    arr.push(j.opportunity_id)
+  }
+  return rows.map(r => ({
+    id: r.id, name: r.name, description: r.description ?? null,
+    owner: r.owner ?? null, relationship_ids: relMap.get(r.id) ?? [],
+    opportunity_ids: oppMap.get(r.id) ?? [], notes: r.notes ?? null,
+    created_at: r.created_at,
+  }))
 }
 
 let _projectsCache: Project[] | null = null
 let _projectsCacheTime = 0
 let _projectsFetch: Promise<Project[]> | null = null
 
-export function invalidateProjectsCache(): void {
-  _projectsCache = null
-}
+export function invalidateProjectsCache(): void { _projectsCache = null }
 
 export function getProjects(): Promise<Project[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_PROJECTS)
   const isExpired = !_projectsCache || Date.now() - _projectsCacheTime > CACHE_TTL
-  const isFresh = _projectsCache && !isExpired
-
-  if (isFresh) return Promise.resolve(_projectsCache!)
+  if (_projectsCache && !isExpired) return Promise.resolve(_projectsCache!)
 
   if (_projectsCache && isExpired && !_projectsFetch) {
     const stale = _projectsCache
-    _projectsFetch = fetchAll<ProjectFields>(TABLES.projects)
-      .then(records => {
-        _projectsCache = records.map(mapProject)
-        _projectsCacheTime = Date.now()
-        _projectsFetch = null
-        return _projectsCache
-      })
-      .catch(err => { _projectsFetch = null; throw err })
+    _projectsFetch = supabase.from('projects').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _projectsCache = await enrichProjects(data ?? [])
+      _projectsCacheTime = Date.now()
+      _projectsFetch = null
+      return _projectsCache
+    })
     return Promise.resolve(stale)
   }
 
   if (!_projectsFetch) {
-    _projectsFetch = fetchAll<ProjectFields>(TABLES.projects)
-      .then(records => {
-        _projectsCache = records.map(mapProject)
-        _projectsCacheTime = Date.now()
-        _projectsFetch = null
-        return _projectsCache
-      })
-      .catch(err => { _projectsFetch = null; throw err })
+    _projectsFetch = supabase.from('projects').select('*').then(async ({ data, error }) => {
+      if (error) throw error
+      _projectsCache = await enrichProjects(data ?? [])
+      _projectsCacheTime = Date.now()
+      _projectsFetch = null
+      return _projectsCache
+    })
   }
   return _projectsFetch
 }
@@ -1347,12 +1036,13 @@ export async function createProject(name: string, description?: string): Promise
     DEMO_PROJECTS.push(p)
     return p
   }
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects, {
-    method: 'POST',
-    body: JSON.stringify({ fields: { Name: name, ...(description ? { Description: description } : {}) } }),
-  })
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('projects').insert({
+    user_id: userId, name, description: description ?? null,
+  }).select().single()
+  if (error) throw error
   _projectsCache = null
-  return mapProject(r)
+  return { id: row.id, name: row.name, description: row.description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: row.created_at }
 }
 
 export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'owner'>>): Promise<Project> {
@@ -1361,16 +1051,12 @@ export async function updateProject(id: string, data: Partial<Pick<Project, 'nam
     if (idx >= 0) Object.assign(DEMO_PROJECTS[idx], data)
     return DEMO_PROJECTS[idx]
   }
-  const fields: Record<string, unknown> = {}
-  if (data.name !== undefined) fields.Name = data.name
-  if (data.description !== undefined) fields.Description = data.description
-  if (data.owner !== undefined) fields.Owner = data.owner
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + id, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields }),
-  })
+  const { data: row, error } = await supabase.from('projects').update(data).eq('id', id).select().single()
+  if (error) throw error
   _projectsCache = null
-  return mapProject(r)
+  // Re-fetch junctions
+  const projects = await enrichProjects([row])
+  return projects[0]
 }
 
 export async function addRecordToProject(projectId: string, recordId: string): Promise<Project> {
@@ -1378,64 +1064,57 @@ export async function addRecordToProject(projectId: string, recordId: string): P
   const project = projects.find(p => p.id === projectId)
   if (!project) throw new Error('Project not found')
   if (project.relationship_ids.includes(recordId)) return project
+
   if (isDemoMode()) {
     project.relationship_ids.push(recordId)
     DEMO_INTERACTIONS.push({
-      id: 'demo-ix-proj-' + Date.now(),
-      contact_id: recordId,
-      type: 'project_event',
-      date: new Date().toISOString(),
-      notes: null,
-      summary: null,
-      source: null,
-      email_link: null,
-      granola_link: null,
+      id: 'demo-ix-proj-' + Date.now(), contact_id: recordId, type: 'project_event',
+      date: new Date().toISOString(), notes: null, summary: null, source: null,
+      email_link: null, granola_link: null,
       event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }),
-      actor: null,
-      created_at: new Date().toISOString(),
+      actor: null, created_at: new Date().toISOString(),
     })
     return project
   }
-  const updated = [...project.relationship_ids, recordId]
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Relationships: updated } }),
-  })
+
+  const userId = await getUserId()
+  await supabase.from('project_contacts').insert({ user_id: userId, project_id: projectId, contact_id: recordId })
   _projectsCache = null
-  await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }), actor: null })
-  return mapProject(r)
+  await createInteraction({
+    contact_id: recordId, type: 'project_event', date: new Date().toISOString(),
+    notes: null, summary: null, source: null, email_link: null, granola_link: null,
+    event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }),
+    actor: null,
+  })
+  return { ...project, relationship_ids: [...project.relationship_ids, recordId] }
 }
 
 export async function removeRecordFromProject(projectId: string, recordId: string): Promise<Project> {
   const projects = await getProjects()
   const project = projects.find(p => p.id === projectId)
   if (!project) throw new Error('Project not found')
+
   if (isDemoMode()) {
     project.relationship_ids = project.relationship_ids.filter(id => id !== recordId)
     DEMO_INTERACTIONS.push({
-      id: 'demo-ix-proj-' + Date.now(),
-      contact_id: recordId,
-      type: 'project_event',
-      date: new Date().toISOString(),
-      notes: null,
-      summary: null,
-      source: null,
-      email_link: null,
-      granola_link: null,
+      id: 'demo-ix-proj-' + Date.now(), contact_id: recordId, type: 'project_event',
+      date: new Date().toISOString(), notes: null, summary: null, source: null,
+      email_link: null, granola_link: null,
       event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'removed_from_project' }),
-      actor: null,
-      created_at: new Date().toISOString(),
+      actor: null, created_at: new Date().toISOString(),
     })
     return project
   }
-  const updated = project.relationship_ids.filter(id => id !== recordId)
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Relationships: updated } }),
-  })
+
+  await supabase.from('project_contacts').delete().eq('project_id', projectId).eq('contact_id', recordId)
   _projectsCache = null
-  await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'removed_from_project' }), actor: null })
-  return mapProject(r)
+  await createInteraction({
+    contact_id: recordId, type: 'project_event', date: new Date().toISOString(),
+    notes: null, summary: null, source: null, email_link: null, granola_link: null,
+    event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'removed_from_project' }),
+    actor: null,
+  })
+  return { ...project, relationship_ids: project.relationship_ids.filter(id => id !== recordId) }
 }
 
 export async function addOpportunityToProject(projectId: string, opportunityId: string): Promise<Project> {
@@ -1443,61 +1122,58 @@ export async function addOpportunityToProject(projectId: string, opportunityId: 
   const project = projects.find(p => p.id === projectId)
   if (!project) throw new Error('Project not found')
   if (project.opportunity_ids.includes(opportunityId)) return project
+
   if (isDemoMode()) {
     project.opportunity_ids.push(opportunityId)
     return project
   }
-  const updated = [...project.opportunity_ids, opportunityId]
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Opportunities: updated } }),
-  })
+
+  const userId = await getUserId()
+  await supabase.from('project_opportunities').insert({ user_id: userId, project_id: projectId, opportunity_id: opportunityId })
   _projectsCache = null
-  return mapProject(r)
+  return { ...project, opportunity_ids: [...project.opportunity_ids, opportunityId] }
 }
 
 export async function removeOpportunityFromProject(projectId: string, opportunityId: string): Promise<Project> {
   const projects = await getProjects()
   const project = projects.find(p => p.id === projectId)
   if (!project) throw new Error('Project not found')
+
   if (isDemoMode()) {
     project.opportunity_ids = project.opportunity_ids.filter(id => id !== opportunityId)
     return project
   }
-  const updated = project.opportunity_ids.filter(id => id !== opportunityId)
-  const r = await request<AirtableRecord<ProjectFields>>(TABLES.projects + '/' + projectId, {
-    method: 'PATCH',
-    body: JSON.stringify({ fields: { Opportunities: updated } }),
-  })
+
+  await supabase.from('project_opportunities').delete().eq('project_id', projectId).eq('opportunity_id', opportunityId)
   _projectsCache = null
-  return mapProject(r)
+  return { ...project, opportunity_ids: project.opportunity_ids.filter(id => id !== opportunityId) }
 }
 
 export async function addProjectNote(projectId: string, note: string): Promise<void> {
   const projects = await getProjects()
   const project = projects.find(p => p.id === projectId)
   if (!project) throw new Error('Project not found')
+
   if (isDemoMode()) {
     for (const recordId of project.relationship_ids) {
       DEMO_INTERACTIONS.push({
-        id: 'demo-ix-proj-' + Date.now() + '-' + recordId,
-        contact_id: recordId,
-        type: 'project_event',
-        date: new Date().toISOString(),
-        notes: note,
-        summary: null,
-        source: null,
-        email_link: null,
-        granola_link: null,
+        id: 'demo-ix-proj-' + Date.now() + '-' + recordId, contact_id: recordId,
+        type: 'project_event', date: new Date().toISOString(), notes: note,
+        summary: null, source: null, email_link: null, granola_link: null,
         event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'project_note' }),
-        actor: null,
-        created_at: new Date().toISOString(),
+        actor: null, created_at: new Date().toISOString(),
       })
     }
     return
   }
+
   for (const recordId of project.relationship_ids) {
-    await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: note, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'project_note' }), actor: null })
+    await createInteraction({
+      contact_id: recordId, type: 'project_event', date: new Date().toISOString(),
+      notes: note, summary: null, source: null, email_link: null, granola_link: null,
+      event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'project_note' }),
+      actor: null,
+    })
   }
 }
 
@@ -1509,60 +1185,36 @@ export async function mergeRecords(
   fieldOverrides: Partial<Contact>
 ): Promise<Contact> {
   if (isDemoMode()) {
-    // Demo mode: in-place array mutations
     const sIdx = DEMO_CONTACTS.findIndex(c => c.id === survivorId)
     const lIdx = DEMO_CONTACTS.findIndex(c => c.id === loserId)
     if (sIdx === -1 || lIdx === -1) throw new Error('Record not found in demo data')
     const loser = DEMO_CONTACTS[lIdx]
     const survivor = DEMO_CONTACTS[sIdx]
-    // Apply field overrides and union associations
     Object.assign(survivor, fieldOverrides)
     survivor.list_ids = [...new Set([...survivor.list_ids, ...loser.list_ids])]
     survivor.category_ids = [...new Set([...survivor.category_ids, ...loser.category_ids])]
-    if (!survivor.primary_list_id && loser.primary_list_id) {
-      survivor.primary_list_id = loser.primary_list_id
-    }
-    // Update opportunity references
+    if (!survivor.primary_list_id && loser.primary_list_id) survivor.primary_list_id = loser.primary_list_id
     DEMO_OPPORTUNITIES.forEach(opp => {
       if (opp.relationship_ids.includes(loserId)) {
-        opp.relationship_ids = opp.relationship_ids
-          .filter(id => id !== loserId)
-          .concat(opp.relationship_ids.includes(survivorId) ? [] : [survivorId])
+        opp.relationship_ids = opp.relationship_ids.filter(id => id !== loserId).concat(opp.relationship_ids.includes(survivorId) ? [] : [survivorId])
       }
     })
-    // Update project references
     DEMO_PROJECTS.forEach(proj => {
       if (proj.relationship_ids.includes(loserId)) {
-        proj.relationship_ids = proj.relationship_ids
-          .filter(id => id !== loserId)
-          .concat(proj.relationship_ids.includes(survivorId) ? [] : [survivorId])
+        proj.relationship_ids = proj.relationship_ids.filter(id => id !== loserId).concat(proj.relationship_ids.includes(survivorId) ? [] : [survivorId])
       }
     })
-    // Update campaign contact references
-    DEMO_CAMPAIGN_CONTACTS.forEach(cc => {
-      if (cc.contact_id === loserId) cc.contact_id = survivorId
-    })
-    // Update company_record_id backlinks
-    DEMO_CONTACTS.forEach(c => {
-      if (c.company_record_id === loserId) c.company_record_id = survivorId
-    })
-    // Reassign loser interactions to survivor
-    DEMO_INTERACTIONS.forEach(ix => {
-      if (ix.contact_id === loserId) ix.contact_id = survivorId
-    })
-    // Write merge_event on survivor
+    DEMO_CAMPAIGN_CONTACTS.forEach(cc => { if (cc.contact_id === loserId) cc.contact_id = survivorId })
+    DEMO_CONTACTS.forEach(c => { if (c.company_record_id === loserId) c.company_record_id = survivorId })
+    DEMO_INTERACTIONS.forEach(ix => { if (ix.contact_id === loserId) ix.contact_id = survivorId })
     DEMO_INTERACTIONS.push({
-      id: 'demo-ix-merge-' + Date.now(),
-      contact_id: survivorId,
-      type: 'merge_event',
+      id: 'demo-ix-merge-' + Date.now(), contact_id: survivorId, type: 'merge_event',
       date: new Date().toISOString().split('T')[0],
       notes: `Merged with ${loser.name} (record deleted)`,
       summary: null, source: null, email_link: null, granola_link: null,
       event_detail: JSON.stringify({ merged_name: loser.name, merged_id: loserId }),
-      actor: null,
-      created_at: new Date().toISOString(),
+      actor: null, created_at: new Date().toISOString(),
     })
-    // Remove loser
     DEMO_CONTACTS.splice(lIdx > sIdx ? lIdx : lIdx, 1)
     return survivor
   }
@@ -1572,7 +1224,6 @@ export async function mergeRecords(
   const loser = contacts.find(c => c.id === loserId)
   if (!survivor || !loser) throw new Error('One or both records not found')
 
-  // Build merged field set
   const mergedFields: Partial<Contact> = {
     ...fieldOverrides,
     list_ids: [...new Set([...survivor.list_ids, ...loser.list_ids])],
@@ -1581,68 +1232,27 @@ export async function mergeRecords(
   }
 
   try {
-    // Update opportunity references
-    const opportunities = await getOpportunities()
-    for (const opp of opportunities) {
-      if (opp.relationship_ids.includes(loserId)) {
-        const updated = opp.relationship_ids.filter(id => id !== loserId)
-        if (!updated.includes(survivorId)) updated.push(survivorId)
-        await request(`${TABLES.opportunities}/${opp.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ fields: { Relationships: updated } }),
-        })
-      }
-    }
+    // Update opportunity_contacts: reassign loser -> survivor
+    await supabase.from('opportunity_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
 
-    // Update project references
-    const projects = await getProjects()
-    for (const proj of projects) {
-      if (proj.relationship_ids.includes(loserId)) {
-        const updated = proj.relationship_ids.filter(id => id !== loserId)
-        if (!updated.includes(survivorId)) updated.push(survivorId)
-        await request(`${TABLES.projects}/${proj.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ fields: { Relationships: updated } }),
-        })
-      }
-    }
+    // Update project_contacts: reassign loser -> survivor
+    await supabase.from('project_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
 
-    // Update campaign contact references
-    await getCampaigns()
-    const allCc = _campaignContactsCache ?? []
-    for (const cc of allCc) {
-      if (cc.contact_id === loserId) {
-        await request(`${TABLES.campaignContacts}/${cc.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ fields: { Contact: [survivorId] } }),
-        })
-      }
-    }
+    // Update campaign_contacts: reassign loser -> survivor
+    await supabase.from('campaign_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
 
-    // Update company_record_id backlinks (contacts pointing to loser as their company)
-    const allContacts = await getContacts()
-    for (const c of allContacts) {
-      if (c.company_record_id === loserId) {
-        await updateContact(c.id, { company_record_id: survivorId })
-      }
-    }
+    // Update company_id backlinks
+    await supabase.from('contacts').update({ company_id: survivorId }).eq('company_id', loserId)
 
     // Move loser interactions to survivor
-    const loserInteractions = await getInteractions(loserId)
-    for (const ix of loserInteractions) {
-      await request(`${TABLES.interactions}/${ix.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ fields: { Contact: [survivorId] } }),
-      })
-    }
+    await supabase.from('interactions').update({ contact_id: survivorId }).eq('contact_id', loserId)
 
     // Update survivor record
     const updated = await updateContact(survivorId, mergedFields)
 
     // Write merge timeline event
     await createInteraction({
-      contact_id: survivorId,
-      type: 'merge_event',
+      contact_id: survivorId, type: 'merge_event',
       date: new Date().toISOString().split('T')[0],
       notes: `Merged with ${loser.name} (record deleted)`,
       summary: null, source: null, email_link: null, granola_link: null,
@@ -1650,12 +1260,9 @@ export async function mergeRecords(
       actor: null,
     })
 
-    // Delete loser
     await deleteContact(loserId)
-
     invalidateContactsCache()
     invalidateInteractionsCache()
-
     return updated
   } catch (err) {
     throw new Error(`Merge failed: ${err instanceof Error ? err.message : String(err)}`)
@@ -1678,4 +1285,3 @@ export async function getPendingContacts(): Promise<Contact[]> {
   const all = await getContacts()
   return all.filter(c => c.status === 'Pending')
 }
-
