@@ -237,8 +237,23 @@ let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
 
 async function fetchContacts(): Promise<Contact[]> {
-  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*'))
-  return enrichContactJunctions(data)
+  // Direct query first to diagnose RLS issues
+  const { data: raw, error: rawErr, count } = await supabase.from('contacts').select('*', { count: 'exact' })
+  console.log('[RealDeal] contacts query:', { count, rowsReturned: raw?.length ?? 0, error: rawErr?.message ?? null })
+  if (rawErr) {
+    console.error('[RealDeal] contacts error detail:', rawErr)
+    throw rawErr
+  }
+  if (!raw || raw.length === 0) {
+    // Check if it's an RLS issue by comparing auth uid
+    const { data: { user } } = await supabase.auth.getUser()
+    console.log('[RealDeal] auth uid:', user?.id)
+    // Check pods to compare - they DO load
+    const { data: podSample } = await supabase.from('pods').select('user_id').limit(1)
+    console.log('[RealDeal] pod user_id sample:', podSample?.[0]?.user_id)
+    console.log('[RealDeal] user_id match:', user?.id === podSample?.[0]?.user_id)
+  }
+  return enrichContactJunctions(raw ?? [])
 }
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
