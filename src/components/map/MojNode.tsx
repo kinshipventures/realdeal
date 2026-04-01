@@ -7,8 +7,8 @@ export type MojNodeType = Node<MojNodeData, 'moj'>
 export const MOJ_ID = 'moj-center'
 export const MOJ_SIZE = 136
 
-const bg = 'radial-gradient(circle at 35% 35%, #3a3a40 0%, #1C1C1E 50%, #0a0a0c 100%)'
-const shadow = 'inset 0 -6px 16px rgba(0,0,0,0.35), 0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25)'
+const bg = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
+const shadow = '0 0 24px rgba(0,0,0,0.20), 0 6px 24px rgba(0,0,0,0.25)'
 
 export function MojNodeComponent(_: NodeProps<MojNodeType>) {
   return (
@@ -22,7 +22,7 @@ export function MojNodeComponent(_: NodeProps<MojNodeType>) {
 
       <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
         <div
-          className="orb-enter orb-specular"
+          className="orb-enter"
           style={{
             width: MOJ_SIZE,
             height: MOJ_SIZE,
@@ -40,7 +40,8 @@ export function MojNodeComponent(_: NodeProps<MojNodeType>) {
         >
           <span style={{
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 800,
+            fontFamily: 'var(--font-serif)',
             color: 'rgba(255,255,255,0.90)',
             letterSpacing: '-0.01em',
             userSelect: 'none',

@@ -52,18 +52,6 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
       />
 
-      {/* Overdue pulse ring — outside the orb, positioned absolutely */}
-      {overdueCount > 0 && (
-        <div style={{
-          position: 'absolute',
-          inset: -8,
-          borderRadius: '50%',
-          border: `1.5px solid rgba(255,59,48,0.35)`,
-          animation: 'pulse-ring 2.4s ease-in-out infinite',
-          pointerEvents: 'none',
-        }} />
-      )}
-
       <SolidOrb
         size={SIZE}
         color={color}
@@ -90,7 +78,8 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
           }}>
             <span style={{
               fontSize: fontSize(list.name),
-              fontWeight: 600,
+              fontWeight: 800,
+              fontFamily: 'var(--font-serif)',
               color: 'rgba(255,255,255,0.95)',
               textAlign: 'center',
               lineHeight: 1.25,
@@ -99,38 +88,28 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             }}>
               {list.name}
             </span>
-            {overdueCount > 0 && (
-              <div style={{
-                position: 'absolute',
-                top: -2, right: 4,
-                width: 8, height: 8,
-                borderRadius: '50%',
-                background: '#FF3B30',
-                border: '1.5px solid rgba(255,255,255,0.9)',
-              }} />
-            )}
           </div>
         )}
       </SolidOrb>
 
-      {/* Orbiting satellite category orbs */}
+      {/* Satellite category dots - clustered near pod, expand on hover */}
       {categories.map((cat, i) => {
-        const satRadius = 62 + categories.length * 2
-        const useOuter = categories.length >= 5 && i % 2 === 1
-        const radius = useOuter ? satRadius + 24 : satRadius
-        const startAngle = (i / categories.length) * 360
-        const period = 30 + (((cat.id.charCodeAt(0) ?? 0) * 7) % 15)
+        const expandRadius = 56
+        const angle = (i / categories.length) * 360
+        const clusterOffset = 4 + (i % 3) * 3
+        const clusterAngle = (i / categories.length) * 360
         const satColor = cat.color ?? list.color ?? '#718096'
 
         return (
           <div
             key={cat.id}
-            className="satellite-orbit"
+            className="satellite-expand"
             style={{
-              '--orbit-period': `${period}s`,
-              '--orbit-radius': `${radius}px`,
-              '--orbit-start-angle': `${startAngle}deg`,
-              '--orbit-delay': `${i * 0.06}s`,
+              '--expand-radius': `${expandRadius}px`,
+              '--expand-angle': `${angle}deg`,
+              '--cluster-x': `${Math.cos(clusterAngle * Math.PI / 180) * clusterOffset}px`,
+              '--cluster-y': `${Math.sin(clusterAngle * Math.PI / 180) * clusterOffset}px`,
+              '--sat-delay': `${i * 0.02}s`,
             } as React.CSSProperties}
           >
             <div

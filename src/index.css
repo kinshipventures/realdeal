@@ -171,23 +171,6 @@
   transition-timing-function: ease-in !important;
 }
 
-/* Specular highlight - fake light reflection on sphere */
-.orb-specular {
-  position: relative;
-}
-.orb-specular::before {
-  content: '';
-  position: absolute;
-  top: 12%;
-  left: 18%;
-  width: 35%;
-  height: 35%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.40) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 2;
-}
-
 /* Floor shadow - grounds orb in 3D space */
 .orb-floor-shadow {
   position: absolute;
@@ -299,52 +282,50 @@
 
 /* ── Satellite orbit system ───────────────────────────────────────────────── */
 
-@keyframes satellite-spin {
-  from { transform: rotate(var(--orbit-start-angle, 0deg)) translateX(var(--orbit-radius, 62px)); }
-  to   { transform: rotate(calc(var(--orbit-start-angle, 0deg) + 360deg)) translateX(var(--orbit-radius, 62px)); }
-}
-
-.satellite-orbit {
+/* Satellite dots - clustered near pod, expand into ring on hover */
+.satellite-expand {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 0;
   height: 0;
-  animation: satellite-spin var(--orbit-period, 30s) linear infinite;
-  animation-delay: var(--orbit-delay, 0s);
+  transform: translate(var(--cluster-x, 0px), var(--cluster-y, 0px));
+  transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  transition-delay: var(--sat-delay, 0s);
   pointer-events: none;
 }
 
 .satellite-dot {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 5.5px;
+  font-size: 5px;
   font-weight: 600;
   color: rgba(255,255,255,0.85);
   letter-spacing: 0.02em;
   user-select: none;
-  opacity: 0.7;
+  opacity: 0.4;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  transition-delay: var(--sat-delay, 0s);
   pointer-events: auto;
   cursor: default;
 }
 
-.satellite-dot:hover {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.3);
-}
-
-/* Hover on parent pod speeds up satellite orbits */
-.orbit-start:hover .satellite-orbit {
-  animation-duration: 8s;
+/* Hover on parent pod expands satellites into ring */
+.orbit-start:hover .satellite-expand {
+  transform: rotate(var(--expand-angle, 0deg)) translateX(var(--expand-radius, 56px));
 }
 .orbit-start:hover .satellite-dot {
+  opacity: 0.85;
+  transform: translate(-50%, -50%) scale(1);
+}
+.satellite-dot:hover {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1.25);
 }
 
 @keyframes pulse-ring {
@@ -605,6 +586,6 @@ body::after {
   .ring-enter { animation: none; }
   .widget-enter { animation: none; }
   .widget-card { transition: none; }
-  .satellite-orbit { animation: none; }
+  .satellite-expand { transition: none; }
   .parallax-layer { transform: none !important; }
 }

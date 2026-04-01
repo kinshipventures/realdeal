@@ -172,15 +172,8 @@ function buildHomeNodes({
   return { nodes: [mojNode, ...podNodes], activeRings }
 }
 
-function buildHomeEdges(pods: Pod[]): Edge[] {
-  return pods.map((pod, i) => ({
-    id: `e-moj-${pod.id}`,
-    source: MOJ_ID,
-    target: pod.id,
-    type: 'gradient',
-    style: { '--edge-delay': `${(i + 1) * 0.1}s` } as React.CSSProperties,
-    data: { color: pod.color ?? '#718096' },
-  }))
+function buildHomeEdges(_pods: Pod[]): Edge[] {
+  return []
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
@@ -458,7 +451,7 @@ export function OrbMap() {
         </button>
       )}
 
-      {/* Dashed orbit rings — transformed to match React Flow viewport, behind nodes */}
+      {/* Orbit rings with subtle glow */}
       <svg
         style={{
           position: 'absolute',
@@ -470,6 +463,15 @@ export function OrbMap() {
           overflow: 'visible',
         }}
       >
+        <defs>
+          <filter id="ring-glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
           {activeRings.map((r, ri) => (
             <circle
@@ -481,8 +483,9 @@ export function OrbMap() {
               r={r}
               fill="none"
               stroke="var(--stroke-subtle)"
-              strokeWidth={1 / viewport.zoom}
-              strokeDasharray={`${8 / viewport.zoom} ${6 / viewport.zoom}`}
+              strokeWidth={1.5 / viewport.zoom}
+              strokeOpacity={0.5 - ri * 0.1}
+              filter="url(#ring-glow)"
             />
           ))}
         </g>
