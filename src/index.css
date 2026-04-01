@@ -376,6 +376,113 @@ body::after {
   }
 }
 
+/* ── Dashboard HIG classes ──────────────────────────────────────────────────── */
+
+/* Section grouping container */
+.dashboard-section {
+  background: var(--tint);
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+/* Primary section heading (Fraunces, 16px) */
+.dashboard-heading {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  line-height: 1.2;
+}
+
+/* "See all" link with hover + chevron */
+.see-all-link {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+.see-all-link::after {
+  content: '\203A';
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.see-all-link:hover {
+  color: var(--color-text-primary);
+}
+.see-all-link:hover::after {
+  transform: translateX(2px);
+}
+
+/* Widget card — unified hover lift + press */
+.widget-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px var(--divider);
+}
+.widget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--divider);
+}
+.widget-card:active {
+  transform: scale(0.98) !important;
+  transition-duration: 0.08s !important;
+}
+
+/* Widget entrance animation */
+@keyframes widget-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.widget-enter {
+  animation: widget-fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 60ms);
+}
+
+/* HIG-compliant action pill (44px min touch target) */
+.action-pill-hig {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 8px 16px;
+  min-height: 44px;
+  border-radius: 100px;
+  background: var(--tint);
+  border: 1px solid var(--edge);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.action-pill-hig:hover {
+  background: var(--tint-hover);
+}
+.action-pill-hig:active {
+  transform: scale(0.96);
+  transition-duration: 0.08s;
+}
+.action-pill-hig.destructive {
+  color: rgba(180,40,40,0.65);
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
