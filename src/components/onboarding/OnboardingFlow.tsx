@@ -467,7 +467,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
   )
 }
 
-function StepPods({ onNext }: { onNext: () => void }) {
+function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const [cadence, setCadence] = useState(() =>
     localStorage.getItem('realdeal:default-cadence') || 'monthly'
   )
