@@ -575,7 +575,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
 
       {/* Import sources */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-        <button type="button" onClick={() => { onComplete(); navigate('/import') }} style={primaryBtnStyle}>
+        <button type="button" onClick={() => { onComplete(); navigate('/import') }} className="onboard-btn-primary" style={primaryBtnStyle}>
           Import from CSV
         </button>
 
