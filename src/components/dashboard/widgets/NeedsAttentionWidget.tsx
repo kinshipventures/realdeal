@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import type { Contact } from '../../../lib/types'
 import { Avatar } from '../../ui'
 import { EmptyState } from '../../empty/EmptyState'
+import { WidgetHeading } from './WidgetHeading'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
