@@ -358,10 +358,10 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
 
       <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
             <div key={p.label} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px',
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', flex: 1,
               borderRadius: 10, background: 'rgba(0,0,0,0.03)',
               opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
             }}>
