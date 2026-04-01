@@ -78,8 +78,10 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
               <div aria-live="polite" style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
                 {Number.isFinite(overallScore) ? overallScore : 0}
               </div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
+              <div className="widget-tooltip-wrap" style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
                 {scoreLabel(overallScore)}
+                <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.20)', color: 'rgba(255,255,255,0.60)' }} aria-label="Info">?</span>
+                <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
               </div>
             </div>
           </>
