@@ -238,13 +238,8 @@ export function OnboardingFlow({ onComplete }: Props) {
           </div>
         </div>
 
-        {/* Back / Skip row */}
+        {/* Skip */}
         <div style={{ display: 'flex', gap: 24 }}>
-          {step > 0 && (
-            <button type="button" onClick={back} style={linkStyle}>
-              Back
-            </button>
-          )}
           <button type="button" onClick={onComplete} style={linkStyle}>
             Skip
           </button>
