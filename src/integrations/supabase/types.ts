@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      _migration_id_map: {
+        Row: {
+          airtable_id: string
+          created_at: string
+          id: string
+          supabase_uuid: string
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          airtable_id: string
+          created_at?: string
+          id?: string
+          supabase_uuid: string
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          airtable_id?: string
+          created_at?: string
+          id?: string
+          supabase_uuid?: string
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaign_contacts: {
+        Row: {
+          campaign_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["campaign_contact_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["campaign_contact_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["campaign_contact_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["campaign_status"]
+          type: Database["public"]["Enums"]["campaign_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["campaign_status"]
+          type: Database["public"]["Enums"]["campaign_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["campaign_status"]
+          type?: Database["public"]["Enums"]["campaign_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string | null
@@ -342,6 +450,56 @@ export type Database = {
           },
         ]
       }
+      field_config: {
+        Row: {
+          airtable_field_id: string | null
+          created_at: string
+          display_order: number
+          field_type: string
+          id: string
+          name: string
+          required: boolean
+          scope_pod_id: string | null
+          scope_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          airtable_field_id?: string | null
+          created_at?: string
+          display_order?: number
+          field_type: string
+          id?: string
+          name: string
+          required?: boolean
+          scope_pod_id?: string | null
+          scope_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          airtable_field_id?: string | null
+          created_at?: string
+          display_order?: number
+          field_type?: string
+          id?: string
+          name?: string
+          required?: boolean
+          scope_pod_id?: string | null
+          scope_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_config_scope_pod_id_fkey"
+            columns: ["scope_pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interactions: {
         Row: {
           actor: string | null
@@ -401,6 +559,157 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["opportunity_priority"] | null
+          stage_id: string | null
+          status: Database["public"]["Enums"]["opportunity_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["opportunity_priority"] | null
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["opportunity_priority"] | null
+          stage_id?: string | null
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          opportunity_id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_stages: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          order: number
+          pipeline_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          order: number
+          pipeline_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          order?: number
+          pipeline_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_stages_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipelines: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["pipeline_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["pipeline_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["pipeline_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pods: {
         Row: {
           cadence: Database["public"]["Enums"]["cadence"] | null
@@ -441,6 +750,117 @@ export type Database = {
           is_priority?: boolean
           name?: string
           owner?: Database["public"]["Enums"]["owner_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_opportunities: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_opportunities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_opportunities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          owner: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          owner?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          owner?: string | null
           updated_at?: string
           user_id?: string
         }
