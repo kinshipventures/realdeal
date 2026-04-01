@@ -194,10 +194,10 @@ export function OnboardingFlow({ onComplete }: Props) {
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
-          {step === 1 && <StepPhilosophy onNext={next} />}
-          {step === 2 && <StepPods onNext={next} />}
-          {step === 3 && <StepImport onComplete={onComplete} onNext={next} navigate={navigate} />}
-          {step === 4 && <StepTour onFinish={onComplete} />}
+          {step === 1 && <StepPhilosophy onNext={next} onBack={back} />}
+          {step === 2 && <StepPods onNext={next} onBack={back} />}
+          {step === 3 && <StepImport onComplete={onComplete} onNext={next} onBack={back} navigate={navigate} />}
+          {step === 4 && <StepTour onFinish={onComplete} onBack={back} />}
         </div>
 
         {/* Progress with step labels */}
