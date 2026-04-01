@@ -260,8 +260,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isPulse ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isPulse ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isPulse ? 'var(--tint-hover)' : 'transparent',
+              color: isPulse ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isPulse ? 600 : 500,
             }}
           >
