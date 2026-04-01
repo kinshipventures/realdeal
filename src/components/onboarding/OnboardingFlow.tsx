@@ -437,10 +437,43 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
         Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 280 }}>
+      {/* Import sources */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
         <button type="button" onClick={() => { onComplete(); navigate('/import') }} style={primaryBtnStyle}>
           Import from CSV
         </button>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          {[
+            { label: 'Google', icon: 'M21.35 11.1h-9.18v2.73h5.51c-.24 1.27-1.33 3.72-5.51 3.72-3.31 0-6.01-2.75-6.01-6.12s2.7-6.12 6.01-6.12c1.87 0 3.13.8 3.85 1.48L18.1 4.8C16.56 3.36 14.56 2.5 12.17 2.5 6.98 2.5 2.73 6.74 2.73 11.93s4.25 9.43 9.44 9.43c5.45 0 9.06-3.83 9.06-9.22 0-.62-.07-1.1-.12-1.04z', color: '#4285F4' },
+            { label: 'Apple', icon: 'M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z', color: '#333' },
+            { label: 'Outlook', icon: 'M2 6v12h8V6H2zm1 1h6v10H3V7zm9-1v12h8V6h-8zm1 1h6v10h-6V7zM7 9H5v1h2V9zm0 2H5v1h2v-1zm0 2H5v1h2v-1zm8-4h-2v1h2V9zm0 2h-2v1h2v-1zm0 2h-2v1h2v-1z', color: '#0078D4' },
+            { label: 'LinkedIn', icon: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z', color: '#0A66C2' },
+          ].map((s, i) => (
+            <button
+              key={s.label}
+              type="button"
+              disabled
+              style={{
+                flex: 1, padding: '10px 8px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)',
+                background: 'rgba(0,0,0,0.02)', cursor: 'not-allowed',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80 + 200}ms forwards`,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={s.color}>
+                <path d={s.icon} />
+              </svg>
+              <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                {s.label}
+              </span>
+              <span style={{ fontSize: 8, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', opacity: 0.6 }}>
+                Coming soon
+              </span>
+            </button>
+          ))}
+        </div>
+
         <button type="button" onClick={onNext} style={secondaryBtnStyle}>
           I'll add people manually
         </button>
