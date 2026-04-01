@@ -257,6 +257,21 @@ export function Dashboard() {
     return contacts.filter(c => c.last_contacted_at && new Date(c.last_contacted_at).getTime() > sevenDaysAgo).length
   }, [contacts])
 
+  // Score trend — compare this week's interactions to last week's
+  const scoreTrend = useMemo((): 'up' | 'down' | 'flat' => {
+    if (interactionsLoading || allInteractions.length === 0) return 'flat'
+    const now = Date.now()
+    const oneWeek = 7 * 24 * 60 * 60 * 1000
+    const thisWeek = allInteractions.filter(ix => now - new Date(ix.date).getTime() < oneWeek).length
+    const lastWeek = allInteractions.filter(ix => {
+      const age = now - new Date(ix.date).getTime()
+      return age >= oneWeek && age < oneWeek * 2
+    }).length
+    if (thisWeek > lastWeek) return 'up'
+    if (thisWeek < lastWeek) return 'down'
+    return 'flat'
+  }, [allInteractions, interactionsLoading])
+
   function handleContactSaved(updated: Contact) {
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
   }
@@ -335,6 +350,11 @@ export function Dashboard() {
                     overdueCount={overdueContacts.length}
                     interactionsLoading={interactionsLoading}
                     dataReady={dataReady}
+                    scoreTrend={scoreTrend}
+                    onQuickAction={() => {
+                      const first = focusItems[0]
+                      if (first) setSelectedContact(first.contact)
+                    }}
                   />
                 </div>
               ) : (
