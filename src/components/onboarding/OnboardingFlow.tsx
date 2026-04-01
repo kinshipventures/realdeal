@@ -28,6 +28,7 @@ const TOTAL_WEIGHT = INTERACTIONS.reduce((s, i) => s + i.weight, 0)
 
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
+  const [maxStep, setMaxStep] = useState(0)
   const navigate = useNavigate()
 
   const next = () => {
