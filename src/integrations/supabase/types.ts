@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          pod_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          pod_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          pod_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string
+          custom_fields: Json | null
+          domain: string | null
+          id: string
+          industry: string | null
+          location: string | null
+          name: string
+          notes: string | null
+          stage: string | null
+          ticker: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          custom_fields?: Json | null
+          domain?: string | null
+          id?: string
+          industry?: string | null
+          location?: string | null
+          name: string
+          notes?: string | null
+          stage?: string | null
+          ticker?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          custom_fields?: Json | null
+          domain?: string | null
+          id?: string
+          industry?: string | null
+          location?: string | null
+          name?: string
+          notes?: string | null
+          stage?: string | null
+          ticker?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      pods: {
+        Row: {
+          cadence: Database["public"]["Enums"]["cadence"] | null
+          capacity: number | null
+          color: string | null
+          created_at: string
+          description: string | null
+          enrichment_opt_in: boolean
+          id: string
+          is_priority: boolean
+          name: string
+          owner: Database["public"]["Enums"]["owner_type"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cadence?: Database["public"]["Enums"]["cadence"] | null
+          capacity?: number | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          enrichment_opt_in?: boolean
+          id?: string
+          is_priority?: boolean
+          name: string
+          owner?: Database["public"]["Enums"]["owner_type"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cadence?: Database["public"]["Enums"]["cadence"] | null
+          capacity?: number | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          enrichment_opt_in?: boolean
+          id?: string
+          is_priority?: boolean
+          name?: string
+          owner?: Database["public"]["Enums"]["owner_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +153,38 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      cadence: "weekly" | "biweekly" | "monthly" | "quarterly"
+      campaign_contact_status: "pending" | "reached" | "responded" | "confirmed"
+      campaign_status: "active" | "completed"
+      campaign_type: "event" | "investment" | "outreach" | "other"
+      contact_frequency:
+        | "Weekly"
+        | "Monthly"
+        | "Quarterly"
+        | "Annual"
+        | "As Needed"
+      gender_type: "Male" | "Female" | "Non-binary" | "Other"
+      global_region: "AMER" | "APAC" | "ME" | "LATAM" | "EU"
+      interaction_source: "Gmail" | "Granola" | "Manual"
+      interaction_type:
+        | "call"
+        | "email"
+        | "text"
+        | "meeting"
+        | "intro"
+        | "note"
+        | "pod_change"
+        | "field_update"
+        | "categorization"
+        | "pipeline_event"
+        | "project_event"
+        | "merge_event"
+      opportunity_priority: "high" | "medium" | "low"
+      opportunity_status: "open" | "won" | "lost" | "archived"
+      owner_type: "moj_mahdara" | "kinship_ventures"
+      pipeline_status: "active" | "hidden"
+      relationship_status: "Active" | "Pending" | "Archived"
+      relationship_type: "Contact" | "Company"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +311,41 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cadence: ["weekly", "biweekly", "monthly", "quarterly"],
+      campaign_contact_status: ["pending", "reached", "responded", "confirmed"],
+      campaign_status: ["active", "completed"],
+      campaign_type: ["event", "investment", "outreach", "other"],
+      contact_frequency: [
+        "Weekly",
+        "Monthly",
+        "Quarterly",
+        "Annual",
+        "As Needed",
+      ],
+      gender_type: ["Male", "Female", "Non-binary", "Other"],
+      global_region: ["AMER", "APAC", "ME", "LATAM", "EU"],
+      interaction_source: ["Gmail", "Granola", "Manual"],
+      interaction_type: [
+        "call",
+        "email",
+        "text",
+        "meeting",
+        "intro",
+        "note",
+        "pod_change",
+        "field_update",
+        "categorization",
+        "pipeline_event",
+        "project_event",
+        "merge_event",
+      ],
+      opportunity_priority: ["high", "medium", "low"],
+      opportunity_status: ["open", "won", "lost", "archived"],
+      owner_type: ["moj_mahdara", "kinship_ventures"],
+      pipeline_status: ["active", "hidden"],
+      relationship_status: ["Active", "Pending", "Archived"],
+      relationship_type: ["Contact", "Company"],
+    },
   },
 } as const
