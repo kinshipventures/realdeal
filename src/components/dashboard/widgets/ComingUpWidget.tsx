@@ -69,8 +69,6 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
         <h3 className="dashboard-subheading">
           coming up
         </h3>
-          coming up
-        </h2>
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=dates')}
