@@ -43,7 +43,7 @@ export function getPods(): Promise<Pod[]> {
 
   if (_podsCache && isExpired && !_podsFetch) {
     const stale = _podsCache
-    _podsFetch = supabase.from('pods').select('*').then(({ data, error }) => {
+    _podsFetch = Promise.resolve(supabase.from('pods').select('*')).then(({ data, error }) => {
       if (error) throw error
       _podsCache = (data ?? []).map(mapPod)
       _podsCacheTime = Date.now()
@@ -54,7 +54,7 @@ export function getPods(): Promise<Pod[]> {
   }
 
   if (!_podsFetch) {
-    _podsFetch = supabase.from('pods').select('*').then(({ data, error }) => {
+    _podsFetch = Promise.resolve(supabase.from('pods').select('*')).then(({ data, error }) => {
       if (error) throw error
       _podsCache = (data ?? []).map(mapPod)
       _podsCacheTime = Date.now()
@@ -140,7 +140,7 @@ export function getCategories(listId?: string): Promise<Category[]> {
 
   if (_categoriesCache && isExpired && !_categoriesFetch) {
     const stale = _categoriesCache
-    _categoriesFetch = supabase.from('categories').select('*').then(({ data, error }) => {
+    _categoriesFetch = Promise.resolve(supabase.from('categories').select('*')).then(({ data, error }) => {
       if (error) throw error
       _categoriesCache = (data ?? []).map(mapCategory)
       _categoriesCacheTime = Date.now()
@@ -151,7 +151,7 @@ export function getCategories(listId?: string): Promise<Category[]> {
   }
 
   if (!_categoriesFetch) {
-    _categoriesFetch = supabase.from('categories').select('*').then(({ data, error }) => {
+    _categoriesFetch = Promise.resolve(supabase.from('categories').select('*')).then(({ data, error }) => {
       if (error) throw error
       _categoriesCache = (data ?? []).map(mapCategory)
       _categoriesCacheTime = Date.now()
@@ -272,7 +272,7 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
 
   if (_contactsCache && isExpired && !_contactsFetch) {
     const stale = _contactsCache
-    _contactsFetch = supabase.from('contacts').select('*').then(async ({ data, error }) => {
+    _contactsFetch = Promise.resolve(supabase.from('contacts').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _contactsCache = await enrichContactJunctions(data ?? [])
       _contactsCacheTime = Date.now()
@@ -283,7 +283,7 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
   }
 
   if (!_contactsFetch) {
-    _contactsFetch = supabase.from('contacts').select('*').then(async ({ data, error }) => {
+    _contactsFetch = Promise.resolve(supabase.from('contacts').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _contactsCache = await enrichContactJunctions(data ?? [])
       _contactsCacheTime = Date.now()
@@ -459,7 +459,7 @@ export function getAllInteractions(): Promise<Interaction[]> {
     const stale = _interactionsCache
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 90)
-    _interactionsFetch = supabase.from('interactions').select('*')
+    _interactionsFetch = Promise.resolve(supabase.from('interactions').select('*')
       .gte('date', cutoff.toISOString().split('T')[0])
       .order('date', { ascending: false })
       .then(({ data, error }) => {
@@ -475,7 +475,7 @@ export function getAllInteractions(): Promise<Interaction[]> {
   if (!_interactionsFetch) {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 90)
-    _interactionsFetch = supabase.from('interactions').select('*')
+    _interactionsFetch = Promise.resolve(supabase.from('interactions').select('*')
       .gte('date', cutoff.toISOString().split('T')[0])
       .order('date', { ascending: false })
       .then(({ data, error }) => {
@@ -750,7 +750,7 @@ export function getPipelines(): Promise<Pipeline[]> {
 
   if (_pipelinesCache && isExpired && !_pipelinesFetch) {
     const stale = _pipelinesCache
-    _pipelinesFetch = supabase.from('pipelines').select('*').then(({ data, error }) => {
+    _pipelinesFetch = Promise.resolve(supabase.from('pipelines').select('*')).then(({ data, error }) => {
       if (error) throw error
       _pipelinesCache = (data ?? []).map(mapPipeline)
       _pipelinesCacheTime = Date.now()
@@ -761,7 +761,7 @@ export function getPipelines(): Promise<Pipeline[]> {
   }
 
   if (!_pipelinesFetch) {
-    _pipelinesFetch = supabase.from('pipelines').select('*').then(({ data, error }) => {
+    _pipelinesFetch = Promise.resolve(supabase.from('pipelines').select('*')).then(({ data, error }) => {
       if (error) throw error
       _pipelinesCache = (data ?? []).map(mapPipeline)
       _pipelinesCacheTime = Date.now()
@@ -821,7 +821,7 @@ export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]>
 
   if (_pipelineStagesCache && isExpired && !_pipelineStagesFetch) {
     const stale = _pipelineStagesCache
-    _pipelineStagesFetch = supabase.from('pipeline_stages').select('*').then(({ data, error }) => {
+    _pipelineStagesFetch = Promise.resolve(supabase.from('pipeline_stages').select('*')).then(({ data, error }) => {
       if (error) throw error
       _pipelineStagesCache = (data ?? []).map(mapPipelineStage)
       _pipelineStagesCacheTime = Date.now()
@@ -832,7 +832,7 @@ export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]>
   }
 
   if (!_pipelineStagesFetch) {
-    _pipelineStagesFetch = supabase.from('pipeline_stages').select('*').then(({ data, error }) => {
+    _pipelineStagesFetch = Promise.resolve(supabase.from('pipeline_stages').select('*')).then(({ data, error }) => {
       if (error) throw error
       _pipelineStagesCache = (data ?? []).map(mapPipelineStage)
       _pipelineStagesCacheTime = Date.now()
@@ -903,7 +903,7 @@ export function getOpportunities(): Promise<Opportunity[]> {
 
   if (_opportunitiesCache && isExpired && !_opportunitiesFetch) {
     const stale = _opportunitiesCache
-    _opportunitiesFetch = supabase.from('opportunities').select('*').then(async ({ data, error }) => {
+    _opportunitiesFetch = Promise.resolve(supabase.from('opportunities').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _opportunitiesCache = await enrichOpportunities(data ?? [])
       _opportunitiesCacheTime = Date.now()
@@ -914,7 +914,7 @@ export function getOpportunities(): Promise<Opportunity[]> {
   }
 
   if (!_opportunitiesFetch) {
-    _opportunitiesFetch = supabase.from('opportunities').select('*').then(async ({ data, error }) => {
+    _opportunitiesFetch = Promise.resolve(supabase.from('opportunities').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _opportunitiesCache = await enrichOpportunities(data ?? [])
       _opportunitiesCacheTime = Date.now()
@@ -1008,7 +1008,7 @@ export function getProjects(): Promise<Project[]> {
 
   if (_projectsCache && isExpired && !_projectsFetch) {
     const stale = _projectsCache
-    _projectsFetch = supabase.from('projects').select('*').then(async ({ data, error }) => {
+    _projectsFetch = Promise.resolve(supabase.from('projects').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _projectsCache = await enrichProjects(data ?? [])
       _projectsCacheTime = Date.now()
@@ -1019,7 +1019,7 @@ export function getProjects(): Promise<Project[]> {
   }
 
   if (!_projectsFetch) {
-    _projectsFetch = supabase.from('projects').select('*').then(async ({ data, error }) => {
+    _projectsFetch = Promise.resolve(supabase.from('projects').select('*')).then(async ({ data, error }) => {
       if (error) throw error
       _projectsCache = await enrichProjects(data ?? [])
       _projectsCacheTime = Date.now()
