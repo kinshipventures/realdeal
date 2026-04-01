@@ -270,6 +270,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
     <dialog ref={dialogRef} className="overlay-dialog" style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
+      boxSizing: 'border-box',
     }}>
 
         {/* Close button */}
@@ -303,6 +304,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           width: '100%',
           maxWidth: 380,
           height: 320,
+          margin: '0 auto',
         }}>
           {[...visibleCards].reverse().map((contact, reversedIdx) => {
             const stackIdx = visibleCards.length - 1 - reversedIdx
