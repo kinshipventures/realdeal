@@ -194,14 +194,43 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Greeting + date */}
-      <div>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 400, letterSpacing: '0.01em' }}>
-          {getGreeting()}
+      {/* Greeting + date + quick action */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 400, letterSpacing: '0.01em' }}>
+            {getGreeting()}
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 2, letterSpacing: '0.02em' }}>
+            {formatDate()}
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 2, letterSpacing: '0.02em' }}>
-          {formatDate()}
-        </div>
+        {dataReady && onQuickAction && (
+          <button
+            type="button"
+            onClick={onQuickAction}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              borderRadius: 20,
+              padding: '7px 16px',
+              fontSize: 12, fontWeight: 600,
+              color: 'rgba(255,255,255,0.90)',
+              cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              transition: 'background 0.15s ease, transform 0.15s ease',
+              minHeight: 36,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Log interaction
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
@@ -265,37 +294,6 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
           )}
         </div>
       </div>
-
-      {/* Quick action pill */}
-      {dataReady && onQuickAction && (
-        <div>
-          <button
-            type="button"
-            onClick={onQuickAction}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.22)',
-              borderRadius: 20,
-              padding: '8px 18px',
-              fontSize: 13, fontWeight: 600,
-              color: 'rgba(255,255,255,0.90)',
-              cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              transition: 'background 0.15s ease, transform 0.15s ease',
-              minHeight: 36,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Log interaction
-          </button>
-        </div>
-      )}
     </div>
   )
 }
