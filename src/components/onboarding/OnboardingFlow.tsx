@@ -230,7 +230,7 @@ export function OnboardingFlow({ onComplete }: Props) {
                 background: i === step ? 'var(--color-brand)' : 'transparent',
                 cursor: i <= maxStep ? 'pointer' : 'default',
                 opacity: i <= maxStep ? 1 : 0.4,
-                transition: 'all 0.25s ease',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               {label}
