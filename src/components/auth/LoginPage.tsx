@@ -37,6 +37,7 @@ export function LoginPage() {
       justifyContent: 'center',
       background: 'var(--color-bg)',
       fontFamily: 'var(--font-sans)',
+      color: 'var(--color-text-primary)',
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 style={{
