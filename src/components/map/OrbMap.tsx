@@ -356,7 +356,7 @@ export function OrbMap() {
     const ringIdx = ringByPodRef.current.get(node.id)
     if (ringIdx === undefined) { savePosition(node.id, node.position.x, node.position.y); return }
 
-    // Snap to nearest point on the assigned ring
+    // Animate snap-to-ring with gravitational pull feel
     const radius = RING_RADII[ringIdx]
     const cx = node.position.x + LIST_SIZE / 2
     const cy = node.position.y + LIST_SIZE / 2
@@ -364,10 +364,30 @@ export function OrbMap() {
     const snapX = Math.cos(angle) * radius - LIST_SIZE / 2
     const snapY = Math.sin(angle) * radius - LIST_SIZE / 2
 
-    setNodes(prev => prev.map(n =>
-      n.id === node.id ? { ...n, position: { x: snapX, y: snapY } } : n
-    ))
-    savePosition(node.id, snapX, snapY)
+    const startX = node.position.x
+    const startY = node.position.y
+    const startTime = performance.now()
+    const duration = 400
+
+    function animate(now: number) {
+      const elapsed = now - startTime
+      const t = Math.min(elapsed / duration, 1)
+      // Spring-like ease: overshoot slightly then settle
+      const ease = 1 - Math.pow(1 - t, 3) * Math.cos(t * Math.PI * 0.5)
+      const x = startX + (snapX - startX) * ease
+      const y = startY + (snapY - startY) * ease
+
+      setNodes(prev => prev.map(n =>
+        n.id === node.id ? { ...n, position: { x, y } } : n
+      ))
+
+      if (t < 1) {
+        requestAnimationFrame(animate)
+      } else {
+        savePosition(node.id, snapX, snapY)
+      }
+    }
+    requestAnimationFrame(animate)
   }, [setNodes])
 
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
