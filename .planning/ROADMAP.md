@@ -129,6 +129,22 @@ Plans:
 Plans:
 - [ ] 21-01: TBD
 
+### Phase 22: Airtable to Supabase data migration
+**Goal**: Replace Airtable as the data layer with Supabase PostgreSQL -- design schema, migrate data, swap client-side data layer
+**Depends on**: Phase 18
+**Requirements**: MIGR-01, MIGR-02, MIGR-03, MIGR-04, MIGR-05, MIGR-06
+**Success Criteria** (what must be TRUE):
+  1. All tables, enums, and RLS policies exist in Supabase
+  2. All Airtable data is migrated with correct FK relationships
+  3. The app reads/writes from Supabase instead of Airtable with no consumer component changes
+  4. `pnpm build` passes with zero TypeScript errors
+**Plans**: 3 plans
+
+Plans:
+- [ ] 22-01-PLAN.md -- Schema DDL spec for Lovable + type generation checkpoint
+- [ ] 22-02-PLAN.md -- Migration script (Airtable -> Supabase) + validation
+- [ ] 22-03-PLAN.md -- supabase-data.ts implementation + barrel re-export swap
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -155,13 +171,4 @@ Plans:
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
-
-### Phase 22: Airtable to Supabase data migration
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 21
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 22 to break down)
+| 22. Airtable to Supabase | - | 0/3 | Not started | - |
