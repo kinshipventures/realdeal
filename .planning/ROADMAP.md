@@ -142,7 +142,7 @@ Plans:
 
 Plans:
 - [x] 22-01-PLAN.md -- Schema DDL spec for Lovable + type generation checkpoint
-- [ ] 22-02-PLAN.md -- Migration script (Airtable -> Supabase) + validation
+- [x] 22-02-PLAN.md -- Migration script (Airtable -> Supabase) + validation
 - [ ] 22-03-PLAN.md -- supabase-data.ts implementation + barrel re-export swap
 
 ## Progress
@@ -171,4 +171,4 @@ Plans:
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
-| 22. Airtable to Supabase | - | 1/3 | In Progress|  |
+| 22. Airtable to Supabase | - | 2/3 | In Progress|  |
