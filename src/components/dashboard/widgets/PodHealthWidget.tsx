@@ -100,8 +100,6 @@ interface PodHealthWidgetProps {
 }
 
 export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
-  if (!dataReady || podStats.length === 0) return null
-
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrolledLeft, setScrolledLeft] = useState(false)
 
