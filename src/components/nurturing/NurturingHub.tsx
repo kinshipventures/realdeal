@@ -292,11 +292,57 @@ export function NurturingHub() {
         fontWeight: 700,
         fontFamily: 'var(--font-serif)',
         color: 'var(--color-text-primary)',
-        margin: '0 0 32px',
+        margin: '0 0 12px',
         letterSpacing: '-0.02em',
       }}>
         nurturing
       </h1>
+
+      {/* Helper text - dismissible */}
+      {!helperDismissed && (
+        <div style={{
+          background: 'var(--tint)',
+          border: '1px solid var(--edge)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          marginBottom: 28,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}>
+          <span style={{ fontSize: 16, lineHeight: 1, marginTop: 1, flexShrink: 0 }}>&#x2728;</span>
+          <div style={{ flex: 1 }}>
+            <p style={{
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: 'var(--color-text-secondary)',
+              margin: 0,
+            }}>
+              Your nurturing hub surfaces contacts that need attention based on cadence, recency, and relationship health - so nothing slips through the cracks.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setHelperDismissed(true)
+              try { localStorage.setItem('realdeal:nurturing-helper-dismissed', '1') } catch {}
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text-tertiary)',
+              fontSize: 15,
+              lineHeight: 1,
+              padding: 2,
+              flexShrink: 0,
+            }}
+            aria-label="Dismiss helper text"
+          >
+            &#x2715;
+          </button>
+        </div>
+      )}
 
       {/* Needs Attention Section */}
       {needsAttentionContacts.length > 0 && (
