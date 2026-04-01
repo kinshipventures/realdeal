@@ -111,6 +111,8 @@ export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
+  if (!dataReady || podStats.length === 0) return null
+
   return (
     <div style={{ position: 'relative', marginBottom: 0 }}>
       {/* Left fade */}
