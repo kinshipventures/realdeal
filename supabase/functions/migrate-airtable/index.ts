@@ -19,172 +19,151 @@ Deno.serve(async (req) => {
 
   if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "Missing env vars" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // Get user_id from request body or look up first auth user
-  let MIGRATION_USER_ID: string;
-  try {
-    const body = await req.json().catch(() => ({}));
-    if (body.user_id) {
-      MIGRATION_USER_ID = body.user_id;
-    } else {
-      // Look up first auth user via admin API
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1 });
-      if (!usersData?.users?.length) {
-        return new Response(JSON.stringify({ error: "No auth users found. Pass user_id in request body." }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      MIGRATION_USER_ID = usersData.users[0].id;
-    }
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid request body" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const logs: string[] = [];
   const log = (msg: string) => { console.log(msg); logs.push(msg); };
+  const errors: Array<{ table: string; id: string; msg: string }> = [];
 
-  // ID mapping
+  // Get user_id
+  let userId: string;
+  const body = await req.json().catch(() => ({}));
+  if (body.user_id) {
+    userId = body.user_id;
+  } else {
+    const { data } = await supabase.auth.admin.listUsers({ perPage: 1 });
+    if (!data?.users?.length) {
+      return new Response(JSON.stringify({ error: "No auth users. Pass user_id." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    userId = data.users[0].id;
+  }
+
+  const step = body.step || "all";
+  log(`Step: ${step}, User: ${userId}`);
+
+  // Load existing id map into memory
   const idMap = new Map<string, string>();
-  const migrationErrors: Array<{ table: string; airtableId: string; message: string }> = [];
-  const airtableCounts: Record<string, number> = {};
+  const { data: existingMap } = await supabase.from("_migration_id_map").select("airtable_id, supabase_uuid");
+  if (existingMap) {
+    for (const row of existingMap) idMap.set(row.airtable_id, row.supabase_uuid);
+    log(`Loaded ${idMap.size} existing ID mappings`);
+  }
 
-  async function recordMapping(airtableId: string, tableName: string, supabaseUuid: string) {
+  async function saveMapping(airtableId: string, tableName: string, supabaseUuid: string) {
     idMap.set(airtableId, supabaseUuid);
-    const { error } = await supabase.from("_migration_id_map").insert({
-      airtable_id: airtableId,
-      table_name: tableName,
-      supabase_uuid: supabaseUuid,
-      user_id: MIGRATION_USER_ID,
-    });
-    if (error) log(`  [id-map warn] ${airtableId}: ${error.message}`);
+    await supabase.from("_migration_id_map").upsert({
+      airtable_id: airtableId, table_name: tableName,
+      supabase_uuid: supabaseUuid, user_id: userId,
+    }, { onConflict: "airtable_id,table_name" });
   }
 
-  function resolveId(airtableId: string): string | undefined {
-    return idMap.get(airtableId);
-  }
+  function resolve(id: string): string | undefined { return idMap.get(id); }
 
-  function resolveIds(ids: unknown): string[] {
-    if (!Array.isArray(ids) || ids.length === 0) return [];
-    return (ids as string[]).map((id) => idMap.get(id)).filter((id): id is string => !!id);
-  }
-
-  function logErr(table: string, airtableId: string, e: unknown) {
-    const message = e instanceof Error ? e.message : (e as { message?: string }).message ?? String(e);
-    migrationErrors.push({ table, airtableId, message });
-    log(`  [error] ${table} ${airtableId}: ${message}`);
-  }
-
-  async function fetchAirtableTable(tableName: string): Promise<AirtableRecord[]> {
+  async function fetchTable(name: string): Promise<AirtableRecord[]> {
     const records: AirtableRecord[] = [];
     let offset: string | undefined;
     do {
-      const params = offset ? `?offset=${encodeURIComponent(offset)}` : "";
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(tableName)}${params}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } });
-      if (!res.ok) throw new Error(`Airtable fetch failed for "${tableName}": ${res.status} ${await res.text()}`);
-      const json = await res.json() as { records: AirtableRecord[]; offset?: string };
-      records.push(...json.records);
-      offset = json.offset;
+      const p = offset ? `?offset=${encodeURIComponent(offset)}` : "";
+      const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(name)}${p}`, {
+        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
+      });
+      if (!res.ok) throw new Error(`${name}: ${res.status}`);
+      const j = await res.json() as { records: AirtableRecord[]; offset?: string };
+      records.push(...j.records);
+      offset = j.offset;
     } while (offset);
-    log(`  Fetched ${records.length} from Airtable:${tableName}`);
+    log(`Fetched ${records.length} from ${name}`);
     return records;
   }
 
-  const BATCH_SIZE = 50;
-  async function batchInsert(table: string, rows: Record<string, unknown>[], airtableIds?: string[]): Promise<void> {
-    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-      const batch = rows.slice(i, i + BATCH_SIZE);
-      const { data, error } = await supabase.from(table).insert(batch).select("id");
-      if (error) { log(`  [error] batch insert into ${table}: ${error.message}`); continue; }
-      if (airtableIds && data) {
-        for (let j = 0; j < batch.length; j++) {
-          const airId = airtableIds[i + j];
-          const row = data[j];
-          if (airId && row) await recordMapping(airId, table, row.id);
-        }
+  const json = (v: unknown) => new Response(JSON.stringify(v), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+  try {
+    // STEP: clean - wipe all data for fresh migration
+    if (step === "clean") {
+      const tables = [
+        "project_opportunities", "project_contacts", "opportunity_contacts",
+        "campaign_contacts", "contact_categories", "contact_pods",
+        "field_config", "interactions", "pipeline_stages", "opportunities",
+        "campaigns", "projects", "pipelines", "contacts", "companies",
+        "categories", "pods", "_migration_id_map",
+      ];
+      for (const t of tables) {
+        const { error } = await supabase.from(t).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+        log(`Cleaned ${t}: ${error ? error.message : "ok"}`);
       }
+      return json({ success: true, logs });
     }
-  }
 
-  // Migration steps
-  async function migratePods(records: AirtableRecord[]) {
-    log("\n[1/14] Pods (Lists)...");
-    airtableCounts["pods"] = records.length;
-    const rows = records.map((r) => ({
-      user_id: MIGRATION_USER_ID,
-      name: (r.fields["Name"] as string) ?? "(unnamed)",
-      color: (r.fields["Color"] as string | null) ?? null,
-      owner: (r.fields["Owner"] as string | null) ?? null,
-      is_priority: !!r.fields["Is Priority"],
-      cadence: (r.fields["Cadence"] as string | null) ?? null,
-      description: (r.fields["Description"] as string | null) ?? null,
-      capacity: (r.fields["Capacity"] as number | null) ?? null,
-      enrichment_opt_in: !!r.fields["Enrichment Opt-In"],
-    }));
-    await batchInsert("pods", rows, records.map((r) => r.id));
-  }
-
-  async function migrateCategories(records: AirtableRecord[]) {
-    log("\n[2/14] Categories...");
-    airtableCounts["categories"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedPods = r.fields["List"] as string[] | undefined;
-        const podId = linkedPods?.[0] ? resolveId(linkedPods[0]) : undefined;
-        if (!podId) { logErr("categories", r.id, `No pod mapping for linked List: ${linkedPods?.[0]}`); continue; }
-        const { data, error } = await supabase.from("categories").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+    // STEP 1: pods + categories
+    if (step === "1" || step === "all") {
+      const [listRecs, catRecs] = await Promise.all([fetchTable("Lists"), fetchTable("Categories")]);
+      for (const r of listRecs) {
+        const { data, error } = await supabase.from("pods").insert({
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           color: (r.fields["Color"] as string | null) ?? null,
-          pod_id: podId,
+          owner: (r.fields["Owner"] as string | null) ?? null,
+          is_priority: !!r.fields["Is Priority"],
+          cadence: (r.fields["Cadence"] as string | null) ?? null,
+          description: (r.fields["Description"] as string | null) ?? null,
+          capacity: (r.fields["Capacity"] as number | null) ?? null,
+          enrichment_opt_in: !!r.fields["Enrichment Opt-In"],
         }).select("id").single();
-        if (error) { logErr("categories", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "categories", data.id);
-      } catch (e) { logErr("categories", r.id, e); }
+        if (error) { errors.push({ table: "pods", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "pods", data.id);
+      }
+      log(`Pods: ${listRecs.length}`);
+      for (const r of catRecs) {
+        const podId = (r.fields["List"] as string[] | undefined)?.[0];
+        const resolved = podId ? resolve(podId) : undefined;
+        if (!resolved) continue;
+        const { data, error } = await supabase.from("categories").insert({
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+          color: (r.fields["Color"] as string | null) ?? null, pod_id: resolved,
+        }).select("id").single();
+        if (error) { errors.push({ table: "categories", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "categories", data.id);
+      }
+      log(`Categories: ${catRecs.length}`);
+      if (step === "1") return json({ success: true, logs, errors });
     }
-  }
 
-  async function migrateCompanies(contactRecords: AirtableRecord[]) {
-    log("\n[3/14] Companies...");
-    const companies = contactRecords.filter((r) => r.fields["Type"] === "Company");
-    airtableCounts["companies"] = companies.length;
-    const rows = companies.map((r) => ({
-      user_id: MIGRATION_USER_ID,
-      name: (r.fields["Name"] as string) ?? "(unnamed)",
-      industry: (r.fields["Industry"] as string | null) ?? null,
-      stage: (r.fields["Stage"] as string | null) ?? null,
-      ticker: (r.fields["Ticker"] as string | null) ?? null,
-      domain: (r.fields["Domain"] as string | null) ?? null,
-      website: (r.fields["Website"] as string | null) ?? null,
-      location: (r.fields["Location"] as string | null) ?? null,
-      notes: (r.fields["Notes"] as string | null) ?? null,
-      custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? null,
-    }));
-    await batchInsert("companies", rows, companies.map((r) => r.id));
-  }
-
-  async function migrateContacts(contactRecords: AirtableRecord[]) {
-    log("\n[4/14] Contacts...");
-    airtableCounts["contacts"] = contactRecords.length;
-    for (const r of contactRecords) {
-      try {
+    // STEP 2: companies + contacts
+    if (step === "2" || step === "all") {
+      const contactRecs = await fetchTable("Contacts");
+      // Companies first
+      const companies = contactRecs.filter((r) => r.fields["Type"] === "Company");
+      for (const r of companies) {
+        const { data, error } = await supabase.from("companies").insert({
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+          industry: (r.fields["Industry"] as string | null) ?? null,
+          stage: (r.fields["Stage"] as string | null) ?? null,
+          ticker: (r.fields["Ticker"] as string | null) ?? null,
+          domain: (r.fields["Domain"] as string | null) ?? null,
+          website: (r.fields["Website"] as string | null) ?? null,
+          location: (r.fields["Location"] as string | null) ?? null,
+          notes: (r.fields["Notes"] as string | null) ?? null,
+          custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? null,
+        }).select("id").single();
+        if (error) { errors.push({ table: "companies", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "companies", data.id);
+      }
+      log(`Companies: ${companies.length}`);
+      // Contacts
+      for (const r of contactRecs) {
         const companyLinked = r.fields["Company Record"] as string[] | undefined;
-        const companyId = companyLinked?.[0] ? resolveId(companyLinked[0]) : undefined;
+        const companyId = companyLinked?.[0] ? resolve(companyLinked[0]) : undefined;
         const kvFund = r.fields["KV Fund Investor"];
         const spv = r.fields["SPV Investor"];
         const { data, error } = await supabase.from("contacts").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           email: (r.fields["Email"] as string | null) ?? null,
           email_2: (r.fields["Email 2"] as string | null) ?? null,
           email_3: (r.fields["Email 3"] as string | null) ?? null,
@@ -227,69 +206,61 @@ Deno.serve(async (req) => {
           domain: (r.fields["Domain"] as string | null) ?? null,
           custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? {},
         }).select("id").single();
-        if (error) { logErr("contacts", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "contacts", data.id);
-      } catch (e) { logErr("contacts", r.id, e); }
-    }
-  }
-
-  async function migrateContactPods(contactRecords: AirtableRecord[]) {
-    log("\n[5/14] contact_pods junction...");
-    const rows: Record<string, unknown>[] = [];
-    for (const r of contactRecords) {
-      const contactId = resolveId(r.id);
-      if (!contactId) continue;
-      const linkedLists = r.fields["Lists"] as string[] | undefined;
-      if (!linkedLists?.length) continue;
-      const primaryListId = r.fields["Primary List ID"] as string | undefined;
-      for (const listAirId of linkedLists) {
-        const podId = resolveId(listAirId);
-        if (!podId) continue;
-        rows.push({
-          user_id: MIGRATION_USER_ID,
-          contact_id: contactId,
-          pod_id: podId,
-          is_primary: primaryListId ? listAirId === primaryListId : linkedLists.indexOf(listAirId) === 0,
-        });
+        if (error) { errors.push({ table: "contacts", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "contacts", data.id);
       }
+      log(`Contacts: ${contactRecs.length}`);
+      if (step === "2") return json({ success: true, logs, errors });
     }
-    airtableCounts["contact_pods"] = rows.length;
-    await batchInsert("contact_pods", rows);
-  }
 
-  async function migrateContactCategories(contactRecords: AirtableRecord[]) {
-    log("\n[6/14] contact_categories junction...");
-    const rows: Record<string, unknown>[] = [];
-    for (const r of contactRecords) {
-      const contactId = resolveId(r.id);
-      if (!contactId) continue;
-      const linkedCats = r.fields["Categories"] as string[] | undefined;
-      if (!linkedCats?.length) continue;
-      for (const catAirId of linkedCats) {
-        const categoryId = resolveId(catAirId);
-        if (!categoryId) continue;
-        rows.push({ user_id: MIGRATION_USER_ID, contact_id: contactId, category_id: categoryId });
+    // STEP 3: junctions (contact_pods, contact_categories)
+    if (step === "3" || step === "all") {
+      const contactRecs = await fetchTable("Contacts");
+      // contact_pods
+      const cpRows: Record<string, unknown>[] = [];
+      for (const r of contactRecs) {
+        const cid = resolve(r.id); if (!cid) continue;
+        const lists = r.fields["Lists"] as string[] | undefined; if (!lists?.length) continue;
+        const primary = r.fields["Primary List ID"] as string | undefined;
+        for (const lid of lists) {
+          const pid = resolve(lid); if (!pid) continue;
+          cpRows.push({ user_id: userId, contact_id: cid, pod_id: pid, is_primary: primary ? lid === primary : lists.indexOf(lid) === 0 });
+        }
       }
+      for (let i = 0; i < cpRows.length; i += 50) {
+        const { error } = await supabase.from("contact_pods").insert(cpRows.slice(i, i + 50));
+        if (error) errors.push({ table: "contact_pods", id: `batch-${i}`, msg: error.message });
+      }
+      log(`contact_pods: ${cpRows.length}`);
+      // contact_categories
+      const ccRows: Record<string, unknown>[] = [];
+      for (const r of contactRecs) {
+        const cid = resolve(r.id); if (!cid) continue;
+        const cats = r.fields["Categories"] as string[] | undefined; if (!cats?.length) continue;
+        for (const catId of cats) {
+          const resolved = resolve(catId); if (!resolved) continue;
+          ccRows.push({ user_id: userId, contact_id: cid, category_id: resolved });
+        }
+      }
+      for (let i = 0; i < ccRows.length; i += 50) {
+        const { error } = await supabase.from("contact_categories").insert(ccRows.slice(i, i + 50));
+        if (error) errors.push({ table: "contact_categories", id: `batch-${i}`, msg: error.message });
+      }
+      log(`contact_categories: ${ccRows.length}`);
+      if (step === "3") return json({ success: true, logs, errors });
     }
-    airtableCounts["contact_categories"] = rows.length;
-    await batchInsert("contact_categories", rows);
-  }
 
-  async function migrateInteractions(records: AirtableRecord[]) {
-    log("\n[7/14] Interactions...");
-    airtableCounts["interactions"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedContact = r.fields["Contact"] as string[] | undefined;
-        const contactId = linkedContact?.[0] ? resolveId(linkedContact[0]) : undefined;
-        if (!contactId) { logErr("interactions", r.id, `No contact mapping for ${linkedContact?.[0]}`); continue; }
-        const dateVal = (r.fields["Date"] as string | null) ?? r.createdTime.split("T")[0];
-        const rawType = ((r.fields["Type"] as string | null) ?? "note").toLowerCase();
+    // STEP 4: interactions
+    if (step === "4" || step === "all") {
+      const recs = await fetchTable("Interactions");
+      for (const r of recs) {
+        const linked = r.fields["Contact"] as string[] | undefined;
+        const cid = linked?.[0] ? resolve(linked[0]) : undefined;
+        if (!cid) { errors.push({ table: "interactions", id: r.id, msg: "no contact" }); continue; }
         const { data, error } = await supabase.from("interactions").insert({
-          user_id: MIGRATION_USER_ID,
-          contact_id: contactId,
-          type: rawType,
-          date: dateVal,
+          user_id: userId, contact_id: cid,
+          type: ((r.fields["Type"] as string | null) ?? "note").toLowerCase(),
+          date: (r.fields["Date"] as string | null) ?? r.createdTime.split("T")[0],
           notes: (r.fields["Notes"] as string | null) ?? null,
           summary: (r.fields["Summary"] as string | null) ?? null,
           source: (r.fields["Source"] as string | null) ?? null,
@@ -298,276 +269,156 @@ Deno.serve(async (req) => {
           event_detail: (r.fields["Event Detail"] as string | null) ?? null,
           actor: (r.fields["Actor"] as string | null) ?? null,
         }).select("id").single();
-        if (error) { logErr("interactions", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "interactions", data.id);
-      } catch (e) { logErr("interactions", r.id, e); }
+        if (error) { errors.push({ table: "interactions", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "interactions", data.id);
+      }
+      log(`Interactions: ${recs.length}`);
+      if (step === "4") return json({ success: true, logs, errors });
     }
-  }
 
-  async function migratePipelines(records: AirtableRecord[]) {
-    log("\n[8/14] Pipelines...");
-    airtableCounts["pipelines"] = records.length;
-    for (const r of records) {
-      try {
+    // STEP 5: pipelines, stages, opportunities, opp_contacts
+    if (step === "5" || step === "all") {
+      const [pipRecs, stageRecs, oppRecs] = await Promise.all([
+        fetchTable("Pipelines").catch(() => []),
+        fetchTable("Pipeline Stages").catch(() => []),
+        fetchTable("Opportunities").catch(() => []),
+      ]);
+      for (const r of pipRecs) {
         const { data, error } = await supabase.from("pipelines").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           status: ((r.fields["Status"] as string | null) ?? "active").toLowerCase(),
         }).select("id").single();
-        if (error) { logErr("pipelines", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "pipelines", data.id);
-      } catch (e) { logErr("pipelines", r.id, e); }
-    }
-  }
-
-  async function migratePipelineStages(records: AirtableRecord[]) {
-    log("\n[9/14] Pipeline stages...");
-    airtableCounts["pipeline_stages"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedPipeline = r.fields["Pipeline"] as string[] | undefined;
-        const pipelineId = linkedPipeline?.[0] ? resolveId(linkedPipeline[0]) : undefined;
-        if (!pipelineId) { logErr("pipeline_stages", r.id, `No pipeline mapping for ${linkedPipeline?.[0]}`); continue; }
+        if (error) { errors.push({ table: "pipelines", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "pipelines", data.id);
+      }
+      for (const r of stageRecs) {
+        const pid = (r.fields["Pipeline"] as string[] | undefined)?.[0];
+        const resolved = pid ? resolve(pid) : undefined;
+        if (!resolved) continue;
         const { data, error } = await supabase.from("pipeline_stages").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
-          pipeline_id: pipelineId,
-          color: (r.fields["Color"] as string | null) ?? null,
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+          pipeline_id: resolved, color: (r.fields["Color"] as string | null) ?? null,
           order: (r.fields["Order"] as number | null) ?? 0,
         }).select("id").single();
-        if (error) { logErr("pipeline_stages", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "pipeline_stages", data.id);
-      } catch (e) { logErr("pipeline_stages", r.id, e); }
-    }
-  }
-
-  async function migrateOpportunities(records: AirtableRecord[]) {
-    log("\n[10/14] Opportunities...");
-    airtableCounts["opportunities"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedStage = r.fields["Stage"] as string[] | undefined;
-        const stageId = linkedStage?.[0] ? resolveId(linkedStage[0]) : undefined;
+        if (error) { errors.push({ table: "pipeline_stages", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "pipeline_stages", data.id);
+      }
+      for (const r of oppRecs) {
+        const sid = (r.fields["Stage"] as string[] | undefined)?.[0];
+        const resolved = sid ? resolve(sid) : undefined;
         const { data, error } = await supabase.from("opportunities").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
-          stage_id: stageId ?? null,
-          notes: (r.fields["Notes"] as string | null) ?? null,
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+          stage_id: resolved ?? null, notes: (r.fields["Notes"] as string | null) ?? null,
           priority: (r.fields["Priority"] as string | null) ?? null,
           status: ((r.fields["Status"] as string | null) ?? "open").toLowerCase(),
         }).select("id").single();
-        if (error) { logErr("opportunities", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "opportunities", data.id);
-      } catch (e) { logErr("opportunities", r.id, e); }
-    }
-  }
-
-  async function migrateOpportunityContacts(opportunityRecords: AirtableRecord[]) {
-    log("\n[11/14] opportunity_contacts junction...");
-    const rows: Record<string, unknown>[] = [];
-    for (const r of opportunityRecords) {
-      const oppId = resolveId(r.id);
-      if (!oppId) continue;
-      const linked = r.fields["Relationships"] as string[] | undefined;
-      for (const airContactId of linked ?? []) {
-        const contactId = resolveId(airContactId);
-        if (contactId) rows.push({ user_id: MIGRATION_USER_ID, opportunity_id: oppId, contact_id: contactId });
+        if (error) { errors.push({ table: "opportunities", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "opportunities", data.id);
       }
+      // opportunity_contacts
+      const ocRows: Record<string, unknown>[] = [];
+      for (const r of oppRecs) {
+        const oid = resolve(r.id); if (!oid) continue;
+        const linked = r.fields["Relationships"] as string[] | undefined;
+        for (const airId of linked ?? []) {
+          const cid = resolve(airId); if (cid) ocRows.push({ user_id: userId, opportunity_id: oid, contact_id: cid });
+        }
+      }
+      if (ocRows.length) {
+        for (let i = 0; i < ocRows.length; i += 50) {
+          const { error } = await supabase.from("opportunity_contacts").insert(ocRows.slice(i, i + 50));
+          if (error) errors.push({ table: "opportunity_contacts", id: `batch-${i}`, msg: error.message });
+        }
+      }
+      log(`Pipelines: ${pipRecs.length}, Stages: ${stageRecs.length}, Opps: ${oppRecs.length}, OC: ${ocRows.length}`);
+      if (step === "5") return json({ success: true, logs, errors });
     }
-    airtableCounts["opportunity_contacts"] = rows.length;
-    await batchInsert("opportunity_contacts", rows);
-  }
 
-  async function migrateCampaigns(records: AirtableRecord[]) {
-    log("\n[12/14] Campaigns...");
-    airtableCounts["campaigns"] = records.length;
-    for (const r of records) {
-      try {
+    // STEP 6: campaigns, campaign_contacts, projects, project junctions, field_config
+    if (step === "6" || step === "all") {
+      const [campRecs, ccRecs, projRecs, fcRecs] = await Promise.all([
+        fetchTable("Campaigns").catch(() => []),
+        fetchTable("CampaignContacts").catch(() => []),
+        fetchTable("Projects").catch(() => []),
+        fetchTable("Field Config").catch(() => []),
+      ]);
+      for (const r of campRecs) {
         const { data, error } = await supabase.from("campaigns").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           type: ((r.fields["Type"] as string | null) ?? "other").toLowerCase(),
           deadline: (r.fields["Deadline"] as string | null) ?? null,
           status: ((r.fields["Status"] as string | null) ?? "active").toLowerCase(),
         }).select("id").single();
-        if (error) { logErr("campaigns", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "campaigns", data.id);
-      } catch (e) { logErr("campaigns", r.id, e); }
-    }
-  }
-
-  async function migrateCampaignContacts(records: AirtableRecord[]) {
-    log("\n[13/14] campaign_contacts...");
-    airtableCounts["campaign_contacts"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedCampaign = r.fields["Campaign"] as string[] | undefined;
-        const campaignId = linkedCampaign?.[0] ? resolveId(linkedCampaign[0]) : undefined;
-        const linkedContact = r.fields["Contact"] as string[] | undefined;
-        const contactId = linkedContact?.[0] ? resolveId(linkedContact[0]) : undefined;
-        if (!campaignId || !contactId) {
-          logErr("campaign_contacts", r.id, `Missing campaign (${linkedCampaign?.[0]}) or contact (${linkedContact?.[0]}) mapping`);
-          continue;
-        }
-        const { data, error } = await supabase.from("campaign_contacts").insert({
-          user_id: MIGRATION_USER_ID,
-          campaign_id: campaignId,
-          contact_id: contactId,
+        if (error) { errors.push({ table: "campaigns", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "campaigns", data.id);
+      }
+      for (const r of ccRecs) {
+        const campId = (r.fields["Campaign"] as string[] | undefined)?.[0];
+        const contId = (r.fields["Contact"] as string[] | undefined)?.[0];
+        const rc = campId ? resolve(campId) : undefined;
+        const rco = contId ? resolve(contId) : undefined;
+        if (!rc || !rco) continue;
+        await supabase.from("campaign_contacts").insert({
+          user_id: userId, campaign_id: rc, contact_id: rco,
           status: ((r.fields["Status"] as string | null) ?? "pending").toLowerCase(),
           notes: (r.fields["Notes"] as string | null) ?? null,
-        }).select("id").single();
-        if (error) { logErr("campaign_contacts", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "campaign_contacts", data.id);
-      } catch (e) { logErr("campaign_contacts", r.id, e); }
-    }
-  }
-
-  async function migrateProjects(records: AirtableRecord[]) {
-    log("\n[14/14] Projects + junctions...");
-    airtableCounts["projects"] = records.length;
-    airtableCounts["project_contacts"] = 0;
-    airtableCounts["project_opportunities"] = 0;
-    for (const r of records) {
-      try {
+        });
+      }
+      for (const r of projRecs) {
         const { data, error } = await supabase.from("projects").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           description: (r.fields["Description"] as string | null) ?? null,
           owner: (r.fields["Owner"] as string | null) ?? null,
           notes: (r.fields["Notes"] as string | null) ?? null,
         }).select("id").single();
-        if (error) { logErr("projects", r.id, error); continue; }
-        await recordMapping(r.id, "projects", data.id);
-        const projectId = data.id;
-
-        const linkedContacts = r.fields["Relationships"] as string[] | undefined;
-        if (linkedContacts?.length) {
-          const pcRows = linkedContacts
-            .map((airId) => resolveId(airId))
-            .filter((id): id is string => !!id)
-            .map((contactId) => ({ user_id: MIGRATION_USER_ID, project_id: projectId, contact_id: contactId }));
-          if (pcRows.length) {
-            const { error: pcErr } = await supabase.from("project_contacts").insert(pcRows);
-            if (pcErr) log(`  [warn] project_contacts for project ${r.id}: ${pcErr.message}`);
-            else airtableCounts["project_contacts"] += pcRows.length;
-          }
+        if (error) { errors.push({ table: "projects", id: r.id, msg: error.message }); continue; }
+        if (data) await saveMapping(r.id, "projects", data.id);
+        const pid = data!.id;
+        const linkedC = r.fields["Relationships"] as string[] | undefined;
+        if (linkedC?.length) {
+          const rows = linkedC.map(a => resolve(a)).filter((v): v is string => !!v)
+            .map(cid => ({ user_id: userId, project_id: pid, contact_id: cid }));
+          if (rows.length) await supabase.from("project_contacts").insert(rows);
         }
-
-        const linkedOpps = r.fields["Opportunities"] as string[] | undefined;
-        if (linkedOpps?.length) {
-          const poRows = linkedOpps
-            .map((airId) => resolveId(airId))
-            .filter((id): id is string => !!id)
-            .map((oppId) => ({ user_id: MIGRATION_USER_ID, project_id: projectId, opportunity_id: oppId }));
-          if (poRows.length) {
-            const { error: poErr } = await supabase.from("project_opportunities").insert(poRows);
-            if (poErr) log(`  [warn] project_opportunities for project ${r.id}: ${poErr.message}`);
-            else airtableCounts["project_opportunities"] += poRows.length;
-          }
+        const linkedO = r.fields["Opportunities"] as string[] | undefined;
+        if (linkedO?.length) {
+          const rows = linkedO.map(a => resolve(a)).filter((v): v is string => !!v)
+            .map(oid => ({ user_id: userId, project_id: pid, opportunity_id: oid }));
+          if (rows.length) await supabase.from("project_opportunities").insert(rows);
         }
-      } catch (e) { logErr("projects", r.id, e); }
-    }
-  }
-
-  async function migrateFieldConfig(records: AirtableRecord[]) {
-    log("\n[+] field_config...");
-    airtableCounts["field_config"] = records.length;
-    for (const r of records) {
-      try {
-        const linkedPod = r.fields["Scope Pod"] as string[] | undefined;
-        const scopePodId = linkedPod?.[0] ? resolveId(linkedPod[0]) : undefined;
-        const { data, error } = await supabase.from("field_config").insert({
-          user_id: MIGRATION_USER_ID,
-          name: (r.fields["Name"] as string) ?? "(unnamed)",
+      }
+      for (const r of fcRecs) {
+        const podId = (r.fields["Scope Pod"] as string[] | undefined)?.[0];
+        const resolved = podId ? resolve(podId) : undefined;
+        await supabase.from("field_config").insert({
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           airtable_field_id: (r.fields["Airtable Field ID"] as string | null) ?? null,
           field_type: (r.fields["Field Type"] as string) ?? "text",
           scope_type: (r.fields["Scope Type"] as string) ?? "global",
-          scope_pod_id: scopePodId ?? null,
+          scope_pod_id: resolved ?? null,
           required: !!r.fields["Required"],
           display_order: (r.fields["Display Order"] as number | null) ?? 0,
-        }).select("id").single();
-        if (error) { logErr("field_config", r.id, error); continue; }
-        if (data) await recordMapping(r.id, "field_config", data.id);
-      } catch (e) { logErr("field_config", r.id, e); }
-    }
-  }
-
-  // Main migration
-  try {
-    log("RealDeal: Airtable -> Supabase migration");
-    log(`User ID: ${MIGRATION_USER_ID}`);
-    log("");
-    log("Fetching all Airtable tables in parallel...");
-
-    const [
-      listRecords, categoryRecords, contactRecords, interactionRecords,
-      campaignRecords, campaignContactRecords, pipelineRecords, stageRecords,
-      opportunityRecords, projectRecords, fieldConfigRecords,
-    ] = await Promise.all([
-      fetchAirtableTable("Lists"),
-      fetchAirtableTable("Categories"),
-      fetchAirtableTable("Contacts"),
-      fetchAirtableTable("Interactions"),
-      fetchAirtableTable("Campaigns"),
-      fetchAirtableTable("CampaignContacts").catch(() => { log("  CampaignContacts table not found -- skipping"); return [] as AirtableRecord[]; }),
-      fetchAirtableTable("Pipelines").catch(() => { log("  Pipelines table not found -- skipping"); return [] as AirtableRecord[]; }),
-      fetchAirtableTable("Pipeline Stages").catch(() => { log("  Pipeline Stages table not found -- skipping"); return [] as AirtableRecord[]; }),
-      fetchAirtableTable("Opportunities").catch(() => { log("  Opportunities table not found -- skipping"); return [] as AirtableRecord[]; }),
-      fetchAirtableTable("Projects").catch(() => { log("  Projects table not found -- skipping"); return [] as AirtableRecord[]; }),
-      fetchAirtableTable("Field Config").catch(() => { log("  Field Config table not found -- skipping"); return [] as AirtableRecord[]; }),
-    ]);
-
-    await migratePods(listRecords);
-    await migrateCategories(categoryRecords);
-    await migrateCompanies(contactRecords);
-    await migrateContacts(contactRecords);
-    await migrateContactPods(contactRecords);
-    await migrateContactCategories(contactRecords);
-    await migrateInteractions(interactionRecords);
-    await migratePipelines(pipelineRecords);
-    await migratePipelineStages(stageRecords);
-    await migrateOpportunities(opportunityRecords);
-    await migrateOpportunityContacts(opportunityRecords);
-    await migrateCampaigns(campaignRecords);
-    await migrateCampaignContacts(campaignContactRecords);
-    await migrateProjects(projectRecords);
-    if (fieldConfigRecords.length) await migrateFieldConfig(fieldConfigRecords);
-
-    // Validation
-    log("\n-- Validation --");
-    const tables = [
-      "pods", "categories", "companies", "contacts",
-      "contact_pods", "contact_categories", "interactions",
-      "pipelines", "pipeline_stages", "opportunities", "opportunity_contacts",
-      "campaigns", "campaign_contacts", "projects", "project_contacts",
-      "project_opportunities", "field_config",
-    ];
-    for (const table of tables) {
-      const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true });
-      const supabaseCount = error ? "ERROR" : (count ?? 0);
-      const airtableCount = airtableCounts[table] ?? "n/a";
-      const match = supabaseCount === airtableCount ? "OK" : "MISMATCH";
-      log(`  ${table.padEnd(28)} airtable=${String(airtableCount).padStart(5)}  supabase=${String(supabaseCount).padStart(5)}  [${match}]`);
+        });
+      }
+      log(`Campaigns: ${campRecs.length}, CC: ${ccRecs.length}, Projects: ${projRecs.length}, FC: ${fcRecs.length}`);
+      if (step === "6") return json({ success: true, logs, errors });
     }
 
-    log(`\n_migration_id_map: ${idMap.size} entries written.`);
-
-    if (migrationErrors.length) {
-      log(`\n${migrationErrors.length} error(s):`);
-      for (const e of migrationErrors) log(`  [${e.table}] ${e.airtableId}: ${e.message}`);
-    } else {
-      log("\nMigration completed with no errors.");
+    // STEP: count - just report counts
+    if (step === "count" || step === "all") {
+      const tables = ["pods","categories","companies","contacts","contact_pods","contact_categories",
+        "interactions","pipelines","pipeline_stages","opportunities","opportunity_contacts",
+        "campaigns","campaign_contacts","projects","project_contacts","project_opportunities","field_config"];
+      for (const t of tables) {
+        const { count } = await supabase.from(t).select("*", { count: "exact", head: true });
+        log(`${t}: ${count ?? 0}`);
+      }
     }
 
-    return new Response(JSON.stringify({ success: true, logs, errors: migrationErrors, idMapSize: idMap.size }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, logs, errors, idMapSize: idMap.size });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    log(`Fatal error: ${msg}`);
-    return new Response(JSON.stringify({ success: false, error: msg, logs }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    log(`Fatal: ${msg}`);
+    return json({ success: false, error: msg, logs, errors });
   }
 });
