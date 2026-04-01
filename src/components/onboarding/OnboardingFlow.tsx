@@ -313,7 +313,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
       }}>
         The relationships that matter most are the ones you invest in. This is your system to make that effortless.
       </p>
-      <button type="button" onClick={onNext} style={{
+      <button type="button" onClick={onNext} className="onboard-btn-primary" style={{
         ...primaryBtnStyle, opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.7s forwards',
       }}>
         Get Started
