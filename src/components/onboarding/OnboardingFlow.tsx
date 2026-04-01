@@ -248,7 +248,12 @@ export function OnboardingFlow({ onComplete }: Props) {
         transition: 'max-width 0.35s ease',
         overflowY: 'auto', maxHeight: '100vh',
       }}>
-        <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
+        <div key={step} style={{
+          animation: step === 0
+            ? 'onboard-enter 0.4s ease-out'
+            : `${direction === 'forward' ? 'onboard-slide-left' : 'onboard-slide-right'} 0.35s cubic-bezier(0.4, 0, 0.2, 1)`,
+          display: 'contents',
+        }}>
           {step === 0 && <StepWelcome onNext={next} />}
           {step === 1 && <StepPhilosophy onNext={next} onBack={back} />}
           {step === 2 && <StepPods onNext={next} onBack={back} />}
@@ -257,7 +262,11 @@ export function OnboardingFlow({ onComplete }: Props) {
         </div>
 
         {/* Skip */}
-        <button type="button" onClick={onComplete} style={linkStyle}>
+        <button type="button" onClick={onComplete} style={{
+          ...linkStyle,
+          opacity: 0,
+          animation: 'onboard-fade-in 0.3s ease-out 0.25s forwards',
+        }}>
           Skip
         </button>
       </div>
