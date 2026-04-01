@@ -175,7 +175,7 @@ export function NeedsAttentionWidget({
       </div>
 
       {dormantContacts.length > 0 && (
-        <div style={{ ...PANEL, overflow: 'hidden' }}>
+        <div style={{ ...PANEL, overflow: 'hidden', opacity: 0.75 }}>
           <button
             type="button"
             onClick={() => setDormantExpanded(v => !v)}
