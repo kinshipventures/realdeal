@@ -1072,7 +1072,7 @@ export function RecordsList() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(contact => {
+              {filtered.map((contact, idx) => {
                 const score = equityMap[contact.id] ?? 0
                 const label = scoreLabel(score)
                 const badge = EQUITY_BADGE[label]
