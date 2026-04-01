@@ -692,7 +692,7 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
           )
         })}
       </div>
-      <ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" />
+      <div style={stagger(180)}><ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" /></div>
     </>
   )
 }
