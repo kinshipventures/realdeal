@@ -492,4 +492,6 @@ body::after {
   .skeleton { animation: none; }
   .edge-enter path { animation: none; }
   .ring-enter { animation: none; }
+  .widget-enter { animation: none; }
+  .widget-card { transition: none; }
 }
