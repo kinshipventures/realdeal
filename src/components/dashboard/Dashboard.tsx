@@ -420,7 +420,13 @@ export function Dashboard() {
           {/* Section: Action Items */}
           {(isVisible('todays-focus') || isVisible('needs-attention') || isVisible('coming-up')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">action items</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  action items
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.</span>
+                </span>
+              </h2>
               {isVisible('todays-focus') && (
                 <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
               )}
