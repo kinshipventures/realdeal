@@ -343,18 +343,48 @@ function StepPods({ onNext }: { onNext: () => void }) {
 }
 
 function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; onNext: () => void; navigate: (path: string) => void }) {
+  const nodes = [
+    { x: 0, y: 0, size: 10, color: '#25B439', delay: 0 },
+    { x: -28, y: -20, size: 7, color: '#6366F1', delay: 100 },
+    { x: 30, y: -16, size: 8, color: '#EC4899', delay: 200 },
+    { x: -18, y: 24, size: 6, color: '#F59E0B', delay: 300 },
+    { x: 26, y: 22, size: 7, color: '#8B5CF6', delay: 150 },
+    { x: -36, y: 6, size: 5, color: '#14B8A6', delay: 250 },
+    { x: 38, y: 4, size: 5, color: '#F97316', delay: 350 },
+  ]
   return (
     <>
-      <h2 style={headingStyle}>Import Your Contacts</h2>
+      {/* Network constellation visual */}
+      <div style={{ position: 'relative', width: 120, height: 120 }}>
+        <svg width="120" height="120" viewBox="-50 -40 100 80">
+          {/* Connection lines from center */}
+          {nodes.slice(1).map((n, i) => (
+            <line key={`l${i}`} x1={nodes[0].x} y1={nodes[0].y} x2={n.x} y2={n.y}
+              stroke={n.color} strokeWidth="0.5" strokeOpacity="0.3"
+              style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${n.delay + 200}ms forwards` }}
+            />
+          ))}
+          {/* Nodes */}
+          {nodes.map((n, i) => (
+            <circle key={`n${i}`} cx={n.x} cy={n.y} r={n.size} fill={n.color}
+              fillOpacity={i === 0 ? 1 : 0.85}
+              style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${n.delay}ms forwards` }}
+            />
+          ))}
+        </svg>
+      </div>
+
+      <h2 style={headingStyle}>Bring your people in</h2>
       <p style={bodyStyle}>
-        Bring your network in. Import contacts from a CSV to get started fast, or add them manually later.
+        Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
       </p>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 280 }}>
         <button type="button" onClick={() => { onComplete(); navigate('/import') }} style={primaryBtnStyle}>
-          Import Contacts
+          Import from CSV
         </button>
         <button type="button" onClick={onNext} style={secondaryBtnStyle}>
-          I'll do this later
+          I'll add people manually
         </button>
       </div>
     </>
