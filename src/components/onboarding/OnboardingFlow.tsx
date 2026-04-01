@@ -124,13 +124,15 @@ function SeedTree({ step }: { step: number }) {
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
   const [maxStep, setMaxStep] = useState(0)
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const navigate = useNavigate()
 
   const next = () => {
+    setDirection('forward')
     if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
     else onComplete()
   }
-  const back = () => { if (step > 0) setStep(step - 1) }
+  const back = () => { if (step > 0) { setDirection('back'); setStep(step - 1) } }
 
   return (
     <div style={{
@@ -141,6 +143,18 @@ export function OnboardingFlow({ onComplete }: Props) {
       <style>{`
         @keyframes onboard-enter {
           from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes onboard-slide-left {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-slide-right {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-stagger {
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes welcome-pulse {
@@ -166,6 +180,10 @@ export function OnboardingFlow({ onComplete }: Props) {
         @keyframes leaf-pop {
           from { transform: scale(0); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes onboard-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .onboard-btn-primary:hover {
           transform: scale(1.03) !important;
@@ -212,7 +230,7 @@ export function OnboardingFlow({ onComplete }: Props) {
                 background: i === step ? 'var(--color-brand)' : 'transparent',
                 cursor: i <= maxStep ? 'pointer' : 'default',
                 opacity: i <= maxStep ? 1 : 0.4,
-                transition: 'all 0.25s ease',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               {label}
@@ -230,7 +248,12 @@ export function OnboardingFlow({ onComplete }: Props) {
         transition: 'max-width 0.35s ease',
         overflowY: 'auto', maxHeight: '100vh',
       }}>
-        <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
+        <div key={step} style={{
+          animation: step === 0
+            ? 'onboard-enter 0.4s ease-out'
+            : `${direction === 'forward' ? 'onboard-slide-left' : 'onboard-slide-right'} 0.35s cubic-bezier(0.4, 0, 0.2, 1)`,
+          display: 'contents',
+        }}>
           {step === 0 && <StepWelcome onNext={next} />}
           {step === 1 && <StepPhilosophy onNext={next} onBack={back} />}
           {step === 2 && <StepPods onNext={next} onBack={back} />}
@@ -239,13 +262,24 @@ export function OnboardingFlow({ onComplete }: Props) {
         </div>
 
         {/* Skip */}
-        <button type="button" onClick={onComplete} style={linkStyle}>
+        <button type="button" onClick={onComplete} style={{
+          ...linkStyle,
+          opacity: 0,
+          animation: 'onboard-fade-in 0.3s ease-out 0.25s forwards',
+        }}>
           Skip
         </button>
       </div>
     </div>
   )
 }
+
+/* ---------- stagger helper ---------- */
+
+const stagger = (delay: number): React.CSSProperties => ({
+  opacity: 0,
+  animation: `onboard-stagger 0.4s ease-out ${delay}ms both`,
+})
 
 /* ---------- shared back+action row ---------- */
 
@@ -370,12 +404,12 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
 
   return (
     <>
-      <h2 style={headingStyle}>This isn't a CRM</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>This isn't a CRM</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         We track relationship health, not sales pipelines.
       </p>
 
-      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
@@ -460,7 +494,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
         </div>
       </div>
 
-      <ActionRow onAction={onNext} onBack={onBack} label="Next" />
+      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
@@ -489,13 +523,13 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
 
   return (
     <>
-      <h2 style={headingStyle}>Your world in pods</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your world in pods</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Not more contacts - fewer, better ones. Pods keep your circles small and intentional.
       </p>
 
       {/* Pod cards with stagger */}
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 16, justifyContent: 'center' }}>
         {pods.map((p, i) => (
           <div
             key={p.name}
@@ -548,7 +582,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
         </div>
       </div>
 
-      <ActionRow onAction={onNext} onBack={onBack} label="Next" />
+      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
@@ -566,7 +600,7 @@ function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () =
   return (
     <>
       {/* Network constellation visual */}
-      <div style={{ position: 'relative', width: 100, height: 100, animation: 'gentle-float 4s ease-in-out infinite', flexShrink: 0 }}>
+      <div style={{ ...stagger(80), position: 'relative', width: 100, height: 100, animation: 'gentle-float 4s ease-in-out infinite', flexShrink: 0 }}>
         <svg width="120" height="120" viewBox="-50 -40 100 80">
           {/* Connection lines from center */}
           {nodes.slice(1).map((n, i) => (
@@ -585,14 +619,14 @@ function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () =
         </svg>
       </div>
 
-      <h2 style={headingStyle}>Bring your people in</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
       </p>
 
-      <ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" />
+      <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" /></div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-secondary" style={secondaryBtnStyle}>
+      <button type="button" onClick={onNext} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(240) }}>
         I'll add people manually
       </button>
     </>
@@ -610,8 +644,8 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
   ]
   return (
     <>
-      <h2 style={headingStyle}>Your Views</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your Views</h2>
+      <div style={{ ...stagger(80), display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
         {views.map((v, i) => {
           const isActive = active === v.label
           return (
@@ -658,7 +692,7 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
           )
         })}
       </div>
-      <ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" />
+      <div style={stagger(180)}><ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" /></div>
     </>
   )
 }
