@@ -681,7 +681,7 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
 /* ---------- shared styles ---------- */
 
 const headingStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
+  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
   color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
 }
 
