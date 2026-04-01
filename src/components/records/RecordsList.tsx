@@ -548,8 +548,8 @@ export function RecordsList() {
           </span>
         </div>
 
-        {/* Filter bar */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+        {/* Filter bar - compact horizontal toolbar */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
 
           {/* Views dropdown */}
           <div ref={viewsRef} style={{ position: 'relative' }}>
