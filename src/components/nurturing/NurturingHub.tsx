@@ -78,6 +78,9 @@ export function NurturingHub() {
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [hygieneExpanded, setHygieneExpanded] = useState(false)
+  const [helperDismissed, setHelperDismissed] = useState(() => {
+    try { return localStorage.getItem('realdeal:nurturing-helper-dismissed') === '1' } catch { return false }
+  })
 
   // Section refs for auto-scroll
   const needsAttentionRef = useRef<HTMLDivElement>(null)
