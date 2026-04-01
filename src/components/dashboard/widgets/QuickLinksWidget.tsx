@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, Pipeline } from '../../../lib/types'
 import { getPipelines } from '../../../lib/airtable'
+import { WidgetHeading } from './WidgetHeading'
 
 interface QuickLinksWidgetProps {
   campaigns: Campaign[]
@@ -24,9 +25,9 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <h3 className="dashboard-subheading" style={{ marginBottom: 12 }}>
-        quick links
-      </h3>
+      <div style={{ marginBottom: 12 }}>
+        <WidgetHeading title="quick links" tooltip="Jump to your active campaigns and pipelines." />
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {activeCampaigns.map(campaign => {
           const cc = campaignContacts.filter(c => c.campaign_id === campaign.id)

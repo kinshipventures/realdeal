@@ -350,7 +350,6 @@ export function OrbMap() {
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (node.id === MOJ_ID) return
-    lastDragPosRef.current = null
     savePosition(node.id, node.position.x, node.position.y)
   }, [])
 

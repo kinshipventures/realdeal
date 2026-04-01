@@ -399,7 +399,13 @@ export function Dashboard() {
           {/* Section: Network Pulse */}
           {(isVisible('pod-health') || isVisible('wrapped')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">network pulse</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  network pulse
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">How your relationship network is performing - pod health scores and key insights.</span>
+                </span>
+              </h2>
               {isVisible('pod-health') && (
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />
               )}
@@ -414,7 +420,13 @@ export function Dashboard() {
           {/* Section: Action Items */}
           {(isVisible('todays-focus') || isVisible('needs-attention') || isVisible('coming-up')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">action items</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  action items
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.</span>
+                </span>
+              </h2>
               {isVisible('todays-focus') && (
                 <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
               )}
@@ -442,7 +454,13 @@ export function Dashboard() {
           {/* Section: Activity & Links */}
           {(isVisible('recent-activity') || isVisible('quick-links')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">activity & links</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  activity & links
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">Recent interaction history and shortcuts to your active campaigns and pipelines.</span>
+                </span>
+              </h2>
               {isVisible('recent-activity') && (
                 <RecentActivityWidget items={recentActivity} onContactClick={handleContactClick} />
               )}

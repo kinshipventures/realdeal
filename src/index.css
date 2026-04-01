@@ -490,6 +490,67 @@ body::after {
   line-height: 1.2;
 }
 
+/* Widget tooltip trigger */
+.widget-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.widget-tooltip-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--tint, rgba(0,0,0,0.04));
+  border: 1px solid var(--edge, rgba(0,0,0,0.06));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  cursor: help;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: var(--font-sans, inherit);
+  line-height: 1;
+}
+.widget-tooltip-icon:hover {
+  background: rgba(0,0,0,0.08);
+  color: var(--color-text-secondary);
+}
+.widget-tooltip-bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 10px 14px;
+  background: rgba(30,30,30,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.88);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 100;
+  font-family: var(--font-sans, inherit);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.widget-tooltip-icon:hover + .widget-tooltip-bubble,
+.widget-tooltip-bubble:hover {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+
 /* "See all" link with hover + chevron */
 .see-all-link {
   font-size: 12px;

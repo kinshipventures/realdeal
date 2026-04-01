@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import type { Contact, Pod } from '../../../lib/types'
+import { WidgetHeading } from './WidgetHeading'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -66,9 +67,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 className="dashboard-subheading">
-          coming up
-        </h3>
+        <WidgetHeading title="coming up" tooltip="Upcoming birthdays and follow-ups in the next 14 days so you never miss a moment." />
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=dates')}

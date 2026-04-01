@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import type { Contact, Interaction } from '../../../lib/types'
 import { TYPE_ICONS } from '../../contacts/InteractionSection'
 import { formatRelativeTime } from '../../../lib/utils'
+import { WidgetHeading } from './WidgetHeading'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -67,9 +68,7 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 className="dashboard-subheading">
-          recent activity
-        </h3>
+        <WidgetHeading title="recent activity" tooltip="Your latest logged interactions across all contacts, sorted by most recent." />
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=activity')}
