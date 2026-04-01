@@ -183,10 +183,63 @@ export function OnboardingFlow({ onComplete }: Props) {
         }
       `}</style>
 
+      {/* Top bar: logo + progress */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        zIndex: 1,
+      }}>
+        {/* Logo */}
+        <span style={{
+          fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 18,
+          color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
+        }}>
+          RealDeal
+        </span>
+
+        {/* Progress dots + labels */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+              {step + 1}/{STEP_COUNT}
+            </span>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {Array.from({ length: STEP_COUNT }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { if (i <= maxStep) setStep(i) }}
+                  style={{
+                    width: i === step ? 20 : 7, height: 7, borderRadius: 4, padding: 0, border: 'none',
+                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'var(--tint-hover)',
+                    opacity: i < step ? 0.4 : 1,
+                    cursor: i <= maxStep ? 'pointer' : 'default',
+                    transition: 'all 0.25s ease',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {STEP_LABELS.map((label, i) => (
+              <span key={label} style={{
+                fontSize: 8, fontWeight: i === step ? 600 : 400,
+                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
+                opacity: i === step ? 1 : 0.4,
+                transition: 'all 0.25s ease',
+              }}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Seed-to-tree persistent element */}
       <SeedTree step={step} />
       <div style={{
-        width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
+        width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '80px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: step === 3 ? 20 : 32, textAlign: 'center',
         transition: 'max-width 0.35s ease',
@@ -200,50 +253,10 @@ export function OnboardingFlow({ onComplete }: Props) {
           {step === 4 && <StepTour onFinish={onComplete} onBack={back} />}
         </div>
 
-        {/* Progress with step labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
-              {step + 1} of {STEP_COUNT}
-            </span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {Array.from({ length: STEP_COUNT }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => { if (i <= maxStep) setStep(i) }}
-                  style={{
-                    width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
-                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                    opacity: i < step ? 0.4 : 1,
-                    cursor: i <= maxStep ? 'pointer' : 'default',
-                    transition: 'all 0.25s ease',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            {STEP_LABELS.map((label, i) => (
-              <span key={label} style={{
-                fontSize: 9, fontWeight: i === step ? 600 : 400,
-                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
-                opacity: i === step ? 1 : 0.5,
-                transition: 'all 0.25s ease',
-              }}>
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-
         {/* Skip */}
-        <div style={{ display: 'flex', gap: 24 }}>
-          <button type="button" onClick={onComplete} style={linkStyle}>
-            Skip
-          </button>
-        </div>
+        <button type="button" onClick={onComplete} style={linkStyle}>
+          Skip
+        </button>
       </div>
     </div>
   )
@@ -668,7 +681,7 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
 /* ---------- shared styles ---------- */
 
 const headingStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
+  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
   color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
 }
 
