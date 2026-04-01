@@ -60,6 +60,9 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes gentle-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
       `}</style>
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
@@ -410,7 +413,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
   return (
     <>
       {/* Network constellation visual */}
-      <div style={{ position: 'relative', width: 120, height: 120 }}>
+      <div style={{ position: 'relative', width: 120, height: 120, animation: 'gentle-float 4s ease-in-out infinite' }}>
         <svg width="120" height="120" viewBox="-50 -40 100 80">
           {/* Connection lines from center */}
           {nodes.slice(1).map((n, i) => (
