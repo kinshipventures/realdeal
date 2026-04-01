@@ -260,8 +260,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isPulse ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isPulse ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isPulse ? 'var(--tint-hover)' : 'transparent',
+              color: isPulse ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isPulse ? 600 : 500,
             }}
           >
@@ -280,8 +280,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isMap ? 'var(--tint-hover)' : 'transparent',
+              color: isMap ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isMap ? 600 : 500,
             }}
           >
@@ -300,8 +300,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isContacts ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isContacts ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isContacts ? 'var(--tint-hover)' : 'transparent',
+              color: isContacts ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isContacts ? 600 : 500,
             }}
           >
@@ -321,7 +321,7 @@ function AppShell() {
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="1.5"
+              fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8"/>
@@ -341,8 +341,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isPipelines ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isPipelines ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isPipelines ? 'var(--tint-hover)' : 'transparent',
+              color: isPipelines ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isPipelines ? 600 : 500,
             }}
           >
@@ -361,8 +361,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isProjects ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isProjects ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isProjects ? 'var(--tint-hover)' : 'transparent',
+              color: isProjects ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isProjects ? 600 : 500,
             }}
           >
@@ -384,7 +384,7 @@ function AppShell() {
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="1.5"
+              fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"
             >
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
