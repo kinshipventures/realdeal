@@ -677,7 +677,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
           )
         })}
       </div>
-      <button type="button" onClick={onFinish} style={primaryBtnStyle}>
+      <button type="button" onClick={onFinish} className="onboard-btn-primary" style={primaryBtnStyle}>
         Let's Go
       </button>
     </>
