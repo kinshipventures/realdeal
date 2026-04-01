@@ -471,6 +471,13 @@ Deno.serve(async (req) => {
         // Insert as contact too
         const kvFund = r.fields["KV Fund Investor"];
         const spv = r.fields["SPV Investor"];
+        // Validate company_id exists in companies table before using it
+        let validCompanyId: string | null = null;
+        if (companyId) {
+          const { data: compCheck } = await supabase.from("companies").select("id").eq("id", companyId).maybeSingle();
+          validCompanyId = compCheck ? companyId : null;
+          if (!compCheck) log(`Skipping invalid company_id ${companyId} for ${r.fields["Name"]}`);
+        }
         const { data, error } = await supabase.from("contacts").insert({
           user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
           email: (r.fields["Email"] as string | null) ?? null,
@@ -478,7 +485,7 @@ Deno.serve(async (req) => {
           email_3: (r.fields["Email 3"] as string | null) ?? null,
           phone: (r.fields["Phone"] as string | null) ?? null,
           company: (r.fields["Company"] as string | null) ?? null,
-          company_id: companyId ?? null,
+          company_id: validCompanyId,
           role: (r.fields["Role"] as string | null) ?? null,
           location: (r.fields["Location"] as string | null) ?? null,
           website: (r.fields["Website"] as string | null) ?? null,
