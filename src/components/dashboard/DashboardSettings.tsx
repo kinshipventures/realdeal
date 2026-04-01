@@ -29,12 +29,15 @@ export function DashboardSettings({ config, onToggle, onPreset, onClose }: Dashb
       />
       {/* Panel */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
+        position: 'fixed', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
         width: 320,
+        maxHeight: 'calc(100vh - 80px)',
         background: 'var(--surface-panel)',
         backdropFilter: 'var(--panel-blur)',
         WebkitBackdropFilter: 'var(--panel-blur)',
-        borderLeft: 'var(--surface-panel-border)',
+        border: '1px solid var(--edge)',
+        borderRadius: 16,
         zIndex: 201,
         display: 'flex',
         flexDirection: 'column',
