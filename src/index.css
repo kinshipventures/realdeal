@@ -258,6 +258,10 @@
   animation: orbit-slide 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.health-ring-enter {
+  animation: ring-fade 0.5s ease both;
+}
+
 /* ── Parallax depth layer ─────────────────────────────────────────────────── */
 
 .parallax-layer {
@@ -648,6 +652,7 @@ body::after {
   .skeleton { animation: none; }
   .edge-enter path { animation: none; }
   .ring-enter { animation: none; }
+  .health-ring-enter { animation: none; }
   .widget-enter { animation: none; }
   .widget-card { transition: none; }
   .satellite-expand { transition: none; }

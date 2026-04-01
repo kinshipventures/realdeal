@@ -74,7 +74,13 @@ export function SolidOrb({
           width={containerSize}
           height={containerSize}
           viewBox={`0 0 ${containerSize} ${containerSize}`}
-          style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+          className="health-ring-enter"
+          style={{
+            position: 'absolute', top: 0, left: 0, pointerEvents: 'none',
+            animationDelay: animationDelay
+              ? `${parseFloat(animationDelay) + 0.7}s`
+              : '0.7s',
+          }}
         >
           {/* Track circle */}
           <circle
