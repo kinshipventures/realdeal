@@ -61,15 +61,21 @@ export function OnboardingFlow({ onComplete }: Props) {
           {step === 4 && <StepTour onFinish={onComplete} />}
         </div>
 
-        {/* Progress dots */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          {Array.from({ length: STEP_COUNT }, (_, i) => (
-            <div key={i} style={{
-              width: i === step ? 24 : 8, height: 8, borderRadius: 4,
-              background: i === step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-              transition: 'all 0.25s ease',
-            }} />
-          ))}
+        {/* Progress */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+            {step + 1} of {STEP_COUNT}
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {Array.from({ length: STEP_COUNT }, (_, i) => (
+              <div key={i} style={{
+                width: i === step ? 24 : 8, height: 8, borderRadius: 4,
+                background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
+                opacity: i < step ? 0.4 : 1,
+                transition: 'all 0.25s ease',
+              }} />
+            ))}
+          </div>
         </div>
 
         {/* Back / Skip row */}
