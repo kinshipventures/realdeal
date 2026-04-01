@@ -249,6 +249,32 @@ export function OnboardingFlow({ onComplete }: Props) {
   )
 }
 
+/* ---------- shared back+action row ---------- */
+
+function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?: () => void; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 280 }}>
+      {onBack && (
+        <button type="button" onClick={onBack} style={{
+          width: 44, height: 44, borderRadius: '50%', border: 'none',
+          background: 'var(--color-brand)', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
+          transition: 'transform 0.15s, box-shadow 0.15s',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+      <button type="button" onClick={onAction} className="onboard-btn-primary" style={{ ...primaryBtnStyle, flex: 1, maxWidth: 'none' }}>
+        {label}
+      </button>
+    </div>
+  )
+}
+
 /* ---------- individual steps ---------- */
 
 function StepWelcome({ onNext }: { onNext: () => void }) {
