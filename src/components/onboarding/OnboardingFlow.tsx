@@ -8,6 +8,7 @@ interface Props {
 }
 
 const STEP_COUNT = 5
+const STEP_LABELS = ['Welcome', 'Philosophy', 'Pods', 'Import', 'Tour']
 
 /* ---------- static data (hoisted out of render) ---------- */
 
@@ -165,6 +166,20 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { transform: scale(0); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
+        .onboard-btn-primary:hover {
+          transform: scale(1.03) !important;
+          box-shadow: 0 6px 24px rgba(37,180,57,0.40) !important;
+        }
+        .onboard-btn-primary:active {
+          transform: scale(0.97) !important;
+        }
+        .onboard-btn-secondary:hover {
+          background: rgba(0,0,0,0.06) !important;
+          border-color: rgba(0,0,0,0.2) !important;
+        }
+        .onboard-btn-secondary:active {
+          transform: scale(0.97) !important;
+        }
       `}</style>
 
       {/* Seed-to-tree persistent element */}
@@ -173,6 +188,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 32, textAlign: 'center',
+        transition: 'max-width 0.35s ease',
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
@@ -182,25 +198,40 @@ export function OnboardingFlow({ onComplete }: Props) {
           {step === 4 && <StepTour onFinish={onComplete} />}
         </div>
 
-        {/* Progress */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
-            {step + 1} of {STEP_COUNT}
-          </span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {Array.from({ length: STEP_COUNT }, (_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => { if (i <= maxStep) setStep(i) }}
-                style={{
-                  width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
-                  background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                  opacity: i < step ? 0.4 : 1,
-                  cursor: i <= maxStep ? 'pointer' : 'default',
-                  transition: 'all 0.25s ease',
-                }}
-              />
+        {/* Progress with step labels */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+              {step + 1} of {STEP_COUNT}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {Array.from({ length: STEP_COUNT }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { if (i <= maxStep) setStep(i) }}
+                  style={{
+                    width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
+                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
+                    opacity: i < step ? 0.4 : 1,
+                    cursor: i <= maxStep ? 'pointer' : 'default',
+                    transition: 'all 0.25s ease',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 16 }}>
+            {STEP_LABELS.map((label, i) => (
+              <span key={label} style={{
+                fontSize: 9, fontWeight: i === step ? 600 : 400,
+                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
+                opacity: i === step ? 1 : 0.5,
+                transition: 'all 0.25s ease',
+              }}>
+                {label}
+              </span>
             ))}
           </div>
         </div>
@@ -282,7 +313,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
       }}>
         The relationships that matter most are the ones you invest in. This is your system to make that effortless.
       </p>
-      <button type="button" onClick={onNext} style={{
+      <button type="button" onClick={onNext} className="onboard-btn-primary" style={{
         ...primaryBtnStyle, opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.7s forwards',
       }}>
         Get Started
@@ -408,7 +439,7 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} style={primaryBtnStyle}>
+      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
         Next
       </button>
     </>
@@ -498,7 +529,7 @@ function StepPods({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} style={primaryBtnStyle}>
+      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
         Next
       </button>
     </>
@@ -544,7 +575,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
 
       {/* Import sources */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-        <button type="button" onClick={() => { onComplete(); navigate('/import') }} style={primaryBtnStyle}>
+        <button type="button" onClick={() => { onComplete(); navigate('/import') }} className="onboard-btn-primary" style={primaryBtnStyle}>
           Import from CSV
         </button>
 
@@ -579,7 +610,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
           ))}
         </div>
 
-        <button type="button" onClick={onNext} style={secondaryBtnStyle}>
+        <button type="button" onClick={onNext} className="onboard-btn-secondary" style={secondaryBtnStyle}>
           I'll add people manually
         </button>
       </div>
@@ -646,7 +677,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
           )
         })}
       </div>
-      <button type="button" onClick={onFinish} style={primaryBtnStyle}>
+      <button type="button" onClick={onFinish} className="onboard-btn-primary" style={primaryBtnStyle}>
         Let's Go
       </button>
     </>
