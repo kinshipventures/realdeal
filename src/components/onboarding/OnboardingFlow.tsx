@@ -159,89 +159,88 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         We track relationship health, not sales pipelines.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', textAlign: 'left' }}>
-        {PRINCIPLES.map((p, i) => (
-          <div key={p.label} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 16px',
-            borderRadius: 10, background: 'rgba(0,0,0,0.03)',
-            opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
-          }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginTop: 2,
-              background: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'flex-start' }}>
+        {/* Left: Principles */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {PRINCIPLES.map((p, i) => (
+            <div key={p.label} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px',
+              borderRadius: 10, background: 'rgba(0,0,0,0.03)',
+              opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d={p.icon} />
-              </svg>
-            </div>
-            <div>
-              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
-                {p.label}
-              </span>
-              <div style={{ fontSize: 11, fontStyle: 'italic', color: 'var(--color-text-secondary)', lineHeight: 1.4, marginTop: 2 }}>
-                {p.stat}
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0, marginTop: 2,
+                background: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={p.icon} />
+                </svg>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
+                  {p.label}
+                </span>
+                <div style={{ fontSize: 10, fontStyle: 'italic', color: 'var(--color-text-secondary)', lineHeight: 1.4, marginTop: 2 }}>
+                  {p.stat}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: '60%', height: 1, background: 'rgba(0,0,0,0.08)' }} />
-
-      {/* How scoring works */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>
-          How scoring works
-        </span>
-        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', margin: 0, maxWidth: 300 }}>
-          Every interaction builds equity. Some carry more weight.
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-        <div style={{ position: 'relative', width: ringSize, height: ringSize, flexShrink: 0 }}>
-          <svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ transform: 'rotate(-90deg)' }}>
-            <circle
-              cx={ringSize / 2} cy={ringSize / 2} r={r}
-              fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeW}
-            />
-            {arcs.map(a => (
-              <circle
-                key={a.label}
-                cx={ringSize / 2} cy={ringSize / 2} r={r}
-                fill="none" stroke={a.color} strokeWidth={strokeW}
-                strokeDasharray={`${a.visible ? a.arcLen : 0} ${circ}`}
-                strokeDashoffset={-a.offset}
-                style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
-              />
-            ))}
-          </svg>
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
-              Equity
-            </span>
-          </div>
+          ))}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {INTERACTIONS.map((inter, i) => (
-            <div key={inter.label} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              opacity: i <= animStep ? 1 : 0.3,
-              transition: 'opacity 0.4s ease',
+        {/* Right: Scoring */}
+        <div style={{
+          flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+          padding: '16px 20px', borderRadius: 14, background: 'rgba(0,0,0,0.02)',
+          border: '1px solid rgba(0,0,0,0.06)',
+        }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+            How scoring works
+          </span>
+
+          <div style={{ position: 'relative', width: ringSize, height: ringSize, flexShrink: 0 }}>
+            <svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ transform: 'rotate(-90deg)' }}>
+              <circle
+                cx={ringSize / 2} cy={ringSize / 2} r={r}
+                fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeW}
+              />
+              {arcs.map(a => (
+                <circle
+                  key={a.label}
+                  cx={ringSize / 2} cy={ringSize / 2} r={r}
+                  fill="none" stroke={a.color} strokeWidth={strokeW}
+                  strokeDasharray={`${a.visible ? a.arcLen : 0} ${circ}`}
+                  strokeDashoffset={-a.offset}
+                  style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                />
+              ))}
+            </svg>
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: inter.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
-                {inter.label}
-              </span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: inter.color, fontFamily: 'var(--font-sans)' }}>
-                +{inter.weight}
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                Equity
               </span>
             </div>
-          ))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {INTERACTIONS.map((inter, i) => (
+              <div key={inter.label} style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                opacity: i <= animStep ? 1 : 0.3,
+                transition: 'opacity 0.4s ease',
+              }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: inter.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>
+                  {inter.label}
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: inter.color, fontFamily: 'var(--font-sans)' }}>
+                  +{inter.weight}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
