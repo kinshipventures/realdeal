@@ -124,13 +124,15 @@ function SeedTree({ step }: { step: number }) {
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
   const [maxStep, setMaxStep] = useState(0)
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const navigate = useNavigate()
 
   const next = () => {
+    setDirection('forward')
     if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
     else onComplete()
   }
-  const back = () => { if (step > 0) setStep(step - 1) }
+  const back = () => { if (step > 0) { setDirection('back'); setStep(step - 1) } }
 
   return (
     <div style={{
