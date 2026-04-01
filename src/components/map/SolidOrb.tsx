@@ -40,8 +40,8 @@ export function SolidOrb({
 
   const orbRef = useRef<HTMLDivElement>(null)
   const glowSize = size >= 96 ? 28 : 20
-  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 4px 16px rgba(0,0,0,0.12)`
-  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 4px 16px rgba(0,0,0,0.12)`
+  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 8px 20px -4px rgba(0,0,0,0.18)`
+  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 12px 28px -4px rgba(0,0,0,0.22)`
 
   const bg = shiftColor
     ? `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`
@@ -131,11 +131,6 @@ export function SolidOrb({
         {children}
       </div>
 
-      {/* Floor shadow - grounding the orb in 3D space */}
-      <div className="orb-floor-shadow" style={{
-        width: size * 0.8,
-        height: size * 0.2,
-      }} />
     </div>
   )
 }
