@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
-stopped_at: "Checkpoint: 22-01 Task 1 complete, awaiting Lovable schema execution (Task 2 human-action)"
-last_updated: "2026-04-01T08:21:28.493Z"
+stopped_at: "Checkpoint: 22-02 Task 1 complete, awaiting user to run migration script (Task 2 human-verify)"
+last_updated: "2026-04-01T18:32:41.519Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 22 (airtable-to-supabase-data-migration) — EXECUTING
-Plan: 1 of 3
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Plan: 1 of 3
 **Previous milestones:** 17 phases, 48 plans shipped across v1.0-v2.0
 | Phase 18-authentication P01 | 8 | 3 tasks | 6 files |
 | Phase 22-airtable-to-supabase-data-migration P01 | 5 | 1 tasks | 1 files |
+| Phase 22-airtable-to-supabase-data-migration P02 | 3 minutes | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,7 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 18-authentication]: Single onAuthStateChange subscription - no getSession() call to avoid double-fetch anti-pattern
 - [Phase 18-authentication]: LoginPage is a shell only - lovable-auth div is mount point for Lovable auth UI drop-in
 - [Phase 22-airtable-to-supabase-data-migration]: Schema DDL spec produced by Claude Code, executed by Lovable -- Lovable handles Supabase table creation, Claude Code handles migration script and data layer swap
+- [Phase 22-airtable-to-supabase-data-migration]: Migration script uses service role key + MIGRATION_USER_ID env var -- never committed, never in Vercel
 
 ### Roadmap Evolution
 
@@ -74,6 +76,6 @@ See PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last activity: 2026-04-01
-Last session: 2026-04-01T08:21:21.880Z
-Stopped at: Checkpoint: 22-01 Task 1 complete, awaiting Lovable schema execution (Task 2 human-action)
+Last session: 2026-04-01T18:32:41.518Z
+Stopped at: Checkpoint: 22-02 Task 1 complete, awaiting user to run migration script (Task 2 human-verify)
 Resume file: None
