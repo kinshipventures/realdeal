@@ -28,10 +28,11 @@ const TOTAL_WEIGHT = INTERACTIONS.reduce((s, i) => s + i.weight, 0)
 
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
+  const [maxStep, setMaxStep] = useState(0)
   const navigate = useNavigate()
 
   const next = () => {
-    if (step < STEP_COUNT - 1) setStep(step + 1)
+    if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
     else onComplete()
   }
   const back = () => { if (step > 0) setStep(step - 1) }
@@ -68,12 +69,18 @@ export function OnboardingFlow({ onComplete }: Props) {
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
             {Array.from({ length: STEP_COUNT }, (_, i) => (
-              <div key={i} style={{
-                width: i === step ? 24 : 8, height: 8, borderRadius: 4,
-                background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                opacity: i < step ? 0.4 : 1,
-                transition: 'all 0.25s ease',
-              }} />
+              <button
+                key={i}
+                type="button"
+                onClick={() => { if (i <= maxStep) setStep(i) }}
+                style={{
+                  width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
+                  background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
+                  opacity: i < step ? 0.4 : 1,
+                  cursor: i <= maxStep ? 'pointer' : 'default',
+                  transition: 'all 0.25s ease',
+                }}
+              />
             ))}
           </div>
         </div>
