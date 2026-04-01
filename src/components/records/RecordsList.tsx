@@ -1082,18 +1082,13 @@ export function RecordsList() {
                 return (
                   <tr
                     key={contact.id}
+                    className="contacts-row"
                     onClick={() => navigate(`/contact/${contact.id}`)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
                       background: selected ? 'rgba(37,180,57,0.05)' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => {
-                      if (!selected) (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(0,0,0,0.02)'
-                    }}
-                    onMouseLeave={e => {
-                      if (!selected) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'
+                      animationDelay: `${Math.min(idx, 20) * 25}ms`,
                     }}
                   >
                     {/* Checkbox cell */}
