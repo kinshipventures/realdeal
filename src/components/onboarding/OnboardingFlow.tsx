@@ -32,7 +32,7 @@ export function OnboardingFlow({ onComplete }: Props) {
   const navigate = useNavigate()
 
   const next = () => {
-    if (step < STEP_COUNT - 1) setStep(step + 1)
+    if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
     else onComplete()
   }
   const back = () => { if (step > 0) setStep(step - 1) }
