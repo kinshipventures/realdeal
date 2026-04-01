@@ -413,7 +413,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
   return (
     <>
       {/* Network constellation visual */}
-      <div style={{ position: 'relative', width: 120, height: 120 }}>
+      <div style={{ position: 'relative', width: 120, height: 120, animation: 'gentle-float 4s ease-in-out infinite' }}>
         <svg width="120" height="120" viewBox="-50 -40 100 80">
           {/* Connection lines from center */}
           {nodes.slice(1).map((n, i) => (
