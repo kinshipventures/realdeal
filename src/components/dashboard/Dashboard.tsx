@@ -353,7 +353,7 @@ export function Dashboard() {
                     scoreTrend={scoreTrend}
                     onQuickAction={() => {
                       const first = focusItems[0]
-                      if (first) setSelectedContact(contacts.find(c => c.id === first.contactId) ?? null)
+                      if (first) setSelectedContact(first.contact)
                     }}
                   />
                 </div>
