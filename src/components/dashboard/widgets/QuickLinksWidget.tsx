@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, Pipeline } from '../../../lib/types'
 import { getPipelines } from '../../../lib/airtable'
+import { WidgetHeading } from './WidgetHeading'
 
 interface QuickLinksWidgetProps {
   campaigns: Campaign[]
