@@ -500,8 +500,30 @@ export function RecordsList() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <span style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>Loading...</span>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
+        <div style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+          <div className="skeleton" style={{ width: 140, height: 28, borderRadius: 8, marginBottom: 20 }} />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {[80, 180, 100, 90, 90, 90].map((w, i) => (
+              <div key={i} className="skeleton" style={{ width: w, height: 36, borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '0 40px 40px' }}>
+          <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--edge)' }}>
+            {[40, 120, 100, 80, 60].map((w, i) => (
+              <div key={i} className="skeleton" style={{ width: w, height: 12, borderRadius: 4 }} />
+            ))}
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--edge)', opacity: 1 - i * 0.08 }}>
+              <div className="skeleton" style={{ width: 16, height: 16, borderRadius: 3 }} />
+              <div className="skeleton" style={{ width: 140 + Math.random() * 60, height: 14, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: 90, height: 14, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: 60, height: 22, borderRadius: 100 }} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -526,8 +548,8 @@ export function RecordsList() {
           </span>
         </div>
 
-        {/* Filter bar */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+        {/* Filter bar - compact horizontal toolbar */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
 
           {/* Views dropdown */}
           <div ref={viewsRef} style={{ position: 'relative' }}>
@@ -611,16 +633,18 @@ export function RecordsList() {
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
             style={{
-              height: 32,
+              height: 36,
               padding: '0 12px',
               borderRadius: 8,
               border: '1px solid var(--edge)',
-              background: 'var(--color-surface)',
+              background: 'var(--surface-panel)',
+              backdropFilter: 'blur(20px)',
               fontSize: 13,
               color: 'var(--color-text-primary)',
               outline: 'none',
               fontFamily: 'inherit',
               minWidth: 180,
+              transition: 'border-color 0.15s',
             }}
           />
 
@@ -1017,14 +1041,16 @@ export function RecordsList() {
           >
             <thead style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 1 }}>
               <tr style={{ borderBottom: '1px solid var(--edge)' }}>
-                {/* Checkbox header */}
-                <th style={{ width: 40, padding: '10px 12px', textAlign: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    style={{ cursor: 'pointer' }}
-                  />
+                {/* Checkbox header - 44px touch target */}
+                <th style={{ width: 44, padding: 0, textAlign: 'center', height: 44 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                    />
+                  </div>
                 </th>
                 {visibleCols.map(col => (
                   <th
@@ -1050,7 +1076,7 @@ export function RecordsList() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(contact => {
+              {filtered.map((contact, idx) => {
                 const score = equityMap[contact.id] ?? 0
                 const label = scoreLabel(score)
                 const badge = EQUITY_BADGE[label]
@@ -1060,32 +1086,29 @@ export function RecordsList() {
                 return (
                   <tr
                     key={contact.id}
+                    className="contacts-row"
                     onClick={() => navigate(`/contact/${contact.id}`)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
                       background: selected ? 'rgba(37,180,57,0.05)' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => {
-                      if (!selected) (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(0,0,0,0.02)'
-                    }}
-                    onMouseLeave={e => {
-                      if (!selected) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'
+                      animationDelay: `${Math.min(idx, 20) * 25}ms`,
                     }}
                   >
-                    {/* Checkbox cell */}
-                    <td style={{ padding: '12px 12px', textAlign: 'center' }} onClick={e => toggleSelectRow(contact.id, e)}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={() => {}}
-                        style={{ cursor: 'pointer' }}
-                      />
+                    {/* Checkbox cell - 44px touch target */}
+                    <td style={{ padding: '0', textAlign: 'center', width: 44, height: 44 }} onClick={e => toggleSelectRow(contact.id, e)}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {}}
+                          style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                        />
+                      </div>
                     </td>
 
                     {visibleCols.map(col => (
-                      <td key={col.id} style={{ padding: '12px 12px' }}>
+                      <td key={col.id} style={{ padding: '12px 12px', height: 44 }}>
                         {col.id === 'name' && (
                           <span style={{
                             fontWeight: contact.type === 'Company' ? 600 : 500,
@@ -1198,10 +1221,27 @@ export function RecordsList() {
         </div>
       )}
 
-      {/* Mobile card layout */}
+      {/* Mobile card layout + HIG row styles */}
       <style>{`
         @media (max-width: 767px) {
           .records-table { display: none !important; }
+        }
+        @keyframes row-enter {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .contacts-row {
+          animation: row-enter 0.3s ease-out both;
+          transition: background 0.12s ease;
+        }
+        .contacts-row:hover {
+          background: rgba(0,0,0,0.03) !important;
+        }
+        .contacts-row:active {
+          background: rgba(0,0,0,0.06) !important;
+        }
+        .contacts-row[style*="rgba(37,180,57"]:hover {
+          background: rgba(37,180,57,0.08) !important;
         }
       `}</style>
     </div>
@@ -1212,65 +1252,78 @@ export function RecordsList() {
 
 function filterBtnStyle(active: boolean): React.CSSProperties {
   return {
-    height: 32,
-    padding: '0 12px',
+    height: 36,
+    minHeight: 36,
+    padding: '0 14px',
     borderRadius: 8,
     border: `1px solid ${active ? 'rgba(0,0,0,0.2)' : 'var(--edge)'}`,
-    background: active ? 'rgba(0,0,0,0.06)' : 'var(--color-surface)',
-    color: 'var(--color-text-secondary)',
+    background: active ? 'rgba(0,0,0,0.06)' : 'var(--surface-panel)',
+    backdropFilter: 'blur(20px)',
+    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
     fontSize: 12,
     fontWeight: 500,
     cursor: 'pointer',
     fontFamily: 'inherit',
     display: 'flex',
     alignItems: 'center',
+    transition: 'background 0.12s, border-color 0.12s',
   }
 }
 
 const selectStyle: React.CSSProperties = {
-  height: 32,
-  padding: '0 8px',
+  height: 36,
+  minHeight: 36,
+  padding: '0 10px',
   borderRadius: 8,
   border: '1px solid var(--edge)',
-  background: 'var(--color-surface)',
+  background: 'var(--surface-panel)',
+  backdropFilter: 'blur(20px)',
   color: 'var(--color-text-secondary)',
   fontSize: 12,
   fontFamily: 'inherit',
   cursor: 'pointer',
   outline: 'none',
+  transition: 'border-color 0.12s',
 }
 
 const dropdownStyle: React.CSSProperties = {
   position: 'absolute',
   top: '100%',
   left: 0,
-  marginTop: 4,
-  background: 'var(--color-surface)',
+  marginTop: 6,
+  background: 'var(--surface-panel)',
   border: '1px solid var(--edge)',
-  borderRadius: 10,
-  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+  borderRadius: 12,
+  boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
   zIndex: 50,
   minWidth: 180,
   padding: 4,
-  backdropFilter: 'blur(20px)',
+  backdropFilter: 'blur(32px)',
 }
 
 const dropdownItemStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  borderRadius: 6,
+  padding: '8px 12px',
+  borderRadius: 8,
   fontSize: 13,
   color: 'var(--color-text-primary)',
   cursor: 'pointer',
+  minHeight: 36,
+  display: 'flex',
+  alignItems: 'center',
+  transition: 'background 0.1s',
 }
 
 const bulkBtnStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  padding: '4px 12px',
-  borderRadius: 6,
+  padding: '6px 14px',
+  minHeight: 32,
+  borderRadius: 8,
   background: 'var(--surface-panel)',
+  backdropFilter: 'blur(20px)',
   border: '1px solid var(--edge)',
   cursor: 'pointer',
   color: 'var(--color-text-primary)',
   fontFamily: 'inherit',
+  transition: 'background 0.12s',
 }
