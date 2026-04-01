@@ -26,6 +26,99 @@ const INTERACTIONS = [
 
 const TOTAL_WEIGHT = INTERACTIONS.reduce((s, i) => s + i.weight, 0)
 
+/* ---------- Seed-to-Tree persistent element ---------- */
+
+// Each step reveals more branches and leaves, growing from a seed dot into a full tree
+function SeedTree({ step }: { step: number }) {
+  // Tree structure: trunk + branches that appear at each step
+  // Step 0: seed dot only
+  // Step 1: short trunk sprouts
+  // Step 2: first branches appear
+  // Step 3: more branches + first leaves
+  // Step 4: full tree with all leaves
+
+  const branches: { d: string; step: number; len: number }[] = [
+    // Trunk
+    { d: 'M60 110 Q60 85 60 70', step: 1, len: 40 },
+    // First fork
+    { d: 'M60 70 Q50 55 38 48', step: 2, len: 35 },
+    { d: 'M60 70 Q70 55 82 48', step: 2, len: 35 },
+    // Second level
+    { d: 'M60 85 Q45 75 35 72', step: 3, len: 30 },
+    { d: 'M60 85 Q75 75 85 72', step: 3, len: 30 },
+    // Top branches
+    { d: 'M38 48 Q30 38 25 32', step: 4, len: 22 },
+    { d: 'M82 48 Q90 38 95 32', step: 4, len: 22 },
+    { d: 'M38 48 Q42 35 50 30', step: 4, len: 22 },
+    { d: 'M82 48 Q78 35 70 30', step: 4, len: 22 },
+  ]
+
+  const leaves: { cx: number; cy: number; r: number; color: string; step: number; delay: number }[] = [
+    // Step 3 leaves
+    { cx: 35, cy: 72, r: 4, color: '#25B439', step: 3, delay: 300 },
+    { cx: 85, cy: 72, r: 4, color: '#6366F1', step: 3, delay: 450 },
+    // Step 4 leaves - full bloom
+    { cx: 25, cy: 32, r: 5, color: '#EC4899', step: 4, delay: 200 },
+    { cx: 95, cy: 32, r: 5, color: '#F59E0B', step: 4, delay: 300 },
+    { cx: 50, cy: 30, r: 4.5, color: '#14B8A6', step: 4, delay: 400 },
+    { cx: 70, cy: 30, r: 4.5, color: '#8B5CF6', step: 4, delay: 500 },
+    { cx: 38, cy: 48, r: 3.5, color: '#25B439', step: 4, delay: 100 },
+    { cx: 82, cy: 48, r: 3.5, color: '#F97316', step: 4, delay: 250 },
+  ]
+
+  return (
+    <div style={{
+      position: 'absolute', bottom: 32, left: 32,
+      width: 120, height: 130, opacity: 0.5,
+      transition: 'opacity 0.6s ease',
+      ...(step >= 1 ? { opacity: 0.7 } : {}),
+      ...(step >= 4 ? { opacity: 0.85 } : {}),
+    }}>
+      <svg width="120" height="130" viewBox="0 0 120 130">
+        {/* Seed dot - always visible */}
+        <circle cx="60" cy="112" r={step === 0 ? 5 : 3.5} fill="#25B439"
+          style={{ transition: 'r 0.4s ease' }}
+        />
+
+        {/* Ground line */}
+        <line x1="40" y1="116" x2="80" y2="116" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
+
+        {/* Branches */}
+        {branches.filter(b => b.step <= step).map((b, i) => (
+          <path
+            key={i}
+            d={b.d}
+            fill="none"
+            stroke={step >= 4 ? 'rgba(37,180,57,0.5)' : 'rgba(0,0,0,0.15)'}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray={b.len}
+            style={{
+              // @ts-ignore
+              '--branch-len': b.len,
+              animation: `branch-grow 0.6s ease-out ${i * 80}ms forwards`,
+              transition: 'stroke 0.4s ease',
+            } as React.CSSProperties}
+          />
+        ))}
+
+        {/* Leaves */}
+        {leaves.filter(l => l.step <= step).map((l, i) => (
+          <circle
+            key={`leaf-${i}`}
+            cx={l.cx} cy={l.cy} r={l.r}
+            fill={l.color} fillOpacity="0.8"
+            style={{
+              transformOrigin: `${l.cx}px ${l.cy}px`,
+              animation: `leaf-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${l.delay}ms both`,
+            }}
+          />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
   const [maxStep, setMaxStep] = useState(0)
@@ -63,7 +156,19 @@ export function OnboardingFlow({ onComplete }: Props) {
         @keyframes gentle-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
+        }
+        @keyframes branch-grow {
+          from { stroke-dashoffset: var(--branch-len); }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes leaf-pop {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
       `}</style>
+
+      {/* Seed-to-tree persistent element */}
+      <SeedTree step={step} />
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
