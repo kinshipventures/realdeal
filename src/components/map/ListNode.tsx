@@ -92,36 +92,36 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         )}
       </SolidOrb>
 
-      {/* Satellite category dots - clustered near pod, expand on hover */}
-      {categories.map((cat, i) => {
-        const expandRadius = 56
-        const angle = (i / categories.length) * 360
-        const clusterOffset = 4 + (i % 3) * 3
-        const clusterAngle = (i / categories.length) * 360
-        const satColor = cat.color ?? list.color ?? '#718096'
+      {/* Satellite category dots - hidden by default, expand + orbit on hover */}
+      {categories.length > 0 && (
+        <div className="satellite-ring">
+          {categories.map((cat, i) => {
+            const expandRadius = 62
+            const angle = (i / categories.length) * 360
+            const satColor = cat.color ?? list.color ?? '#718096'
 
-        return (
-          <div
-            key={cat.id}
-            className="satellite-expand"
-            style={{
-              '--expand-radius': `${expandRadius}px`,
-              '--expand-angle': `${angle}deg`,
-              '--cluster-x': `${Math.cos(clusterAngle * Math.PI / 180) * clusterOffset}px`,
-              '--cluster-y': `${Math.sin(clusterAngle * Math.PI / 180) * clusterOffset}px`,
-              '--sat-delay': `${i * 0.02}s`,
-            } as React.CSSProperties}
-          >
-            <div
-              className="satellite-dot"
-              style={{ background: satColor }}
-              title={cat.name}
-            >
-              {cat.name.length <= 4 ? cat.name.toUpperCase() : cat.name.slice(0, 2).toUpperCase()}
-            </div>
-          </div>
-        )
-      })}
+            return (
+              <div
+                key={cat.id}
+                className="satellite-expand"
+                style={{
+                  '--expand-radius': `${expandRadius}px`,
+                  '--expand-angle': `${angle}deg`,
+                  '--sat-delay': `${i * 0.025}s`,
+                } as React.CSSProperties}
+              >
+                <div
+                  className="satellite-dot"
+                  style={{ background: satColor }}
+                  title={cat.name}
+                >
+                  {cat.name.length <= 4 ? cat.name.toUpperCase() : cat.name.slice(0, 2).toUpperCase()}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
