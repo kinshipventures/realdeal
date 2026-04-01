@@ -22,7 +22,7 @@ import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
-import { SatelliteNodeComponent } from './SatelliteNode'
+import { GradientEdgeComponent } from './GradientEdge'
 import { getPositions, savePosition, clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
 
@@ -33,7 +33,10 @@ const nodeTypes = {
   category: CategoryNodeComponent,
   moj: MojNodeComponent,
   'create-category': CreateCategoryNodeComponent,
-  satellite: SatelliteNodeComponent,
+}
+
+const edgeTypes = {
+  gradient: GradientEdgeComponent,
 }
 
 const CREATE_POD_ID = '__create-pod__'
@@ -44,7 +47,7 @@ const RING_RADII = [210, 330, 460]
 function hubLayout(
   lists: { id: string; is_priority?: boolean }[],
   savedPositions: Record<string, { x: number; y: number }>,
-): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }>; activeRings: number[] } {
+): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }>; activeRings: number[]; ringIndexByPod: Map<string, number> } {
   const mojPos = { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 }
   const listPositions = new Map<string, { x: number; y: number }>()
 
@@ -55,9 +58,32 @@ function hubLayout(
   else if (n <= 10) rings = [RING_RADII[0], RING_RADII[1]]
   else rings = RING_RADII
 
-  // Assign each pod to a ring (round-robin)
+  // Assign pods to rings: priority pods on inner ring (max 5), rest fill outward
+  const INNER_CAP = 5
+  const priority = lists.filter(l => l.is_priority)
+  const rest = lists.filter(l => !l.is_priority)
+  const sorted = [...priority, ...rest]
+
   const ringBuckets: { id: string; is_priority?: boolean }[][] = rings.map(() => [])
-  lists.forEach((item, i) => ringBuckets[i % rings.length].push(item))
+  sorted.forEach((item, i) => {
+    // Priority pods fill inner ring first, up to cap
+    if (item.is_priority && ringBuckets[0].length < INNER_CAP) {
+      ringBuckets[0].push(item)
+    } else {
+      // Fill remaining rings round-robin starting from ring 1 (or 0 if single ring)
+      const startRing = rings.length > 1 ? 1 : 0
+      const available = rings.length - startRing
+      const idx = startRing + (ringBuckets.slice(startRing).reduce((min, b, bi) =>
+        b.length < ringBuckets[startRing + min].length ? bi : min, 0))
+      ringBuckets[idx].push(item)
+    }
+  })
+
+  // Track which ring each pod landed on (for parallax depth)
+  const ringIndexByPod = new Map<string, number>()
+  for (let r = 0; r < rings.length; r++) {
+    for (const item of ringBuckets[r]) ringIndexByPod.set(item.id, r)
+  }
 
   // Position each pod on its ring
   for (let r = 0; r < rings.length; r++) {
@@ -74,7 +100,7 @@ function hubLayout(
     })
   }
 
-  return { mojPos, listPositions, activeRings: rings }
+  return { mojPos, listPositions, activeRings: rings, ringIndexByPod }
 }
 
 type PodCounts = { total: number; overdue: number }
@@ -98,7 +124,8 @@ function buildHomeNodes({
   memberCountByPod,
   onCreatePod,
 }: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[] } {
-  const { mojPos, listPositions, activeRings } = hubLayout(pods, savedPositions)
+  const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods, savedPositions)
+  const DEPTH_BY_RING = [1.0, 0.92, 0.85]
 
   const mojNode: Node = {
     id: MOJ_ID,
@@ -113,7 +140,6 @@ function buildHomeNodes({
   const hubCenterY = mojPos.y + MOJ_SIZE / 2
 
   const podNodes: Node[] = []
-  const satelliteNodes: Node[] = []
 
   pods.forEach((pod, i) => {
     const pos = listPositions.get(pod.id)!
@@ -137,48 +163,13 @@ function buildHomeNodes({
         orbitStartY,
         capacity: pod.capacity ?? null,
         memberCount: memberCountByPod[pod.id] ?? 0,
+        categories: categoriesByPod[pod.id] ?? [],
+        depth: DEPTH_BY_RING[ringIndexByPod.get(pod.id) ?? 0] ?? 1.0,
       },
     })
-
-    // Satellite category orbs — cluster near parent pod, fan out on load
-    const cats = categoriesByPod[pod.id] ?? []
-    if (cats.length > 0) {
-      const podCenterX = pos.x + LIST_SIZE / 2
-      const podCenterY = pos.y + LIST_SIZE / 2
-      const satRadius = 62 + cats.length * 2
-      const SAT_SIZE = 20
-
-      cats.forEach((cat, ci) => {
-        const podAngle = Math.atan2(podCenterY - hubCenterY, podCenterX - hubCenterX)
-        const spread = Math.min(cats.length * 0.4, Math.PI * 0.8)
-        const startAngle = podAngle - spread / 2
-        const angle = startAngle + (ci / Math.max(cats.length - 1, 1)) * spread
-        const satColor = cat.color ?? pod.color ?? '#718096'
-
-        const satX = podCenterX + Math.cos(angle) * satRadius - SAT_SIZE / 2
-        const satY = podCenterY + Math.sin(angle) * satRadius - SAT_SIZE / 2
-        const orbitStartX = podCenterX - SAT_SIZE / 2 - satX
-        const orbitStartY = podCenterY - SAT_SIZE / 2 - satY
-
-        satelliteNodes.push({
-          id: `sat-${pod.id}-${cat.id}`,
-          type: 'satellite',
-          position: { x: satX, y: satY },
-          draggable: false,
-          data: {
-            name: cat.name,
-            color: satColor,
-            orbitStartX,
-            orbitStartY,
-            animationDelay: `${(i + 1) * 0.1 + 0.3 + ci * 0.06}s`,
-            onClick: () => {},
-          },
-        })
-      })
-    }
   })
 
-  return { nodes: [mojNode, ...podNodes, ...satelliteNodes], activeRings }
+  return { nodes: [mojNode, ...podNodes], activeRings }
 }
 
 function buildHomeEdges(pods: Pod[]): Edge[] {
@@ -186,9 +177,9 @@ function buildHomeEdges(pods: Pod[]): Edge[] {
     id: `e-moj-${pod.id}`,
     source: MOJ_ID,
     target: pod.id,
-    style: { stroke: 'var(--stroke-subtle)', strokeWidth: 1.5, '--edge-delay': `${(i + 1) * 0.1}s` } as React.CSSProperties,
-    className: 'edge-enter',
-    type: 'straight',
+    type: 'gradient',
+    style: { '--edge-delay': `${(i + 1) * 0.1}s` } as React.CSSProperties,
+    data: { color: pod.color ?? '#718096' },
   }))
 }
 
@@ -206,9 +197,21 @@ export function OrbMap() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
 
-  // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay
+  // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay + parallax
   useOnViewportChange({
-    onChange: (vp: Viewport) => setViewportState(vp),
+    onChange: (vp: Viewport) => {
+      setViewportState(vp)
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        panRef.current.x += vp.x - prevVpRef.current.x
+        panRef.current.y += vp.y - prevVpRef.current.y
+        prevVpRef.current = { ...vp }
+        if (containerRef.current) {
+          containerRef.current.style.setProperty('--pan-x', `${panRef.current.x}`)
+          containerRef.current.style.setProperty('--pan-y', `${panRef.current.y}`)
+        }
+      })
+    },
     onEnd: (vp: Viewport) => localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp)),
   })
 
@@ -224,8 +227,12 @@ export function OrbMap() {
   const categoriesByPodRef = useRef<Record<string, Category[]>>({})
   const memberCountByPodRef = useRef<Record<string, number>>({})
 
-  // Track last known pod position so we can compute drag delta for satellites
-  const lastDragPosRef = useRef<{ x: number; y: number } | null>(null)
+  // Parallax: track cumulative pan offset, apply via CSS custom properties
+  const panRef = useRef({ x: 0, y: 0 })
+  const prevVpRef = useRef<Viewport>({ x: 0, y: 0, zoom: 1 })
+  const rafRef = useRef<number>(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+
 
   const rebuildHomeView = useCallback((savedPositions: Record<string, { x: number; y: number }>) => {
     const { nodes: homeNodes, activeRings: rings } = buildHomeNodes({
@@ -344,24 +351,9 @@ export function OrbMap() {
     return () => { stale = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleNodeDragStart: OnNodeDrag = useCallback((_, node) => {
-    lastDragPosRef.current = { x: node.position.x, y: node.position.y }
-  }, [])
+  const handleNodeDragStart: OnNodeDrag = useCallback(() => {}, [])
 
-  const handleNodeDrag: OnNodeDrag = useCallback((_, node) => {
-    if (node.id === MOJ_ID || !lastDragPosRef.current) return
-    const satPrefix = `sat-${node.id}-`
-    const dx = node.position.x - lastDragPosRef.current.x
-    const dy = node.position.y - lastDragPosRef.current.y
-    if (dx === 0 && dy === 0) return
-    lastDragPosRef.current = { x: node.position.x, y: node.position.y }
-
-    setNodes(prev => prev.map(n =>
-      n.id.startsWith(satPrefix)
-        ? { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }
-        : n
-    ))
-  }, [setNodes])
+  const handleNodeDrag: OnNodeDrag = useCallback(() => {}, [])
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (node.id === MOJ_ID) return
@@ -392,7 +384,7 @@ export function OrbMap() {
   }, [setViewport, setNodes, setEdges])
 
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       width: '100%',
       height: '100%',
       position: 'relative',
@@ -502,6 +494,7 @@ export function OrbMap() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodeDragStart={handleNodeDragStart}
         onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}

@@ -1,5 +1,5 @@
 // Bump this version when the default layout changes to invalidate saved positions
-const KEY = 'realdeal:node-positions:v2'
+const KEY = 'realdeal:node-positions:v3'
 
 type Positions = Record<string, { x: number; y: number }>
 

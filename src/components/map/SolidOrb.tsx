@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useRef } from 'react'
-import { hexToRgba, hexToRgbValues } from '../../lib/utils'
+import { hexToRgba, hexToRgbValues, lightenHex, darkenHex } from '../../lib/utils'
 import type { HexColor } from '../../lib/types'
 
 export const POD_SHIFT_COLORS: Record<string, string> = {
@@ -40,12 +40,10 @@ export function SolidOrb({
 
   const orbRef = useRef<HTMLDivElement>(null)
   const glowSize = size >= 96 ? 28 : 20
-  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 4px 16px rgba(0,0,0,0.12)`
-  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 4px 16px rgba(0,0,0,0.12)`
+  const restShadow = `inset 0 -4px 12px rgba(0,0,0,0.25), 0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 4px 16px rgba(0,0,0,0.12)`
+  const hoverShadow = `inset 0 -4px 12px rgba(0,0,0,0.25), 0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 4px 16px rgba(0,0,0,0.12)`
 
-  const bg = shiftColor
-    ? `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`
-    : `linear-gradient(135deg, ${color} 0%, ${color} 100%)`
+  const bg = `radial-gradient(circle at 35% 35%, ${lightenHex(color, 0.25)} 0%, ${color} 50%, ${darkenHex(color, 0.4)} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
@@ -102,7 +100,7 @@ export function SolidOrb({
 
       <div
         ref={orbRef}
-        className={`orb-enter orb-interactive${className ? ` ${className}` : ''}`}
+        className={`orb-enter orb-interactive orb-specular${className ? ` ${className}` : ''}`}
         onClick={onClick}
         onMouseEnter={() => {
           if (orbRef.current) orbRef.current.style.boxShadow = hoverShadow
@@ -130,6 +128,12 @@ export function SolidOrb({
       >
         {children}
       </div>
+
+      {/* Floor shadow - grounding the orb in 3D space */}
+      <div className="orb-floor-shadow" style={{
+        width: size * 0.8,
+        height: size * 0.2,
+      }} />
     </div>
   )
 }

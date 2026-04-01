@@ -171,6 +171,39 @@
   transition-timing-function: ease-in !important;
 }
 
+/* Specular highlight - fake light reflection on sphere */
+.orb-specular {
+  position: relative;
+}
+.orb-specular::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 35%;
+  height: 35%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.40) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Floor shadow - grounds orb in 3D space */
+.orb-floor-shadow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(0,0,0,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.orb-interactive:hover ~ .orb-floor-shadow {
+  transform: translateX(-50%) scale(1.1) translateY(2px);
+  opacity: 0.85;
+}
+
 
 /* ── Hover interaction classes ──────────────────────────────────────────────── */
 /* Naming follows behavioral taxonomy: what the element does, not what it looks like */
@@ -253,6 +286,65 @@
 
 .orb-enter {
   animation: orbit-slide 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Parallax depth layer ─────────────────────────────────────────────────── */
+
+.parallax-layer {
+  transform: translate(
+    calc(var(--pan-x, 0) * (1 - var(--depth, 1)) * 0.3 * 1px),
+    calc(var(--pan-y, 0) * (1 - var(--depth, 1)) * 0.3 * 1px)
+  );
+}
+
+/* ── Satellite orbit system ───────────────────────────────────────────────── */
+
+@keyframes satellite-spin {
+  from { transform: rotate(var(--orbit-start-angle, 0deg)) translateX(var(--orbit-radius, 62px)); }
+  to   { transform: rotate(calc(var(--orbit-start-angle, 0deg) + 360deg)) translateX(var(--orbit-radius, 62px)); }
+}
+
+.satellite-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: satellite-spin var(--orbit-period, 30s) linear infinite;
+  animation-delay: var(--orbit-delay, 0s);
+  pointer-events: none;
+}
+
+.satellite-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+  user-select: none;
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.satellite-dot:hover {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+/* Hover on parent pod speeds up satellite orbits */
+.orbit-start:hover .satellite-orbit {
+  animation-duration: 8s;
+}
+.orbit-start:hover .satellite-dot {
+  opacity: 1;
 }
 
 @keyframes pulse-ring {
@@ -513,4 +605,6 @@ body::after {
   .ring-enter { animation: none; }
   .widget-enter { animation: none; }
   .widget-card { transition: none; }
+  .satellite-orbit { animation: none; }
+  .parallax-layer { transform: none !important; }
 }

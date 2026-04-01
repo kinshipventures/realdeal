@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useNavigate } from 'react-router'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
-import type { Pod, HexColor } from '../../lib/types'
+import type { Pod, Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 
 export type ListNodeData = {
@@ -16,6 +16,8 @@ export type ListNodeData = {
   orbitStartY?: number
   capacity?: number | null
   memberCount?: number
+  categories?: Category[]
+  depth?: number
 }
 export type ListNodeType = Node<ListNodeData>
 
@@ -29,17 +31,18 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0 } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
   return (
     <div
-      className="orbit-start"
+      className="orbit-start parallax-layer"
       style={{
         '--orbit-start-x': `${orbitStartX ?? 0}px`,
         '--orbit-start-y': `${orbitStartY ?? 0}px`,
+        '--depth': depth,
       } as React.CSSProperties}
     >
       <Handle type="source" position={Position.Right}
@@ -109,6 +112,37 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
           </div>
         )}
       </SolidOrb>
+
+      {/* Orbiting satellite category orbs */}
+      {categories.map((cat, i) => {
+        const satRadius = 62 + categories.length * 2
+        const useOuter = categories.length >= 5 && i % 2 === 1
+        const radius = useOuter ? satRadius + 24 : satRadius
+        const startAngle = (i / categories.length) * 360
+        const period = 30 + (((cat.id.charCodeAt(0) ?? 0) * 7) % 15)
+        const satColor = cat.color ?? list.color ?? '#718096'
+
+        return (
+          <div
+            key={cat.id}
+            className="satellite-orbit"
+            style={{
+              '--orbit-period': `${period}s`,
+              '--orbit-radius': `${radius}px`,
+              '--orbit-start-angle': `${startAngle}deg`,
+              '--orbit-delay': `${i * 0.06}s`,
+            } as React.CSSProperties}
+          >
+            <div
+              className="satellite-dot"
+              style={{ background: satColor }}
+              title={cat.name}
+            >
+              {cat.name.length <= 4 ? cat.name.toUpperCase() : cat.name.slice(0, 2).toUpperCase()}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
