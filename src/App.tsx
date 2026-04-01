@@ -280,8 +280,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isMap ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isMap ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isMap ? 'var(--tint-hover)' : 'transparent',
+              color: isMap ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isMap ? 600 : 500,
             }}
           >
