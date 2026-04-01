@@ -100,6 +100,307 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_categories: {
+        Row: {
+          category_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_categories_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_pods: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          pod_id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          pod_id: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          pod_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_pods_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_pods_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          birthday: string | null
+          cadence_override: Database["public"]["Enums"]["cadence"] | null
+          company: string | null
+          company_id: string | null
+          contact_frequency:
+            | Database["public"]["Enums"]["contact_frequency"]
+            | null
+          country: string | null
+          created_at: string
+          custom_fields: Json | null
+          domain: string | null
+          email: string | null
+          email_2: string | null
+          email_3: string | null
+          first_name: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          global_region: Database["public"]["Enums"]["global_region"] | null
+          id: string
+          industry: string | null
+          intel_notes: string | null
+          interests: string | null
+          introduced_by: string | null
+          kv_fund_investor: string[] | null
+          last_contacted_at: string | null
+          last_name: string | null
+          linkedin: string | null
+          location: string | null
+          milestones: string | null
+          name: string
+          needs_review: boolean
+          next_action: string | null
+          next_follow_up_date: string | null
+          notes: string | null
+          past_clients: string | null
+          phone: string | null
+          recommended_by: string | null
+          relationship_context: string | null
+          relationship_owner: string | null
+          role: string | null
+          specialization: string | null
+          spv_investor: string[] | null
+          stage: string | null
+          status: Database["public"]["Enums"]["relationship_status"]
+          ticker: string | null
+          type: Database["public"]["Enums"]["relationship_type"]
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          birthday?: string | null
+          cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          company?: string | null
+          company_id?: string | null
+          contact_frequency?:
+            | Database["public"]["Enums"]["contact_frequency"]
+            | null
+          country?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          domain?: string | null
+          email?: string | null
+          email_2?: string | null
+          email_3?: string | null
+          first_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          global_region?: Database["public"]["Enums"]["global_region"] | null
+          id?: string
+          industry?: string | null
+          intel_notes?: string | null
+          interests?: string | null
+          introduced_by?: string | null
+          kv_fund_investor?: string[] | null
+          last_contacted_at?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          location?: string | null
+          milestones?: string | null
+          name: string
+          needs_review?: boolean
+          next_action?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
+          past_clients?: string | null
+          phone?: string | null
+          recommended_by?: string | null
+          relationship_context?: string | null
+          relationship_owner?: string | null
+          role?: string | null
+          specialization?: string | null
+          spv_investor?: string[] | null
+          stage?: string | null
+          status?: Database["public"]["Enums"]["relationship_status"]
+          ticker?: string | null
+          type?: Database["public"]["Enums"]["relationship_type"]
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          birthday?: string | null
+          cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          company?: string | null
+          company_id?: string | null
+          contact_frequency?:
+            | Database["public"]["Enums"]["contact_frequency"]
+            | null
+          country?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          domain?: string | null
+          email?: string | null
+          email_2?: string | null
+          email_3?: string | null
+          first_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          global_region?: Database["public"]["Enums"]["global_region"] | null
+          id?: string
+          industry?: string | null
+          intel_notes?: string | null
+          interests?: string | null
+          introduced_by?: string | null
+          kv_fund_investor?: string[] | null
+          last_contacted_at?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          location?: string | null
+          milestones?: string | null
+          name?: string
+          needs_review?: boolean
+          next_action?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
+          past_clients?: string | null
+          phone?: string | null
+          recommended_by?: string | null
+          relationship_context?: string | null
+          relationship_owner?: string | null
+          role?: string | null
+          specialization?: string | null
+          spv_investor?: string[] | null
+          stage?: string | null
+          status?: Database["public"]["Enums"]["relationship_status"]
+          ticker?: string | null
+          type?: Database["public"]["Enums"]["relationship_type"]
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interactions: {
+        Row: {
+          actor: string | null
+          contact_id: string
+          created_at: string
+          date: string
+          email_link: string | null
+          event_detail: string | null
+          granola_link: string | null
+          id: string
+          notes: string | null
+          source: Database["public"]["Enums"]["interaction_source"] | null
+          summary: string | null
+          type: Database["public"]["Enums"]["interaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actor?: string | null
+          contact_id: string
+          created_at?: string
+          date: string
+          email_link?: string | null
+          event_detail?: string | null
+          granola_link?: string | null
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["interaction_source"] | null
+          summary?: string | null
+          type: Database["public"]["Enums"]["interaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actor?: string | null
+          contact_id?: string
+          created_at?: string
+          date?: string
+          email_link?: string | null
+          event_detail?: string | null
+          granola_link?: string | null
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["interaction_source"] | null
+          summary?: string | null
+          type?: Database["public"]["Enums"]["interaction_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pods: {
         Row: {
           cadence: Database["public"]["Enums"]["cadence"] | null
