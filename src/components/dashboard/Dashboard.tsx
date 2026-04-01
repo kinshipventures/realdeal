@@ -454,7 +454,13 @@ export function Dashboard() {
           {/* Section: Activity & Links */}
           {(isVisible('recent-activity') || isVisible('quick-links')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">activity & links</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  activity & links
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">Recent interaction history and shortcuts to your active campaigns and pipelines.</span>
+                </span>
+              </h2>
               {isVisible('recent-activity') && (
                 <RecentActivityWidget items={recentActivity} onContactClick={handleContactClick} />
               )}
