@@ -500,8 +500,30 @@ export function RecordsList() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <span style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>Loading...</span>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
+        <div style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+          <div className="skeleton" style={{ width: 140, height: 28, borderRadius: 8, marginBottom: 20 }} />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {[80, 180, 100, 90, 90, 90].map((w, i) => (
+              <div key={i} className="skeleton" style={{ width: w, height: 36, borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '0 40px 40px' }}>
+          <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--edge)' }}>
+            {[40, 120, 100, 80, 60].map((w, i) => (
+              <div key={i} className="skeleton" style={{ width: w, height: 12, borderRadius: 4 }} />
+            ))}
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--edge)', opacity: 1 - i * 0.08 }}>
+              <div className="skeleton" style={{ width: 16, height: 16, borderRadius: 3 }} />
+              <div className="skeleton" style={{ width: 140 + Math.random() * 60, height: 14, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: 90, height: 14, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: 60, height: 22, borderRadius: 100 }} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
