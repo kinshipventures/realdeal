@@ -159,7 +159,7 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         We track relationship health, not sales pipelines.
       </p>
 
-      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
