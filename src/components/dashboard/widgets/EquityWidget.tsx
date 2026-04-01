@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { scoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
