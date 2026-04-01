@@ -518,18 +518,36 @@ function DashboardSkeleton() {
         </div>
       </div>
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
-        <div className="skeleton" style={{ width: 120, height: 16, marginBottom: 16 }} />
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ width: 155, height: 80, borderRadius: 12 }} />
-          ))}
-        </div>
-        <div className="skeleton" style={{ width: 100, height: 16, marginBottom: 12 }} />
-        <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
-            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
+        {/* Network Pulse section skeleton */}
+        <div className="dashboard-section" style={{ marginBottom: 24 }}>
+          <div className="skeleton" style={{ width: 140, height: 18, marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton" style={{ width: 155, height: 100, borderRadius: 12 }} />
+            ))}
           </div>
+          <div className="skeleton" style={{ width: '100%', height: 80, borderRadius: 12 }} />
+        </div>
+        {/* Action Items section skeleton */}
+        <div className="dashboard-section" style={{ marginBottom: 24 }}>
+          <div className="skeleton" style={{ width: 120, height: 18, marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            {[1, 2].map(i => (
+              <div key={i} className="skeleton" style={{ flex: 1, height: 90, borderRadius: 14 }} />
+            ))}
+          </div>
+          <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+            ))}
+          </div>
+        </div>
+        {/* Activity section skeleton */}
+        <div className="dashboard-section">
+          <div className="skeleton" style={{ width: 130, height: 18, marginBottom: 16 }} />
+          {[1, 2, 3].map(i => (
+            <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          ))}
         </div>
       </div>
     </div>
