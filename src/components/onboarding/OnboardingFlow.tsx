@@ -250,9 +250,9 @@ function StepPods({ onNext }: { onNext: () => void }) {
     localStorage.getItem('realdeal:default-cadence') || 'monthly'
   )
   const pods = [
-    { name: 'Talent', color: '#6366F1' },
-    { name: 'LPs', color: '#F59E0B' },
-    { name: 'Advisors', color: '#EC4899' },
+    { name: 'Talent', color: '#6366F1', count: '~15 people', emoji: '🎨' },
+    { name: 'LPs', color: '#F59E0B', count: '~12 people', emoji: '💰' },
+    { name: 'Advisors', color: '#EC4899', count: '~8 people', emoji: '🧠' },
   ]
 
   const cadenceOptions = [
@@ -269,19 +269,39 @@ function StepPods({ onNext }: { onNext: () => void }) {
 
   return (
     <>
-      <h2 style={headingStyle}>Organize with Pods</h2>
+      <h2 style={headingStyle}>Your world in pods</h2>
       <p style={bodyStyle}>
-        Pods group your relationships. Set how often you want to check in.
+        Not more contacts - fewer, better ones. Pods keep your circles small and intentional.
       </p>
-      <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
-        {pods.map(p => (
-          <div key={p.name}>
-            <SolidOrb size={72} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
-              <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>{p.name}</span>
+
+      {/* Pod cards with stagger */}
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+        {pods.map((p, i) => (
+          <div
+            key={p.name}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+              padding: '20px 16px 16px', borderRadius: 16, width: 120,
+              background: `linear-gradient(160deg, ${p.color}12, ${p.color}06)`,
+              border: `1px solid ${p.color}20`,
+              opacity: 0, animation: `onboard-enter 0.4s ease-out ${i * 120}ms forwards`,
+            }}
+          >
+            <SolidOrb size={64} color={p.color as HexColor} shiftColor={(POD_SHIFT_COLORS[p.color] || p.color) as HexColor} glowIntensity="high" className="onboarding-orb">
+              <span style={{ fontSize: 18 }}>{p.emoji}</span>
             </SolidOrb>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>{p.name}</div>
+              <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', marginTop: 2 }}>{p.count}</div>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Philosophy nudge */}
+      <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', fontStyle: 'italic', margin: 0, maxWidth: 320 }}>
+        "This isn't about how big your list is. It's about how small it is."
+      </p>
 
       {/* Cadence picker */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
