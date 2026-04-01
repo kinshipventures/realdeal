@@ -340,7 +340,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
     <>
       <h2 style={headingStyle}>Your Views</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
-        {views.map(v => {
+        {views.map((v, i) => {
           const isActive = active === v.label
           return (
             <button
@@ -353,6 +353,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
                 background: isActive ? 'rgba(37,180,57,0.08)' : 'rgba(0,0,0,0.03)',
                 outline: isActive ? '1.5px solid var(--color-brand)' : 'none',
                 transition: 'all 0.2s ease',
+                opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
               }}
             >
               <div style={{
