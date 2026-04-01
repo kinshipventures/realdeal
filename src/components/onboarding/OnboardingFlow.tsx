@@ -165,6 +165,20 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { transform: scale(0); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
+        .onboard-btn-primary:hover {
+          transform: scale(1.03) !important;
+          box-shadow: 0 6px 24px rgba(37,180,57,0.40) !important;
+        }
+        .onboard-btn-primary:active {
+          transform: scale(0.97) !important;
+        }
+        .onboard-btn-secondary:hover {
+          background: rgba(0,0,0,0.06) !important;
+          border-color: rgba(0,0,0,0.2) !important;
+        }
+        .onboard-btn-secondary:active {
+          transform: scale(0.97) !important;
+        }
       `}</style>
 
       {/* Seed-to-tree persistent element */}
