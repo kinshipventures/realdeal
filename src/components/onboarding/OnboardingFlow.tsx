@@ -644,8 +644,8 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
   ]
   return (
     <>
-      <h2 style={headingStyle}>Your Views</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your Views</h2>
+      <div style={{ ...stagger(80), display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
         {views.map((v, i) => {
           const isActive = active === v.label
           return (
