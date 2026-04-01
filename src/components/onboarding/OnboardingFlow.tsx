@@ -124,13 +124,15 @@ function SeedTree({ step }: { step: number }) {
 export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(0)
   const [maxStep, setMaxStep] = useState(0)
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const navigate = useNavigate()
 
   const next = () => {
+    setDirection('forward')
     if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
     else onComplete()
   }
-  const back = () => { if (step > 0) setStep(step - 1) }
+  const back = () => { if (step > 0) { setDirection('back'); setStep(step - 1) } }
 
   return (
     <div style={{
@@ -141,6 +143,18 @@ export function OnboardingFlow({ onComplete }: Props) {
       <style>{`
         @keyframes onboard-enter {
           from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes onboard-slide-left {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-slide-right {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-stagger {
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes welcome-pulse {
@@ -167,6 +181,10 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { transform: scale(0); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
+        @keyframes onboard-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         .onboard-btn-primary:hover {
           transform: scale(1.03) !important;
           box-shadow: 0 6px 24px rgba(37,180,57,0.40) !important;
@@ -183,73 +201,108 @@ export function OnboardingFlow({ onComplete }: Props) {
         }
       `}</style>
 
+      {/* Top bar: logo + progress */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        zIndex: 1,
+      }}>
+        {/* Logo */}
+        <span style={{
+          fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 18,
+          color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
+        }}>
+          RealDeal
+        </span>
+
+        {/* Progress: labels as segmented bar */}
+        <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 3, background: 'var(--tint)' }}>
+          {STEP_LABELS.map((label, i) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => { if (i <= maxStep) setStep(i) }}
+              style={{
+                padding: '6px 14px', borderRadius: 8, border: 'none',
+                fontSize: 11, fontWeight: i === step ? 600 : 400,
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.01em',
+                color: i === step ? '#fff' : 'var(--color-text-secondary)',
+                background: i === step ? 'var(--color-brand)' : 'transparent',
+                cursor: i <= maxStep ? 'pointer' : 'default',
+                opacity: i <= maxStep ? 1 : 0.4,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Seed-to-tree persistent element */}
       <SeedTree step={step} />
       <div style={{
-        width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
+        width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '80px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: step === 3 ? 20 : 32, textAlign: 'center',
         transition: 'max-width 0.35s ease',
         overflowY: 'auto', maxHeight: '100vh',
       }}>
-        <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
+        <div key={step} style={{
+          animation: step === 0
+            ? 'onboard-enter 0.4s ease-out'
+            : `${direction === 'forward' ? 'onboard-slide-left' : 'onboard-slide-right'} 0.35s cubic-bezier(0.4, 0, 0.2, 1)`,
+          display: 'contents',
+        }}>
           {step === 0 && <StepWelcome onNext={next} />}
-          {step === 1 && <StepPhilosophy onNext={next} />}
-          {step === 2 && <StepPods onNext={next} />}
-          {step === 3 && <StepImport onComplete={onComplete} onNext={next} navigate={navigate} />}
-          {step === 4 && <StepTour onFinish={onComplete} />}
+          {step === 1 && <StepPhilosophy onNext={next} onBack={back} />}
+          {step === 2 && <StepPods onNext={next} onBack={back} />}
+          {step === 3 && <StepImport onComplete={onComplete} onNext={next} onBack={back} navigate={navigate} />}
+          {step === 4 && <StepTour onFinish={onComplete} onBack={back} />}
         </div>
 
-        {/* Progress with step labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
-              {step + 1} of {STEP_COUNT}
-            </span>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {Array.from({ length: STEP_COUNT }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => { if (i <= maxStep) setStep(i) }}
-                  style={{
-                    width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
-                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                    opacity: i < step ? 0.4 : 1,
-                    cursor: i <= maxStep ? 'pointer' : 'default',
-                    transition: 'all 0.25s ease',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            {STEP_LABELS.map((label, i) => (
-              <span key={label} style={{
-                fontSize: 9, fontWeight: i === step ? 600 : 400,
-                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
-                opacity: i === step ? 1 : 0.5,
-                transition: 'all 0.25s ease',
-              }}>
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Back / Skip row */}
-        <div style={{ display: 'flex', gap: 24 }}>
-          {step > 0 && (
-            <button type="button" onClick={back} style={linkStyle}>
-              Back
-            </button>
-          )}
-          <button type="button" onClick={onComplete} style={linkStyle}>
-            Skip
-          </button>
-        </div>
+        {/* Skip */}
+        <button type="button" onClick={onComplete} style={{
+          ...linkStyle,
+          opacity: 0,
+          animation: 'onboard-fade-in 0.3s ease-out 0.25s forwards',
+        }}>
+          Skip
+        </button>
       </div>
+    </div>
+  )
+}
+
+/* ---------- stagger helper ---------- */
+
+const stagger = (delay: number): React.CSSProperties => ({
+  opacity: 0,
+  animation: `onboard-stagger 0.4s ease-out ${delay}ms both`,
+})
+
+/* ---------- shared back+action row ---------- */
+
+function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?: () => void; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 280 }}>
+      {onBack && (
+        <button type="button" onClick={onBack} style={{
+          width: 44, height: 44, borderRadius: '50%', border: 'none',
+          background: 'var(--color-brand)', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
+          transition: 'transform 0.15s, box-shadow 0.15s',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+      <button type="button" onClick={onAction} className="onboard-btn-primary" style={{ ...primaryBtnStyle, flex: 1, maxWidth: 'none' }}>
+        {label}
+      </button>
     </div>
   )
 }
@@ -324,7 +377,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
   )
 }
 
-function StepPhilosophy({ onNext }: { onNext: () => void }) {
+function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const ringSize = 120
   const strokeW = 10
   const r = (ringSize - strokeW) / 2
@@ -351,17 +404,17 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
 
   return (
     <>
-      <h2 style={headingStyle}>This isn't a CRM</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>This isn't a CRM</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         We track relationship health, not sales pipelines.
       </p>
 
-      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
             <div key={p.label} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px',
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', flex: 1,
               borderRadius: 10, background: 'rgba(0,0,0,0.03)',
               opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
             }}>
@@ -441,14 +494,12 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Next
-      </button>
+      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
 
-function StepPods({ onNext }: { onNext: () => void }) {
+function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const [cadence, setCadence] = useState(() =>
     localStorage.getItem('realdeal:default-cadence') || 'monthly'
   )
@@ -472,13 +523,13 @@ function StepPods({ onNext }: { onNext: () => void }) {
 
   return (
     <>
-      <h2 style={headingStyle}>Your world in pods</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your world in pods</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Not more contacts - fewer, better ones. Pods keep your circles small and intentional.
       </p>
 
       {/* Pod cards with stagger */}
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 16, justifyContent: 'center' }}>
         {pods.map((p, i) => (
           <div
             key={p.name}
@@ -531,14 +582,12 @@ function StepPods({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Next
-      </button>
+      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
 
-function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; onNext: () => void; navigate: (path: string) => void }) {
+function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () => void; onNext: () => void; onBack: () => void; navigate: (path: string) => void }) {
   const nodes = [
     { x: 0, y: 0, size: 10, color: '#25B439', delay: 0 },
     { x: -28, y: -20, size: 7, color: '#6366F1', delay: 100 },
@@ -551,7 +600,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
   return (
     <>
       {/* Network constellation visual */}
-      <div style={{ position: 'relative', width: 100, height: 100, animation: 'gentle-float 4s ease-in-out infinite', flexShrink: 0 }}>
+      <div style={{ ...stagger(80), position: 'relative', width: 100, height: 100, animation: 'gentle-float 4s ease-in-out infinite', flexShrink: 0 }}>
         <svg width="120" height="120" viewBox="-50 -40 100 80">
           {/* Connection lines from center */}
           {nodes.slice(1).map((n, i) => (
@@ -570,57 +619,21 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
         </svg>
       </div>
 
-      <h2 style={headingStyle}>Bring your people in</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
       </p>
 
-      {/* Import sources */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-        <button type="button" onClick={() => { onComplete(); navigate('/import') }} className="onboard-btn-primary" style={primaryBtnStyle}>
-          Import from CSV
-        </button>
+      <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" /></div>
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          {[
-            { label: 'Google', icon: 'M21.35 11.1h-9.18v2.73h5.51c-.24 1.27-1.33 3.72-5.51 3.72-3.31 0-6.01-2.75-6.01-6.12s2.7-6.12 6.01-6.12c1.87 0 3.13.8 3.85 1.48L18.1 4.8C16.56 3.36 14.56 2.5 12.17 2.5 6.98 2.5 2.73 6.74 2.73 11.93s4.25 9.43 9.44 9.43c5.45 0 9.06-3.83 9.06-9.22 0-.62-.07-1.1-.12-1.04z', color: '#4285F4' },
-            { label: 'Apple', icon: 'M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z', color: '#333' },
-            { label: 'Outlook', icon: 'M2 6v12h8V6H2zm1 1h6v10H3V7zm9-1v12h8V6h-8zm1 1h6v10h-6V7zM7 9H5v1h2V9zm0 2H5v1h2v-1zm0 2H5v1h2v-1zm8-4h-2v1h2V9zm0 2h-2v1h2v-1zm0 2h-2v1h2v-1z', color: '#0078D4' },
-            { label: 'LinkedIn', icon: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z', color: '#0A66C2' },
-          ].map((s, i) => (
-            <button
-              key={s.label}
-              type="button"
-              disabled
-              style={{
-                flex: 1, padding: '10px 8px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)',
-                background: 'rgba(0,0,0,0.02)', cursor: 'not-allowed',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80 + 200}ms forwards`,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill={s.color}>
-                <path d={s.icon} />
-              </svg>
-              <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
-                {s.label}
-              </span>
-              <span style={{ fontSize: 8, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', opacity: 0.6 }}>
-                Coming soon
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <button type="button" onClick={onNext} className="onboard-btn-secondary" style={secondaryBtnStyle}>
-          I'll add people manually
-        </button>
-      </div>
+      <button type="button" onClick={onNext} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(240) }}>
+        I'll add people manually
+      </button>
     </>
   )
 }
 
-function StepTour({ onFinish }: { onFinish: () => void }) {
+function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => void }) {
   const [active, setActive] = useState<string | null>(null)
   const views = [
     { icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label: 'Pulse', desc: 'Your daily dashboard with equity scores and focus list', detail: 'See who needs attention today, track pod health at a glance, and get nudged toward the relationships that matter most.' },
@@ -631,8 +644,8 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
   ]
   return (
     <>
-      <h2 style={headingStyle}>Your Views</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your Views</h2>
+      <div style={{ ...stagger(80), display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
         {views.map((v, i) => {
           const isActive = active === v.label
           return (
@@ -679,9 +692,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
           )
         })}
       </div>
-      <button type="button" onClick={onFinish} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Let's Go
-      </button>
+      <div style={stagger(180)}><ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" /></div>
     </>
   )
 }
@@ -689,7 +700,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
 /* ---------- shared styles ---------- */
 
 const headingStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
+  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
   color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
 }
 
