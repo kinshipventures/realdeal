@@ -274,6 +274,13 @@ export function OnboardingFlow({ onComplete }: Props) {
   )
 }
 
+/* ---------- stagger helper ---------- */
+
+const stagger = (delay: number): React.CSSProperties => ({
+  opacity: 0,
+  animation: `onboard-stagger 0.4s ease-out ${delay}ms both`,
+})
+
 /* ---------- shared back+action row ---------- */
 
 function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?: () => void; label: string }) {
