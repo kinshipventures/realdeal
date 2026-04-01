@@ -63,10 +63,10 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+        <h3 className="dashboard-subheading">
           today's focus
-        </h2>
+        </h3>
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=focus')}

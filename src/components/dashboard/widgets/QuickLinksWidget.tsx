@@ -24,9 +24,9 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0, marginBottom: 12 }}>
+      <h3 className="dashboard-subheading" style={{ marginBottom: 12 }}>
         quick links
-      </h2>
+      </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {activeCampaigns.map(campaign => {
           const cc = campaignContacts.filter(c => c.campaign_id === campaign.id)
