@@ -1039,14 +1039,16 @@ export function RecordsList() {
           >
             <thead style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 1 }}>
               <tr style={{ borderBottom: '1px solid var(--edge)' }}>
-                {/* Checkbox header */}
-                <th style={{ width: 40, padding: '10px 12px', textAlign: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    style={{ cursor: 'pointer' }}
-                  />
+                {/* Checkbox header - 44px touch target */}
+                <th style={{ width: 44, padding: 0, textAlign: 'center', height: 44 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                    />
+                  </div>
                 </th>
                 {visibleCols.map(col => (
                   <th
