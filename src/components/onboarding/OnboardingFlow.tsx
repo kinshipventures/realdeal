@@ -529,7 +529,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
       </p>
 
       {/* Pod cards with stagger */}
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 16, justifyContent: 'center' }}>
         {pods.map((p, i) => (
           <div
             key={p.name}
