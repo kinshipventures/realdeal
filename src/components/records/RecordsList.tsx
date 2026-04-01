@@ -1091,18 +1091,20 @@ export function RecordsList() {
                       animationDelay: `${Math.min(idx, 20) * 25}ms`,
                     }}
                   >
-                    {/* Checkbox cell */}
-                    <td style={{ padding: '12px 12px', textAlign: 'center' }} onClick={e => toggleSelectRow(contact.id, e)}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={() => {}}
-                        style={{ cursor: 'pointer' }}
-                      />
+                    {/* Checkbox cell - 44px touch target */}
+                    <td style={{ padding: '0', textAlign: 'center', width: 44, height: 44 }} onClick={e => toggleSelectRow(contact.id, e)}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {}}
+                          style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                        />
+                      </div>
                     </td>
 
                     {visibleCols.map(col => (
-                      <td key={col.id} style={{ padding: '12px 12px' }}>
+                      <td key={col.id} style={{ padding: '12px 12px', height: 44 }}>
                         {col.id === 'name' && (
                           <span style={{
                             fontWeight: contact.type === 'Company' ? 600 : 500,
