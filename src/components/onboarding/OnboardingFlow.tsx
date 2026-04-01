@@ -63,7 +63,19 @@ export function OnboardingFlow({ onComplete }: Props) {
         @keyframes gentle-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
+        }
+        @keyframes branch-grow {
+          from { stroke-dashoffset: var(--branch-len); }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes leaf-pop {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
       `}</style>
+
+      {/* Seed-to-tree persistent element */}
+      <SeedTree step={step} />
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
