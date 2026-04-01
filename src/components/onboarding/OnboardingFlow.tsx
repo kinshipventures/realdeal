@@ -69,13 +69,14 @@ function SeedTree({ step }: { step: number }) {
 
   return (
     <div style={{
-      position: 'absolute', bottom: 32, left: 32,
-      width: 120, height: 130, opacity: 0.5,
-      transition: 'opacity 0.6s ease',
-      ...(step >= 1 ? { opacity: 0.7 } : {}),
-      ...(step >= 4 ? { opacity: 0.85 } : {}),
+      position: 'absolute', top: '50%', left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 360, height: 400,
+      opacity: step === 0 ? 0.06 : step >= 4 ? 0.12 : 0.08,
+      transition: 'opacity 0.8s ease',
+      pointerEvents: 'none',
     }}>
-      <svg width="120" height="130" viewBox="0 0 120 130">
+      <svg width="360" height="400" viewBox="0 0 120 130" preserveAspectRatio="xMidYMid meet">
         {/* Seed dot - always visible */}
         <circle cx="60" cy="112" r={step === 0 ? 5 : 3.5} fill="#25B439"
           style={{ transition: 'r 0.4s ease' }}
