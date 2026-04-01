@@ -197,42 +197,27 @@ export function OnboardingFlow({ onComplete }: Props) {
           RealDeal
         </span>
 
-        {/* Progress dots + labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
-              {step + 1}/{STEP_COUNT}
-            </span>
-            <div style={{ display: 'flex', gap: 5 }}>
-              {Array.from({ length: STEP_COUNT }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => { if (i <= maxStep) setStep(i) }}
-                  style={{
-                    width: i === step ? 20 : 7, height: 7, borderRadius: 4, padding: 0, border: 'none',
-                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'var(--tint-hover)',
-                    opacity: i < step ? 0.4 : 1,
-                    cursor: i <= maxStep ? 'pointer' : 'default',
-                    transition: 'all 0.25s ease',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {STEP_LABELS.map((label, i) => (
-              <span key={label} style={{
-                fontSize: 8, fontWeight: i === step ? 600 : 400,
-                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
-                opacity: i === step ? 1 : 0.4,
+        {/* Progress: labels as segmented bar */}
+        <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 3, background: 'var(--tint)' }}>
+          {STEP_LABELS.map((label, i) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => { if (i <= maxStep) setStep(i) }}
+              style={{
+                padding: '6px 14px', borderRadius: 8, border: 'none',
+                fontSize: 11, fontWeight: i === step ? 600 : 400,
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.01em',
+                color: i === step ? '#fff' : 'var(--color-text-secondary)',
+                background: i === step ? 'var(--color-brand)' : 'transparent',
+                cursor: i <= maxStep ? 'pointer' : 'default',
+                opacity: i <= maxStep ? 1 : 0.4,
                 transition: 'all 0.25s ease',
-              }}>
-                {label}
-              </span>
-            ))}
-          </div>
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
