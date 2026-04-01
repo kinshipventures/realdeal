@@ -365,7 +365,7 @@ export function Dashboard() {
         </div>
 
         {/* Rest of dashboard on light background */}
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (

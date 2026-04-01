@@ -383,8 +383,8 @@ body::after {
   background: rgba(0,0,0,0.018);
   border: 1px solid rgba(0,0,0,0.05);
   border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 20px 24px 24px;
+  margin-bottom: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -394,14 +394,26 @@ body::after {
   }
 }
 
-/* Primary section heading (Fraunces, 16px) */
+/* Primary section heading - group title (Fraunces, 13px uppercase) */
 .dashboard-heading {
-  font-size: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  line-height: 1.2;
+}
+
+/* Sub-widget heading (Fraunces, 15px) */
+.dashboard-subheading {
+  font-size: 15px;
   font-weight: 700;
   font-family: var(--font-serif);
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
-  margin: 0 0 16px;
+  margin: 0;
   line-height: 1.2;
 }
 
