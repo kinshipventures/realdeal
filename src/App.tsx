@@ -361,8 +361,8 @@ function AppShell() {
               cursor: 'pointer',
               fontFamily: 'inherit',
               transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isProjects ? 'rgba(0,0,0,0.08)' : 'transparent',
-              color: isProjects ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.40)',
+              background: isProjects ? 'var(--tint-hover)' : 'transparent',
+              color: isProjects ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isProjects ? 600 : 500,
             }}
           >
