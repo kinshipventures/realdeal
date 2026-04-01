@@ -187,6 +187,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 32, textAlign: 'center',
+        transition: 'max-width 0.35s ease',
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
@@ -196,25 +197,40 @@ export function OnboardingFlow({ onComplete }: Props) {
           {step === 4 && <StepTour onFinish={onComplete} />}
         </div>
 
-        {/* Progress */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
-            {step + 1} of {STEP_COUNT}
-          </span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {Array.from({ length: STEP_COUNT }, (_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => { if (i <= maxStep) setStep(i) }}
-                style={{
-                  width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
-                  background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                  opacity: i < step ? 0.4 : 1,
-                  cursor: i <= maxStep ? 'pointer' : 'default',
-                  transition: 'all 0.25s ease',
-                }}
-              />
+        {/* Progress with step labels */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+              {step + 1} of {STEP_COUNT}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {Array.from({ length: STEP_COUNT }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { if (i <= maxStep) setStep(i) }}
+                  style={{
+                    width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
+                    background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
+                    opacity: i < step ? 0.4 : 1,
+                    cursor: i <= maxStep ? 'pointer' : 'default',
+                    transition: 'all 0.25s ease',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 16 }}>
+            {STEP_LABELS.map((label, i) => (
+              <span key={label} style={{
+                fontSize: 9, fontWeight: i === step ? 600 : 400,
+                color: i === step ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.02em',
+                opacity: i === step ? 1 : 0.5,
+                transition: 'all 0.25s ease',
+              }}>
+                {label}
+              </span>
             ))}
           </div>
         </div>
