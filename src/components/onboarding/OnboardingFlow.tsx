@@ -523,8 +523,8 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
 
   return (
     <>
-      <h2 style={headingStyle}>Your world in pods</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Your world in pods</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Not more contacts - fewer, better ones. Pods keep your circles small and intentional.
       </p>
 
