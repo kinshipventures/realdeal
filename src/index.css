@@ -13,6 +13,8 @@
 */
 
 :root {
+  --font-serif: 'Fraunces', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
   --orb-hub: 136px;
   --orb-list: 96px;
   --orb-category: 60px;
