@@ -270,6 +270,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
     <dialog ref={dialogRef} className="overlay-dialog" style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px',
+      boxSizing: 'border-box',
     }}>
 
         {/* Close button */}
