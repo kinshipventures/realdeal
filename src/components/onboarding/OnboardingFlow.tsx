@@ -555,7 +555,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
   )
 }
 
-function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; onNext: () => void; navigate: (path: string) => void }) {
+function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () => void; onNext: () => void; onBack: () => void; navigate: (path: string) => void }) {
   const nodes = [
     { x: 0, y: 0, size: 10, color: '#25B439', delay: 0 },
     { x: -28, y: -20, size: 7, color: '#6366F1', delay: 100 },
