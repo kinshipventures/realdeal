@@ -50,7 +50,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         }
       `}</style>
       <div style={{
-        width: '100%', maxWidth: 480, padding: '48px 32px 40px',
+        width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 32, textAlign: 'center',
       }}>
