@@ -1219,10 +1219,27 @@ export function RecordsList() {
         </div>
       )}
 
-      {/* Mobile card layout */}
+      {/* Mobile card layout + HIG row styles */}
       <style>{`
         @media (max-width: 767px) {
           .records-table { display: none !important; }
+        }
+        @keyframes row-enter {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .contacts-row {
+          animation: row-enter 0.3s ease-out both;
+          transition: background 0.12s ease;
+        }
+        .contacts-row:hover {
+          background: rgba(0,0,0,0.03) !important;
+        }
+        .contacts-row:active {
+          background: rgba(0,0,0,0.06) !important;
+        }
+        .contacts-row[style*="rgba(37,180,57"]:hover {
+          background: rgba(37,180,57,0.08) !important;
         }
       `}</style>
     </div>
