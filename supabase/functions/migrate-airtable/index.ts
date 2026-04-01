@@ -412,6 +412,30 @@ Deno.serve(async (req) => {
       if (step === "6") return json({ success: true, logs, errors });
     }
 
+    // STEP: find_gaps - compare Airtable IDs against migration map
+    if (step === "find_gaps") {
+      const [atContacts, atInteractions] = await Promise.all([
+        fetchTable("Contacts"),
+        fetchTable("Interactions"),
+      ]);
+      const { data: mapRows } = await supabase.from("_migration_id_map")
+        .select("airtable_id, table_name")
+        .in("table_name", ["contacts", "interactions"]);
+      const mapped = new Set((mapRows || []).map(r => r.airtable_id));
+
+      const missingContacts = atContacts
+        .filter(r => !mapped.has(r.id))
+        .map(r => ({ airtable_id: r.id, name: r.fields["Name"], email: r.fields["Email"], company: r.fields["Company"] }));
+      const missingInteractions = atInteractions
+        .filter(r => !mapped.has(r.id))
+        .map(r => ({ airtable_id: r.id, contact_ref: r.fields["Contact"], type: r.fields["Type"], date: r.fields["Date"], notes: String(r.fields["Notes"] || "").slice(0, 100) }));
+
+      log(`Airtable contacts: ${atContacts.length}, mapped: ${atContacts.length - missingContacts.length}, missing: ${missingContacts.length}`);
+      log(`Airtable interactions: ${atInteractions.length}, mapped: ${atInteractions.length - missingInteractions.length}, missing: ${missingInteractions.length}`);
+
+      return json({ success: true, logs, missingContacts, missingInteractions });
+    }
+
     // STEP: count - just report counts
     if (step === "count" || step === "all") {
       const tables = ["pods","categories","companies","contacts","contact_pods","contact_categories",
