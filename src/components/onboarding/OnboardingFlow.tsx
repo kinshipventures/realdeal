@@ -145,6 +145,18 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes onboard-slide-left {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-slide-right {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes onboard-stagger {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes welcome-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(37,180,57,0.30); }
           50% { transform: scale(1.05); box-shadow: 0 12px 48px rgba(37,180,57,0.40); }
@@ -168,6 +180,10 @@ export function OnboardingFlow({ onComplete }: Props) {
         @keyframes leaf-pop {
           from { transform: scale(0); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes onboard-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .onboard-btn-primary:hover {
           transform: scale(1.03) !important;
