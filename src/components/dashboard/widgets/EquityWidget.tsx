@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { scoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
@@ -81,6 +81,41 @@ function StatBlock({ label, value, accent }: { label: string; value: number; acc
   )
 }
 
+function ScorePulse({ value }: { value: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const prev = useRef(value)
+
+  useEffect(() => {
+    if (prev.current !== value && ref.current) {
+      ref.current.style.transform = 'scale(1.12)'
+      ref.current.style.opacity = '0.85'
+      const t = setTimeout(() => {
+        if (ref.current) {
+          ref.current.style.transform = 'scale(1)'
+          ref.current.style.opacity = '1'
+        }
+      }, 60)
+      prev.current = value
+      return () => clearTimeout(t)
+    }
+  }, [value])
+
+  return (
+    <div
+      ref={ref}
+      aria-live="polite"
+      style={{
+        fontSize: 38, fontWeight: 900, color: '#ffffff',
+        letterSpacing: '-0.03em', lineHeight: 1,
+        fontFamily: 'var(--font-serif)',
+        transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease',
+      }}
+    >
+      <AnimatedNumber value={value} />
+    </div>
+  )
+}
+
 function getGreeting(): string {
   const hour = new Date().getHours()
   if (hour < 12) return 'Good morning'
@@ -126,9 +161,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
             <>
               <EquityRing score={overallScore} size={96} />
               <div>
-                <div aria-live="polite" style={{ fontSize: 36, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: 'var(--font-serif)' }}>
-                  <AnimatedNumber value={Number.isFinite(overallScore) ? overallScore : 0} />
-                </div>
+                <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
                 <div className="widget-tooltip-wrap" style={{ fontSize: 13, color: 'rgba(255,255,255,0.70)', marginTop: 6, letterSpacing: '0.01em' }}>
                   {scoreLabel(overallScore)}
                   <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
