@@ -619,14 +619,14 @@ function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () =
         </svg>
       </div>
 
-      <h2 style={headingStyle}>Bring your people in</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
       </p>
 
-      <ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" />
+      <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" /></div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-secondary" style={secondaryBtnStyle}>
+      <button type="button" onClick={onNext} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(240) }}>
         I'll add people manually
       </button>
     </>
