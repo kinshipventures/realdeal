@@ -3,7 +3,6 @@ import type { Contact, FocusItem } from '../../../lib/types'
 import { daysSinceContact } from '../../../lib/equity'
 import { Avatar } from '../../ui'
 import { WidgetHeading } from './WidgetHeading'
-import { Avatar } from '../../ui'
 
 function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) {
   const days = daysSinceContact(item.contact)
