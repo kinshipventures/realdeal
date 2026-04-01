@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import type { Contact, Interaction } from '../../../lib/types'
 import { TYPE_ICONS } from '../../contacts/InteractionSection'
 import { formatRelativeTime } from '../../../lib/utils'
+import { WidgetHeading } from './WidgetHeading'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
