@@ -436,6 +436,134 @@ Deno.serve(async (req) => {
       return json({ success: true, logs, missingContacts, missingInteractions });
     }
 
+    // STEP: fill_gaps - insert missing contacts + their interactions
+    if (step === "fill_gaps") {
+      const [atContacts, atInteractions] = await Promise.all([
+        fetchTable("Contacts"),
+        fetchTable("Interactions"),
+      ]);
+
+      // Find unmapped contacts
+      const unmappedContacts = atContacts.filter(r => !resolve(r.id));
+      log(`Unmapped contacts to insert: ${unmappedContacts.length}`);
+
+      for (const r of unmappedContacts) {
+        const companyLinked = r.fields["Company Record"] as string[] | undefined;
+        const companyId = companyLinked?.[0] ? resolve(companyLinked[0]) : undefined;
+        const isCompanyType = r.fields["Type"] === "Company";
+
+        if (isCompanyType) {
+          const { data, error } = await supabase.from("companies").insert({
+            user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+            industry: (r.fields["Industry"] as string | null) ?? null,
+            stage: (r.fields["Stage"] as string | null) ?? null,
+            ticker: (r.fields["Ticker"] as string | null) ?? null,
+            domain: (r.fields["Domain"] as string | null) ?? null,
+            website: (r.fields["Website"] as string | null) ?? null,
+            location: (r.fields["Location"] as string | null) ?? null,
+            notes: (r.fields["Notes"] as string | null) ?? null,
+            custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? null,
+          }).select("id").single();
+          if (error) { errors.push({ table: "companies", id: r.id, msg: error.message }); log(`ERR company ${r.id}: ${error.message}`); continue; }
+          if (data) { await saveMapping(r.id, "companies", data.id); log(`Inserted company: ${r.fields["Name"]}`); }
+        }
+
+        // Insert as contact too
+        const kvFund = r.fields["KV Fund Investor"];
+        const spv = r.fields["SPV Investor"];
+        const { data, error } = await supabase.from("contacts").insert({
+          user_id: userId, name: (r.fields["Name"] as string) ?? "(unnamed)",
+          email: (r.fields["Email"] as string | null) ?? null,
+          email_2: (r.fields["Email 2"] as string | null) ?? null,
+          email_3: (r.fields["Email 3"] as string | null) ?? null,
+          phone: (r.fields["Phone"] as string | null) ?? null,
+          company: (r.fields["Company"] as string | null) ?? null,
+          company_id: companyId ?? null,
+          role: (r.fields["Role"] as string | null) ?? null,
+          location: (r.fields["Location"] as string | null) ?? null,
+          website: (r.fields["Website"] as string | null) ?? null,
+          notes: (r.fields["Notes"] as string | null) ?? null,
+          recommended_by: (r.fields["Recommended By"] as string | null) ?? null,
+          specialization: (r.fields["Specialization"] as string | null) ?? null,
+          past_clients: (r.fields["Past Clients"] as string | null) ?? null,
+          birthday: (r.fields["Birthday"] as string | null) ?? null,
+          milestones: (r.fields["Milestones"] as string | null) ?? null,
+          interests: (r.fields["Interests"] as string | null) ?? null,
+          relationship_context: (r.fields["Relationship Context"] as string | null) ?? null,
+          last_contacted_at: (r.fields["Last Contacted At"] as string | null) ?? null,
+          cadence_override: (r.fields["Cadence Override"] as string | null) ?? null,
+          first_name: (r.fields["First Name"] as string | null) ?? null,
+          last_name: (r.fields["Last Name"] as string | null) ?? null,
+          linkedin: (r.fields["LinkedIn"] as string | null) ?? null,
+          country: (r.fields["Country"] as string | null) ?? null,
+          global_region: (r.fields["Global Region"] as string | null) ?? null,
+          gender: (r.fields["Gender"] as string | null) ?? null,
+          introduced_by: (r.fields["Introduced By"] as string | null) ?? null,
+          intel_notes: (r.fields["Intel Notes"] as string | null) ?? null,
+          relationship_owner: (r.fields["Relationship Owner"] as string | null) ?? null,
+          contact_frequency: (r.fields["Contact Frequency"] as string | null) ?? null,
+          next_follow_up_date: (r.fields["Next Follow Up Date"] as string | null) ?? null,
+          next_action: (r.fields["Next Action"] as string | null) ?? null,
+          kv_fund_investor: Array.isArray(kvFund) ? kvFund : kvFund ? [kvFund as string] : null,
+          spv_investor: Array.isArray(spv) ? spv : spv ? [spv as string] : null,
+          needs_review: !!r.fields["Needs Review"],
+          type: isCompanyType ? "Company" : "Contact",
+          status: (r.fields["Status"] as string | null) ?? "Active",
+          industry: (r.fields["Industry"] as string | null) ?? null,
+          stage: (r.fields["Stage"] as string | null) ?? null,
+          ticker: (r.fields["Ticker"] as string | null) ?? null,
+          domain: (r.fields["Domain"] as string | null) ?? null,
+          custom_fields: (r.fields["Custom Fields"] as Record<string, unknown> | null) ?? {},
+        }).select("id").single();
+        if (error) { errors.push({ table: "contacts", id: r.id, msg: error.message }); log(`ERR contact ${r.id}: ${error.message}`); continue; }
+        if (data) { await saveMapping(r.id, "contacts", data.id); log(`Inserted contact: ${r.fields["Name"]}`); }
+
+        // Also create junction rows for this contact
+        const cid = data?.id;
+        if (cid) {
+          const lists = r.fields["Lists"] as string[] | undefined;
+          if (lists?.length) {
+            for (const lid of lists) {
+              const pid = resolve(lid); if (!pid) continue;
+              await supabase.from("contact_pods").insert({ user_id: userId, contact_id: cid, pod_id: pid, is_primary: lists.indexOf(lid) === 0 });
+            }
+          }
+          const cats = r.fields["Categories"] as string[] | undefined;
+          if (cats?.length) {
+            for (const catId of cats) {
+              const resolved = resolve(catId); if (!resolved) continue;
+              await supabase.from("contact_categories").insert({ user_id: userId, contact_id: cid, category_id: resolved });
+            }
+          }
+        }
+      }
+
+      // Now insert missing interactions
+      const unmappedInteractions = atInteractions.filter(r => !resolve(r.id));
+      log(`Unmapped interactions to insert: ${unmappedInteractions.length}`);
+      for (const r of unmappedInteractions) {
+        const contactRef = (r.fields["Contact"] as string[])?.[0];
+        const contactId = contactRef ? resolve(contactRef) : undefined;
+        if (!contactId) { errors.push({ table: "interactions", id: r.id, msg: `No contact mapping for ${contactRef}` }); continue; }
+        let iType = ((r.fields["Type"] as string) ?? "note").toLowerCase();
+        if (iType === "event") iType = "meeting";
+        const { data, error } = await supabase.from("interactions").insert({
+          user_id: userId, contact_id: contactId,
+          type: iType,
+          date: (r.fields["Date"] as string) ?? new Date().toISOString().slice(0, 10),
+          notes: (r.fields["Notes"] as string | null) ?? null,
+          summary: (r.fields["Summary"] as string | null) ?? null,
+          source: (r.fields["Source"] as string | null) ?? null,
+          email_link: (r.fields["Email Link"] as string | null) ?? null,
+          granola_link: (r.fields["Granola Link"] as string | null) ?? null,
+        }).select("id").single();
+        if (error) { errors.push({ table: "interactions", id: r.id, msg: error.message }); log(`ERR interaction ${r.id}: ${error.message}`); continue; }
+        if (data) { await saveMapping(r.id, "interactions", data.id); log(`Inserted interaction: ${iType} on ${r.fields["Date"]}`); }
+      }
+
+      return json({ success: true, logs, errors, insertedContacts: unmappedContacts.length, insertedInteractions: unmappedInteractions.length });
+    }
+
     // STEP: count - just report counts
     if (step === "count" || step === "all") {
       const tables = ["pods","categories","companies","contacts","contact_pods","contact_categories",
