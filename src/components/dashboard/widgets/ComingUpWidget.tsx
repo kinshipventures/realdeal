@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import type { Contact, Pod } from '../../../lib/types'
+import { WidgetHeading } from './WidgetHeading'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
