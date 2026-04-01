@@ -399,7 +399,13 @@ export function Dashboard() {
           {/* Section: Network Pulse */}
           {(isVisible('pod-health') || isVisible('wrapped')) && (
             <div className="dashboard-section widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">network pulse</h2>
+              <h2 className="dashboard-heading">
+                <span className="widget-tooltip-wrap">
+                  network pulse
+                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">How your relationship network is performing - pod health scores and key insights.</span>
+                </span>
+              </h2>
               {isVisible('pod-health') && (
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />
               )}
