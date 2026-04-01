@@ -121,9 +121,9 @@ export function NeedsAttentionWidget({
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
+          <h3 className="dashboard-subheading">
             needs attention
-          </h2>
+          </h3>
           {overdueContacts.length > 0 && (
             <span style={{
               display: 'inline-flex', alignItems: 'center',

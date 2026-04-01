@@ -67,9 +67,9 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 className="dashboard-heading" style={{ marginBottom: 0 }}>
+        <h3 className="dashboard-subheading">
           recent activity
-        </h2>
+        </h3>
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=activity')}
