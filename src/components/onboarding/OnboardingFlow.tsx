@@ -582,7 +582,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
         </div>
       </div>
 
-      <ActionRow onAction={onNext} onBack={onBack} label="Next" />
+      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
