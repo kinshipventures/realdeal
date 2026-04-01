@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { scoreLabel } from '../../../lib/equity'
+import React, { useEffect, useRef, useState } from 'react'
+import { scoreLabel, type ScoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
   const safeScore = Number.isFinite(score) ? score : 0
@@ -51,7 +51,6 @@ function AnimatedNumber({ value, duration = 1200 }: { value: number; duration?: 
     function tick(now: number) {
       const elapsed = now - startTime
       const t = Math.min(elapsed / duration, 1)
-      // ease-out cubic
       const ease = 1 - Math.pow(1 - t, 3)
       const current = Math.round(start + (end - start) * ease)
       if (el) el.textContent = String(current)
@@ -109,11 +108,66 @@ function ScorePulse({ value }: { value: number }) {
         letterSpacing: '-0.03em', lineHeight: 1,
         fontFamily: 'var(--font-serif)',
         transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease',
+        display: 'inline-flex', alignItems: 'baseline', gap: 8,
       }}
     >
       <AnimatedNumber value={value} />
     </div>
   )
+}
+
+// Trend arrow: up, down, or flat
+function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' }) {
+  if (trend === 'flat') {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/></svg>
+      </span>
+    )
+  }
+  const isUp = trend === 'up'
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      color: isUp ? 'hsla(140, 70%, 75%, 0.95)' : 'hsla(0, 70%, 70%, 0.90)',
+      fontSize: 12,
+    }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        {isUp
+          ? <><polyline points="17 11 12 6 7 11"/><line x1="12" y1="6" x2="12" y2="18"/></>
+          : <><polyline points="7 13 12 18 17 13"/><line x1="12" y1="18" x2="12" y2="6"/></>
+        }
+      </svg>
+    </span>
+  )
+}
+
+// Score label as colored chip
+const LABEL_COLORS: Record<ScoreLabel, { bg: string; text: string }> = {
+  Thriving: { bg: 'rgba(150, 255, 150, 0.18)', text: 'hsla(140, 80%, 80%, 1)' },
+  Steady:   { bg: 'rgba(150, 200, 255, 0.18)', text: 'hsla(210, 80%, 82%, 1)' },
+  Cooling:  { bg: 'rgba(255, 200, 100, 0.18)', text: 'hsla(35, 90%, 78%, 1)' },
+  Fading:   { bg: 'rgba(255, 130, 130, 0.18)', text: 'hsla(0, 80%, 78%, 1)' },
+}
+
+function ScoreLabelChip({ label }: { label: ScoreLabel }) {
+  const colors = LABEL_COLORS[label]
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      background: colors.bg, color: colors.text,
+      fontSize: 11, fontWeight: 600, letterSpacing: '0.04em',
+      textTransform: 'uppercase',
+      padding: '3px 8px', borderRadius: 6,
+      border: `1px solid ${colors.text.replace('1)', '0.20)')}`,
+    }}>
+      {label}
+    </span>
+  )
+}
+
+function formatDate(): string {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 function getGreeting(): string {
@@ -123,7 +177,7 @@ function getGreeting(): string {
   return 'Good evening'
 }
 
-interface EquityWidgetProps {
+export interface EquityWidgetProps {
   overallScore: number
   podCount: number
   contactCount: number
@@ -131,23 +185,27 @@ interface EquityWidgetProps {
   overdueCount: number
   interactionsLoading: boolean
   dataReady: boolean
+  scoreTrend?: 'up' | 'down' | 'flat'
+  onQuickAction?: () => void
 }
 
-export function EquityWidget({ overallScore, podCount, contactCount, recentlyContacted, overdueCount, interactionsLoading, dataReady }: EquityWidgetProps) {
+export function EquityWidget({ overallScore, podCount, contactCount, recentlyContacted, overdueCount, interactionsLoading, dataReady, scoreTrend, onQuickAction }: EquityWidgetProps) {
+  const label = scoreLabel(overallScore)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Greeting line */}
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.70)', fontWeight: 400, letterSpacing: '0.01em' }}>
-        {getGreeting()}
-        {dataReady && (
-          <span style={{ color: 'rgba(255,255,255,0.50)', marginLeft: 6 }}>
-            - {contactCount} contacts across {podCount} pods
-          </span>
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Greeting + date */}
+      <div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 400, letterSpacing: '0.01em' }}>
+          {getGreeting()}
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 2, letterSpacing: '0.02em' }}>
+          {formatDate()}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        {/* Equity score ring - larger */}
+        {/* Equity score ring */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '0 0 auto' }}>
           {interactionsLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
@@ -161,11 +219,16 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
             <>
               <EquityRing score={overallScore} size={96} />
               <div>
-                <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
-                <div className="widget-tooltip-wrap" style={{ fontSize: 13, color: 'rgba(255,255,255,0.70)', marginTop: 6, letterSpacing: '0.01em' }}>
-                  {scoreLabel(overallScore)}
-                  <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
-                  <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
+                  {scoreTrend && <TrendArrow trend={scoreTrend} />}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <ScoreLabelChip label={label} />
+                  <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
+                    <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
+                    <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
+                  </span>
                 </div>
               </div>
             </>
@@ -202,6 +265,37 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
           )}
         </div>
       </div>
+
+      {/* Quick action pill */}
+      {dataReady && onQuickAction && (
+        <div>
+          <button
+            type="button"
+            onClick={onQuickAction}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              borderRadius: 20,
+              padding: '8px 18px',
+              fontSize: 13, fontWeight: 600,
+              color: 'rgba(255,255,255,0.90)',
+              cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              transition: 'background 0.15s ease, transform 0.15s ease',
+              minHeight: 36,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Log interaction
+          </button>
+        </div>
+      )}
     </div>
   )
 }
