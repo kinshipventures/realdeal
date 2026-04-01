@@ -194,10 +194,10 @@ export function OnboardingFlow({ onComplete }: Props) {
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
-          {step === 1 && <StepPhilosophy onNext={next} />}
-          {step === 2 && <StepPods onNext={next} />}
-          {step === 3 && <StepImport onComplete={onComplete} onNext={next} navigate={navigate} />}
-          {step === 4 && <StepTour onFinish={onComplete} />}
+          {step === 1 && <StepPhilosophy onNext={next} onBack={back} />}
+          {step === 2 && <StepPods onNext={next} onBack={back} />}
+          {step === 3 && <StepImport onComplete={onComplete} onNext={next} onBack={back} navigate={navigate} />}
+          {step === 4 && <StepTour onFinish={onComplete} onBack={back} />}
         </div>
 
         {/* Progress with step labels */}
@@ -238,18 +238,39 @@ export function OnboardingFlow({ onComplete }: Props) {
           </div>
         </div>
 
-        {/* Back / Skip row */}
+        {/* Skip */}
         <div style={{ display: 'flex', gap: 24 }}>
-          {step > 0 && (
-            <button type="button" onClick={back} style={linkStyle}>
-              Back
-            </button>
-          )}
           <button type="button" onClick={onComplete} style={linkStyle}>
             Skip
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ---------- shared back+action row ---------- */
+
+function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?: () => void; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 280 }}>
+      {onBack && (
+        <button type="button" onClick={onBack} style={{
+          width: 44, height: 44, borderRadius: '50%', border: 'none',
+          background: 'var(--color-brand)', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
+          transition: 'transform 0.15s, box-shadow 0.15s',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+      <button type="button" onClick={onAction} className="onboard-btn-primary" style={{ ...primaryBtnStyle, flex: 1, maxWidth: 'none' }}>
+        {label}
+      </button>
     </div>
   )
 }
@@ -324,7 +345,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
   )
 }
 
-function StepPhilosophy({ onNext }: { onNext: () => void }) {
+function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const ringSize = 120
   const strokeW = 10
   const r = (ringSize - strokeW) / 2
@@ -358,10 +379,10 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
 
       <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
             <div key={p.label} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px',
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', flex: 1,
               borderRadius: 10, background: 'rgba(0,0,0,0.03)',
               opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
             }}>
@@ -441,14 +462,12 @@ function StepPhilosophy({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Next
-      </button>
+      <ActionRow onAction={onNext} onBack={onBack} label="Next" />
     </>
   )
 }
 
-function StepPods({ onNext }: { onNext: () => void }) {
+function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const [cadence, setCadence] = useState(() =>
     localStorage.getItem('realdeal:default-cadence') || 'monthly'
   )
@@ -531,14 +550,12 @@ function StepPods({ onNext }: { onNext: () => void }) {
         </div>
       </div>
 
-      <button type="button" onClick={onNext} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Next
-      </button>
+      <ActionRow onAction={onNext} onBack={onBack} label="Next" />
     </>
   )
 }
 
-function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; onNext: () => void; navigate: (path: string) => void }) {
+function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () => void; onNext: () => void; onBack: () => void; navigate: (path: string) => void }) {
   const nodes = [
     { x: 0, y: 0, size: 10, color: '#25B439', delay: 0 },
     { x: -28, y: -20, size: 7, color: '#6366F1', delay: 100 },
@@ -576,12 +593,10 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
       </p>
 
       {/* Import sources */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-        <button type="button" onClick={() => { onComplete(); navigate('/import') }} className="onboard-btn-primary" style={primaryBtnStyle}>
-          Import from CSV
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%', maxWidth: 320 }}>
+        <ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" />
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', width: '100%' }}>
           {[
             { label: 'Google', icon: 'M21.35 11.1h-9.18v2.73h5.51c-.24 1.27-1.33 3.72-5.51 3.72-3.31 0-6.01-2.75-6.01-6.12s2.7-6.12 6.01-6.12c1.87 0 3.13.8 3.85 1.48L18.1 4.8C16.56 3.36 14.56 2.5 12.17 2.5 6.98 2.5 2.73 6.74 2.73 11.93s4.25 9.43 9.44 9.43c5.45 0 9.06-3.83 9.06-9.22 0-.62-.07-1.1-.12-1.04z', color: '#4285F4' },
             { label: 'Apple', icon: 'M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z', color: '#333' },
@@ -620,7 +635,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
   )
 }
 
-function StepTour({ onFinish }: { onFinish: () => void }) {
+function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => void }) {
   const [active, setActive] = useState<string | null>(null)
   const views = [
     { icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label: 'Pulse', desc: 'Your daily dashboard with equity scores and focus list', detail: 'See who needs attention today, track pod health at a glance, and get nudged toward the relationships that matter most.' },
@@ -679,9 +694,7 @@ function StepTour({ onFinish }: { onFinish: () => void }) {
           )
         })}
       </div>
-      <button type="button" onClick={onFinish} className="onboard-btn-primary" style={primaryBtnStyle}>
-        Let's Go
-      </button>
+      <ActionRow onAction={onFinish} onBack={onBack} label="Let's Go" />
     </>
   )
 }
