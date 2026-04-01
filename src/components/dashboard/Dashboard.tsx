@@ -350,6 +350,11 @@ export function Dashboard() {
                     overdueCount={overdueContacts.length}
                     interactionsLoading={interactionsLoading}
                     dataReady={dataReady}
+                    scoreTrend={scoreTrend}
+                    onQuickAction={() => {
+                      const first = focusItems[0]
+                      if (first) setSelectedContact(contacts.find(c => c.id === first.contactId) ?? null)
+                    }}
                   />
                 </div>
               ) : (
