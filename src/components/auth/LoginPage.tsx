@@ -37,20 +37,21 @@ export function LoginPage() {
       justifyContent: 'center',
       background: 'var(--color-bg)',
       fontFamily: 'var(--font-sans)',
+      color: 'var(--color-text-primary)',
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 32,
           fontWeight: 700,
-          color: 'rgba(0,0,0,0.82)',
+          color: 'var(--color-text-primary)',
           margin: 0,
         }}>
           RealDeal
         </h1>
         <p style={{
           fontSize: 14,
-          color: 'rgba(0,0,0,0.45)',
+          color: 'var(--color-text-secondary)',
           margin: '8px 0 0',
         }}>
           Sign in to continue
