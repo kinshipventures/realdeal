@@ -66,7 +66,7 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <h3 className="dashboard-subheading">
           recent activity
         </h3>

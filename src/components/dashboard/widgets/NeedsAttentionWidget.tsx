@@ -119,7 +119,7 @@ export function NeedsAttentionWidget({
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h3 className="dashboard-subheading">
             needs attention
