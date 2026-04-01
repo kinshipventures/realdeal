@@ -394,13 +394,13 @@ body::after {
   }
 }
 
-/* Primary section heading - group title (Fraunces, 13px uppercase) */
+/* Primary section heading - group title (small caps, warm tint) */
 .dashboard-heading {
-  font-size: 11px;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--color-text-tertiary);
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0 0 16px;
   line-height: 1.2;
