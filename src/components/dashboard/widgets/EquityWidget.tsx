@@ -1,51 +1,91 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { scoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
   const safeScore = Number.isFinite(score) ? score : 0
-  const strokeWidth = 6
+  const strokeWidth = 7
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (safeScore / 100) * circumference
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setMounted(true))
+  }, [])
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth={strokeWidth} />
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.25))' }}>
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={strokeWidth} />
       <circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none"
-        stroke="url(#equityGradient)"
+        stroke="url(#equityGradientLg)"
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
-        strokeDashoffset={offset}
+        strokeDashoffset={mounted ? offset : circumference}
         strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
       />
       <defs>
-        <linearGradient id="equityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0.60)" />
+        <linearGradient id="equityGradientLg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="rgba(255,255,255,1)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.55)" />
         </linearGradient>
       </defs>
     </svg>
   )
 }
 
+function AnimatedNumber({ value, duration = 1200 }: { value: number; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const prevValue = useRef(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const start = prevValue.current
+    const end = Number.isFinite(value) ? value : 0
+    if (start === end) { el.textContent = String(end); return }
+    const startTime = performance.now()
+
+    function tick(now: number) {
+      const elapsed = now - startTime
+      const t = Math.min(elapsed / duration, 1)
+      // ease-out cubic
+      const ease = 1 - Math.pow(1 - t, 3)
+      const current = Math.round(start + (end - start) * ease)
+      if (el) el.textContent = String(current)
+      if (t < 1) requestAnimationFrame(tick)
+      else prevValue.current = end
+    }
+    requestAnimationFrame(tick)
+  }, [value, duration])
+
+  return <span ref={ref}>{Number.isFinite(value) ? value : 0}</span>
+}
+
 function StatBlock({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div style={{ textAlign: 'center' }}>
+    <div style={{ textAlign: 'center', minWidth: 0 }}>
       <div style={{
-        fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1,
-        color: accent && value > 0 ? 'hsla(20, 80%, 45%, 0.80)' : '#ffffff',
+        fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1,
+        color: accent && value > 0 ? 'hsla(0, 85%, 60%, 0.95)' : '#ffffff',
         fontVariantNumeric: 'tabular-nums',
       }}>
-        {Number.isFinite(value) ? value : 0}
+        <AnimatedNumber value={value} />
       </div>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4, letterSpacing: '0.01em' }}>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 5, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500 }}>
         {label}
       </div>
     </div>
   )
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
 }
 
 interface EquityWidgetProps {
@@ -60,53 +100,74 @@ interface EquityWidgetProps {
 
 export function EquityWidget({ overallScore, podCount, contactCount, recentlyContacted, overdueCount, interactionsLoading, dataReady }: EquityWidgetProps) {
   return (
-    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-      {/* Equity score ring */}
-      <div style={{ padding: '0', display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
-        {interactionsLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="skeleton" style={{ width: 48, height: 28, background: 'rgba(255,255,255,0.15)' }} />
-              <div className="skeleton" style={{ width: 56, height: 14, background: 'rgba(255,255,255,0.15)' }} />
-            </div>
-          </div>
-        ) : (
-          <>
-            <EquityRing score={overallScore} size={80} />
-            <div>
-              <div aria-live="polite" style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                {Number.isFinite(overallScore) ? overallScore : 0}
-              </div>
-              <div className="widget-tooltip-wrap" style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 4, letterSpacing: '0.01em' }}>
-                {scoreLabel(overallScore)}
-                <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.20)', color: 'rgba(255,255,255,0.60)' }} aria-label="Info">?</span>
-                <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
-              </div>
-            </div>
-          </>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Greeting line */}
+      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.70)', fontWeight: 400, letterSpacing: '0.01em' }}>
+        {getGreeting()}
+        {dataReady && (
+          <span style={{ color: 'rgba(255,255,255,0.50)', marginLeft: 6 }}>
+            - {contactCount} contacts across {podCount} pods
+          </span>
         )}
       </div>
 
-      {/* Stats panel */}
-      <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 'var(--panel-radius)', padding: '20px 24px', flex: 1 }}>
-        {!dataReady ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <div className="skeleton" style={{ width: 40, height: 22, background: 'rgba(255,255,255,0.15)' }} />
-                <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.15)' }} />
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        {/* Equity score ring - larger */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '0 0 auto' }}>
+          {interactionsLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <div className="skeleton" style={{ width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="skeleton" style={{ width: 52, height: 32, background: 'rgba(255,255,255,0.12)' }} />
+                <div className="skeleton" style={{ width: 60, height: 14, background: 'rgba(255,255,255,0.12)' }} />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            <StatBlock label="Pods" value={podCount} />
-            <StatBlock label="Contacts" value={contactCount} />
-            <StatBlock label="Reached this week" value={recentlyContacted} />
-            <StatBlock label="Overdue" value={overdueCount} accent />
-          </div>
-        )}
+            </div>
+          ) : (
+            <>
+              <EquityRing score={overallScore} size={96} />
+              <div>
+                <div aria-live="polite" style={{ fontSize: 36, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: 'var(--font-serif)' }}>
+                  <AnimatedNumber value={Number.isFinite(overallScore) ? overallScore : 0} />
+                </div>
+                <div className="widget-tooltip-wrap" style={{ fontSize: 13, color: 'rgba(255,255,255,0.70)', marginTop: 6, letterSpacing: '0.01em' }}>
+                  {scoreLabel(overallScore)}
+                  <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Stats panel - liquid glass */}
+        <div style={{
+          background: 'rgba(255,255,255,0.10)',
+          backdropFilter: 'blur(24px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
+          borderRadius: 16,
+          border: '1px solid rgba(255,255,255,0.18)',
+          padding: '20px 28px',
+          flex: 1,
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 24px rgba(0,0,0,0.08)',
+        }}>
+          {!dataReady ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div className="skeleton" style={{ width: 40, height: 24, background: 'rgba(255,255,255,0.12)' }} />
+                  <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.12)' }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <StatBlock label="Pods" value={podCount} />
+              <StatBlock label="Contacts" value={contactCount} />
+              <StatBlock label="Reached this week" value={recentlyContacted} />
+              <StatBlock label="Overdue" value={overdueCount} accent />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
