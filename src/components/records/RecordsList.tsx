@@ -633,16 +633,18 @@ export function RecordsList() {
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
             style={{
-              height: 32,
+              height: 36,
               padding: '0 12px',
               borderRadius: 8,
               border: '1px solid var(--edge)',
-              background: 'var(--color-surface)',
+              background: 'var(--surface-panel)',
+              backdropFilter: 'blur(20px)',
               fontSize: 13,
               color: 'var(--color-text-primary)',
               outline: 'none',
               fontFamily: 'inherit',
               minWidth: 180,
+              transition: 'border-color 0.15s',
             }}
           />
 
