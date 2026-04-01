@@ -69,12 +69,18 @@ export function OnboardingFlow({ onComplete }: Props) {
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
             {Array.from({ length: STEP_COUNT }, (_, i) => (
-              <div key={i} style={{
-                width: i === step ? 24 : 8, height: 8, borderRadius: 4,
-                background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
-                opacity: i < step ? 0.4 : 1,
-                transition: 'all 0.25s ease',
-              }} />
+              <button
+                key={i}
+                type="button"
+                onClick={() => { if (i <= maxStep) setStep(i) }}
+                style={{
+                  width: i === step ? 24 : 8, height: 8, borderRadius: 4, padding: 0, border: 'none',
+                  background: i === step ? 'var(--color-brand)' : i < step ? 'var(--color-brand)' : 'rgba(0,0,0,0.22)',
+                  opacity: i < step ? 0.4 : 1,
+                  cursor: i <= maxStep ? 'pointer' : 'default',
+                  transition: 'all 0.25s ease',
+                }}
+              />
             ))}
           </div>
         </div>
