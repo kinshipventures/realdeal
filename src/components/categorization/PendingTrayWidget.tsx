@@ -6,8 +6,8 @@ const PANEL: React.CSSProperties = {
   WebkitBackdropFilter: 'var(--panel-blur)',
   border: 'var(--surface-panel-border)',
   borderRadius: 'var(--panel-radius)',
-  padding: '20px 20px',
-  marginBottom: 24,
+  padding: '16px 20px',
+  marginBottom: 16,
 }
 
 interface PendingTrayWidgetProps {

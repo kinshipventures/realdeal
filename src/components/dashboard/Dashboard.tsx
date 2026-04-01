@@ -517,7 +517,7 @@ function DashboardSkeleton() {
           </div>
         </div>
       </div>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
         {/* Network Pulse section skeleton */}
         <div className="dashboard-section" style={{ marginBottom: 24 }}>
           <div className="skeleton" style={{ width: 140, height: 18, marginBottom: 16 }} />
