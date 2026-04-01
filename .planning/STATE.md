@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
-stopped_at: "Checkpoint: 18-01 tasks complete, awaiting human verification of auth routing"
-last_updated: "2026-03-31T21:44:50.761Z"
-last_activity: 2026-03-31
+stopped_at: "Checkpoint: 22-01 Task 1 complete, awaiting Lovable schema execution (Task 2 human-action)"
+last_updated: "2026-04-01T08:21:28.493Z"
+last_activity: 2026-04-01
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 4
+  completed_plans: 2
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 18 — authentication
+**Current focus:** Phase 22 — airtable-to-supabase-data-migration
 
 ## Current Position
 
-Phase: 18 (authentication) — EXECUTING
-Plan: 1 of 1
+Phase: 22 (airtable-to-supabase-data-migration) — EXECUTING
+Plan: 1 of 3
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Plan: 1 of 1
 
 **Previous milestones:** 17 phases, 48 plans shipped across v1.0-v2.0
 | Phase 18-authentication P01 | 8 | 3 tasks | 6 files |
+| Phase 22-airtable-to-supabase-data-migration P01 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -53,6 +54,7 @@ See PROJECT.md Key Decisions table for full log.
 - Phase 21: Sharing depends on Auth (share links need authenticated generation, public route bypasses auth)
 - [Phase 18-authentication]: Single onAuthStateChange subscription - no getSession() call to avoid double-fetch anti-pattern
 - [Phase 18-authentication]: LoginPage is a shell only - lovable-auth div is mount point for Lovable auth UI drop-in
+- [Phase 22-airtable-to-supabase-data-migration]: Schema DDL spec produced by Claude Code, executed by Lovable -- Lovable handles Supabase table creation, Claude Code handles migration script and data layer swap
 
 ### Roadmap Evolution
 
@@ -71,7 +73,7 @@ See PROJECT.md Key Decisions table for full log.
 
 ## Session Continuity
 
-Last activity: 2026-03-31
-Last session: 2026-03-31T21:44:50.759Z
-Stopped at: Checkpoint: 18-01 tasks complete, awaiting human verification of auth routing
+Last activity: 2026-04-01
+Last session: 2026-04-01T08:21:21.880Z
+Stopped at: Checkpoint: 22-01 Task 1 complete, awaiting Lovable schema execution (Task 2 human-action)
 Resume file: None
