@@ -404,12 +404,12 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
 
   return (
     <>
-      <h2 style={headingStyle}>This isn't a CRM</h2>
-      <p style={bodyStyle}>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>This isn't a CRM</h2>
+      <p style={{ ...bodyStyle, ...stagger(60) }}>
         We track relationship health, not sales pipelines.
       </p>
 
-      <div style={{ display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
+      <div style={{ ...stagger(120), display: 'flex', gap: 24, width: '100%', textAlign: 'left', alignItems: 'stretch' }}>
         {/* Left: Principles */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
           {PRINCIPLES.map((p, i) => (
