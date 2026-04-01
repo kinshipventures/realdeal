@@ -8,6 +8,7 @@ interface Props {
 }
 
 const STEP_COUNT = 5
+const STEP_LABELS = ['Welcome', 'Philosophy', 'Pods', 'Import', 'Tour']
 
 /* ---------- static data (hoisted out of render) ---------- */
 
