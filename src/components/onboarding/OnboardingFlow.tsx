@@ -345,7 +345,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
   )
 }
 
-function StepPhilosophy({ onNext }: { onNext: () => void }) {
+function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const ringSize = 120
   const strokeW = 10
   const r = (ringSize - strokeW) / 2
