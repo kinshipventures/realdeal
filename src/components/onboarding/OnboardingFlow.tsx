@@ -610,7 +610,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
           ))}
         </div>
 
-        <button type="button" onClick={onNext} style={secondaryBtnStyle}>
+        <button type="button" onClick={onNext} className="onboard-btn-secondary" style={secondaryBtnStyle}>
           I'll add people manually
         </button>
       </div>
