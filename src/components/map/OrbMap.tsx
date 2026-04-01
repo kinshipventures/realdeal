@@ -123,7 +123,7 @@ function buildHomeNodes({
   savedPositions,
   memberCountByPod,
   onCreatePod,
-}: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[] } {
+}: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number> } {
   const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods, savedPositions)
   const DEPTH_BY_RING = [1.0, 0.92, 0.85]
 
@@ -169,7 +169,7 @@ function buildHomeNodes({
     })
   })
 
-  return { nodes: [mojNode, ...podNodes], activeRings }
+  return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
 }
 
 function buildHomeEdges(_pods: Pod[]): Edge[] {
@@ -219,6 +219,7 @@ export function OrbMap() {
   const equityByPodRef = useRef<Record<string, number>>({})
   const categoriesByPodRef = useRef<Record<string, Category[]>>({})
   const memberCountByPodRef = useRef<Record<string, number>>({})
+  const ringByPodRef = useRef<Map<string, number>>(new Map())
 
   // Parallax: track cumulative pan offset, apply via CSS custom properties
   const panRef = useRef({ x: 0, y: 0 })
@@ -228,7 +229,7 @@ export function OrbMap() {
 
 
   const rebuildHomeView = useCallback((savedPositions: Record<string, { x: number; y: number }>) => {
-    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes({
+    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
       pods: podsRef.current,
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
@@ -239,6 +240,7 @@ export function OrbMap() {
     })
     setNodes(homeNodes)
     setActiveRings(rings)
+    ringByPodRef.current = ringMap
     setEdges(buildHomeEdges(podsRef.current))
   }, [setNodes, setEdges])
 
@@ -322,7 +324,7 @@ export function OrbMap() {
         categoriesByPodRef.current = catsByPod
 
         const savedPositions = getPositions()
-        const { nodes: homeNodes, activeRings: rings } = buildHomeNodes({
+        const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
           pods: allPods,
           countsByPod,
           equityByPod,
@@ -333,6 +335,7 @@ export function OrbMap() {
         })
         setNodes(homeNodes)
         setActiveRings(rings)
+    ringByPodRef.current = ringMap
         setEdges(buildHomeEdges(allPods))
         if (!stale) { setPodsLoaded(true); setPodsCount(allPods.length) }
       } catch (err) {
@@ -350,8 +353,22 @@ export function OrbMap() {
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (node.id === MOJ_ID) return
-    savePosition(node.id, node.position.x, node.position.y)
-  }, [])
+    const ringIdx = ringByPodRef.current.get(node.id)
+    if (ringIdx === undefined) { savePosition(node.id, node.position.x, node.position.y); return }
+
+    // Snap to nearest point on the assigned ring
+    const radius = RING_RADII[ringIdx]
+    const cx = node.position.x + LIST_SIZE / 2
+    const cy = node.position.y + LIST_SIZE / 2
+    const angle = Math.atan2(cy, cx)
+    const snapX = Math.cos(angle) * radius - LIST_SIZE / 2
+    const snapY = Math.sin(angle) * radius - LIST_SIZE / 2
+
+    setNodes(prev => prev.map(n =>
+      n.id === node.id ? { ...n, position: { x: snapX, y: snapY } } : n
+    ))
+    savePosition(node.id, snapX, snapY)
+  }, [setNodes])
 
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
   const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
@@ -359,7 +376,7 @@ export function OrbMap() {
   const handleResetLayout = useCallback(() => {
     clearAllPositions()
     localStorage.removeItem(VIEWPORT_KEY)
-    const { nodes: homeNodes, activeRings: rings } = buildHomeNodes({
+    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
       pods: podsRef.current,
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
@@ -370,6 +387,7 @@ export function OrbMap() {
     })
     setNodes(homeNodes)
     setActiveRings(rings)
+    ringByPodRef.current = ringMap
     setEdges(buildHomeEdges(podsRef.current))
     setViewport({ x: 0, y: 0, zoom: 1 })
     setViewportState({ x: 0, y: 0, zoom: 1 })
