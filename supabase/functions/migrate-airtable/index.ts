@@ -509,15 +509,12 @@ Deno.serve(async (req) => {
       fetchAirtableTable("Contacts"),
       fetchAirtableTable("Interactions"),
       fetchAirtableTable("Campaigns"),
-      fetchAirtableTable("CampaignContacts"),
-      fetchAirtableTable("Pipelines"),
-      fetchAirtableTable("Pipeline Stages"),
-      fetchAirtableTable("Opportunities"),
-      fetchAirtableTable("Projects"),
-      fetchAirtableTable("Field Config").catch(() => {
-        log("  Field Config table not found -- skipping");
-        return [] as AirtableRecord[];
-      }),
+      fetchAirtableTable("CampaignContacts").catch(() => { log("  CampaignContacts table not found -- skipping"); return [] as AirtableRecord[]; }),
+      fetchAirtableTable("Pipelines").catch(() => { log("  Pipelines table not found -- skipping"); return [] as AirtableRecord[]; }),
+      fetchAirtableTable("Pipeline Stages").catch(() => { log("  Pipeline Stages table not found -- skipping"); return [] as AirtableRecord[]; }),
+      fetchAirtableTable("Opportunities").catch(() => { log("  Opportunities table not found -- skipping"); return [] as AirtableRecord[]; }),
+      fetchAirtableTable("Projects").catch(() => { log("  Projects table not found -- skipping"); return [] as AirtableRecord[]; }),
+      fetchAirtableTable("Field Config").catch(() => { log("  Field Config table not found -- skipping"); return [] as AirtableRecord[]; }),
     ]);
 
     await migratePods(listRecords);
