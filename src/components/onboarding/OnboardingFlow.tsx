@@ -48,6 +48,18 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes welcome-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(37,180,57,0.30); }
+          50% { transform: scale(1.05); box-shadow: 0 12px 48px rgba(37,180,57,0.40); }
+        }
+        @keyframes orbit {
+          from { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
+          to { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
+        }
+        @keyframes welcome-heading {
+          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
       `}</style>
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
