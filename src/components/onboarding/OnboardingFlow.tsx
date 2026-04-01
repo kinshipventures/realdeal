@@ -188,8 +188,9 @@ export function OnboardingFlow({ onComplete }: Props) {
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 32, textAlign: 'center',
+        gap: step === 3 ? 20 : 32, textAlign: 'center',
         transition: 'max-width 0.35s ease',
+        overflowY: 'auto', maxHeight: '100vh',
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
