@@ -188,8 +188,9 @@ export function OnboardingFlow({ onComplete }: Props) {
       <div style={{
         width: '100%', maxWidth: step === 1 ? 600 : 480, padding: '48px 32px 40px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 32, textAlign: 'center',
+        gap: step === 3 ? 20 : 32, textAlign: 'center',
         transition: 'max-width 0.35s ease',
+        overflowY: 'auto', maxHeight: '100vh',
       }}>
         <div key={step} style={{ animation: 'onboard-enter 0.3s ease-out', display: 'contents' }}>
           {step === 0 && <StepWelcome onNext={next} />}
@@ -550,7 +551,7 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
   return (
     <>
       {/* Network constellation visual */}
-      <div style={{ position: 'relative', width: 120, height: 120, animation: 'gentle-float 4s ease-in-out infinite' }}>
+      <div style={{ position: 'relative', width: 100, height: 100, animation: 'gentle-float 4s ease-in-out infinite', flexShrink: 0 }}>
         <svg width="120" height="120" viewBox="-50 -40 100 80">
           {/* Connection lines from center */}
           {nodes.slice(1).map((n, i) => (
