@@ -44,7 +44,7 @@ export function LoginPage() {
           fontFamily: 'var(--font-serif)',
           fontSize: 32,
           fontWeight: 700,
-          color: 'rgba(0,0,0,0.82)',
+          color: 'var(--color-text-primary)',
           margin: 0,
         }}>
           RealDeal
