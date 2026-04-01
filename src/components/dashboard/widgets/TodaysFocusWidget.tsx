@@ -16,19 +16,17 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
+      className="widget-card"
       style={{
         flex: 1,
         padding: '16px 18px',
-        background: 'rgba(37,180,57,0.04)',
+        background: 'var(--surface-panel)',
+        border: '1px solid var(--edge)',
         borderRadius: 14,
         cursor: 'pointer',
         textAlign: 'left',
         fontFamily: 'inherit',
-        transition: 'transform 0.15s, box-shadow 0.15s',
-        boxShadow: '0 1px 3px var(--divider)',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px var(--divider)' }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px var(--divider)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <Avatar name={item.contact.name} size={28} variant="subtle" />
@@ -64,7 +62,7 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
   if (items.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
           today's focus
@@ -72,7 +70,7 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=focus')}
-          style={{ fontSize: 12, color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          className="see-all-link"
         >
           See all
         </button>

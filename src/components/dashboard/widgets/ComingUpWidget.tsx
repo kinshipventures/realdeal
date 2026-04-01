@@ -64,7 +64,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
   if (items.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <h2 style={{
           fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
@@ -75,7 +75,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=dates')}
-          style={{ fontSize: 12, color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          className="see-all-link"
         >
           See all
         </button>

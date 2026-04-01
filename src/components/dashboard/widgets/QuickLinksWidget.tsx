@@ -3,14 +3,6 @@ import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, Pipeline } from '../../../lib/types'
 import { getPipelines } from '../../../lib/airtable'
 
-const PANEL: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  backdropFilter: 'var(--panel-blur)',
-  WebkitBackdropFilter: 'var(--panel-blur)',
-  border: 'var(--surface-panel-border)',
-  borderRadius: 'var(--panel-radius)',
-}
-
 interface QuickLinksWidgetProps {
   campaigns: Campaign[]
   campaignContacts: CampaignContact[]
@@ -31,7 +23,7 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
   if (!hasLinks) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div style={{ marginBottom: 0 }}>
       <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0, marginBottom: 12 }}>
         quick links
       </h2>
@@ -45,8 +37,12 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
               key={campaign.id}
               type="button"
               onClick={() => navigate(`/`)}
+              className="widget-card"
               style={{
-                ...PANEL, width: '100%', padding: '12px 16px',
+                background: 'var(--surface-panel)',
+                border: '1px solid var(--edge)',
+                borderRadius: 'var(--panel-radius)',
+                width: '100%', padding: '12px 16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
                 gap: 12,
@@ -74,8 +70,12 @@ export function QuickLinksWidget({ campaigns, campaignContacts, campaignsLoading
             key={pipeline.id}
             type="button"
             onClick={() => navigate('/pipelines')}
+            className="widget-card"
             style={{
-              ...PANEL, width: '100%', padding: '12px 16px',
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
+              borderRadius: 'var(--panel-radius)',
+              width: '100%', padding: '12px 16px',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box',
               gap: 12,

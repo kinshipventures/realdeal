@@ -88,15 +88,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
               key={label}
               type="button"
               onClick={action}
-              style={{
-                fontSize: 10, fontWeight: 500,
-                padding: '3px 10px', borderRadius: 100,
-                background: 'var(--tint)',
-                border: '1px solid var(--edge)',
-                color: label === 'Let go' ? 'rgba(180,40,40,0.65)' : 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              className={`action-pill-hig${label === 'Let go' ? ' destructive' : ''}`}
             >
               {label}
             </button>
@@ -126,8 +118,7 @@ export function NeedsAttentionWidget({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      {/* Section header */}
+    <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', margin: 0 }}>
@@ -150,13 +141,12 @@ export function NeedsAttentionWidget({
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=overdue')}
-          style={{ fontSize: 12, color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          className="see-all-link"
         >
           See all
         </button>
       </div>
 
-      {/* Overdue group */}
       <div style={{ ...PANEL, overflow: 'hidden', marginBottom: dormantContacts.length > 0 ? 12 : 0 }}>
         {contactsLoading ? (
           <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -184,7 +174,6 @@ export function NeedsAttentionWidget({
         )}
       </div>
 
-      {/* Dormant group — "gone quiet" collapsible */}
       {dormantContacts.length > 0 && (
         <div style={{ ...PANEL, overflow: 'hidden' }}>
           <button
@@ -201,7 +190,7 @@ export function NeedsAttentionWidget({
               {dormantContacts.length} gone quiet
             </span>
             <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-              ▾
+              &#9662;
             </span>
           </button>
           {dormantExpanded && (

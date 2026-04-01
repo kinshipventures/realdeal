@@ -386,53 +386,76 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Widget render order: pending-tray, pod-health, wrapped, recent-activity, coming-up, todays-focus, needs-attention, quick-links */}
-
+          {/* Pending tray */}
           {isVisible('pending-tray') && (
-            <PendingTrayWidget
-              pendingContacts={pendingContacts}
-              onReview={() => setShowQueue(true)}
-            />
+            <div className="widget-enter" style={{ '--stagger': 0 } as React.CSSProperties}>
+              <PendingTrayWidget
+                pendingContacts={pendingContacts}
+                onReview={() => setShowQueue(true)}
+              />
+            </div>
           )}
 
-          {isVisible('pod-health') && (
-            <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+          {/* Section: Network Pulse */}
+          {(isVisible('pod-health') || isVisible('wrapped')) && (
+            <div className="dashboard-section widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+              <h2 className="dashboard-heading">network pulse</h2>
+              {isVisible('pod-health') && (
+                <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+              )}
+              {isVisible('wrapped') && (
+                <div style={{ marginTop: isVisible('pod-health') ? 16 : 0 }}>
+                  <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+                </div>
+              )}
+            </div>
           )}
 
-          {isVisible('wrapped') && (
-            <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+          {/* Section: Action Items */}
+          {(isVisible('todays-focus') || isVisible('needs-attention') || isVisible('coming-up')) && (
+            <div className="dashboard-section widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+              <h2 className="dashboard-heading">action items</h2>
+              {isVisible('todays-focus') && (
+                <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
+              )}
+              {isVisible('coming-up') && (
+                <div style={{ marginTop: isVisible('todays-focus') && focusItems.length > 0 ? 20 : 0 }}>
+                  <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
+                </div>
+              )}
+              {isVisible('needs-attention') && (
+                <div style={{ marginTop: 20 }}>
+                  <NeedsAttentionWidget
+                    overdueContacts={overdueContacts}
+                    dormantContacts={dormantContacts}
+                    contactsLoading={contactsLoading}
+                    error={error}
+                    onContactClick={handleContactClick}
+                    onSnooze={handleSnooze}
+                    onRemoveContact={handleRemoveContact}
+                  />
+                </div>
+              )}
+            </div>
           )}
 
-          {isVisible('recent-activity') && (
-            <RecentActivityWidget items={recentActivity} onContactClick={handleContactClick} />
-          )}
-
-          {isVisible('coming-up') && (
-            <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
-          )}
-
-          {isVisible('todays-focus') && (
-            <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
-          )}
-
-          {isVisible('needs-attention') && (
-            <NeedsAttentionWidget
-              overdueContacts={overdueContacts}
-              dormantContacts={dormantContacts}
-              contactsLoading={contactsLoading}
-              error={error}
-              onContactClick={handleContactClick}
-              onSnooze={handleSnooze}
-              onRemoveContact={handleRemoveContact}
-            />
-          )}
-
-          {isVisible('quick-links') && (
-            <QuickLinksWidget
-              campaigns={campaigns}
-              campaignContacts={campaignContacts}
-              campaignsLoading={campaignsLoading}
-            />
+          {/* Section: Activity & Links */}
+          {(isVisible('recent-activity') || isVisible('quick-links')) && (
+            <div className="dashboard-section widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+              <h2 className="dashboard-heading">activity & links</h2>
+              {isVisible('recent-activity') && (
+                <RecentActivityWidget items={recentActivity} onContactClick={handleContactClick} />
+              )}
+              {isVisible('quick-links') && (
+                <div style={{ marginTop: isVisible('recent-activity') && recentActivity.length > 0 ? 20 : 0 }}>
+                  <QuickLinksWidget
+                    campaigns={campaigns}
+                    campaignContacts={campaignContacts}
+                    campaignsLoading={campaignsLoading}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -495,18 +518,36 @@ function DashboardSkeleton() {
         </div>
       </div>
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
-        <div className="skeleton" style={{ width: 120, height: 16, marginBottom: 16 }} />
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ width: 155, height: 80, borderRadius: 12 }} />
-          ))}
-        </div>
-        <div className="skeleton" style={{ width: 100, height: 16, marginBottom: 12 }} />
-        <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
-            <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 12 }} />
+        {/* Network Pulse section skeleton */}
+        <div className="dashboard-section" style={{ marginBottom: 24 }}>
+          <div className="skeleton" style={{ width: 140, height: 18, marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton" style={{ width: 155, height: 100, borderRadius: 12 }} />
+            ))}
           </div>
+          <div className="skeleton" style={{ width: '100%', height: 80, borderRadius: 12 }} />
+        </div>
+        {/* Action Items section skeleton */}
+        <div className="dashboard-section" style={{ marginBottom: 24 }}>
+          <div className="skeleton" style={{ width: 120, height: 18, marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            {[1, 2].map(i => (
+              <div key={i} className="skeleton" style={{ flex: 1, height: 90, borderRadius: 14 }} />
+            ))}
+          </div>
+          <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+            ))}
+          </div>
+        </div>
+        {/* Activity section skeleton */}
+        <div className="dashboard-section">
+          <div className="skeleton" style={{ width: 130, height: 18, marginBottom: 16 }} />
+          {[1, 2, 3].map(i => (
+            <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          ))}
         </div>
       </div>
     </div>

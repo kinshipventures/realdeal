@@ -1,7 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import type { Pod } from '../../../lib/types'
 import { POD_SHIFT_COLORS } from '../../map/SolidOrb'
-import { hexToRgba } from '../../../lib/utils'
 
 function Sparkline({ data, color, width = 60, height = 24 }: {
   data: number[]
@@ -31,25 +30,10 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
 }) {
   const color = pod.color ?? '#718096'
   const cadence = pod.cadence ?? 'monthly'
-  const cardRef = useRef<HTMLDivElement>(null)
-  const restShadow = '0 1px 3px var(--divider)'
-  const hoverShadow = `0 4px 16px ${hexToRgba(color, 0.15)}`
 
   return (
     <div
-      ref={cardRef}
-      onMouseEnter={() => {
-        if (cardRef.current) {
-          cardRef.current.style.transform = 'translateY(-2px)'
-          cardRef.current.style.boxShadow = hoverShadow
-        }
-      }}
-      onMouseLeave={() => {
-        if (cardRef.current) {
-          cardRef.current.style.transform = 'none'
-          cardRef.current.style.boxShadow = restShadow
-        }
-      }}
+      className="widget-card"
       style={{
         background: 'var(--surface-panel)',
         border: '1px solid var(--edge)',
@@ -57,11 +41,10 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
         padding: '14px 16px',
         minWidth: 155,
         flexShrink: 0,
-        boxShadow: restShadow,
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
+        scrollSnapAlign: 'start',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -117,16 +100,42 @@ interface PodHealthWidgetProps {
 }
 
 export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrolledLeft, setScrolledLeft] = useState(false)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => setScrolledLeft(el.scrollLeft > 8)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
   if (!dataReady || podStats.length === 0) return null
 
   return (
-    <div style={{ position: 'relative', marginBottom: 24 }}>
+    <div style={{ position: 'relative', marginBottom: 0 }}>
+      {/* Left fade */}
+      {scrolledLeft && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, bottom: 0, width: 48,
+          background: 'linear-gradient(to left, transparent, var(--color-bg))',
+          pointerEvents: 'none', zIndex: 1,
+        }} />
+      )}
+      {/* Right fade */}
       <div style={{
         position: 'absolute', top: 0, right: 0, bottom: 0, width: 48,
         background: 'linear-gradient(to right, transparent, var(--color-bg))',
         pointerEvents: 'none', zIndex: 1,
       }} />
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 6, paddingBottom: 6, scrollbarWidth: 'none' }}>
+      <div
+        ref={scrollRef}
+        style={{
+          display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 6, paddingBottom: 6,
+          scrollbarWidth: 'none', scrollSnapType: 'x mandatory',
+        }}
+      >
         {podStats.map(({ pod, contactCount, overdueCount, score, scoreReady, sparkline }) => (
           <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={scoreReady} sparkline={sparkline} />
         ))}
