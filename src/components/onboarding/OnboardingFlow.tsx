@@ -328,36 +328,62 @@ function StepImport({ onComplete, onNext, navigate }: { onComplete: () => void; 
 }
 
 function StepTour({ onFinish }: { onFinish: () => void }) {
+  const [active, setActive] = useState<string | null>(null)
   const views = [
-    { icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label: 'Pulse', desc: 'Your daily dashboard with equity scores and focus list' },
-    { icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2', label: 'Map', desc: 'Visual network graph of all your pods and contacts' },
-    { icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', label: 'Contacts', desc: 'Browse and manage all your relationship records' },
-    { icon: 'M2 3h5v18H2zM9.5 6h5v15h-5zM17 9h5v12h-5z', label: 'Pipelines', desc: 'Track deals and opportunities through stages' },
-    { icon: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z', label: 'Projects', desc: 'Group contacts and tasks around shared goals' },
+    { icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label: 'Pulse', desc: 'Your daily dashboard with equity scores and focus list', detail: 'See who needs attention today, track pod health at a glance, and get nudged toward the relationships that matter most.' },
+    { icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2', label: 'Map', desc: 'Visual network graph of all your pods and contacts', detail: 'Explore your network as an orbital map. Tap pods to drill into categories, then into individual contacts.' },
+    { icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', label: 'Contacts', desc: 'Browse and manage all your relationship records', detail: 'Search, filter, and sort everyone in your network. View timelines, log interactions, and update details inline.' },
+    { icon: 'M2 3h5v18H2zM9.5 6h5v15h-5zM17 9h5v12h-5z', label: 'Pipelines', desc: 'Track deals and opportunities through stages', detail: 'Kanban boards for deals, fundraising rounds, or any multi-stage workflow. Drag contacts between stages.' },
+    { icon: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z', label: 'Projects', desc: 'Group contacts and tasks around shared goals', detail: 'Organize efforts like events or launches. Attach contacts, track progress, and keep everything in one place.' },
   ]
   return (
     <>
       <h2 style={headingStyle}>Your Views</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', textAlign: 'left' }}>
-        {views.map(v => (
-          <div key={v.label} style={{
-            display: 'flex', alignItems: 'center', gap: 14, padding: '10px 16px',
-            borderRadius: 12, background: 'rgba(0,0,0,0.03)',
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d={v.icon} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', textAlign: 'left' }}>
+        {views.map(v => {
+          const isActive = active === v.label
+          return (
+            <button
+              key={v.label}
+              type="button"
+              onClick={() => setActive(isActive ? null : v.label)}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 16px',
+                borderRadius: 12, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
+                background: isActive ? 'rgba(37,180,57,0.08)' : 'rgba(0,0,0,0.03)',
+                outline: isActive ? '1.5px solid var(--color-brand)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={v.icon} />
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>{v.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>{v.desc}</div>
+                {isActive && (
+                  <div style={{
+                    marginTop: 8, padding: '8px 10px', borderRadius: 8,
+                    background: 'rgba(37,180,57,0.06)',
+                    fontSize: 11, lineHeight: 1.5, color: 'var(--color-text-primary)',
+                    fontFamily: 'var(--font-sans)',
+                    animation: 'onboard-enter 0.25s ease-out',
+                  }}>
+                    {v.detail}
+                  </div>
+                )}
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 12, transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                <path d="M6 9l6 6 6-6" />
               </svg>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>{v.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>{v.desc}</div>
-            </div>
-          </div>
-        ))}
+            </button>
+          )
+        })}
       </div>
       <button type="button" onClick={onFinish} style={primaryBtnStyle}>
         Let's Go
