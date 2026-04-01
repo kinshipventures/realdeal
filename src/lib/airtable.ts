@@ -13,6 +13,24 @@ async function getUserId(): Promise<string> {
   return user.id
 }
 
+// Supabase returns max 1000 rows by default. Fetch all rows for junction tables.
+async function fetchAllRows<T>(
+  query: () => ReturnType<ReturnType<typeof supabase.from>['select']>,
+): Promise<T[]> {
+  const PAGE = 1000
+  let offset = 0
+  const all: T[] = []
+  while (true) {
+    const { data, error } = await (query() as any).range(offset, offset + PAGE - 1)
+    if (error) throw error
+    if (!data || data.length === 0) break
+    all.push(...(data as T[]))
+    if (data.length < PAGE) break
+    offset += PAGE
+  }
+  return all
+}
+
 const CACHE_TTL = 5 * 60 * 1000
 
 // Generic stale-while-revalidate cache helper
@@ -157,19 +175,33 @@ export async function createCategory(name: string, listId: string): Promise<Cate
 async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
   if (contacts.length === 0) return []
   const contactIds = contacts.map(c => c.id)
-  const [podJ, catJ] = await Promise.all([
-    supabase.from('contact_pods').select('contact_id, pod_id, is_primary').in('contact_id', contactIds),
-    supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', contactIds),
-  ])
+
+  // Batch IDs to avoid URL length limits (Supabase uses GET with query params)
+  const BATCH = 200
+  const podRows: { contact_id: string; pod_id: string; is_primary: boolean }[] = []
+  const catRows: { contact_id: string; category_id: string }[] = []
+
+  for (let i = 0; i < contactIds.length; i += BATCH) {
+    const batch = contactIds.slice(i, i + BATCH)
+    const [podRes, catRes] = await Promise.all([
+      supabase.from('contact_pods').select('contact_id, pod_id, is_primary').in('contact_id', batch),
+      supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', batch),
+    ])
+    if (podRes.error) throw new Error(`contact_pods query failed: ${podRes.error.message}`)
+    if (catRes.error) throw new Error(`contact_categories query failed: ${catRes.error.message}`)
+    podRows.push(...(podRes.data ?? []))
+    catRows.push(...(catRes.data ?? []))
+  }
+
   const podMap = new Map<string, { pod_ids: string[]; primary: string | null }>()
-  for (const jp of podJ.data ?? []) {
+  for (const jp of podRows) {
     let entry = podMap.get(jp.contact_id)
     if (!entry) { entry = { pod_ids: [], primary: null }; podMap.set(jp.contact_id, entry) }
     entry.pod_ids.push(jp.pod_id)
     if (jp.is_primary) entry.primary = jp.pod_id
   }
   const catMap = new Map<string, string[]>()
-  for (const jc of catJ.data ?? []) {
+  for (const jc of catRows) {
     let arr = catMap.get(jc.contact_id)
     if (!arr) { arr = []; catMap.set(jc.contact_id, arr) }
     arr.push(jc.category_id)
@@ -205,9 +237,8 @@ let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
 
 async function fetchContacts(): Promise<Contact[]> {
-  const { data, error } = await supabase.from('contacts').select('*')
-  if (error) throw error
-  return enrichContactJunctions(data ?? [])
+  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*'))
+  return enrichContactJunctions(data)
 }
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
@@ -483,6 +514,7 @@ async function fetchCampaigns(): Promise<Campaign[]> {
     supabase.from('campaign_contacts').select('*'),
   ])
   if (campRes.error) throw campRes.error
+  if (ccRes.error) throw new Error(`campaign_contacts query failed: ${ccRes.error.message}`)
   const ccs = (ccRes.data ?? []).map(mapCampaignContact)
   _campaignContactsCache = ccs
   return (campRes.data ?? []).map(r => {
@@ -674,7 +706,8 @@ export async function updatePipelineStage(id: string, data: Partial<Pick<Pipelin
 async function enrichOpportunities(rows: any[]): Promise<Opportunity[]> {
   if (rows.length === 0) return []
   const oppIds = rows.map(r => r.id)
-  const { data: junctions } = await supabase.from('opportunity_contacts').select('opportunity_id, contact_id').in('opportunity_id', oppIds)
+  const { data: junctions, error } = await supabase.from('opportunity_contacts').select('opportunity_id, contact_id').in('opportunity_id', oppIds)
+  if (error) throw new Error(`opportunity_contacts query failed: ${error.message}`)
   const relMap = new Map<string, string[]>()
   for (const j of junctions ?? []) {
     let arr = relMap.get(j.opportunity_id)
@@ -753,6 +786,8 @@ async function enrichProjects(rows: any[]): Promise<Project[]> {
     supabase.from('project_contacts').select('project_id, contact_id').in('project_id', projIds),
     supabase.from('project_opportunities').select('project_id, opportunity_id').in('project_id', projIds),
   ])
+  if (pcRes.error) throw new Error(`project_contacts query failed: ${pcRes.error.message}`)
+  if (poRes.error) throw new Error(`project_opportunities query failed: ${poRes.error.message}`)
   const relMap = new Map<string, string[]>()
   for (const j of pcRes.data ?? []) {
     let arr = relMap.get(j.project_id); if (!arr) { arr = []; relMap.set(j.project_id, arr) }; arr.push(j.contact_id)
