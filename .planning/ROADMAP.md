@@ -169,7 +169,7 @@ Plans:
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
-| 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete   | 2026-04-02 |
+| 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
