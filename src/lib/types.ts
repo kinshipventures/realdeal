@@ -180,3 +180,15 @@ export interface Project {
   notes: string | null
   created_at: string
 }
+
+export interface ShareLink {
+  id: string
+  pod_id: string
+  token: string
+  excluded_contact_ids: string[]
+  visible_columns: string[]
+  expires_at: string
+  pin_hash: string | null
+  revoked_at: string | null
+  created_at: string
+}
