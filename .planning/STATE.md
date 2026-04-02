@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-04-02T17:38:11.521Z"
+stopped_at: Completed 19-03-PLAN.md
+last_updated: "2026-04-02T17:43:42.261Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -42,6 +42,7 @@ Plan: 3 of 3
 | Phase 22-airtable-to-supabase-data-migration P02 | 3 minutes | 1 tasks | 3 files |
 | Phase 19-enrichment-followups P01 | 8 | 2 tasks | 2 files |
 | Phase 19-enrichment-followups P02 | 3 minutes | 2 tasks | 4 files |
+| Phase 19-enrichment-followups P03 | 10 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,8 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 22-airtable-to-supabase-data-migration]: Migration script uses service role key + MIGRATION_USER_ID env var -- never committed, never in Vercel
 - [Phase 19-enrichment-followups]: ContactDetail uses onSaved (existing prop) for follow-up mutations -- no new prop alias needed
 - [Phase 19-02]: followUpOverdue computed as separate memo in Dashboard, not merged into overdueContacts -- keeps cadence-overdue and follow-up-overdue cleanly separated
+- [Phase 19-enrichment-followups]: Edge function stays in supabase/ -- supabase client present for auth and functions.invoke; swapping enrichment provider only requires changing edge function body
+- [Phase 19-enrichment-followups]: Suggested-update UI embedded in field() renderer inline -- simple pattern, no new component extraction needed
 
 ### Roadmap Evolution
 
@@ -81,6 +84,6 @@ See PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last activity: 2026-04-02
-Last session: 2026-04-02T17:38:11.520Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-04-02T17:43:42.260Z
+Stopped at: Completed 19-03-PLAN.md
 Resume file: None

@@ -65,7 +65,7 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
 **Milestone Goal:** Close the remaining MVP gaps -- reporting, share links, enrichment, follow-up flow, and authentication.
 
 - [x] **Phase 18: Authentication** - Supabase auth wiring, login/signup routing, session persistence (completed 2026-03-31)
-- [ ] **Phase 19: Enrichment + Follow-ups** - Web enrichment with opt-in and timeline logging, follow-up creation flow from nurturing hub
+- [x] **Phase 19: Enrichment + Follow-ups** - Web enrichment with opt-in and timeline logging, follow-up creation flow from nurturing hub (completed 2026-04-02)
 - [ ] **Phase 20: Reporting** - Pod distribution, pipeline velocity, engagement reports with CSV export and saved configurations
 - [ ] **Phase 21: Sharing** - Read-only share links for curated lists with revocation
 
@@ -99,7 +99,7 @@ Plans:
 Plans:
 - [x] 19-01-PLAN.md -- Follow-up CRUD: editable pinned bar in ContactDetail, inline creation from NurturingRow
 - [x] 19-02-PLAN.md -- Follow-up dashboard surfacing: overdue in NeedsAttention, ComingUp, NurturingHub
-- [ ] 19-03-PLAN.md -- Enrichment engine: edge function stub, client module, Enrich button with field indicators
+- [x] 19-03-PLAN.md -- Enrichment engine: edge function stub, client module, Enrich button with field indicators
 
 ### Phase 20: Reporting
 **Goal**: Users can pull reports on their relationship network health and activity
@@ -169,7 +169,7 @@ Plans:
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
-| 19. Enrichment + Follow-ups | v2.1 | 2/3 | In Progress|  |
+| 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete   | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
@@ -179,7 +179,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)

@@ -23,10 +23,10 @@ Requirements for MVP completion. Closes gaps identified in Kinship Brain MVP PDF
 
 ### Enrichment
 
-- [ ] **ENR-01**: System can auto-fill company info, LinkedIn, and role from a web enrichment API
-- [ ] **ENR-02**: Every enrichment change is logged to the contact's timeline with before/after values
-- [ ] **ENR-03**: Enrichment only runs for contacts/pods where opt-in is enabled
-- [ ] **ENR-04**: AI-filled fields are visually marked as enriched
+- [x] **ENR-01**: System can auto-fill company info, LinkedIn, and role from a web enrichment API
+- [x] **ENR-02**: Every enrichment change is logged to the contact's timeline with before/after values
+- [x] **ENR-03**: Enrichment only runs for contacts/pods where opt-in is enabled
+- [x] **ENR-04**: AI-filled fields are visually marked as enriched
 
 ### Follow-ups
 
@@ -70,10 +70,10 @@ Deferred to future release.
 | AUTH-01 | Phase 18 | Complete |
 | AUTH-02 | Phase 18 | Complete |
 | AUTH-03 | Phase 18 | Complete |
-| ENR-01 | Phase 19 | Pending |
-| ENR-02 | Phase 19 | Pending |
-| ENR-03 | Phase 19 | Pending |
-| ENR-04 | Phase 19 | Pending |
+| ENR-01 | Phase 19 | Complete |
+| ENR-02 | Phase 19 | Complete |
+| ENR-03 | Phase 19 | Complete |
+| ENR-04 | Phase 19 | Complete |
 | FLW-01 | Phase 19 | Complete |
 | FLW-02 | Phase 19 | Complete |
 | FLW-03 | Phase 19 | Complete |
