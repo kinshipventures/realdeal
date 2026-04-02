@@ -12,7 +12,7 @@ function nextStatus(current: CampaignContactStatus): CampaignContactStatus {
 }
 
 const STATUS_STYLE: Record<CampaignContactStatus, { background: string; color: string }> = {
-  pending:   { background: 'rgba(0,0,0,0.06)',               color: 'var(--color-text-secondary)' },
+  pending:   { background: 'var(--tint)',                     color: 'var(--color-text-secondary)' },
   reached:   { background: 'hsla(210, 60%, 50%, 0.12)',      color: 'hsla(210, 60%, 35%, 0.9)' },
   responded: { background: 'hsla(270, 60%, 50%, 0.12)',      color: 'hsla(270, 60%, 35%, 0.9)' },
   confirmed: { background: 'hsla(150, 60%, 40%, 0.12)',      color: 'hsla(150, 60%, 28%, 0.9)' },
@@ -157,7 +157,7 @@ export function CampaignDetail({
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{
                 padding: '2px 8px', borderRadius: 100, fontSize: 11, fontWeight: 500,
-                background: 'rgba(0,0,0,0.06)', color: 'var(--color-text-secondary)',
+                background: 'var(--tint)', color: 'var(--color-text-secondary)',
               }}>
                 {campaignType}
               </span>
@@ -176,7 +176,7 @@ export function CampaignDetail({
 
         {/* Progress bar */}
         {total > 0 && (
-          <div style={{ width: '100%', height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.06)', marginTop: 8 }}>
+          <div style={{ width: '100%', height: 4, borderRadius: 2, background: 'var(--tint)', marginTop: 8 }}>
             <div style={{
               width: `${total > 0 ? (contacted / total) * 100 : 0}%`,
               height: '100%', borderRadius: 2,

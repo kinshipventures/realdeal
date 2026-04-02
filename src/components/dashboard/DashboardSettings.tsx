@@ -79,7 +79,7 @@ export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClo
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.20)',
+          background: 'var(--overlay-dim)',
           backdropFilter: 'blur(4px)',
           WebkitBackdropFilter: 'blur(4px)',
           zIndex: 200,
@@ -255,7 +255,7 @@ function WidgetRow({
         onClick={() => onToggle(widget.id)}
         style={{
           width: 36, height: 20, borderRadius: 10, border: 'none',
-          background: visible ? 'var(--color-brand)' : 'rgba(0,0,0,0.12)',
+          background: visible ? 'var(--color-brand)' : 'var(--tint)',
           cursor: 'pointer', position: 'relative',
           transition: 'background 0.15s',
           flexShrink: 0,

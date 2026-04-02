@@ -12,10 +12,10 @@ interface Props {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(0,0,0,0.04)',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--tint)',
+  border: '1px solid var(--edge-strong)',
   borderRadius: 7,
-  color: 'rgba(0,0,0,0.82)',
+  color: 'var(--color-text-primary)',
   fontSize: 13,
   padding: '8px 12px',
   outline: 'none',
@@ -26,7 +26,7 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  color: 'rgba(0,0,0,0.45)',
+  color: 'var(--color-text-secondary)',
   marginBottom: 4,
   display: 'block',
   textTransform: 'uppercase',
@@ -127,7 +127,7 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
             fontFamily: 'var(--font-serif)',
             fontWeight: 700,
             fontSize: 20,
-            color: 'rgba(0,0,0,0.82)',
+            color: 'var(--color-text-primary)',
             margin: 0,
           }}>New Pod</h2>
           <button
@@ -139,8 +139,8 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
               width: 28,
               height: 28,
               borderRadius: '50%',
-              background: 'rgba(0,0,0,0.06)',
-              color: 'rgba(0,0,0,0.45)',
+              background: 'var(--tint)',
+              color: 'var(--color-text-secondary)',
               cursor: 'pointer',
               fontSize: 16,
               display: 'flex',
@@ -294,12 +294,12 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
               onClick={handleClose}
               style={{
                 padding: '9px 18px',
-                background: 'rgba(0,0,0,0.06)',
+                background: 'var(--tint)',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
                 fontFamily: 'inherit',
-                color: 'rgba(0,0,0,0.6)',
+                color: 'var(--color-text-secondary)',
                 cursor: 'pointer',
               }}
             >
@@ -311,8 +311,8 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
               disabled={!canSave}
               style={{
                 padding: '9px 18px',
-                background: canSave ? 'var(--color-brand, #25B439)' : 'rgba(0,0,0,0.1)',
-                color: canSave ? '#fff' : 'rgba(0,0,0,0.3)',
+                background: canSave ? 'var(--color-brand, #25B439)' : 'var(--edge-strong)',
+                color: canSave ? '#fff' : 'var(--color-text-tertiary)',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,

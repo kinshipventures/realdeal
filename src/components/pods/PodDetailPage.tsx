@@ -17,10 +17,10 @@ const EQUITY_COLORS: Record<string, string> = {
 }
 
 const inputStyle: React.CSSProperties = {
-  background: 'rgba(0,0,0,0.04)',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--tint)',
+  border: '1px solid var(--edge-strong)',
   borderRadius: 7,
-  color: 'rgba(0,0,0,0.82)',
+  color: 'var(--color-text-primary)',
   fontSize: 13,
   padding: '8px 12px',
   outline: 'none',
@@ -31,7 +31,7 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  color: 'rgba(0,0,0,0.45)',
+  color: 'var(--color-text-secondary)',
   marginBottom: 4,
   display: 'block',
   textTransform: 'uppercase',
@@ -42,7 +42,7 @@ const sectionHeadStyle: React.CSSProperties = {
   fontFamily: 'var(--font-serif)',
   fontWeight: 700,
   fontSize: 16,
-  color: 'rgba(0,0,0,0.82)',
+  color: 'var(--color-text-primary)',
   marginBottom: 12,
   display: 'flex',
   alignItems: 'center',
@@ -52,12 +52,12 @@ const sectionHeadStyle: React.CSSProperties = {
 function Badge({ label }: { label: string }) {
   return (
     <span style={{
-      background: 'rgba(0,0,0,0.06)',
+      background: 'var(--tint)',
       borderRadius: 100,
       padding: '1px 8px',
       fontSize: 11,
       fontWeight: 500,
-      color: 'rgba(0,0,0,0.45)',
+      color: 'var(--color-text-secondary)',
     }}>{label}</span>
   )
 }
@@ -65,12 +65,12 @@ function Badge({ label }: { label: string }) {
 function TypeBadge({ type }: { type: string }) {
   return (
     <span style={{
-      background: 'rgba(0,0,0,0.06)',
+      background: 'var(--tint)',
       borderRadius: 4,
       padding: '1px 6px',
       fontSize: 10,
       fontWeight: 500,
-      color: 'rgba(0,0,0,0.45)',
+      color: 'var(--color-text-secondary)',
       textTransform: 'uppercase',
       letterSpacing: '0.04em',
     }}>{type}</span>
@@ -183,10 +183,10 @@ export function PodDetailPage() {
   if (notFound || !pod) {
     return (
       <div style={{ background: 'var(--color-bg)', minHeight: '100vh', padding: 40 }}>
-        <button type="button" onClick={() => navigate('/map')} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontSize: 13, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button type="button" onClick={() => navigate('/map')} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back
         </button>
-        <p style={{ color: 'rgba(0,0,0,0.45)' }}>Pod not found.</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Pod not found.</p>
       </div>
     )
   }
@@ -204,7 +204,7 @@ export function PodDetailPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -230,12 +230,12 @@ export function PodDetailPage() {
               fontFamily: 'var(--font-serif)',
               fontWeight: 700,
               fontSize: 28,
-              color: 'rgba(0,0,0,0.82)',
+              color: 'var(--color-text-primary)',
               margin: 0,
               lineHeight: 1.2,
             }}>{pod.name}</h1>
           </div>
-          {saving && <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.3)', marginTop: 8 }}>Saving…</span>}
+          {saving && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 8 }}>Saving…</span>}
         </div>
 
         {/* Description */}
@@ -337,11 +337,11 @@ export function PodDetailPage() {
               />
               <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
             </div>
-            <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginBottom: 32 }} />
+        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
 
         {/* Required Fields section */}
         <section style={{ marginBottom: 32 }}>
@@ -349,7 +349,7 @@ export function PodDetailPage() {
             Required Questions <Badge label={String(fieldConfigs.length)} />
           </div>
           {fieldConfigs.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: 0 }}>No required fields for this pod yet.</p>
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>No required fields for this pod yet.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {fieldConfigs.map(fc => (
@@ -358,21 +358,21 @@ export function PodDetailPage() {
                   alignItems: 'center',
                   gap: 10,
                   padding: '10px 14px',
-                  background: 'rgba(0,0,0,0.025)',
+                  background: 'var(--tint)',
                   borderRadius: 8,
-                  border: '1px solid rgba(0,0,0,0.06)',
+                  border: '1px solid var(--edge)',
                 }}>
                   {fc.required && (
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} />
                   )}
-                  <span style={{ flex: 1, fontSize: 13, color: 'rgba(0,0,0,0.82)', fontWeight: 500 }}>{fc.name}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{fc.name}</span>
                   <TypeBadge type={fc.field_type} />
                 </div>
               ))}
             </div>
           )}
           {members.length > 0 && (
-            <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', marginTop: 10, marginBottom: 0 }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, marginBottom: 0 }}>
               Manage fields from a{' '}
               <button
                 type="button"
@@ -385,7 +385,7 @@ export function PodDetailPage() {
           )}
         </section>
 
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginBottom: 32 }} />
+        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
 
         {/* Sub-pods section */}
         <section style={{ marginBottom: 32 }}>
@@ -403,12 +403,12 @@ export function PodDetailPage() {
                   alignItems: 'center',
                   gap: 6,
                   padding: '6px 12px',
-                  background: 'rgba(0,0,0,0.04)',
-                  border: '1px solid rgba(0,0,0,0.08)',
+                  background: 'var(--tint)',
+                  border: '1px solid var(--edge)',
                   borderRadius: 100,
                   cursor: 'pointer',
                   fontSize: 13,
-                  color: 'rgba(0,0,0,0.75)',
+                  color: 'var(--color-text-primary)',
                   fontFamily: 'inherit',
                   transition: 'background 0.15s',
                 }}
@@ -455,7 +455,7 @@ export function PodDetailPage() {
               <button
                 type="button"
                 onClick={() => { setAddingSubPod(false); setNewSubPodName('') }}
-                style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.4)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+                style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
               >
                 Cancel
               </button>
@@ -466,11 +466,11 @@ export function PodDetailPage() {
               onClick={() => setAddingSubPod(true)}
               style={{
                 background: 'none',
-                border: '1px dashed rgba(0,0,0,0.2)',
+                border: '1px dashed var(--edge-strong)',
                 borderRadius: 100,
                 padding: '5px 14px',
                 fontSize: 12,
-                color: 'rgba(0,0,0,0.4)',
+                color: 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -480,7 +480,7 @@ export function PodDetailPage() {
           )}
         </section>
 
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginBottom: 32 }} />
+        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
 
         {/* Members section */}
         <section>
@@ -490,15 +490,15 @@ export function PodDetailPage() {
           </div>
           {members.length === 0 ? (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: '0 0 8px' }}>No members yet.</p>
-              <p style={{ fontSize: 12, color: 'rgba(0,0,0,0.3)', margin: 0 }}>Add contacts from the Categorization Queue.</p>
+              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 8px' }}>No members yet.</p>
+              <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0 }}>Add contacts from the Categorization Queue.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {members.map(m => {
                 const score = equityMap[m.id] ?? 0
                 const label = scoreLabel(score)
-                const labelColor = EQUITY_COLORS[label] ?? 'rgba(0,0,0,0.4)'
+                const labelColor = EQUITY_COLORS[label] ?? 'var(--color-text-secondary)'
                 const isPrimary = m.primary_list_id === podId
                 return (
                   <button
@@ -519,13 +519,13 @@ export function PodDetailPage() {
                       transition: 'background 0.12s',
                       width: '100%',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <Avatar name={m.name} size={32} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {m.name}
                         </span>
                         {isPrimary && (
@@ -533,7 +533,7 @@ export function PodDetailPage() {
                         )}
                       </div>
                       {(m.company || m.role) && (
-                        <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {[m.role, m.company].filter(Boolean).join(' · ')}
                         </div>
                       )}

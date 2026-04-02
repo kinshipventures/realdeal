@@ -294,7 +294,7 @@ export function OpportunityDetail({ opportunity, pipeline, stages, contacts, onC
                   cursor: 'pointer',
                   fontSize: 11,
                   fontWeight: 400,
-                  background: opportunity.priority ? PRIORITY_STYLES[opportunity.priority].bg : 'rgba(0,0,0,0.06)',
+                  background: opportunity.priority ? PRIORITY_STYLES[opportunity.priority].bg : 'var(--tint)',
                   color: opportunity.priority ? PRIORITY_STYLES[opportunity.priority].color : 'var(--color-text-secondary)',
                 }}
               >

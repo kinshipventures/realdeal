@@ -10,7 +10,7 @@ const LABEL_COLORS: Record<string, string> = {
 
 const WIDGET_STYLE: React.CSSProperties = {
   background: 'rgba(255,255,255,0.92)',
-  border: '1px solid rgba(0,0,0,0.07)',
+  border: '1px solid var(--edge)',
   borderRadius: 12,
   padding: '16px 20px',
   marginBottom: 12,
@@ -41,7 +41,7 @@ export function HealthWidget({ interactions, upcomingBirthday, missingFieldCount
         fontFamily: 'var(--font-serif)',
         fontSize: 16,
         fontWeight: 700,
-        color: 'rgba(0,0,0,0.82)',
+        color: 'var(--color-text-primary)',
         marginBottom: 14,
       }}>
         Relationship Health
@@ -51,7 +51,7 @@ export function HealthWidget({ interactions, upcomingBirthday, missingFieldCount
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
           <circle
             cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth}
+            fill="none" stroke="var(--tint)" strokeWidth={strokeWidth}
           />
           <circle
             cx={size / 2} cy={size / 2} r={radius}
@@ -66,7 +66,7 @@ export function HealthWidget({ interactions, upcomingBirthday, missingFieldCount
             fontFamily: 'var(--font-serif)',
             fontSize: 22,
             fontWeight: 700,
-            color: 'rgba(0,0,0,0.82)',
+            color: 'var(--color-text-primary)',
             lineHeight: 1,
           }}>
             {score}
@@ -78,7 +78,7 @@ export function HealthWidget({ interactions, upcomingBirthday, missingFieldCount
       </div>
 
       {(upcomingBirthday || (missingFieldCount != null && missingFieldCount > 0)) && (
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: 12, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ borderTop: '1px solid var(--divider)', marginTop: 12, paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {upcomingBirthday && upcomingBirthday.daysUntil <= 14 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#25B439' }}>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">

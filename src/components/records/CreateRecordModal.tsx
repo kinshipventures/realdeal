@@ -28,10 +28,10 @@ interface Props {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(0,0,0,0.04)',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--tint)',
+  border: '1px solid var(--edge-strong)',
   borderRadius: 7,
-  color: 'rgba(0,0,0,0.82)',
+  color: 'var(--color-text-primary)',
   fontSize: 13,
   padding: '8px 12px',
   outline: 'none',
@@ -42,16 +42,16 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  color: 'rgba(0,0,0,0.45)',
+  color: 'var(--color-text-secondary)',
   marginBottom: 4,
   display: 'block',
 }
 
 const compactInput: React.CSSProperties = {
-  background: 'rgba(0,0,0,0.04)',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--tint)',
+  border: '1px solid var(--edge-strong)',
   borderRadius: 6,
-  color: 'rgba(0,0,0,0.82)',
+  color: 'var(--color-text-primary)',
   fontSize: 12,
   padding: '6px 10px',
   outline: 'none',
@@ -373,7 +373,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
           fontFamily: 'var(--font-serif)',
           fontSize: 16,
           fontWeight: 700,
-          color: 'rgba(0,0,0,0.82)',
+          color: 'var(--color-text-primary)',
           marginBottom: 20,
         }}>
           New Relationship
@@ -388,7 +388,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                 onClick={() => { setRecordType(rt); setStep('form') }}
                 style={{
                   flex: 1,
-                  border: '1px solid rgba(0,0,0,0.07)',
+                  border: '1px solid var(--edge)',
                   borderRadius: 12,
                   padding: 16,
                   minHeight: 80,
@@ -399,12 +399,12 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                   transition: 'all 0.15s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#25B439')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.07)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--edge)')}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(0,0,0,0.82)', marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 4 }}>
                   {rt}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 400, color: 'rgba(0,0,0,0.45)' }}>
+                <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--color-text-secondary)' }}>
                   {rt === 'Contact' ? 'Person' : 'Organization'}
                 </div>
               </button>
@@ -468,15 +468,15 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, right: 0,
                       background: 'rgba(255,255,255,0.96)',
-                      border: '1px solid rgba(0,0,0,0.07)',
+                      border: '1px solid var(--edge)',
                       borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                       zIndex: 10, marginTop: 2,
                     }}>
                       {companyResults.map(c => (
                         <div key={c.id} onMouseDown={() => selectCompany(c)} style={{
-                          padding: '10px 12px', fontSize: 13, color: 'rgba(0,0,0,0.82)',
+                          padding: '10px 12px', fontSize: 13, color: 'var(--color-text-primary)',
                           cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center',
-                          borderBottom: '1px solid rgba(0,0,0,0.04)',
+                          borderBottom: '1px solid var(--divider)',
                         }}
                           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -511,13 +511,13 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                 <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 4 }}>
                   <button type="button" onClick={() => setBraindump(true)} style={{
                     background: 'none', border: 'none', padding: 0,
-                    fontSize: 11, color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
                   }}>
                     Switch to brain dump
                   </button>
                   <button type="button" onClick={() => setFormMode('multi')} style={{
                     background: 'none', border: 'none', padding: 0,
-                    fontSize: 11, color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
                   }}>
                     Add multiple
                   </button>
@@ -535,13 +535,13 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                   placeholder="Dump everything you know..."
                   style={{ ...inputStyle, resize: 'vertical', fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}
                 />
-                <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)', margin: '0 0 16px' }}>
+                <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: '0 0 16px' }}>
                   Saved as Pending for review
                 </p>
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
                 <button type="button" onClick={() => setBraindump(false)} style={{
                   background: 'none', border: 'none', padding: 0,
-                  fontSize: 11, color: 'rgba(0,0,0,0.45)', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer',
                   fontFamily: 'inherit', marginBottom: 16, marginTop: 4,
                 }}>
                   Switch to structured form
@@ -585,7 +585,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
                 <button type="button" onClick={() => setFormMode('multi')} style={{
                   background: 'none', border: 'none', padding: 0,
-                  fontSize: 11, color: 'rgba(0,0,0,0.45)', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer',
                   fontFamily: 'inherit', marginBottom: 16, marginTop: 4,
                 }}>
                   Add multiple
@@ -599,9 +599,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" onClick={() => setStep('type')} style={{
-                background: 'none', border: '1px solid rgba(0,0,0,0.1)',
+                background: 'none', border: '1px solid var(--edge-strong)',
                 borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
-                fontSize: 13, color: 'rgba(0,0,0,0.45)', fontFamily: 'inherit',
+                fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'inherit',
               }}>
                 Back
               </button>
@@ -611,9 +611,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                 title={!canSubmit ? 'Fill required fields' : undefined}
                 style={{
                   flex: 1, padding: 12,
-                  background: canSubmit && !saving ? '#25B439' : 'rgba(0,0,0,0.06)',
+                  background: canSubmit && !saving ? '#25B439' : 'var(--tint)',
                   border: 'none', borderRadius: 8,
-                  color: canSubmit && !saving ? '#fff' : 'rgba(0,0,0,0.28)',
+                  color: canSubmit && !saving ? '#fff' : 'var(--color-text-tertiary)',
                   fontSize: 13, fontWeight: 700, cursor: canSubmit && !saving ? 'pointer' : 'default',
                   fontFamily: 'inherit', transition: 'all 0.15s',
                 }}
@@ -633,7 +633,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
               {multiRows.map((row, idx) => (
                 <div key={row.id} style={{
                   display: 'flex', gap: 6, alignItems: 'center',
-                  borderBottom: '1px solid rgba(0,0,0,0.07)',
+                  borderBottom: '1px solid var(--divider)',
                   padding: '8px 0',
                 }}>
                   {recordType === 'Contact' ? (
@@ -644,14 +644,14 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                         onChange={e => updateMultiRow(row.id, { firstName: e.target.value })}
                         placeholder="First name"
                         autoFocus={idx === 0}
-                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'rgba(0,0,0,0.1)' }}
+                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'var(--edge-strong)' }}
                       />
                       <input
                         type="text"
                         value={row.lastName}
                         onChange={e => updateMultiRow(row.id, { lastName: e.target.value })}
                         placeholder="Last name"
-                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'rgba(0,0,0,0.1)' }}
+                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'var(--edge-strong)' }}
                       />
                       <input
                         type="email"
@@ -669,7 +669,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                         onChange={e => updateMultiRow(row.id, { companyName: e.target.value })}
                         placeholder="Company name"
                         autoFocus={idx === 0}
-                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'rgba(0,0,0,0.1)' }}
+                        style={{ ...compactInput, borderColor: row.error ? '#D93025' : 'var(--edge-strong)' }}
                       />
                       <input
                         type="text"
@@ -691,7 +691,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                     <button type="button" onClick={() => removeMultiRow(row.id)}
                       style={{
                         background: 'none', border: 'none', padding: '4px 6px',
-                        fontSize: 14, color: 'rgba(0,0,0,0.28)', cursor: 'pointer',
+                        fontSize: 14, color: 'var(--color-text-tertiary)', cursor: 'pointer',
                         fontFamily: 'inherit', flexShrink: 0, lineHeight: 1,
                       }}
                     >
@@ -711,14 +711,14 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
             </button>
 
             {multiProgress && (
-              <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.55)', margin: '0 0 12px' }}>{multiProgress}</p>
+              <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: '0 0 12px' }}>{multiProgress}</p>
             )}
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" onClick={() => setFormMode('single')} style={{
-                background: 'none', border: '1px solid rgba(0,0,0,0.1)',
+                background: 'none', border: '1px solid var(--edge-strong)',
                 borderRadius: 8, padding: '12px 16px', cursor: 'pointer',
-                fontSize: 13, color: 'rgba(0,0,0,0.45)', fontFamily: 'inherit',
+                fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'inherit',
               }}>
                 Single
               </button>
@@ -727,9 +727,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
                 disabled={!canMultiSubmit || saving}
                 style={{
                   flex: 1, padding: 12,
-                  background: canMultiSubmit && !saving ? '#25B439' : 'rgba(0,0,0,0.06)',
+                  background: canMultiSubmit && !saving ? '#25B439' : 'var(--tint)',
                   border: 'none', borderRadius: 8,
-                  color: canMultiSubmit && !saving ? '#fff' : 'rgba(0,0,0,0.28)',
+                  color: canMultiSubmit && !saving ? '#fff' : 'var(--color-text-tertiary)',
                   fontSize: 13, fontWeight: 700,
                   cursor: canMultiSubmit && !saving ? 'pointer' : 'default',
                   fontFamily: 'inherit', transition: 'all 0.15s',
@@ -768,9 +768,9 @@ function PodPicker({ pods, selectedPodIds, onToggle }: {
                 padding: '5px 12px',
                 borderRadius: 100,
                 border: '1px solid',
-                borderColor: isSelected ? (p.color ?? '#25B439') : 'rgba(0,0,0,0.1)',
+                borderColor: isSelected ? (p.color ?? '#25B439') : 'var(--edge-strong)',
                 background: isSelected ? shift : 'transparent',
-                color: isSelected ? '#fff' : 'rgba(0,0,0,0.55)',
+                color: isSelected ? '#fff' : 'var(--color-text-secondary)',
                 fontSize: 11,
                 fontWeight: isSelected ? 700 : 400,
                 cursor: 'pointer',

@@ -4,7 +4,7 @@ import type { Contact } from '../../lib/types'
 
 const WIDGET_STYLE: React.CSSProperties = {
   background: 'rgba(255,255,255,0.92)',
-  border: '1px solid rgba(0,0,0,0.07)',
+  border: '1px solid var(--edge)',
   borderRadius: 12,
   padding: '16px 20px',
   marginBottom: 12,
@@ -66,17 +66,17 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
       ? {
           fontSize: 13,
           fontWeight: 400,
-          color: 'rgba(0,0,0,0.35)',
+          color: 'var(--text-muted)',
           cursor: 'text',
           minHeight: 20,
           lineHeight: '20px',
-          borderBottom: '1px dashed rgba(0,0,0,0.2)',
+          borderBottom: '1px dashed var(--color-text-tertiary)',
           display: 'inline-block',
         }
       : {
           fontSize: 13,
           fontWeight: 400,
-          color: val ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.28)',
+          color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
           cursor: 'text',
           minHeight: 20,
           lineHeight: '20px',
@@ -92,11 +92,11 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              style={{ color: 'rgba(0,0,0,0.82)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}
+              style={{ color: 'var(--color-text-primary)', fontSize: 13, textDecoration: 'underline', textUnderlineOffset: 2 }}
             >
               {val}
             </a>
-            <ExternalLink size={11} style={{ color: 'rgba(0,0,0,0.35)', flexShrink: 0 }} />
+            <ExternalLink size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           </div>
         )
       }
@@ -110,7 +110,7 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
           onClick={() => { if (key !== 'website' || !val) setEditingField(key) }}
           style={{
             fontSize: 11, fontWeight: 700,
-            color: 'rgba(0,0,0,0.45)',
+            color: 'var(--color-text-secondary)',
             letterSpacing: '0.02em',
             marginBottom: 3,
             textTransform: 'uppercase',
@@ -157,7 +157,7 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
         fontFamily: 'var(--font-serif)',
         fontSize: 16,
         fontWeight: 700,
-        color: 'rgba(0,0,0,0.82)',
+        color: 'var(--color-text-primary)',
         marginBottom: 14,
       }}>
         Details

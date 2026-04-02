@@ -68,10 +68,10 @@ export function NurturingRow({ contact, signal, signalColor, onSnooze, onInterac
           alignItems: 'center',
           gap: 10,
           padding: '12px 20px',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          borderBottom: '1px solid var(--divider)',
           cursor: 'default',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.02)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--tint)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
         {/* Clickable name + avatar area */}
@@ -123,8 +123,8 @@ export function NurturingRow({ contact, signal, signalColor, onSnooze, onInterac
       {showLog && (
         <div style={{
           padding: '8px 20px 12px',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          background: 'rgba(0,0,0,0.02)',
+          borderBottom: '1px solid var(--divider)',
+          background: 'var(--tint)',
         }}>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {LOG_TYPES.map(type => (

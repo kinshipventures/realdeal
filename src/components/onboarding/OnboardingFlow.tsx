@@ -83,7 +83,7 @@ function SeedTree({ step }: { step: number }) {
         />
 
         {/* Ground line */}
-        <line x1="40" y1="116" x2="80" y2="116" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
+        <line x1="40" y1="116" x2="80" y2="116" stroke="var(--edge)" strokeWidth="1" />
 
         {/* Branches */}
         {branches.filter(b => b.step <= step).map((b, i) => (
@@ -91,7 +91,7 @@ function SeedTree({ step }: { step: number }) {
             key={i}
             d={b.d}
             fill="none"
-            stroke={step >= 4 ? 'rgba(37,180,57,0.5)' : 'rgba(0,0,0,0.15)'}
+            stroke={step >= 4 ? 'rgba(37,180,57,0.5)' : 'var(--color-text-tertiary)'}
             strokeWidth="2"
             strokeLinecap="round"
             strokeDasharray={b.len}
@@ -193,8 +193,8 @@ export function OnboardingFlow({ onComplete }: Props) {
           transform: scale(0.97) !important;
         }
         .onboard-btn-secondary:hover {
-          background: rgba(0,0,0,0.06) !important;
-          border-color: rgba(0,0,0,0.2) !important;
+          background: var(--tint) !important;
+          border-color: var(--edge-strong) !important;
         }
         .onboard-btn-secondary:active {
           transform: scale(0.97) !important;
@@ -325,8 +325,8 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
       <div style={{ position: 'relative', width: 180, height: 180, opacity: 0, animation: 'onboard-enter 0.6s ease-out 0.1s forwards' }}>
         {/* Orbit rings */}
         <svg width="180" height="180" viewBox="0 0 180 180" style={{ position: 'absolute', inset: 0 }}>
-          <circle cx="90" cy="90" r="56" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1" />
-          <circle cx="90" cy="90" r="72" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1" />
+          <circle cx="90" cy="90" r="56" fill="none" stroke="var(--tint)" strokeWidth="1" />
+          <circle cx="90" cy="90" r="72" fill="none" stroke="var(--tint)" strokeWidth="1" />
         </svg>
 
         {/* Orbiting dots */}
@@ -415,7 +415,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
           {PRINCIPLES.map((p, i) => (
             <div key={p.label} style={{
               display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', flex: 1,
-              borderRadius: 10, background: 'rgba(0,0,0,0.03)',
+              borderRadius: 10, background: 'var(--tint)',
               opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
             }}>
               <div style={{
@@ -441,8 +441,8 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
         {/* Right: Scoring */}
         <div style={{
           flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-          padding: '16px 20px', borderRadius: 14, background: 'rgba(0,0,0,0.02)',
-          border: '1px solid rgba(0,0,0,0.06)',
+          padding: '16px 20px', borderRadius: 14, background: 'var(--tint)',
+          border: '1px solid var(--edge)',
         }}>
           <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
             How scoring works
@@ -452,7 +452,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
             <svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ transform: 'rotate(-90deg)' }}>
               <circle
                 cx={ringSize / 2} cy={ringSize / 2} r={r}
-                fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeW}
+                fill="none" stroke="var(--edge)" strokeWidth={strokeW}
               />
               {arcs.map(a => (
                 <circle
@@ -572,7 +572,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
                 padding: '6px 14px', borderRadius: 100, border: 'none',
                 fontSize: 12, fontWeight: 500, fontFamily: 'var(--font-sans)',
                 cursor: 'pointer', transition: 'all 0.15s ease',
-                background: cadence === o.value ? 'var(--color-brand)' : 'rgba(0,0,0,0.06)',
+                background: cadence === o.value ? 'var(--color-brand)' : 'var(--tint)',
                 color: cadence === o.value ? '#fff' : 'var(--color-text-secondary)',
               }}
             >
@@ -656,7 +656,7 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
               style={{
                 display: 'flex', alignItems: 'flex-start', gap: 14, padding: '10px 16px',
                 borderRadius: 12, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
-                background: isActive ? 'rgba(37,180,57,0.08)' : 'rgba(0,0,0,0.03)',
+                background: isActive ? 'rgba(37,180,57,0.08)' : 'var(--tint)',
                 outline: isActive ? '1.5px solid var(--color-brand)' : 'none',
                 transition: 'all 0.2s ease',
                 opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 80}ms forwards`,
@@ -721,7 +721,7 @@ const primaryBtnStyle: React.CSSProperties = {
 
 const secondaryBtnStyle: React.CSSProperties = {
   padding: '12px 32px', borderRadius: 100,
-  border: '1px solid rgba(0,0,0,0.12)', background: 'transparent',
+  border: '1px solid var(--edge-strong)', background: 'transparent',
   color: 'var(--color-text-secondary)', fontSize: 13, fontWeight: 500,
   fontFamily: 'var(--font-sans)', cursor: 'pointer',
   width: '100%', maxWidth: 280,

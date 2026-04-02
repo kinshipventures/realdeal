@@ -147,7 +147,7 @@ export function PipelineStageColumn({
                   height: 24,
                   borderRadius: 6,
                   background: hex,
-                  border: hex === stageColor ? '2px solid rgba(0,0,0,0.3)' : '2px solid transparent',
+                  border: hex === stageColor ? '2px solid var(--color-text-tertiary)' : '2px solid transparent',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

@@ -30,9 +30,9 @@ export function RecordTimeline({ contact, onContactUpdated }: RecordTimelineProp
   const chipStyle = (active: boolean): React.CSSProperties => ({
     fontSize: 11, fontWeight: 500,
     padding: '3px 10px', borderRadius: 100,
-    background: active ? 'rgba(0,0,0,0.06)' : 'transparent',
+    background: active ? 'var(--tint)' : 'transparent',
     border: '1px solid',
-    borderColor: active ? 'rgba(0,0,0,0.12)' : 'var(--edge)',
+    borderColor: active ? 'var(--edge-strong)' : 'var(--edge)',
     color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
     cursor: 'pointer', transition: 'all 0.15s',
     fontFamily: 'inherit',
@@ -45,7 +45,7 @@ export function RecordTimeline({ contact, onContactUpdated }: RecordTimelineProp
         fontSize: 16,
         fontWeight: 700,
         letterSpacing: '-0.02em',
-        color: 'rgba(0,0,0,0.82)',
+        color: 'var(--color-text-primary)',
         marginBottom: 12,
       }}>
         Timeline

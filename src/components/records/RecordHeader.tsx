@@ -9,7 +9,7 @@ import { MergeModal } from '../merge/MergeModal'
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   Active: { bg: 'rgba(37,180,57,0.12)', color: '#1A8A2A' },
   Pending: { bg: 'rgba(255,149,0,0.12)', color: '#CC7700' },
-  Archived: { bg: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.45)' },
+  Archived: { bg: 'var(--tint)', color: 'var(--color-text-secondary)' },
 }
 
 const PILL_STYLE: React.CSSProperties = {
@@ -153,7 +153,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     <span>
       {contact.role && <span>{contact.role}</span>}
       {contact.role && (contact.company || contact.company_record_id) && (
-        <span style={{ color: 'rgba(0,0,0,0.28)' }}> @ </span>
+        <span style={{ color: 'var(--color-text-tertiary)' }}> @ </span>
       )}
       {contact.company_record_id ? (
         <span
@@ -169,7 +169,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   ) : contact.type === 'Company' && (contact.industry || contact.domain) ? (
     <span>
       {contact.industry && <span>{contact.industry}</span>}
-      {contact.industry && contact.domain && <span style={{ color: 'rgba(0,0,0,0.28)' }}> · </span>}
+      {contact.industry && contact.domain && <span style={{ color: 'var(--color-text-tertiary)' }}> · </span>}
       {contact.domain && <span>{contact.domain}</span>}
     </span>
   ) : null
@@ -183,7 +183,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   return (
     <div style={{
       background: 'rgba(255,255,255,0.92)',
-      borderBottom: '1px solid rgba(0,0,0,0.07)',
+      borderBottom: '1px solid var(--divider)',
       padding: '28px 32px 24px',
     }}>
       <button
@@ -196,7 +196,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           cursor: 'pointer',
           fontSize: 13,
           fontWeight: 400,
-          color: 'rgba(0,0,0,0.45)',
+          color: 'var(--color-text-secondary)',
           fontFamily: 'inherit',
           marginBottom: 12,
           display: 'block',
@@ -220,7 +220,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
-              color: 'rgba(0,0,0,0.82)',
+              color: 'var(--color-text-primary)',
               background: 'var(--tint)',
               border: '1px solid var(--edge-strong)',
               borderRadius: 6,
@@ -238,7 +238,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
-              color: 'rgba(0,0,0,0.82)',
+              color: 'var(--color-text-primary)',
               cursor: 'text',
             }}
           >
@@ -248,8 +248,8 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
 
         <span style={{
           ...PILL_STYLE,
-          background: 'rgba(0,0,0,0.06)',
-          color: 'rgba(0,0,0,0.45)',
+          background: 'var(--tint)',
+          color: 'var(--color-text-secondary)',
         }}>
           {contact.type}
         </span>
@@ -268,10 +268,10 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
             type="button"
             onClick={() => setShowOverflow(v => !v)}
             style={{
-              background: showOverflow ? 'rgba(0,0,0,0.06)' : 'none',
+              background: showOverflow ? 'var(--tint)' : 'none',
               border: 'none', borderRadius: 6, cursor: 'pointer',
               padding: '4px 6px', display: 'flex', alignItems: 'center',
-              color: 'rgba(0,0,0,0.35)',
+              color: 'var(--text-muted)',
             }}
           >
             <MoreHorizontal size={18} />
@@ -279,7 +279,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           {showOverflow && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(0,0,0,0.07)',
+              background: 'rgba(255,255,255,0.96)', border: '1px solid var(--edge)',
               borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
               zIndex: 50, minWidth: 160, overflow: 'hidden',
             }}>
@@ -287,9 +287,9 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                 onClick={() => { setShowOverflow(false); setMergeSearchOpen(true); setMergeQuery('') }}
                 style={{
                   padding: '10px 14px', fontSize: 13, cursor: 'pointer',
-                  color: 'rgba(0,0,0,0.82)', minHeight: 40, display: 'flex', alignItems: 'center',
+                  color: 'var(--color-text-primary)', minHeight: 40, display: 'flex', alignItems: 'center',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Merge with...
@@ -311,7 +311,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       </div>
 
       {companySubtitle && (
-        <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(0,0,0,0.45)', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: 10 }}>
           {companySubtitle}
         </div>
       )}
@@ -326,7 +326,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                 onClick={() => { setShowTypeahead(true); setCompanyQuery(contact.company ?? '') }}
                 style={{
                   background: 'none', border: 'none', padding: 0,
-                  fontSize: 11, color: 'rgba(0,0,0,0.28)', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)', cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
@@ -338,7 +338,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                 onClick={() => setShowTypeahead(true)}
                 style={{
                   background: 'none', border: 'none', padding: 0,
-                  fontSize: 11, color: 'rgba(0,0,0,0.28)', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)', cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
@@ -361,7 +361,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   border: 'none',
                   borderBottom: '1px solid #25B439',
                   background: 'transparent',
-                  color: 'rgba(0,0,0,0.82)',
+                  color: 'var(--color-text-primary)',
                   padding: '2px 0',
                   minWidth: 160,
                 }}
@@ -373,7 +373,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   left: 0,
                   minWidth: 220,
                   background: 'rgba(255,255,255,0.96)',
-                  border: '1px solid rgba(0,0,0,0.07)',
+                  border: '1px solid var(--edge)',
                   borderRadius: 8,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                   zIndex: 50,
@@ -386,12 +386,12 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                       style={{
                         padding: '10px 12px',
                         fontSize: 13,
-                        color: 'rgba(0,0,0,0.82)',
+                        color: 'var(--color-text-primary)',
                         cursor: 'pointer',
                         minHeight: 44,
                         display: 'flex',
                         alignItems: 'center',
-                        borderBottom: '1px solid rgba(0,0,0,0.04)',
+                        borderBottom: '1px solid var(--divider)',
                       }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -431,12 +431,12 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
           {contactMethods.map((m, i) => (
             <span key={m.href}>
-              {i > 0 && <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.28)', padding: '0 6px' }}>·</span>}
+              {i > 0 && <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', padding: '0 6px' }}>·</span>}
               <a
                 href={m.href}
                 target={m.external ? '_blank' : undefined}
                 rel={m.external ? 'noopener noreferrer' : undefined}
-                style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)', textDecoration: 'none' }}
+                style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
               >
                 {m.label}
               </a>
@@ -456,7 +456,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
             position: 'relative', background: '#fff', borderRadius: 12,
             padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.82)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
               Merge "{contact.name}" with...
             </div>
             <input
@@ -467,7 +467,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
               placeholder="Search records..."
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.12)', fontSize: 13,
+                border: '1px solid var(--edge-strong)', fontSize: 13,
                 fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -479,14 +479,14 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                     onClick={() => { setMergeSearchOpen(false); setMergeTarget(r) }}
                     style={{
                       padding: '10px 12px', cursor: 'pointer', borderRadius: 6,
-                      fontSize: 13, color: 'rgba(0,0,0,0.82)', minHeight: 40,
+                      fontSize: 13, color: 'var(--color-text-primary)', minHeight: 40,
                       display: 'flex', flexDirection: 'column', gap: 2,
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span style={{ fontWeight: 500 }}>{r.name}</span>
-                    {r.company && <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)' }}>{r.company}</span>}
+                    {r.company && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.company}</span>}
                   </div>
                 ))}
               </div>
@@ -522,10 +522,10 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
             padding: 24, width: 320, textAlign: 'center',
             boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.82)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
               Delete "{contact.name}"?
             </div>
-            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)', marginBottom: 20 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
               This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
@@ -533,8 +533,8 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                 type="button" onClick={() => setConfirmDelete(false)}
                 style={{
                   padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid rgba(0,0,0,0.12)',
-                  fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.6)', fontFamily: 'inherit',
+                  background: 'transparent', border: '1px solid var(--edge-strong)',
+                  fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'inherit',
                 }}
               >
                 Cancel

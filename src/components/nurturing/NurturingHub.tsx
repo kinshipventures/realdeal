@@ -17,7 +17,7 @@ const PANEL: React.CSSProperties = {
   background: 'rgba(245,244,240,0.88)',
   backdropFilter: 'blur(32px)',
   WebkitBackdropFilter: 'blur(32px)',
-  border: '1px solid rgba(0,0,0,0.07)',
+  border: '1px solid var(--edge)',
   borderRadius: 12,
   overflow: 'hidden',
 }
@@ -46,7 +46,7 @@ const countBadgeBase: React.CSSProperties = {
   lineHeight: 1.5,
 }
 
-function CountBadge({ count, color = 'rgba(0,0,0,0.12)', textColor = 'var(--color-text-secondary)' }: { count: number; color?: string; textColor?: string }) {
+function CountBadge({ count, color = 'var(--tint)', textColor = 'var(--color-text-secondary)' }: { count: number; color?: string; textColor?: string }) {
   if (count === 0) return null
   return (
     <span style={{ ...countBadgeBase, background: color, color: textColor }}>
@@ -493,9 +493,9 @@ export function NurturingHub() {
                         gap: 12,
                         padding: '10px 16px',
                         cursor: 'pointer',
-                        borderBottom: '1px solid rgba(0,0,0,0.05)',
+                        borderBottom: '1px solid var(--divider)',
                       }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.02)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--tint)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
                     >
                       <Avatar name={contact.name} size={28} />
@@ -529,7 +529,7 @@ export function NurturingHub() {
                         cursor: 'pointer',
                         transition: 'background 0.1s',
                       }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.03)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--tint)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

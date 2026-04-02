@@ -7,7 +7,7 @@ import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 
 const WIDGET_STYLE: React.CSSProperties = {
   background: 'rgba(255,255,255,0.92)',
-  border: '1px solid rgba(0,0,0,0.07)',
+  border: '1px solid var(--edge)',
   borderRadius: 12,
   padding: '16px 20px',
   marginBottom: 12,
@@ -107,7 +107,7 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
                   cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.03)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-primary)' }}>

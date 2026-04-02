@@ -119,11 +119,11 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px 16px', borderBottom: '1px solid rgba(0,0,0,0.07)',
+          padding: '20px 24px 16px', borderBottom: '1px solid var(--divider)',
         }}>
           <h2 style={{
             margin: 0, fontFamily: 'var(--font-serif)',
-            fontSize: 18, fontWeight: 700, color: 'rgba(0,0,0,0.82)',
+            fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)',
           }}>
             Merge Records
           </h2>
@@ -131,7 +131,7 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
             type="button" onClick={stableClose}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 18, color: 'rgba(0,0,0,0.35)', padding: '4px 8px',
+              fontSize: 18, color: 'var(--text-muted)', padding: '4px 8px',
             }}
           >
             x
@@ -149,19 +149,19 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
                 onClick={() => setSurvivorId(rec.id)}
                 style={{
                   padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
-                  background: survivorId === rec.id ? 'rgba(37,180,57,0.08)' : 'rgba(0,0,0,0.02)',
-                  border: survivorId === rec.id ? '2px solid #25B439' : '2px solid rgba(0,0,0,0.07)',
+                  background: survivorId === rec.id ? 'rgba(37,180,57,0.08)' : 'var(--tint)',
+                  border: survivorId === rec.id ? '2px solid #25B439' : '2px solid var(--edge)',
                   textAlign: 'left', fontFamily: 'inherit',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 600, color: survivorId === rec.id ? '#25B439' : 'rgba(0,0,0,0.35)', marginBottom: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: survivorId === rec.id ? '#25B439' : 'var(--text-muted)', marginBottom: 4 }}>
                   {survivorId === rec.id ? 'SURVIVES' : 'WILL BE DELETED'}
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.82)' }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   {rec.name}
                 </div>
                 {rec.company && (
-                  <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>{rec.company}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>{rec.company}</div>
                 )}
               </button>
             ))}
@@ -170,7 +170,7 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
           {/* Differing fields */}
           {diffFields.length > 0 && (
             <>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(0,0,0,0.35)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Pick values to keep ({diffFields.length} differ{diffFields.length === 1 ? 's' : ''})
               </div>
               {diffFields.map(({ key, label }) => {
@@ -183,7 +183,7 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
                     display: 'grid', gridTemplateColumns: '100px 1fr 1fr', gap: 8,
                     marginBottom: 4, alignItems: 'stretch',
                   }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(0,0,0,0.45)', padding: '8px 0', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', padding: '8px 0', display: 'flex', alignItems: 'center' }}>
                       {label}
                     </div>
                     <button
@@ -191,10 +191,10 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
                       onClick={() => setPicks(p => ({ ...p, [key]: 'a' }))}
                       style={{
                         padding: '8px 10px', borderRadius: 6, cursor: 'pointer',
-                        background: currentPick === 'a' ? 'rgba(0,0,0,0.04)' : 'transparent',
-                        border: currentPick === 'a' ? '1px solid rgba(0,0,0,0.12)' : '1px solid transparent',
-                        borderLeft: currentPick === 'a' ? '2px solid rgba(0,0,0,0.82)' : '2px solid transparent',
-                        fontSize: 13, color: 'rgba(0,0,0,0.82)', textAlign: 'left',
+                        background: currentPick === 'a' ? 'var(--tint)' : 'transparent',
+                        border: currentPick === 'a' ? '1px solid var(--edge-strong)' : '1px solid transparent',
+                        borderLeft: currentPick === 'a' ? '2px solid var(--color-text-primary)' : '2px solid transparent',
+                        fontSize: 13, color: 'var(--color-text-primary)', textAlign: 'left',
                         fontFamily: 'inherit', wordBreak: 'break-word',
                       }}
                     >
@@ -205,10 +205,10 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
                       onClick={() => setPicks(p => ({ ...p, [key]: 'b' }))}
                       style={{
                         padding: '8px 10px', borderRadius: 6, cursor: 'pointer',
-                        background: currentPick === 'b' ? 'rgba(0,0,0,0.04)' : 'transparent',
-                        border: currentPick === 'b' ? '1px solid rgba(0,0,0,0.12)' : '1px solid transparent',
-                        borderLeft: currentPick === 'b' ? '2px solid rgba(0,0,0,0.82)' : '2px solid transparent',
-                        fontSize: 13, color: 'rgba(0,0,0,0.82)', textAlign: 'left',
+                        background: currentPick === 'b' ? 'var(--tint)' : 'transparent',
+                        border: currentPick === 'b' ? '1px solid var(--edge-strong)' : '1px solid transparent',
+                        borderLeft: currentPick === 'b' ? '2px solid var(--color-text-primary)' : '2px solid transparent',
+                        fontSize: 13, color: 'var(--color-text-primary)', textAlign: 'left',
                         fontFamily: 'inherit', wordBreak: 'break-word',
                       }}
                     >
@@ -222,7 +222,7 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
 
           {/* Same fields (collapsed) */}
           {sameFields.length > 0 && (
-            <div style={{ marginTop: 16, fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>
+            <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-muted)' }}>
               {sameFields.length} field{sameFields.length === 1 ? '' : 's'} identical - will be kept as-is
             </div>
           )}
@@ -230,12 +230,12 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
           {/* Associations */}
           <div style={{
             marginTop: 20, padding: '12px 16px', borderRadius: 8,
-            background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)',
+            background: 'var(--tint)', border: '1px solid var(--divider)',
           }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(0,0,0,0.35)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Combined automatically
             </div>
-            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.6)', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
               <div>Pods: {podNames([...new Set([...recordA.list_ids, ...recordB.list_ids])])}</div>
               <div>Categories: {[...new Set([...recordA.category_ids, ...recordB.category_ids])].length} total</div>
               <div>All interactions, pipeline cards, projects, and campaigns will transfer to the surviving record.</div>
@@ -260,8 +260,8 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
               type="button" onClick={stableClose} disabled={merging}
               style={{
                 padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
-                background: 'transparent', border: '1px solid rgba(0,0,0,0.12)',
-                fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.6)',
+                background: 'transparent', border: '1px solid var(--edge-strong)',
+                fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)',
                 fontFamily: 'inherit',
               }}
             >

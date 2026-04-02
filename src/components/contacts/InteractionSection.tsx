@@ -31,12 +31,12 @@ const TYPE_COLORS: Record<InteractionType, string> = {
   meeting: '#E65100',
   note: 'var(--color-text-secondary)',
   intro: '#C2185B',
-  pod_change: 'rgba(0,0,0,0.35)',
-  field_update: 'rgba(0,0,0,0.35)',
-  categorization: 'rgba(0,0,0,0.35)',
-  pipeline_event: 'rgba(0,0,0,0.35)',
-  project_event: 'rgba(0,0,0,0.35)',
-  merge_event: 'rgba(0,0,0,0.35)',
+  pod_change: 'var(--text-muted)',
+  field_update: 'var(--text-muted)',
+  categorization: 'var(--text-muted)',
+  pipeline_event: 'var(--text-muted)',
+  project_event: 'var(--text-muted)',
+  merge_event: 'var(--text-muted)',
 }
 
 function typePill(type: InteractionType): React.CSSProperties {
@@ -374,7 +374,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
             }}>
               <div style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.15)', flexShrink: 0,
+                background: 'var(--color-text-tertiary)', flexShrink: 0,
               }} />
               <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flex: 1 }}>
                 {(() => {
@@ -483,7 +483,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       padding: '2px 6px', borderRadius: 4,
                       background: interaction.source === 'Gmail' ? 'hsla(0, 70%, 50%, 0.08)'
                         : interaction.source === 'Granola' ? 'hsla(30, 70%, 50%, 0.08)'
-                        : 'rgba(0,0,0,0.04)',
+                        : 'var(--tint)',
                       color: interaction.source === 'Gmail' ? 'hsla(0, 70%, 40%, 0.80)'
                         : interaction.source === 'Granola' ? 'hsla(30, 70%, 40%, 0.80)'
                         : 'var(--color-text-tertiary)',

@@ -42,8 +42,8 @@ const PRIORITY_CYCLE: Record<OpportunityPriority, OpportunityPriority> = {
 
 const STATUS_BADGE_STYLES: Partial<Record<string, { bg: string; color: string; label: string }>> = {
   won:      { bg: 'hsla(140, 60%, 45%, 0.15)', color: 'hsla(140, 60%, 35%, 1)', label: 'Won' },
-  lost:     { bg: 'rgba(0,0,0,0.07)', color: 'rgba(0,0,0,0.45)', label: 'Lost' },
-  archived: { bg: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.35)', label: 'Archived' },
+  lost:     { bg: 'var(--tint)', color: 'var(--color-text-secondary)', label: 'Lost' },
+  archived: { bg: 'var(--tint)', color: 'var(--text-muted)', label: 'Archived' },
 }
 
 export function OpportunityCard({ opportunity, contacts, onPriorityChange, onArchive, onInlineNote, onClick, isDragOverlay }: Props) {

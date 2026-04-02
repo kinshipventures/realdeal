@@ -156,7 +156,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       onMouseLeave={() => setHovered(false)}
       style={{
         background: 'rgba(255,255,255,0.92)',
-        border: '1px solid rgba(0,0,0,0.07)',
+        border: '1px solid var(--edge)',
         borderRadius: 12,
         padding: 20,
         cursor: 'pointer',

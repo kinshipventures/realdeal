@@ -101,7 +101,7 @@ export function PodFieldsWidget({
   return (
     <div style={{
       background: 'rgba(255,255,255,0.92)',
-      border: '1px solid rgba(0,0,0,0.07)',
+      border: '1px solid var(--edge)',
       borderLeft: `4px solid ${pod.color ?? '#ccc'}`,
       borderRadius: 12,
       padding: '16px 20px',
@@ -111,7 +111,7 @@ export function PodFieldsWidget({
         fontFamily: 'var(--font-serif)',
         fontSize: 16,
         fontWeight: 700,
-        color: 'rgba(0,0,0,0.82)',
+        color: 'var(--color-text-primary)',
         marginBottom: 14,
       }}>
         {pod.name}
@@ -122,12 +122,12 @@ export function PodFieldsWidget({
           <div style={{
             fontSize: 13,
             fontWeight: 600,
-            color: 'rgba(0,0,0,0.45)',
+            color: 'var(--color-text-secondary)',
             marginBottom: 4,
           }}>
             No fields yet
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
             Add a field to track details specific to this pod.
           </div>
         </div>
@@ -142,7 +142,7 @@ export function PodFieldsWidget({
             <div style={{
               fontSize: 11,
               fontWeight: 700,
-              color: 'rgba(0,0,0,0.45)',
+              color: 'var(--color-text-secondary)',
               letterSpacing: '0.02em',
               marginBottom: 3,
               textTransform: 'uppercase',
@@ -208,7 +208,7 @@ export function PodFieldsWidget({
                 style={{
                   fontSize: 13,
                   fontWeight: 400,
-                  color: val !== null && val !== undefined && val !== '' ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.28)',
+                  color: val !== null && val !== undefined && val !== '' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                   cursor: 'text',
                   minHeight: 20,
                   lineHeight: '20px',
@@ -225,7 +225,7 @@ export function PodFieldsWidget({
 
       {showAddForm && (
         <div style={{
-          borderTop: podFields.length > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+          borderTop: podFields.length > 0 ? '1px solid var(--divider)' : 'none',
           paddingTop: podFields.length > 0 ? 12 : 0,
           marginBottom: 8,
         }}>
@@ -253,7 +253,7 @@ export function PodFieldsWidget({
               <option value="date">Date</option>
               <option value="checkbox">Checkbox</option>
             </select>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'rgba(0,0,0,0.55)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               <input
                 type="checkbox"
                 checked={newFieldRequired}
@@ -272,7 +272,7 @@ export function PodFieldsWidget({
               disabled={adding || !newFieldName.trim()}
               style={{
                 background: 'none', border: 'none', padding: 0,
-                fontSize: 11, fontWeight: 700, color: adding || !newFieldName.trim() ? 'rgba(0,0,0,0.28)' : '#25B439',
+                fontSize: 11, fontWeight: 700, color: adding || !newFieldName.trim() ? 'var(--color-text-tertiary)' : '#25B439',
                 cursor: adding || !newFieldName.trim() ? 'default' : 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -284,7 +284,7 @@ export function PodFieldsWidget({
               onClick={closeAddForm}
               style={{
                 background: 'none', border: 'none', padding: 0,
-                fontSize: 11, color: 'rgba(0,0,0,0.45)', cursor: 'pointer',
+                fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
             >

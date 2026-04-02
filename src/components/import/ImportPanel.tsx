@@ -243,9 +243,9 @@ export function ImportPanel() {
                         padding: '5px 12px',
                         borderRadius: 100,
                         border: '1px solid',
-                        borderColor: isSelected ? (p.color ?? '#25B439') : 'rgba(0,0,0,0.1)',
+                        borderColor: isSelected ? (p.color ?? '#25B439') : 'var(--edge-strong)',
                         background: isSelected ? shift : 'transparent',
-                        color: isSelected ? '#fff' : 'rgba(0,0,0,0.55)',
+                        color: isSelected ? '#fff' : 'var(--color-text-secondary)',
                         fontSize: 11,
                         fontWeight: isSelected ? 700 : 400,
                         cursor: 'pointer',
@@ -400,7 +400,7 @@ export function ImportPanel() {
             </p>
             <div style={{
               height: 6,
-              background: 'var(--border, rgba(0,0,0,0.1))',
+              background: 'var(--border, var(--edge-strong))',
               borderRadius: 3,
               overflow: 'hidden',
             }}>

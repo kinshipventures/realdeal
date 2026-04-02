@@ -765,7 +765,7 @@ export function RecordsList() {
           alignItems: 'center',
           gap: 12,
           padding: '8px 16px',
-          background: 'rgba(0,0,0,0.04)',
+          background: 'var(--tint)',
           borderRadius: 8,
           flexShrink: 0,
         }}>
@@ -982,9 +982,9 @@ export function RecordsList() {
                   onClick={() => setSelectedProjectId(p.id)}
                   style={{
                     padding: '8px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
-                    background: selectedProjectId === p.id ? 'rgba(0,0,0,0.06)' : 'transparent',
+                    background: selectedProjectId === p.id ? 'var(--tint)' : 'transparent',
                   }}
-                  onMouseEnter={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,0,0,0.03)' }}
+                  onMouseEnter={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'var(--tint)' }}
                   onMouseLeave={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 500 }}>{p.name}</div>
@@ -997,8 +997,8 @@ export function RecordsList() {
               onClick={handleAddToProject}
               style={{
                 marginTop: 12, width: '100%', padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: selectedProjectId ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.12)',
-                color: selectedProjectId ? '#fff' : 'rgba(0,0,0,0.3)',
+                background: selectedProjectId ? 'var(--color-text-primary)' : 'var(--edge-strong)',
+                color: selectedProjectId ? '#fff' : 'var(--color-text-tertiary)',
                 cursor: selectedProjectId ? 'pointer' : 'default',
                 fontSize: 14, fontWeight: 500,
               }}
@@ -1173,7 +1173,7 @@ export function RecordsList() {
                               ? 'rgba(37,180,57,0.1)'
                               : contact.status === 'Pending'
                               ? 'rgba(251,191,36,0.12)'
-                              : 'rgba(0,0,0,0.05)',
+                              : 'var(--tint)',
                             color: contact.status === 'Active'
                               ? '#16a34a'
                               : contact.status === 'Pending'
@@ -1235,10 +1235,10 @@ export function RecordsList() {
           transition: background 0.12s ease;
         }
         .contacts-row:hover {
-          background: rgba(0,0,0,0.03) !important;
+          background: var(--tint) !important;
         }
         .contacts-row:active {
-          background: rgba(0,0,0,0.06) !important;
+          background: var(--tint) !important;
         }
         .contacts-row[style*="rgba(37,180,57"]:hover {
           background: rgba(37,180,57,0.08) !important;
@@ -1256,8 +1256,8 @@ function filterBtnStyle(active: boolean): React.CSSProperties {
     minHeight: 36,
     padding: '0 14px',
     borderRadius: 8,
-    border: `1px solid ${active ? 'rgba(0,0,0,0.2)' : 'var(--edge)'}`,
-    background: active ? 'rgba(0,0,0,0.06)' : 'var(--surface-panel)',
+    border: `1px solid ${active ? 'var(--edge-strong)' : 'var(--edge)'}`,
+    background: active ? 'var(--tint)' : 'var(--surface-panel)',
     backdropFilter: 'blur(20px)',
     color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
     fontSize: 12,

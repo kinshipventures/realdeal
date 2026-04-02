@@ -9,7 +9,7 @@ interface Props {
 
 const WIDGET_STYLE: React.CSSProperties = {
   background: 'rgba(255,255,255,0.92)',
-  border: '1px solid rgba(0,0,0,0.07)',
+  border: '1px solid var(--edge)',
   borderRadius: 12,
   padding: '16px 20px',
   marginBottom: 12,
@@ -74,20 +74,20 @@ export function AssociatedPeopleWidget({ contact }: Props) {
         fontFamily: 'var(--font-serif)',
         fontSize: 16,
         fontWeight: 700,
-        color: 'rgba(0,0,0,0.82)',
+        color: 'var(--color-text-primary)',
         marginBottom: 12,
       }}>
         People
       </div>
 
       {loading ? (
-        <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)', padding: '4px 0' }}>Loading...</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '4px 0' }}>Loading...</div>
       ) : people.length === 0 ? (
         <div style={{ padding: '8px 0 4px' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.45)', marginBottom: 2 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 2 }}>
             No linked contacts
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.28)' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
             Search for existing contacts to link.
           </div>
         </div>
@@ -106,7 +106,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                 borderRadius: 8,
                 padding: '4px 0',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               <div style={{
@@ -125,11 +125,11 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                 {initials(person.name)}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.82)' }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                   {person.name}
                 </div>
                 {person.role && (
-                  <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)' }}>{person.role}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{person.role}</div>
                 )}
               </div>
             </div>
@@ -168,7 +168,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                 border: 'none',
                 borderBottom: '1px solid #25B439',
                 background: 'transparent',
-                color: 'rgba(0,0,0,0.82)',
+                color: 'var(--color-text-primary)',
                 padding: '2px 0',
                 boxSizing: 'border-box',
               }}
@@ -180,7 +180,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                 left: 0,
                 right: 0,
                 background: 'rgba(255,255,255,0.96)',
-                border: '1px solid rgba(0,0,0,0.07)',
+                border: '1px solid var(--edge)',
                 borderRadius: 8,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                 zIndex: 50,
@@ -193,13 +193,13 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                     style={{
                       padding: '10px 12px',
                       fontSize: 13,
-                      color: 'rgba(0,0,0,0.82)',
+                      color: 'var(--color-text-primary)',
                       cursor: 'pointer',
                       minHeight: 44,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      borderBottom: '1px solid rgba(0,0,0,0.04)',
+                      borderBottom: '1px solid var(--divider)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -214,7 +214,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                     </div>
                     <div>
                       <div>{person.name}</div>
-                      {person.role && <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)' }}>{person.role}</div>}
+                      {person.role && <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{person.role}</div>}
                     </div>
                   </div>
                 ))}

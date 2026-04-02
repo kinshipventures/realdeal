@@ -408,7 +408,7 @@ function ContactsTab({ contacts, onRemove, onSelect, onAdd }: {
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10,
                 background: 'rgba(255,255,255,0.92)',
-                border: '1px solid rgba(0,0,0,0.06)',
+                border: '1px solid var(--edge)',
               }}
             >
               <div
@@ -484,7 +484,7 @@ function OpportunitiesTab({ opportunities, onRemove, onAdd, navigate }: {
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10,
                 background: 'rgba(255,255,255,0.92)',
-                border: '1px solid rgba(0,0,0,0.06)',
+                border: '1px solid var(--edge)',
               }}
             >
               <div
@@ -551,7 +551,7 @@ function NotesTab({ notes, noteText, onNoteChange, onSubmit, submitting }: {
           disabled={!noteText.trim() || submitting}
           style={{
             padding: '0 16px', height: 36, borderRadius: 8, border: 'none',
-            background: noteText.trim() ? 'var(--color-brand)' : 'rgba(0,0,0,0.08)',
+            background: noteText.trim() ? 'var(--color-brand)' : 'var(--tint)',
             color: noteText.trim() ? '#fff' : 'var(--color-text-tertiary)',
             fontSize: 13, fontWeight: 600,
             cursor: noteText.trim() && !submitting ? 'pointer' : 'default',
@@ -573,7 +573,7 @@ function NotesTab({ notes, noteText, onNoteChange, onSubmit, submitting }: {
                 padding: '12px 16px',
                 borderRadius: 10,
                 background: 'rgba(255,255,255,0.92)',
-                border: '1px solid rgba(0,0,0,0.06)',
+                border: '1px solid var(--edge)',
               }}
             >
               <p style={{ fontSize: 13, color: 'var(--color-text-primary)', margin: '0 0 6px', lineHeight: 1.5 }}>

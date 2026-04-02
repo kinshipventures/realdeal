@@ -47,7 +47,7 @@ function RecentActivityRow({ interaction, contact, onClick }: { interaction: Int
           {formatRelativeTime(interaction.date)}
         </span>
         {interaction.source && (
-          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,0,0,0.04)', color: 'var(--color-text-tertiary)' }}>
+          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'var(--tint)', color: 'var(--color-text-tertiary)' }}>
             {interaction.source}
           </span>
         )}
