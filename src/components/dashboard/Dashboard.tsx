@@ -14,6 +14,7 @@ import {
 import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
 import { useDashboardConfig } from './useDashboardConfig'
+import type { WidgetId } from './useDashboardConfig'
 
 import type { Contact, Pod, Interaction, Campaign, CampaignContact } from '../../lib/types'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -33,7 +34,7 @@ import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 
 export function Dashboard() {
-  const { config, isVisible, toggleWidget, applyPreset } = useDashboardConfig()
+  const { config, isVisible, toggleWidget, applyPreset, reorderWidgets } = useDashboardConfig()
   const [showSettings, setShowSettings] = useState(false)
 
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -330,6 +331,7 @@ export function Dashboard() {
           config={config}
           onToggle={toggleWidget}
           onPreset={applyPreset}
+          onReorder={reorderWidgets}
           onClose={() => setShowSettings(false)}
         />
       )}
@@ -406,95 +408,19 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Pending tray */}
-          {isVisible('pending-tray') && (
-            <div className="widget-enter" style={{ '--stagger': 0 } as React.CSSProperties}>
-              <PendingTrayWidget
-                pendingContacts={pendingContacts}
-                onReview={() => setShowQueue(true)}
-              />
-            </div>
-          )}
-
-          {/* Section: Network Pulse */}
-          {(isVisible('pod-health') || isVisible('wrapped')) && (
-            <div className="dashboard-section widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">
-                <span className="widget-tooltip-wrap">
-                  network pulse
-                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
-                  <span className="widget-tooltip-bubble">How your relationship network is performing - pod health scores and key insights.</span>
-                </span>
-              </h2>
-              {isVisible('pod-health') && (
-                <PodHealthWidget podStats={podStats} dataReady={dataReady} />
-              )}
-              {isVisible('wrapped') && (
-                <div style={{ marginTop: isVisible('pod-health') ? 16 : 0 }}>
-                  <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Section: Action Items */}
-          {(isVisible('todays-focus') || isVisible('needs-attention') || isVisible('coming-up')) && (
-            <div className="dashboard-section widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">
-                <span className="widget-tooltip-wrap">
-                  action items
-                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
-                  <span className="widget-tooltip-bubble">People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.</span>
-                </span>
-              </h2>
-              {isVisible('todays-focus') && (
-                <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
-              )}
-              {isVisible('coming-up') && (
-                <div style={{ marginTop: isVisible('todays-focus') && focusItems.length > 0 ? 20 : 0 }}>
-                  <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
-                </div>
-              )}
-              {isVisible('needs-attention') && (
-                <div style={{ marginTop: 20 }}>
-                  <NeedsAttentionWidget
-                    overdueContacts={overdueContacts}
-                    dormantContacts={dormantContacts}
-                    contactsLoading={contactsLoading}
-                    error={error}
-                    onContactClick={handleContactClick}
-                    onSnooze={handleSnooze}
-                    onRemoveContact={handleRemoveContact}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Section: Activity & Links */}
-          {(isVisible('recent-activity') || isVisible('quick-links')) && (
-            <div className="dashboard-section widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-              <h2 className="dashboard-heading">
-                <span className="widget-tooltip-wrap">
-                  activity & links
-                  <span className="widget-tooltip-icon" aria-label="Info">?</span>
-                  <span className="widget-tooltip-bubble">Recent interaction history and shortcuts to your active campaigns and pipelines.</span>
-                </span>
-              </h2>
-              {isVisible('recent-activity') && (
-                <RecentActivityWidget items={recentActivity} onContactClick={handleContactClick} />
-              )}
-              {isVisible('quick-links') && (
-                <div style={{ marginTop: isVisible('recent-activity') && recentActivity.length > 0 ? 20 : 0 }}>
-                  <QuickLinksWidget
-                    campaigns={campaigns}
-                    campaignContacts={campaignContacts}
-                    campaignsLoading={campaignsLoading}
-                  />
-                </div>
-              )}
-            </div>
-          )}
+          {/* Order-driven widget rendering */}
+          {renderOrderedWidgets({
+            order: config.order,
+            isVisible,
+            podStats, dataReady, wrappedInsights, interactionsLoading,
+            focusItems, upcomingItems, overdueContacts, dormantContacts,
+            contactsLoading, error, recentActivity, campaigns, campaignContacts,
+            campaignsLoading, pendingContacts,
+            onContactClick: handleContactClick,
+            onSnooze: handleSnooze,
+            onRemoveContact: handleRemoveContact,
+            onReview: () => setShowQueue(true),
+          })}
         </div>
 
         {selectedContact && (
@@ -527,6 +453,188 @@ export function Dashboard() {
       </main>
     </>
   )
+}
+
+// ── Order-driven widget rendering ────────────────────────────────────────────
+
+type PodStat = { pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean; sparkline: number[] | null }
+
+interface OrderedWidgetProps {
+  order: WidgetId[]
+  isVisible: (id: WidgetId) => boolean
+  podStats: PodStat[]
+  dataReady: boolean
+  wrappedInsights: import('./WrappedCard').WrappedInsight[]
+  interactionsLoading: boolean
+  focusItems: ReturnType<typeof todaysFocus>
+  upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }>
+  overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
+  dormantContacts: Array<{ contact: Contact; days: number | null }>
+  contactsLoading: boolean
+  error: string | null
+  recentActivity: Array<{ interaction: Interaction; contact: Contact }>
+  campaigns: Campaign[]
+  campaignContacts: CampaignContact[]
+  campaignsLoading: boolean
+  pendingContacts: Contact[]
+  onContactClick: (c: Contact) => void
+  onSnooze: (id: string) => void
+  onRemoveContact: (id: string) => Promise<void>
+  onReview: () => void
+}
+
+// Section metadata — drives headings and grouping
+const SECTION_MAP: Record<string, { heading: string; tooltip: string }> = {
+  'network-pulse': {
+    heading: 'network pulse',
+    tooltip: 'How your relationship network is performing - pod health scores and key insights.',
+  },
+  'action-items': {
+    heading: 'action items',
+    tooltip: 'People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.',
+  },
+  'activity-links': {
+    heading: 'activity & links',
+    tooltip: 'Recent interaction history and shortcuts to your active campaigns and pipelines.',
+  },
+}
+
+const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
+  'pod-health': 'network-pulse',
+  'wrapped': 'network-pulse',
+  'todays-focus': 'action-items',
+  'coming-up': 'action-items',
+  'needs-attention': 'action-items',
+  'recent-activity': 'activity-links',
+  'quick-links': 'activity-links',
+}
+
+function renderOrderedWidgets(props: OrderedWidgetProps) {
+  const {
+    order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
+    focusItems, upcomingItems, overdueContacts, dormantContacts,
+    contactsLoading, error, recentActivity, campaigns, campaignContacts,
+    campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onReview,
+  } = props
+
+  // Collect sections in order of first appearance
+  const sectionOrder: string[] = []
+  const sectionWidgets: Record<string, WidgetId[]> = {}
+  const standaloneWidgets: WidgetId[] = []
+
+  for (const id of order) {
+    if (!isVisible(id)) continue
+    const section = WIDGET_SECTION[id]
+    if (!section) {
+      standaloneWidgets.push(id)
+    } else {
+      if (!sectionWidgets[section]) {
+        sectionWidgets[section] = []
+        sectionOrder.push(section)
+      }
+      sectionWidgets[section].push(id)
+    }
+  }
+
+  const elements: React.ReactNode[] = []
+  let stagger = 0
+
+  // Standalone widgets (pending-tray) render before sections
+  for (const id of standaloneWidgets) {
+    if (id === 'pending-tray') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ '--stagger': stagger++ } as React.CSSProperties}>
+          <PendingTrayWidget pendingContacts={pendingContacts} onReview={onReview} />
+        </div>
+      )
+    }
+  }
+
+  // Sections in config order
+  for (const sectionId of sectionOrder) {
+    const widgets = sectionWidgets[sectionId]
+    if (!widgets?.length) continue
+    const meta = SECTION_MAP[sectionId]
+
+    elements.push(
+      <div key={sectionId} className="dashboard-section widget-enter" style={{ '--stagger': stagger++ } as React.CSSProperties}>
+        <h2 className="dashboard-heading">
+          <span className="widget-tooltip-wrap">
+            {meta.heading}
+            <span className="widget-tooltip-icon" aria-label="Info">?</span>
+            <span className="widget-tooltip-bubble">{meta.tooltip}</span>
+          </span>
+        </h2>
+        {widgets.map((id, i) => {
+          const spacer = i > 0
+          if (id === 'pod-health') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
+                <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+              </div>
+            )
+          }
+          if (id === 'wrapped') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
+                <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+              </div>
+            )
+          }
+          if (id === 'todays-focus') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
+              </div>
+            )
+          }
+          if (id === 'coming-up') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
+              </div>
+            )
+          }
+          if (id === 'needs-attention') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <NeedsAttentionWidget
+                  overdueContacts={overdueContacts}
+                  dormantContacts={dormantContacts}
+                  contactsLoading={contactsLoading}
+                  error={error}
+                  onContactClick={onContactClick}
+                  onSnooze={onSnooze}
+                  onRemoveContact={onRemoveContact}
+                />
+              </div>
+            )
+          }
+          if (id === 'recent-activity') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
+              </div>
+            )
+          }
+          if (id === 'quick-links') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <QuickLinksWidget
+                  campaigns={campaigns}
+                  campaignContacts={campaignContacts}
+                  campaignsLoading={campaignsLoading}
+                />
+              </div>
+            )
+          }
+          return null
+        })}
+      </div>
+    )
+  }
+
+  return <>{elements}</>
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
