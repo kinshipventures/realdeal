@@ -13,6 +13,7 @@ function daysUntilBirthday(birthday: string | null): number | null {
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 import { updateContact, createContact, deleteContact, getCampaigns, addContactToCampaign } from '../../lib/airtable'
+import { logSystemEvent } from '../../lib/timeline'
 import type { Campaign } from '../../lib/types'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
@@ -112,6 +113,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [showCampaignPicker, setShowCampaignPicker] = useState(false)
   const [addingToCampaign, setAddingToCampaign] = useState(false)
   const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
+  const [editFollowUpDate, setEditFollowUpDate] = useState('')
+  const [editFollowUpAction, setEditFollowUpAction] = useState('')
+  const [completingFollowUp, setCompletingFollowUp] = useState(false)
 
   useEffect(() => {
     if (!contact) return
@@ -866,28 +870,208 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         </div>
 
         {/* Next Follow-Up bar — pinned at bottom */}
-        {!isNew && contact && contact.next_follow_up_date && (
+        {!isNew && contact && (
           <div style={{
             padding: '12px 32px',
             borderTop: '1px solid var(--divider)',
             background: 'rgba(37,180,57,0.03)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-                Next Follow-Up
+            {editingField === 'next_follow_up_date' ? (
+              /* Edit mode */
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                  Next Follow-Up
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <input
+                    type="date"
+                    value={editFollowUpDate}
+                    onChange={e => setEditFollowUpDate(e.target.value)}
+                    style={{
+                      background: 'var(--tint)',
+                      border: '1px solid var(--edge-strong)',
+                      borderRadius: 6,
+                      color: 'var(--color-text-primary)',
+                      fontSize: 13,
+                      padding: '4px 8px',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={editFollowUpAction}
+                    onChange={e => setEditFollowUpAction(e.target.value)}
+                    placeholder="Next action..."
+                    style={{
+                      flex: 1,
+                      minWidth: 120,
+                      background: 'var(--tint)',
+                      border: '1px solid var(--edge-strong)',
+                      borderRadius: 6,
+                      color: 'var(--color-text-primary)',
+                      fontSize: 13,
+                      padding: '4px 8px',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const updated = await updateContact(contact.id, {
+                        next_follow_up_date: editFollowUpDate || null,
+                        next_action: editFollowUpAction || null,
+                      })
+                      onSaved(updated)
+                      setEditingField(null)
+                    }}
+                    style={{
+                      padding: '4px 12px',
+                      background: 'var(--color-brand)',
+                      border: 'none',
+                      borderRadius: 6,
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingField(null)}
+                    style={{
+                      padding: '4px 10px',
+                      background: 'none',
+                      border: '1px solid var(--edge)',
+                      borderRadius: 6,
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                {contact.next_action ?? 'Follow up'}
+            ) : contact.next_follow_up_date ? (
+              /* Read mode — follow-up exists */
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setEditFollowUpDate(contact.next_follow_up_date ?? '')
+                    setEditFollowUpAction(contact.next_action ?? '')
+                    setEditingField('next_follow_up_date')
+                  }}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                    Next Follow-Up
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                    {contact.next_action ?? 'Follow up'}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
+                      background: 'rgba(37,180,57,0.08)',
+                      padding: '4px 12px', borderRadius: 8,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setEditFollowUpDate(contact.next_follow_up_date ?? '')
+                      setEditFollowUpAction(contact.next_action ?? '')
+                      setEditingField('next_follow_up_date')
+                    }}
+                  >
+                    {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                  <button
+                    type="button"
+                    title="Complete follow-up"
+                    disabled={completingFollowUp}
+                    onClick={async () => {
+                      setCompletingFollowUp(true)
+                      try {
+                        await logSystemEvent({
+                          contactId: contact.id,
+                          type: 'field_update',
+                          detail: {
+                            source: 'follow_up_completed',
+                            action: contact.next_action,
+                            date: contact.next_follow_up_date,
+                          },
+                          notes: `Follow-up completed: ${contact.next_action ?? 'Follow up'}`,
+                        })
+                        const updated = await updateContact(contact.id, {
+                          next_follow_up_date: null,
+                          next_action: null,
+                        })
+                        onSaved(updated)
+                      } finally {
+                        setCompletingFollowUp(false)
+                      }
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: completingFollowUp ? 'default' : 'pointer',
+                      padding: 4,
+                      borderRadius: 6,
+                      color: 'var(--color-text-tertiary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      opacity: completingFollowUp ? 0.5 : 1,
+                    }}
+                    onMouseEnter={e => { if (!completingFollowUp) (e.currentTarget as HTMLElement).style.color = '#22c55e' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div style={{
-              fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
-              background: 'rgba(37,180,57,0.08)',
-              padding: '4px 12px', borderRadius: 8,
-            }}>
-              {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </div>
+            ) : (
+              /* Empty state — no follow-up set */
+              <button
+                type="button"
+                onClick={() => {
+                  setEditFollowUpDate('')
+                  setEditFollowUpAction('')
+                  setEditingField('next_follow_up_date')
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  color: 'var(--color-text-tertiary)',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Set follow-up
+              </button>
+            )}
           </div>
         )}
 
