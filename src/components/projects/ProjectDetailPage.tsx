@@ -287,6 +287,7 @@ export function ProjectDetailPage() {
             setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
             setSelectedContact(null)
           }}
+          pods={[]} // TODO: thread pods from project context if enrichment needed here
         />
       )}
 

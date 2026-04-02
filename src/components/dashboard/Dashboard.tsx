@@ -452,6 +452,7 @@ export function Dashboard() {
             onClose={() => setSelectedContact(null)}
             onSaved={handleContactSaved}
             onDeleted={handleContactDeleted}
+            pods={pods}
           />
         )}
 

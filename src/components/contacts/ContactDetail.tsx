@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import type { Contact, Interaction } from '../../lib/types'
+import type { Contact, Interaction, Pod } from '../../lib/types'
 import { getInteractions } from '../../lib/airtable'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 
@@ -14,6 +14,7 @@ function daysUntilBirthday(birthday: string | null): number | null {
 }
 import { updateContact, createContact, deleteContact, getCampaigns, addContactToCampaign } from '../../lib/airtable'
 import { logSystemEvent } from '../../lib/timeline'
+import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign } from '../../lib/types'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
@@ -85,11 +86,12 @@ interface Props {
   onClose: () => void
   onSaved: (contact: Contact) => void
   onDeleted?: () => void
+  pods?: Pod[]  // optional -- enrichment features disabled when not provided
 }
 
 type SaveError = { field: keyof Contact; value: string | null } | null
 
-export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted }: Props) {
+export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [] }: Props) {
   const isNew = contact === null
 
   const [draft, setDraft] = useState<Partial<Contact>>(
@@ -116,6 +118,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [editFollowUpDate, setEditFollowUpDate] = useState('')
   const [editFollowUpAction, setEditFollowUpAction] = useState('')
   const [completingFollowUp, setCompletingFollowUp] = useState(false)
+  const [enriching, setEnriching] = useState(false)
+  const [enrichedFields, setEnrichedFields] = useState<Set<keyof Contact>>(new Set())
+  const [enrichError, setEnrichError] = useState<string | null>(null)
+  const [suggestedUpdates, setSuggestedUpdates] = useState<Record<string, { current: string; suggested: string }>>({})
+  const [acceptingField, setAcceptingField] = useState<string | null>(null)
 
   useEffect(() => {
     if (!contact) return
@@ -177,6 +184,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const val = (draft[key] as string | null | undefined) ?? null
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
+    const isEnriched = enrichedFields.has(key)
+    const fieldKey = key as string
 
     const inputStyle = {
       width: '100%',
@@ -219,6 +228,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           }}>
             {label}
           </div>
+          {isEnriched && (
+            <span
+              title="AI-enriched"
+              style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: '#6366F1',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+          )}
           {hasSaveError && (
             <button
               type="button"
@@ -271,6 +291,38 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             }}
           >
             {val ?? `add ${label.toLowerCase()}`}
+          </div>
+        )}
+        {suggestedUpdates[fieldKey] && (
+          <div style={{ marginTop: 4, padding: '6px 8px', background: 'rgba(99,102,241,0.06)', borderRadius: 6, fontSize: 13 }}>
+            <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
+              Suggested: <strong>{suggestedUpdates[fieldKey].suggested}</strong>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                type="button"
+                disabled={acceptingField === fieldKey}
+                onClick={async () => {
+                  setAcceptingField(fieldKey)
+                  const original = { [fieldKey]: suggestedUpdates[fieldKey].current }
+                  const updated = await applyEnrichment(contact!.id, { [fieldKey]: suggestedUpdates[fieldKey].suggested }, original)
+                  onSaved(updated)
+                  setEnrichedFields(prev => new Set([...prev, key]))
+                  setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })
+                  setAcceptingField(null)
+                }}
+                style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === fieldKey ? 0.5 : 1 }}
+              >
+                {acceptingField === fieldKey ? 'Accepting...' : 'Accept'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })}
+                style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+              >
+                Keep current
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -361,6 +413,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const val = (draft.linkedin as string | null) ?? null
     const editing = editingField === 'linkedin'
     const hasSaveError = saveError?.field === 'linkedin'
+    const isEnriched = enrichedFields.has('linkedin')
 
     return (
       <div style={{ marginBottom: 14 }}>
@@ -373,6 +426,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           }}>
             LinkedIn
           </div>
+          {isEnriched && (
+            <span
+              title="AI-enriched"
+              style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: '#6366F1',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+          )}
           {hasSaveError && (
             <button
               type="button"
@@ -441,6 +505,38 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             }}
           >
             {val ?? 'add linkedin'}
+          </div>
+        )}
+        {suggestedUpdates['linkedin'] && (
+          <div style={{ marginTop: 4, padding: '6px 8px', background: 'rgba(99,102,241,0.06)', borderRadius: 6, fontSize: 13 }}>
+            <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
+              Suggested: <strong>{suggestedUpdates['linkedin'].suggested}</strong>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                type="button"
+                disabled={acceptingField === 'linkedin'}
+                onClick={async () => {
+                  setAcceptingField('linkedin')
+                  const original = { linkedin: suggestedUpdates['linkedin'].current }
+                  const updated = await applyEnrichment(contact!.id, { linkedin: suggestedUpdates['linkedin'].suggested }, original)
+                  onSaved(updated)
+                  setEnrichedFields(prev => new Set([...prev, 'linkedin' as keyof Contact]))
+                  setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })
+                  setAcceptingField(null)
+                }}
+                style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === 'linkedin' ? 0.5 : 1 }}
+              >
+                {acceptingField === 'linkedin' ? 'Accepting...' : 'Accept'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })}
+                style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+              >
+                Keep current
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -573,7 +669,75 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )
             ) : <div />}
 
-            <CloseButton onClick={onClose} aria-label="Close contact" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {/* Enrich button -- only for existing contacts */}
+              {!isNew && contact && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <button
+                    type="button"
+                    disabled={enriching || !isEnrichmentAllowed(contact, pods)}
+                    title={!isEnrichmentAllowed(contact, pods) ? 'Enable enrichment on at least one pod to use this feature' : 'Auto-fill contact fields'}
+                    onClick={async () => {
+                      setEnriching(true)
+                      setEnrichError(null)
+                      const result = await callEnrichFunction(contact)
+                      if (!result.ok || !result.data) {
+                        setEnrichError(result.error ?? 'Enrichment failed')
+                        setEnriching(false)
+                        return
+                      }
+                      const { autoFill, suggestedUpdates: suggestions } = computeFieldDiffs(contact, result.data)
+
+                      if (Object.keys(autoFill).length > 0) {
+                        const originalValues: Record<string, string | null> = {}
+                        for (const key of Object.keys(autoFill)) {
+                          originalValues[key] = (contact as Record<string, unknown>)[key] as string | null ?? null
+                        }
+                        const updated = await applyEnrichment(contact.id, autoFill, originalValues)
+                        onSaved(updated)
+                        setEnrichedFields(prev => new Set([...prev, ...Object.keys(autoFill) as (keyof Contact)[]]))
+                      }
+
+                      setSuggestedUpdates(suggestions)
+                      setEnriching(false)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      fontSize: 11, fontWeight: 500,
+                      padding: '4px 10px',
+                      background: isEnrichmentAllowed(contact, pods) ? 'rgba(99,102,241,0.08)' : 'var(--tint)',
+                      border: '1px solid ' + (isEnrichmentAllowed(contact, pods) ? 'rgba(99,102,241,0.2)' : 'var(--edge)'),
+                      borderRadius: 6,
+                      color: isEnrichmentAllowed(contact, pods) ? '#6366F1' : 'var(--color-text-tertiary)',
+                      cursor: (enriching || !isEnrichmentAllowed(contact, pods)) ? 'default' : 'pointer',
+                      fontFamily: 'inherit',
+                      opacity: enriching ? 0.6 : 1,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {enriching ? (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                          <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                        </svg>
+                        Enriching...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 3l1.9 5.8L19 10.5l-5.1 3.7 1.9 5.8L12 16.5l-4.8 3.5 1.9-5.8L4 10.5l5.1-1.7z"/>
+                        </svg>
+                        Enrich
+                      </>
+                    )}
+                  </button>
+                  {enrichError && (
+                    <div style={{ fontSize: 10, color: '#D93025' }}>{enrichError}</div>
+                  )}
+                </div>
+              )}
+              <CloseButton onClick={onClose} aria-label="Close contact" />
+            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
