@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
-stopped_at: "Checkpoint: 22-02 Task 1 complete, awaiting user to run migration script (Task 2 human-verify)"
-last_updated: "2026-04-02T06:54:00.182Z"
+stopped_at: Completed 19-01-PLAN.md -- follow-up CRUD shipped
+last_updated: "2026-04-02T17:37:46.462Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 3
+  total_plans: 7
+  completed_plans: 4
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 22 — airtable-to-supabase-data-migration
+**Current focus:** Phase 19 — enrichment-followups
 
 ## Current Position
 
-Phase: 23
-Plan: Not started
+Phase: 19 (enrichment-followups) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Plan: Not started
 | Phase 18-authentication P01 | 8 | 3 tasks | 6 files |
 | Phase 22-airtable-to-supabase-data-migration P01 | 5 | 1 tasks | 1 files |
 | Phase 22-airtable-to-supabase-data-migration P02 | 3 minutes | 1 tasks | 3 files |
+| Phase 19-enrichment-followups P01 | 8 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,7 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 18-authentication]: LoginPage is a shell only - lovable-auth div is mount point for Lovable auth UI drop-in
 - [Phase 22-airtable-to-supabase-data-migration]: Schema DDL spec produced by Claude Code, executed by Lovable -- Lovable handles Supabase table creation, Claude Code handles migration script and data layer swap
 - [Phase 22-airtable-to-supabase-data-migration]: Migration script uses service role key + MIGRATION_USER_ID env var -- never committed, never in Vercel
+- [Phase 19-enrichment-followups]: ContactDetail uses onSaved (existing prop) for follow-up mutations -- no new prop alias needed
 
 ### Roadmap Evolution
 
@@ -77,6 +79,6 @@ See PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last activity: 2026-04-02
-Last session: 2026-04-01T18:32:41.518Z
-Stopped at: Checkpoint: 22-02 Task 1 complete, awaiting user to run migration script (Task 2 human-verify)
+Last session: 2026-04-02T17:37:46.460Z
+Stopped at: Completed 19-01-PLAN.md -- follow-up CRUD shipped
 Resume file: None

@@ -30,10 +30,10 @@ Requirements for MVP completion. Closes gaps identified in Kinship Brain MVP PDF
 
 ### Follow-ups
 
-- [ ] **FLW-01**: User can set a follow-up date and next action on any record
+- [x] **FLW-01**: User can set a follow-up date and next action on any record
 - [ ] **FLW-02**: Due and overdue follow-ups surface on the dashboard
-- [ ] **FLW-03**: Nurturing hub shows a "create follow-up" action that sets date + action inline
-- [ ] **FLW-04**: Completing a follow-up logs it to the timeline
+- [x] **FLW-03**: Nurturing hub shows a "create follow-up" action that sets date + action inline
+- [x] **FLW-04**: Completing a follow-up logs it to the timeline
 
 ### Authentication
 
@@ -74,10 +74,10 @@ Deferred to future release.
 | ENR-02 | Phase 19 | Pending |
 | ENR-03 | Phase 19 | Pending |
 | ENR-04 | Phase 19 | Pending |
-| FLW-01 | Phase 19 | Pending |
+| FLW-01 | Phase 19 | Complete |
 | FLW-02 | Phase 19 | Pending |
-| FLW-03 | Phase 19 | Pending |
-| FLW-04 | Phase 19 | Pending |
+| FLW-03 | Phase 19 | Complete |
+| FLW-04 | Phase 19 | Complete |
 | RPT-01 | Phase 20 | Pending |
 | RPT-02 | Phase 20 | Pending |
 | RPT-03 | Phase 20 | Pending |
