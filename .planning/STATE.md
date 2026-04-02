@@ -61,6 +61,7 @@ See PROJECT.md Key Decisions table for full log.
 ### Roadmap Evolution
 
 - Phase 22 added: Airtable to Supabase data migration
+- Phase 23 added: Dashboard widget settings and reordering
 
 ### Blockers/Concerns
 
