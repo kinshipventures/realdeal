@@ -11,17 +11,11 @@ export interface WrappedInsight {
 
 export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [dismissed, setDismissed] = useState(false)
-  const [hovered, setHovered] = useState(false)
-
-  if (dismissed) return null
 
   // Empty state — no interactions in the 7-day window
   if (insights.length === 0) {
     return (
       <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         style={{
           borderRadius: 16,
           padding: '24px 20px',
@@ -50,19 +44,6 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
         }}>
           Log an interaction to start your weekly pulse.
         </div>
-        {hovered && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
-            style={{
-              position: 'absolute', top: 10, right: 10,
-              background: 'rgba(255,255,255,0.20)', border: 'none', borderRadius: 6,
-              padding: '2px 8px', color: 'white', fontSize: 11, cursor: 'pointer', zIndex: 2,
-            }}
-          >
-            hide
-          </button>
-        )}
       </div>
     )
   }
@@ -72,8 +53,6 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
   return (
     <div
       onClick={() => setActiveIndex(i => (i + 1) % insights.length)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         borderRadius: 16,
         padding: '24px 20px',
@@ -136,21 +115,6 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
           />
         ))}
       </div>
-
-      {/* Dismiss button */}
-      {hovered && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
-          style={{
-            position: 'absolute', top: 10, right: 10,
-            background: 'rgba(255,255,255,0.20)', border: 'none', borderRadius: 6,
-            padding: '2px 8px', color: 'white', fontSize: 11, cursor: 'pointer', zIndex: 2,
-          }}
-        >
-          hide
-        </button>
-      )}
     </div>
   )
 }

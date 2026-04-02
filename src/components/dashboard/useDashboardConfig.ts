@@ -30,22 +30,36 @@ export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'quick-links'],
 }
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v1'
+// Orderable widgets (equity lives in header band, not the widget flow)
+export const DEFAULT_ORDER: WidgetId[] = [
+  'pending-tray',
+  'pod-health',
+  'wrapped',
+  'todays-focus',
+  'coming-up',
+  'needs-attention',
+  'recent-activity',
+  'quick-links',
+]
+
+const STORAGE_KEY = 'realdeal:dashboard-config:v2'
 
 interface StoredConfig {
   preset: Preset
   visible: WidgetId[]
+  order: WidgetId[]
 }
 
 export interface DashboardConfig {
   preset: Preset
   visible: Set<WidgetId>
+  order: WidgetId[]
 }
 
 function loadConfig(): DashboardConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full) }
+    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
 
@@ -57,9 +71,17 @@ function loadConfig(): DashboardConfig {
         storedSet.add(id)
       }
     }
-    return { preset, visible: storedSet }
+
+    // Order drift protection: append any new orderable widget IDs not in stored order
+    const storedOrder: WidgetId[] = parsed.order ?? DEFAULT_ORDER
+    const orderSet = new Set(storedOrder)
+    for (const id of DEFAULT_ORDER) {
+      if (!orderSet.has(id)) storedOrder.push(id)
+    }
+
+    return { preset, visible: storedSet, order: storedOrder }
   } catch {
-    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full) }
+    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
   }
 }
 
@@ -68,6 +90,7 @@ function saveConfig(config: DashboardConfig) {
     const stored: StoredConfig = {
       preset: config.preset,
       visible: [...config.visible] as WidgetId[],
+      order: config.order,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
   } catch { /* silent */ }
@@ -90,12 +113,23 @@ export function useDashboardConfig() {
   }, [])
 
   const applyPreset = useCallback((preset: Preset) => {
-    setConfig(() => {
-      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]) }
+    setConfig(prev => {
+      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]), order: prev.order }
       saveConfig(updated)
       return updated
     })
   }, [])
 
-  return { config, isVisible, toggleWidget, applyPreset }
+  const reorderWidgets = useCallback((fromIndex: number, toIndex: number) => {
+    setConfig(prev => {
+      const next = [...prev.order]
+      const [item] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, item)
+      const updated = { ...prev, order: next }
+      saveConfig(updated)
+      return updated
+    })
+  }, [])
+
+  return { config, isVisible, toggleWidget, applyPreset, reorderWidgets }
 }
