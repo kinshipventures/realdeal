@@ -496,408 +496,436 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const hasFundTags = (draft.kv_fund_investor && draft.kv_fund_investor.length > 0) || (draft.spv_investor && draft.spv_investor.length > 0)
 
   return (
-    <div
-      className="panel-enter"
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        width: 360,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--surface-panel)',
-        backdropFilter: 'var(--panel-blur)',
-        WebkitBackdropFilter: 'var(--panel-blur)',
-        borderLeft: '1px solid var(--edge)',
-        zIndex: 60,
-      }}
-    >
-      {/* Header */}
-      <div style={{ padding: '24px 24px 0', borderBottom: '1px solid var(--divider)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          {/* Delete control — existing contacts only */}
-          {!isNew ? (
-            confirmDelete ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  style={{
-                    fontSize: 11, fontWeight: 500,
-                    color: deleting ? 'var(--color-text-tertiary)' : 'rgba(180,40,40,0.85)',
-                    background: 'none', border: 'none',
-                    cursor: deleting ? 'default' : 'pointer',
-                    padding: 0, letterSpacing: '0.01em',
-                  }}
-                >
-                  {deleting ? 'Removing...' : 'Remove this person?'}
-                </button>
-                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>·</span>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(false)}
-                  style={{
-                    fontSize: 11, color: 'var(--text-muted)',
-                    background: 'none', border: 'none',
-                    cursor: 'pointer', padding: 0,
-                  }}
-                >
-                  cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="action-ghost"
-                onClick={() => setConfirmDelete(true)}
-                style={{ fontSize: 11, padding: 0, letterSpacing: '0.01em' }}
-              >
-                Delete
-              </button>
-            )
-          ) : <div />}
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.25)',
+          zIndex: 59,
+        }}
+      />
 
-          <CloseButton onClick={onClose} aria-label="Close contact" />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, paddingBottom: !isNew ? 0 : 20 }}>
-          {/* Avatar */}
-          <div style={{
-            width: 48, height: 48,
-            borderRadius: '50%',
-            background: `hsla(${hue}, 40%, 88%, 0.9)`,
-            border: `1px solid hsla(${hue}, 30%, 78%, 0.5)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 600,
-            color: `hsla(${hue}, 40%, 30%, 0.85)`,
-            flexShrink: 0,
-            letterSpacing: '0.03em',
-          }}>
-            {nameInitials || '?'}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Name */}
-            {editingField === 'name' ? (
-              <input
-                autoFocus
-                type="text"
-                defaultValue={draft.name ?? ''}
-                placeholder="Name"
-                onBlur={e => handleBlur('name', e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') e.currentTarget.blur()
-                  if (e.key === 'Escape') { e.currentTarget.value = draft.name ?? ''; e.currentTarget.blur(); e.stopPropagation() }
-                }}
-                style={{
-                  width: '100%',
-                  fontSize: 18, fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  background: 'var(--tint)',
-                  border: '1px solid var(--edge-strong)',
-                  borderRadius: 6,
-                  color: 'var(--color-text-primary)',
-                  padding: '3px 8px',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                }}
-              />
-            ) : (
-              <div
-                onClick={() => setEditingField('name')}
-                style={{
-                  fontSize: 18, fontWeight: 600,
-                  fontFamily: 'var(--font-serif)',
-                  letterSpacing: '-0.02em',
-                  color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                  cursor: 'text',
-                  padding: '2px 0',
-                }}
-              >
-                {draft.name || 'Name'}
-              </div>
-            )}
-
-            {/* Role + Company */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
-              {editingField === 'role' ? (
-                <input
-                  autoFocus
-                  defaultValue={draft.role ?? ''}
-                  placeholder="Role"
-                  onBlur={e => handleBlur('role', e.target.value)}
-                  style={{ ...smallInputStyle, width: '45%' }}
-                />
-              ) : (
-                <span
-                  onClick={() => setEditingField('role')}
-                  style={{ fontSize: 12, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
-                >
-                  {draft.role ?? 'Role'}
-                </span>
-              )}
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>at</span>
-              {editingField === 'company' ? (
-                <input
-                  autoFocus
-                  defaultValue={draft.company ?? ''}
-                  placeholder="Company"
-                  onBlur={e => handleBlur('company', e.target.value)}
-                  style={{ ...smallInputStyle, flex: 1 }}
-                />
-              ) : (
-                <span
-                  onClick={() => setEditingField('company')}
-                  style={{ fontSize: 12, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
-                >
-                  {draft.company ?? 'Company'}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Scrollable body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px' }}>
-
-        {/* Equity score ring — existing contacts only */}
-        {!isNew && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-            <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} />
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
-                {equityScore}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2, letterSpacing: '0.01em' }}>
-                {scoreLabel(equityScore)}
-              </div>
-            </div>
-          </div>
-        )}
-        {!isNew && equityBreakdown.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 16 }}>
-            {equityBreakdown.map(b => (
-              <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
-                  {b.type}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>contact info</div>
-          {field('email', 'Email')}
-          {field('phone', 'Phone')}
-          {linkedinField()}
-          {field('website', 'Website')}
-          {field('location', 'Location')}
-          {field('country', 'City / Country')}
-          {birthdayField()}
-          {draft.global_region && (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Region</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.global_region}</div>
-            </div>
-          )}
-          {draft.gender && (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Gender</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.gender}</div>
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>relationship</div>
-          {field('introduced_by', 'Introduced By')}
-          {field('relationship_owner', 'Relationship Owner')}
-          {draft.contact_frequency && (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Contact Frequency</div>
-              <span style={{
-                fontSize: 12, fontWeight: 500,
-                padding: '3px 10px', borderRadius: 100,
-                background: 'rgba(37,180,57,0.08)',
-                color: 'var(--color-brand)',
-              }}>
-                {draft.contact_frequency}
-              </span>
-            </div>
-          )}
-          {field('intel_notes', 'Intel / Notes', true)}
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={sectionLabel}>context</div>
-          {field('specialization', 'Focus')}
-          {field('interests', 'Interests', true)}
-          {field('relationship_context', 'Context', true)}
-          {field('notes', 'Notes', true)}
-        </div>
-
-        {hasFundTags && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={sectionLabel}>fund tags</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {draft.kv_fund_investor?.map(tag => (
-                <span key={tag} style={{
-                  fontSize: 11, fontWeight: 500,
-                  padding: '3px 10px', borderRadius: 100,
-                  background: 'hsla(150, 60%, 40%, 0.08)',
-                  color: 'hsla(150, 60%, 30%, 0.80)',
-                }}>
-                  KV: {tag}
-                </span>
-              ))}
-              {draft.spv_investor?.map(tag => (
-                <span key={tag} style={{
-                  fontSize: 11, fontWeight: 500,
-                  padding: '3px 10px', borderRadius: 100,
-                  background: 'hsla(210, 60%, 50%, 0.08)',
-                  color: 'hsla(210, 60%, 40%, 0.80)',
-                }}>
-                  SPV: {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Add to campaign — existing contacts only, when active campaigns exist */}
-        {!isNew && contact && campaigns.length > 0 && (
-          <div style={{ marginBottom: 24 }}>
-            {addedCampaignId ? (
-              <div style={{ fontSize: 12, color: 'hsla(150, 60%, 35%, 0.9)', padding: '4px 0' }}>
-                added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
-              </div>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowCampaignPicker(v => !v)}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: 13, color: 'var(--color-text-secondary)',
-                    padding: '6px 0', fontFamily: 'inherit',
-                  }}
-                >
-                  + add to campaign
-                </button>
-                {showCampaignPicker && (
-                  <div style={{
-                    marginTop: 6,
-                    background: 'var(--surface-panel)',
-                    border: '1px solid var(--edge)',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  }}>
-                    {campaigns.map(campaign => (
-                      <button
-                        key={campaign.id}
-                        type="button"
-                        onClick={() => handleAddToCampaign(campaign.id)}
-                        disabled={addingToCampaign}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          width: '100%', padding: '10px 14px',
-                          background: 'none', border: 'none',
-                          borderBottom: '1px solid var(--divider)',
-                          cursor: addingToCampaign ? 'default' : 'pointer',
-                          textAlign: 'left', fontFamily: 'inherit',
-                          opacity: addingToCampaign ? 0.5 : 1,
-                        }}
-                      >
-                        <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
-                          {campaign.name}
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-                          {campaign.type}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Interactions — existing contacts only */}
-        {!isNew && contact && (
-          <InteractionSection
-            contact={contact}
-            onContactUpdated={onSaved}
-          />
-        )}
-      </div>
-
-      {/* Next Follow-Up bar — pinned at bottom */}
-      {!isNew && contact && contact.next_follow_up_date && (
-        <div style={{
-          padding: '12px 24px',
-          borderTop: '1px solid var(--divider)',
-          background: 'rgba(37,180,57,0.03)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-              Next Follow-Up
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-              {contact.next_action ?? 'Follow up'}
-            </div>
-          </div>
-          <div style={{
-            fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
-            background: 'rgba(37,180,57,0.08)',
-            padding: '4px 12px', borderRadius: 8,
-          }}>
-            {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </div>
-        </div>
-      )}
-
-      {/* Create footer */}
-      {isNew && (
-        <div style={{
-          padding: '14px 24px',
-          borderTop: '1px solid var(--divider)',
+      {/* Centered modal */}
+      <div
+        className="modal-enter"
+        style={{
+          position: 'fixed',
+          top: '50%', left: '50%',
+          width: 'min(880px, calc(100vw - 48px))',
+          maxHeight: 'calc(100vh - 80px)',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: 6,
-        }}>
-          {createError && (
-            <p style={{ fontSize: 11, color: '#D93025', margin: 0 }}>failed to create — try again</p>
+          background: 'var(--color-surface)',
+          borderRadius: 16,
+          boxShadow: '0 24px 80px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.06)',
+          zIndex: 60,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding: '24px 32px 20px', borderBottom: '1px solid var(--divider)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            {!isNew ? (
+              confirmDelete ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    style={{
+                      fontSize: 11, fontWeight: 500,
+                      color: deleting ? 'var(--color-text-tertiary)' : 'rgba(180,40,40,0.85)',
+                      background: 'none', border: 'none',
+                      cursor: deleting ? 'default' : 'pointer',
+                      padding: 0, letterSpacing: '0.01em',
+                    }}
+                  >
+                    {deleting ? 'Removing...' : 'Remove this person?'}
+                  </button>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    style={{
+                      fontSize: 11, color: 'var(--text-muted)',
+                      background: 'none', border: 'none',
+                      cursor: 'pointer', padding: 0,
+                    }}
+                  >
+                    cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="action-ghost"
+                  onClick={() => setConfirmDelete(true)}
+                  style={{ fontSize: 11, padding: 0, letterSpacing: '0.01em' }}
+                >
+                  Delete
+                </button>
+              )
+            ) : <div />}
+
+            <CloseButton onClick={onClose} aria-label="Close contact" />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            {/* Avatar */}
+            <div style={{
+              width: 48, height: 48,
+              borderRadius: '50%',
+              background: `hsla(${hue}, 40%, 88%, 0.9)`,
+              border: `1px solid hsla(${hue}, 30%, 78%, 0.5)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 600,
+              color: `hsla(${hue}, 40%, 30%, 0.85)`,
+              flexShrink: 0,
+              letterSpacing: '0.03em',
+            }}>
+              {nameInitials || '?'}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {editingField === 'name' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  defaultValue={draft.name ?? ''}
+                  placeholder="Name"
+                  onBlur={e => handleBlur('name', e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') e.currentTarget.blur()
+                    if (e.key === 'Escape') { e.currentTarget.value = draft.name ?? ''; e.currentTarget.blur(); e.stopPropagation() }
+                  }}
+                  style={{
+                    width: '100%',
+                    fontSize: 18, fontWeight: 600,
+                    letterSpacing: '-0.02em',
+                    background: 'var(--tint)',
+                    border: '1px solid var(--edge-strong)',
+                    borderRadius: 6,
+                    color: 'var(--color-text-primary)',
+                    padding: '3px 8px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingField('name')}
+                  style={{
+                    fontSize: 18, fontWeight: 600,
+                    fontFamily: 'var(--font-serif)',
+                    letterSpacing: '-0.02em',
+                    color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                    cursor: 'text',
+                    padding: '2px 0',
+                  }}
+                >
+                  {draft.name || 'Name'}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+                {editingField === 'role' ? (
+                  <input
+                    autoFocus
+                    defaultValue={draft.role ?? ''}
+                    placeholder="Role"
+                    onBlur={e => handleBlur('role', e.target.value)}
+                    style={{ ...smallInputStyle, width: '45%' }}
+                  />
+                ) : (
+                  <span
+                    onClick={() => setEditingField('role')}
+                    style={{ fontSize: 12, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
+                  >
+                    {draft.role ?? 'Role'}
+                  </span>
+                )}
+                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>at</span>
+                {editingField === 'company' ? (
+                  <input
+                    autoFocus
+                    defaultValue={draft.company ?? ''}
+                    placeholder="Company"
+                    onBlur={e => handleBlur('company', e.target.value)}
+                    style={{ ...smallInputStyle, flex: 1 }}
+                  />
+                ) : (
+                  <span
+                    onClick={() => setEditingField('company')}
+                    style={{ fontSize: 12, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
+                  >
+                    {draft.company ?? 'Company'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Equity score in header — existing contacts only */}
+            {!isNew && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} size={56} />
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
+                    {equityScore}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', letterSpacing: '0.01em' }}>
+                    {scoreLabel(equityScore)}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!isNew && equityBreakdown.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginTop: 12 }}>
+              {equityBreakdown.map(b => (
+                <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+                    {b.type}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={creating || !draft.name}
-            style={{
-              padding: '8px 20px',
-              background: draft.name ? 'var(--edge)' : 'var(--tint)',
-              border: '1px solid var(--edge-strong)',
-              borderRadius: 7,
-              color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              fontSize: 13, fontWeight: 500,
-              cursor: draft.name ? 'pointer' : 'default',
-              transition: 'all 0.15s',
-              letterSpacing: '0.01em',
-              fontFamily: 'inherit',
-            }}
-          >
-            {creating ? 'Adding...' : 'Add to network'}
-          </button>
         </div>
-      )}
-    </div>
+
+        {/* Two-column body */}
+        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+
+          {/* Left column — Timeline & Interactions */}
+          <div style={{
+            flex: 1, minWidth: 0,
+            overflowY: 'auto',
+            padding: '24px 32px',
+            borderRight: '1px solid var(--divider)',
+          }}>
+            {!isNew && contact ? (
+              <InteractionSection
+                contact={contact}
+                onContactUpdated={onSaved}
+              />
+            ) : (
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}>
+                Save this contact to start logging interactions.
+              </div>
+            )}
+          </div>
+
+          {/* Right column — Details */}
+          <div style={{
+            width: 320, flexShrink: 0,
+            overflowY: 'auto',
+            padding: '24px 32px',
+          }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={sectionLabel}>contact info</div>
+              {field('email', 'Email')}
+              {field('phone', 'Phone')}
+              {linkedinField()}
+              {field('website', 'Website')}
+              {field('location', 'Location')}
+              {field('country', 'City / Country')}
+              {birthdayField()}
+              {draft.global_region && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Region</div>
+                  <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.global_region}</div>
+                </div>
+              )}
+              {draft.gender && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Gender</div>
+                  <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.gender}</div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <div style={sectionLabel}>relationship</div>
+              {field('introduced_by', 'Introduced By')}
+              {field('relationship_owner', 'Relationship Owner')}
+              {draft.contact_frequency && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Contact Frequency</div>
+                  <span style={{
+                    fontSize: 12, fontWeight: 500,
+                    padding: '3px 10px', borderRadius: 100,
+                    background: 'rgba(37,180,57,0.08)',
+                    color: 'var(--color-brand)',
+                  }}>
+                    {draft.contact_frequency}
+                  </span>
+                </div>
+              )}
+              {field('intel_notes', 'Intel / Notes', true)}
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <div style={sectionLabel}>context</div>
+              {field('specialization', 'Focus')}
+              {field('interests', 'Interests', true)}
+              {field('relationship_context', 'Context', true)}
+              {field('notes', 'Notes', true)}
+            </div>
+
+            {hasFundTags && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={sectionLabel}>fund tags</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {draft.kv_fund_investor?.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 11, fontWeight: 500,
+                      padding: '3px 10px', borderRadius: 100,
+                      background: 'hsla(150, 60%, 40%, 0.08)',
+                      color: 'hsla(150, 60%, 30%, 0.80)',
+                    }}>
+                      KV: {tag}
+                    </span>
+                  ))}
+                  {draft.spv_investor?.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 11, fontWeight: 500,
+                      padding: '3px 10px', borderRadius: 100,
+                      background: 'hsla(210, 60%, 50%, 0.08)',
+                      color: 'hsla(210, 60%, 40%, 0.80)',
+                    }}>
+                      SPV: {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add to campaign */}
+            {!isNew && contact && campaigns.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                {addedCampaignId ? (
+                  <div style={{ fontSize: 12, color: 'hsla(150, 60%, 35%, 0.9)', padding: '4px 0' }}>
+                    added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowCampaignPicker(v => !v)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: 13, color: 'var(--color-text-secondary)',
+                        padding: '6px 0', fontFamily: 'inherit',
+                      }}
+                    >
+                      + add to campaign
+                    </button>
+                    {showCampaignPicker && (
+                      <div style={{
+                        marginTop: 6,
+                        background: 'var(--surface-panel)',
+                        border: '1px solid var(--edge)',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      }}>
+                        {campaigns.map(campaign => (
+                          <button
+                            key={campaign.id}
+                            type="button"
+                            onClick={() => handleAddToCampaign(campaign.id)}
+                            disabled={addingToCampaign}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              width: '100%', padding: '10px 14px',
+                              background: 'none', border: 'none',
+                              borderBottom: '1px solid var(--divider)',
+                              cursor: addingToCampaign ? 'default' : 'pointer',
+                              textAlign: 'left', fontFamily: 'inherit',
+                              opacity: addingToCampaign ? 0.5 : 1,
+                            }}
+                          >
+                            <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
+                              {campaign.name}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                              {campaign.type}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Next Follow-Up bar — pinned at bottom */}
+        {!isNew && contact && contact.next_follow_up_date && (
+          <div style={{
+            padding: '12px 32px',
+            borderTop: '1px solid var(--divider)',
+            background: 'rgba(37,180,57,0.03)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                Next Follow-Up
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                {contact.next_action ?? 'Follow up'}
+              </div>
+            </div>
+            <div style={{
+              fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
+              background: 'rgba(37,180,57,0.08)',
+              padding: '4px 12px', borderRadius: 8,
+            }}>
+              {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+        )}
+
+        {/* Create footer */}
+        {isNew && (
+          <div style={{
+            padding: '14px 32px',
+            borderTop: '1px solid var(--divider)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 6,
+          }}>
+            {createError && (
+              <p style={{ fontSize: 11, color: '#D93025', margin: 0 }}>failed to create — try again</p>
+            )}
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={creating || !draft.name}
+              style={{
+                padding: '8px 20px',
+                background: draft.name ? 'var(--edge)' : 'var(--tint)',
+                border: '1px solid var(--edge-strong)',
+                borderRadius: 7,
+                color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                fontSize: 13, fontWeight: 500,
+                cursor: draft.name ? 'pointer' : 'default',
+                transition: 'all 0.15s',
+                letterSpacing: '0.01em',
+                fontFamily: 'inherit',
+              }}
+            >
+              {creating ? 'Adding...' : 'Add to network'}
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

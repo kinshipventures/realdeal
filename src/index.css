@@ -397,6 +397,15 @@
   to   { transform: translateX(0);   opacity: 1; }
 }
 
+.modal-enter {
+  animation: modal-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modal-fade-in {
+  from { transform: translate(-50%, -50%) scale(0.97); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
+}
+
 @keyframes panel-slide-up {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
