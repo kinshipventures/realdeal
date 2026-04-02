@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import type { Pod, Category, Contact, Cadence, Owner, Interaction } from '../../lib/types'
+import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getPods, getContacts, getCategories, getAllInteractions, updatePod, createCategory } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
@@ -8,6 +8,8 @@ import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { indexByContact } from '../../lib/equity'
 import { Avatar, Spinner } from '../ui'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
+import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
+import { SharePopover } from '../sharing/SharePopover'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -102,17 +104,24 @@ export function PodDetailPage() {
   const [newSubPodName, setNewSubPodName] = useState('')
   const newSubPodInputRef = useRef<HTMLInputElement>(null)
 
+  // Share links state
+  const [shareLinks, setShareLinks] = useState<ShareLink[]>([])
+  const [showSharePopover, setShowSharePopover] = useState(false)
+  const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
+
   useEffect(() => {
     if (!podId) { setNotFound(true); setLoading(false); return }
     let stale = false
 
     async function load() {
-      const [pods, allContacts, cats, configs, allInteractions] = await Promise.all([
+      const [pods, allContacts, cats, configs, allInteractions, activeLinks] = await Promise.all([
         getPods(),
         getContacts(),
         getCategories(podId),
         getFieldConfigs(),
         getAllInteractions() as Promise<Interaction[]>,
+        getActiveShareLinks(podId).catch(() => [] as ShareLink[]),
       ])
       if (stale) return
 
@@ -139,6 +148,7 @@ export function PodDetailPage() {
       setCategories(cats)
       setFieldConfigs(configs.filter(fc => fc.scope_pod_id === podId))
       setEquityMap(eqMap)
+      setShareLinks(activeLinks)
       setLoading(false)
     }
 
@@ -236,6 +246,43 @@ export function PodDetailPage() {
             }}>{pod.name}</h1>
           </div>
           {saving && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 8 }}>Saving…</span>}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setShowSharePopover(v => !v)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'var(--tint)',
+                border: '1px solid var(--edge)',
+                borderRadius: 8,
+                padding: '8px 14px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-text-primary)',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+              Share
+            </button>
+            {showSharePopover && (
+              <SharePopover
+                podId={podId!}
+                members={members}
+                onCreated={(link) => {
+                  setShareLinks(prev => [link, ...prev])
+                  setShowSharePopover(false)
+                }}
+                onClose={() => setShowSharePopover(false)}
+              />
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -481,6 +528,89 @@ export function PodDetailPage() {
         </section>
 
         <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
+
+        {/* Shared links section */}
+        {shareLinks.length > 0 && (
+          <section style={{ marginBottom: 32 }}>
+            <div style={sectionHeadStyle}>
+              Shared links <Badge label={String(shareLinks.length)} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {shareLinks.map(link => {
+                const expiresAt = new Date(link.expires_at)
+                const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                const isConfirming = confirmRevoke === link.id
+                return (
+                  <div
+                    key={link.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 14px',
+                      background: 'var(--tint)',
+                      borderRadius: 8,
+                      border: '1px solid var(--edge)',
+                    }}
+                  >
+                    {isConfirming ? (
+                      <>
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)' }}>Revoke this link?</span>
+                        <button
+                          type="button"
+                          disabled={revokingId === link.id}
+                          onClick={async () => {
+                            setRevokingId(link.id)
+                            try {
+                              await revokeShareLink(link.id)
+                              setShareLinks(prev => prev.filter(l => l.id !== link.id))
+                              setConfirmRevoke(null)
+                            } finally {
+                              setRevokingId(null)
+                            }
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                        >
+                          {revokingId === link.id ? 'Revoking...' : 'Yes, revoke'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmRevoke(null)}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          /s/{link.token}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          {link.pin_hash && (
+                            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', background: 'var(--edge)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>PIN</span>
+                          )}
+                          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                            in {daysLeft}d
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRevoke(link.id)}
+                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {shareLinks.length > 0 && <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />}
 
         {/* Members section */}
         <section>
