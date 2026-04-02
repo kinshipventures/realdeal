@@ -10,10 +10,10 @@ const PANEL: React.CSSProperties = {
   borderRadius: 'var(--panel-radius)',
 }
 
-type UpcomingItem = { type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }
+type UpcomingItem = { type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }
 
 function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => void }) {
-  const dotColor = item.type === 'birthday' ? 'hsla(30, 80%, 55%, 0.9)' : 'var(--color-brand)'
+  const dotColor = item.isOverdue ? '#DC2626' : item.type === 'birthday' ? 'hsla(30, 80%, 55%, 0.9)' : 'var(--color-brand)'
   const isToday = item.daysUntil === 0
 
   return (
@@ -24,7 +24,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         width: '100%', padding: '12px 24px',
-        background: isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
+        background: item.isOverdue ? 'hsla(0, 70%, 50%, 0.04)' : isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
         border: 'none',
         borderBottom: '1px solid var(--divider)',
         cursor: 'pointer', textAlign: 'left',
@@ -42,7 +42,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
       </span>
       <span style={{
         fontSize: 11, fontWeight: 500, flexShrink: 0, minWidth: 32, textAlign: 'right',
-        color: isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
+        color: item.isOverdue ? '#DC2626' : isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
       }}>
         {item.sublabel}
       </span>
@@ -64,6 +64,13 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
   const navigate = useNavigate()
   if (items.length === 0) return null
 
+  // Sort overdue items to top, then by daysUntil ascending
+  const sorted = [...items].sort((a, b) => {
+    if (a.isOverdue && !b.isOverdue) return -1
+    if (!a.isOverdue && b.isOverdue) return 1
+    return a.daysUntil - b.daysUntil
+  })
+
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -77,7 +84,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
         </button>
       </div>
       <div style={{ ...PANEL, overflow: 'hidden' }}>
-        {items.map((item, i) => (
+        {sorted.map((item, i) => (
           <UpcomingRow key={`${item.type}-${item.contact.id}-${i}`} item={item} onClick={() => onContactClick(item.contact)} />
         ))}
       </div>

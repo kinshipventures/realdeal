@@ -222,7 +222,7 @@ export function Dashboard() {
       .sort((a, b) => b.overdueDays - a.overdueDays)
   }, [contacts, pods])
 
-  // Follow-ups due this week
+  // Follow-ups due this week (and overdue)
   const followUpItems = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -233,7 +233,7 @@ export function Dashboard() {
       .filter(c => c.next_follow_up_date)
       .filter(c => {
         const d = new Date(c.next_follow_up_date + 'T00:00:00')
-        return d >= today && d <= endOfWeek
+        return d <= endOfWeek  // include overdue (d < today) + this week
       })
       .map(c => {
         const d = new Date(c.next_follow_up_date + 'T00:00:00')
@@ -244,14 +244,23 @@ export function Dashboard() {
       .sort((a, b) => a.daysUntil - b.daysUntil)
   }, [contacts, pods])
 
-  // Merged upcoming — birthdays + follow-ups
+  // Merged upcoming — birthdays + follow-ups (including overdue)
   const upcomingItems = useMemo(() => {
-    const items: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }> = []
+    const items: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }> = []
     for (const b of upcomingBirthdays) {
       items.push({ type: 'birthday', contact: b.contact, pod: b.pod, daysUntil: b.daysUntil, label: b.date, sublabel: b.isToday ? 'Today' : `${b.daysUntil}d` })
     }
     for (const f of followUpItems) {
-      items.push({ type: 'follow-up', contact: f.contact, pod: f.pod, daysUntil: f.daysUntil, label: f.contact.next_action ?? 'Follow up', sublabel: f.daysUntil === 0 ? 'Today' : `${f.daysUntil}d` })
+      const isOverdue = f.daysUntil < 0
+      items.push({
+        type: 'follow-up',
+        contact: f.contact,
+        pod: f.pod,
+        daysUntil: f.daysUntil,
+        label: f.contact.next_action ?? 'Follow up',
+        sublabel: isOverdue ? `${Math.abs(f.daysUntil)}d overdue` : f.daysUntil === 0 ? 'Today' : `${f.daysUntil}d`,
+        isOverdue,
+      })
     }
     return items.sort((a, b) => a.daysUntil - b.daysUntil)
   }, [upcomingBirthdays, followUpItems])
@@ -480,7 +489,7 @@ interface OrderedWidgetProps {
   wrappedInsights: import('./WrappedCard').WrappedInsight[]
   interactionsLoading: boolean
   focusItems: ReturnType<typeof todaysFocus>
-  upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }>
+  upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }>
   overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
   followUpOverdue: Array<{ contact: Contact; overdueDays: number; podName: string; action: string | null }>
   dormantContacts: Array<{ contact: Contact; days: number | null }>

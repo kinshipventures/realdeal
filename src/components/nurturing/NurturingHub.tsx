@@ -132,10 +132,32 @@ export function NurturingHub() {
   // ── Computed data ──────────────────────────────────────────────────────────
 
   const needsAttentionContacts = useMemo(() => {
-    const result: { contact: Contact; days: number | null }[] = []
+    const today = new Date().toISOString().slice(0, 10)
+
+    // Follow-up overdue (stronger signal) — sorted first per D-23
+    const followUpOverdueIds = new Set<string>()
+    const followUpOverdue: { contact: Contact; days: number | null; isFollowUpOverdue: true }[] = []
+    for (const contact of contacts) {
+      if (snoozedIds.has(contact.id)) continue
+      if (!contact.next_follow_up_date || contact.next_follow_up_date >= today) continue
+      followUpOverdueIds.add(contact.id)
+      const days = contact.last_contacted_at
+        ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
+        : null
+      followUpOverdue.push({ contact, days, isFollowUpOverdue: true })
+    }
+    followUpOverdue.sort((a, b) => {
+      const aOver = a.contact.next_follow_up_date ? Math.floor((Date.now() - new Date(a.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
+      const bOver = b.contact.next_follow_up_date ? Math.floor((Date.now() - new Date(b.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
+      return bOver - aOver
+    })
+
+    // Cadence-overdue contacts (skip follow-up overdue already included)
+    const cadenceOverdue: { contact: Contact; days: number | null; isFollowUpOverdue?: undefined }[] = []
     for (const contact of contacts) {
       if (isInGracePeriod(contact)) continue
       if (snoozedIds.has(contact.id)) continue
+      if (followUpOverdueIds.has(contact.id)) continue  // already in follow-up overdue
       const overdue = contact.list_ids.some(podId => {
         const pod = pods.find(p => p.id === podId)
         return isOverdue(contact, pod?.cadence ?? 'monthly')
@@ -144,9 +166,11 @@ export function NurturingHub() {
       const days = contact.last_contacted_at
         ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
         : null
-      result.push({ contact, days })
+      cadenceOverdue.push({ contact, days })
     }
-    return result.sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
+    cadenceOverdue.sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
+
+    return [...followUpOverdue, ...cadenceOverdue]
   }, [contacts, pods, snoozedIds])
 
   const staleContacts = useMemo(() => {
@@ -357,16 +381,22 @@ export function NurturingHub() {
             </div>
           </div>
           <div style={PANEL}>
-            {needsAttentionContacts.map(({ contact }) => (
-              <NurturingRow
-                key={contact.id}
-                contact={contact}
-                signal={getOverdueSignal(contact, pods)}
-                signalColor="hsla(20, 80%, 45%, 1)"
-                onSnooze={handleSnooze}
-                onInteractionLogged={handleInteractionLogged}
-              />
-            ))}
+            {needsAttentionContacts.map(({ contact, isFollowUpOverdue }) => {
+              const signal = isFollowUpOverdue
+                ? (contact.next_action ? `Follow-up overdue: ${contact.next_action}` : 'Follow-up overdue')
+                : getOverdueSignal(contact, pods)
+              const signalColor = isFollowUpOverdue ? '#DC2626' : 'hsla(20, 80%, 45%, 1)'
+              return (
+                <NurturingRow
+                  key={contact.id}
+                  contact={contact}
+                  signal={signal}
+                  signalColor={signalColor}
+                  onSnooze={handleSnooze}
+                  onInteractionLogged={handleInteractionLogged}
+                />
+              )
+            })}
           </div>
         </div>
       )}
