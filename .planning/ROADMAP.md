@@ -128,7 +128,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 21-01-PLAN.md -- Schema migration, data layer, public share page, route wiring
+- [x] 21-01-PLAN.md -- Schema migration, data layer, public share page, route wiring
 - [ ] 21-02-PLAN.md -- Share creation popover on PodDetailPage, active links list, revocation
 
 ### Phase 22: Airtable to Supabase data migration
@@ -172,7 +172,7 @@ Plans:
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
 | 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
-| 21. Sharing | v2.1 | 0/2 | Not started | - |
+| 21. Sharing | v2.1 | 1/2 | In Progress|  |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
 
 ### Phase 23: Dashboard widget settings and reordering
@@ -180,7 +180,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 3/3 plans complete
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)
