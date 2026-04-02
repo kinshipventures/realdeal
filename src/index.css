@@ -567,11 +567,14 @@ body::after {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 4px 8px;
+  margin: -4px -8px;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 44px;
+  min-width: 44px;
   transition: color 0.15s ease;
 }
 .see-all-link::after {
