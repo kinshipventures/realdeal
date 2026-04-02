@@ -209,6 +209,19 @@ export function Dashboard() {
   // Upcoming birthdays
   const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(contacts, pods), [contacts, pods])
 
+  // Follow-up overdue contacts — next_follow_up_date < today
+  const followUpOverdue = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    return contacts
+      .filter(c => c.next_follow_up_date && c.next_follow_up_date < today)
+      .map(c => {
+        const overdueDays = Math.floor((Date.now() - new Date(c.next_follow_up_date + 'T00:00:00').getTime()) / 86400000)
+        const pod = pods.find(p => p.id === c.primary_list_id || c.list_ids.includes(p.id))
+        return { contact: c, overdueDays, podName: pod?.name ?? '', action: c.next_action }
+      })
+      .sort((a, b) => b.overdueDays - a.overdueDays)
+  }, [contacts, pods])
+
   // Follow-ups due this week
   const followUpItems = useMemo(() => {
     const today = new Date()
@@ -413,7 +426,7 @@ export function Dashboard() {
             order: config.order,
             isVisible,
             podStats, dataReady, wrappedInsights, interactionsLoading,
-            focusItems, upcomingItems, overdueContacts, dormantContacts,
+            focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
             contactsLoading, error, recentActivity, campaigns, campaignContacts,
             campaignsLoading, pendingContacts,
             onContactClick: handleContactClick,
@@ -469,6 +482,7 @@ interface OrderedWidgetProps {
   focusItems: ReturnType<typeof todaysFocus>
   upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string }>
   overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
+  followUpOverdue: Array<{ contact: Contact; overdueDays: number; podName: string; action: string | null }>
   dormantContacts: Array<{ contact: Contact; days: number | null }>
   contactsLoading: boolean
   error: string | null
@@ -512,7 +526,7 @@ const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
 function renderOrderedWidgets(props: OrderedWidgetProps) {
   const {
     order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
-    focusItems, upcomingItems, overdueContacts, dormantContacts,
+    focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
     contactsLoading, error, recentActivity, campaigns, campaignContacts,
     campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onReview,
   } = props
@@ -600,6 +614,7 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
               <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
                 <NeedsAttentionWidget
                   overdueContacts={overdueContacts}
+                  followUpOverdue={followUpOverdue}
                   dormantContacts={dormantContacts}
                   contactsLoading={contactsLoading}
                   error={error}

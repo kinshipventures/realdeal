@@ -49,6 +49,53 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
   )
 }
 
+function FollowUpOverdueRow({ contact, overdueDays, podName, action, onClick }: {
+  contact: Contact; overdueDays: number; podName: string; action: string | null; onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="interactive-row"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', padding: '12px 24px',
+        background: 'none', border: 'none',
+        borderBottom: '1px solid var(--divider)',
+        cursor: 'pointer', textAlign: 'left',
+      }}
+    >
+      {/* Calendar icon */}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+          {contact.name}
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {podName && (
+            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>
+              {podName}
+            </span>
+          )}
+          {action && (
+            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+              {podName ? `· ${action}` : action}
+            </span>
+          )}
+        </div>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 500, flexShrink: 0, color: '#DC2626', whiteSpace: 'nowrap', letterSpacing: '0.02em' }}>
+        {overdueDays}d overdue
+      </div>
+    </button>
+  )
+}
+
 function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, onConfirmRemove, onCancelRemove }: {
   contact: Contact; days: number | null; confirming: boolean
   onKeep: () => void; onReachOut: () => void; onRemove: () => void
@@ -102,6 +149,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
 
 interface NeedsAttentionWidgetProps {
   overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
+  followUpOverdue: Array<{ contact: Contact; overdueDays: number; podName: string; action: string | null }>
   dormantContacts: Array<{ contact: Contact; days: number | null }>
   contactsLoading: boolean
   error: string | null
@@ -111,7 +159,7 @@ interface NeedsAttentionWidgetProps {
 }
 
 export function NeedsAttentionWidget({
-  overdueContacts, dormantContacts, contactsLoading, error,
+  overdueContacts, followUpOverdue, dormantContacts, contactsLoading, error,
   onContactClick, onSnooze, onRemoveContact,
 }: NeedsAttentionWidgetProps) {
   const navigate = useNavigate()
@@ -123,7 +171,7 @@ export function NeedsAttentionWidget({
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <WidgetHeading title="needs attention" tooltip="Contacts past their cadence deadline or going dormant. Reach out to keep relationships healthy." />
-          {overdueContacts.length > 0 && (
+          {(overdueContacts.length + followUpOverdue.length) > 0 && (
             <span style={{
               display: 'inline-flex', alignItems: 'center',
               padding: '2px 7px', borderRadius: 100,
@@ -133,7 +181,7 @@ export function NeedsAttentionWidget({
               color: 'hsla(20, 80%, 45%, 0.80)',
               letterSpacing: '0.01em',
             }}>
-              {overdueContacts.length}
+              {overdueContacts.length + followUpOverdue.length}
             </span>
           )}
         </div>
@@ -157,7 +205,7 @@ export function NeedsAttentionWidget({
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
             {error}
           </div>
-        ) : overdueContacts.length === 0 ? (
+        ) : overdueContacts.length === 0 && followUpOverdue.length === 0 ? (
           <EmptyState
             icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
             heading="All caught up"
@@ -166,6 +214,9 @@ export function NeedsAttentionWidget({
           />
         ) : (
           <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+            {followUpOverdue.map(({ contact, overdueDays, podName, action }) => (
+              <FollowUpOverdueRow key={`fu-${contact.id}`} contact={contact} overdueDays={overdueDays} podName={podName} action={action} onClick={() => onContactClick(contact)} />
+            ))}
             {overdueContacts.map(({ contact, days, podName }) => (
               <OverdueRow key={contact.id} contact={contact} days={days} podName={podName} onClick={() => onContactClick(contact)} />
             ))}
