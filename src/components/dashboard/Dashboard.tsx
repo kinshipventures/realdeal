@@ -558,13 +558,13 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
 
     elements.push(
       <div key={sectionId} className="dashboard-section widget-enter" style={{ '--stagger': stagger++ } as React.CSSProperties}>
-        <h2 className="dashboard-heading">
+        <div className="dashboard-heading" role="heading" aria-level={2}>
           <span className="widget-tooltip-wrap">
             {meta.heading}
             <span className="widget-tooltip-icon" aria-label="Info">?</span>
             <span className="widget-tooltip-bubble">{meta.tooltip}</span>
           </span>
-        </h2>
+        </div>
         {widgets.map((id, i) => {
           const spacer = i > 0
           if (id === 'pod-health') {
