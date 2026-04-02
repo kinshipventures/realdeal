@@ -445,35 +445,36 @@ export function Dashboard() {
           })}
         </div>
 
-        {selectedContact && (
-          <ContactDetail
-            contact={selectedContact}
-            categoryId={selectedContact.category_ids[0]}
-            onClose={() => setSelectedContact(null)}
-            onSaved={handleContactSaved}
-            onDeleted={handleContactDeleted}
-            pods={pods}
-          />
-        )}
-
-        {selectedCampaignId && (() => {
-          const campaign = campaigns.find(c => c.id === selectedCampaignId)
-          if (!campaign) return null
-          return (
-            <CampaignDetail
-              campaignId={campaign.id}
-              campaignName={campaign.name}
-              campaignType={campaign.type}
-              campaignDeadline={campaign.deadline}
-              campaignStatus={campaign.status}
-              contacts={contacts}
-              pods={pods}
-              onClose={() => setSelectedCampaignId(null)}
-              onUpdate={refreshCampaigns}
-            />
-          )
-        })()}
       </main>
+
+      {selectedContact && (
+        <ContactDetail
+          contact={selectedContact}
+          categoryId={selectedContact.category_ids[0]}
+          onClose={() => setSelectedContact(null)}
+          onSaved={handleContactSaved}
+          onDeleted={handleContactDeleted}
+          pods={pods}
+        />
+      )}
+
+      {selectedCampaignId && (() => {
+        const campaign = campaigns.find(c => c.id === selectedCampaignId)
+        if (!campaign) return null
+        return (
+          <CampaignDetail
+            campaignId={campaign.id}
+            campaignName={campaign.name}
+            campaignType={campaign.type}
+            campaignDeadline={campaign.deadline}
+            campaignStatus={campaign.status}
+            contacts={contacts}
+            pods={pods}
+            onClose={() => setSelectedCampaignId(null)}
+            onUpdate={refreshCampaigns}
+          />
+        )
+      })()}
     </>
   )
 }
