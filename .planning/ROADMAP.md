@@ -125,10 +125,11 @@ Plans:
   1. User can generate a public share link for any filtered list of contacts
   2. Share link recipients see contact names, roles, companies, and pod membership -- no private fields exposed
   3. User can revoke a share link and it immediately stops working
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: TBD
+- [ ] 21-01-PLAN.md -- Schema migration, data layer, public share page, route wiring
+- [ ] 21-02-PLAN.md -- Share creation popover on PodDetailPage, active links list, revocation
 
 ### Phase 22: Airtable to Supabase data migration
 **Goal**: Replace Airtable as the data layer with Supabase PostgreSQL -- design schema, migrate data, swap client-side data layer
@@ -171,7 +172,7 @@ Plans:
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
 | 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
-| 21. Sharing | v2.1 | 0/? | Not started | - |
+| 21. Sharing | v2.1 | 0/2 | Not started | - |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
 
 ### Phase 23: Dashboard widget settings and reordering
