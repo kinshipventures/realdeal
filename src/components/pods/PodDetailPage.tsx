@@ -249,6 +249,7 @@ export function PodDetailPage() {
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               type="button"
+              onMouseDown={e => e.stopPropagation()}
               onClick={() => setShowSharePopover(v => !v)}
               style={{
                 display: 'flex',

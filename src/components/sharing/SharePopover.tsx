@@ -65,11 +65,22 @@ export function SharePopover({ podId, members, onCreated, onClose }: SharePopove
         pin: pin || undefined,
       })
       const url = `${window.location.origin}/s/${result.token}`
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => {
+      let copiedToClipboard = false
+      try {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        copiedToClipboard = true
+      } catch {
+        // Link creation should still complete even if clipboard access fails.
+      }
+      const finish = () => {
         onCreated(result)
-      }, 1800)
+      }
+      if (copiedToClipboard) {
+        setTimeout(finish, 1800)
+      } else {
+        finish()
+      }
     } finally {
       setCreating(false)
     }
