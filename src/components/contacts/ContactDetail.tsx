@@ -603,7 +603,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.25)',
-          zIndex: 59,
+          zIndex: 199,
         }}
       />
 
@@ -620,7 +620,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           background: 'var(--color-surface)',
           borderRadius: 16,
           boxShadow: '0 24px 80px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.06)',
-          zIndex: 60,
+          zIndex: 200,
           overflow: 'hidden',
         }}
       >

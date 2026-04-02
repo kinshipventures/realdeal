@@ -155,7 +155,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(255,255,255,0.92)',
+        background: 'var(--nav-bg)',
         border: '1px solid var(--edge)',
         borderRadius: 12,
         padding: 20,

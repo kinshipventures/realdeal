@@ -408,7 +408,7 @@ function ContactsTab({ contacts, onRemove, onSelect, onAdd }: {
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10,
-                background: 'rgba(255,255,255,0.92)',
+                background: 'var(--nav-bg)',
                 border: '1px solid var(--edge)',
               }}
             >
@@ -484,7 +484,7 @@ function OpportunitiesTab({ opportunities, onRemove, onAdd, navigate }: {
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10,
-                background: 'rgba(255,255,255,0.92)',
+                background: 'var(--nav-bg)',
                 border: '1px solid var(--edge)',
               }}
             >
@@ -573,7 +573,7 @@ function NotesTab({ notes, noteText, onNoteChange, onSubmit, submitting }: {
               style={{
                 padding: '12px 16px',
                 borderRadius: 10,
-                background: 'rgba(255,255,255,0.92)',
+                background: 'var(--nav-bg)',
                 border: '1px solid var(--edge)',
               }}
             >
