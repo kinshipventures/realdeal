@@ -68,19 +68,19 @@ All color tokens are defined in `src/styles/globals.css` in the `@theme` block (
 
 ## Typography
 
-**Heading font**: [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) — bold editorial serif with high stroke contrast, ball terminals, large x-height. Closest Google Font match to the Trolley CRM PDF headings.
+**Heading font**: [Fraunces](https://fonts.google.com/specimen/Fraunces) — variable optical size serif, heavier and more confident than Playfair. Matches Trolley CRM PDF energy.
 
 **Body font**: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) — geometric sans with tall x-height, open counters, contemporary feel. Replaces DM Sans entirely.
 
 Both loaded via Google Fonts in `index.html`.
 
 ```css
---font-serif: 'Playfair Display', Georgia, serif;
+--font-serif: 'Fraunces', serif;
 --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 ```
 
 Loaded weights:
-- Playfair Display: `700`, `800`
+- Fraunces: `400`, `700`, `800`, `900`
 - Plus Jakarta Sans: `400`, `500`, `600`
 
 ### Scale
