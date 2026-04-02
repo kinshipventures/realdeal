@@ -20,6 +20,7 @@ import { NurturingHub } from './components/nurturing/NurturingHub'
 import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
+import { SharedListPage } from './components/sharing/SharedListPage'
 
 const BG = 'var(--color-bg)'
 
@@ -481,6 +482,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="login" element={<LoginPage />} />
+      <Route path="s/:token" element={<SharedListPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<Dashboard />} />
