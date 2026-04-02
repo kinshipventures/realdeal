@@ -98,7 +98,7 @@ Plans:
 
 Plans:
 - [x] 19-01-PLAN.md -- Follow-up CRUD: editable pinned bar in ContactDetail, inline creation from NurturingRow
-- [ ] 19-02-PLAN.md -- Follow-up dashboard surfacing: overdue in NeedsAttention, ComingUp, NurturingHub
+- [x] 19-02-PLAN.md -- Follow-up dashboard surfacing: overdue in NeedsAttention, ComingUp, NurturingHub
 - [ ] 19-03-PLAN.md -- Enrichment engine: edge function stub, client module, Enrich button with field indicators
 
 ### Phase 20: Reporting
@@ -169,7 +169,7 @@ Plans:
 | 16. Dashboard + Nurturing Hub | v2.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
-| 19. Enrichment + Follow-ups | v2.1 | 1/3 | In Progress|  |
+| 19. Enrichment + Follow-ups | v2.1 | 2/3 | In Progress|  |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
@@ -179,7 +179,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)
