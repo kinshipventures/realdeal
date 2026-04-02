@@ -173,6 +173,8 @@
   transition-timing-function: ease-in !important;
 }
 
+.react-flow__node-moj.selectable { cursor: default !important; }
+
 
 
 /* ── Hover interaction classes ──────────────────────────────────────────────── */

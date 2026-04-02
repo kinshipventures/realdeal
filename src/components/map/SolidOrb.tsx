@@ -20,6 +20,7 @@ interface SolidOrbProps {
   glowIntensity?: 'low' | 'high'
   animationDelay?: string
   onClick?: () => void
+  ariaLabel?: string
   className?: string
   children: React.ReactNode
 }
@@ -32,6 +33,7 @@ export function SolidOrb({
   glowIntensity,
   animationDelay,
   onClick,
+  ariaLabel,
   className,
   children,
 }: SolidOrbProps) {
@@ -108,6 +110,8 @@ export function SolidOrb({
 
       <div
         ref={orbRef}
+        role={onClick ? 'button' : undefined}
+        aria-label={ariaLabel}
         className={`orb-enter orb-interactive${className ? ` ${className}` : ''}`}
         onClick={onClick}
         onMouseEnter={() => {

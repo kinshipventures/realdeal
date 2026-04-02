@@ -60,6 +60,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
         onClick={() => navigate(`/pod/${list.id}`)}
+        ariaLabel={`Pod: ${list.name}`}
         className={loadError ? 'orb-error-flash' : undefined}
       >
         {loading ? (
