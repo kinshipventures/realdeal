@@ -5,13 +5,14 @@ import {
   getContacts,
   getOpportunities,
   getAllInteractions,
+  getPods,
   removeRecordFromProject,
   removeOpportunityFromProject,
   addProjectNote,
   updateProject,
   invalidateProjectsCache,
 } from '../../lib/airtable'
-import type { Contact, Interaction, Opportunity, Project } from '../../lib/types'
+import type { Contact, Interaction, Opportunity, Pod, Project } from '../../lib/types'
 import { formatRelativeTime } from '../../lib/utils'
 import { Spinner } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -27,6 +28,7 @@ export function ProjectDetailPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [notes, setNotes] = useState<Interaction[]>([])
+  const [pods, setPods] = useState<Pod[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('contacts')
@@ -45,12 +47,14 @@ export function ProjectDetailPage() {
   const load = useCallback(async () => {
     if (!id) return
     try {
-      const [projects, allContacts, allOpps, allInteractions] = await Promise.all([
+      const [projects, allContacts, allOpps, allInteractions, allPods] = await Promise.all([
         getProjects(),
         getContacts(),
         getOpportunities(),
         getAllInteractions(),
+        getPods(),
       ])
+      setPods(allPods)
       const p = projects.find(pr => pr.id === id)
       if (!p) { setError(true); setLoading(false); return }
       setProject(p)
@@ -287,7 +291,7 @@ export function ProjectDetailPage() {
             setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
             setSelectedContact(null)
           }}
-          pods={[]} // TODO: thread pods from project context if enrichment needed here
+          pods={pods}
         />
       )}
 

@@ -41,8 +41,11 @@ const edgeTypes = {
 
 const CREATE_POD_ID = '__create-pod__'
 
-// Radii for orbital rings — pods distribute across these
-const RING_RADII = [210, 330, 460]
+// Radii for orbital rings — scale down on small screens so orbs stay visible
+const BASE_RADII = [210, 330, 460]
+const RING_RADII = typeof window !== 'undefined' && window.innerWidth < 500
+  ? BASE_RADII.map(r => Math.round(r * 0.55))
+  : BASE_RADII
 
 function hubLayout(
   lists: { id: string; is_priority?: boolean }[],

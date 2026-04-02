@@ -1,9 +1,9 @@
 # TODOs
 
 ## UI Polish
-- [ ] Redesign "today's focus" cards — remove green dashed border (AI slop). Use spacing, subtle background, or shadow for card separation instead of decorative borders.
-- [ ] Wrapped card show/hide toggle — need a way to both hide AND show the wrapped insight cards. Also review redundancy between wrapped stats and the top equity numbers on the dashboard (may be showing the same info twice).
-- [ ] Pod cards horizontal scroll — no visible navigation (arrows, dots, or scroll indicator) to signal there are more pods off-screen. Horizontal scroll works but isn't discoverable.
+- [x] ~~Redesign "today's focus" cards~~ — Already uses clean widget-card style, no dashed border
+- [x] ~~Wrapped card show/hide toggle~~ — Dashboard settings panel already supports toggling any widget including Wrapped
+- [ ] Pod cards horizontal scroll — no visible navigation (arrows, dots, or scroll indicator) to signal there are more pods off-screen. Horizontal scroll works but isn't discoverable. (Has fade indicators on edges -- may be sufficient)
 
 ## New Pages
 - [ ] Settings page — accessible via gear icon somewhere in the UI. Scope TBD.
@@ -12,10 +12,15 @@
 - [ ] Pod navigation as map trail — clicking a pod card on the dashboard should feel like navigating a trail on a map. Shift attention, center the pod, zoom in to show contacts, reveal connecting lines from the hub-and-spoke structure. Smoothly navigate the tree back and forth (drill in, back out). Think of it as traversing the orb map but triggered from the dashboard.
 
 ## Bugs
-- [ ] Pod cards clip on hover — hover scale/lift effect gets cut off at top of container. Likely overflow:hidden on parent needs padding or overflow:visible.
+- [x] ~~Pod cards clip on hover~~ — Fixed: added padding to scroll container for hover lift
+- [x] ~~Orb map broken on mobile~~ — Fixed: ring radii scale to 55% on screens under 500px
+- [x] ~~Project cards dark mode~~ — Fixed: swapped hardcoded white to var(--nav-bg)
+- [x] ~~Contact modal overlap in projects~~ — Fixed: z-index bumped above project modals
+- [x] ~~Thread pods into ProjectDetailPage ContactDetail~~ — Fixed: enrichment button now works in project context
+- [ ] Raw CSV data in contact names — imported data shows commas, URLs, field delimiters. Airtable data cleanup needed.
+- [ ] Duplicate contacts in overdue list — likely duplicate Airtable records, not a rendering bug.
 
 ## Design Review Deferred (2026-03-25)
-- [ ] Orb map broken on mobile — orbs use fixed pixel positions, off-screen at 375px. Needs scaled layout or simplified list view.
 - [ ] Raw CSV data in contact names — imported data shows commas, URLs, field delimiters. Airtable data cleanup needed.
 - [ ] Duplicate contacts in overdue list — likely duplicate Airtable records, not a rendering bug.
 
