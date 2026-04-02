@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RealDeal - Delivery Status</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --secondary: #86868b;
+    --accent: #34c759;
+    --accent-bg: rgba(52, 199, 89, 0.08);
+    --blue: #007aff;
+    --blue-bg: rgba(0, 122, 255, 0.08);
+    --orange: #ff9500;
+    --orange-bg: rgba(255, 149, 0, 0.08);
+    --red: #ff3b30;
+    --red-bg: rgba(255, 59, 48, 0.08);
+    --purple: #af52de;
+    --purple-bg: rgba(175, 82, 222, 0.08);
+    --border: rgba(0, 0, 0, 0.06);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --text: #f5f5f7;
+      --secondary: #98989d;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent-bg: rgba(52, 199, 89, 0.12);
+      --blue-bg: rgba(0, 122, 255, 0.12);
+      --orange-bg: rgba(255, 149, 0, 0.12);
+      --red-bg: rgba(255, 59, 48, 0.12);
+      --purple-bg: rgba(175, 82, 222, 0.12);
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 80px;
+  }
+
+  .header {
+    padding: 60px 24px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .header .eyebrow {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .header .subtitle {
+    font-size: 17px;
+    color: var(--secondary);
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--secondary);
+  }
+
+  .meta-item strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Progress bar */
+  .progress-section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+  }
+
+  .progress-bar-container {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    border: 1px solid var(--border);
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .progress-label .title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .progress-label .pct {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #30d158);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .progress-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--secondary);
+  }
+
+  /* Milestone pills */
+  .milestones-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .milestone-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .milestone-done { background: var(--accent-bg); color: var(--accent); }
+  .milestone-active { background: var(--blue-bg); color: var(--blue); }
+
+  /* Try it banner */
+  .try-banner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 32px;
+  }
+
+  .try-banner-inner {
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.08), rgba(0, 122, 255, 0.08));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .try-banner-inner .text {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .try-banner-inner .sub {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-top: 2px;
+  }
+
+  .try-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .try-btn:hover { opacity: 0.85; }
+  .try-btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+  }
+
+  /* Sections */
+  .section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+  }
+
+  .section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+
+  .section .section-sub {
+    font-size: 14px;
+    color: var(--secondary);
+    margin-bottom: 16px;
+  }
+
+  /* Feature grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feature-card .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .feature-card .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .icon-data { background: var(--blue-bg); }
+  .icon-ui { background: var(--purple-bg); }
+  .icon-integration { background: var(--orange-bg); }
+  .icon-ai { background: var(--accent-bg); }
+  .icon-infra { background: var(--red-bg); }
+
+  .feature-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .feature-card p {
+    font-size: 13px;
+    color: var(--secondary);
+    line-height: 1.4;
+  }
+
+  .feature-card .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-done { background: var(--accent-bg); color: var(--accent); }
+  .status-ready { background: var(--blue-bg); color: var(--blue); }
+  .status-blocked { background: var(--red-bg); color: var(--red); }
+  .status-in-progress { background: var(--orange-bg); color: var(--orange); }
+  .status-deferred { background: var(--purple-bg); color: var(--purple); }
+
+  .try-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .try-link:hover { text-decoration: underline; }
+
+  /* Shipped count */
+  .shipped-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .shipped-check svg {
+    width: 11px;
+    height: 11px;
+    stroke: white;
+    stroke-width: 2.5;
+    fill: none;
+  }
+
+  /* Blockers table */
+  .blocker-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .blocker-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .blocker-table td {
+    font-size: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .blocker-table tr:last-child td { border-bottom: none; }
+  .priority-critical { color: var(--red); font-weight: 600; }
+  .priority-high { color: var(--orange); font-weight: 600; }
+
+  /* Stats strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-card .num {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 2px;
+  }
+
+  .footer {
+    max-width: 960px;
+    margin: 60px auto 0;
+    padding: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--secondary);
+  }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 28px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .meta-row { gap: 12px; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .try-banner-inner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">RealDeal</div>
+  <h1>Delivery Status</h1>
+  <p class="subtitle">Relationship intelligence platform for Kinship Ventures. Real-time status of every feature, with links to test each one live.</p>
+  <div class="meta-row">
+    <div class="meta-item"><strong>Timeline:</strong>&nbsp;Mar 5 - Apr 25, 2026</div>
+    <div class="meta-item"><strong>Engineer:</strong>&nbsp;Gabriel Murray</div>
+    <div class="meta-item"><strong>Hours:</strong>&nbsp;15/week</div>
+    <div class="meta-item"><strong>Updated:</strong>&nbsp;Apr 2, 2026</div>
+  </div>
+</div>
+
+<!-- Stats strip -->
+<div class="section">
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="num" style="color: var(--accent)">22</div>
+      <div class="label">Phases shipped</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color: var(--blue)">56</div>
+      <div class="label">Plans completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color: var(--purple)">466</div>
+      <div class="label">Commits</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color: var(--orange)">4</div>
+      <div class="label">Milestones shipped</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">16/19</div>
+      <div class="label">v2.1 requirements done</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section">
+  <div class="progress-bar-container">
+    <div class="progress-label">
+      <span class="title">MVP Completion (v2.1)</span>
+      <span class="pct">84%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 84%"></div>
+    </div>
+    <div class="progress-detail">
+      <span>16 of 19 requirements complete</span>
+      <span>Remaining: Reporting (Phase 20)</span>
+    </div>
+    <div class="milestones-row">
+      <span class="milestone-pill milestone-done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg> v1.0 MVP</span>
+      <span class="milestone-pill milestone-done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg> v1.1 Polish</span>
+      <span class="milestone-pill milestone-done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg> v1.2 Demo</span>
+      <span class="milestone-pill milestone-done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 6 5 9 10 3"/></svg> v2.0 Rebuild</span>
+      <span class="milestone-pill milestone-active">&#9654; v2.1 Completion</span>
+    </div>
+  </div>
+</div>
+
+<!-- Try It Banner -->
+<div class="try-banner">
+  <div class="try-banner-inner">
+    <div>
+      <div class="text">Try the live app</div>
+      <div class="sub">Demo mode loads sample data - no login required. Toggle "demo on/off" at the bottom of any page.</div>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="https://real-deal.lovable.app" target="_blank" class="try-btn">Open RealDeal &#8599;</a>
+    </div>
+  </div>
+</div>
+
+<!-- SHIPPED: Core Platform -->
+<div class="section">
+  <h2>Core Platform</h2>
+  <p class="section-sub">The foundation - relationship records, pods, navigation, and search. All shipped.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#128100;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Relationship Records</h3>
+      <p>Full CRUD for people and companies. Per-type field layouts, custom fields, company-contact linking, auto-save.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 11</span>
+        <a href="https://real-deal.lovable.app/contacts" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#127793;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Pods + Categorization</h3>
+      <p>Unlimited pods and sub-pods with color, cadence, and capacity. Tinder-style swipe intake queue for new contacts.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 12</span>
+        <a href="https://real-deal.lovable.app/map" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128202;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Dashboard + Widgets</h3>
+      <p>Modular operating dashboard with toggleable widgets, full/focus presets, and settings panel. Equity ring, pod health, Today's Focus.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 16</span>
+        <a href="https://real-deal.lovable.app/" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#127912;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Orb Map</h3>
+      <p>Visual network map with pod orbs, capacity indicators, and click-to-navigate. Pod detail pages with contact lists.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">v1.0</span>
+        <a href="https://real-deal.lovable.app/map" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128269;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Search + Records List</h3>
+      <p>Cmd+K global search. Filterable, sortable records table with saved views, column visibility, multi-select, and bulk actions.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 13</span>
+        <a href="https://real-deal.lovable.app/contacts" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128200;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Social Equity Scoring</h3>
+      <p>Weighted by interaction type, cadence-aware, per-contact frequency overrides. Segmented ring breakdown per contact.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">v1.0</span>
+        <a href="https://real-deal.lovable.app/" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SHIPPED: Workflows -->
+<div class="section">
+  <h2>Workflows</h2>
+  <p class="section-sub">Pipelines, projects, follow-ups, nurturing - the operational layer.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#128203;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Pipelines (Kanban)</h3>
+      <p>Drag-and-drop Kanban boards with custom stages, color picker, opportunity cards with priority and archive. Tab switching between pipelines.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 14</span>
+        <a href="https://real-deal.lovable.app/pipelines" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#128194;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Projects</h3>
+      <p>Initiative containers with attached contacts, opportunities, and notes. Card grid landing, tabbed detail page, timeline events.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 15</span>
+        <a href="https://real-deal.lovable.app/projects" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ai">&#127793;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Nurturing Hub</h3>
+      <p>Dedicated maintenance surface. Stale relationships, overdue follow-ups, health signals across all records and pipelines.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 16</span>
+        <a href="https://real-deal.lovable.app/pulse/nurturing" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128197;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Follow-ups</h3>
+      <p>Set follow-up date and next action on any contact. Surfaces on dashboard when due. Complete from nurturing hub, logs to timeline.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 19</span>
+        <a href="https://real-deal.lovable.app/pulse/nurturing" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#128336;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Activity Timeline</h3>
+      <p>Unified per-contact timeline: interactions, system events, field changes, pod changes. Source labels and summaries.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 13</span>
+        <a href="https://real-deal.lovable.app/contacts" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#128227;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Campaigns</h3>
+      <p>Create campaigns, manage recipients with per-contact status tracking, deadline management. Full lifecycle UI.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">v1.1</span>
+        <a href="https://real-deal.lovable.app/" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SHIPPED: Intelligence + Infrastructure -->
+<div class="section">
+  <h2>Intelligence + Infrastructure</h2>
+  <p class="section-sub">Enrichment, auth, data migration, sharing, and import tools.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ai">&#129302;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Contact Enrichment</h3>
+      <p>Auto-fill company, LinkedIn, role via web enrichment. Per-field indicators, suggested-update UI, opt-in per pod. Timeline logging.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 19</span>
+        <a href="https://real-deal.lovable.app/contacts" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-infra">&#128274;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Authentication</h3>
+      <p>Supabase auth with email/password, Google, and Apple sign-in. Route guards, session persistence, login page.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 18</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-infra">&#9881;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Supabase Migration</h3>
+      <p>Full schema DDL, migration script from Airtable to Supabase with FK relationships. Data layer swap in progress.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 22</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128279;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Share Links</h3>
+      <p>Generate public read-only links for curated contact lists. Pod-scoped, privacy-safe fields only. Instant revocation.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 21</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128228;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>CSV Import + Bulk Actions</h3>
+      <p>Browser-based CSV import with dedup. Multi-select bulk actions: add to pod, field update, CSV export, archive.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">v1.0 + Phase 13</span>
+        <a href="https://real-deal.lovable.app/import" target="_blank" class="try-link">Try it &#8599;</a>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#127912;</div>
+        <span class="status-pill status-done">Shipped</span>
+      </div>
+      <h3>Design System</h3>
+      <p>Trolley CRM-aligned visual identity. Fraunces + Plus Jakarta Sans, brand green, dark mode, CSS custom property tokens.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">v1.0</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REMAINING -->
+<div class="section">
+  <h2>Remaining Work</h2>
+  <p class="section-sub">What's left to close out the MVP.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128200;</div>
+        <span class="status-pill status-ready">Up Next</span>
+      </div>
+      <h3>Reporting Module</h3>
+      <p>Pod distribution, pipeline velocity, engagement activity over time. CSV export. Saved report configurations.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 20 - 5 requirements</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-ui">&#9881;</div>
+        <span class="status-pill status-in-progress">In Progress</span>
+      </div>
+      <h3>Dashboard Widget Reordering</h3>
+      <p>Drag-to-reorder dashboard widgets and persist custom layouts.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Phase 23</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DEFERRED (Blocked) -->
+<div class="section">
+  <h2>Deferred (Blocked on Access)</h2>
+  <p class="section-sub">These features are scoped and ready to build once external access is provided.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-integration">&#128231;</div>
+        <span class="status-pill status-blocked">Blocked</span>
+      </div>
+      <h3>Gmail Integration</h3>
+      <p>Email summaries on contact timelines. Thread matching, background sync.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Needs: OAuth from Moj</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-integration">&#128197;</div>
+        <span class="status-pill status-blocked">Blocked</span>
+      </div>
+      <h3>Google Calendar Sync</h3>
+      <p>Meetings on contact timelines and dashboard.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Needs: Calendar OAuth</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="top-row">
+        <div class="icon icon-data">&#128202;</div>
+        <span class="status-pill status-blocked">Blocked</span>
+      </div>
+      <h3>LP + Talent List Import</h3>
+      <p>Investor and talent contacts from team's Google Sheets.</p>
+      <div class="card-footer">
+        <span style="font-size:11px; color:var(--secondary)">Needs: Sheets from Moj/Briell</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- V2 Roadmap -->
+<div class="section">
+  <h2>Post-MVP (v2.2+)</h2>
+  <p class="section-sub">Planned for after MVP completion. Not in current scope.</p>
+  <div class="feature-grid">
+
+    <div class="feature-card" style="opacity: 0.7;">
+      <div class="top-row">
+        <div class="icon icon-ai">&#129302;</div>
+        <span class="status-pill status-deferred">v2.2</span>
+      </div>
+      <h3>AI Copilot</h3>
+      <p>Read-only AI synthesis layer. Meeting briefs, relationship summaries, follow-up suggestions.</p>
+    </div>
+
+    <div class="feature-card" style="opacity: 0.7;">
+      <div class="top-row">
+        <div class="icon icon-integration">&#128231;</div>
+        <span class="status-pill status-deferred">v2.2</span>
+      </div>
+      <h3>Gmail Chrome Extension</h3>
+      <p>Create or attach relationship records directly from Gmail inbox.</p>
+    </div>
+
+    <div class="feature-card" style="opacity: 0.7;">
+      <div class="top-row">
+        <div class="icon icon-infra">&#128101;</div>
+        <span class="status-pill status-deferred">v2.2</span>
+      </div>
+      <h3>Team Workspaces</h3>
+      <p>Multi-user with filtered views, granular permissions per pod/project/pipeline.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Route Map -->
+<div class="section">
+  <h2>App Route Map</h2>
+  <p class="section-sub">Direct links to every surface in the live app.</p>
+  <table class="blocker-table">
+    <thead>
+      <tr>
+        <th>Route</th>
+        <th>Feature</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/" target="_blank" style="color:var(--blue); text-decoration:none;">/</a></td>
+        <td>Dashboard - equity ring, widgets, Today's Focus, nurturing signals</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/map" target="_blank" style="color:var(--blue); text-decoration:none;">/map</a></td>
+        <td>Orb Map - visual network navigation with pod orbs</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/contacts" target="_blank" style="color:var(--blue); text-decoration:none;">/contacts</a></td>
+        <td>Records List - filterable table with saved views and bulk actions</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/pipelines" target="_blank" style="color:var(--blue); text-decoration:none;">/pipelines</a></td>
+        <td>Kanban pipeline boards with drag-and-drop</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/projects" target="_blank" style="color:var(--blue); text-decoration:none;">/projects</a></td>
+        <td>Project containers with contacts, opportunities, notes</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/pulse/nurturing" target="_blank" style="color:var(--blue); text-decoration:none;">/pulse/nurturing</a></td>
+        <td>Nurturing Hub - stale contacts, overdue follow-ups, health signals</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td><a href="https://real-deal.lovable.app/import" target="_blank" style="color:var(--blue); text-decoration:none;">/import</a></td>
+        <td>CSV import with drag-and-drop and dedup</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--secondary)">/pod/:id</td>
+        <td>Pod detail page - contacts, sub-pods, share links</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--secondary)">/contact/:id</td>
+        <td>Record page - full detail with timeline, follow-ups, enrichment</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--secondary)">/s/:token</td>
+        <td>Public share link (read-only, no auth required)</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--secondary)">/onboarding</td>
+        <td>New user onboarding flow</td>
+        <td><span class="status-pill status-done">Live</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  <p>RealDeal - Gabriel Murray - Updated April 2, 2026</p>
+  <p style="margin-top: 4px;">Live: <a href="https://real-deal.lovable.app" style="color:var(--blue); text-decoration:none;">real-deal.lovable.app</a> &middot; Repo: <a href="https://github.com/gkmur/realdeal" style="color:var(--blue); text-decoration:none;">github.com/gkmur/realdeal</a></p>
+</div>
+
+</body>
+</html>
