@@ -64,10 +64,10 @@ One place where every relationship lives with full context — so founders never
 - ✓ Projects — initiative containers with attached contacts/opportunities/notes — Phase 15
 - ✓ Dashboard widget architecture — modular operating dashboard with presets, per-widget toggles, settings panel — Phase 16
 - ✓ Nurturing Hub — dedicated maintenance surface at /pulse/nurturing with health signals across records/pipelines — Phase 16
-- [ ] Basic enrichment — email metadata, opt-in web search enrichment (Phase 17)
-- [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 18)
-- [ ] Sharing + Exports — read-only share links for curated lists (Phase 19)
-- [ ] Follow-ups as dashboard-led signals (not tasks) with pod cadence + record overrides
+- ✓ Web enrichment with opt-in, per-field indicators, suggested-update UI, timeline logging — Phase 19
+- ✓ Follow-up CRUD from ContactDetail + NurturingHub, dashboard surfacing in widgets — Phase 19
+- [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 20)
+- [ ] Sharing + Exports — read-only share links for curated lists (Phase 21)
 - [ ] Remove sub-pod cap (currently blocked at 3, per PDF this is a blocker)
 - [ ] Multiple emails per contact + basic merge support
 
@@ -109,7 +109,7 @@ Shipped v1.0–v1.2 prototype (Feb 17 – Mar 27). Rebuilding as the real produc
 
 **Prototype shipped (v1.0–v1.2):** Dashboard, orb map, contact CRUD, equity scoring, campaigns, search, CSV import, demo mode. ~9,500 LOC.
 
-**v2.0 rebuild:** Phases 10-16 established the relationship-first foundation + pipelines + projects + dashboard/nurturing. Phases 17-19 build the remaining V1 modules: enrichment, reporting, and sharing.
+**v2.0 rebuild:** Phases 10-16 established the relationship-first foundation + pipelines + projects + dashboard/nurturing. Phase 19 shipped enrichment + follow-ups. Phases 20-21 build the remaining V1 modules: reporting and sharing.
 
 **Stack:** React 19, TypeScript, Tailwind v4, @xyflow/react v12, Vite, Airtable REST API + MCP. No backend server. Gmail Chrome extension (new for v2.0).
 
