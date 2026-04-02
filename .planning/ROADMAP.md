@@ -171,14 +171,14 @@ Plans:
 | 19. Enrichment + Follow-ups | v2.1 | 0/? | Not started | - |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 0/? | Not started | - |
-| 22. Airtable to Supabase | - | 2/3 | In Progress|  |
+| 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
 
 ### Phase 23: Dashboard widget settings and reordering
 
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 0 plans
+**Plans:** 2/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)
