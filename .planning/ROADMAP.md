@@ -67,7 +67,7 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
 - [x] **Phase 18: Authentication** - Supabase auth wiring, login/signup routing, session persistence (completed 2026-03-31)
 - [x] **Phase 19: Enrichment + Follow-ups** - Web enrichment with opt-in and timeline logging, follow-up creation flow from nurturing hub (completed 2026-04-02)
 - [ ] **Phase 20: Reporting** - Pod distribution, pipeline velocity, engagement reports with CSV export and saved configurations
-- [ ] **Phase 21: Sharing** - Read-only share links for curated lists with revocation
+- [x] **Phase 21: Sharing** - Read-only share links for curated lists with revocation (completed 2026-04-02)
 
 ## Phase Details
 
@@ -129,7 +129,7 @@ Plans:
 
 Plans:
 - [x] 21-01-PLAN.md -- Schema migration, data layer, public share page, route wiring
-- [ ] 21-02-PLAN.md -- Share creation popover on PodDetailPage, active links list, revocation
+- [x] 21-02-PLAN.md -- Share creation popover on PodDetailPage, active links list, revocation
 
 ### Phase 22: Airtable to Supabase data migration
 **Goal**: Replace Airtable as the data layer with Supabase PostgreSQL -- design schema, migrate data, swap client-side data layer
@@ -172,7 +172,7 @@ Plans:
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
 | 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
-| 21. Sharing | v2.1 | 1/2 | In Progress|  |
+| 21. Sharing | v2.1 | 2/2 | Complete   | 2026-04-02 |
 | 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
 
 ### Phase 23: Dashboard widget settings and reordering
@@ -180,7 +180,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)

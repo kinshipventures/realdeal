@@ -19,7 +19,7 @@ Requirements for MVP completion. Closes gaps identified in Kinship Brain MVP PDF
 
 - [x] **SHR-01**: User can generate a public read-only share link for any filtered list
 - [x] **SHR-02**: Share link shows contact names, roles, companies, and pod membership (no private fields)
-- [ ] **SHR-03**: User can revoke a share link at any time
+- [x] **SHR-03**: User can revoke a share link at any time
 
 ### Enrichment
 
@@ -85,7 +85,7 @@ Deferred to future release.
 | RPT-05 | Phase 20 | Pending |
 | SHR-01 | Phase 21 | Complete |
 | SHR-02 | Phase 21 | Complete |
-| SHR-03 | Phase 21 | Pending |
+| SHR-03 | Phase 21 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 19 total
