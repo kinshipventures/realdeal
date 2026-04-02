@@ -538,14 +538,7 @@ export function OrbMap() {
         onNodeDragStart={handleNodeDragStart}
         onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
-        onInit={() => {
-          const saved = loadViewport()
-          if (saved) {
-            setViewport(saved)
-            setViewportState(saved)
-          }
-        }}
-        fitView={!loadViewport()}
+        fitView
         fitViewOptions={{ padding: 0.22 }}
         minZoom={0.15}
         maxZoom={2.5}
