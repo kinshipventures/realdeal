@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useEscape } from '../../lib/escapeStack'
 import { ALL_WIDGETS, PRESET_CONFIGS } from './useDashboardConfig'
 import type { DashboardConfig, WidgetId, Preset } from './useDashboardConfig'
@@ -16,39 +16,60 @@ export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClo
   useEscape(stableClose)
 
   const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [overIndex, setOverIndex] = useState<number | null>(null)
+  const [insertIndex, setInsertIndex] = useState<number | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // Only orderable widgets (equity stays in header)
   const orderedWidgets = config.order
     .map(id => ALL_WIDGETS.find(w => w.id === id))
     .filter(Boolean) as { id: WidgetId; label: string }[]
 
-  // Equity is shown separately at top as non-orderable
   const equityWidget = ALL_WIDGETS.find(w => w.id === 'equity')!
 
-  function handleDragStart(e: React.DragEvent, index: number) {
-    setDragIndex(index)
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  function handleDragOver(e: React.DragEvent, index: number) {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setOverIndex(index)
-  }
-
-  function handleDrop(e: React.DragEvent, index: number) {
-    e.preventDefault()
-    if (dragIndex !== null && dragIndex !== index) {
-      onReorder(dragIndex, index)
+  function getInsertIndex(clientY: number): number {
+    for (let i = 0; i < rowRefs.current.length; i++) {
+      const row = rowRefs.current[i]
+      if (!row) continue
+      const rect = row.getBoundingClientRect()
+      const mid = rect.top + rect.height / 2
+      if (clientY < mid) return i
     }
-    setDragIndex(null)
-    setOverIndex(null)
+    return rowRefs.current.length
   }
 
-  function handleDragEnd() {
-    setDragIndex(null)
-    setOverIndex(null)
+  function handlePointerDown(e: React.PointerEvent, index: number) {
+    // Only left mouse button
+    if (e.button !== 0) return
+    e.preventDefault()
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    setDragIndex(index)
+    setInsertIndex(index)
+
+    function onMove(ev: PointerEvent) {
+      setInsertIndex(getInsertIndex(ev.clientY))
+    }
+
+    function onUp(ev: PointerEvent) {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+      const finalInsert = getInsertIndex(ev.clientY)
+      // Adjust for the removal of the dragged item
+      const to = finalInsert > index ? finalInsert - 1 : finalInsert
+      if (to !== index) onReorder(index, to)
+      setDragIndex(null)
+      setInsertIndex(null)
+    }
+
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
+  }
+
+  // Show a drop indicator line between rows
+  function showIndicator(rowIndex: number): 'above' | 'below' | null {
+    if (dragIndex === null || insertIndex === null) return null
+    if (insertIndex === rowIndex && insertIndex !== dragIndex && insertIndex !== dragIndex + 1) return 'above'
+    if (insertIndex === rowIndex + 1 && insertIndex !== dragIndex && insertIndex !== dragIndex + 1) return 'below'
+    return null
   }
 
   return (
@@ -130,7 +151,7 @@ export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClo
         </div>
 
         {/* Widget list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+        <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
           <div style={{ padding: '12px 20px 8px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Widgets
           </div>
@@ -146,44 +167,52 @@ export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClo
           {/* Orderable widgets */}
           {orderedWidgets.map((widget, index) => {
             const isDragging = dragIndex === index
-            const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
+            const indicator = showIndicator(index)
             return (
               <div
                 key={widget.id}
-                draggable
-                onDragStart={e => handleDragStart(e, index)}
-                onDragOver={e => handleDragOver(e, index)}
-                onDrop={e => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
+                ref={el => { rowRefs.current[index] = el }}
                 style={{
                   opacity: isDragging ? 0.4 : 1,
-                  borderTop: isOver && overIndex! < dragIndex! ? '2px solid var(--color-brand)' : undefined,
-                  borderBottom: isOver && overIndex! > dragIndex! ? '2px solid var(--color-brand)' : '1px solid var(--divider)',
+                  position: 'relative',
+                  transition: isDragging ? 'none' : 'opacity 0.15s',
                 }}
               >
+                {indicator === 'above' && (
+                  <div style={{ position: 'absolute', top: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
+                )}
                 <WidgetRow
                   widget={widget}
                   visible={config.visible.has(widget.id)}
                   onToggle={onToggle}
                   draggable
+                  onGripPointerDown={e => handlePointerDown(e, index)}
                 />
+                {indicator === 'below' && (
+                  <div style={{ position: 'absolute', bottom: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
+                )}
               </div>
             )
           })}
+          {/* Bottom drop zone indicator */}
+          {dragIndex !== null && insertIndex === orderedWidgets.length && insertIndex !== dragIndex && insertIndex !== dragIndex + 1 && (
+            <div style={{ margin: '0 20px', height: 2, background: 'var(--color-brand)', borderRadius: 1 }} />
+          )}
         </div>
       </div>
     </>
   )
 }
 
-function DragHandle() {
+function DragHandle({ onPointerDown }: { onPointerDown?: (e: React.PointerEvent) => void }) {
   return (
     <svg
       width="12"
       height="12"
       viewBox="0 0 12 12"
       fill="currentColor"
-      style={{ color: 'var(--color-text-tertiary)', flexShrink: 0, cursor: 'grab' }}
+      onPointerDown={onPointerDown}
+      style={{ color: 'var(--color-text-tertiary)', flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
     >
       <circle cx="3" cy="2" r="1.2" />
       <circle cx="9" cy="2" r="1.2" />
@@ -200,20 +229,24 @@ function WidgetRow({
   visible,
   onToggle,
   draggable,
+  onGripPointerDown,
 }: {
   widget: { id: WidgetId; label: string }
   visible: boolean
   onToggle: (id: WidgetId) => void
   draggable: boolean
+  onGripPointerDown?: (e: React.PointerEvent) => void
 }) {
   return (
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '11px 20px',
+        borderBottom: '1px solid var(--divider)',
+        userSelect: 'none',
       }}
     >
-      {draggable ? <DragHandle /> : <div style={{ width: 12 }} />}
+      {draggable ? <DragHandle onPointerDown={onGripPointerDown} /> : <div style={{ width: 12 }} />}
       <span style={{ fontSize: 13, color: 'var(--color-text-primary)', flex: 1 }}>
         {widget.label}
       </span>
