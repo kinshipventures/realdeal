@@ -40,21 +40,22 @@ decisions:
   - MAP-09 (mobile) requires no changes - React Flow touch events already handle basic tap
 
 metrics:
-  duration: "8 minutes"
+  duration: "12 minutes"
   completed: "2026-04-03"
-  tasks: 1
+  tasks: 2
   files: 4
 ---
 
 # Phase 24 Plan 03: Search-to-Map Highlight Bridge Summary
 
-Cmd+K search on the map route now dispatches a pod highlight event - selecting a contact pulses their pod orb(s) 3 times with a brightness/glow animation that auto-clears after 2.5 seconds.
+Cmd+K search on the map route dispatches a pod highlight event - selecting a contact pulses their pod orb(s) 3 times with a brightness/glow animation that auto-clears after 2.5 seconds.
 
 ## Tasks Completed
 
 | # | Name | Commit | Files |
 |---|------|--------|-------|
 | 1 | Search-to-map highlight bridge | c478c9a | App.tsx, OrbMap.tsx, ListNode.tsx, index.css |
+| 2 | Full map experience verification | - | Human-verified, approved |
 
 ## What Was Built
 
@@ -65,6 +66,17 @@ Cmd+K search on the map route now dispatches a pod highlight event - selecting a
 **ListNode highlight (ListNode.tsx):** `highlighted?: boolean` added to `ListNodeData`. When true, appends `orb-highlight-pulse` to the wrapper's className.
 
 **CSS animation (index.css):** `.orb-highlight-pulse` runs `highlight-pulse` 3 iterations at 0.75s each (2.25s total). Keyframes use `filter: brightness + drop-shadow` for a clean glow effect.
+
+## Post-Checkpoint Fixes (by orchestrator)
+
+The following bugs were discovered during human verification and fixed by the orchestrator before approval:
+
+- **Drill-down viewport centering:** Replaced `setViewport({x:0,y:0,zoom:1})` with `fitView({padding:0.35, duration:250})` in both drillIntoPod and drillBackToHub - nodes were pinned to top-left instead of centered
+- **Map view state timing:** Moved `setMapView('pod')` before the fade timeout for correct sequencing
+- **Fading class application:** Added `fading` CSS class to ListNode and CategoryNode components
+- **Tooltip cleanup:** Added `setHoveredPod(null)` on drill-in to prevent stale tooltips
+
+These fixes are committed in the working tree (4accf1d through 4d88c6d).
 
 ## Deviations from Plan
 
