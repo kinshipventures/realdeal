@@ -28,11 +28,13 @@ export async function getLastSyncTime(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data } = await supabase
-    .from('gmail_sync_state' as string)
+  // Use rpc-style query since the table may not yet be in generated types
+  const { data, error } = await (supabase as unknown as { from: (t: string) => any })
+    .from('gmail_sync_state')
     .select('last_synced_at')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  return (data as { last_synced_at: string | null } | null)?.last_synced_at ?? null
+  if (error || !data) return null
+  return (data as { last_synced_at: string | null }).last_synced_at ?? null
 }
