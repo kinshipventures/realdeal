@@ -74,7 +74,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             justifyContent: 'center',
             width: collapsed ? 40 : 32,
             height: 32,
-            marginLeft: collapsed ? 0 : 'auto',
+            margin: collapsed ? '0 auto' : '0 0 0 auto',
             background: 'none',
             border: 'none',
             borderRadius: 8,
@@ -318,20 +318,21 @@ function NavItem({
       <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
         {icon}
       </span>
-      <span style={{
-        opacity: collapsed ? 0 : 1,
-        transition: 'opacity 0.15s',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        fontSize: 13,
-        fontWeight: active ? 600 : 500,
-        color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-        flex: 1,
-        textAlign: 'left',
-        ...labelStyle,
-      }}>
-        {label}
-      </span>
+      {!collapsed && (
+        <span style={{
+          transition: 'opacity 0.15s',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          fontSize: 13,
+          fontWeight: active ? 600 : 500,
+          color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          flex: 1,
+          textAlign: 'left',
+          ...labelStyle,
+        }}>
+          {label}
+        </span>
+      )}
       {hint && !collapsed && (
         <span style={{
           fontSize: 11,

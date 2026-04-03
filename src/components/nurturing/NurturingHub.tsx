@@ -5,10 +5,10 @@ import { Avatar } from '../ui'
 import { Spinner } from '../ui'
 import { getContacts, getPods, getAllInteractions, isOverdue, isInGracePeriod } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
-import { isDormant, daysSinceContact, contactCadenceDays } from '../../lib/equity'
+import { isDormant, daysSinceContact, contactCadenceDays, todaysFocus } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
-import type { Contact, Pod } from '../../lib/types'
+import type { Contact, Pod, Interaction, FocusItem } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 
 // ── Styles ───────────────────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ export function NurturingHub() {
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
+  const [interactions, setInteractions] = useState<Interaction[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -83,6 +84,7 @@ export function NurturingHub() {
   })
 
   // Section refs for auto-scroll
+  const focusRef = useRef<HTMLDivElement>(null)
   const needsAttentionRef = useRef<HTMLDivElement>(null)
   const staleRef = useRef<HTMLDivElement>(null)
   const datesRef = useRef<HTMLDivElement>(null)
@@ -96,10 +98,11 @@ export function NurturingHub() {
       getPods(),
       getAllInteractions(),
       getFieldConfigs(),
-    ]).then(([c, p]) => {
+    ]).then(([c, p, ix]) => {
       if (canceled) return
       setContacts(c)
       setPods(p)
+      setInteractions(ix)
       setSnoozedIds(getSnoozedIds())
       setLoading(false)
     }).catch(() => {
@@ -112,7 +115,7 @@ export function NurturingHub() {
     if (loading) return
     // Auto-scroll to relevant section based on filter param
     const map: Record<string, React.RefObject<HTMLDivElement | null>> = {
-      focus: needsAttentionRef,
+      focus: focusRef,
       overdue: needsAttentionRef,
       stale: staleRef,
       dates: datesRef,
@@ -130,6 +133,17 @@ export function NurturingHub() {
   }, [])
 
   // ── Computed data ──────────────────────────────────────────────────────────
+
+  const focusItems = useMemo(() => {
+    if (contacts.length === 0 || pods.length === 0) return []
+    const byContact = new Map<string, Interaction[]>()
+    for (const ix of interactions) {
+      const arr = byContact.get(ix.contact_id) ?? []
+      arr.push(ix)
+      byContact.set(ix.contact_id, arr)
+    }
+    return todaysFocus(contacts, byContact, pods, 10)
+  }, [contacts, pods, interactions])
 
   const needsAttentionContacts = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -368,6 +382,38 @@ export function NurturingHub() {
           >
             &#x2715;
           </button>
+        </div>
+      )}
+
+      {/* Today's Focus Section */}
+      {focusItems.length > 0 && (
+        <div ref={focusRef} style={{ marginBottom: 28 }}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={sectionTitleStyle}>today's focus</h2>
+              <CountBadge count={focusItems.length} color="hsla(140, 60%, 45%, 0.12)" textColor="hsla(140, 60%, 35%, 1)" />
+            </div>
+          </div>
+          <div style={PANEL}>
+            {focusItems.map(item => {
+              const days = item.contact.last_contacted_at
+                ? Math.floor((Date.now() - new Date(item.contact.last_contacted_at).getTime()) / 86_400_000)
+                : null
+              const signal = item.reason === 'overdue'
+                ? days === null ? 'Never contacted' : `${days} days since last contact`
+                : 'Good time to check in'
+              return (
+                <NurturingRow
+                  key={item.contact.id}
+                  contact={item.contact}
+                  signal={signal}
+                  signalColor="var(--color-brand)"
+                  onSnooze={handleSnooze}
+                  onInteractionLogged={handleInteractionLogged}
+                />
+              )
+            })}
+          </div>
         </div>
       )}
 

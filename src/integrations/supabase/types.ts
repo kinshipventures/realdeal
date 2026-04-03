@@ -866,6 +866,48 @@ export type Database = {
         }
         Relationships: []
       }
+      share_links: {
+        Row: {
+          created_at: string
+          excluded_contact_ids: string[]
+          expires_at: string
+          id: string
+          pin_hash: string | null
+          pod_id: string
+          revoked_at: string | null
+          token: string
+          updated_at: string
+          user_id: string
+          visible_columns: string[]
+        }
+        Insert: {
+          created_at?: string
+          excluded_contact_ids?: string[]
+          expires_at: string
+          id?: string
+          pin_hash?: string | null
+          pod_id: string
+          revoked_at?: string | null
+          token: string
+          updated_at?: string
+          user_id: string
+          visible_columns?: string[]
+        }
+        Update: {
+          created_at?: string
+          excluded_contact_ids?: string[]
+          expires_at?: string
+          id?: string
+          pin_hash?: string | null
+          pod_id?: string
+          revoked_at?: string | null
+          token?: string
+          updated_at?: string
+          user_id?: string
+          visible_columns?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
