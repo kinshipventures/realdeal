@@ -98,7 +98,7 @@ export function NurturingHub() {
       getPods(),
       getAllInteractions(),
       getFieldConfigs(),
-    ]).then(([c, p]) => {
+    ]).then(([c, p, ix]) => {
       if (canceled) return
       setContacts(c)
       setPods(p)
