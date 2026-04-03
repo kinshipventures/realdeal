@@ -30,6 +30,7 @@ export function CategoryTable() {
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [categoryName, setCategoryName] = useState('')
   const [podName, setPodName] = useState('')
+  const [podId, setPodId] = useState<string | null>(null)
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [loading, setLoading] = useState(true)
 
