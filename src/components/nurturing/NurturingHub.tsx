@@ -134,7 +134,18 @@ export function NurturingHub() {
 
   // ── Computed data ──────────────────────────────────────────────────────────
 
-  const needsAttentionContacts = useMemo(() => {
+  const focusItems = useMemo(() => {
+    if (contacts.length === 0 || pods.length === 0) return []
+    const byContact = new Map<string, Interaction[]>()
+    for (const ix of interactions) {
+      const arr = byContact.get(ix.contact_id) ?? []
+      arr.push(ix)
+      byContact.set(ix.contact_id, arr)
+    }
+    return todaysFocus(contacts, byContact, pods, 10)
+  }, [contacts, pods, interactions])
+
+
     const today = new Date().toISOString().slice(0, 10)
 
     // Follow-up overdue (stronger signal) — sorted first per D-23
