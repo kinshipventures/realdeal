@@ -69,40 +69,52 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
           </span>
         ) : (
           <>
-            <span style={{
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: 'var(--font-serif)',
-              color: 'rgba(255,255,255,0.92)',
-              letterSpacing: '-0.01em',
-              userSelect: 'none',
-              lineHeight: 1.2,
-              textAlign: 'center',
-              padding: '0 12px',
-            }}>
-              {userName || 'RealDeal'}
-            </span>
-            {hasData && (
+            {hasData ? (
               <>
+                <span style={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-serif)',
+                  color: 'rgba(255,255,255,0.95)',
+                  letterSpacing: '-0.02em',
+                  userSelect: 'none',
+                  lineHeight: 1,
+                }}>
+                  {overallHealth}
+                </span>
                 <span style={{
                   fontSize: 10,
                   fontWeight: 500,
-                  color: 'rgba(255,255,255,0.50)',
+                  color: 'rgba(255,255,255,0.60)',
                   userSelect: 'none',
-                  marginTop: 6,
+                  marginTop: 4,
                 }}>
-                  {scoreLabel(overallHealth!)} - {overallHealth}
+                  {scoreLabel(overallHealth!)}
                 </span>
                 <span style={{
                   fontSize: 9,
                   fontWeight: 400,
                   color: 'rgba(255,255,255,0.38)',
                   userSelect: 'none',
-                  marginTop: 2,
+                  marginTop: 4,
                 }}>
                   {totalContacts ?? 0} contacts
                 </span>
               </>
+            ) : (
+              <span style={{
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: 'var(--font-serif)',
+                color: 'rgba(255,255,255,0.92)',
+                letterSpacing: '-0.01em',
+                userSelect: 'none',
+                lineHeight: 1.2,
+                textAlign: 'center',
+                padding: '0 12px',
+              }}>
+                {userName || 'RealDeal'}
+              </span>
             )}
           </>
         )}
