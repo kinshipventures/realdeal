@@ -228,6 +228,7 @@ function buildDrillNodes(
       totalContacts,
       podName: pod.name,
       podColor: pod.color ?? undefined,
+      podId: pod.id,
     },
   }
 
