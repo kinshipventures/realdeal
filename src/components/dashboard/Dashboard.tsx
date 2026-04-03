@@ -533,6 +533,7 @@ const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
   'needs-attention': 'action-items',
   'recent-activity': 'activity-links',
   'quick-links': 'activity-links',
+  'gmail-sync': 'activity-links',
 }
 
 function renderOrderedWidgets(props: OrderedWidgetProps) {
