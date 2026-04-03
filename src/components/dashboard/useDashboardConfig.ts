@@ -64,7 +64,7 @@ export interface DashboardConfig {
 function loadConfig(): DashboardConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
+    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
 
