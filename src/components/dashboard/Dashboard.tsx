@@ -358,9 +358,11 @@ export function Dashboard() {
       {showSettings && (
         <DashboardSettings
           config={config}
+          pods={pods}
           onToggle={toggleWidget}
           onPreset={applyPreset}
           onReorder={reorderWidgets}
+          onSetEquityPods={setEquityPods}
           onClose={() => setShowSettings(false)}
         />
       )}
