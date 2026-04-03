@@ -137,5 +137,13 @@ export function useDashboardConfig() {
     })
   }, [])
 
-  return { config, isVisible, toggleWidget, applyPreset, reorderWidgets }
+  const setEquityPods = useCallback((podIds: string[] | null) => {
+    setConfig(prev => {
+      const updated = { ...prev, equityPodIds: podIds }
+      saveConfig(updated)
+      return updated
+    })
+  }, [])
+
+  return { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods }
 }
