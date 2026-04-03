@@ -53,8 +53,9 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
           justifyContent: 'center',
           overflow: 'hidden',
           position: 'relative',
-          cursor: 'default',
+          cursor: isDrillDown ? 'pointer' : 'default',
         } as React.CSSProperties}
+        onClick={isDrillDown && podId ? () => navigate(`/pod/${podId}`) : undefined}
       >
         {isDrillDown ? (
           <span style={{
