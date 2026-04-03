@@ -1,94 +1,64 @@
 
 
-# RealDeal Gap Analysis - Eisenhower Matrix
+# Standardize Breadcrumbs and Navigation Across All Pages
 
 ## Current State
 
-- **v2.0**: Shipped (68/68 requirements), 3 known broken routes + 1 data integrity gap from audit
-- **v2.1**: 3/4 phases complete (Auth, Enrichment/Follow-ups, Sharing done). Reporting (Phase 20) not started.
-- **Phase 22** (Airtable->Supabase migration): 2/3 plans done, Plan 22-03 (swap data layer) incomplete
-- **Phase 24** (Orb Map overhaul): All 3 plans marked complete
-- **Phase 25** (Sidebar nav): Plan exists, partially implemented (sidebar is live)
-- **21 pending todos** in `.planning/todos/pending/`
+Navigation is inconsistent across pages:
 
-## Eisenhower Matrix
+| Page | Back button | Goes to | Style |
+|------|-----------|---------|-------|
+| CategoryTable (`/category/:id`) | Breadcrumb trail: Map > Pod > Category | `/map` (Map link only clickable, Pod is plain text) | Text links with `>` separator |
+| PodDetailPage (`/pod/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
+| RecordPage/RecordHeader (`/contact/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
+| ProjectDetailPage (`/projects/:id`) | Chevron + "Projects" | `/projects` (explicit) | Chevron icon |
+| NurturingHub (`/pulse/nurturing`) | Chevron + "Dashboard" | `/` (should be `/pulse`) | Chevron icon |
+| ImportPanel (`/import`) | Text button "Done" | `/` | Different pattern entirely |
+| List pages (Contacts, Pipelines, Projects) | No back button | N/A | Top-level, correct |
 
-```text
-                        URGENT                          NOT URGENT
-              +-------------------------------+-------------------------------+
-              |                               |                               |
-              |  1. Broken navigation routes  |  5. Phase 20: Reporting       |
-              |     (P0 - 3 locations use      |     (pod distribution,        |
-              |      /record/:id, no route)   |      pipeline velocity,       |
-              |                               |      engagement over time,    |
-              |  2. Phase 22-03: Supabase     |      CSV export, saved        |
-   IMPORTANT  |     data layer swap           |      configs)                 |
-              |     (migration incomplete -   |                               |
-              |      app may still hit         |  6. Multi-user team access    |
-              |      Airtable in places)       |     (filtered views per user, |
-              |                               |      role-based scoping)      |
-              |  3. mergeRecords backlink gap  |                               |
-              |     (P1 - dangling company     |  7. Gmail integration         |
-              |      refs after merge)         |     (cross-channel timeline,  |
-              |                               |      blocked on OAuth creds)  |
-              |                               |                               |
-              +-------------------------------+-------------------------------+
-              |                               |                               |
-              |  4. Focus filter semantic     |  8. Orb map visual bugs       |
-              |     mismatch (P2 - focus       |     (overlap on large pods,   |
-              |     links to wrong section)   |      plus-orb position,       |
-              |                               |      disappear on zoom-out)   |
-              |                               |                               |
-              |  9. Contact modal overlaps    | 10. Import flows              |
-   NOT        |     project detail page       |     (LP lists, Talent list    |
-   IMPORTANT  |                               |      from Google Sheets)      |
-              | 10. Project cards dark mode   |                               |
-              |     contrast                  | 11. iMessage bot, Google Cal,  |
-              |                               |     email drafting, history    |
-              |                               |     backfill (all future/      |
-              |                               |     blocked on 3rd-party)     |
-              |                               |                               |
-              +-------------------------------+-------------------------------+
-```
+### Problems
 
-## Breakdown
+1. **CategoryTable breadcrumb**: Pod name is not clickable (should link to `/pod/:podId`)
+2. **NurturingHub**: Back goes to `/` (map) instead of `/pulse` (dashboard)
+3. **PodDetailPage**: Uses `navigate(-1)` - unpredictable if user arrived via direct link or deep navigation
+4. **RecordHeader**: Uses `navigate(-1)` - same unpredictability issue
+5. **Sidebar**: No active highlight for `/category/:id`, `/pulse/nurturing`, or `/contact/:id` routes
+6. **CategoryTable**: Header padding `28px 40px 0` not standardized to `32px 32px`
 
-### Quadrant 1: Do First (Urgent + Important)
+## Plan
 
-| # | Item | Effort | Impact | Status |
-|---|------|--------|--------|--------|
-| 1 | Fix 3 broken `/record/:id` routes -> `/contact/:id` | ~10 min | Unblocks pipeline and nurturing flows | Known since v2.0 audit |
-| 2 | Phase 22-03: Supabase data layer swap | Medium | Completes migration, removes Airtable dependency | 2/3 plans done |
-| 3 | mergeRecords backlink fix | ~30 min | Prevents dangling company refs | Known P1 |
+### 1. Standardize back navigation targets (explicit routes, not browser history)
 
-**Lowest-hanging fruit**: Item 1. Three lines of code, fixes two broken user flows.
+- **PodDetailPage**: Change `navigate(-1)` to `navigate('/')` with label "Map" (pods are on the map)
+- **RecordHeader**: Change `navigate(-1)` to breadcrumb: Contacts > Contact Name. "Contacts" links to `/contacts`
+- **NurturingHub**: Change back target from `/` to `/pulse`
+- **CategoryTable**: Make pod name clickable, linking to `/pod/:podId`. Store `podId` in state during data load
 
-### Quadrant 2: Schedule (Not Urgent + Important)
+### 2. Add breadcrumbs to detail pages that have parent context
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 5 | Phase 20: Reporting | Large | Completes v2.1 milestone |
-| 6 | Multi-user team access | Large | Enables Briell + team usage |
-| 7 | Gmail integration | Large | Cross-channel visibility (top user request) |
+- **CategoryTable**: Already has breadcrumb - fix pod name to be clickable link to `/pod/:podId`
+- **ProjectDetailPage**: Already correct (chevron + "Projects" -> `/projects`)
+- **PodDetailPage**: Change to breadcrumb: Map > Pod Name (Map links to `/`)
+- **RecordHeader**: Add breadcrumb: Contacts > Contact Name
+- **NurturingHub**: Change label from "Dashboard" to "Pulse" and fix target
 
-### Quadrant 3: Delegate/Quick Fix (Urgent + Not Important)
+### 3. Fix sidebar active states for sub-routes
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 4 | Focus filter -> distinct NurturingHub section | ~1 hr | Fixes semantic mismatch |
-| 9 | Contact modal z-index overlap | ~15 min | Visual bug |
-| 10 | Dark mode contrast on project cards | ~15 min | Visual polish |
+In `Sidebar.tsx`, update route detection:
+- `isContacts` should also match `/contact/:id` and `/category/:id`
+- `isPulse` already matches `/pulse/` prefix - confirmed correct
+- Add pod route highlighting (already handled via `isPod`)
 
-### Quadrant 4: Eliminate/Defer (Not Urgent + Not Important)
+### 4. Standardize CategoryTable padding
 
-Items 8, 10, 11 - orb map visual edge cases, import flows (blocked on data), and third-party integrations (blocked on credentials/APIs).
+- Change header padding from `28px 40px 0` to `32px 32px 0`
+- Change body padding to match other pages
 
-## Recommended Execution Order
+## Files Modified
 
-1. **Fix broken routes** (10 min, highest ROI in the entire backlog)
-2. **mergeRecords backlink** (30 min, data integrity)
-3. **Focus filter fix** (1 hr, completes nurturing flow)
-4. **Phase 22-03** (complete Supabase swap)
-5. **Phase 20: Reporting** (last v2.1 blocker)
-6. **UI bugs** (modal overlap, dark mode contrast)
+- `src/components/contacts/CategoryTable.tsx` - Fix breadcrumb (clickable pod), fix padding
+- `src/components/pods/PodDetailPage.tsx` - Breadcrumb instead of generic back
+- `src/components/records/RecordHeader.tsx` - Breadcrumb instead of `navigate(-1)`
+- `src/components/nurturing/NurturingHub.tsx` - Fix back target to `/pulse`
+- `src/components/nav/Sidebar.tsx` - Highlight sidebar for `/contact/` and `/category/` routes
 

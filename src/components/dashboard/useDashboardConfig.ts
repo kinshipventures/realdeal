@@ -10,6 +10,7 @@ export type WidgetId =
   | 'recent-activity'
   | 'quick-links'
   | 'pending-tray'
+  | 'gmail-sync'
 
 export type Preset = 'full' | 'focus'
 
@@ -23,10 +24,11 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
   { id: 'recent-activity', label: 'Recent Activity' },
   { id: 'quick-links', label: 'Quick Links' },
   { id: 'pending-tray', label: 'Pending Tray' },
+  { id: 'gmail-sync', label: 'Email Sync' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'recent-activity', 'quick-links', 'pending-tray'],
+  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync'],
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'quick-links'],
 }
 
@@ -40,6 +42,7 @@ export const DEFAULT_ORDER: WidgetId[] = [
   'needs-attention',
   'recent-activity',
   'quick-links',
+  'gmail-sync',
 ]
 
 const STORAGE_KEY = 'realdeal:dashboard-config:v2'

@@ -60,7 +60,7 @@ export function ProjectsPage() {
           </p>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: 700,
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',

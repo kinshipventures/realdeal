@@ -300,36 +300,26 @@ export function NurturingHub() {
     <div style={{
       maxWidth: 720,
       margin: '0 auto',
-      padding: '28px 24px 80px',
+      padding: '32px 32px 96px',
       background: 'var(--color-bg)',
       minHeight: '100vh',
     }}>
-      {/* Back button */}
-      <button
-        onClick={() => navigate('/')}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: 13,
-          color: 'var(--color-text-secondary)',
-          padding: '0 0 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontFamily: 'inherit',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"/>
-          <polyline points="12 19 5 12 12 5"/>
-        </svg>
-        Dashboard
-      </button>
+      {/* Breadcrumb */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/pulse')}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
+        >
+          Pulse
+        </button>
+        <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
+        <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>Nurturing</span>
+      </nav>
 
       {/* Title */}
       <h1 style={{
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 700,
         fontFamily: 'var(--font-serif)',
         color: 'var(--color-text-primary)',
