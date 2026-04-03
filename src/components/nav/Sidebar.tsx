@@ -74,7 +74,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             justifyContent: 'center',
             width: collapsed ? 40 : 32,
             height: 32,
-            marginLeft: collapsed ? 0 : 'auto',
+            margin: collapsed ? '0 auto' : '0 0 0 auto',
             background: 'none',
             border: 'none',
             borderRadius: 8,
