@@ -84,7 +84,9 @@ function loadConfig(): DashboardConfig {
       if (!orderSet.has(id)) storedOrder.push(id)
     }
 
-    return { preset, visible: storedSet, order: storedOrder }
+    const equityPodIds: string[] | null = parsed.equityPodIds ?? null
+
+    return { preset, visible: storedSet, order: storedOrder, equityPodIds }
   } catch {
     return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
   }
