@@ -19,6 +19,7 @@ export type ListNodeData = {
   memberCount?: number
   categories?: Category[]
   depth?: number
+  highlighted?: boolean
   onHoverEnter?: (podId: string, x: number, y: number) => void
   onHoverLeave?: () => void
   onDrillIn?: (pod: Pod) => void
@@ -35,14 +36,14 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, onHoverEnter, onHoverLeave, onDrillIn } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, highlighted, onHoverEnter, onHoverLeave, onDrillIn } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
 
   return (
     <div
-      className="orbit-start parallax-layer"
+      className={`orbit-start parallax-layer${highlighted ? ' orb-highlight-pulse' : ''}`}
       style={{
         '--orbit-start-x': `${orbitStartX ?? 0}px`,
         '--orbit-start-y': `${orbitStartY ?? 0}px`,

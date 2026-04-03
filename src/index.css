@@ -280,6 +280,16 @@
   opacity: 1;
 }
 
+/* Search highlight pulse */
+.orb-highlight-pulse {
+  animation: highlight-pulse 0.75s ease-in-out 3;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  50% { filter: brightness(1.15) drop-shadow(0 0 16px rgba(255,255,255,0.3)); }
+}
+
 /* ── Parallax depth layer ─────────────────────────────────────────────────── */
 
 .parallax-layer {

@@ -261,7 +261,7 @@ function loadViewport(): Viewport | null {
   } catch { return null }
 }
 
-export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } = {}) {
+export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
@@ -276,6 +276,7 @@ export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } =
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
   const drillBackRef = useRef<(() => void) | null>(null)
+  const mapViewRef = useRef<'hub' | 'pod'>('hub')
 
   // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay + parallax
   useOnViewportChange({
@@ -392,6 +393,7 @@ export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } =
       setNodes(drillNodes)
       setEdges([])
       setMapView('pod')
+      mapViewRef.current = 'pod'
       setSelectedPod(pod)
 
       // Step 3: re-center
@@ -417,6 +419,7 @@ export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } =
     setTimeout(() => {
       rebuildHomeView(getPositions())
       setMapView('hub')
+      mapViewRef.current = 'hub'
       setSelectedPod(null)
       setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })
 
@@ -429,20 +432,28 @@ export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } =
 
   drillBackRef.current = drillBackToHub
 
-  // Watch highlightedPodIds prop - set highlights and auto-clear after 2.5s
+  // Listen for search highlight events from SearchPalette (via App.tsx)
   useEffect(() => {
-    if (!highlightedPodIds?.length) return
-    const applyHighlights = () => setActiveHighlights(new Set(highlightedPodIds))
-    // If in drill-down, go back to hub first so the pod is visible
-    if (mapView === 'pod') {
-      drillBackRef.current?.()
-      setTimeout(applyHighlights, 500)
-    } else {
-      applyHighlights()
+    let clearTimer: ReturnType<typeof setTimeout>
+    function handleHighlight(e: Event) {
+      const podIds: string[] = (e as CustomEvent<string[]>).detail
+      if (!podIds?.length) return
+      clearTimeout(clearTimer)
+      // If in drill-down, go back to hub first so the pods are visible
+      if (mapViewRef.current === 'pod') {
+        drillBackRef.current?.()
+        setTimeout(() => setActiveHighlights(new Set(podIds)), 500)
+      } else {
+        setActiveHighlights(new Set(podIds))
+      }
+      clearTimer = setTimeout(() => setActiveHighlights(new Set()), 2500)
     }
-    const timer = setTimeout(() => setActiveHighlights(new Set()), 2500)
-    return () => clearTimeout(timer)
-  }, [highlightedPodIds]) // eslint-disable-line react-hooks/exhaustive-deps
+    window.addEventListener('map:highlight-pods', handleHighlight)
+    return () => {
+      window.removeEventListener('map:highlight-pods', handleHighlight)
+      clearTimeout(clearTimer)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Apply highlighted flag to nodes when activeHighlights changes
   useEffect(() => {
@@ -890,7 +901,7 @@ export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } =
             height: 48,
             borderRadius: '50%',
             border: 'none',
-            background: 'var(--green-band)',
+            background: '#25B439',
             color: '#fff',
             cursor: 'pointer',
             display: 'flex',
