@@ -300,7 +300,7 @@ export function NurturingHub() {
     <div style={{
       maxWidth: 720,
       margin: '0 auto',
-      padding: '28px 24px 80px',
+      padding: '32px 32px 96px',
       background: 'var(--color-bg)',
       minHeight: '100vh',
     }}>
@@ -313,23 +313,23 @@ export function NurturingHub() {
           cursor: 'pointer',
           fontSize: 13,
           color: 'var(--color-text-secondary)',
-          padding: '0 0 20px',
+          padding: 0,
+          marginBottom: 20,
           display: 'flex',
           alignItems: 'center',
           gap: 6,
           fontFamily: 'inherit',
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"/>
-          <polyline points="12 19 5 12 12 5"/>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
         </svg>
         Dashboard
       </button>
 
       {/* Title */}
       <h1 style={{
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 700,
         fontFamily: 'var(--font-serif)',
         color: 'var(--color-text-primary)',
