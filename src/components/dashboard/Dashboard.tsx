@@ -655,6 +655,13 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
               </div>
             )
           }
+          if (id === 'gmail-sync') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <GmailSyncWidget />
+              </div>
+            )
+          }
           return null
         })}
       </div>
