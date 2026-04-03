@@ -74,6 +74,7 @@ export function NurturingHub() {
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
+  const [interactions, setInteractions] = useState<Interaction[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -83,6 +84,7 @@ export function NurturingHub() {
   })
 
   // Section refs for auto-scroll
+  const focusRef = useRef<HTMLDivElement>(null)
   const needsAttentionRef = useRef<HTMLDivElement>(null)
   const staleRef = useRef<HTMLDivElement>(null)
   const datesRef = useRef<HTMLDivElement>(null)
