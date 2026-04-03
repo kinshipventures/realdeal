@@ -362,7 +362,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         type: 'Contact', status: 'Active',
         company_record_id: null, industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
-        custom_fields: {},
+        communication_preferences: null, custom_fields: {},
       })
       onSaved(created)
       onClose()

@@ -75,6 +75,7 @@ export interface Contact {
   intel_notes: string | null
   relationship_owner: string | null
   contact_frequency: ContactFrequency | null
+  communication_preferences: string | null
   next_follow_up_date: ISODate | null
   next_action: string | null
   kv_fund_investor: string[] | null

@@ -293,6 +293,7 @@ export type Database = {
         Row: {
           birthday: string | null
           cadence_override: Database["public"]["Enums"]["cadence"] | null
+          communication_preferences: string | null
           company: string | null
           company_id: string | null
           contact_frequency:
@@ -343,6 +344,7 @@ export type Database = {
         Insert: {
           birthday?: string | null
           cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          communication_preferences?: string | null
           company?: string | null
           company_id?: string | null
           contact_frequency?:
@@ -393,6 +395,7 @@ export type Database = {
         Update: {
           birthday?: string | null
           cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          communication_preferences?: string | null
           company?: string | null
           company_id?: string | null
           contact_frequency?:

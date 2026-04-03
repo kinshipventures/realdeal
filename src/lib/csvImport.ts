@@ -174,7 +174,7 @@ export async function importContacts(
         kv_fund_investor: null, spv_investor: null, needs_review: false,
         company_record_id: null, custom_fields: {},
         primary_list_id: null, cadence_override: null,
-        email_2: null, email_3: null,
+        email_2: null, email_3: null, communication_preferences: null,
       })
 
       // Update dedup index with newly created contact

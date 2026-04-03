@@ -172,15 +172,7 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
           {field('country', 'Country')}
           {field('global_region', 'Region')}
           {field('contact_frequency', 'Contact Frequency')}
-        </>
-      )}
-
-      {contact.type === 'Company' && (
-        <>
-          {field('stage', 'Stage')}
-          {field('ticker', 'Ticker')}
-          {field('domain', 'Domain')}
-          {field('industry', 'Industry')}
+          {field('communication_preferences', 'Comm Preferences', true)}
         </>
       )}
 
