@@ -21,7 +21,8 @@ const DEFAULT_BG = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
 const shadow = '0 0 24px rgba(0,0,0,0.20), 0 10px 30px -4px rgba(0,0,0,0.25)'
 
 export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
-  const { overallHealth, totalContacts, userName, podName, podColor } = data
+  const { overallHealth, totalContacts, userName, podName, podColor, podId } = data
+  const navigate = useNavigate()
   const hasData = overallHealth !== undefined
   const isDrillDown = !!podName
 
