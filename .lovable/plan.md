@@ -1,37 +1,49 @@
 
 
-# Add Communication Preferences Field
+# Add Companies Page with Dedicated Sidebar Nav
 
 ## What
 
-Add a `communication_preferences` free-text field to contacts (e.g. "bullet points only, text only", "prefers WhatsApp", "no calls before 10am"). Displayed in the Details widget for Contact-type records, between "Contact Frequency" and the shared email fields.
+A new `/companies` route with its own sidebar nav item, showing a table of Company-type records. Separate from the Contacts list, giving companies their own workspace.
 
-## Changes
+## Current state
 
-### 1. Database migration
-- Add `communication_preferences text` column to `contacts` table (nullable, no default)
+- Companies exist as rows in `contacts` table with `type = 'Company'`
+- There's also a `companies` table in the DB (from migration), but the app uses the `contacts` table for both types
+- `RecordsList` already has a `type` filter that can show only Companies
+- Company records use the same `Contact` type interface and CRUD functions
 
-### 2. `src/lib/types.ts`
-- Add `communication_preferences: string | null` to `Contact` interface (after `contact_frequency`)
+## Plan
 
-### 3. `src/lib/supabase-data.ts`
-- Include `communication_preferences` in contact read/write mappings (should flow automatically if using `select('*')`, but verify create/update pass it through)
+### 1. Create `CompaniesPage` component
 
-### 4. `src/components/records/DetailsWidget.tsx`
-- Add `{field('communication_preferences', 'Comm Preferences', true)}` in the Contact section after `contact_frequency`
-- Uses `multi = true` so it renders as a textarea for longer notes
+New file: `src/components/companies/CompaniesPage.tsx`
 
-### 5. `src/lib/sampleData.ts`
-- Add `communication_preferences: null` default to demo contact helper; add a couple example values like "Text only - bullet points preferred" on key demo contacts
+- Reuse the same data loading pattern as `RecordsList` (calls `getContacts()`, `getPods()`, etc.)
+- Pre-filter to `type === 'Company'` only
+- Simplified table with company-relevant columns: Name, Industry, Stage, Domain, Location, Equity, Last Contact
+- Search, sort, click-to-navigate to `/contact/:id` (existing record page handles Company type)
+- Bulk actions: archive, add to pipeline/project
 
-### 6. Touch-up call sites
-- Any `createContact` call sites that build a full `Omit<Contact, 'id' | 'created_at'>` need `communication_preferences: null` added (CreateRecordModal, AddContactModal, csvImport, etc.)
+### 2. Add route in `App.tsx`
+
+- Add `<Route path="companies" element={<CompaniesPage />} />`
+
+### 3. Add sidebar nav item
+
+In `Sidebar.tsx`:
+- Add "Companies" nav item between Contacts and Pipelines
+- Add `isCompanies` route detection for `/companies`
+- Add a `CompaniesIcon` (building icon)
+
+### 4. Add breadcrumb support
+
+Company record pages (`/contact/:id` where type is Company) should show `Companies > [Name]` breadcrumb instead of `Contacts > [Name]` in `RecordHeader.tsx`.
 
 ## Files modified
-- `src/lib/types.ts`
-- `src/lib/supabase-data.ts`
-- `src/lib/sampleData.ts`
-- `src/components/records/DetailsWidget.tsx`
-- `src/components/contacts/AddContactModal.tsx`
-- `src/components/records/CreateRecordModal.tsx`
+
+- `src/components/companies/CompaniesPage.tsx` (new) - dedicated companies table
+- `src/App.tsx` - add `/companies` route
+- `src/components/nav/Sidebar.tsx` - add Companies nav item + icon
+- `src/components/records/RecordHeader.tsx` - conditional breadcrumb based on contact type
 
