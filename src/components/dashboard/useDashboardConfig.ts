@@ -122,7 +122,7 @@ export function useDashboardConfig() {
 
   const applyPreset = useCallback((preset: Preset) => {
     setConfig(prev => {
-      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]), order: prev.order }
+      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]), order: prev.order, equityPodIds: prev.equityPodIds }
       saveConfig(updated)
       return updated
     })
