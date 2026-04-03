@@ -50,7 +50,7 @@ export function CompaniesPage() {
       const eMap: Record<string, number> = {}
       for (const c of companies) {
         const pod = allPods.find(p => c.list_ids.includes(p.id))
-        eMap[c.id] = contactEquityScore(c, interactionsByContact[c.id] ?? [], pod?.cadence ?? 'monthly')
+        eMap[c.id] = contactEquityScore(interactionsByContact[c.id] ?? [])
       }
       setEquityMap(eMap)
       setLoading(false)
