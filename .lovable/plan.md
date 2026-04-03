@@ -1,49 +1,35 @@
 
 
-# Add Companies Page with Dedicated Sidebar Nav
+# Configurable Equity Score Pods
 
 ## What
 
-A new `/companies` route with its own sidebar nav item, showing a table of Company-type records. Separate from the Contacts list, giving companies their own workspace.
+The overall equity score currently uses only pods with `is_priority = true`. Add a "Score Pods" picker to the existing dashboard settings panel so users can check/uncheck which pods feed the equity ring. Defaults to priority pods; persists to localStorage.
 
-## Current state
+## Changes
 
-- Companies exist as rows in `contacts` table with `type = 'Company'`
-- There's also a `companies` table in the DB (from migration), but the app uses the `contacts` table for both types
-- `RecordsList` already has a `type` filter that can show only Companies
-- Company records use the same `Contact` type interface and CRUD functions
+### 1. `src/components/dashboard/useDashboardConfig.ts`
 
-## Plan
+- Add `equityPodIds: string[] | null` to `StoredConfig` and `DashboardConfig` (null = "use priority pods" default)
+- Add `setEquityPods(podIds: string[] | null)` to the hook return
+- Bump storage key to `v3` to force clean migration
 
-### 1. Create `CompaniesPage` component
+### 2. `src/components/dashboard/DashboardSettings.tsx`
 
-New file: `src/components/companies/CompaniesPage.tsx`
+- Accept new props: `pods: Pod[]`, `equityPodIds: string[] | null`, `onSetEquityPods: (ids: string[] | null) => void`
+- Add a "Score Pods" section below presets/above widget list
+- Show a "Use priority pods (default)" toggle. When on, `equityPodIds` is null (auto). When off, show pod checkboxes.
+- Each pod row: color dot + name + checkbox
 
-- Reuse the same data loading pattern as `RecordsList` (calls `getContacts()`, `getPods()`, etc.)
-- Pre-filter to `type === 'Company'` only
-- Simplified table with company-relevant columns: Name, Industry, Stage, Domain, Location, Equity, Last Contact
-- Search, sort, click-to-navigate to `/contact/:id` (existing record page handles Company type)
-- Bulk actions: archive, add to pipeline/project
+### 3. `src/components/dashboard/Dashboard.tsx`
 
-### 2. Add route in `App.tsx`
-
-- Add `<Route path="companies" element={<CompaniesPage />} />`
-
-### 3. Add sidebar nav item
-
-In `Sidebar.tsx`:
-- Add "Companies" nav item between Contacts and Pipelines
-- Add `isCompanies` route detection for `/companies`
-- Add a `CompaniesIcon` (building icon)
-
-### 4. Add breadcrumb support
-
-Company record pages (`/contact/:id` where type is Company) should show `Companies > [Name]` breadcrumb instead of `Contacts > [Name]` in `RecordHeader.tsx`.
+- Destructure `setEquityPods` and `config.equityPodIds` from hook
+- Replace `priorityPods` in `overallScore` computation: if `equityPodIds` is null, use priority pods (current behavior); otherwise filter pods by the configured IDs
+- Pass `pods`, `equityPodIds`, `onSetEquityPods` to `DashboardSettings`
 
 ## Files modified
 
-- `src/components/companies/CompaniesPage.tsx` (new) - dedicated companies table
-- `src/App.tsx` - add `/companies` route
-- `src/components/nav/Sidebar.tsx` - add Companies nav item + icon
-- `src/components/records/RecordHeader.tsx` - conditional breadcrumb based on contact type
+- `src/components/dashboard/useDashboardConfig.ts`
+- `src/components/dashboard/DashboardSettings.tsx`
+- `src/components/dashboard/Dashboard.tsx`
 
