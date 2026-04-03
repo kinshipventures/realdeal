@@ -18,6 +18,8 @@ import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
 import { indexByContact, podEquityScore, overallEquityScore, scoreLabel } from '../../lib/equity'
 import type { Category, Pod } from '../../lib/types'
+import { useAuth } from '../../contexts/AuthContext'
+import { isDemoMode } from '../../lib/sampleData'
 import { EmptyState } from '../empty/EmptyState'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
@@ -128,6 +130,7 @@ interface BuildHomeNodesParams {
   memberCountByPod: Record<string, number>
   overallHealth?: number
   totalContacts?: number
+  userName?: string
   onCreatePod: () => void
   onPodHoverEnter?: (podId: string, x: number, y: number) => void
   onPodHoverLeave?: () => void
@@ -143,6 +146,7 @@ function buildHomeNodes({
   memberCountByPod,
   overallHealth,
   totalContacts,
+  userName,
   onCreatePod,
   onPodHoverEnter,
   onPodHoverLeave,
@@ -157,7 +161,7 @@ function buildHomeNodes({
     position: mojPos,
     draggable: false,
     style: { overflow: 'visible' },
-    data: { overallHealth, totalContacts },
+    data: { overallHealth, totalContacts, userName },
   }
 
   const hubCenterX = mojPos.x + MOJ_SIZE / 2
@@ -199,14 +203,8 @@ function buildHomeNodes({
   return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
 }
 
-function buildHomeEdges(pods: Pod[], equityByPod: Record<string, number>): Edge[] {
-  return pods.map(pod => ({
-    id: `moj-${pod.id}`,
-    type: 'gradient',
-    source: MOJ_ID,
-    target: pod.id,
-    data: { color: 'rgba(255,255,255,0.9)', healthPercent: equityByPod[pod.id] ?? 0 },
-  }))
+function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edge[] {
+  return []
 }
 
 const DRILL_RADIUS = 200
@@ -263,17 +261,21 @@ function loadViewport(): Viewport | null {
   } catch { return null }
 }
 
-export function OrbMap() {
+export function OrbMap({ highlightedPodIds }: { highlightedPodIds?: string[] } = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
   const navigate = useNavigate()
+  const { session } = useAuth()
+  const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
+  const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
   const [fitViewEnabled, setFitViewEnabled] = useState(true)
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
+  const drillBackRef = useRef<(() => void) | null>(null)
 
   // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay + parallax
   useOnViewportChange({
@@ -352,6 +354,7 @@ export function OrbMap() {
       memberCountByPod: memberCountByPodRef.current,
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
+      userName,
       onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,
@@ -423,6 +426,31 @@ export function OrbMap() {
       }, 250)
     }, 150)
   }, [setNodes, rebuildHomeView, setViewport])
+
+  drillBackRef.current = drillBackToHub
+
+  // Watch highlightedPodIds prop - set highlights and auto-clear after 2.5s
+  useEffect(() => {
+    if (!highlightedPodIds?.length) return
+    const applyHighlights = () => setActiveHighlights(new Set(highlightedPodIds))
+    // If in drill-down, go back to hub first so the pod is visible
+    if (mapView === 'pod') {
+      drillBackRef.current?.()
+      setTimeout(applyHighlights, 500)
+    } else {
+      applyHighlights()
+    }
+    const timer = setTimeout(() => setActiveHighlights(new Set()), 2500)
+    return () => clearTimeout(timer)
+  }, [highlightedPodIds]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Apply highlighted flag to nodes when activeHighlights changes
+  useEffect(() => {
+    setNodes(prev => prev.map(n => ({
+      ...n,
+      data: { ...n.data, highlighted: activeHighlights.has(n.id) },
+    })))
+  }, [activeHighlights, setNodes])
 
   const handlePodCreated = useCallback(async (newPod: Pod) => {
     setShowCreatePod(false)
@@ -551,6 +579,7 @@ export function OrbMap() {
           memberCountByPod,
           overallHealth,
           totalContacts: allContacts.length,
+          userName,
           onCreatePod: () => setShowCreatePod(true),
           onPodHoverEnter: handlePodHoverEnter,
           onPodHoverLeave: handlePodHoverLeave,
@@ -629,6 +658,7 @@ export function OrbMap() {
       memberCountByPod: memberCountByPodRef.current,
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
+      userName,
       onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,

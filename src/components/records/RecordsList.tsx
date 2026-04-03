@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Download } from 'lucide-react'
 import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
@@ -114,6 +114,7 @@ function matchesRecency(contact: Contact, recency: RecencyFilter): boolean {
 
 export function RecordsList() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   // Data
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -122,8 +123,11 @@ export function RecordsList() {
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // Filters
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+  // Filters - pre-fill pod from URL query param
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const podParam = searchParams.get('pod')
+    return podParam ? { ...DEFAULT_FILTERS, pod: podParam } : DEFAULT_FILTERS
+  })
 
   // Sort
   const [sort, setSort] = useState<{ col: ColumnId; dir: SortDir }>({ col: 'equity', dir: 'desc' })

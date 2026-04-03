@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { lovable } from '@/integrations/lovable/index'
+import { setDemoMode } from '@/lib/sampleData'
 
 export function LoginPage() {
   const { session } = useAuth()
@@ -93,6 +94,28 @@ export function LoginPage() {
         {error && (
           <p style={{ color: '#dc2626', fontSize: 13, marginTop: 12 }}>{error}</p>
         )}
+
+        <button
+          onClick={() => {
+            setDemoMode(true)
+            window.location.href = '/'
+          }}
+          style={{
+            marginTop: 16,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 13,
+            color: 'var(--color-text-tertiary)',
+            fontFamily: 'var(--font-sans)',
+            padding: '8px 16px',
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+        >
+          Try demo mode
+        </button>
       </div>
     </div>
   )

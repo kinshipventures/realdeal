@@ -6,6 +6,7 @@ import { POD_SHIFT_COLORS } from './SolidOrb'
 export type MojNodeData = {
   overallHealth?: number
   totalContacts?: number
+  userName?: string
   podName?: string
   podColor?: string
 }
@@ -18,7 +19,7 @@ const DEFAULT_BG = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
 const shadow = '0 0 24px rgba(0,0,0,0.20), 0 10px 30px -4px rgba(0,0,0,0.25)'
 
 export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
-  const { overallHealth, totalContacts, podName, podColor } = data
+  const { overallHealth, totalContacts, userName, podName, podColor } = data
   const hasData = overallHealth !== undefined
   const isDrillDown = !!podName
 
@@ -66,50 +67,44 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
           }}>
             {podName}
           </span>
-        ) : hasData ? (
+        ) : (
           <>
             <span style={{
-              fontSize: 28,
-              fontWeight: 800,
+              fontSize: 14,
+              fontWeight: 700,
               fontFamily: 'var(--font-serif)',
-              color: 'rgba(255,255,255,0.90)',
-              letterSpacing: '-0.02em',
+              color: 'rgba(255,255,255,0.92)',
+              letterSpacing: '-0.01em',
               userSelect: 'none',
-              lineHeight: 1,
+              lineHeight: 1.2,
+              textAlign: 'center',
+              padding: '0 12px',
             }}>
-              {overallHealth}
+              {userName || 'RealDeal'}
             </span>
-            <span style={{
-              fontSize: 10,
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.55)',
-              userSelect: 'none',
-              marginTop: 2,
-            }}>
-              {scoreLabel(overallHealth!)}
-            </span>
-            <span style={{
-              fontSize: 9,
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.45)',
-              userSelect: 'none',
-              marginTop: 3,
-            }}>
-              {totalContacts ?? 0} contacts
-            </span>
+            {hasData && (
+              <>
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.50)',
+                  userSelect: 'none',
+                  marginTop: 6,
+                }}>
+                  {scoreLabel(overallHealth!)} - {overallHealth}
+                </span>
+                <span style={{
+                  fontSize: 9,
+                  fontWeight: 400,
+                  color: 'rgba(255,255,255,0.38)',
+                  userSelect: 'none',
+                  marginTop: 2,
+                }}>
+                  {totalContacts ?? 0} contacts
+                </span>
+              </>
+            )}
           </>
-        ) : (
-          <span style={{
-            fontSize: 13,
-            fontWeight: 800,
-            fontFamily: 'var(--font-serif)',
-            color: 'rgba(255,255,255,0.90)',
-            letterSpacing: '-0.01em',
-            userSelect: 'none',
-            lineHeight: 1.2,
-          }}>
-            MRM
-          </span>
         )}
       </div>
     </>

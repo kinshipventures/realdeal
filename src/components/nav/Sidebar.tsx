@@ -61,8 +61,44 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         overflow: 'hidden',
       }}
     >
+      {/* Collapse toggle - top */}
+      <div style={{ padding: '8px 8px 0' }}>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: collapsed ? 40 : 32,
+            height: 32,
+            marginLeft: collapsed ? 0 : 'auto',
+            background: 'none',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            color: 'var(--color-text-tertiary)',
+            transition: 'color 0.12s ease',
+          }}
+        >
+          <svg
+            width="16" height="16" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            style={{
+              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+      </div>
+
       {/* Map - primary */}
-      <div style={{ padding: '12px 8px 4px' }}>
+      <div style={{ padding: '4px 8px' }}>
         <NavItem
           icon={<MapIcon />}
           label="Map"
@@ -238,42 +274,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
         />
 
-        <Divider />
-
-        {/* Collapse toggle */}
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: 10,
-            width: '100%',
-            padding: '8px 16px',
-            background: 'none',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            color: 'var(--color-text-tertiary)',
-            transition: 'color 0.12s ease',
-          }}
-        >
-          <svg
-            width="16" height="16" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="1.5"
-            strokeLinecap="round" strokeLinejoin="round"
-            style={{
-              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease',
-              flexShrink: 0,
-            }}
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
       </div>
     </nav>
   )
@@ -301,9 +301,10 @@ function NavItem({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: collapsed ? 0 : 10,
         width: '100%',
-        padding: '8px 16px',
+        padding: collapsed ? '8px 0' : '8px 16px',
         background: active ? 'var(--tint-hover)' : 'transparent',
         border: 'none',
         borderRadius: 8,

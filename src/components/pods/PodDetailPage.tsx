@@ -2,12 +2,14 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getPods, getContacts, getCategories, getAllInteractions, updatePod, createCategory } from '../../lib/airtable'
+import { getPods, getContacts, getCategories, getAllInteractions, updatePod, createCategory, updateCategory } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { indexByContact } from '../../lib/equity'
 import { Avatar, Spinner } from '../ui'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
+import { LucideIcon } from '../LucideIcon'
+import { IconPicker } from '../map/IconPicker'
 import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
 import { SharePopover } from '../sharing/SharePopover'
 
@@ -104,6 +106,10 @@ export function PodDetailPage() {
   const [newSubPodName, setNewSubPodName] = useState('')
   const newSubPodInputRef = useRef<HTMLInputElement>(null)
 
+  // Icon picker state
+  const [iconPickerCatId, setIconPickerCatId] = useState<string | null>(null)
+  const [iconPickerAnchor, setIconPickerAnchor] = useState<HTMLElement | null>(null)
+
   // Share links state
   const [shareLinks, setShareLinks] = useState<ShareLink[]>([])
   const [showSharePopover, setShowSharePopover] = useState(false)
@@ -177,6 +183,11 @@ export function PodDetailPage() {
     setNewSubPodName('')
     setAddingSubPod(false)
   }, [podId, newSubPodName])
+
+  const handleIconChange = useCallback(async (catId: string, icon: string | null) => {
+    await updateCategory(catId, { icon })
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, icon } : c))
+  }, [])
 
   useEffect(() => {
     if (addingSubPod) newSubPodInputRef.current?.focus()
@@ -442,31 +453,51 @@ export function PodDetailPage() {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {categories.map(cat => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => navigate(`/category/${cat.id}`)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  background: 'var(--tint)',
-                  border: '1px solid var(--edge)',
-                  borderRadius: 100,
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'inherit',
-                  transition: 'background 0.15s',
-                }}
-              >
-                {cat.color && (
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: cat.color, flexShrink: 0 }} />
-                )}
-                {cat.name}
-              </button>
+              <div key={cat.id} style={{ display: 'flex', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/category/${cat.id}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    background: 'var(--tint)',
+                    border: '1px solid var(--edge)',
+                    borderRadius: 100,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    color: 'var(--color-text-primary)',
+                    fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  {cat.icon ? (
+                    <span
+                      onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                      style={{ lineHeight: 0, cursor: 'pointer' }}
+                    >
+                      <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
+                    </span>
+                  ) : (
+                    <span
+                      onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                      style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
+                      title="Set icon"
+                    />
+                  )}
+                  {cat.name}
+                </button>
+              </div>
             ))}
+            {iconPickerCatId && (
+              <IconPicker
+                value={categories.find(c => c.id === iconPickerCatId)?.icon ?? null}
+                onChange={icon => handleIconChange(iconPickerCatId, icon)}
+                anchorEl={iconPickerAnchor}
+                onClose={() => { setIconPickerCatId(null); setIconPickerAnchor(null) }}
+              />
+            )}
           </div>
           {addingSubPod ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -615,9 +646,20 @@ export function PodDetailPage() {
 
         {/* Members section */}
         <section>
-          <div style={sectionHeadStyle}>
-            Members{' '}
-            <Badge label={capacityNum != null ? `${members.length}/${capacityNum}` : String(members.length)} />
+          <div style={{ ...sectionHeadStyle, justifyContent: 'space-between' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Members{' '}
+              <Badge label={capacityNum != null ? `${members.length}/${capacityNum}` : String(members.length)} />
+            </span>
+            {members.length > 0 && (
+              <button
+                type="button"
+                className="see-all-link"
+                onClick={() => navigate(`/contacts?pod=${podId}`)}
+              >
+                View table
+              </button>
+            )}
           </div>
           {members.length === 0 ? (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
