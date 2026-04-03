@@ -2,12 +2,15 @@ import { useCallback, useRef, useState } from 'react'
 import { useEscape } from '../../lib/escapeStack'
 import { ALL_WIDGETS, PRESET_CONFIGS } from './useDashboardConfig'
 import type { DashboardConfig, WidgetId, Preset } from './useDashboardConfig'
+import type { Pod } from '../../lib/types'
 
 interface DashboardSettingsProps {
   config: DashboardConfig
+  pods: Pod[]
   onToggle: (id: WidgetId) => void
   onPreset: (preset: Preset) => void
   onReorder: (from: number, to: number) => void
+  onSetEquityPods: (ids: string[] | null) => void
   onClose: () => void
 }
 
