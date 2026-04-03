@@ -35,7 +35,7 @@ import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 
 export function Dashboard() {
-  const { config, isVisible, toggleWidget, applyPreset, reorderWidgets } = useDashboardConfig()
+  const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
   const [showSettings, setShowSettings] = useState(false)
 
   const [contacts, setContacts] = useState<Contact[]>([])
