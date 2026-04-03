@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
-stopped_at: "Completed 21-02-PLAN.md (checkpoint pending: Task 3 human-verify)"
-last_updated: "2026-04-03T05:43:23.723Z"
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-04-03T06:37:36.045Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 8
+  total_plans: 13
+  completed_plans: 9
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 25 — sidebar-navigation
+**Current focus:** Phase 24 — orb-map-experience-overhaul
 
 ## Current Position
 
-Phase: 25 (sidebar-navigation) — EXECUTING
-Plan: 1 of 1
+Phase: 24 (orb-map-experience-overhaul) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Plan: 1 of 1
 | Phase 19-enrichment-followups P03 | 10 | 3 tasks | 5 files |
 | Phase 21-sharing P01 | 12 | 2 tasks | 5 files |
 | Phase 21-sharing P02 | 8 | 2 tasks | 2 files |
+| Phase 24-orb-map-experience-overhaul P01 | 12 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ See PROJECT.md Key Decisions table for full log.
 - [Phase 19-enrichment-followups]: Suggested-update UI embedded in field() renderer inline -- simple pattern, no new component extraction needed
 - [Phase 21-sharing]: getSharedContacts returns only name/role/company/pod_name - no private fields exposed via public route per SHR-02
 - [Phase 21-sharing]: Same supabase client for anon queries - RLS policies enforce access, no separate anon client needed
+- [Phase 24-orb-map-experience-overhaul]: getStraightPath replaces getSmoothStepPath for hub spokes - straight lines match radial spoke design
+- [Phase 24-orb-map-experience-overhaul]: Tooltip uses position:fixed at cursor coords - avoids ReactFlow canvas-to-screen coordinate transform complexity
 
 ### Roadmap Evolution
 
@@ -89,7 +92,7 @@ See PROJECT.md Key Decisions table for full log.
 
 ## Session Continuity
 
-Last activity: 2026-04-03 - Completed quick task 260402-w6x: Column reorder and resize for contacts table
-Last session: 2026-04-02T18:25:27.267Z
-Stopped at: Completed 21-02-PLAN.md (checkpoint pending: Task 3 human-verify)
+Last activity: 2026-04-03
+Last session: 2026-04-03T06:37:36.043Z
+Stopped at: Completed 24-01-PLAN.md
 Resume file: None

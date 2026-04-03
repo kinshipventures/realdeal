@@ -190,10 +190,10 @@ Plans:
 **Goal:** Transform the orb map from a static pod picker into a full network exploration tool with in-canvas navigation, visual health indicators, map-native interactions, and animated state transitions.
 **Requirements**: MAP-01 through MAP-09 (navigation depth, edges, contact presence, health glanceability, hub interactivity, search/filter, state transitions, map interactions, mobile)
 **Depends on:** None (standalone UX overhaul)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 24-01-PLAN.md -- Health-encoded edges, hub stats display, pod hover tooltips
+- [x] 24-01-PLAN.md -- Health-encoded edges, hub stats display, pod hover tooltips
 - [ ] 24-02-PLAN.md -- Two-level drill-down navigation with animated transitions and breadcrumb toolbar
 - [ ] 24-03-PLAN.md -- Cmd+K search highlight bridge + full experience verification
 
