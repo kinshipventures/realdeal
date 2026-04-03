@@ -45,18 +45,20 @@ export const DEFAULT_ORDER: WidgetId[] = [
   'gmail-sync',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v2'
+const STORAGE_KEY = 'realdeal:dashboard-config:v3'
 
 interface StoredConfig {
   preset: Preset
   visible: WidgetId[]
   order: WidgetId[]
+  equityPodIds: string[] | null
 }
 
 export interface DashboardConfig {
   preset: Preset
   visible: Set<WidgetId>
   order: WidgetId[]
+  equityPodIds: string[] | null
 }
 
 function loadConfig(): DashboardConfig {
