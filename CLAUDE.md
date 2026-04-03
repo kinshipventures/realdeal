@@ -51,7 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm dev          # start dev server
+pnpm dev          # start dev server on http://localhost:8080
 pnpm build        # type-check + vite build
 pnpm lint         # eslint
 
