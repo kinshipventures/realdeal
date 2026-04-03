@@ -128,6 +128,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={() => navigate('/contacts')}
         />
         <NavItem
+          icon={<CompaniesIcon />}
+          label="Companies"
+          active={isCompanies}
+          collapsed={collapsed}
+          onClick={() => navigate('/companies')}
+        />
+        <NavItem
           icon={<PipelinesIcon />}
           label="Pipelines"
           active={isPipelines}
