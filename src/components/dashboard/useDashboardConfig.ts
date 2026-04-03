@@ -86,7 +86,7 @@ function loadConfig(): DashboardConfig {
 
     return { preset, visible: storedSet, order: storedOrder }
   } catch {
-    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
+    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
   }
 }
 
@@ -96,6 +96,7 @@ function saveConfig(config: DashboardConfig) {
       preset: config.preset,
       visible: [...config.visible] as WidgetId[],
       order: config.order,
+      equityPodIds: config.equityPodIds,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
   } catch { /* silent */ }
