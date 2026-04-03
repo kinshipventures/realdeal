@@ -145,7 +145,7 @@ Plans:
 Plans:
 - [x] 22-01-PLAN.md -- Schema DDL spec for Lovable + type generation checkpoint
 - [x] 22-02-PLAN.md -- Migration script (Airtable -> Supabase) + validation
-- [ ] 22-03-PLAN.md -- supabase-data.ts implementation + barrel re-export swap
+- [x] 22-03-PLAN.md -- supabase-data.ts implementation + barrel re-export swap
 
 ## Progress
 
@@ -173,14 +173,14 @@ Plans:
 | 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
 | 20. Reporting | v2.1 | 0/? | Not started | - |
 | 21. Sharing | v2.1 | 2/2 | Complete   | 2026-04-02 |
-| 22. Airtable to Supabase | - | 2/3 | Complete    | 2026-04-02 |
+| 22. Airtable to Supabase | - | 3/3 | Complete    | 2026-04-03 |
 
 ### Phase 23: Dashboard widget settings and reordering
 
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 22
-**Plans:** 2/2 plans complete
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)
