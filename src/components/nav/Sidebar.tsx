@@ -33,7 +33,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 
   const isMap = location.pathname === '/' || location.pathname === '/map'
   const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
-  const isContacts = location.pathname === '/contacts'
+  const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
 

@@ -168,19 +168,25 @@ export function CategoryTable() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
       {/* Header */}
-      <div style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+      <div style={{ padding: '32px 32px 0', flexShrink: 0 }}>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
           <button
             type="button"
-            onClick={() => navigate('/map')}
+            onClick={() => navigate('/')}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
           >
             Map
           </button>
           <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
-          {podName && (
+          {podName && podId && (
             <>
-              <span>{podName}</span>
+              <button
+                type="button"
+                onClick={() => navigate(`/pod/${podId}`)}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
+              >
+                {podName}
+              </button>
               <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
             </>
           )}

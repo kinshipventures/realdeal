@@ -186,29 +186,17 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       borderBottom: '1px solid var(--divider)',
       padding: '28px 32px 24px',
     }}>
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 400,
-          color: 'var(--color-text-secondary)',
-          fontFamily: 'inherit',
-          marginBottom: 20,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        Back
-      </button>
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/contacts')}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
+        >
+          Contacts
+        </button>
+        <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
+        <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{contact.name}</span>
+      </nav>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>
         {editingName ? (
