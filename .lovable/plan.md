@@ -1,64 +1,37 @@
 
 
-# Standardize Breadcrumbs and Navigation Across All Pages
+# Add Communication Preferences Field
 
-## Current State
+## What
 
-Navigation is inconsistent across pages:
+Add a `communication_preferences` free-text field to contacts (e.g. "bullet points only, text only", "prefers WhatsApp", "no calls before 10am"). Displayed in the Details widget for Contact-type records, between "Contact Frequency" and the shared email fields.
 
-| Page | Back button | Goes to | Style |
-|------|-----------|---------|-------|
-| CategoryTable (`/category/:id`) | Breadcrumb trail: Map > Pod > Category | `/map` (Map link only clickable, Pod is plain text) | Text links with `>` separator |
-| PodDetailPage (`/pod/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
-| RecordPage/RecordHeader (`/contact/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
-| ProjectDetailPage (`/projects/:id`) | Chevron + "Projects" | `/projects` (explicit) | Chevron icon |
-| NurturingHub (`/pulse/nurturing`) | Chevron + "Dashboard" | `/` (should be `/pulse`) | Chevron icon |
-| ImportPanel (`/import`) | Text button "Done" | `/` | Different pattern entirely |
-| List pages (Contacts, Pipelines, Projects) | No back button | N/A | Top-level, correct |
+## Changes
 
-### Problems
+### 1. Database migration
+- Add `communication_preferences text` column to `contacts` table (nullable, no default)
 
-1. **CategoryTable breadcrumb**: Pod name is not clickable (should link to `/pod/:podId`)
-2. **NurturingHub**: Back goes to `/` (map) instead of `/pulse` (dashboard)
-3. **PodDetailPage**: Uses `navigate(-1)` - unpredictable if user arrived via direct link or deep navigation
-4. **RecordHeader**: Uses `navigate(-1)` - same unpredictability issue
-5. **Sidebar**: No active highlight for `/category/:id`, `/pulse/nurturing`, or `/contact/:id` routes
-6. **CategoryTable**: Header padding `28px 40px 0` not standardized to `32px 32px`
+### 2. `src/lib/types.ts`
+- Add `communication_preferences: string | null` to `Contact` interface (after `contact_frequency`)
 
-## Plan
+### 3. `src/lib/supabase-data.ts`
+- Include `communication_preferences` in contact read/write mappings (should flow automatically if using `select('*')`, but verify create/update pass it through)
 
-### 1. Standardize back navigation targets (explicit routes, not browser history)
+### 4. `src/components/records/DetailsWidget.tsx`
+- Add `{field('communication_preferences', 'Comm Preferences', true)}` in the Contact section after `contact_frequency`
+- Uses `multi = true` so it renders as a textarea for longer notes
 
-- **PodDetailPage**: Change `navigate(-1)` to `navigate('/')` with label "Map" (pods are on the map)
-- **RecordHeader**: Change `navigate(-1)` to breadcrumb: Contacts > Contact Name. "Contacts" links to `/contacts`
-- **NurturingHub**: Change back target from `/` to `/pulse`
-- **CategoryTable**: Make pod name clickable, linking to `/pod/:podId`. Store `podId` in state during data load
+### 5. `src/lib/sampleData.ts`
+- Add `communication_preferences: null` default to demo contact helper; add a couple example values like "Text only - bullet points preferred" on key demo contacts
 
-### 2. Add breadcrumbs to detail pages that have parent context
+### 6. Touch-up call sites
+- Any `createContact` call sites that build a full `Omit<Contact, 'id' | 'created_at'>` need `communication_preferences: null` added (CreateRecordModal, AddContactModal, csvImport, etc.)
 
-- **CategoryTable**: Already has breadcrumb - fix pod name to be clickable link to `/pod/:podId`
-- **ProjectDetailPage**: Already correct (chevron + "Projects" -> `/projects`)
-- **PodDetailPage**: Change to breadcrumb: Map > Pod Name (Map links to `/`)
-- **RecordHeader**: Add breadcrumb: Contacts > Contact Name
-- **NurturingHub**: Change label from "Dashboard" to "Pulse" and fix target
-
-### 3. Fix sidebar active states for sub-routes
-
-In `Sidebar.tsx`, update route detection:
-- `isContacts` should also match `/contact/:id` and `/category/:id`
-- `isPulse` already matches `/pulse/` prefix - confirmed correct
-- Add pod route highlighting (already handled via `isPod`)
-
-### 4. Standardize CategoryTable padding
-
-- Change header padding from `28px 40px 0` to `32px 32px 0`
-- Change body padding to match other pages
-
-## Files Modified
-
-- `src/components/contacts/CategoryTable.tsx` - Fix breadcrumb (clickable pod), fix padding
-- `src/components/pods/PodDetailPage.tsx` - Breadcrumb instead of generic back
-- `src/components/records/RecordHeader.tsx` - Breadcrumb instead of `navigate(-1)`
-- `src/components/nurturing/NurturingHub.tsx` - Fix back target to `/pulse`
-- `src/components/nav/Sidebar.tsx` - Highlight sidebar for `/contact/` and `/category/` routes
+## Files modified
+- `src/lib/types.ts`
+- `src/lib/supabase-data.ts`
+- `src/lib/sampleData.ts`
+- `src/components/records/DetailsWidget.tsx`
+- `src/components/contacts/AddContactModal.tsx`
+- `src/components/records/CreateRecordModal.tsx`
 
