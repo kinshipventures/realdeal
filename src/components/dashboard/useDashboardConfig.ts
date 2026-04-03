@@ -24,6 +24,7 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
   { id: 'recent-activity', label: 'Recent Activity' },
   { id: 'quick-links', label: 'Quick Links' },
   { id: 'pending-tray', label: 'Pending Tray' },
+  { id: 'gmail-sync', label: 'Email Sync' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
