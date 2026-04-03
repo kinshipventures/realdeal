@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Column resize handle */
+.col-resize-handle { background: transparent; transition: background 0.15s; }
+.col-resize-handle:hover, .col-resize-handle.active { background: var(--color-text-tertiary); }
+
 /* Z-index scale
    20   — breadcrumb navigation
    50   — contact panel
@@ -672,4 +676,71 @@ body::after {
   .widget-card { transition: none; }
   .satellite-expand { transition: none; }
   .parallax-layer { transform: none !important; }
+}
+
+/* Icon picker */
+.icon-picker {
+  width: 264px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 8px;
+  animation: icon-picker-in 0.15s ease-out;
+}
+
+@keyframes icon-picker-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.icon-picker-search {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  outline: none;
+  margin-bottom: 6px;
+  font-family: var(--font-sans);
+}
+
+.icon-picker-search:focus {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: white;
+}
+
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.icon-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.icon-picker-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.icon-picker-item.active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.icon-picker-remove {
+  border: 1px dashed rgba(0, 0, 0, 0.15);
 }

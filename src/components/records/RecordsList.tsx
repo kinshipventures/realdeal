@@ -60,12 +60,16 @@ type SortDir = 'asc' | 'desc'
 // ── Saved views ──────────────────────────────────────────────────────────────
 
 const VIEWS_KEY = 'realdeal:contacts-views'
+const COL_ORDER_KEY = 'realdeal:contacts-column-order'
+const COL_WIDTHS_KEY = 'realdeal:contacts-column-widths'
 
 interface SavedView {
   name: string
   filters: FilterState
   visibleColumns: ColumnId[]
   sort: { col: ColumnId; dir: SortDir }
+  columnOrder?: ColumnId[]
+  columnWidths?: Record<ColumnId, number>
 }
 
 function loadViews(): SavedView[] {
@@ -128,6 +132,43 @@ export function RecordsList() {
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnId>>(
     () => new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id))
   )
+
+  // Column order (drag-reorder)
+  const [columnOrder, setColumnOrder] = useState<ColumnId[]>(() => {
+    try {
+      const raw = localStorage.getItem(COL_ORDER_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as ColumnId[]
+        // Ensure all known columns are present (handles new columns added after save)
+        const allIds = COLUMNS.map(c => c.id)
+        const merged = [...parsed.filter(id => allIds.includes(id))]
+        for (const id of allIds) {
+          if (!merged.includes(id)) merged.push(id)
+        }
+        return merged
+      }
+    } catch { /* ignore */ }
+    return COLUMNS.map(c => c.id)
+  })
+
+  // Column widths (resize)
+  const [columnWidths, setColumnWidths] = useState<Partial<Record<ColumnId, number>>>(() => {
+    try {
+      const raw = localStorage.getItem(COL_WIDTHS_KEY)
+      return raw ? JSON.parse(raw) : {}
+    } catch { return {} }
+  })
+
+  // Drag-reorder refs (avoid re-renders during drag)
+  const dragCol = useRef<ColumnId | null>(null)
+  const overCol = useRef<ColumnId | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dropTargetCol, setDropTargetCol] = useState<ColumnId | null>(null)
+
+  // Resize refs
+  const resizingCol = useRef<ColumnId | null>(null)
+  const resizeStartX = useRef(0)
+  const resizeStartWidth = useRef(0)
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -302,8 +343,16 @@ export function RecordsList() {
   const toggleColumn = useCallback((id: ColumnId) => {
     setVisibleColumns(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+        // Ensure newly visible column is in columnOrder
+        setColumnOrder(order => {
+          if (order.includes(id)) return order
+          return [...order, id]
+        })
+      }
       return next
     })
   }, [])
@@ -336,13 +385,15 @@ export function RecordsList() {
       filters,
       visibleColumns: Array.from(visibleColumns),
       sort,
+      columnOrder,
+      columnWidths: columnWidths as Record<ColumnId, number>,
     }
     const updated = [...savedViews.filter(v => v.name !== view.name), view]
     setSavedViews(updated)
     saveViews(updated)
     setSavingViewName('')
     setShowSaveInput(false)
-  }, [savingViewName, filters, visibleColumns, sort, savedViews])
+  }, [savingViewName, filters, visibleColumns, sort, columnOrder, columnWidths, savedViews])
 
   // Apply a saved view
   const applyView = useCallback((view: SavedView | null) => {
@@ -350,10 +401,16 @@ export function RecordsList() {
       setFilters(DEFAULT_FILTERS)
       setVisibleColumns(new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id)))
       setSort({ col: 'equity', dir: 'desc' })
+      setColumnOrder(COLUMNS.map(c => c.id))
+      setColumnWidths({})
+      localStorage.removeItem(COL_ORDER_KEY)
+      localStorage.removeItem(COL_WIDTHS_KEY)
     } else {
       setFilters(view.filters)
       setVisibleColumns(new Set(view.visibleColumns))
       setSort(view.sort)
+      if (view.columnOrder) setColumnOrder(view.columnOrder)
+      if (view.columnWidths) setColumnWidths(view.columnWidths)
     }
     setShowViewsDropdown(false)
   }, [])
@@ -438,7 +495,7 @@ export function RecordsList() {
   }
 
   function handleExportCsv(rows: Contact[] = contacts.filter(c => selectedIds.has(c.id))) {
-    const visibleColsSnap = COLUMNS.filter(c => visibleColumns.has(c.id))
+    const visibleColsSnap = visibleCols
     const headers = visibleColsSnap.map(c => c.label)
 
     const csvRows = rows.map(c => visibleColsSnap.map(col => {
@@ -457,13 +514,101 @@ export function RecordsList() {
   }
 
   async function handleCopyToClipboard(rows: Contact[]) {
-    const cols = COLUMNS.filter(c => visibleColumns.has(c.id))
+    const cols = visibleCols
     const headers = cols.map(c => c.label).join('\t')
     const lines = rows.map(c => cols.map(col => cellValue(c, col.id)).join('\t'))
     await navigator.clipboard.writeText([headers, ...lines].join('\n'))
     setCopyFeedback(true)
     setTimeout(() => setCopyFeedback(false), 2000)
   }
+
+  // ── Column drag-reorder handlers ──────────────────────────────────────────
+
+  function handleColDragStart(e: React.DragEvent, colId: ColumnId) {
+    dragCol.current = colId
+    setIsDragging(true)
+    e.dataTransfer.effectAllowed = 'move'
+    // Use a transparent 1x1 drag image to avoid browser ghost
+    const img = document.createElement('div')
+    img.style.position = 'absolute'
+    img.style.top = '-9999px'
+    document.body.appendChild(img)
+    e.dataTransfer.setDragImage(img, 0, 0)
+    requestAnimationFrame(() => document.body.removeChild(img))
+  }
+
+  function handleColDragOver(e: React.DragEvent, colId: ColumnId) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (overCol.current !== colId) {
+      overCol.current = colId
+      setDropTargetCol(colId)
+    }
+  }
+
+  function handleColDragLeave() {
+    overCol.current = null
+    setDropTargetCol(null)
+  }
+
+  function handleColDragEnd() {
+    const from = dragCol.current
+    const to = overCol.current
+    if (from && to && from !== to) {
+      setColumnOrder(prev => {
+        const next = prev.filter(id => id !== from)
+        const toIdx = next.indexOf(to)
+        next.splice(toIdx, 0, from)
+        localStorage.setItem(COL_ORDER_KEY, JSON.stringify(next))
+        return next
+      })
+    }
+    dragCol.current = null
+    overCol.current = null
+    setIsDragging(false)
+    setDropTargetCol(null)
+  }
+
+  // ── Column resize handlers ────────────────────────────────────────────────
+
+  function handleResizePointerDown(e: React.PointerEvent, colId: ColumnId) {
+    e.stopPropagation()
+    e.preventDefault()
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    resizingCol.current = colId
+    resizeStartX.current = e.clientX
+    // Get current width from state or measure the th
+    const th = (e.target as HTMLElement).parentElement as HTMLTableCellElement
+    resizeStartWidth.current = columnWidths[colId] ?? th.offsetWidth
+  }
+
+  function handleResizePointerMove(e: React.PointerEvent, colId: ColumnId) {
+    if (resizingCol.current !== colId) return
+    const delta = e.clientX - resizeStartX.current
+    const newWidth = Math.max(60, resizeStartWidth.current + delta)
+    setColumnWidths(prev => ({ ...prev, [colId]: newWidth }))
+  }
+
+  function handleResizePointerUp(e: React.PointerEvent) {
+    if (!resizingCol.current) return
+    ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
+    setColumnWidths(prev => {
+      localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(prev))
+      return prev
+    })
+    resizingCol.current = null
+  }
+
+  function handleResizeDoubleClick(colId: ColumnId) {
+    setColumnWidths(prev => {
+      const next = { ...prev }
+      delete next[colId]
+      localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
+  const hasCustomWidths = Object.keys(columnWidths).length > 0
 
   async function handleBulkArchive() {
     if (!window.confirm(`Archive ${selectedIds.size} contact(s)? This is reversible.`)) return
@@ -496,7 +641,11 @@ export function RecordsList() {
     setSelectedProjectId(null)
   }
 
-  const visibleCols = COLUMNS.filter(c => visibleColumns.has(c.id))
+  // Ordered visible columns -- respects custom column order
+  const visibleCols = columnOrder
+    .filter(id => visibleColumns.has(id))
+    .map(id => COLUMNS.find(c => c.id === id)!)
+    .filter(Boolean)
 
   if (loading) {
     return (
@@ -1037,12 +1186,17 @@ export function RecordsList() {
           {/* Desktop table */}
           <table
             className="records-table"
-            style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: 13,
+              tableLayout: hasCustomWidths ? 'fixed' : 'auto',
+            }}
           >
             <thead style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 1 }}>
               <tr style={{ borderBottom: '1px solid var(--edge)' }}>
                 {/* Checkbox header - 44px touch target */}
-                <th style={{ width: 44, padding: 0, textAlign: 'center', height: 44 }}>
+                <th style={{ width: 44, padding: 0, textAlign: 'center', height: 44, position: 'relative' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
                     <input
                       type="checkbox"
@@ -1052,27 +1206,59 @@ export function RecordsList() {
                     />
                   </div>
                 </th>
-                {visibleCols.map(col => (
-                  <th
-                    key={col.id}
-                    onClick={() => toggleSort(col.id)}
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px 12px',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {col.label}
-                    <SortIcon active={sort.col === col.id} dir={sort.dir} />
-                  </th>
-                ))}
+                {visibleCols.map(col => {
+                  const isDragSource = isDragging && dragCol.current === col.id
+                  const isDropTarget = dropTargetCol === col.id && dragCol.current !== col.id
+                  const canDrag = col.id !== 'name'
+                  return (
+                    <th
+                      key={col.id}
+                      draggable={canDrag}
+                      onClick={() => toggleSort(col.id)}
+                      onDragStart={canDrag ? e => handleColDragStart(e, col.id) : undefined}
+                      onDragOver={canDrag ? e => handleColDragOver(e, col.id) : undefined}
+                      onDragLeave={canDrag ? handleColDragLeave : undefined}
+                      onDragEnd={canDrag ? handleColDragEnd : undefined}
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px 12px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                        cursor: canDrag ? 'grab' : 'pointer',
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                        opacity: isDragSource ? 0.4 : 1,
+                        borderLeft: isDropTarget ? '2px solid #25B439' : undefined,
+                        width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined,
+                      }}
+                    >
+                      {col.label}
+                      <SortIcon active={sort.col === col.id} dir={sort.dir} />
+                      {/* Resize handle */}
+                      <div
+                        className="col-resize-handle"
+                        onClick={e => e.stopPropagation()}
+                        onPointerDown={e => handleResizePointerDown(e, col.id)}
+                        onPointerMove={e => handleResizePointerMove(e, col.id)}
+                        onPointerUp={handleResizePointerUp}
+                        onDoubleClick={() => handleResizeDoubleClick(col.id)}
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 4,
+                          cursor: 'col-resize',
+                          zIndex: 2,
+                        }}
+                      />
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>
@@ -1108,7 +1294,7 @@ export function RecordsList() {
                     </td>
 
                     {visibleCols.map(col => (
-                      <td key={col.id} style={{ padding: '12px 12px', height: 44 }}>
+                      <td key={col.id} style={{ padding: '12px 12px', height: 44, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
                         {col.id === 'name' && (
                           <span style={{
                             fontWeight: contact.type === 'Company' ? 600 : 500,
