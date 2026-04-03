@@ -389,6 +389,7 @@ export function OrbMap() {
     if (isAnimating.current) return
     isAnimating.current = true
     setFitViewEnabled(false)
+    setHoveredPod(null)
 
     // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
     setMapView('pod')
@@ -697,9 +698,10 @@ export function OrbMap() {
     setActiveRings(rings)
     ringByPodRef.current = ringMap
     setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
-    setViewport({ x: 0, y: 0, zoom: 1 })
-    setViewportState({ x: 0, y: 0, zoom: 1 })
-  }, [setViewport, setNodes, setEdges, handlePodHoverEnter, handlePodHoverLeave])
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.22, duration: 250 })
+    })
+  }, [setNodes, setEdges, fitView, handlePodHoverEnter, handlePodHoverLeave])
 
   return (
     <div ref={containerRef} style={{
@@ -895,6 +897,7 @@ export function OrbMap() {
         fitViewOptions={{ padding: 0.22 }}
         minZoom={0.15}
         maxZoom={2.5}
+        translateExtent={[[-800, -800], [800, 800]]}
         nodesDraggable
         edgesReconnectable={false}
         edgesFocusable={false}
