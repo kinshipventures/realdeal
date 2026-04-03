@@ -184,3 +184,23 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 23 to break down)
+
+### Phase 24: Orb Map Experience Overhaul
+
+**Goal:** Transform the orb map from a static pod picker into a full network exploration tool with in-canvas navigation, visual health indicators, map-native interactions, and animated state transitions.
+**Requirements**: MAP-01 through MAP-09 (navigation depth, edges, contact presence, health glanceability, hub interactivity, search/filter, state transitions, map interactions, mobile)
+**Depends on:** None (standalone UX overhaul)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 24 to break down)
+
+### Phase 25: Sidebar Navigation
+
+**Goal:** Replace the floating bottom pill navigator with a collapsible left sidebar on desktop. Map becomes the default route.
+**Requirements**: NAV-SIDEBAR
+**Depends on:** None (standalone UX overhaul)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 25-01-PLAN.md -- Sidebar component, AppShell layout update, route swap (/ = OrbMap, /pulse = Dashboard)
