@@ -15,8 +15,8 @@ const pod = (id: string, name: string, color: HexColor, priority: boolean, caden
   id: `demo-pod-${id}`, name, color, owner: 'moj_mahdara', is_priority: priority, cadence, description, capacity, enrichment_opt_in: false, created_at: '2026-01-15T00:00:00.000Z',
 })
 
-const cat = (id: string, podId: string, name: string, color: HexColor | null = null): Category => ({
-  id: `demo-cat-${id}`, list_id: `demo-pod-${podId}`, name, color, created_at: '2026-01-15T00:00:00.000Z',
+const cat = (id: string, podId: string, name: string, color: HexColor | null = null, icon: string | null = null): Category => ({
+  id: `demo-cat-${id}`, list_id: `demo-pod-${podId}`, name, color, icon, created_at: '2026-01-15T00:00:00.000Z',
 })
 
 function daysAgo(n: number): string {
@@ -113,20 +113,20 @@ export const DEMO_PODS: Pod[] = [
 // ── Categories ──
 
 export const DEMO_CATEGORIES: Category[] = [
-  cat('sv', 'maps', 'Silicon Valley', '#E57373'),
-  cat('ny', 'maps', 'New York', '#EF5350'),
-  cat('la', 'maps', 'Los Angeles', '#F44336'),
-  cat('series-a', 'lps', 'Series A', '#F48FB1'),
-  cat('angels', 'lps', 'Angels', '#FF80AB'),
-  cat('family-office', 'lps', 'Family Office', '#FF4081'),
-  cat('design', 'service', 'Design', '#FFB74D'),
-  cat('dev', 'service', 'Development', '#FFA726'),
-  cat('pr', 'service', 'PR & Comms', '#FF9800'),
-  cat('legal', 'service', 'Legal', '#FB8C00'),
-  cat('brand', 'companies', 'Brand Partners', '#9575CD'),
-  cat('portfolio', 'companies', 'Portfolio', '#7E57C2'),
-  cat('inner', 'friends', 'Inner Circle', '#DAA520'),
-  cat('mentors', 'friends', 'Mentors', '#C49B1A'),
+  cat('sv', 'maps', 'Silicon Valley', '#E57373', 'Cpu'),
+  cat('ny', 'maps', 'New York', '#EF5350', 'Building2'),
+  cat('la', 'maps', 'Los Angeles', '#F44336', 'Sun'),
+  cat('series-a', 'lps', 'Series A', '#F48FB1', 'TrendingUp'),
+  cat('angels', 'lps', 'Angels', '#FF80AB', 'Heart'),
+  cat('family-office', 'lps', 'Family Office', '#FF4081', 'Landmark'),
+  cat('design', 'service', 'Design', '#FFB74D', 'Palette'),
+  cat('dev', 'service', 'Development', '#FFA726', 'Code'),
+  cat('pr', 'service', 'PR & Comms', '#FF9800', 'Megaphone'),
+  cat('legal', 'service', 'Legal', '#FB8C00', 'Scale'),
+  cat('brand', 'companies', 'Brand Partners', '#9575CD', 'Sparkles'),
+  cat('portfolio', 'companies', 'Portfolio', '#7E57C2', 'Briefcase'),
+  cat('inner', 'friends', 'Inner Circle', '#DAA520', 'Star'),
+  cat('mentors', 'friends', 'Mentors', '#C49B1A', 'GraduationCap'),
 ]
 
 // ── Contacts ──

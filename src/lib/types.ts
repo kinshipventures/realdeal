@@ -38,6 +38,7 @@ export interface Category {
   list_id: string      // single linked Pod record ID
   name: string
   color: HexColor | null
+  icon: string | null   // Lucide icon name, e.g. "Coffee", "Briefcase"
   created_at: string
 }
 

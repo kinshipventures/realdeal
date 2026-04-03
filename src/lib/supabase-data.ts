@@ -134,7 +134,7 @@ export async function updatePod(id: string, data: Partial<{
 // ── Categories ───────────────────────────────────────────────────────────────
 
 function mapCategory(r: any): Category {
-  return { id: r.id, list_id: r.pod_id, name: r.name, color: (r.color ?? null) as HexColor | null, created_at: r.created_at }
+  return { id: r.id, list_id: r.pod_id, name: r.name, color: (r.color ?? null) as HexColor | null, icon: r.icon ?? null, created_at: r.created_at }
 }
 
 let _categoriesCache: Category[] | null = null
@@ -159,12 +159,24 @@ export function getCategories(listId?: string): Promise<Category[]> {
 
 export async function createCategory(name: string, listId: string): Promise<Category> {
   if (isDemoMode()) {
-    const c: Category = { id: `demo-cat-${Date.now()}`, list_id: listId, name, color: null, created_at: new Date().toISOString() }
+    const c: Category = { id: `demo-cat-${Date.now()}`, list_id: listId, name, color: null, icon: null, created_at: new Date().toISOString() }
     DEMO_CATEGORIES.push(c)
     return c
   }
   const userId = await getUserId()
   const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, name, pod_id: listId }).select().single()
+  if (error) throw error
+  _categoriesCache = null
+  return mapCategory(row)
+}
+
+export async function updateCategory(id: string, data: Partial<Pick<Category, 'name' | 'color' | 'icon'>>): Promise<Category> {
+  if (isDemoMode()) {
+    const cat = DEMO_CATEGORIES.find(c => c.id === id)
+    if (cat) Object.assign(cat, data)
+    return cat ?? ({ id, ...data } as Category)
+  }
+  const { data: row, error } = await supabase.from('categories').update(data).eq('id', id).select().single()
   if (error) throw error
   _categoriesCache = null
   return mapCategory(row)
