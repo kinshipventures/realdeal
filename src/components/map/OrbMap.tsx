@@ -264,7 +264,7 @@ function loadViewport(): Viewport | null {
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const { setViewport } = useReactFlow()
+  const { setViewport, fitView } = useReactFlow()
   const navigate = useNavigate()
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
@@ -375,7 +375,10 @@ export function OrbMap() {
     isAnimating.current = true
     setFitViewEnabled(false)
 
-    // Step 1: zoom toward the clicked pod
+    // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
+    setMapView('pod')
+    mapViewRef.current = 'pod'
+    setSelectedPod(pod)
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
       if (n.id === MOJ_ID) return n
@@ -383,7 +386,7 @@ export function OrbMap() {
     }))
 
     setTimeout(() => {
-      // Step 2: build drill nodes and switch view
+      // Step 2: build drill nodes and fit to them
       const cats = categoriesByPodRef.current[pod.id] ?? []
       const { nodes: drillNodes } = buildDrillNodes(
         pod, cats, equityByPodRef.current,
@@ -392,18 +395,16 @@ export function OrbMap() {
       )
       setNodes(drillNodes)
       setEdges([])
-      setMapView('pod')
-      mapViewRef.current = 'pod'
-      setSelectedPod(pod)
 
-      // Step 3: re-center
-      setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })
-
-      setTimeout(() => {
-        isAnimating.current = false
-      }, 250)
+      // Step 3: fitView centers on actual node positions with padding
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.35, duration: 250 })
+        setTimeout(() => {
+          isAnimating.current = false
+        }, 300)
+      })
     }, 150)
-  }, [setNodes, setEdges, setViewport, navigate])
+  }, [setNodes, setEdges, fitView, navigate])
 
   drillInRef.current = drillIntoPod
 
@@ -417,18 +418,20 @@ export function OrbMap() {
     ))
 
     setTimeout(() => {
-      rebuildHomeView(getPositions())
       setMapView('hub')
       mapViewRef.current = 'hub'
       setSelectedPod(null)
-      setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })
+      rebuildHomeView(getPositions())
 
-      setTimeout(() => {
-        isAnimating.current = false
-        setFitViewEnabled(true)
-      }, 250)
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.22, duration: 250 })
+        setTimeout(() => {
+          isAnimating.current = false
+          setFitViewEnabled(true)
+        }, 300)
+      })
     }, 150)
-  }, [setNodes, rebuildHomeView, setViewport])
+  }, [setNodes, rebuildHomeView, fitView])
 
   drillBackRef.current = drillBackToHub
 
@@ -921,9 +924,6 @@ export function OrbMap() {
             justifyContent: 'center',
             boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
             transition: 'transform 0.15s, box-shadow 0.15s',
-            fontSize: 24,
-            fontWeight: 300,
-            lineHeight: 1,
           }}
           onMouseEnter={e => {
             e.currentTarget.style.transform = 'scale(1.1)'
@@ -934,7 +934,10 @@ export function OrbMap() {
             e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)'
           }}
         >
-          +
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </button>
       )}
 
