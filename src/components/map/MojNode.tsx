@@ -10,6 +10,7 @@ export type MojNodeData = {
   userName?: string
   podName?: string
   podColor?: string
+  podId?: string
 }
 export type MojNodeType = Node<MojNodeData, 'moj'>
 
