@@ -240,7 +240,8 @@ function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | nul
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
     company_record_id: r.company_id ?? null, industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
-    email_3: r.email_3 ?? null, custom_fields: r.custom_fields ?? {}, created_at: r.created_at,
+    email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
+    custom_fields: r.custom_fields ?? {}, created_at: r.created_at,
   }
 }
 
