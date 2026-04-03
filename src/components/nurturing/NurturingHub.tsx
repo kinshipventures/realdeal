@@ -8,7 +8,7 @@ import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact, contactCadenceDays, todaysFocus } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
-import type { Contact, Pod } from '../../lib/types'
+import type { Contact, Pod, Interaction, FocusItem } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 
 // ── Styles ───────────────────────────────────────────────────────────────────
