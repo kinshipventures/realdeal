@@ -21,6 +21,7 @@ import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { SharedListPage } from './components/sharing/SharedListPage'
+import { Sidebar } from './components/nav/Sidebar'
 
 const BG = 'var(--color-bg)'
 
@@ -39,17 +40,19 @@ function useIsMobile() {
 function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
-  const isMap = location.pathname === '/map'
+  const isMap = location.pathname === '/' || location.pathname === '/map'
   const isContacts = location.pathname === '/contacts'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
-  const isPulse = !isMap && !isContacts && !isPipelines && !isProjects
-    && (location.pathname === '/' || location.pathname.startsWith('/pulse'))
+  const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isMobile = useIsMobile()
   const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
+  )
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (isDemoMode()) return false
     return !localStorage.getItem('realdeal:onboarding-complete')
@@ -73,14 +76,43 @@ function AppShell() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  const toggleSidebar = () => {
+    const next = !collapsed
+    setCollapsed(next)
+    localStorage.setItem('realdeal:sidebar-collapsed', next ? '1' : '0')
+  }
+
+  const handleDemoToggle = () => {
+    const next = !demo
+    setDemoMode(next)
+    setDemo(next)
+    window.location.reload()
+  }
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
-      <div style={{ paddingBottom: isMobile ? 56 : 0, height: '100%' }}>
+
+      {!isMobile && (
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={toggleSidebar}
+          onSearch={() => setShowSearch(true)}
+          demo={demo}
+          onDemoToggle={handleDemoToggle}
+        />
+      )}
+
+      <div style={{
+        paddingLeft: isMobile ? 0 : (collapsed ? 56 : 220),
+        paddingBottom: isMobile ? 56 : 0,
+        height: '100%',
+        transition: isMobile ? undefined : 'padding-left 0.2s cubic-bezier(0.215, 0.61, 0.355, 1)',
+      }}>
         <Outlet />
       </div>
 
-      {isMobile ? (
+      {isMobile && (
         /* Mobile — fixed bottom tab bar */
         <nav
           role="navigation"
@@ -103,7 +135,7 @@ function AppShell() {
           <button
             type="button"
             aria-current={isPulse ? 'page' : undefined}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/pulse')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
@@ -226,174 +258,6 @@ function AppShell() {
             <span style={{ fontSize: 9, fontWeight: 500, color: isProjects ? 'var(--color-brand)' : 'var(--text-muted)' }}>Projects</span>
           </button>
         </nav>
-      ) : (
-        /* Desktop — floating pill navigator */
-        <nav
-          role="navigation"
-          aria-label="Main navigation"
-          style={{
-            position: 'fixed',
-            bottom: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            display: 'flex',
-            gap: 2,
-            padding: 4,
-            borderRadius: 100,
-            background: 'var(--nav-bg)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid var(--edge-strong)',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
-          }}
-        >
-          <button
-            type="button"
-            aria-current={isPulse ? 'page' : undefined}
-            onClick={() => navigate('/')}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 100,
-              border: 'none',
-              fontSize: 12,
-              letterSpacing: '0.01em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isPulse ? 'var(--tint-hover)' : 'transparent',
-              color: isPulse ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isPulse ? 600 : 500,
-            }}
-          >
-            Pulse
-          </button>
-          <button
-            type="button"
-            aria-current={isMap ? 'page' : undefined}
-            onClick={() => navigate('/map')}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 100,
-              border: 'none',
-              fontSize: 12,
-              letterSpacing: '0.01em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isMap ? 'var(--tint-hover)' : 'transparent',
-              color: isMap ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isMap ? 600 : 500,
-            }}
-          >
-            Map
-          </button>
-          <button
-            type="button"
-            aria-current={isContacts ? 'page' : undefined}
-            onClick={() => navigate('/contacts')}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 100,
-              border: 'none',
-              fontSize: 12,
-              letterSpacing: '0.01em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isContacts ? 'var(--tint-hover)' : 'transparent',
-              color: isContacts ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isContacts ? 600 : 500,
-            }}
-          >
-            Contacts
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSearch(true)}
-            aria-label="Search contacts"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '12px 12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
-          <button
-            type="button"
-            aria-current={isPipelines ? 'page' : undefined}
-            onClick={() => navigate('/pipelines')}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 100,
-              border: 'none',
-              fontSize: 12,
-              letterSpacing: '0.01em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isPipelines ? 'var(--tint-hover)' : 'transparent',
-              color: isPipelines ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isPipelines ? 600 : 500,
-            }}
-          >
-            Pipelines
-          </button>
-          <button
-            type="button"
-            aria-current={isProjects ? 'page' : undefined}
-            onClick={() => navigate('/projects')}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 100,
-              border: 'none',
-              fontSize: 12,
-              letterSpacing: '0.01em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-              background: isProjects ? 'var(--tint-hover)' : 'transparent',
-              color: isProjects ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isProjects ? 600 : 500,
-            }}
-          >
-            Projects
-          </button>
-          <div style={{ width: 1, height: 20, background: 'var(--edge)', margin: '0 4px', alignSelf: 'center' }} />
-          <button
-            type="button"
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
-            aria-label="Sign out"
-            title="Sign out"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '12px 12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-        </nav>
       )}
 
       {showSearch && (
@@ -414,7 +278,7 @@ function AppShell() {
           aria-label="New relationship"
           style={{
             position: 'fixed',
-            bottom: isMobile ? 72 : 84,
+            bottom: isMobile ? 72 : 24,
             right: 24,
             width: 48,
             height: 48,
@@ -443,37 +307,34 @@ function AppShell() {
         onCreated={(_contact: Contact) => setShowCreate(false)}
       />
 
-      {/* Demo data toggle */}
-      <button
-        type="button"
-        onClick={() => {
-          const next = !demo
-          setDemoMode(next)
-          setDemo(next)
-          window.location.reload()
-        }}
-        style={{
-          position: 'fixed',
-          bottom: isMobile ? 56 : 52,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 100,
-          padding: '4px 12px',
-          borderRadius: 100,
-          border: `1px solid ${demo ? 'var(--color-brand)' : 'var(--edge)'}`,
-          background: demo ? 'rgba(37,180,57,0.08)' : 'var(--nav-bg)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          fontSize: 10,
-          fontWeight: 500,
-          fontFamily: 'inherit',
-          color: demo ? 'var(--color-brand)' : 'var(--text-muted)',
-          cursor: 'pointer',
-          transition: 'all 0.15s',
-        }}
-      >
-        {demo ? 'demo on' : 'demo off'}
-      </button>
+      {/* Demo data toggle - mobile only (desktop uses sidebar) */}
+      {isMobile && (
+        <button
+          type="button"
+          onClick={handleDemoToggle}
+          style={{
+            position: 'fixed',
+            bottom: 56,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            padding: '4px 12px',
+            borderRadius: 100,
+            border: `1px solid ${demo ? 'var(--color-brand)' : 'var(--edge)'}`,
+            background: demo ? 'rgba(37,180,57,0.08)' : 'var(--nav-bg)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            fontSize: 10,
+            fontWeight: 500,
+            fontFamily: 'inherit',
+            color: demo ? 'var(--color-brand)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          {demo ? 'demo on' : 'demo off'}
+        </button>
+      )}
     </div>
   )
 }
@@ -485,7 +346,8 @@ export default function App() {
       <Route path="s/:token" element={<SharedListPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={<OrbMap />} />
+          <Route path="pulse" element={<Dashboard />} />
           <Route path="pulse/nurturing" element={<NurturingHub />} />
           <Route path="map" element={<OrbMap />} />
           <Route path="contacts" element={<RecordsList />} />
