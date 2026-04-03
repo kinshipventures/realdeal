@@ -28,7 +28,7 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'recent-activity', 'quick-links', 'pending-tray'],
+  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync'],
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'quick-links'],
 }
 
