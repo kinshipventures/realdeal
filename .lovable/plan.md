@@ -1,94 +1,125 @@
 
 
-# RealDeal Gap Analysis - Eisenhower Matrix
+# Layout Standardization + Gmail Email Integration
 
-## Current State
+## Part A: Layout Standardization
 
-- **v2.0**: Shipped (68/68 requirements), 3 known broken routes + 1 data integrity gap from audit
-- **v2.1**: 3/4 phases complete (Auth, Enrichment/Follow-ups, Sharing done). Reporting (Phase 20) not started.
-- **Phase 22** (Airtable->Supabase migration): 2/3 plans done, Plan 22-03 (swap data layer) incomplete
-- **Phase 24** (Orb Map overhaul): All 3 plans marked complete
-- **Phase 25** (Sidebar nav): Plan exists, partially implemented (sidebar is live)
-- **21 pending todos** in `.planning/todos/pending/`
+Standardize padding, titling, and back buttons across all list and detail pages.
 
-## Eisenhower Matrix
+### List Pages
+
+**RecordsList (Contacts)**
+- Change header padding from `28px 40px 0` to `32px 32px 0`
+- Change body padding from `0 40px 40px` to `0 32px`
+- Add bottom padding `96px` to scroll container
+- Add eyebrow "CONTACTS" (10px uppercase, 0.08em letter-spacing, tertiary color)
+- Change title from 30px to 24px, add `letterSpacing: '-0.02em'`
+
+**PipelinesPage**
+- Add eyebrow "PIPELINES" + title "Pipelines" header before the tab bar
+- Change padding from `32` to `32px 32px 96px`
+
+**ProjectsPage**
+- Change title from 22px to 24px (already closest to standard)
+
+### Detail Pages
+
+**Back buttons** - standardize all to: chevron-left polyline SVG (`15 18 9 12 15 6`), `fontSize: 13`, `gap: 6`, `padding: 0`, `marginBottom: 20`
+- RecordHeader: currently uses `← Back` text entity, change to chevron SVG, adjust margin from 12 to 20
+- PodDetailPage: already uses chevron - move inside the `maxWidth: 720` container, standardize padding
+- NurturingHub: uses arrow-left SVG - swap to chevron, change `padding: '0 0 20px'` to `padding: 0, marginBottom: 20`
+- ProjectDetailPage: uses arrow-left SVG - swap to chevron
+
+**Padding normalization**
+- NurturingHub: `28px 24px 80px` -> `32px 32px 96px`
+- PodDetailPage: back button area `16px 24px 0` -> inside container; content `24px 24px` -> `32px 32px`; bottom `80` -> `96`
+- NurturingHub title: `24px` -> `26px` (match RecordHeader/ProjectDetail convention)
+
+### Files to modify
+1. `src/components/records/RecordsList.tsx` - header sizing, eyebrow, padding
+2. `src/components/pipelines/PipelinesPage.tsx` - add header, fix padding
+3. `src/components/projects/ProjectsPage.tsx` - title size
+4. `src/components/records/RecordHeader.tsx` - back button SVG + margin
+5. `src/components/pods/PodDetailPage.tsx` - back button, padding
+6. `src/components/nurturing/NurturingHub.tsx` - back button, padding, title size
+
+---
+
+## Part B: Gmail Email Integration
+
+Integrate Gmail email data into the contact system to auto-populate interaction timelines and enrich contact data.
+
+### Architecture
+
+Since the user already signs in with Google OAuth, we can request Gmail read scopes during sign-in and use an Edge Function to fetch and process emails server-side.
 
 ```text
-                        URGENT                          NOT URGENT
-              +-------------------------------+-------------------------------+
-              |                               |                               |
-              |  1. Broken navigation routes  |  5. Phase 20: Reporting       |
-              |     (P0 - 3 locations use      |     (pod distribution,        |
-              |      /record/:id, no route)   |      pipeline velocity,       |
-              |                               |      engagement over time,    |
-              |  2. Phase 22-03: Supabase     |      CSV export, saved        |
-   IMPORTANT  |     data layer swap           |      configs)                 |
-              |     (migration incomplete -   |                               |
-              |      app may still hit         |  6. Multi-user team access    |
-              |      Airtable in places)       |     (filtered views per user, |
-              |                               |      role-based scoping)      |
-              |  3. mergeRecords backlink gap  |                               |
-              |     (P1 - dangling company     |  7. Gmail integration         |
-              |      refs after merge)         |     (cross-channel timeline,  |
-              |                               |      blocked on OAuth creds)  |
-              |                               |                               |
-              +-------------------------------+-------------------------------+
-              |                               |                               |
-              |  4. Focus filter semantic     |  8. Orb map visual bugs       |
-              |     mismatch (P2 - focus       |     (overlap on large pods,   |
-              |     links to wrong section)   |      plus-orb position,       |
-              |                               |      disappear on zoom-out)   |
-              |                               |                               |
-              |  9. Contact modal overlaps    | 10. Import flows              |
-   NOT        |     project detail page       |     (LP lists, Talent list    |
-   IMPORTANT  |                               |      from Google Sheets)      |
-              | 10. Project cards dark mode   |                               |
-              |     contrast                  | 11. iMessage bot, Google Cal,  |
-              |                               |     email drafting, history    |
-              |                               |     backfill (all future/      |
-              |                               |     blocked on 3rd-party)     |
-              |                               |                               |
-              +-------------------------------+-------------------------------+
+User signs in (Google OAuth + Gmail scopes)
+          |
+          v
+   Edge Function: sync-gmail
+   - Receives user's access token
+   - Fetches recent email threads via Gmail API
+   - Matches senders/recipients to existing contacts (by email)
+   - Creates Interaction records (type: 'email', source: 'Gmail')
+   - Updates last_contacted_at on matched contacts
+   - Stores sync cursor (last history ID) for incremental sync
+          |
+          v
+   Contact timelines show Gmail emails inline
 ```
 
-## Breakdown
+### Implementation Steps
 
-### Quadrant 1: Do First (Urgent + Important)
+**Step 1: Request Gmail scopes on sign-in**
+- Update the Google OAuth config to include `https://www.googleapis.com/auth/gmail.readonly` scope
+- Store the provider access token from the auth session for API calls
 
-| # | Item | Effort | Impact | Status |
-|---|------|--------|--------|--------|
-| 1 | Fix 3 broken `/record/:id` routes -> `/contact/:id` | ~10 min | Unblocks pipeline and nurturing flows | Known since v2.0 audit |
-| 2 | Phase 22-03: Supabase data layer swap | Medium | Completes migration, removes Airtable dependency | 2/3 plans done |
-| 3 | mergeRecords backlink fix | ~30 min | Prevents dangling company refs | Known P1 |
+**Step 2: Database additions**
+- `gmail_sync_state` table: `user_id`, `last_history_id`, `last_synced_at` - tracks incremental sync cursor
+- No new interaction fields needed - existing `email_link`, `source`, `summary` fields cover Gmail data
 
-**Lowest-hanging fruit**: Item 1. Three lines of code, fixes two broken user flows.
+**Step 3: Edge Function `sync-gmail`**
+- Accepts the user's Google access token (from `session.provider_token`)
+- Calls Gmail API `messages.list` + `messages.get` for recent emails
+- For each email thread:
+  - Extracts sender/recipient email addresses
+  - Matches against contacts table by `email`, `email_2`, `email_3`
+  - Creates an Interaction record with `type: 'email'`, `source: 'Gmail'`, subject as `summary`, date from email headers
+  - Updates `last_contacted_at` on matched contact if this email is more recent
+- Stores `historyId` for next incremental sync
+- Deduplicates by Gmail message ID (store in `email_link` field)
 
-### Quadrant 2: Schedule (Not Urgent + Important)
+**Step 4: Trigger sync from the frontend**
+- Add a "Sync Email" button in the dashboard or settings area
+- On click, invoke the edge function with the user's provider token
+- Show sync progress/result feedback
+- Optionally auto-sync on login (after first manual sync)
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 5 | Phase 20: Reporting | Large | Completes v2.1 milestone |
-| 6 | Multi-user team access | Large | Enables Briell + team usage |
-| 7 | Gmail integration | Large | Cross-channel visibility (top user request) |
+**Step 5: Contact auto-fill from email signatures**
+- Use AI (Lovable AI supported model like `google/gemini-2.5-flash`) to parse email signatures for company, role, phone, LinkedIn
+- Apply the existing enrichment flow (`computeFieldDiffs` -> suggested updates UI) for any new data found
+- This reuses the enrichment infrastructure already built in Phase 19
 
-### Quadrant 3: Delegate/Quick Fix (Urgent + Not Important)
+**Step 6: Timeline display**
+- Gmail-sourced interactions already render via `InteractionSection` (type `email` with source `Gmail` shown as a distinct pill)
+- Add a Gmail icon or "Gmail" label on email interactions where `source === 'Gmail'`
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 4 | Focus filter -> distinct NurturingHub section | ~1 hr | Fixes semantic mismatch |
-| 9 | Contact modal z-index overlap | ~15 min | Visual bug |
-| 10 | Dark mode contrast on project cards | ~15 min | Visual polish |
+### Files to create/modify
+- `supabase/functions/sync-gmail/index.ts` - new Edge Function
+- `src/lib/gmail.ts` - client-side sync trigger + helpers
+- `src/components/contacts/InteractionSection.tsx` - Gmail source indicator
+- `src/components/settings/` or dashboard - Sync Email button
+- Database migration for `gmail_sync_state` table
 
-### Quadrant 4: Eliminate/Defer (Not Urgent + Not Important)
+### Scope decisions
+- Read-only Gmail access (no sending)
+- Manual sync trigger first, auto-sync later
+- Match by exact email address only (no fuzzy matching)
+- Last 30 days of email on first sync, incremental after
+- No email content storage - only metadata (subject, date, participants)
 
-Items 8, 10, 11 - orb map visual edge cases, import flows (blocked on data), and third-party integrations (blocked on credentials/APIs).
-
-## Recommended Execution Order
-
-1. **Fix broken routes** (10 min, highest ROI in the entire backlog)
-2. **mergeRecords backlink** (30 min, data integrity)
-3. **Focus filter fix** (1 hr, completes nurturing flow)
-4. **Phase 22-03** (complete Supabase swap)
-5. **Phase 20: Reporting** (last v2.1 blocker)
-6. **UI bugs** (modal overlap, dark mode contrast)
+### Prerequisites
+- Google OAuth must be configured with Gmail read scope
+- User must grant Gmail permission on sign-in (re-auth prompt if scope not yet granted)
 
