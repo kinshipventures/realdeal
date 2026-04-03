@@ -79,13 +79,19 @@ export function Dashboard() {
   // Pre-index interactions by contact — O(m) single pass
   const byContact = useMemo(() => indexByContact(allInteractions), [allInteractions])
 
-  // Priority pods
-  const priorityPods = useMemo(() => pods.filter(p => p.is_priority), [pods])
+  // Pods used for equity score - configurable or priority pods
+  const equityPods = useMemo(() => {
+    if (config.equityPodIds !== null) {
+      const idSet = new Set(config.equityPodIds)
+      return pods.filter(p => idSet.has(p.id))
+    }
+    return pods.filter(p => p.is_priority)
+  }, [pods, config.equityPodIds])
 
   // Overall equity score
   const overallScore = useMemo(
-    () => overallEquityScore(priorityPods, contacts, byContact),
-    [priorityPods, contacts, byContact]
+    () => overallEquityScore(equityPods, contacts, byContact),
+    [equityPods, contacts, byContact]
   )
 
   // Pod stats
