@@ -202,7 +202,7 @@ Plans:
 **Goal:** Replace the floating bottom pill navigator with a collapsible left sidebar on desktop. Map becomes the default route.
 **Requirements**: NAV-SIDEBAR
 **Depends on:** None (standalone UX overhaul)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 25-01-PLAN.md -- Sidebar component, AppShell layout update, route swap (/ = OrbMap, /pulse = Dashboard)
+- [x] 25-01-PLAN.md -- Sidebar component, AppShell layout update, route swap (/ = OrbMap, /pulse = Dashboard)

@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: MVP Completion
 status: unknown
 stopped_at: Completed 24-03-PLAN.md - Phase 24 all plans complete, human-verified
-last_updated: "2026-04-03T07:04:59.328Z"
+last_updated: "2026-04-03T16:35:56.150Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 8
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** One place where every relationship lives with full context
-**Current focus:** Phase 24 — orb-map-experience-overhaul
+**Current focus:** Phase 25 — sidebar-navigation
 
 ## Current Position
 
-Phase: 25
-Plan: Not started
+Phase: 25 (sidebar-navigation) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
