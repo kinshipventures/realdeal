@@ -691,7 +691,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       if (Object.keys(autoFill).length > 0) {
                         const originalValues: Record<string, string | null> = {}
                         for (const key of Object.keys(autoFill)) {
-                          originalValues[key] = (contact as Record<string, unknown>)[key] as string | null ?? null
+                          originalValues[key] = (contact as unknown as Record<string, unknown>)[key] as string | null ?? null
                         }
                         const updated = await applyEnrichment(contact.id, autoFill, originalValues)
                         onSaved(updated)
