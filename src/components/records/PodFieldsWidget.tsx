@@ -100,7 +100,7 @@ export function PodFieldsWidget({
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.92)',
+      background: 'var(--surface-panel)',
       border: '1px solid var(--edge)',
       borderLeft: `4px solid ${pod.color ?? '#ccc'}`,
       borderRadius: 12,

@@ -6,7 +6,7 @@ import type { Contact, Opportunity, Pipeline, PipelineStage } from '../../lib/ty
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 
 const WIDGET_STYLE: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.92)',
+  background: 'var(--surface-panel)',
   border: '1px solid var(--edge)',
   borderRadius: 12,
   padding: '16px 20px',

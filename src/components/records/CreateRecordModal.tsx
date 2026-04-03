@@ -356,7 +356,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'rgba(255,255,255,0.92)',
+          background: 'var(--surface-panel)',
           backdropFilter: 'blur(32px)',
           WebkitBackdropFilter: 'blur(32px)',
           borderRadius: 16,

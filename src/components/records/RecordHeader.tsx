@@ -182,7 +182,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.92)',
+      background: 'var(--surface-panel)',
       borderBottom: '1px solid var(--divider)',
       padding: '28px 32px 24px',
     }}>

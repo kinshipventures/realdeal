@@ -783,11 +783,22 @@ export function OrbMap() {
       )}
 
       {/* Pod hover tooltip */}
-      {hoveredPod && (
+      {hoveredPod && (() => {
+        const tooltipW = 160
+        const tooltipH = 90
+        const vw = window.innerWidth
+        const vh = window.innerHeight
+        // Position to the right by default, flip left if it would overflow
+        const spaceRight = vw - hoveredPod.x
+        const goLeft = spaceRight < tooltipW + 60
+        const left = goLeft ? hoveredPod.x - tooltipW - 20 : hoveredPod.x + 60
+        // Vertically center on cursor, clamp to viewport
+        const top = Math.max(8, Math.min(hoveredPod.y - tooltipH / 2, vh - tooltipH - 8))
+        return (
         <div style={{
           position: 'fixed',
-          left: hoveredPod.x + 12,
-          top: hoveredPod.y - 8,
+          left,
+          top,
           zIndex: 30,
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(12px)',
@@ -815,7 +826,8 @@ export function OrbMap() {
             Last: {formatLastInteracted(hoveredPod.lastInteracted)}
           </span>
         </div>
-      )}
+        )
+      })()}
 
       {/* Orbit rings with subtle glow — hidden during drill-down */}
       <svg
