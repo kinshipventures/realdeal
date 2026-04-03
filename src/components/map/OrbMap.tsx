@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
-import { indexByContact, podEquityScore } from '../../lib/equity'
+import { indexByContact, podEquityScore, overallEquityScore, scoreLabel } from '../../lib/equity'
 import type { Category, Pod } from '../../lib/types'
 import { EmptyState } from '../empty/EmptyState'
 import { ListNodeComponent } from './ListNode'
@@ -115,6 +115,8 @@ interface BuildHomeNodesParams {
   categoriesByPod: Record<string, Category[]>
   savedPositions: Record<string, { x: number; y: number }>
   memberCountByPod: Record<string, number>
+  overallHealth?: number
+  totalContacts?: number
   onCreatePod: () => void
 }
 
@@ -125,6 +127,8 @@ function buildHomeNodes({
   categoriesByPod,
   savedPositions,
   memberCountByPod,
+  overallHealth,
+  totalContacts,
   onCreatePod,
 }: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number> } {
   const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods, savedPositions)
@@ -136,7 +140,7 @@ function buildHomeNodes({
     position: mojPos,
     draggable: false,
     style: { overflow: 'visible' },
-    data: {},
+    data: { overallHealth, totalContacts },
   }
 
   const hubCenterX = mojPos.x + MOJ_SIZE / 2
@@ -175,8 +179,14 @@ function buildHomeNodes({
   return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
 }
 
-function buildHomeEdges(_pods: Pod[]): Edge[] {
-  return []
+function buildHomeEdges(pods: Pod[], equityByPod: Record<string, number>): Edge[] {
+  return pods.map(pod => ({
+    id: `moj-${pod.id}`,
+    type: 'gradient',
+    source: MOJ_ID,
+    target: pod.id,
+    data: { color: 'rgba(255,255,255,0.9)', healthPercent: equityByPod[pod.id] ?? 0 },
+  }))
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
@@ -223,6 +233,8 @@ export function OrbMap() {
   const categoriesByPodRef = useRef<Record<string, Category[]>>({})
   const memberCountByPodRef = useRef<Record<string, number>>({})
   const ringByPodRef = useRef<Map<string, number>>(new Map())
+  const overallHealthRef = useRef<number | undefined>(undefined)
+  const totalContactsRef = useRef<number>(0)
 
   // Parallax: track cumulative pan offset, apply via CSS custom properties
   const panRef = useRef({ x: 0, y: 0 })
@@ -239,12 +251,14 @@ export function OrbMap() {
       categoriesByPod: categoriesByPodRef.current,
       savedPositions,
       memberCountByPod: memberCountByPodRef.current,
+      overallHealth: overallHealthRef.current,
+      totalContacts: totalContactsRef.current,
       onCreatePod: () => setShowCreatePod(true),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
     ringByPodRef.current = ringMap
-    setEdges(buildHomeEdges(podsRef.current))
+    setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
   }, [setNodes, setEdges])
 
   const handlePodCreated = useCallback(async (newPod: Pod) => {
@@ -278,6 +292,10 @@ export function OrbMap() {
         }
       }
       equityByPodRef.current = equityByPod
+
+      const priorityPods = allPods.filter(p => p.is_priority)
+      overallHealthRef.current = overallEquityScore(priorityPods.length > 0 ? priorityPods : allPods, allContacts, byContact)
+      totalContactsRef.current = allContacts.length
 
       rebuildHomeView(getPositions())
       setPodsCount(allPods.length)
@@ -319,6 +337,11 @@ export function OrbMap() {
         }
         equityByPodRef.current = equityByPod
 
+        const priorityPods = allPods.filter(p => p.is_priority)
+        const overallHealth = overallEquityScore(priorityPods.length > 0 ? priorityPods : allPods, allContacts, byContact)
+        overallHealthRef.current = overallHealth
+        totalContactsRef.current = allContacts.length
+
         const catsByPod: Record<string, Category[]> = {}
         for (const cat of allCategoriesRaw) {
           if (!catsByPod[cat.list_id]) catsByPod[cat.list_id] = []
@@ -334,12 +357,14 @@ export function OrbMap() {
           categoriesByPod: catsByPod,
           savedPositions,
           memberCountByPod,
+          overallHealth,
+          totalContacts: allContacts.length,
           onCreatePod: () => setShowCreatePod(true),
         })
         setNodes(homeNodes)
         setActiveRings(rings)
-    ringByPodRef.current = ringMap
-        setEdges(buildHomeEdges(allPods))
+        ringByPodRef.current = ringMap
+        setEdges(buildHomeEdges(allPods, equityByPod))
         if (!stale) { setPodsLoaded(true); setPodsCount(allPods.length) }
       } catch (err) {
         console.error('Couldn\'t load your network:', err)
@@ -406,12 +431,14 @@ export function OrbMap() {
       categoriesByPod: categoriesByPodRef.current,
       savedPositions: {},
       memberCountByPod: memberCountByPodRef.current,
+      overallHealth: overallHealthRef.current,
+      totalContacts: totalContactsRef.current,
       onCreatePod: () => setShowCreatePod(true),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
     ringByPodRef.current = ringMap
-    setEdges(buildHomeEdges(podsRef.current))
+    setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
     setViewport({ x: 0, y: 0, zoom: 1 })
     setViewportState({ x: 0, y: 0, zoom: 1 })
   }, [setViewport, setNodes, setEdges])

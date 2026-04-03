@@ -1,7 +1,8 @@
 import type React from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
+import { scoreLabel } from '../../lib/equity'
 
-export type MojNodeData = Record<string, never>
+export type MojNodeData = { overallHealth?: number; totalContacts?: number }
 export type MojNodeType = Node<MojNodeData, 'moj'>
 
 export const MOJ_ID = 'moj-center'
@@ -10,7 +11,10 @@ export const MOJ_SIZE = 136
 const bg = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
 const shadow = '0 0 24px rgba(0,0,0,0.20), 0 10px 30px -4px rgba(0,0,0,0.25)'
 
-export function MojNodeComponent(_: NodeProps<MojNodeType>) {
+export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
+  const { overallHealth, totalContacts } = data
+  const hasData = overallHealth !== undefined
+
   return (
     <>
       <Handle type="source" position={Position.Right}
@@ -37,19 +41,51 @@ export function MojNodeComponent(_: NodeProps<MojNodeType>) {
           cursor: 'default',
         } as React.CSSProperties}
       >
-        <span style={{
-          fontSize: 13,
-          fontWeight: 800,
-          fontFamily: 'var(--font-serif)',
-          color: 'rgba(255,255,255,0.90)',
-          letterSpacing: '-0.01em',
-          userSelect: 'none',
-          position: 'relative',
-          zIndex: 1,
-          lineHeight: 1.2,
-        }}>
-          MRM
-        </span>
+        {hasData ? (
+          <>
+            <span style={{
+              fontSize: 28,
+              fontWeight: 800,
+              fontFamily: 'var(--font-serif)',
+              color: 'rgba(255,255,255,0.90)',
+              letterSpacing: '-0.02em',
+              userSelect: 'none',
+              lineHeight: 1,
+            }}>
+              {overallHealth}
+            </span>
+            <span style={{
+              fontSize: 10,
+              fontWeight: 500,
+              color: 'rgba(255,255,255,0.55)',
+              userSelect: 'none',
+              marginTop: 2,
+            }}>
+              {scoreLabel(overallHealth!)}
+            </span>
+            <span style={{
+              fontSize: 9,
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.45)',
+              userSelect: 'none',
+              marginTop: 3,
+            }}>
+              {totalContacts ?? 0} contacts
+            </span>
+          </>
+        ) : (
+          <span style={{
+            fontSize: 13,
+            fontWeight: 800,
+            fontFamily: 'var(--font-serif)',
+            color: 'rgba(255,255,255,0.90)',
+            letterSpacing: '-0.01em',
+            userSelect: 'none',
+            lineHeight: 1.2,
+          }}>
+            MRM
+          </span>
+        )}
       </div>
     </>
   )
