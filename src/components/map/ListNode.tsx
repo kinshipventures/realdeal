@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
+import { LucideIcon } from '../LucideIcon'
 
 export type ListNodeData = {
   list: Pod
@@ -18,6 +19,8 @@ export type ListNodeData = {
   memberCount?: number
   categories?: Category[]
   depth?: number
+  onHoverEnter?: (podId: string, x: number, y: number) => void
+  onHoverLeave?: () => void
 }
 export type ListNodeType = Node<ListNodeData>
 
@@ -31,7 +34,7 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0 } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, onHoverEnter, onHoverLeave } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
@@ -44,6 +47,8 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         '--orbit-start-y': `${orbitStartY ?? 0}px`,
         '--depth': depth,
       } as React.CSSProperties}
+      onMouseEnter={(e) => onHoverEnter?.(list.id, e.clientX, e.clientY)}
+      onMouseLeave={() => onHoverLeave?.()}
     >
       <Handle type="source" position={Position.Right}
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
@@ -116,7 +121,10 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
                   style={{ background: satColor }}
                   title={cat.name}
                 >
-                  {cat.name.length <= 4 ? cat.name.toUpperCase() : cat.name.slice(0, 2).toUpperCase()}
+                  {cat.icon
+                    ? <LucideIcon name={cat.icon} size={10} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+                    : (cat.name.length <= 4 ? cat.name.toUpperCase() : cat.name.slice(0, 2).toUpperCase())
+                  }
                 </div>
               </div>
             )
