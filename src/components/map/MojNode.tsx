@@ -1,6 +1,6 @@
 import type React from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { scoreLabel } from '../../lib/equity'
 import { POD_SHIFT_COLORS } from './SolidOrb'
 
