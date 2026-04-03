@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
   ReactFlow,
   Background,
@@ -130,6 +131,7 @@ interface BuildHomeNodesParams {
   onCreatePod: () => void
   onPodHoverEnter?: (podId: string, x: number, y: number) => void
   onPodHoverLeave?: () => void
+  onDrillIn?: (pod: Pod) => void
 }
 
 function buildHomeNodes({
@@ -144,6 +146,7 @@ function buildHomeNodes({
   onCreatePod,
   onPodHoverEnter,
   onPodHoverLeave,
+  onDrillIn,
 }: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number> } {
   const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods, savedPositions)
   const DEPTH_BY_RING = [1.0, 0.92, 0.85]
@@ -188,6 +191,7 @@ function buildHomeNodes({
         depth: DEPTH_BY_RING[ringIndexByPod.get(pod.id) ?? 0] ?? 1.0,
         onHoverEnter: onPodHoverEnter,
         onHoverLeave: onPodHoverLeave,
+        onDrillIn,
       },
     })
   })
@@ -205,6 +209,51 @@ function buildHomeEdges(pods: Pod[], equityByPod: Record<string, number>): Edge[
   }))
 }
 
+const DRILL_RADIUS = 200
+const CAT_SIZE = 64
+
+function buildDrillNodes(
+  pod: Pod,
+  categories: Category[],
+  equityByPod: Record<string, number>,
+  totalContacts: number,
+  navigateFn: (path: string) => void,
+): { nodes: Node[] } {
+  const centerNode: Node = {
+    id: MOJ_ID,
+    type: 'moj',
+    position: { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 },
+    draggable: false,
+    style: { overflow: 'visible' },
+    data: {
+      overallHealth: equityByPod[pod.id],
+      totalContacts,
+      podName: pod.name,
+      podColor: pod.color ?? undefined,
+    },
+  }
+
+  const catNodes: Node[] = categories.map((cat, i) => {
+    const angle = (i / categories.length) * 2 * Math.PI - Math.PI / 2
+    const x = Math.cos(angle) * DRILL_RADIUS - CAT_SIZE / 2
+    const y = Math.sin(angle) * DRILL_RADIUS - CAT_SIZE / 2
+    return {
+      id: cat.id,
+      type: 'category',
+      position: { x, y },
+      style: { overflow: 'visible' },
+      data: {
+        category: cat,
+        listColor: pod.color,
+        onClick: () => navigateFn(`/pod/${pod.id}`),
+        animationDelay: `${(i + 1) * 0.08}s`,
+      },
+    }
+  })
+
+  return { nodes: [centerNode, ...catNodes] }
+}
+
 const VIEWPORT_KEY = 'realdeal:map-viewport'
 
 function loadViewport(): Viewport | null {
@@ -218,10 +267,18 @@ export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport } = useReactFlow()
+  const navigate = useNavigate()
+
+  const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
+  const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
+  const [fitViewEnabled, setFitViewEnabled] = useState(true)
+  const isAnimating = useRef(false)
+  const drillInRef = useRef<((pod: Pod) => void) | null>(null)
 
   // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay + parallax
   useOnViewportChange({
     onChange: (vp: Viewport) => {
+      if (isAnimating.current) return
       setViewportState(vp)
       cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => {
@@ -234,7 +291,10 @@ export function OrbMap() {
         }
       })
     },
-    onEnd: (vp: Viewport) => localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp)),
+    onEnd: (vp: Viewport) => {
+      if (isAnimating.current) return
+      localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp))
+    },
   })
 
   const [initError, setInitError] = useState(false)
@@ -295,12 +355,74 @@ export function OrbMap() {
       onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,
+      onDrillIn: (pod) => drillInRef.current?.(pod),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
     ringByPodRef.current = ringMap
     setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
   }, [setNodes, setEdges, handlePodHoverEnter, handlePodHoverLeave])
+
+  // Keep drillInRef in sync so rebuildHomeView can reference drillIntoPod without a circular dep
+  // (rebuildHomeView is defined before drillIntoPod)
+
+  const drillIntoPod = useCallback((pod: Pod) => {
+    if (isAnimating.current) return
+    isAnimating.current = true
+    setFitViewEnabled(false)
+
+    // Step 1: zoom toward the clicked pod
+    setNodes(prev => prev.map(n => {
+      if (n.id === pod.id) return n
+      if (n.id === MOJ_ID) return n
+      return { ...n, data: { ...n.data, fading: true } }
+    }))
+
+    setTimeout(() => {
+      // Step 2: build drill nodes and switch view
+      const cats = categoriesByPodRef.current[pod.id] ?? []
+      const { nodes: drillNodes } = buildDrillNodes(
+        pod, cats, equityByPodRef.current,
+        countsByPodRef.current[pod.id]?.total ?? 0,
+        navigate,
+      )
+      setNodes(drillNodes)
+      setEdges([])
+      setMapView('pod')
+      setSelectedPod(pod)
+
+      // Step 3: re-center
+      setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })
+
+      setTimeout(() => {
+        isAnimating.current = false
+      }, 250)
+    }, 150)
+  }, [setNodes, setEdges, setViewport, navigate])
+
+  drillInRef.current = drillIntoPod
+
+  const drillBackToHub = useCallback(() => {
+    if (isAnimating.current) return
+    isAnimating.current = true
+
+    // Fade out category nodes
+    setNodes(prev => prev.map(n =>
+      n.id === MOJ_ID ? n : { ...n, data: { ...n.data, fading: true } }
+    ))
+
+    setTimeout(() => {
+      rebuildHomeView(getPositions())
+      setMapView('hub')
+      setSelectedPod(null)
+      setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })
+
+      setTimeout(() => {
+        isAnimating.current = false
+        setFitViewEnabled(true)
+      }, 250)
+    }, 150)
+  }, [setNodes, rebuildHomeView, setViewport])
 
   const handlePodCreated = useCallback(async (newPod: Pod) => {
     setShowCreatePod(false)
@@ -432,6 +554,7 @@ export function OrbMap() {
           onCreatePod: () => setShowCreatePod(true),
           onPodHoverEnter: handlePodHoverEnter,
           onPodHoverLeave: handlePodHoverLeave,
+          onDrillIn: (pod) => drillInRef.current?.(pod),
         })
         setNodes(homeNodes)
         setActiveRings(rings)
@@ -452,6 +575,7 @@ export function OrbMap() {
   const handleNodeDrag: OnNodeDrag = useCallback(() => {}, [])
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
+    if (mapView !== 'hub') return
     if (node.id === MOJ_ID) return
     const ringIdx = ringByPodRef.current.get(node.id)
     if (ringIdx === undefined) { savePosition(node.id, node.position.x, node.position.y); return }
@@ -488,7 +612,7 @@ export function OrbMap() {
       }
     }
     requestAnimationFrame(animate)
-  }, [setNodes])
+  }, [setNodes, mapView])
 
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
   const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
@@ -508,6 +632,7 @@ export function OrbMap() {
       onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,
+      onDrillIn: (pod) => drillInRef.current?.(pod),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
@@ -557,8 +682,32 @@ export function OrbMap() {
         </div>
       )}
 
+      {/* Breadcrumb — visible during drill-down */}
+      {mapView === 'pod' && selectedPod && (
+        <div style={{
+          position: 'absolute', top: 12, left: 12, zIndex: 20,
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '6px 12px', borderRadius: 8,
+          background: 'var(--nav-bg)', backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid var(--edge)',
+        }}>
+          <button onClick={drillBackToHub} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>{selectedPod.name}</span>
+        </div>
+      )}
+
       {/* Reset layout button */}
-      {podsLoaded && podsCount > 0 && (
+      {mapView === 'hub' && podsLoaded && podsCount > 0 && (
         <button
           type="button"
           onClick={handleResetLayout}
@@ -627,7 +776,7 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Orbit rings with subtle glow */}
+      {/* Orbit rings with subtle glow — hidden during drill-down */}
       <svg
         style={{
           position: 'absolute',
@@ -637,6 +786,7 @@ export function OrbMap() {
           pointerEvents: 'none',
           zIndex: 0,
           overflow: 'visible',
+          display: mapView === 'pod' ? 'none' : undefined,
         }}
       >
         <defs>
@@ -677,7 +827,7 @@ export function OrbMap() {
         onNodeDragStart={handleNodeDragStart}
         onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
-        fitView
+        fitView={fitViewEnabled}
         fitViewOptions={{ padding: 0.22 }}
         minZoom={0.15}
         maxZoom={2.5}
@@ -696,7 +846,7 @@ export function OrbMap() {
       </ReactFlow>
 
       {/* FAB: Add Pod */}
-      {podsLoaded && (
+      {mapView === 'hub' && podsLoaded && (
         <button
           type="button"
           onClick={() => setShowCreatePod(true)}

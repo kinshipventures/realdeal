@@ -21,6 +21,7 @@ export type ListNodeData = {
   depth?: number
   onHoverEnter?: (podId: string, x: number, y: number) => void
   onHoverLeave?: () => void
+  onDrillIn?: (pod: Pod) => void
 }
 export type ListNodeType = Node<ListNodeData>
 
@@ -34,7 +35,7 @@ function fontSize(name: string): number {
 }
 
 export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, onHoverEnter, onHoverLeave } = data
+  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, onHoverEnter, onHoverLeave, onDrillIn } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
@@ -64,7 +65,7 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
         healthPercent={healthPercent}
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
-        onClick={() => navigate(`/pod/${list.id}`)}
+        onClick={() => onDrillIn ? onDrillIn(list) : navigate(`/pod/${list.id}`)}
         ariaLabel={`Pod: ${list.name}`}
         className={loadError ? 'orb-error-flash' : undefined}
       >
