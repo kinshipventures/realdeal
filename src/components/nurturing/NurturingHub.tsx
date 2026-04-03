@@ -115,7 +115,7 @@ export function NurturingHub() {
     if (loading) return
     // Auto-scroll to relevant section based on filter param
     const map: Record<string, React.RefObject<HTMLDivElement | null>> = {
-      focus: needsAttentionRef,
+      focus: focusRef,
       overdue: needsAttentionRef,
       stale: staleRef,
       dates: datesRef,
