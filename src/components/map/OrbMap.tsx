@@ -317,8 +317,24 @@ export function OrbMap() {
   const lastInteractedByPodRef = useRef<Record<string, string | null>>({})
 
   const [hoveredPod, setHoveredPod] = useState<{
-    pod: Pod; health: number; contactCount: number; overdueCount: number; lastInteracted: string | null; x: number; y: number
+    pod: Pod; health: number; contactCount: number; overdueCount: number; lastInteracted: string | null
   } | null>(null)
+  const cursorRef = useRef({ x: 0, y: 0 })
+  const tooltipRef = useRef<HTMLDivElement>(null)
+
+  // Track cursor globally while a pod is hovered - update tooltip position via DOM (no re-renders)
+  useEffect(() => {
+    if (!hoveredPod) return
+    const onMove = (e: MouseEvent) => {
+      cursorRef.current = { x: e.clientX, y: e.clientY }
+      if (tooltipRef.current) {
+        tooltipRef.current.style.left = `${e.clientX + 16}px`
+        tooltipRef.current.style.top = `${e.clientY + 16}px`
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [hoveredPod])
 
   // Parallax: track cumulative pan offset, apply via CSS custom properties
   const panRef = useRef({ x: 0, y: 0 })
@@ -330,14 +346,13 @@ export function OrbMap() {
     const pod = podsRef.current.find(p => p.id === podId)
     if (!pod) return
     const counts = countsByPodRef.current[podId] ?? { total: 0, overdue: 0 }
+    cursorRef.current = { x: clientX, y: clientY }
     setHoveredPod({
       pod,
       health: equityByPodRef.current[podId] ?? 0,
       contactCount: counts.total,
       overdueCount: counts.overdue,
       lastInteracted: lastInteractedByPodRef.current[podId] ?? null,
-      x: clientX,
-      y: clientY,
     })
   }, [])
 
@@ -785,37 +800,31 @@ export function OrbMap() {
         </button>
       )}
 
-      {/* Pod hover tooltip */}
-      {hoveredPod && (() => {
-        const tooltipW = 160
-        const tooltipH = 90
-        const vw = window.innerWidth
-        const vh = window.innerHeight
-        // Position to the right by default, flip left if it would overflow
-        const spaceRight = vw - hoveredPod.x
-        const goLeft = spaceRight < tooltipW + 60
-        const left = goLeft ? hoveredPod.x - tooltipW - 20 : hoveredPod.x + 60
-        // Vertically center on cursor, clamp to viewport
-        const top = Math.max(8, Math.min(hoveredPod.y - tooltipH / 2, vh - tooltipH - 8))
-        return (
-        <div style={{
-          position: 'fixed',
-          left,
-          top,
-          zIndex: 30,
-          background: 'var(--nav-bg)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--edge)',
-          borderRadius: 10,
-          padding: '10px 14px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          pointerEvents: 'none',
-          minWidth: 140,
-        }}>
+      {/* Pod hover tooltip - tracks cursor */}
+      {hoveredPod && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'fixed',
+            left: cursorRef.current.x + 16,
+            top: cursorRef.current.y + 16,
+            zIndex: 30,
+            background: 'var(--nav-bg)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid var(--edge)',
+            borderRadius: 10,
+            padding: '10px 14px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            pointerEvents: 'none',
+            minWidth: 140,
+            opacity: 0,
+            animation: 'tooltip-fade-in 0.15s ease forwards',
+          }}
+        >
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
             {hoveredPod.pod.name}
           </span>
@@ -829,8 +838,7 @@ export function OrbMap() {
             Last: {formatLastInteracted(hoveredPod.lastInteracted)}
           </span>
         </div>
-        )
-      })()}
+      )}
 
       {/* Orbit rings with subtle glow — hidden during drill-down */}
       <svg
