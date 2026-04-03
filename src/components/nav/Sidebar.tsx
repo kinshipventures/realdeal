@@ -409,6 +409,17 @@ function PipelinesIcon() {
   )
 }
 
+function CompaniesIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+      <line x1="9" y1="22" x2="9" y2="2"/>
+      <line x1="15" y1="22" x2="15" y2="2"/>
+      <line x1="4" y1="12" x2="20" y2="12"/>
+    </svg>
+  )
+}
+
 function ProjectsIcon() {
   return (
     <svg {...iconProps}>

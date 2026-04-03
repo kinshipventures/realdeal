@@ -356,6 +356,7 @@ export default function App() {
           <Route path="pulse/nurturing" element={<NurturingHub />} />
           <Route path="map" element={<OrbMap />} />
           <Route path="contacts" element={<RecordsList />} />
+          <Route path="companies" element={<CompaniesPage />} />
           <Route path="pipelines" element={<PipelinesPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
