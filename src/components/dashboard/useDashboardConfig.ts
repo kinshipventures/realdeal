@@ -42,6 +42,7 @@ export const DEFAULT_ORDER: WidgetId[] = [
   'needs-attention',
   'recent-activity',
   'quick-links',
+  'gmail-sync',
 ]
 
 const STORAGE_KEY = 'realdeal:dashboard-config:v2'
