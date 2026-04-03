@@ -385,6 +385,38 @@ export function NurturingHub() {
         </div>
       )}
 
+      {/* Today's Focus Section */}
+      {focusItems.length > 0 && (
+        <div ref={focusRef} style={{ marginBottom: 28 }}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={sectionTitleStyle}>today's focus</h2>
+              <CountBadge count={focusItems.length} color="hsla(140, 60%, 45%, 0.12)" textColor="hsla(140, 60%, 35%, 1)" />
+            </div>
+          </div>
+          <div style={PANEL}>
+            {focusItems.map(item => {
+              const days = item.contact.last_contacted_at
+                ? Math.floor((Date.now() - new Date(item.contact.last_contacted_at).getTime()) / 86_400_000)
+                : null
+              const signal = item.reason === 'overdue'
+                ? days === null ? 'Never contacted' : `${days} days since last contact`
+                : 'Good time to check in'
+              return (
+                <NurturingRow
+                  key={item.contact.id}
+                  contact={item.contact}
+                  signal={signal}
+                  signalColor="var(--color-brand)"
+                  onSnooze={handleSnooze}
+                  onInteractionLogged={handleInteractionLogged}
+                />
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Needs Attention Section */}
       {needsAttentionContacts.length > 0 && (
         <div ref={needsAttentionRef} style={{ marginBottom: 28 }}>
