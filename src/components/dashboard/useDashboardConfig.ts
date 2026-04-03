@@ -45,24 +45,26 @@ export const DEFAULT_ORDER: WidgetId[] = [
   'gmail-sync',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v2'
+const STORAGE_KEY = 'realdeal:dashboard-config:v3'
 
 interface StoredConfig {
   preset: Preset
   visible: WidgetId[]
   order: WidgetId[]
+  equityPodIds: string[] | null
 }
 
 export interface DashboardConfig {
   preset: Preset
   visible: Set<WidgetId>
   order: WidgetId[]
+  equityPodIds: string[] | null
 }
 
 function loadConfig(): DashboardConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
+    if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
 
@@ -82,9 +84,11 @@ function loadConfig(): DashboardConfig {
       if (!orderSet.has(id)) storedOrder.push(id)
     }
 
-    return { preset, visible: storedSet, order: storedOrder }
+    const equityPodIds: string[] | null = parsed.equityPodIds ?? null
+
+    return { preset, visible: storedSet, order: storedOrder, equityPodIds }
   } catch {
-    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER }
+    return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
   }
 }
 
@@ -94,6 +98,7 @@ function saveConfig(config: DashboardConfig) {
       preset: config.preset,
       visible: [...config.visible] as WidgetId[],
       order: config.order,
+      equityPodIds: config.equityPodIds,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
   } catch { /* silent */ }
@@ -117,7 +122,7 @@ export function useDashboardConfig() {
 
   const applyPreset = useCallback((preset: Preset) => {
     setConfig(prev => {
-      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]), order: prev.order }
+      const updated: DashboardConfig = { preset, visible: new Set(PRESET_CONFIGS[preset]), order: prev.order, equityPodIds: prev.equityPodIds }
       saveConfig(updated)
       return updated
     })
@@ -134,5 +139,13 @@ export function useDashboardConfig() {
     })
   }, [])
 
-  return { config, isVisible, toggleWidget, applyPreset, reorderWidgets }
+  const setEquityPods = useCallback((podIds: string[] | null) => {
+    setConfig(prev => {
+      const updated = { ...prev, equityPodIds: podIds }
+      saveConfig(updated)
+      return updated
+    })
+  }, [])
+
+  return { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods }
 }

@@ -2,16 +2,19 @@ import { useCallback, useRef, useState } from 'react'
 import { useEscape } from '../../lib/escapeStack'
 import { ALL_WIDGETS, PRESET_CONFIGS } from './useDashboardConfig'
 import type { DashboardConfig, WidgetId, Preset } from './useDashboardConfig'
+import type { Pod } from '../../lib/types'
 
 interface DashboardSettingsProps {
   config: DashboardConfig
+  pods: Pod[]
   onToggle: (id: WidgetId) => void
   onPreset: (preset: Preset) => void
   onReorder: (from: number, to: number) => void
+  onSetEquityPods: (ids: string[] | null) => void
   onClose: () => void
 }
 
-export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClose }: DashboardSettingsProps) {
+export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder, onSetEquityPods, onClose }: DashboardSettingsProps) {
   const stableClose = useCallback(() => onClose(), [onClose])
   useEscape(stableClose)
 
@@ -148,6 +151,73 @@ export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClo
               ? `${PRESET_CONFIGS.focus.length} widgets - essentials only`
               : `${PRESET_CONFIGS.full.length} widgets - everything`}
           </div>
+        </div>
+
+        {/* Score Pods */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--divider)' }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+            Score Pods
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: config.equityPodIds !== null ? 12 : 0 }}>
+            <button
+              type="button"
+              onClick={() => onSetEquityPods(config.equityPodIds === null ? pods.filter(p => p.is_priority).map(p => p.id) : null)}
+              style={{
+                width: 36, height: 20, borderRadius: 10, border: 'none',
+                background: config.equityPodIds === null ? 'var(--color-brand)' : 'var(--tint)',
+                cursor: 'pointer', position: 'relative',
+                transition: 'background 0.15s',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{
+                position: 'absolute', top: 2,
+                left: config.equityPodIds === null ? 18 : 2,
+                width: 16, height: 16, borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.15s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.20)',
+              }} />
+            </button>
+            <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Use priority pods</span>
+          </div>
+          {config.equityPodIds !== null && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {pods.map(pod => {
+                const checked = config.equityPodIds!.includes(pod.id)
+                return (
+                  <div
+                    key={pod.id}
+                    onClick={() => {
+                      const current = config.equityPodIds!
+                      const next = checked ? current.filter(id => id !== pod.id) : [...current, pod.id]
+                      onSetEquityPods(next)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '8px 0', cursor: 'pointer', userSelect: 'none',
+                    }}
+                  >
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                      border: checked ? 'none' : '1.5px solid var(--edge)',
+                      background: checked ? 'var(--color-brand)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'background 0.15s',
+                    }}>
+                      {checked && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color ?? '#718096', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: 'var(--color-text-primary)', flex: 1 }}>{pod.name}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Widget list */}
