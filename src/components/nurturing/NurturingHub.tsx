@@ -102,6 +102,7 @@ export function NurturingHub() {
       if (canceled) return
       setContacts(c)
       setPods(p)
+      setInteractions(ix)
       setSnoozedIds(getSnoozedIds())
       setLoading(false)
     }).catch(() => {
