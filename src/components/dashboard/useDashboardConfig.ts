@@ -10,6 +10,7 @@ export type WidgetId =
   | 'recent-activity'
   | 'quick-links'
   | 'pending-tray'
+  | 'gmail-sync'
 
 export type Preset = 'full' | 'focus'
 
