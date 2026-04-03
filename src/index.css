@@ -269,6 +269,17 @@
   animation: ring-fade 0.5s ease both;
 }
 
+/* Drill-down transition helpers */
+.orb-fading {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.orbit-start-skip {
+  animation: none !important;
+  opacity: 1;
+}
+
 /* ── Parallax depth layer ─────────────────────────────────────────────────── */
 
 .parallax-layer {

@@ -1,19 +1,30 @@
 import type React from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import { scoreLabel } from '../../lib/equity'
+import { POD_SHIFT_COLORS } from './SolidOrb'
 
-export type MojNodeData = { overallHealth?: number; totalContacts?: number }
+export type MojNodeData = {
+  overallHealth?: number
+  totalContacts?: number
+  podName?: string
+  podColor?: string
+}
 export type MojNodeType = Node<MojNodeData, 'moj'>
 
 export const MOJ_ID = 'moj-center'
 export const MOJ_SIZE = 136
 
-const bg = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
+const DEFAULT_BG = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
 const shadow = '0 0 24px rgba(0,0,0,0.20), 0 10px 30px -4px rgba(0,0,0,0.25)'
 
 export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
-  const { overallHealth, totalContacts } = data
+  const { overallHealth, totalContacts, podName, podColor } = data
   const hasData = overallHealth !== undefined
+  const isDrillDown = !!podName
+
+  const bg = isDrillDown && podColor
+    ? `linear-gradient(135deg, ${podColor} 0%, ${POD_SHIFT_COLORS[podColor] ?? POD_SHIFT_COLORS[podColor.toUpperCase()] ?? '#2C2C30'} 100%)`
+    : DEFAULT_BG
 
   return (
     <>
@@ -41,7 +52,21 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
           cursor: 'default',
         } as React.CSSProperties}
       >
-        {hasData ? (
+        {isDrillDown ? (
+          <span style={{
+            fontSize: 14,
+            fontWeight: 700,
+            fontFamily: 'var(--font-serif)',
+            color: 'rgba(255,255,255,0.95)',
+            letterSpacing: '-0.01em',
+            userSelect: 'none',
+            lineHeight: 1.2,
+            textAlign: 'center',
+            padding: '0 12px',
+          }}>
+            {podName}
+          </span>
+        ) : hasData ? (
           <>
             <span style={{
               fontSize: 28,
