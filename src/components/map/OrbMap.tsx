@@ -243,7 +243,7 @@ function buildDrillNodes(
       data: {
         category: cat,
         listColor: pod.color,
-        onClick: () => navigateFn(`/pod/${pod.id}`),
+        onClick: () => navigateFn(`/category/${cat.id}`),
         animationDelay: `${(i + 1) * 0.08}s`,
       },
     }
