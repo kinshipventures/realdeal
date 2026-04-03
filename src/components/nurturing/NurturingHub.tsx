@@ -145,7 +145,7 @@ export function NurturingHub() {
     return todaysFocus(contacts, byContact, pods, 10)
   }, [contacts, pods, interactions])
 
-
+  const needsAttentionContacts = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
 
     // Follow-up overdue (stronger signal) — sorted first per D-23
