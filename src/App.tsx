@@ -14,6 +14,7 @@ import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
 import { PipelinesPage } from './components/pipelines/PipelinesPage'
+import { CompaniesPage } from './components/companies/CompaniesPage'
 import { ProjectsPage } from './components/projects/ProjectsPage'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import { NurturingHub } from './components/nurturing/NurturingHub'
@@ -355,6 +356,7 @@ export default function App() {
           <Route path="pulse/nurturing" element={<NurturingHub />} />
           <Route path="map" element={<OrbMap />} />
           <Route path="contacts" element={<RecordsList />} />
+          <Route path="companies" element={<CompaniesPage />} />
           <Route path="pipelines" element={<PipelinesPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />

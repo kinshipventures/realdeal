@@ -34,6 +34,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   const isMap = location.pathname === '/' || location.pathname === '/map'
   const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
+  const isCompanies = location.pathname === '/companies'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
 
@@ -125,6 +126,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           active={isContacts}
           collapsed={collapsed}
           onClick={() => navigate('/contacts')}
+        />
+        <NavItem
+          icon={<CompaniesIcon />}
+          label="Companies"
+          active={isCompanies}
+          collapsed={collapsed}
+          onClick={() => navigate('/companies')}
         />
         <NavItem
           icon={<PipelinesIcon />}
@@ -397,6 +405,17 @@ function PipelinesIcon() {
       <rect x="2" y="3" width="5" height="18" rx="1"/>
       <rect x="9.5" y="6" width="5" height="15" rx="1"/>
       <rect x="17" y="9" width="5" height="12" rx="1"/>
+    </svg>
+  )
+}
+
+function CompaniesIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+      <line x1="9" y1="22" x2="9" y2="2"/>
+      <line x1="15" y1="22" x2="15" y2="2"/>
+      <line x1="4" y1="12" x2="20" y2="12"/>
     </svg>
   )
 }
