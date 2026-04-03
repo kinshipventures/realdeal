@@ -58,6 +58,7 @@ export function CategoryTable() {
       const pod = pods.find((p: Pod) => p.id === cat.list_id)
       setCategoryName(cat.name)
       setPodName(pod?.name ?? '')
+      setPodId(pod?.id ?? null)
       if (pod?.cadence) setCadence(pod.cadence)
       setContacts(categoryContacts)
 
