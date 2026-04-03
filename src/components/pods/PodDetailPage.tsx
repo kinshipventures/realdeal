@@ -221,17 +221,18 @@ export function PodDetailPage() {
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 96 }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 32px' }}>
-        {/* Back nav */}
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, padding: 0, marginBottom: 20, fontFamily: 'inherit' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Back
-        </button>
+        {/* Breadcrumb */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
+          >
+            Map
+          </button>
+          <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
+          <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{pod.name}</span>
+        </nav>
 
         {/* Pod header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>
