@@ -14,7 +14,7 @@ interface DashboardSettingsProps {
   onClose: () => void
 }
 
-export function DashboardSettings({ config, onToggle, onPreset, onReorder, onClose }: DashboardSettingsProps) {
+export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder, onSetEquityPods, onClose }: DashboardSettingsProps) {
   const stableClose = useCallback(() => onClose(), [onClose])
   useEscape(stableClose)
 
