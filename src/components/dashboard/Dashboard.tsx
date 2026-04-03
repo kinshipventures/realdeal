@@ -32,6 +32,7 @@ import { NeedsAttentionWidget } from './widgets/NeedsAttentionWidget'
 import { ComingUpWidget } from './widgets/ComingUpWidget'
 import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
+import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets } = useDashboardConfig()
@@ -651,6 +652,13 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
                   campaignContacts={campaignContacts}
                   campaignsLoading={campaignsLoading}
                 />
+              </div>
+            )
+          }
+          if (id === 'gmail-sync') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+                <GmailSyncWidget />
               </div>
             )
           }

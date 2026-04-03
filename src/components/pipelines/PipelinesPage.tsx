@@ -99,7 +99,30 @@ export function PipelinesPage() {
   }
 
   return (
-    <div style={{ padding: 32, maxWidth: '100%', overflowX: 'auto' }}>
+    <div style={{ padding: '32px 32px 96px', maxWidth: '100%', overflowX: 'auto' }}>
+      <div style={{ marginBottom: 16 }}>
+        <p style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-tertiary)',
+          marginBottom: 4,
+          margin: 0,
+        }}>
+          Pipelines
+        </p>
+        <h1 style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: 24,
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
+          letterSpacing: '-0.02em',
+          margin: 0,
+        }}>
+          Pipelines
+        </h1>
+      </div>
       <PipelineTabBar
         pipelines={activePipelines}
         hiddenPipelines={hiddenPipelines}

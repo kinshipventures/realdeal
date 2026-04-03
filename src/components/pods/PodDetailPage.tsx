@@ -219,22 +219,19 @@ export function PodDetailPage() {
   const capacityColor = atCapacity ? '#ea580c' : '#16a34a'
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 80 }}>
-      {/* Back nav */}
-      <div style={{ padding: '16px 24px 0' }}>
+    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 96 }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 32px' }}>
+        {/* Back nav */}
         <button
           type="button"
           onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, padding: 0, marginBottom: 20, fontFamily: 'inherit' }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Back
         </button>
-      </div>
-
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 24px' }}>
 
         {/* Pod header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>

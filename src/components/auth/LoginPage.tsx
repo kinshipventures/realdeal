@@ -22,6 +22,11 @@ export function LoginPage() {
     setError(null)
     const result = await lovable.auth.signInWithOAuth('google', {
       redirect_uri: window.location.origin,
+      extraParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+        scope: 'https://www.googleapis.com/auth/gmail.readonly',
+      },
     })
     if (result.error) {
       setError('Sign in failed. Please try again.')

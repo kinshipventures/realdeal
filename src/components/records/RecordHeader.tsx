@@ -198,11 +198,16 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           fontWeight: 400,
           color: 'var(--color-text-secondary)',
           fontFamily: 'inherit',
-          marginBottom: 12,
-          display: 'block',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
         }}
       >
-        ← Back
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back
       </button>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>

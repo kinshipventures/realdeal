@@ -685,14 +685,26 @@ export function RecordsList() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
 
       {/* Header */}
-      <div style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+      <div style={{ padding: '32px 32px 0', flexShrink: 0 }}>
+        <p style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-tertiary)',
+          marginBottom: 4,
+          margin: 0,
+        }}>
+          Contacts
+        </p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 30,
+            fontSize: 24,
             fontWeight: 700,
             margin: 0,
             color: 'var(--color-text-primary)',
+            letterSpacing: '-0.02em',
           }}>
             Contacts
           </h1>
