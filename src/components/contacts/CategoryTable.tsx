@@ -40,7 +40,7 @@ export function CategoryTable() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (!id) { navigate('/map'); return }
+    if (!id) { navigate('/pods'); return }
     let stale = false
 
     async function load() {
