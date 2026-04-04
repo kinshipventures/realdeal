@@ -318,7 +318,7 @@ function AppShell() {
       />
 
       {/* Demo data toggle - mobile only (desktop uses sidebar) */}
-      {isMobile && (
+      {isMobile && showDemoControls && (
         <button
           type="button"
           onClick={handleDemoToggle}
