@@ -1,43 +1,53 @@
 
 
-# Phase 2: Full Rename Maps to Pods
+# Phase 3: Import Flow Polish
 
-## What changes
+## Current State
 
-Rename "Map" to "Pods" across routes, UI labels, mobile nav, breadcrumbs, and component names. The index route (`/`) renders `OrbMap` (now labeled "Pods"), `/map` becomes a redirect to `/pods` for compatibility.
+The import flow works but feels like a developer tool - a single flat page with all options visible at once. No guidance for first-time users, no step indicators, and the upload/preview/import states just swap content abruptly.
 
-## Changes
+## What Changes
 
-### 1. Routes (`src/App.tsx`)
+Redesign ImportPanel as a guided stepper flow with 3 clear steps, animated transitions, and contextual help text. Keep the same underlying logic (`csvImport.ts` unchanged).
 
-- Change `<Route index>` to render at `/pods` instead of index
-- Add `<Route path="pods" element={<OrbMap />} />`
-- Keep `/map` as redirect to `/pods` (or remove)
-- Update `index` route to redirect to `/pods`
-- Rename `isMap` variable to `isPods` throughout
-- Mobile bottom nav: label "Map" -> "Pods", navigate to `/pods`
-- Update hub-and-spoke icon for mobile nav (replace crosshair circle with hub icon)
+## Steps
 
-### 2. Sidebar (`src/components/nav/Sidebar.tsx`)
+### Step 1: Upload
+- Add a numbered step indicator bar at the top (1. Upload - 2. Configure - 3. Import)
+- Add a brief welcome line: "Import contacts from a CSV file. We'll match your columns automatically."
+- Keep drag-and-drop zone but add a sample CSV download link ("Need a template?") that generates a minimal CSV with expected headers
+- Add file size validation (warn if > 5MB)
 
-- Rename `isMap` to `isPods`, match on `/pods` and `/`
-- Change label "Map" -> "Pods"
-- Replace `MapIcon` with a hub-and-spoke SVG icon
-- Update `navigate('/')` to `navigate('/pods')`
+### Step 2: Configure (replaces "preview")
+- Step indicator advances to step 2
+- Show file name with a "Change file" button (resets to step 1)
+- Record type selector with short descriptions ("Contacts - People you know" / "Companies - Organizations")
+- Pod selector with empty-state message if no pods exist ("Create a pod first")
+- Column mapping with green checkmarks for matched columns, amber for skipped
+- Collapsible preview table (collapsed by default, "Preview 5 rows" toggle)
+- Validation summary card at bottom: "X ready, Y will be skipped (no name)" with clear iconography
 
-### 3. Breadcrumb navigation updates
+### Step 3: Import + Results
+- Progress bar with percentage label and estimated time remaining
+- Live counter: "Imported X / Skipped Y"
+- On completion, show a results card with success icon, counts, and any errors in a collapsible section
+- "View in Pods" button navigates to `/pods`, "Import Another" resets
 
-- `PodDetailPage.tsx`: "Back" link navigates to `/pods` instead of `/map`
-- `CategoryTable.tsx`: fallback navigates to `/pods` instead of `/map`
+## Design
 
-### 4. Component file rename (optional, cosmetic)
+- Calm, minimal - aligned with existing design tokens
+- Subtle fade transitions between steps (200ms opacity)
+- Step indicator uses small numbered circles with connecting lines
+- Active step is brand green, completed steps have a checkmark, future steps are grey
 
-- Keep `OrbMap.tsx` filename as-is (internal name, not user-facing) to minimize churn
+## Files Modified
 
-## Files modified
+- `src/components/import/ImportPanel.tsx` - full rewrite of the render section; state machine and handlers stay mostly the same, add step indicator component inline, add template download helper, add estimated time calculation
 
-- `src/App.tsx` - routes, mobile nav label/icon, variable names
-- `src/components/nav/Sidebar.tsx` - label, icon, route, variable name
-- `src/components/pods/PodDetailPage.tsx` - back link `/map` -> `/pods`
-- `src/components/contacts/CategoryTable.tsx` - fallback redirect `/map` -> `/pods`
+## Technical Details
+
+- Add `step` derived from `state`: upload=1, preview=2, importing/done=3
+- Template CSV: `generateTemplate()` creates a Blob with headers (Name, Email, Phone, Company, Role, Location) and one example row
+- Estimated time: `(remaining * 250ms)` based on avg per-row time from progress updates
+- No new files needed - all changes in ImportPanel.tsx
 
