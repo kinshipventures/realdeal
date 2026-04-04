@@ -648,7 +648,7 @@ export async function createPipeline(name: string): Promise<Pipeline> {
     return p
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, name }).select().single()
+  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name }).select().single()
   if (error) throw error
   _pipelinesCache = null
   return mapPipeline(row)
