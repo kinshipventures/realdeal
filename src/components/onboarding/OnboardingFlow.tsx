@@ -221,15 +221,14 @@ export function OnboardingFlow({ onComplete }: Props) {
             <button
               key={label}
               type="button"
-              onClick={() => { if (i <= maxStep) setStep(i) }}
+              onClick={() => { setDirection(i > step ? 'forward' : 'back'); setStep(i); setMaxStep(m => Math.max(m, i)) }}
               style={{
                 padding: '6px 14px', borderRadius: 8, border: 'none',
                 fontSize: 11, fontWeight: i === step ? 600 : 400,
                 fontFamily: 'var(--font-sans)', letterSpacing: '0.01em',
                 color: i === step ? '#fff' : 'var(--color-text-secondary)',
                 background: i === step ? 'var(--color-brand)' : 'transparent',
-                cursor: i <= maxStep ? 'pointer' : 'default',
-                opacity: i <= maxStep ? 1 : 0.4,
+                cursor: 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >

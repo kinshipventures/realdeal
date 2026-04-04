@@ -1,64 +1,53 @@
 
 
-# Standardize Breadcrumbs and Navigation Across All Pages
+# Phase 3: Import Flow Polish
 
 ## Current State
 
-Navigation is inconsistent across pages:
+The import flow works but feels like a developer tool - a single flat page with all options visible at once. No guidance for first-time users, no step indicators, and the upload/preview/import states just swap content abruptly.
 
-| Page | Back button | Goes to | Style |
-|------|-----------|---------|-------|
-| CategoryTable (`/category/:id`) | Breadcrumb trail: Map > Pod > Category | `/map` (Map link only clickable, Pod is plain text) | Text links with `>` separator |
-| PodDetailPage (`/pod/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
-| RecordPage/RecordHeader (`/contact/:id`) | Chevron + "Back" | `navigate(-1)` (browser history) | Chevron icon |
-| ProjectDetailPage (`/projects/:id`) | Chevron + "Projects" | `/projects` (explicit) | Chevron icon |
-| NurturingHub (`/pulse/nurturing`) | Chevron + "Dashboard" | `/` (should be `/pulse`) | Chevron icon |
-| ImportPanel (`/import`) | Text button "Done" | `/` | Different pattern entirely |
-| List pages (Contacts, Pipelines, Projects) | No back button | N/A | Top-level, correct |
+## What Changes
 
-### Problems
+Redesign ImportPanel as a guided stepper flow with 3 clear steps, animated transitions, and contextual help text. Keep the same underlying logic (`csvImport.ts` unchanged).
 
-1. **CategoryTable breadcrumb**: Pod name is not clickable (should link to `/pod/:podId`)
-2. **NurturingHub**: Back goes to `/` (map) instead of `/pulse` (dashboard)
-3. **PodDetailPage**: Uses `navigate(-1)` - unpredictable if user arrived via direct link or deep navigation
-4. **RecordHeader**: Uses `navigate(-1)` - same unpredictability issue
-5. **Sidebar**: No active highlight for `/category/:id`, `/pulse/nurturing`, or `/contact/:id` routes
-6. **CategoryTable**: Header padding `28px 40px 0` not standardized to `32px 32px`
+## Steps
 
-## Plan
+### Step 1: Upload
+- Add a numbered step indicator bar at the top (1. Upload - 2. Configure - 3. Import)
+- Add a brief welcome line: "Import contacts from a CSV file. We'll match your columns automatically."
+- Keep drag-and-drop zone but add a sample CSV download link ("Need a template?") that generates a minimal CSV with expected headers
+- Add file size validation (warn if > 5MB)
 
-### 1. Standardize back navigation targets (explicit routes, not browser history)
+### Step 2: Configure (replaces "preview")
+- Step indicator advances to step 2
+- Show file name with a "Change file" button (resets to step 1)
+- Record type selector with short descriptions ("Contacts - People you know" / "Companies - Organizations")
+- Pod selector with empty-state message if no pods exist ("Create a pod first")
+- Column mapping with green checkmarks for matched columns, amber for skipped
+- Collapsible preview table (collapsed by default, "Preview 5 rows" toggle)
+- Validation summary card at bottom: "X ready, Y will be skipped (no name)" with clear iconography
 
-- **PodDetailPage**: Change `navigate(-1)` to `navigate('/')` with label "Map" (pods are on the map)
-- **RecordHeader**: Change `navigate(-1)` to breadcrumb: Contacts > Contact Name. "Contacts" links to `/contacts`
-- **NurturingHub**: Change back target from `/` to `/pulse`
-- **CategoryTable**: Make pod name clickable, linking to `/pod/:podId`. Store `podId` in state during data load
+### Step 3: Import + Results
+- Progress bar with percentage label and estimated time remaining
+- Live counter: "Imported X / Skipped Y"
+- On completion, show a results card with success icon, counts, and any errors in a collapsible section
+- "View in Pods" button navigates to `/pods`, "Import Another" resets
 
-### 2. Add breadcrumbs to detail pages that have parent context
+## Design
 
-- **CategoryTable**: Already has breadcrumb - fix pod name to be clickable link to `/pod/:podId`
-- **ProjectDetailPage**: Already correct (chevron + "Projects" -> `/projects`)
-- **PodDetailPage**: Change to breadcrumb: Map > Pod Name (Map links to `/`)
-- **RecordHeader**: Add breadcrumb: Contacts > Contact Name
-- **NurturingHub**: Change label from "Dashboard" to "Pulse" and fix target
-
-### 3. Fix sidebar active states for sub-routes
-
-In `Sidebar.tsx`, update route detection:
-- `isContacts` should also match `/contact/:id` and `/category/:id`
-- `isPulse` already matches `/pulse/` prefix - confirmed correct
-- Add pod route highlighting (already handled via `isPod`)
-
-### 4. Standardize CategoryTable padding
-
-- Change header padding from `28px 40px 0` to `32px 32px 0`
-- Change body padding to match other pages
+- Calm, minimal - aligned with existing design tokens
+- Subtle fade transitions between steps (200ms opacity)
+- Step indicator uses small numbered circles with connecting lines
+- Active step is brand green, completed steps have a checkmark, future steps are grey
 
 ## Files Modified
 
-- `src/components/contacts/CategoryTable.tsx` - Fix breadcrumb (clickable pod), fix padding
-- `src/components/pods/PodDetailPage.tsx` - Breadcrumb instead of generic back
-- `src/components/records/RecordHeader.tsx` - Breadcrumb instead of `navigate(-1)`
-- `src/components/nurturing/NurturingHub.tsx` - Fix back target to `/pulse`
-- `src/components/nav/Sidebar.tsx` - Highlight sidebar for `/contact/` and `/category/` routes
+- `src/components/import/ImportPanel.tsx` - full rewrite of the render section; state machine and handlers stay mostly the same, add step indicator component inline, add template download helper, add estimated time calculation
+
+## Technical Details
+
+- Add `step` derived from `state`: upload=1, preview=2, importing/done=3
+- Template CSV: `generateTemplate()` creates a Blob with headers (Name, Email, Phone, Company, Role, Location) and one example row
+- Estimated time: `(remaining * 250ms)` based on avg per-row time from progress updates
+- No new files needed - all changes in ImportPanel.tsx
 

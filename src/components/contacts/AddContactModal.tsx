@@ -94,7 +94,7 @@ export function AddContactModal({ onCreated, onClose }: Props) {
         kv_fund_investor: null, spv_investor: null, needs_review: false,
         company_record_id: null, industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
-        custom_fields: {},
+        communication_preferences: null, custom_fields: {},
       }
 
       let data: Omit<Contact, 'id' | 'created_at'>

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
+import { getActiveWorkspaceId } from './workspace'
 import type { RelationshipType } from './types'
 import { isDemoMode, DEMO_FIELD_CONFIGS } from './sampleData'
 
@@ -94,6 +95,7 @@ export async function createCustomField(spec: {
   const userId = await getUserId()
   const { data: row, error } = await supabase.from('field_config').insert({
     user_id: userId,
+    workspace_id: getActiveWorkspaceId(),
     name: spec.name,
     field_type: spec.field_type,
     scope_type: spec.scope_type,

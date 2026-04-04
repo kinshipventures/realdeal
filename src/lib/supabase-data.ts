@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
 
 // Re-export TABLES for backward compat (some imports reference it)
@@ -106,8 +107,9 @@ export async function createPod(data: {
     return p
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const { data: row, error } = await supabase.from('pods').insert({
-    user_id: userId, name: data.name, color: data.color ?? null, owner: data.owner ?? null,
+    user_id: userId, workspace_id: wsId, name: data.name, color: data.color ?? null, owner: data.owner ?? null,
     is_priority: data.is_priority ?? false, cadence: data.cadence ?? null,
     description: data.description ?? null, capacity: data.capacity ?? null,
   }).select().single()
@@ -164,7 +166,7 @@ export async function createCategory(name: string, listId: string): Promise<Cate
     return c
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, name, pod_id: listId }).select().single()
+  const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pod_id: listId }).select().single()
   if (error) throw error
   _categoriesCache = null
   return mapCategory(row)
@@ -240,7 +242,8 @@ function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | nul
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
     company_record_id: r.company_id ?? null, industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
-    email_3: r.email_3 ?? null, custom_fields: r.custom_fields ?? {}, created_at: r.created_at,
+    email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
+    custom_fields: r.custom_fields ?? {}, created_at: r.created_at,
   }
 }
 
@@ -271,8 +274,9 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     return c
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const insert: Record<string, unknown> = {
-    user_id: userId, name: data.name, email: data.email, phone: data.phone,
+    user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,
     notes: data.notes, recommended_by: data.recommended_by, specialization: data.specialization,
     past_clients: data.past_clients, birthday: data.birthday, milestones: data.milestones,
@@ -295,14 +299,14 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
   if (data.list_ids.length) {
     await supabase.from('contact_pods').insert(
       data.list_ids.map((pod_id, i) => ({
-        user_id: userId, contact_id: row.id, pod_id,
+        user_id: userId, workspace_id: wsId, contact_id: row.id, pod_id,
         is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
       }))
     )
   }
   if (data.category_ids.length) {
     await supabase.from('contact_categories').insert(
-      data.category_ids.map(category_id => ({ user_id: userId, contact_id: row.id, category_id }))
+      data.category_ids.map(category_id => ({ user_id: userId, workspace_id: wsId, contact_id: row.id, category_id }))
     )
   }
   _contactsCache = null
@@ -341,7 +345,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     if (data.list_ids.length) {
       await supabase.from('contact_pods').insert(
         data.list_ids.map((pod_id, i) => ({
-          user_id: userId, contact_id: id, pod_id,
+          user_id: userId, workspace_id: getActiveWorkspaceId(), contact_id: id, pod_id,
           is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
         }))
       )
@@ -352,7 +356,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     await supabase.from('contact_categories').delete().eq('contact_id', id)
     if (data.category_ids.length) {
       await supabase.from('contact_categories').insert(
-        data.category_ids.map(category_id => ({ user_id: userId, contact_id: id, category_id }))
+        data.category_ids.map(category_id => ({ user_id: userId, workspace_id: getActiveWorkspaceId(), contact_id: id, category_id }))
       )
     }
   }
@@ -434,8 +438,9 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
     return interaction
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const { data: row, error } = await supabase.from('interactions').insert({
-    user_id: userId, contact_id: data.contact_id, type: data.type, date: data.date,
+    user_id: userId, workspace_id: wsId, contact_id: data.contact_id, type: data.type, date: data.date,
     notes: data.notes, summary: data.summary, source: data.source,
     email_link: data.email_link, granola_link: data.granola_link,
     event_detail: data.event_detail, actor: data.actor,
@@ -558,7 +563,7 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
     return c
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaigns').insert({ user_id: userId, name: data.name, type: data.type, deadline: data.deadline ?? null }).select().single()
+  const { data: row, error } = await supabase.from('campaigns').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: data.type, deadline: data.deadline ?? null }).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaign(row)
@@ -573,7 +578,7 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     return cc
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, campaign_id: campaignId, contact_id: contactId }).select().single()
+  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaignContact(row)
@@ -643,7 +648,7 @@ export async function createPipeline(name: string): Promise<Pipeline> {
     return p
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, name }).select().single()
+  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name }).select().single()
   if (error) throw error
   _pipelinesCache = null
   return mapPipeline(row)
@@ -696,7 +701,7 @@ export async function createPipelineStage(name: string, pipelineId: string, orde
     return s
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, name, pipeline_id: pipelineId, order, color: color ?? null }).select().single()
+  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pipeline_id: pipelineId, order, color: color ?? null }).select().single()
   if (error) throw error
   _pipelineStagesCache = null
   return mapPipelineStage(row)
@@ -762,11 +767,12 @@ export async function createOpportunity(name: string, stageId: string, relations
     return o
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('opportunities').insert({ user_id: userId, name, stage_id: stageId }).select().single()
+  const wsId = getActiveWorkspaceId()
+  const { data: row, error } = await supabase.from('opportunities').insert({ user_id: userId, workspace_id: wsId, name, stage_id: stageId }).select().single()
   if (error) throw error
   if (relationshipIds.length) {
     await supabase.from('opportunity_contacts').insert(
-      relationshipIds.map(contact_id => ({ user_id: userId, opportunity_id: row.id, contact_id }))
+      relationshipIds.map(contact_id => ({ user_id: userId, workspace_id: wsId, opportunity_id: row.id, contact_id }))
     )
   }
   _opportunitiesCache = null
@@ -844,7 +850,7 @@ export async function createProject(name: string, description?: string): Promise
     return p
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('projects').insert({ user_id: userId, name, description: description ?? null }).select().single()
+  const { data: row, error } = await supabase.from('projects').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, description: description ?? null }).select().single()
   if (error) throw error
   _projectsCache = null
   return { id: row.id, name: row.name, description: row.description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: row.created_at }
@@ -874,7 +880,7 @@ export async function addRecordToProject(projectId: string, recordId: string): P
     return project
   }
   const userId = await getUserId()
-  await supabase.from('project_contacts').insert({ user_id: userId, project_id: projectId, contact_id: recordId })
+  await supabase.from('project_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), project_id: projectId, contact_id: recordId })
   _projectsCache = null
   await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }), actor: null })
   return { ...project, relationship_ids: [...project.relationship_ids, recordId] }
@@ -902,7 +908,7 @@ export async function addOpportunityToProject(projectId: string, opportunityId: 
   if (project.opportunity_ids.includes(opportunityId)) return project
   if (isDemoMode()) { project.opportunity_ids.push(opportunityId); return project }
   const userId = await getUserId()
-  await supabase.from('project_opportunities').insert({ user_id: userId, project_id: projectId, opportunity_id: opportunityId })
+  await supabase.from('project_opportunities').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), project_id: projectId, opportunity_id: opportunityId })
   _projectsCache = null
   return { ...project, opportunity_ids: [...project.opportunity_ids, opportunityId] }
 }

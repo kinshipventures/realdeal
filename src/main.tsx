@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import { ReactFlowProvider } from '@xyflow/react'
 import { AuthProvider } from './contexts/AuthContext'
+import { WorkspaceProvider } from './contexts/WorkspaceContext'
 import './index.css'
 import App from './App'
 
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')!).render(
     <ReactFlowProvider>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <WorkspaceProvider>
+            <App />
+          </WorkspaceProvider>
         </AuthProvider>
       </BrowserRouter>
     </ReactFlowProvider>

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
+import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
 interface SidebarProps {
   collapsed: boolean
@@ -31,9 +32,10 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
     localStorage.setItem('realdeal:sidebar-pods-open', next ? '1' : '0')
   }
 
-  const isMap = location.pathname === '/' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
+  const isCompanies = location.pathname === '/companies'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
 
@@ -97,14 +99,17 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         </button>
       </div>
 
+      {/* Workspace switcher */}
+      <WorkspaceSwitcher collapsed={collapsed} />
+
       {/* Map - primary */}
       <div style={{ padding: '4px 8px' }}>
         <NavItem
-          icon={<MapIcon />}
-          label="Map"
-          active={isMap}
+          icon={<PodsIcon />}
+          label="Pods"
+          active={isPods}
           collapsed={collapsed}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/pods')}
         />
       </div>
 
@@ -125,6 +130,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           active={isContacts}
           collapsed={collapsed}
           onClick={() => navigate('/contacts')}
+        />
+        <NavItem
+          icon={<CompaniesIcon />}
+          label="Companies"
+          active={isCompanies}
+          collapsed={collapsed}
+          onClick={() => navigate('/companies')}
         />
         <NavItem
           icon={<PipelinesIcon />}
@@ -358,14 +370,14 @@ const iconProps = {
   strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
 }
 
-function MapIcon() {
+function PodsIcon() {
   return (
     <svg {...iconProps}>
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="22" y1="12" x2="18" y2="12"/>
-      <line x1="6" y1="12" x2="2" y2="12"/>
-      <line x1="12" y1="6" x2="12" y2="2"/>
-      <line x1="12" y1="22" x2="12" y2="18"/>
+      <circle cx="12" cy="12" r="3"/>
+      <line x1="12" y1="3" x2="12" y2="9"/>
+      <line x1="12" y1="15" x2="12" y2="21"/>
+      <line x1="3" y1="12" x2="9" y2="12"/>
+      <line x1="15" y1="12" x2="21" y2="12"/>
     </svg>
   )
 }
@@ -397,6 +409,17 @@ function PipelinesIcon() {
       <rect x="2" y="3" width="5" height="18" rx="1"/>
       <rect x="9.5" y="6" width="5" height="15" rx="1"/>
       <rect x="17" y="9" width="5" height="12" rx="1"/>
+    </svg>
+  )
+}
+
+function CompaniesIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+      <line x1="9" y1="22" x2="9" y2="2"/>
+      <line x1="15" y1="22" x2="15" y2="2"/>
+      <line x1="4" y1="12" x2="20" y2="12"/>
     </svg>
   )
 }

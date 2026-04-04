@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { ShareLink } from './types'
+import { getActiveWorkspaceId } from './workspace'
 
 // ── Token + PIN helpers ──────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ export async function createShareLink(data: {
     .from('share_links')
     .insert({
       user_id: userId,
+      workspace_id: getActiveWorkspaceId(),
       pod_id: data.pod_id,
       token,
       excluded_contact_ids: data.excluded_contact_ids,

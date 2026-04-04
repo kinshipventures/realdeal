@@ -78,6 +78,7 @@ const contact = (id: string, name: string, opts: {
   stage: opts.stage ?? null,
   ticker: opts.ticker ?? null,
   domain: opts.domain ?? null,
+  communication_preferences: null,
   custom_fields: {},
   primary_list_id: opts.primary_pod ? `demo-pod-${opts.primary_pod}` : null,
   cadence_override: opts.cadence_override ?? null,
