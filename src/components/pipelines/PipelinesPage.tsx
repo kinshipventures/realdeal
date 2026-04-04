@@ -6,6 +6,7 @@ import {
   getOpportunities,
   getContacts,
   createPipeline,
+  createPipelineStage,
   updatePipeline,
 } from '../../lib/airtable'
 import type { Contact, Opportunity, Pipeline, PipelineStage } from '../../lib/types'
@@ -56,7 +57,16 @@ export function PipelinesPage() {
 
   const handlePipelineCreated = useCallback(async (name: string) => {
     const newPipeline = await createPipeline(name)
+    const defaults = [
+      { name: 'Lead', order: 0, color: '#4299E1' },
+      { name: 'In Progress', order: 1, color: '#ECC94B' },
+      { name: 'Closed', order: 2, color: '#48BB78' },
+    ]
+    const newStages = await Promise.all(
+      defaults.map(d => createPipelineStage(d.name, newPipeline.id, d.order, d.color))
+    )
     setPipelines(prev => [...prev, newPipeline])
+    setStages(prev => [...prev, ...newStages])
     setActivePipelineId(newPipeline.id)
   }, [])
 
@@ -101,17 +111,6 @@ export function PipelinesPage() {
   return (
     <div style={{ padding: '32px 32px 96px', maxWidth: '100%', overflowX: 'auto' }}>
       <div style={{ marginBottom: 16 }}>
-        <p style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-          marginBottom: 4,
-          margin: 0,
-        }}>
-          Pipelines
-        </p>
         <h1 style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 24,
@@ -146,8 +145,59 @@ export function PipelinesPage() {
           initialOpenOpportunityId={initialOpenOpportunityId}
         />
       ) : (
-        <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
-          No active pipeline. Create one to get started.
+        <div style={{
+          padding: '64px 0',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--edge)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 24,
+          }}>
+            &#9670;
+          </div>
+          <p style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: 'var(--color-text-primary)',
+            margin: 0,
+          }}>
+            Create your first pipeline
+          </p>
+          <p style={{
+            fontSize: 13,
+            color: 'var(--color-text-secondary)',
+            margin: 0,
+            maxWidth: 280,
+            textAlign: 'center',
+          }}>
+            Pipelines help you track opportunities through stages like Lead, In Progress, and Closed.
+          </p>
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            style={{
+              marginTop: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '8px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'var(--color-brand)',
+              color: '#ffffff',
+              cursor: 'pointer',
+            }}
+          >
+            + New Pipeline
+          </button>
         </div>
       )}
 
