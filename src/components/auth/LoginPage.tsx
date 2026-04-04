@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { lovable } from '@/integrations/lovable/index'
+import { supabase } from '@/integrations/supabase/client'
 import { setDemoMode } from '@/lib/sampleData'
 
 export function LoginPage() {
@@ -10,6 +11,9 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
     if (!session) return
@@ -34,6 +38,39 @@ export function LoginPage() {
     }
   }
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      }
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '1px solid var(--edge-strong)',
+    background: '#fff',
+    fontSize: 14,
+    fontFamily: 'var(--font-sans)',
+    color: 'var(--color-text-primary)',
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+
   return (
     <div style={{
       width: '100vw',
@@ -45,7 +82,7 @@ export function LoginPage() {
       fontFamily: 'var(--font-sans)',
       color: 'var(--color-text-primary)',
     }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 320 }}>
         <h1 style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 32,
@@ -68,8 +105,10 @@ export function LoginPage() {
           disabled={loading}
           style={{
             marginTop: 32,
+            width: '100%',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 12,
             padding: '12px 24px',
             borderRadius: 8,
@@ -96,8 +135,78 @@ export function LoginPage() {
           {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
+        {/* Divider */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          width: '100%',
+          margin: '24px 0',
+        }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--edge-strong)' }} />
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>or</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--edge-strong)' }} />
+        </div>
+
+        {/* Email form */}
+        <form onSubmit={handleEmailAuth} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={6}
+            style={inputStyle}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--color-text-primary)',
+              color: 'var(--color-bg)',
+              fontSize: 15,
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
+              cursor: loading ? 'wait' : 'pointer',
+              opacity: loading ? 0.6 : 1,
+              transition: 'opacity 0.15s ease',
+            }}
+          >
+            {loading ? 'Please wait...' : isSignUp ? 'Sign up' : 'Sign in'}
+          </button>
+        </form>
+
+        <button
+          onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
+          style={{
+            marginTop: 12,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 13,
+            color: 'var(--color-text-tertiary)',
+            fontFamily: 'var(--font-sans)',
+            padding: '4px 8px',
+          }}
+        >
+          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
+
         {error && (
-          <p style={{ color: '#dc2626', fontSize: 13, marginTop: 12 }}>{error}</p>
+          <p style={{ color: '#dc2626', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>
         )}
 
         <button
@@ -106,7 +215,7 @@ export function LoginPage() {
             window.location.href = '/'
           }}
           style={{
-            marginTop: 16,
+            marginTop: 12,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
