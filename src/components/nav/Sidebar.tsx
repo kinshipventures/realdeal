@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
+import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
 interface SidebarProps {
   collapsed: boolean
