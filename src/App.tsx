@@ -93,6 +93,8 @@ function AppShell() {
     window.location.reload()
   }
 
+  const showDemoControls = demo || window.location.hostname === 'localhost'
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
@@ -103,7 +105,7 @@ function AppShell() {
           onToggle={toggleSidebar}
           onSearch={() => setShowSearch(true)}
           demo={demo}
-          onDemoToggle={handleDemoToggle}
+          onDemoToggle={showDemoControls ? handleDemoToggle : undefined}
         />
       )}
 
