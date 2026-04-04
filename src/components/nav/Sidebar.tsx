@@ -105,11 +105,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Map - primary */}
       <div style={{ padding: '4px 8px' }}>
         <NavItem
-          icon={<MapIcon />}
-          label="Map"
-          active={isMap}
+          icon={<PodsIcon />}
+          label="Pods"
+          active={isPods}
           collapsed={collapsed}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/pods')}
         />
       </div>
 
