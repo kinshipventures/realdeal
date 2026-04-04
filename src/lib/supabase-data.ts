@@ -1011,3 +1011,15 @@ export async function getActiveContacts(): Promise<Contact[]> {
 export async function getPendingContacts(): Promise<Contact[]> {
   const all = await getContacts(); return all.filter(c => c.status === 'Pending')
 }
+
+export function invalidateAllCaches(): void {
+  _podsCache = null; _podsCacheTime = 0; _podsFetch = null
+  _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null
+  _contactsCache = null
+  _interactionsCache = null
+  _campaignsCache = null; _campaignContactsCache = null
+  _pipelinesCache = null; _pipelinesFetch = null
+  _pipelineStagesCache = null; _pipelineStagesFetch = null
+  _opportunitiesCache = null; _opportunitiesFetch = null
+  _projectsCache = null; _projectsFetch = null
+}

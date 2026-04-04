@@ -72,6 +72,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const switchWorkspace = useCallback((id: string) => {
     const ws = workspaces.find(w => w.id === id)
     if (ws) {
+      invalidateAllCaches()
       setActiveWorkspace(ws)
       setActiveWorkspaceId(ws.id)
     }
