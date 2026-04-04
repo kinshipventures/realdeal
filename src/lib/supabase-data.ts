@@ -563,7 +563,7 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
     return c
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaigns').insert({ user_id: userId, name: data.name, type: data.type, deadline: data.deadline ?? null }).select().single()
+  const { data: row, error } = await supabase.from('campaigns').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: data.type, deadline: data.deadline ?? null }).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaign(row)
