@@ -767,11 +767,12 @@ export async function createOpportunity(name: string, stageId: string, relations
     return o
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('opportunities').insert({ user_id: userId, name, stage_id: stageId }).select().single()
+  const wsId = getActiveWorkspaceId()
+  const { data: row, error } = await supabase.from('opportunities').insert({ user_id: userId, workspace_id: wsId, name, stage_id: stageId }).select().single()
   if (error) throw error
   if (relationshipIds.length) {
     await supabase.from('opportunity_contacts').insert(
-      relationshipIds.map(contact_id => ({ user_id: userId, opportunity_id: row.id, contact_id }))
+      relationshipIds.map(contact_id => ({ user_id: userId, workspace_id: wsId, opportunity_id: row.id, contact_id }))
     )
   }
   _opportunitiesCache = null
