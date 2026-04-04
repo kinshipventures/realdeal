@@ -266,7 +266,7 @@ function AppShell() {
           onClose={closeSearch}
           onSelectContact={(contact) => {
             setShowSearch(false)
-            if (isMap && contact.list_ids.length > 0) {
+            if (isPods && contact.list_ids.length > 0) {
               window.dispatchEvent(new CustomEvent('map:highlight-pods', { detail: contact.list_ids }))
             } else {
               navigate(`/contact/${contact.id}`)
