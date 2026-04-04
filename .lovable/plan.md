@@ -1,69 +1,44 @@
 
 
-# Alpha Readiness Audit
+# Alpha Launch - Remaining Polish
 
-After reviewing the full codebase, here is what is missing or broken for real users to interact with this app.
+## Status: Nearly ready
 
-## Critical (blocks alpha)
+All critical items from the previous audit are implemented:
+- 404 route, `/map` redirect, error boundary, account page, cache invalidation, demo toggle restriction, companies RLS, invite flow, workspace scoping
 
-### 1. No invite/team member flow
-Workspaces exist, but there is no way to invite another user. The `workspace_members` table has no UPDATE policy either. Without this, "multi-user" is impossible.
+## Remaining items (small, non-blocking)
 
-**Work:**
-- Add an "Invite member" UI in WorkspaceSwitcher or a new settings panel
-- Create an edge function to send invite emails (or generate invite links)
-- Add an `invites` table (workspace_id, email, role, token, accepted_at)
-- Add UPDATE policy on `workspace_members` for role changes
+### 1. Mobile account access
+The sidebar has sign-out on desktop, and `/account` exists, but the mobile bottom tab bar has no way to reach `/account`. Users on mobile cannot change their display name or sign out.
 
-### 2. No catch-all / 404 route
-Visiting any unknown URL shows a blank page. Need a `<Route path="*">` with a "Page not found" screen and a link back to `/`.
+**Fix:** Add a small account/avatar icon to the mobile nav bar (replace one slot or add to the end), linking to `/account`.
 
-### 3. No `/map` redirect
-Phase 2 planned a `/map` -> `/pods` redirect but it was not added. Old bookmarks/links will break.
+### 2. Leaked password protection
+The linter flags this, but login is Google OAuth only - no passwords are used. Non-issue.
 
-### 4. Demo mode toggle visible to real users
-The "demo on/off" button is in the sidebar and mobile nav for all users, including real authenticated users. This is confusing for alpha testers. It should be hidden (or behind a developer flag).
+### 3. No email/password signup fallback
+Login is Google-only. If a tester cannot use Google (e.g., corporate SSO restrictions), they are locked out.
 
-## Important (should fix before inviting users)
+**Fix (optional):** Add email/password as a fallback auth method on the login page.
 
-### 5. No user settings / account page
-No way to view your profile, change display name, or sign out on mobile (sign out is only in the desktop sidebar). Need at minimum a simple account/settings page or modal.
+### 4. Onboarding for invited users
+When a user accepts an invite and joins a workspace, they still see the generic onboarding flow ("Welcome to RealDeal, create your first pod"). This is confusing for someone joining an existing workspace with data already in it.
 
-### 6. Workspace switching reloads nothing
-When switching workspaces via WorkspaceSwitcher, it updates context but does not invalidate any data caches. The user sees stale data from the previous workspace until they manually refresh. Need to clear all module-level caches on workspace switch.
+**Fix:** Skip onboarding if the user is joining via invite (check if workspace already has contacts/pods).
 
-### 7. `companies` table has no workspace_id column
-The `companies` table RLS is `true` for all authenticated users - every user can see every company. This is a data leak. Need to add `workspace_id` + proper RLS like other tables.
+### 5. No loading/empty state for invited users
+A new user who accepts an invite sees the pods map, but `getPods()` uses the default "Personal" workspace (auto-created on signup) rather than the invited workspace. They need to manually switch workspaces.
 
-### 8. `_migration_id_map` table has permissive RLS
-RLS is `true` for all authenticated users. Should be restricted or removed if no longer needed.
+**Fix:** After accepting an invite, auto-switch to the invited workspace.
 
-## Nice-to-have (polish for alpha)
+## Recommendation
 
-### 9. Global error boundary
-No React error boundary - a crash in any component white-screens the app. Add a top-level `<ErrorBoundary>` with a "Something went wrong" fallback and a reload button.
-
-### 10. Loading state for workspace context
-If workspace loading is slow, the app renders with `activeWorkspace = null`, which causes `getActiveWorkspaceId()` to throw. Add a loading gate after auth.
-
-## Recommended implementation order
-
-1. Fix companies table RLS + workspace_id (security, database migration)
-2. Add catch-all 404 route + `/map` redirect (quick, 1 file)
-3. Hide demo toggle from non-dev users (quick)
-4. Cache invalidation on workspace switch (important for correctness)
-5. Add error boundary (safety net)
-6. Invite member flow (largest piece, enables multi-user)
-7. Account/settings page (profile, sign out on mobile)
+Items 1 and 5 are the most impactful for alpha. Item 1 is ~10 lines. Item 5 is ~15 lines in `AcceptInvitePage.tsx` + `WorkspaceContext.tsx`.
 
 ## Files modified
 
-- **Database migration**: companies table workspace_id + RLS, _migration_id_map RLS fix, workspace_members UPDATE policy, invites table
-- `src/App.tsx` - 404 route, /map redirect, hide demo toggle
-- `src/lib/supabase-data.ts` - cache invalidation export
-- `src/contexts/WorkspaceContext.tsx` - trigger cache clear on switch
-- `src/components/nav/WorkspaceSwitcher.tsx` - invite UI
-- `src/components/errors/ErrorBoundary.tsx` - new
-- `src/components/settings/AccountPage.tsx` - new (or modal)
-- Edge function for invite emails (if doing email invites)
+- `src/App.tsx` - add account link to mobile nav
+- `src/components/settings/AcceptInvitePage.tsx` - auto-switch workspace after accepting invite
+- `src/contexts/WorkspaceContext.tsx` - expose method or trigger to switch after invite acceptance
 
