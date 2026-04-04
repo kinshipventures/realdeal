@@ -1,83 +1,69 @@
 
 
-# Phase 4: Pipeline Polish - Demo-Ready
+# Alpha Readiness Audit
 
-## Problems for new users
+After reviewing the full codebase, here is what is missing or broken for real users to interact with this app.
 
-1. **Creating a pipeline gives no stages** - user sees an empty board with no columns. No way to add stages from the UI.
-2. **"+ Add opportunity" creates a temp stub** - `handleCreateOpportunity` creates a local-only `temp-` ID object with no persistence. Data is lost on refresh.
-3. **No "Add Stage" button** - stages can only be created programmatically. New users are stuck.
-4. **Page header says "Pipelines / Pipelines"** - redundant label + subtitle.
-5. **Empty state is unhelpful** - "No active pipeline. Create one to get started." but no guidance after creation.
-6. **Opportunity cards have no priority by default** - the "set priority" action is hidden behind a hover-only button that's hard to discover.
-7. **Tab bar kebab menu is invisible** - requires hover to reveal, undiscoverable on touch.
+## Critical (blocks alpha)
 
-## Changes
+### 1. No invite/team member flow
+Workspaces exist, but there is no way to invite another user. The `workspace_members` table has no UPDATE policy either. Without this, "multi-user" is impossible.
 
-### 1. Auto-create default stages on pipeline creation
+**Work:**
+- Add an "Invite member" UI in WorkspaceSwitcher or a new settings panel
+- Create an edge function to send invite emails (or generate invite links)
+- Add an `invites` table (workspace_id, email, role, token, accepted_at)
+- Add UPDATE policy on `workspace_members` for role changes
 
-Update `handlePipelineCreated` in `PipelinesPage.tsx` to create 3 default stages ("Lead", "In Progress", "Closed") via `createPipelineStage()` after `createPipeline()`. Add resulting stages to local state.
+### 2. No catch-all / 404 route
+Visiting any unknown URL shows a blank page. Need a `<Route path="*">` with a "Page not found" screen and a link back to `/`.
 
-### 2. Add "Add Stage" column
+### 3. No `/map` redirect
+Phase 2 planned a `/map` -> `/pods` redirect but it was not added. Old bookmarks/links will break.
 
-Add an "Add Stage" button as the last column in `PipelineBoard.tsx`. Clicking it shows an inline input. On submit, calls `createPipelineStage(name, pipeline.id, maxOrder + 1)` and appends to stages state.
+### 4. Demo mode toggle visible to real users
+The "demo on/off" button is in the sidebar and mobile nav for all users, including real authenticated users. This is confusing for alpha testers. It should be hidden (or behind a developer flag).
 
-### 3. Persist opportunity creation
+## Important (should fix before inviting users)
 
-Update `handleCreateOpportunity` in `PipelineBoard.tsx` to call `createOpportunity(name, stageId, contactIds)` from the data layer instead of creating a temp stub. Replace the temp ID with the real one on response.
+### 5. No user settings / account page
+No way to view your profile, change display name, or sign out on mobile (sign out is only in the desktop sidebar). Need at minimum a simple account/settings page or modal.
 
-### 4. Fix page header
+### 6. Workspace switching reloads nothing
+When switching workspaces via WorkspaceSwitcher, it updates context but does not invalidate any data caches. The user sees stale data from the previous workspace until they manually refresh. Need to clear all module-level caches on workspace switch.
 
-Change the redundant "Pipelines / Pipelines" heading to just "Pipelines" with no subtitle label.
+### 7. `companies` table has no workspace_id column
+The `companies` table RLS is `true` for all authenticated users - every user can see every company. This is a data leak. Need to add `workspace_id` + proper RLS like other tables.
 
-### 5. Better empty state
+### 8. `_migration_id_map` table has permissive RLS
+RLS is `true` for all authenticated users. Should be restricted or removed if no longer needed.
 
-Replace the plain text empty state with a centered card that has an icon, heading ("Create your first pipeline"), description, and a CTA button that opens the create modal.
+## Nice-to-have (polish for alpha)
 
-### 6. Improved empty stage guidance
+### 9. Global error boundary
+No React error boundary - a crash in any component white-screens the app. Add a top-level `<ErrorBoundary>` with a "Something went wrong" fallback and a reload button.
 
-Update the empty column text to be more inviting: "Drag opportunities here or click below to add one."
+### 10. Loading state for workspace context
+If workspace loading is slow, the app renders with `activeWorkspace = null`, which causes `getActiveWorkspaceId()` to throw. Add a loading gate after auth.
 
-### 7. Stage delete/reorder
+## Recommended implementation order
 
-Add a "Delete stage" option to the stage header context (only when stage has 0 opportunities). No drag reorder for now - keep scope small.
+1. Fix companies table RLS + workspace_id (security, database migration)
+2. Add catch-all 404 route + `/map` redirect (quick, 1 file)
+3. Hide demo toggle from non-dev users (quick)
+4. Cache invalidation on workspace switch (important for correctness)
+5. Add error boundary (safety net)
+6. Invite member flow (largest piece, enables multi-user)
+7. Account/settings page (profile, sign out on mobile)
 
 ## Files modified
 
-- `src/components/pipelines/PipelinesPage.tsx` - auto-create stages, fix header, better empty state
-- `src/components/pipelines/PipelineBoard.tsx` - add "Add Stage" column, persist opportunity creation, add stage delete
-- `src/components/pipelines/PipelineStageColumn.tsx` - add delete button in header, updated empty text
-- `src/components/pipelines/CreatePipelineModal.tsx` - no changes needed
-
-## Technical details
-
-### Default stages on pipeline creation
-```typescript
-const handlePipelineCreated = useCallback(async (name: string) => {
-  const newPipeline = await createPipeline(name)
-  const defaults = [
-    { name: 'Lead', order: 0, color: '#4299E1' },
-    { name: 'In Progress', order: 1, color: '#ECC94B' },
-    { name: 'Closed', order: 2, color: '#48BB78' },
-  ]
-  const newStages = await Promise.all(
-    defaults.map(d => createPipelineStage(d.name, newPipeline.id, d.order, d.color))
-  )
-  setPipelines(prev => [...prev, newPipeline])
-  setStages(prev => [...prev, ...newStages])
-  setActivePipelineId(newPipeline.id)
-}, [])
-```
-
-### Add Stage column in PipelineBoard
-Renders after the last stage column. Contains an input form (hidden by default, shown on click). Calls `createPipelineStage` and updates parent state via `onStagesChange`.
-
-### Persist opportunity creation
-Replace the temp object creation with an async call:
-```typescript
-async function handleCreateOpportunity(name: string, stageId: string, contactIds: string[]) {
-  const newOpp = await createOpportunity(name, stageId, contactIds)
-  onOpportunitiesChange([...opportunities, newOpp])
-}
-```
+- **Database migration**: companies table workspace_id + RLS, _migration_id_map RLS fix, workspace_members UPDATE policy, invites table
+- `src/App.tsx` - 404 route, /map redirect, hide demo toggle
+- `src/lib/supabase-data.ts` - cache invalidation export
+- `src/contexts/WorkspaceContext.tsx` - trigger cache clear on switch
+- `src/components/nav/WorkspaceSwitcher.tsx` - invite UI
+- `src/components/errors/ErrorBoundary.tsx` - new
+- `src/components/settings/AccountPage.tsx` - new (or modal)
+- Edge function for invite emails (if doing email invites)
 
