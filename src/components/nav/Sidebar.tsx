@@ -32,7 +32,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
     localStorage.setItem('realdeal:sidebar-pods-open', next ? '1' : '0')
   }
 
-  const isMap = location.pathname === '/' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
   const isCompanies = location.pathname === '/companies'
