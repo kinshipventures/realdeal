@@ -251,6 +251,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={onSearch}
           hint={collapsed ? undefined : 'Cmd+K'}
         />
+        {onDemoToggle && (
         <NavItem
           icon={
             <div style={{
@@ -275,6 +276,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={onDemoToggle}
           labelStyle={demo ? { color: 'var(--color-brand)', fontWeight: 600 } : undefined}
         />
+        )}
 
         <Divider />
 
