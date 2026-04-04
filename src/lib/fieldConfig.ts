@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
+import { getActiveWorkspaceId } from './workspace'
 import type { RelationshipType } from './types'
 import { isDemoMode, DEMO_FIELD_CONFIGS } from './sampleData'
 
