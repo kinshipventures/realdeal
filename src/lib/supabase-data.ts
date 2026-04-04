@@ -850,7 +850,7 @@ export async function createProject(name: string, description?: string): Promise
     return p
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('projects').insert({ user_id: userId, name, description: description ?? null }).select().single()
+  const { data: row, error } = await supabase.from('projects').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, description: description ?? null }).select().single()
   if (error) throw error
   _projectsCache = null
   return { id: row.id, name: row.name, description: row.description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: row.created_at }
