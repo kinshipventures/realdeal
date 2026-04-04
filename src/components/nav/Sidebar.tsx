@@ -99,6 +99,9 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         </button>
       </div>
 
+      {/* Workspace switcher */}
+      <WorkspaceSwitcher collapsed={collapsed} />
+
       {/* Map - primary */}
       <div style={{ padding: '4px 8px' }}>
         <NavItem
