@@ -10,7 +10,7 @@ interface SidebarProps {
   onToggle: () => void
   onSearch: () => void
   demo: boolean
-  onDemoToggle: () => void
+  onDemoToggle?: () => void
 }
 
 export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: SidebarProps) {
