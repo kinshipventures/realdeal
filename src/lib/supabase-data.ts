@@ -578,7 +578,7 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     return cc
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, campaign_id: campaignId, contact_id: contactId }).select().single()
+  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaignContact(row)
