@@ -41,7 +41,7 @@ function useIsMobile() {
 function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
-  const isMap = location.pathname === '/' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
   const isContacts = location.pathname === '/contacts'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
@@ -154,8 +154,8 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isMap ? 'page' : undefined}
-            onClick={() => navigate('/map')}
+            aria-current={isPods ? 'page' : undefined}
+            onClick={() => navigate('/pods')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
@@ -164,16 +164,16 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill="none"
-              stroke={isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
+              stroke={isPods ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="22" y1="12" x2="18" y2="12"/>
-              <line x1="6" y1="12" x2="2" y2="12"/>
-              <line x1="12" y1="6" x2="12" y2="2"/>
-              <line x1="12" y1="22" x2="12" y2="18"/>
+              <circle cx="12" cy="12" r="3"/>
+              <line x1="12" y1="3" x2="12" y2="9"/>
+              <line x1="12" y1="15" x2="12" y2="21"/>
+              <line x1="3" y1="12" x2="9" y2="12"/>
+              <line x1="15" y1="12" x2="21" y2="12"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Map</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isPods ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pods</span>
           </button>
           <button
             type="button"
@@ -266,7 +266,7 @@ function AppShell() {
           onClose={closeSearch}
           onSelectContact={(contact) => {
             setShowSearch(false)
-            if (isMap && contact.list_ids.length > 0) {
+            if (isPods && contact.list_ids.length > 0) {
               window.dispatchEvent(new CustomEvent('map:highlight-pods', { detail: contact.list_ids }))
             } else {
               navigate(`/contact/${contact.id}`)
@@ -276,7 +276,7 @@ function AppShell() {
       )}
 
       {/* FAB — create new record (hidden on map, which has its own) */}
-      {!isMap && (
+      {!isPods && (
         <button
           type="button"
           onClick={() => setShowCreate(true)}
@@ -352,9 +352,9 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<OrbMap />} />
+          <Route path="pods" element={<OrbMap />} />
           <Route path="pulse" element={<Dashboard />} />
           <Route path="pulse/nurturing" element={<NurturingHub />} />
-          <Route path="map" element={<OrbMap />} />
           <Route path="contacts" element={<RecordsList />} />
           <Route path="companies" element={<CompaniesPage />} />
           <Route path="pipelines" element={<PipelinesPage />} />

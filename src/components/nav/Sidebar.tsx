@@ -32,7 +32,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
     localStorage.setItem('realdeal:sidebar-pods-open', next ? '1' : '0')
   }
 
-  const isMap = location.pathname === '/' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
   const isCompanies = location.pathname === '/companies'
@@ -105,11 +105,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Map - primary */}
       <div style={{ padding: '4px 8px' }}>
         <NavItem
-          icon={<MapIcon />}
-          label="Map"
-          active={isMap}
+          icon={<PodsIcon />}
+          label="Pods"
+          active={isPods}
           collapsed={collapsed}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/pods')}
         />
       </div>
 
@@ -370,14 +370,14 @@ const iconProps = {
   strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
 }
 
-function MapIcon() {
+function PodsIcon() {
   return (
     <svg {...iconProps}>
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="22" y1="12" x2="18" y2="12"/>
-      <line x1="6" y1="12" x2="2" y2="12"/>
-      <line x1="12" y1="6" x2="12" y2="2"/>
-      <line x1="12" y1="22" x2="12" y2="18"/>
+      <circle cx="12" cy="12" r="3"/>
+      <line x1="12" y1="3" x2="12" y2="9"/>
+      <line x1="12" y1="15" x2="12" y2="21"/>
+      <line x1="3" y1="12" x2="9" y2="12"/>
+      <line x1="15" y1="12" x2="21" y2="12"/>
     </svg>
   )
 }

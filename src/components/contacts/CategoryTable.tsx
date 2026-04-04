@@ -40,7 +40,7 @@ export function CategoryTable() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (!id) { navigate('/map'); return }
+    if (!id) { navigate('/pods'); return }
     let stale = false
 
     async function load() {
@@ -53,7 +53,7 @@ export function CategoryTable() {
       if (stale) return
 
       const cat = categories.find(c => c.id === id)
-      if (!cat) { navigate('/map'); return }
+      if (!cat) { navigate('/pods'); return }
 
       const pod = pods.find((p: Pod) => p.id === cat.list_id)
       setCategoryName(cat.name)
@@ -172,10 +172,10 @@ export function CategoryTable() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/pods')}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
           >
-            Map
+            Pods
           </button>
           <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
           {podName && podId && (
