@@ -276,7 +276,7 @@ function AppShell() {
       )}
 
       {/* FAB — create new record (hidden on map, which has its own) */}
-      {!isMap && (
+      {!isPods && (
         <button
           type="button"
           onClick={() => setShowCreate(true)}
