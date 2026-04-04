@@ -1,53 +1,83 @@
 
 
-# Phase 3: Import Flow Polish
+# Phase 4: Pipeline Polish - Demo-Ready
 
-## Current State
+## Problems for new users
 
-The import flow works but feels like a developer tool - a single flat page with all options visible at once. No guidance for first-time users, no step indicators, and the upload/preview/import states just swap content abruptly.
+1. **Creating a pipeline gives no stages** - user sees an empty board with no columns. No way to add stages from the UI.
+2. **"+ Add opportunity" creates a temp stub** - `handleCreateOpportunity` creates a local-only `temp-` ID object with no persistence. Data is lost on refresh.
+3. **No "Add Stage" button** - stages can only be created programmatically. New users are stuck.
+4. **Page header says "Pipelines / Pipelines"** - redundant label + subtitle.
+5. **Empty state is unhelpful** - "No active pipeline. Create one to get started." but no guidance after creation.
+6. **Opportunity cards have no priority by default** - the "set priority" action is hidden behind a hover-only button that's hard to discover.
+7. **Tab bar kebab menu is invisible** - requires hover to reveal, undiscoverable on touch.
 
-## What Changes
+## Changes
 
-Redesign ImportPanel as a guided stepper flow with 3 clear steps, animated transitions, and contextual help text. Keep the same underlying logic (`csvImport.ts` unchanged).
+### 1. Auto-create default stages on pipeline creation
 
-## Steps
+Update `handlePipelineCreated` in `PipelinesPage.tsx` to create 3 default stages ("Lead", "In Progress", "Closed") via `createPipelineStage()` after `createPipeline()`. Add resulting stages to local state.
 
-### Step 1: Upload
-- Add a numbered step indicator bar at the top (1. Upload - 2. Configure - 3. Import)
-- Add a brief welcome line: "Import contacts from a CSV file. We'll match your columns automatically."
-- Keep drag-and-drop zone but add a sample CSV download link ("Need a template?") that generates a minimal CSV with expected headers
-- Add file size validation (warn if > 5MB)
+### 2. Add "Add Stage" column
 
-### Step 2: Configure (replaces "preview")
-- Step indicator advances to step 2
-- Show file name with a "Change file" button (resets to step 1)
-- Record type selector with short descriptions ("Contacts - People you know" / "Companies - Organizations")
-- Pod selector with empty-state message if no pods exist ("Create a pod first")
-- Column mapping with green checkmarks for matched columns, amber for skipped
-- Collapsible preview table (collapsed by default, "Preview 5 rows" toggle)
-- Validation summary card at bottom: "X ready, Y will be skipped (no name)" with clear iconography
+Add an "Add Stage" button as the last column in `PipelineBoard.tsx`. Clicking it shows an inline input. On submit, calls `createPipelineStage(name, pipeline.id, maxOrder + 1)` and appends to stages state.
 
-### Step 3: Import + Results
-- Progress bar with percentage label and estimated time remaining
-- Live counter: "Imported X / Skipped Y"
-- On completion, show a results card with success icon, counts, and any errors in a collapsible section
-- "View in Pods" button navigates to `/pods`, "Import Another" resets
+### 3. Persist opportunity creation
 
-## Design
+Update `handleCreateOpportunity` in `PipelineBoard.tsx` to call `createOpportunity(name, stageId, contactIds)` from the data layer instead of creating a temp stub. Replace the temp ID with the real one on response.
 
-- Calm, minimal - aligned with existing design tokens
-- Subtle fade transitions between steps (200ms opacity)
-- Step indicator uses small numbered circles with connecting lines
-- Active step is brand green, completed steps have a checkmark, future steps are grey
+### 4. Fix page header
 
-## Files Modified
+Change the redundant "Pipelines / Pipelines" heading to just "Pipelines" with no subtitle label.
 
-- `src/components/import/ImportPanel.tsx` - full rewrite of the render section; state machine and handlers stay mostly the same, add step indicator component inline, add template download helper, add estimated time calculation
+### 5. Better empty state
 
-## Technical Details
+Replace the plain text empty state with a centered card that has an icon, heading ("Create your first pipeline"), description, and a CTA button that opens the create modal.
 
-- Add `step` derived from `state`: upload=1, preview=2, importing/done=3
-- Template CSV: `generateTemplate()` creates a Blob with headers (Name, Email, Phone, Company, Role, Location) and one example row
-- Estimated time: `(remaining * 250ms)` based on avg per-row time from progress updates
-- No new files needed - all changes in ImportPanel.tsx
+### 6. Improved empty stage guidance
+
+Update the empty column text to be more inviting: "Drag opportunities here or click below to add one."
+
+### 7. Stage delete/reorder
+
+Add a "Delete stage" option to the stage header context (only when stage has 0 opportunities). No drag reorder for now - keep scope small.
+
+## Files modified
+
+- `src/components/pipelines/PipelinesPage.tsx` - auto-create stages, fix header, better empty state
+- `src/components/pipelines/PipelineBoard.tsx` - add "Add Stage" column, persist opportunity creation, add stage delete
+- `src/components/pipelines/PipelineStageColumn.tsx` - add delete button in header, updated empty text
+- `src/components/pipelines/CreatePipelineModal.tsx` - no changes needed
+
+## Technical details
+
+### Default stages on pipeline creation
+```typescript
+const handlePipelineCreated = useCallback(async (name: string) => {
+  const newPipeline = await createPipeline(name)
+  const defaults = [
+    { name: 'Lead', order: 0, color: '#4299E1' },
+    { name: 'In Progress', order: 1, color: '#ECC94B' },
+    { name: 'Closed', order: 2, color: '#48BB78' },
+  ]
+  const newStages = await Promise.all(
+    defaults.map(d => createPipelineStage(d.name, newPipeline.id, d.order, d.color))
+  )
+  setPipelines(prev => [...prev, newPipeline])
+  setStages(prev => [...prev, ...newStages])
+  setActivePipelineId(newPipeline.id)
+}, [])
+```
+
+### Add Stage column in PipelineBoard
+Renders after the last stage column. Contains an input form (hidden by default, shown on click). Calls `createPipelineStage` and updates parent state via `onStagesChange`.
+
+### Persist opportunity creation
+Replace the temp object creation with an async call:
+```typescript
+async function handleCreateOpportunity(name: string, stageId: string, contactIds: string[]) {
+  const newOpp = await createOpportunity(name, stageId, contactIds)
+  onOpportunitiesChange([...opportunities, newOpp])
+}
+```
 
