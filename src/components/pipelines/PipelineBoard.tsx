@@ -6,7 +6,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { createInteraction, updateOpportunity } from '../../lib/airtable'
+import { createInteraction, createOpportunity, createPipelineStage, deletePipelineStage, updateOpportunity } from '../../lib/airtable'
 import type { Contact, Opportunity, OpportunityPriority, Pipeline, PipelineStage } from '../../lib/types'
 import { PipelineStageColumn } from './PipelineStageColumn'
 import { OpportunityCard } from './OpportunityCard'
@@ -40,6 +40,8 @@ export function PipelineBoard({
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [showAddStage, setShowAddStage] = useState(false)
+  const [newStageName, setNewStageName] = useState('')
 
   // Open opportunity from URL param on mount
   useEffect(() => {
@@ -106,7 +108,6 @@ export function PipelineBoard({
       updateOpportunity(activeId, { stage_id: prevStageId }).catch(console.error)
     })
 
-    // Write pipeline_event in .then() — avoids double-write if action is undone (Pitfall 3)
     updateOpportunity(activeId, { stage_id: newStageId })
       .then(() => {
         draggedOpp.relationship_ids.forEach(relId => {
@@ -137,18 +138,27 @@ export function PipelineBoard({
     onStagesChange(stages.map(s => s.id === id ? { ...s, ...data } : s))
   }
 
-  function handleCreateOpportunity(name: string, stageId: string, _contactIds: string[]) {
-    const newOpp: Opportunity = {
-      id: 'temp-' + Date.now(),
-      name,
-      stage_id: stageId,
-      relationship_ids: [],
-      notes: null,
-      priority: null,
-      status: 'open',
-      created_at: new Date().toISOString(),
-    }
+  async function handleCreateOpportunity(name: string, stageId: string, contactIds: string[]) {
+    const newOpp = await createOpportunity(name, stageId, contactIds)
     onOpportunitiesChange([...opportunities, newOpp])
+  }
+
+  async function handleAddStageSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = newStageName.trim()
+    if (!trimmed) return
+    const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.order)) + 1 : 0
+    const newStage = await createPipelineStage(trimmed, pipeline.id, maxOrder)
+    onStagesChange([...stages, newStage])
+    setNewStageName('')
+    setShowAddStage(false)
+  }
+
+  async function handleDeleteStage(id: string) {
+    const stageOpps = opportunities.filter(o => o.stage_id === id && o.status !== 'archived')
+    if (stageOpps.length > 0) return
+    await deletePipelineStage(id)
+    onStagesChange(stages.filter(s => s.id !== id))
   }
 
   function handlePriorityChange(id: string, newPriority: OpportunityPriority) {
@@ -157,7 +167,6 @@ export function PipelineBoard({
     const oldPriority = opp.priority
     const prevOpps = [...opportunities]
 
-    // Optimistic
     onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, priority: newPriority } : o))
 
     showUndoToast(`${opp.name} priority changed to ${newPriority}. `, () => {
@@ -197,7 +206,6 @@ export function PipelineBoard({
     if (!opp) return
     const prevOpps = [...opportunities]
 
-    // Optimistic: remove from view (status = archived, filtered out in column)
     onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, status: 'archived' } : o))
 
     showUndoToast(`${opp.name} archived.`, () => {
@@ -262,9 +270,7 @@ export function PipelineBoard({
   }
 
   function handleOpportunityUpdate(id: string, data: Partial<Opportunity>) {
-    // Optimistic local update
     onOpportunitiesChange(opportunities.map(o => o.id === id ? { ...o, ...data } : o))
-    // Also keep selectedOpportunity in sync
     setSelectedOpportunity(prev => prev && prev.id === id ? { ...prev, ...data } : prev)
     updateOpportunity(id, data as Parameters<typeof updateOpportunity>[1]).catch(console.error)
   }
@@ -300,9 +306,108 @@ export function PipelineBoard({
                 onPriorityChange={handlePriorityChange}
                 onArchive={handleArchive}
                 onInlineNote={handleInlineNote}
+                onDeleteStage={handleDeleteStage}
               />
             )
           })}
+
+          {/* Add Stage column */}
+          <div
+            style={{
+              minWidth: 240,
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              paddingTop: 16,
+            }}
+          >
+            {showAddStage ? (
+              <form
+                onSubmit={handleAddStageSubmit}
+                style={{
+                  width: '100%',
+                  background: 'var(--surface-panel)',
+                  borderRadius: 12,
+                  border: '1px solid var(--edge)',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
+                <input
+                  autoFocus
+                  type="text"
+                  value={newStageName}
+                  onChange={e => setNewStageName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') { setNewStageName(''); setShowAddStage(false) } }}
+                  placeholder="Stage name"
+                  style={{
+                    fontSize: 13,
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--edge)',
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-text-primary)',
+                    outline: 'none',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    type="submit"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '4px 12px',
+                      borderRadius: 6,
+                      border: 'none',
+                      background: 'var(--color-brand)',
+                      color: '#fff',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setNewStageName(''); setShowAddStage(false) }}
+                    style={{
+                      fontSize: 12,
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--edge)',
+                      background: 'transparent',
+                      color: 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowAddStage(true)}
+                style={{
+                  fontSize: 13,
+                  color: 'var(--color-text-secondary)',
+                  background: 'transparent',
+                  border: '1px dashed var(--edge)',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  padding: '12px 24px',
+                  width: '100%',
+                  transition: 'border-color 150ms, color 150ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+              >
+                + Add Stage
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Ghost card during drag */}

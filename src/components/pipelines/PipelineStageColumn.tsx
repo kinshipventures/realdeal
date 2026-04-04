@@ -1,11 +1,10 @@
 import { useRef, useState } from 'react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
-import { Check } from 'lucide-react'
+import { Check, Trash2 } from 'lucide-react'
 import type { Contact, Opportunity, OpportunityPriority, PipelineStage } from '../../lib/types'
 import { OpportunityCard } from './OpportunityCard'
 
-// 8 preset swatches from POD_SHIFT_COLORS keys + a few more
 const COLOR_SWATCHES = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#E53935', '#FF6B8A', '#7E57C2', '#F5A623']
 
 interface Props {
@@ -18,6 +17,7 @@ interface Props {
   onPriorityChange: (id: string, priority: OpportunityPriority) => void
   onArchive: (id: string) => void
   onInlineNote?: (id: string, note: string) => void
+  onDeleteStage?: (id: string) => void
 }
 
 export function PipelineStageColumn({
@@ -30,6 +30,7 @@ export function PipelineStageColumn({
   onPriorityChange,
   onArchive,
   onInlineNote,
+  onDeleteStage,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -37,9 +38,10 @@ export function PipelineStageColumn({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newOppName, setNewOppName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const addInputRef = useRef<HTMLInputElement>(null)
 
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
+
+  const canDelete = opportunities.length === 0 && onDeleteStage
 
   function handleNameClick() {
     setDraft(stage.name)
@@ -103,7 +105,6 @@ export function PipelineStageColumn({
     >
       {/* Header */}
       <div style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-        {/* Color swatch / accent stripe */}
         <button
           onClick={() => setShowColorPicker(prev => !prev)}
           aria-label="Change stage color"
@@ -119,7 +120,6 @@ export function PipelineStageColumn({
           }}
         />
 
-        {/* Color picker popover */}
         {showColorPicker && (
           <div
             style={{
@@ -161,7 +161,6 @@ export function PipelineStageColumn({
           </div>
         )}
 
-        {/* Stage name */}
         {isRenaming ? (
           <input
             ref={inputRef}
@@ -201,10 +200,33 @@ export function PipelineStageColumn({
           </span>
         )}
 
-        {/* Opportunity count */}
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
           {opportunities.length}
         </span>
+
+        {canDelete && (
+          <button
+            onClick={() => onDeleteStage!(stage.id)}
+            aria-label="Delete stage"
+            title="Delete empty stage"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 2,
+              color: 'var(--color-text-tertiary)',
+              flexShrink: 0,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'color 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = '#E53935'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-tertiary)'}
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
 
       {/* Cards body */}
@@ -223,10 +245,7 @@ export function PipelineStageColumn({
           {opportunities.length === 0 ? (
             <div style={{ padding: '16px 8px', textAlign: 'center' }}>
               <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
-                No opportunities in this stage
-              </p>
-              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '4px 0 0' }}>
-                Drag a card here or add one below.
+                Drag opportunities here or click below to add one.
               </p>
             </div>
           ) : (
@@ -245,12 +264,11 @@ export function PipelineStageColumn({
         </SortableContext>
       </div>
 
-      {/* Footer — add opportunity */}
+      {/* Footer - add opportunity */}
       <div style={{ padding: '0 8px 12px' }}>
         {showAddForm ? (
           <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <input
-              ref={addInputRef}
               autoFocus
               type="text"
               value={newOppName}
