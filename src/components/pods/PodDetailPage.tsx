@@ -225,10 +225,10 @@ export function PodDetailPage() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/pods')}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
           >
-            Map
+            Pods
           </button>
           <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
           <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{pod.name}</span>
