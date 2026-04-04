@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { ShareLink } from './types'
+import { getActiveWorkspaceId } from './workspace'
 
 // ── Token + PIN helpers ──────────────────────────────────────────────────────
 
