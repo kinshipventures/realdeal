@@ -166,7 +166,7 @@ export async function createCategory(name: string, listId: string): Promise<Cate
     return c
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, name, pod_id: listId }).select().single()
+  const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pod_id: listId }).select().single()
   if (error) throw error
   _categoriesCache = null
   return mapCategory(row)
