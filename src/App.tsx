@@ -164,16 +164,16 @@ function AppShell() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24"
               fill="none"
-              stroke={isMap ? 'var(--color-brand)' : 'var(--text-muted)'}
+              stroke={isPods ? 'var(--color-brand)' : 'var(--text-muted)'}
               strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
             >
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="22" y1="12" x2="18" y2="12"/>
-              <line x1="6" y1="12" x2="2" y2="12"/>
-              <line x1="12" y1="6" x2="12" y2="2"/>
-              <line x1="12" y1="22" x2="12" y2="18"/>
+              <circle cx="12" cy="12" r="3"/>
+              <line x1="12" y1="3" x2="12" y2="9"/>
+              <line x1="12" y1="15" x2="12" y2="21"/>
+              <line x1="3" y1="12" x2="9" y2="12"/>
+              <line x1="15" y1="12" x2="21" y2="12"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isMap ? 'var(--color-brand)' : 'var(--text-muted)' }}>Map</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isPods ? 'var(--color-brand)' : 'var(--text-muted)' }}>Pods</span>
           </button>
           <button
             type="button"
