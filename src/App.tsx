@@ -41,7 +41,7 @@ function useIsMobile() {
 function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
-  const isMap = location.pathname === '/' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
   const isContacts = location.pathname === '/contacts'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
