@@ -299,7 +299,7 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
   if (data.list_ids.length) {
     await supabase.from('contact_pods').insert(
       data.list_ids.map((pod_id, i) => ({
-        user_id: userId, contact_id: row.id, pod_id,
+        user_id: userId, workspace_id: wsId, contact_id: row.id, pod_id,
         is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
       }))
     )
