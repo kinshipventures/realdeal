@@ -274,8 +274,9 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     return c
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const insert: Record<string, unknown> = {
-    user_id: userId, name: data.name, email: data.email, phone: data.phone,
+    user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,
     notes: data.notes, recommended_by: data.recommended_by, specialization: data.specialization,
     past_clients: data.past_clients, birthday: data.birthday, milestones: data.milestones,
