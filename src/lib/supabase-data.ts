@@ -701,7 +701,7 @@ export async function createPipelineStage(name: string, pipelineId: string, orde
     return s
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, name, pipeline_id: pipelineId, order, color: color ?? null }).select().single()
+  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pipeline_id: pipelineId, order, color: color ?? null }).select().single()
   if (error) throw error
   _pipelineStagesCache = null
   return mapPipelineStage(row)
