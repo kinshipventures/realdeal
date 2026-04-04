@@ -438,8 +438,9 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
     return interaction
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const { data: row, error } = await supabase.from('interactions').insert({
-    user_id: userId, contact_id: data.contact_id, type: data.type, date: data.date,
+    user_id: userId, workspace_id: wsId, contact_id: data.contact_id, type: data.type, date: data.date,
     notes: data.notes, summary: data.summary, source: data.source,
     email_link: data.email_link, granola_link: data.granola_link,
     event_detail: data.event_detail, actor: data.actor,
