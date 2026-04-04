@@ -107,8 +107,9 @@ export async function createPod(data: {
     return p
   }
   const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
   const { data: row, error } = await supabase.from('pods').insert({
-    user_id: userId, name: data.name, color: data.color ?? null, owner: data.owner ?? null,
+    user_id: userId, workspace_id: wsId, name: data.name, color: data.color ?? null, owner: data.owner ?? null,
     is_priority: data.is_priority ?? false, cadence: data.cadence ?? null,
     description: data.description ?? null, capacity: data.capacity ?? null,
   }).select().single()
