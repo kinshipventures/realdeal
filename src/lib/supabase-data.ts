@@ -880,7 +880,7 @@ export async function addRecordToProject(projectId: string, recordId: string): P
     return project
   }
   const userId = await getUserId()
-  await supabase.from('project_contacts').insert({ user_id: userId, project_id: projectId, contact_id: recordId })
+  await supabase.from('project_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), project_id: projectId, contact_id: recordId })
   _projectsCache = null
   await createInteraction({ contact_id: recordId, type: 'project_event', date: new Date().toISOString(), notes: null, summary: null, source: null, email_link: null, granola_link: null, event_detail: JSON.stringify({ project_name: project.name, project_id: projectId, action: 'added_to_project' }), actor: null })
   return { ...project, relationship_ids: [...project.relationship_ids, recordId] }
