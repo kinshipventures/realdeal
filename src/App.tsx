@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Routes, Route, Outlet, useLocation, useNavigate } from 'react-router'
+import { Routes, Route, Outlet, useLocation, useNavigate, Navigate } from 'react-router'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { LoginPage } from './components/auth/LoginPage'
 import { OrbMap } from './components/map/OrbMap'
@@ -18,6 +18,10 @@ import { CompaniesPage } from './components/companies/CompaniesPage'
 import { ProjectsPage } from './components/projects/ProjectsPage'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import { NurturingHub } from './components/nurturing/NurturingHub'
+import { AccountPage } from './components/settings/AccountPage'
+import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
+import { NotFoundPage } from './components/errors/NotFoundPage'
+import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
@@ -90,6 +94,8 @@ function AppShell() {
     window.location.reload()
   }
 
+  const showDemoControls = demo || window.location.hostname === 'localhost'
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
@@ -100,7 +106,7 @@ function AppShell() {
           onToggle={toggleSidebar}
           onSearch={() => setShowSearch(true)}
           demo={demo}
-          onDemoToggle={handleDemoToggle}
+          onDemoToggle={showDemoControls ? handleDemoToggle : undefined}
         />
       )}
 
@@ -313,7 +319,7 @@ function AppShell() {
       />
 
       {/* Demo data toggle - mobile only (desktop uses sidebar) */}
-      {isMobile && (
+      {isMobile && showDemoControls && (
         <button
           type="button"
           onClick={handleDemoToggle}
@@ -346,9 +352,12 @@ function AppShell() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="s/:token" element={<SharedListPage />} />
+      <Route path="map" element={<Navigate to="/pods" replace />} />
+      <Route path="invite" element={<AcceptInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<OrbMap />} />
@@ -364,9 +373,12 @@ export default function App() {
           <Route path="contact/:id" element={<RecordPage />} />
           <Route path="pod/:id" element={<PodDetailPage />} />
           <Route path="import" element={<ImportPanel />} />
+          <Route path="account" element={<AccountPage />} />
           <Route path="onboarding" element={<OnboardingFlow onComplete={() => window.history.back()} />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
     </Routes>
+    </ErrorBoundary>
   )
 }

@@ -10,7 +10,7 @@ interface SidebarProps {
   onToggle: () => void
   onSearch: () => void
   demo: boolean
-  onDemoToggle: () => void
+  onDemoToggle?: () => void
 }
 
 export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: SidebarProps) {
@@ -251,6 +251,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={onSearch}
           hint={collapsed ? undefined : 'Cmd+K'}
         />
+        {onDemoToggle && (
         <NavItem
           icon={
             <div style={{
@@ -275,8 +276,17 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={onDemoToggle}
           labelStyle={demo ? { color: 'var(--color-brand)', fontWeight: 600 } : undefined}
         />
+        )}
 
         <Divider />
+
+        <NavItem
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+          label="Account"
+          active={location.pathname === '/account'}
+          collapsed={collapsed}
+          onClick={() => navigate('/account')}
+        />
 
         <NavItem
           icon={<SignOutIcon />}
