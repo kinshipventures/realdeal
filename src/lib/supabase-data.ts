@@ -345,7 +345,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     if (data.list_ids.length) {
       await supabase.from('contact_pods').insert(
         data.list_ids.map((pod_id, i) => ({
-          user_id: userId, contact_id: id, pod_id,
+          user_id: userId, workspace_id: getActiveWorkspaceId(), contact_id: id, pod_id,
           is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
         }))
       )
