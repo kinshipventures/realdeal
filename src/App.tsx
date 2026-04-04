@@ -351,9 +351,11 @@ function AppShell() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="s/:token" element={<SharedListPage />} />
+      <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<OrbMap />} />
@@ -369,9 +371,12 @@ export default function App() {
           <Route path="contact/:id" element={<RecordPage />} />
           <Route path="pod/:id" element={<PodDetailPage />} />
           <Route path="import" element={<ImportPanel />} />
+          <Route path="account" element={<AccountPage />} />
           <Route path="onboarding" element={<OnboardingFlow onComplete={() => window.history.back()} />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
     </Routes>
+    </ErrorBoundary>
   )
 }
