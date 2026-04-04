@@ -357,6 +357,7 @@ export default function App() {
       <Route path="login" element={<LoginPage />} />
       <Route path="s/:token" element={<SharedListPage />} />
       <Route path="map" element={<Navigate to="/pods" replace />} />
+      <Route path="invite" element={<AcceptInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<OrbMap />} />
