@@ -306,7 +306,7 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
   }
   if (data.category_ids.length) {
     await supabase.from('contact_categories').insert(
-      data.category_ids.map(category_id => ({ user_id: userId, contact_id: row.id, category_id }))
+      data.category_ids.map(category_id => ({ user_id: userId, workspace_id: wsId, contact_id: row.id, category_id }))
     )
   }
   _contactsCache = null
