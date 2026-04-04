@@ -26,7 +26,10 @@ export function AcceptInvitePage() {
         if (data?.error) throw new Error(data.error)
 
         await refreshWorkspaces()
-        if (data?.workspace_id) switchWorkspace(data.workspace_id)
+        if (data?.workspace_id) {
+          switchWorkspace(data.workspace_id)
+          localStorage.setItem('realdeal:onboarding-complete', '1')
+        }
 
         setStatus('success')
         setMessage(data?.already_member ? 'You are already a member of this workspace.' : 'You have joined the workspace!')

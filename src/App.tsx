@@ -264,6 +264,26 @@ function AppShell() {
             </svg>
             <span style={{ fontSize: 9, fontWeight: 500, color: isProjects ? 'var(--color-brand)' : 'var(--text-muted)' }}>Projects</span>
           </button>
+          <button
+            type="button"
+            aria-current={location.pathname === '/account' ? 'page' : undefined}
+            onClick={() => navigate('/account')}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24"
+              fill="none"
+              stroke={location.pathname === '/account' ? 'var(--color-brand)' : 'var(--text-muted)'}
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span style={{ fontSize: 9, fontWeight: 500, color: location.pathname === '/account' ? 'var(--color-brand)' : 'var(--text-muted)' }}>Account</span>
+          </button>
         </nav>
       )}
 
