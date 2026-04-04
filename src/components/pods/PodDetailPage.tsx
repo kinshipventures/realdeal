@@ -204,7 +204,7 @@ export function PodDetailPage() {
   if (notFound || !pod) {
     return (
       <div style={{ background: 'var(--color-bg)', minHeight: '100vh', padding: 40 }}>
-        <button type="button" onClick={() => navigate('/map')} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button type="button" onClick={() => navigate('/pods')} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back
         </button>
         <p style={{ color: 'var(--color-text-secondary)' }}>Pod not found.</p>

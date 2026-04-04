@@ -352,9 +352,9 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<OrbMap />} />
+          <Route path="pods" element={<OrbMap />} />
           <Route path="pulse" element={<Dashboard />} />
           <Route path="pulse/nurturing" element={<NurturingHub />} />
-          <Route path="map" element={<OrbMap />} />
           <Route path="contacts" element={<RecordsList />} />
           <Route path="companies" element={<CompaniesPage />} />
           <Route path="pipelines" element={<PipelinesPage />} />

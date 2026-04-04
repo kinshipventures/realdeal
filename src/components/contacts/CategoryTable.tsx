@@ -53,7 +53,7 @@ export function CategoryTable() {
       if (stale) return
 
       const cat = categories.find(c => c.id === id)
-      if (!cat) { navigate('/map'); return }
+      if (!cat) { navigate('/pods'); return }
 
       const pod = pods.find((p: Pod) => p.id === cat.list_id)
       setCategoryName(cat.name)
