@@ -908,7 +908,7 @@ export async function addOpportunityToProject(projectId: string, opportunityId: 
   if (project.opportunity_ids.includes(opportunityId)) return project
   if (isDemoMode()) { project.opportunity_ids.push(opportunityId); return project }
   const userId = await getUserId()
-  await supabase.from('project_opportunities').insert({ user_id: userId, project_id: projectId, opportunity_id: opportunityId })
+  await supabase.from('project_opportunities').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), project_id: projectId, opportunity_id: opportunityId })
   _projectsCache = null
   return { ...project, opportunity_ids: [...project.opportunity_ids, opportunityId] }
 }
