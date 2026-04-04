@@ -154,8 +154,8 @@ function AppShell() {
           </button>
           <button
             type="button"
-            aria-current={isMap ? 'page' : undefined}
-            onClick={() => navigate('/map')}
+            aria-current={isPods ? 'page' : undefined}
+            onClick={() => navigate('/pods')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
