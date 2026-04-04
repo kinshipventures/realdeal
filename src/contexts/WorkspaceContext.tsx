@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './AuthContext'
 import { setActiveWorkspaceId, clearActiveWorkspaceId } from '@/lib/workspace'
+import { invalidateAllCaches } from '@/lib/supabase-data'
 
 export interface Workspace {
   id: string
