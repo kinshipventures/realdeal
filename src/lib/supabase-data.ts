@@ -356,7 +356,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     await supabase.from('contact_categories').delete().eq('contact_id', id)
     if (data.category_ids.length) {
       await supabase.from('contact_categories').insert(
-        data.category_ids.map(category_id => ({ user_id: userId, contact_id: id, category_id }))
+        data.category_ids.map(category_id => ({ user_id: userId, workspace_id: getActiveWorkspaceId(), contact_id: id, category_id }))
       )
     }
   }
