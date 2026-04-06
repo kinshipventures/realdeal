@@ -77,8 +77,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: collapsed ? 40 : 32,
-            height: 32,
+            width: collapsed ? 44 : 36,
+            height: 36,
             margin: collapsed ? '0 auto' : '0 0 0 auto',
             background: 'none',
             border: 'none',
@@ -177,6 +177,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
               alignItems: 'center',
               gap: 6,
               width: '100%',
+              minHeight: 36,
               padding: '6px 8px',
               background: 'none',
               border: 'none',
@@ -203,7 +204,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             Pods
           </button>
           {podsOpen && (
-            <div style={{ overflowY: 'auto', maxHeight: 200 }}>
+            <div style={{ overflowY: 'auto', maxHeight: 260 }}>
               {pods.map(pod => (
                 <button
                   key={pod.id}
@@ -215,6 +216,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                     alignItems: 'center',
                     gap: 10,
                     width: '100%',
+                    minHeight: 40,
                     padding: '6px 8px 6px 16px',
                     background: activePodId === pod.id ? 'var(--tint-hover)' : 'transparent',
                     border: 'none',
@@ -349,8 +351,9 @@ function NavItem({
         alignItems: 'center',
         justifyContent: collapsed ? 'center' : 'flex-start',
         gap: collapsed ? 0 : 10,
-        width: collapsed ? 40 : '100%',
-        height: collapsed ? 40 : undefined,
+        width: collapsed ? 44 : '100%',
+        height: collapsed ? 44 : undefined,
+        minHeight: collapsed ? undefined : 44,
         margin: collapsed ? '0 auto' : undefined,
         padding: collapsed ? 0 : '8px 16px',
         background: active ? 'var(--tint-hover)' : 'transparent',
