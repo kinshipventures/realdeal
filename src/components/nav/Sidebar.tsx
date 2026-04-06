@@ -38,6 +38,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   const isCompanies = location.pathname === '/companies'
   const isPipelines = location.pathname.startsWith('/pipelines')
   const isProjects = location.pathname.startsWith('/projects')
+  const isReports = location.pathname === '/reports'
+  const isLearn = location.pathname === '/learn'
 
   const isPod = location.pathname.startsWith('/pod/')
   const activePodId = isPod ? location.pathname.split('/pod/')[1] : null
@@ -152,6 +154,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           collapsed={collapsed}
           onClick={() => navigate('/projects')}
         />
+        <NavItem
+          icon={<ReportsIcon />}
+          label="Reports"
+          active={isReports}
+          collapsed={collapsed}
+          onClick={() => navigate('/reports')}
+        />
       </div>
 
       <Divider />
@@ -243,6 +252,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 
       {/* Utilities */}
       <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <NavItem
+          icon={<LearnIcon />}
+          label="How It Works"
+          active={isLearn}
+          collapsed={collapsed}
+          onClick={() => navigate('/learn')}
+        />
         <NavItem
           icon={<SearchIcon />}
           label="Search"
@@ -438,6 +454,26 @@ function ProjectsIcon() {
   return (
     <svg {...iconProps}>
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    </svg>
+  )
+}
+
+function LearnIcon() {
+  return (
+    <svg {...iconProps}>
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="16" x2="12" y2="12"/>
+      <line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>
+  )
+}
+
+function ReportsIcon() {
+  return (
+    <svg {...iconProps}>
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
   )
 }

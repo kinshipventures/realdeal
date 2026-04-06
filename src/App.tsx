@@ -26,6 +26,8 @@ import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { SharedListPage } from './components/sharing/SharedListPage'
+import { ReportsPage } from './components/reports/ReportsPage'
+import { LearnPage } from './components/learn/LearnPage'
 import { Sidebar } from './components/nav/Sidebar'
 
 const BG = 'var(--color-bg)'
@@ -400,6 +402,8 @@ export default function App() {
           <Route path="pipelines" element={<PipelinesPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="learn" element={<LearnPage />} />
           <Route path="category/:id" element={<CategoryTable />} />
           <Route path="contact/:id" element={<RecordPage />} />
           <Route path="pod/:id" element={<PodDetailPage />} />
