@@ -94,13 +94,10 @@ export async function revokeShareLink(id: string): Promise<void> {
 
 export async function getShareLink(token: string): Promise<ShareLink | null> {
   const { data, error } = await supabase
-    .from('share_links')
-    .select('*')
-    .eq('token', token)
-    .single()
+    .rpc('get_share_link_by_token', { _token: token })
 
-  if (error || !data) return null
-  return data as unknown as ShareLink
+  if (error || !data || (data as any[]).length === 0) return null
+  return (data as any[])[0] as unknown as ShareLink
 }
 
 export async function getSharedContacts(
