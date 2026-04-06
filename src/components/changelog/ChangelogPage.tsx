@@ -181,6 +181,9 @@ export function ChangelogPage() {
         <ReleaseBlock key={release.version} release={release} isLatest={i === 0} />
       ))}
 
+      {/* Coming Next */}
+      <ComingNext />
+
       {/* Footer */}
       <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)' }}>
         <button
@@ -482,6 +485,94 @@ function SpotlightCard({ spotlight, onClick }: { spotlight: Spotlight; onClick?:
         }}>
           {spotlight.description}
         </p>
+      </div>
+    </div>
+  )
+}
+
+const upNext = [
+  {
+    title: 'Gmail Sync',
+    description: 'Email history on contact timelines. New contacts auto-surface in an intake queue for you to approve, assign to a pod, and add context.',
+    icon: 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
+    color: '#E53935',
+  },
+  {
+    title: 'AI Copilot',
+    description: 'Ask questions about your network in natural language. "Who should I follow up with?" "Brief me on this person." Answers from your real data.',
+    icon: 'M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.38 0 2.5 1.12 2.5 2.5S4.88 15.8 3.5 15.8H2V19c0 1.1.9 2 2 2h3.8v-1.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5V21H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z',
+    color: '#7B1FA2',
+  },
+  {
+    title: 'Calendar Sync',
+    description: 'Meetings auto-log to contact timelines. Upcoming meetings surface on your dashboard so you always have context before a call.',
+    icon: 'M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z',
+    color: '#1565C0',
+  },
+  {
+    title: 'Alpha Bug Fixes',
+    description: 'Active testing with real users and real data. Expect rapid fixes as we find edge cases, improve performance, and tighten up the experience.',
+    icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+    color: '#FF9800',
+  },
+]
+
+function ComingNext() {
+  return (
+    <div style={{
+      marginTop: 8, padding: '28px 24px', borderRadius: 16,
+      border: '1px dashed var(--edge-strong)',
+      background: 'var(--nav-bg)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
+      }}>
+        <h3 style={{
+          fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+          color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
+        }}>
+          Coming Next
+        </h3>
+        <span style={{
+          fontSize: 10, fontWeight: 600, letterSpacing: '0.06em',
+          color: 'var(--color-text-tertiary)', textTransform: 'uppercase',
+        }}>
+          Alpha 0.2
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {upNext.map(item => (
+          <div key={item.title} style={{
+            display: 'flex', gap: 14, alignItems: 'flex-start',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              background: `${item.color}14`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg
+                width="18" height="18" viewBox="0 0 24 24"
+                fill={item.color}
+              >
+                <path d={item.icon} />
+              </svg>
+            </div>
+            <div>
+              <div style={{
+                fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)',
+                marginBottom: 3,
+              }}>
+                {item.title}
+              </div>
+              <div style={{
+                fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.55,
+              }}>
+                {item.description}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
