@@ -66,7 +66,7 @@ See: `.planning/milestones/v2.0-ROADMAP.md` for full details.
 
 - [x] **Phase 18: Authentication** - Supabase auth wiring, login/signup routing, session persistence (completed 2026-03-31)
 - [x] **Phase 19: Enrichment + Follow-ups** - Web enrichment with opt-in and timeline logging, follow-up creation flow from nurturing hub (completed 2026-04-02)
-- [ ] **Phase 20: Reporting** - Pod distribution, pipeline velocity, engagement reports with CSV export and saved configurations
+- [x] **Phase 20: Reporting** - Pod distribution, pipeline velocity, engagement reports with CSV export and saved configurations (completed 2026-04-06)
 - [x] **Phase 21: Sharing** - Read-only share links for curated lists with revocation (completed 2026-04-02)
 
 ## Phase Details
@@ -111,11 +111,10 @@ Plans:
   3. User can view engagement activity over time broken down by interaction type
   4. User can export any report view as a CSV file
   5. User can save a report configuration and reload it later from a favorites list
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 20-01: TBD
-- [ ] 20-02: TBD
+- [x] 20-01: Reporting data layer, ReportsPage UI (3 pre-built reports), CSV export, saved configs, route + sidebar nav
 
 ### Phase 21: Sharing
 **Goal**: Users can share curated relationship lists with external collaborators via read-only links
@@ -171,7 +170,7 @@ Plans:
 | 17. Polish + Operations | v2.0 | 2/2 | Complete | 2026-03-31 |
 | 18. Authentication | v2.1 | 1/1 | Complete   | 2026-03-31 |
 | 19. Enrichment + Follow-ups | v2.1 | 3/3 | Complete    | 2026-04-02 |
-| 20. Reporting | v2.1 | 0/? | Not started | - |
+| 20. Reporting | v2.1 | 1/1 | Complete | 2026-04-06 |
 | 21. Sharing | v2.1 | 2/2 | Complete   | 2026-04-02 |
 | 22. Airtable to Supabase | - | 3/3 | Complete    | 2026-04-03 |
 
