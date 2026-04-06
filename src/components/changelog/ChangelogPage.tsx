@@ -1,0 +1,392 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
+
+type EntryType = 'feature' | 'fix' | 'design' | 'infra'
+
+interface Entry {
+  type: EntryType
+  text: string
+}
+
+interface Spotlight {
+  title: string
+  description: string
+  icon: string
+  gradient: [string, string]
+  area: string
+}
+
+interface Release {
+  version: string
+  date: string
+  title: string
+  summary: string
+  spotlights: Spotlight[]
+  entries: Entry[]
+}
+
+const TYPE_META: Record<EntryType, { label: string; color: string }> = {
+  feature: { label: 'New', color: 'var(--color-brand)' },
+  fix: { label: 'Fix', color: '#FF9800' },
+  design: { label: 'Design', color: '#7B1FA2' },
+  infra: { label: 'Infra', color: '#1565C0' },
+}
+
+const releases: Release[] = [
+  {
+    version: 'Alpha 0.1',
+    date: 'April 6, 2025',
+    title: 'Foundation',
+    summary: 'First alpha release. Core relationship management, visual network map, equity scoring, and the full data layer migrated from Airtable to Supabase.',
+    spotlights: [
+      {
+        title: 'Visual Network Map',
+        description: 'Your relationships as an interactive orb map. Health-encoded rings show who\'s thriving and who\'s fading. Drill into any pod, search a name and watch their orb pulse.',
+        icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
+        gradient: ['#1C1C1E', '#3A3A3C'],
+        area: 'Map',
+      },
+      {
+        title: 'Equity Scoring',
+        description: 'Every contact gets a 0-100 health score based on interaction recency and quality. Intros weigh most, notes weigh least. See who needs attention before relationships go cold.',
+        icon: 'M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z',
+        gradient: ['#25B439', '#1A8A2A'],
+        area: 'Scoring',
+      },
+      {
+        title: 'Follow-ups & Focus',
+        description: 'Pin follow-ups to contacts, see overdue items on your dashboard, and let Today\'s Focus tell you exactly who to reach out to based on priority and cadence.',
+        icon: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
+        gradient: ['#FF9800', '#E65100'],
+        area: 'Nurturing',
+      },
+      {
+        title: 'Pod Sharing',
+        description: 'Share any pod via a public link. Choose which contacts to include or exclude. Recipients see a clean read-only view - no login required.',
+        icon: 'M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z',
+        gradient: ['#7B1FA2', '#4A148C'],
+        area: 'Sharing',
+      },
+      {
+        title: 'Workspaces',
+        description: 'Multi-workspace foundation with switcher UI, invite system, and workspace-scoped data. Collaborate with your team on shared relationship networks.',
+        icon: 'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z',
+        gradient: ['#1565C0', '#0D47A1'],
+        area: 'Platform',
+      },
+      {
+        title: 'Supabase Migration',
+        description: 'The entire data layer moved from Airtable to Supabase. Faster queries, real-time subscriptions, proper auth, and no more API rate limits.',
+        icon: 'M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z',
+        gradient: ['#3ECF8E', '#1C8656'],
+        area: 'Infrastructure',
+      },
+    ],
+    entries: [
+      // Remaining features not covered by spotlights
+      { type: 'feature', text: 'Collapsible sidebar navigation - map is home, Pulse is the dashboard' },
+      { type: 'feature', text: 'Renamed "Maps" to "Pods" and "Contacts" to "People" across the UI' },
+      { type: 'feature', text: 'Contact detail redesigned as centered two-column modal' },
+      { type: 'feature', text: 'Contact enrichment engine with per-field confidence dots' },
+      { type: 'feature', text: 'Reports page - pod distribution, pipeline velocity, engagement' },
+      { type: 'feature', text: 'Companies page with navigation' },
+      { type: 'feature', text: 'Pipeline UI with auto-created stages' },
+      { type: 'feature', text: 'Gmail sync integration widget' },
+      { type: 'feature', text: 'Column reorder and resize on the people table' },
+      { type: 'feature', text: 'Dashboard widgets with drag-to-reorder settings' },
+      { type: 'feature', text: 'Configurable equity pod cadences' },
+      { type: 'feature', text: 'Global search with Cmd+K' },
+      { type: 'feature', text: 'CSV import wizard with step-by-step flow' },
+      { type: 'feature', text: 'Category icon support' },
+      { type: 'feature', text: 'Communication preferences on contacts' },
+      { type: 'feature', text: 'Mobile bottom tab bar' },
+      { type: 'feature', text: 'Onboarding flow with flexible navigation' },
+      { type: 'feature', text: 'Error boundary and 404 page' },
+
+      // Fixes
+      { type: 'fix', text: 'Contact modal no longer renders behind dashboard content' },
+      { type: 'fix', text: 'Dark mode - project cards, replaced hardcoded rgba with CSS vars' },
+      { type: 'fix', text: 'Sub-pod member cap enforced correctly' },
+      { type: 'fix', text: 'Share popover close behavior and clipboard fallback' },
+      { type: 'fix', text: 'Map fits to view on open instead of restoring stale viewport' },
+      { type: 'fix', text: 'Sidebar icon alignment and hover centering' },
+      { type: 'fix', text: 'Pod card hover clip and mobile map layout' },
+      { type: 'fix', text: 'Health rings fade in after orb animation' },
+      { type: 'fix', text: 'Breadcrumb navigation and subpod routing' },
+      { type: 'fix', text: 'FAB button background and tooltip positioning' },
+      { type: 'fix', text: 'Widget reorder rewritten with pointer events' },
+      { type: 'fix', text: 'Supabase junction query pagination for large datasets' },
+
+      // Design
+      { type: 'design', text: 'Touch targets expanded to 44px minimum' },
+      { type: 'design', text: 'Dashboard heading hierarchy corrected' },
+      { type: 'design', text: 'Typography - Playfair Display replaced with Fraunces' },
+
+      // Infrastructure
+      { type: 'infra', text: 'Airtable-to-Supabase migration script' },
+      { type: 'infra', text: 'Security hardening for alpha readiness' },
+    ],
+  },
+]
+
+export function ChangelogPage() {
+  const navigate = useNavigate()
+
+  return (
+    <div style={{ padding: '32px 32px 96px', maxWidth: 720, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{
+          display: 'inline-block', padding: '3px 10px', borderRadius: 100,
+          background: 'var(--color-brand)', marginBottom: 12,
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: '0.04em' }}>
+            ALPHA
+          </span>
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
+          color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
+        }}>
+          What's New
+        </h1>
+        <p style={{
+          fontSize: 14, color: 'var(--color-text-secondary)', marginTop: 8, lineHeight: 1.6,
+        }}>
+          Everything we've shipped, fixed, and improved.
+        </p>
+      </div>
+
+      {/* Releases */}
+      {releases.map((release, i) => (
+        <ReleaseBlock key={release.version} release={release} isLatest={i === 0} />
+      ))}
+
+      {/* Footer */}
+      <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/pulse')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: 'var(--color-text-secondary)', padding: 0,
+            fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
+          }}
+        >
+          Back to Pulse
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boolean }) {
+  const grouped = groupByType(release.entries)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
+
+  const toggleSection = (type: string) => {
+    setExpandedSections(prev => ({ ...prev, [type]: !prev[type] }))
+  }
+
+  return (
+    <div style={{ marginBottom: 48 }}>
+      {/* Version header */}
+      <div style={{
+        display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8,
+      }}>
+        <h2 style={{
+          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
+          color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
+        }}>
+          {release.version}
+        </h2>
+        {isLatest && (
+          <span style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: '0.06em',
+            color: 'var(--color-brand)', textTransform: 'uppercase',
+          }}>
+            Latest
+          </span>
+        )}
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24,
+      }}>
+        <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>
+          {release.date}
+        </span>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
+          {release.title}
+        </span>
+      </div>
+
+      <p style={{
+        fontSize: 14, color: 'var(--color-text-secondary)', margin: '0 0 32px',
+        lineHeight: 1.7,
+      }}>
+        {release.summary}
+      </p>
+
+      {/* Spotlight cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 16,
+        marginBottom: 32,
+      }}>
+        {release.spotlights.map(s => (
+          <SpotlightCard key={s.title} spotlight={s} />
+        ))}
+      </div>
+
+      {/* Collapsible detail sections */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {(['feature', 'fix', 'design', 'infra'] as EntryType[]).map(type => {
+          const entries = grouped[type]
+          if (!entries?.length) return null
+          const meta = TYPE_META[type]
+          const expanded = expandedSections[type] ?? false
+          return (
+            <div key={type}>
+              <button
+                type="button"
+                onClick={() => toggleSection(type)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '12px 16px', background: 'none', border: 'none',
+                  borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%', background: meta.color, flexShrink: 0,
+                }} />
+                <span style={{
+                  fontSize: 13, fontWeight: 600, color: meta.color,
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                }}>
+                  {meta.label}
+                </span>
+                <span style={{
+                  fontSize: 12, color: 'var(--color-text-tertiary)',
+                  background: 'var(--tint)', padding: '1px 8px', borderRadius: 100,
+                }}>
+                  {entries.length}
+                </span>
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="var(--color-text-tertiary)" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  style={{
+                    marginLeft: 'auto', flexShrink: 0,
+                    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              <div style={{
+                overflow: 'hidden',
+                maxHeight: expanded ? entries.length * 40 + 24 : 0,
+                opacity: expanded ? 1 : 0,
+                transition: 'max-height 0.25s ease, opacity 0.2s ease',
+              }}>
+                <div style={{
+                  padding: '8px 16px 16px 34px',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                }}>
+                  {entries.map((entry, j) => (
+                    <div key={j} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                      <span style={{
+                        width: 4, height: 4, borderRadius: '50%', flexShrink: 0,
+                        background: 'var(--color-text-tertiary)', marginTop: 7,
+                      }} />
+                      <span style={{
+                        fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.5,
+                      }}>
+                        {entry.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SpotlightCard({ spotlight }: { spotlight: Spotlight }) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderRadius: 16, overflow: 'hidden',
+        border: '1px solid var(--edge)',
+        background: 'var(--nav-bg)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+        cursor: 'default',
+      }}
+    >
+      {/* Gradient hero */}
+      <div style={{
+        height: 80,
+        background: `linear-gradient(135deg, ${spotlight.gradient[0]}, ${spotlight.gradient[1]})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        <svg
+          width="32" height="32" viewBox="0 0 24 24"
+          fill="rgba(255,255,255,0.9)"
+          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+        >
+          <path d={spotlight.icon} />
+        </svg>
+        <span style={{
+          position: 'absolute', top: 8, right: 10,
+          fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
+          color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase',
+        }}>
+          {spotlight.area}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '14px 16px 16px' }}>
+        <h3 style={{
+          fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)',
+          margin: '0 0 6px', letterSpacing: '-0.01em',
+        }}>
+          {spotlight.title}
+        </h3>
+        <p style={{
+          fontSize: 12, color: 'var(--color-text-secondary)',
+          margin: 0, lineHeight: 1.55,
+        }}>
+          {spotlight.description}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function groupByType(entries: Entry[]): Partial<Record<EntryType, Entry[]>> {
+  const grouped: Partial<Record<EntryType, Entry[]>> = {}
+  for (const entry of entries) {
+    if (!grouped[entry.type]) grouped[entry.type] = []
+    grouped[entry.type]!.push(entry)
+  }
+  return grouped
+}

@@ -28,6 +28,7 @@ import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { SharedListPage } from './components/sharing/SharedListPage'
 import { ReportsPage } from './components/reports/ReportsPage'
 import { LearnPage } from './components/learn/LearnPage'
+import { ChangelogPage } from './components/changelog/ChangelogPage'
 import { Sidebar } from './components/nav/Sidebar'
 
 const BG = 'var(--color-bg)'
@@ -404,6 +405,7 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="learn" element={<LearnPage />} />
+          <Route path="changelog" element={<ChangelogPage />} />
           <Route path="category/:id" element={<CategoryTable />} />
           <Route path="contact/:id" element={<RecordPage />} />
           <Route path="pod/:id" element={<PodDetailPage />} />
