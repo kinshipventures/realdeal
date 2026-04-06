@@ -69,6 +69,7 @@ export function GmailSyncWidget() {
               fontSize: 12,
               fontWeight: 600,
               padding: '8px 16px',
+              minHeight: 44,
               cursor: syncing ? 'wait' : 'pointer',
               fontFamily: 'inherit',
               whiteSpace: 'nowrap',

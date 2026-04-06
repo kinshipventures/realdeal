@@ -213,14 +213,14 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.22)',
-              borderRadius: 20,
+              borderRadius: 8,
               padding: '7px 16px',
               fontSize: 12, fontWeight: 600,
               color: 'rgba(255,255,255,0.90)',
               cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', gap: 5,
               transition: 'background 0.15s ease, transform 0.15s ease',
-              minHeight: 36,
+              minHeight: 44,
             }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
