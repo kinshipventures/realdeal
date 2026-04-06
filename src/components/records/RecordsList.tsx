@@ -1198,8 +1198,8 @@ export function RecordsList() {
           )}
         </div>
       ) : (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 40px 40px' }}>
-          {/* Desktop table */}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '0 40px 40px', WebkitOverflowScrolling: 'touch' }}>
+          {/* Table */}
           <table
             className="records-table"
             style={{
@@ -1423,10 +1423,10 @@ export function RecordsList() {
         </div>
       )}
 
-      {/* Mobile card layout + HIG row styles */}
+      {/* HIG row styles */}
       <style>{`
         @media (max-width: 767px) {
-          .records-table { display: none !important; }
+          .records-table { font-size: 12px; min-width: 600px; }
         }
         @keyframes row-enter {
           from { opacity: 0; transform: translateY(6px); }
