@@ -66,9 +66,9 @@ One place where every relationship lives with full context — so founders never
 - ✓ Nurturing Hub — dedicated maintenance surface at /pulse/nurturing with health signals across records/pipelines — Phase 16
 - ✓ Web enrichment with opt-in, per-field indicators, suggested-update UI, timeline logging — Phase 19
 - ✓ Follow-up CRUD from ContactDetail + NurturingHub, dashboard surfacing in widgets — Phase 19
-- [ ] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports (Phase 20)
-- [ ] Sharing + Exports — read-only share links for curated lists (Phase 21)
-- [ ] Remove sub-pod cap (currently blocked at 3, per PDF this is a blocker)
+- [x] Reporting — pod distribution, pipeline velocity, engagement activity, CSV export, saved reports — Phase 20
+- [x] Sharing + Exports — read-only share links for curated lists — Phase 21
+- [x] Remove sub-pod cap (verified: no cap exists in code -- categories render without limit)
 - [ ] Multiple emails per contact + basic merge support
 
 ### Deferred to V2 (per MVP PDF scope boundary)

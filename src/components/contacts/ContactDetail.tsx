@@ -602,7 +602,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.25)',
+          background: 'rgba(0,0,0,0.5)',
           zIndex: 199,
         }}
       />

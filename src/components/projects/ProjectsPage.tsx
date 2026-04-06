@@ -161,7 +161,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         padding: 20,
         cursor: 'pointer',
         transition: 'box-shadow 0.15s, transform 0.15s',
-        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.10)' : '0 1px 4px rgba(0,0,0,0.04)',
+        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.18)' : 'none',
         transform: hovered ? 'translateY(-1px)' : 'none',
       }}
     >
