@@ -841,7 +841,7 @@ export function OrbMap() {
             {hoveredPod.health} - {scoreLabel(hoveredPod.health)}
           </span>
           <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-            {hoveredPod.contactCount} contacts - {hoveredPod.overdueCount} overdue
+            {hoveredPod.contactCount} people - {hoveredPod.overdueCount} overdue
           </span>
           <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
             Last: {formatLastInteracted(hoveredPod.lastInteracted)}

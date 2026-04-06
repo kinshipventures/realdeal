@@ -61,7 +61,7 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
             {pod.name}
           </div>
           <div style={{ display: 'flex', gap: 8, fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)' }}>
-            <span>{contactCount} contacts</span>
+            <span>{contactCount} people</span>
             {overdueCount > 0 && (
               <span style={{ color: 'hsla(20, 80%, 45%, 0.80)' }}>{overdueCount} overdue</span>
             )}

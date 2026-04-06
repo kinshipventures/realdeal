@@ -128,7 +128,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         />
         <NavItem
           icon={<ContactsIcon />}
-          label="Contacts"
+          label="People"
           active={isContacts}
           collapsed={collapsed}
           onClick={() => navigate('/contacts')}

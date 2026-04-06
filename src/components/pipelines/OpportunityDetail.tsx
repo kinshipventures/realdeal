@@ -242,7 +242,7 @@ export function OpportunityDetail({ opportunity, pipeline, stages, contacts, onC
           <section>
             <p style={sectionLabel}>Linked Records</p>
             {linkedContacts.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>No linked contacts</p>
+              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>No linked people</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {linkedContacts.map(contact => (

@@ -183,7 +183,7 @@ export function downloadCSV(filename: string, headers: string[], rows: string[][
 export function podDistributionToCSV(data: PodDistribution[]) {
   downloadCSV(
     'pod-distribution.csv',
-    ['Pod', 'Contacts', 'Thriving', 'Steady', 'Cooling', 'Fading'],
+    ['Pod', 'People', 'Thriving', 'Steady', 'Cooling', 'Fading'],
     data.map(d => [d.podName, String(d.contactCount), String(d.health.Thriving), String(d.health.Steady), String(d.health.Cooling), String(d.health.Fading)]),
   )
 }

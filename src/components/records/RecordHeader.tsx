@@ -192,7 +192,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           onClick={() => navigate(contact.type === 'Company' ? '/companies' : '/contacts')}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
         >
-          {contact.type === 'Company' ? 'Companies' : 'Contacts'}
+          {contact.type === 'Company' ? 'Companies' : 'People'}
         </button>
         <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
         <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{contact.name}</span>

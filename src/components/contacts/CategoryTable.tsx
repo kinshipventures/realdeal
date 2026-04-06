@@ -204,7 +204,7 @@ export function CategoryTable() {
             {categoryName}
           </h1>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'contact' : 'contacts'}
+            {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
           </span>
         </div>
 
@@ -295,10 +295,10 @@ export function CategoryTable() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             }
-            heading={search || filterOverdue || filterCooling ? 'No contacts match' : 'No contacts yet'}
+            heading={search || filterOverdue || filterCooling ? 'No people match' : 'No people yet'}
             subtext={search || filterOverdue || filterCooling
               ? 'Try clearing a filter.'
-              : 'Add contacts to this category to start tracking relationships.'}
+              : 'Add people to this category to start tracking relationships.'}
           />
         </div>
       ) : (

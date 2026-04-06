@@ -237,7 +237,7 @@ export function SharedListPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search contacts..."
+            placeholder="Search people..."
             style={{
               width: '100%',
               padding: '8px 12px',
@@ -289,7 +289,7 @@ export function SharedListPage() {
                       color: 'var(--color-text-secondary)',
                     }}
                   >
-                    {search ? 'No contacts match your search.' : 'No contacts in this list.'}
+                    {search ? 'No people match your search.' : 'No people in this list.'}
                   </td>
                 </tr>
               ) : filteredContacts.map((c, i) => (

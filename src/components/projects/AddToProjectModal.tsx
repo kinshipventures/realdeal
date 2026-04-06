@@ -106,7 +106,7 @@ export function AddToProjectModal({ open, onClose, projectId, mode, existingIds,
         onClick={e => e.stopPropagation()}
       >
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-          Add {mode === 'contacts' ? 'Contacts' : 'Opportunities'}
+          Add {mode === 'contacts' ? 'People' : 'Opportunities'}
         </h3>
 
         <input
@@ -134,7 +134,7 @@ export function AddToProjectModal({ open, onClose, projectId, mode, existingIds,
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 120, maxHeight: 320 }}>
           {items.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center', padding: '24px 0' }}>
-              {query ? 'No results' : (mode === 'contacts' ? 'All contacts already added' : 'All opportunities already added')}
+              {query ? 'No results' : (mode === 'contacts' ? 'All people already added' : 'All opportunities already added')}
             </p>
           ) : items.map(item => {
             const isContact = mode === 'contacts'

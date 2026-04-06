@@ -695,7 +695,7 @@ export function RecordsList() {
           marginBottom: 4,
           margin: 0,
         }}>
-          Contacts
+          People
         </p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
@@ -706,10 +706,10 @@ export function RecordsList() {
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',
           }}>
-            Contacts
+            People
           </h1>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'contact' : 'contacts'}
+            {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
           </span>
         </div>
 
@@ -732,7 +732,7 @@ export function RecordsList() {
                   onClick={() => applyView(null)}
                   style={dropdownItemStyle}
                 >
-                  All Contacts
+                  All People
                 </div>
                 {savedViews.map(view => (
                   <div
@@ -1177,7 +1177,7 @@ export function RecordsList() {
       {/* Table area */}
       {filtered.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No contacts match your filters</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No people match your filters</span>
           {hasActiveFilters && (
             <button
               type="button"

@@ -18,7 +18,7 @@ import { Spinner } from '../ui'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { AddToProjectModal } from './AddToProjectModal'
 
-type Tab = 'contacts' | 'opportunities' | 'notes'
+type Tab = 'people' | 'opportunities' | 'notes'
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -31,7 +31,7 @@ export function ProjectDetailPage() {
   const [pods, setPods] = useState<Pod[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [activeTab, setActiveTab] = useState<Tab>('contacts')
+  const [activeTab, setActiveTab] = useState<Tab>('people')
 
   const [editingName, setEditingName] = useState(false)
   const [editName, setEditName] = useState('')
@@ -225,7 +225,7 @@ export function ProjectDetailPage() {
 
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--edge)', marginBottom: 24 }}>
-          {(['contacts', 'opportunities', 'notes'] as Tab[]).map(tab => (
+          {(['people', 'opportunities', 'notes'] as Tab[]).map(tab => (
             <button
               key={tab}
               type="button"
@@ -245,14 +245,14 @@ export function ProjectDetailPage() {
             >
               {tab}
               <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-                {tab === 'contacts' ? contacts.length : tab === 'opportunities' ? opportunities.length : notes.length}
+                {tab === 'people' ? contacts.length : tab === 'opportunities' ? opportunities.length : notes.length}
               </span>
             </button>
           ))}
         </div>
 
         {/* Tab content */}
-        {activeTab === 'contacts' && (
+        {activeTab === 'people' && (
           <ContactsTab
             contacts={contacts}
             onRemove={handleRemoveContact}
@@ -398,11 +398,11 @@ function ContactsTab({ contacts, onRemove, onSelect, onAdd }: {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Add contacts
+          Add people
         </button>
       </div>
       {contacts.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>No contacts attached yet.</p>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center', padding: '32px 0' }}>No people attached yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {contacts.map(contact => (

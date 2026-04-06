@@ -524,7 +524,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
     <>
       <h2 style={{ ...headingStyle, ...stagger(0) }}>Your world in pods</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Not more contacts - fewer, better ones. Pods keep your circles small and intentional.
+        Not more people - fewer, better ones. Pods keep your circles small and intentional.
       </p>
 
       {/* Pod cards with stagger */}
@@ -620,7 +620,7 @@ function StepImport({ onComplete, onNext, onBack, navigate }: { onComplete: () =
 
       <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Everyone you need is already one person away. Import your existing contacts so the system can start working for you from day one.
+        Everyone you need is already one person away. Import your people so the system can start working for you from day one.
       </p>
 
       <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import from CSV" /></div>
@@ -636,8 +636,8 @@ function StepTour({ onFinish, onBack }: { onFinish: () => void; onBack: () => vo
   const [active, setActive] = useState<string | null>(null)
   const views = [
     { icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label: 'Pulse', desc: 'Your daily dashboard with equity scores and focus list', detail: 'See who needs attention today, track pod health at a glance, and get nudged toward the relationships that matter most.' },
-    { icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2', label: 'Map', desc: 'Visual network graph of all your pods and contacts', detail: 'Explore your network as an orbital map. Tap pods to drill into categories, then into individual contacts.' },
-    { icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', label: 'Contacts', desc: 'Browse and manage all your relationship records', detail: 'Search, filter, and sort everyone in your network. View timelines, log interactions, and update details inline.' },
+    { icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2', label: 'Map', desc: 'Visual network graph of all your pods and people', detail: 'Explore your network as an orbital map. Tap pods to drill into categories, then into individual people.' },
+    { icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', label: 'People', desc: 'Browse and manage all your relationship records', detail: 'Search, filter, and sort everyone in your network. View timelines, log interactions, and update details inline.' },
     { icon: 'M2 3h5v18H2zM9.5 6h5v15h-5zM17 9h5v12h-5z', label: 'Pipelines', desc: 'Track deals and opportunities through stages', detail: 'Kanban boards for deals, fundraising rounds, or any multi-stage workflow. Drag contacts between stages.' },
     { icon: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z', label: 'Projects', desc: 'Group contacts and tasks around shared goals', detail: 'Organize efforts like events or launches. Attach contacts, track progress, and keep everything in one place.' },
   ]

@@ -102,7 +102,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   userSelect: 'none',
                   marginTop: 4,
                 }}>
-                  {totalContacts ?? 0} contacts
+                  {totalContacts ?? 0} people
                 </span>
               </>
             ) : (

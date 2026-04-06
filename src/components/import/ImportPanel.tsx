@@ -218,7 +218,7 @@ export function ImportPanel() {
               margin: '0 0 24px',
               lineHeight: 1.5,
             }}>
-              Import contacts from a CSV file. We'll match your columns automatically.
+              Import people from a CSV file. We'll match your columns automatically.
             </p>
 
             <div
@@ -341,7 +341,7 @@ export function ImportPanel() {
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 {([
-                  { type: 'Contact' as RelationshipType, label: 'Contacts', desc: 'People you know' },
+                  { type: 'Contact' as RelationshipType, label: 'People', desc: 'People you know' },
                   { type: 'Company' as RelationshipType, label: 'Companies', desc: 'Organizations' },
                 ]).map(({ type, label, desc }) => (
                   <button
@@ -392,7 +392,7 @@ export function ImportPanel() {
                   borderRadius: 8,
                   margin: 0,
                 }}>
-                  No pods yet. Create a pod first to import contacts into it.
+                  No pods yet. Create a pod first to import people into it.
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -570,7 +570,7 @@ export function ImportPanel() {
                 </svg>
               )}
               <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
-                {validCount} {recordType === 'Company' ? 'companies' : 'contacts'} ready
+                {validCount} {recordType === 'Company' ? 'companies' : 'people'} ready
                 {invalidCount > 0 && ` - ${invalidCount} will be skipped (no name)`}
               </span>
             </div>
@@ -595,7 +595,7 @@ export function ImportPanel() {
                   transition: 'opacity 0.12s',
                 }}
               >
-                Import {validCount > 0 ? `${validCount} ` : ''}{recordType === 'Company' ? 'Companies' : 'Contacts'}
+                Import {validCount > 0 ? `${validCount} ` : ''}{recordType === 'Company' ? 'Companies' : 'People'}
               </button>
               <button
                 type="button"
@@ -706,7 +706,7 @@ export function ImportPanel() {
                 Import complete
               </p>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
-                {result.imported} {recordType === 'Company' ? 'companies' : 'contacts'} imported
+                {result.imported} {recordType === 'Company' ? 'companies' : 'people'} imported
                 {result.skipped > 0 && ` - ${result.skipped} skipped`}
               </p>
 

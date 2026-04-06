@@ -213,7 +213,7 @@ export function CampaignDetail({
           <Spinner />
         ) : contactRows.length === 0 ? (
           <div style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
-            No contacts yet — add some below
+            No people yet — add some below
           </div>
         ) : (
           contactRows.map(({ cc, contact }) => {

@@ -89,7 +89,7 @@ React SPA with Supabase backend, sidebar navigation, and auth.
 | `/` or `/pods` | `OrbMap` | React Flow node graph for visual network exploration |
 | `/pulse` | `Dashboard` | Equity ring, pod health cards, wrapped insights, birthdays, focus, overdue |
 | `/pulse/nurturing` | `NurturingHub` | Nurturing workflows |
-| `/contacts` | `RecordsList` | All contacts list view |
+| `/contacts` | `RecordsList` | All people list view |
 | `/contact/:id` | `RecordPage` | Individual contact detail |
 | `/companies` | `CompaniesPage` | Companies view |
 | `/pipelines` | `PipelinesPage` | Pipeline management |
@@ -97,7 +97,7 @@ React SPA with Supabase backend, sidebar navigation, and auth.
 | `/reports` | `ReportsPage` | Pod distribution, pipeline velocity, engagement reports |
 | `/projects/:id` | `ProjectDetailPage` | Project detail |
 | `/pod/:id` | `PodDetailPage` | Pod detail view |
-| `/category/:id` | `CategoryTable` | Category contacts table |
+| `/category/:id` | `CategoryTable` | Category people table |
 | `/import` | `ImportPanel` | CSV import UI |
 | `/onboarding` | `OnboardingFlow` | First-run onboarding |
 

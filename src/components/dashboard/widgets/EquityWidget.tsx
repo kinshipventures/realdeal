@@ -287,7 +287,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
               <StatBlock label="Pods" value={podCount} />
-              <StatBlock label="Contacts" value={contactCount} />
+              <StatBlock label="People" value={contactCount} />
               <StatBlock label="Reached this week" value={recentlyContacted} />
               <StatBlock label="Overdue" value={overdueCount} accent />
             </div>

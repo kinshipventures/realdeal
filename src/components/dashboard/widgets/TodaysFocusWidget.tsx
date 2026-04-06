@@ -65,7 +65,7 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <WidgetHeading title="today's focus" tooltip="Contacts prioritized for outreach today based on cadence, recency, and relationship health." />
+        <WidgetHeading title="today's focus" tooltip="People prioritized for outreach today based on cadence, recency, and relationship health." />
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=focus')}

@@ -120,7 +120,7 @@ export function SharePopover({ podId, members, onCreated, onClose }: SharePopove
     >
       {/* Exclude contacts */}
       <div style={{ marginBottom: 16 }}>
-        <span style={labelStyle}>Exclude contacts</span>
+        <span style={labelStyle}>Exclude people</span>
         {members.length === 0 ? (
           <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>No members in this pod</p>
         ) : (

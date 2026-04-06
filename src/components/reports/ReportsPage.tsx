@@ -160,7 +160,7 @@ export function ReportsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           <ReportCard
             title="Pod Distribution"
-            subtitle={`${pods.length} pods, ${contacts.length} contacts`}
+            subtitle={`${pods.length} pods, ${contacts.length} people`}
             onClick={() => setView('pod-distribution')}
           >
             <MiniPodBars data={podDist} />
@@ -372,7 +372,7 @@ function PodDistributionView({ data, onExport, onSave }: {
             }} />
             <div style={{ width: 140, flexShrink: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{d.podName}</div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{d.contactCount} contact{d.contactCount !== 1 ? 's' : ''}</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{d.contactCount} {d.contactCount !== 1 ? 'people' : 'person'}</div>
             </div>
 
             {/* Stacked health bar */}

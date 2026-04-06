@@ -205,12 +205,12 @@ function AppShell() {
               <line x1="3" y1="12" x2="3.01" y2="12"/>
               <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
-            <span style={{ fontSize: 9, fontWeight: 500, color: isContacts ? 'var(--color-brand)' : 'var(--text-muted)' }}>Contacts</span>
+            <span style={{ fontSize: 9, fontWeight: 500, color: isContacts ? 'var(--color-brand)' : 'var(--text-muted)' }}>People</span>
           </button>
           <button
             type="button"
             onClick={() => setShowSearch(true)}
-            aria-label="Search contacts"
+            aria-label="Search people"
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               background: 'none', border: 'none', padding: '6px 16px', cursor: 'pointer',
