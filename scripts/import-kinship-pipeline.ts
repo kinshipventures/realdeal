@@ -156,14 +156,13 @@ async function run() {
     .eq('workspace_id', WORKSPACE_ID)
   if (contactsErr) throw contactsErr
 
-  function matchContact(name: string, email: string): string | null {
+  function matchContact(name: string, email: string, nameOnly = false): string | null {
     const normName = name.toLowerCase().replace(/\s*\(.*?\)\s*/g, '').trim()
     const normEmail = email.toLowerCase().trim()
     for (const c of existingContacts!) {
-      if (normEmail && c.email?.toLowerCase() === normEmail) return c.id
+      if (!nameOnly && normEmail && c.email?.toLowerCase() === normEmail) return c.id
       const cName = (c.name || '').toLowerCase().trim()
       if (cName && cName === normName) return c.id
-      // Try first + last
       const full = `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase().trim()
       if (full && full === normName) return c.id
     }
@@ -175,7 +174,7 @@ async function run() {
 
   async function importRow(
     name: string, company: string, email: string, stageName: string,
-    notes: string, investment: string, referredBy: string
+    notes: string, investment: string, referredBy: string, nameOnly = false
   ) {
     const stageId = stageMap.get(stageName)
     if (!stageId) {
@@ -191,7 +190,7 @@ async function run() {
     const noteStr = noteParts.join(' | ') || null
 
     // Match or create contact
-    let contactId = matchContact(name, email)
+    let contactId = matchContact(name, email, nameOnly)
     if (contactId) {
       matched++
     } else {
@@ -206,7 +205,7 @@ async function run() {
         .insert({
           user_id: USER_ID, workspace_id: WORKSPACE_ID,
           name: cleaned, first_name: firstName, last_name: lastName,
-          email: email || null, company: company || null,
+          email: nameOnly ? null : (email || null), company: company || null,
           type: 'Contact', status: 'Active',
         })
         .select('id').single()
@@ -241,7 +240,7 @@ async function run() {
   // Prospects -> their respective stages
   for (const row of prospects) {
     const stageName = STAGE_ORDER.includes(row.status) ? row.status : 'Circle Back'
-    await importRow(row.name, row.company, row.email, stageName, row.notes, row.targetCommitment, row.referredBy)
+    await importRow(row.name, row.company, row.email, stageName, row.notes, row.targetCommitment, row.referredBy, true)
   }
 
   console.log(`\nDone!`)
