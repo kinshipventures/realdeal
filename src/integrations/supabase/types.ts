@@ -1256,6 +1256,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_share_link_by_token: {
+        Args: { _token: string }
+        Returns: {
+          created_at: string
+          excluded_contact_ids: string[]
+          expires_at: string
+          id: string
+          pin_hash: string | null
+          pod_id: string
+          revoked_at: string | null
+          token: string
+          updated_at: string
+          user_id: string
+          visible_columns: string[]
+          workspace_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "share_links"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      is_workspace_admin: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
