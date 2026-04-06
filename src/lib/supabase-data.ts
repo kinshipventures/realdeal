@@ -1014,7 +1014,7 @@ export interface WorkspaceMember {
 export interface WorkspaceInvite {
   id: string
   email: string
-  role: 'owner' | 'admin' | 'member'
+  role: 'owner' | 'admin' | 'member' | 'viewer'
   token: string
   accepted_at: string | null
   created_at: string
