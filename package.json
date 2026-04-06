@@ -12,7 +12,8 @@
     "seed:lists": "tsx --env-file=.env.local src/scripts/seedLists.ts",
     "seed:csv": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts",
     "migrate:schema": "tsx --env-file=.env.local src/scripts/migrateSchema.ts",
-    "migrate:fieldconfig": "tsx --env-file=.env.local src/scripts/migrateFieldConfig.ts"
+    "migrate:fieldconfig": "tsx --env-file=.env.local src/scripts/migrateFieldConfig.ts",
+    "import:kinship-pipeline": "tsx --env-file=.env.local scripts/import-kinship-pipeline.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
