@@ -719,6 +719,17 @@ export async function updatePipelineStage(id: string, data: Partial<Pick<Pipelin
   return mapPipelineStage(row)
 }
 
+export async function deletePipelineStage(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_PIPELINE_STAGES.findIndex(s => s.id === id)
+    if (idx >= 0) DEMO_PIPELINE_STAGES.splice(idx, 1)
+    return
+  }
+  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
+  if (error) throw error
+  invalidatePipelineStagesCache()
+}
+
 // ── Opportunities ─────────────────────────────────────────────────────────────
 
 async function enrichOpportunities(rows: any[]): Promise<Opportunity[]> {
@@ -999,4 +1010,16 @@ export async function getActiveContacts(): Promise<Contact[]> {
 }
 export async function getPendingContacts(): Promise<Contact[]> {
   const all = await getContacts(); return all.filter(c => c.status === 'Pending')
+}
+
+export function invalidateAllCaches(): void {
+  _podsCache = null; _podsCacheTime = 0; _podsFetch = null
+  _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null
+  _contactsCache = null
+  _interactionsCache = null
+  _campaignsCache = null; _campaignContactsCache = null
+  _pipelinesCache = null; _pipelinesFetch = null
+  _pipelineStagesCache = null; _pipelineStagesFetch = null
+  _opportunitiesCache = null; _opportunitiesFetch = null
+  _projectsCache = null; _projectsFetch = null
 }

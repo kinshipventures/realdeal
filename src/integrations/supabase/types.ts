@@ -206,6 +206,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website: string | null
+          workspace_id: string
         }
         Insert: {
           created_at?: string
@@ -221,6 +222,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website?: string | null
+          workspace_id: string
         }
         Update: {
           created_at?: string
@@ -236,8 +238,17 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website?: string | null
+          workspace_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_categories: {
         Row: {
@@ -1133,6 +1144,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "share_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          token: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          token?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          token?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invites_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
