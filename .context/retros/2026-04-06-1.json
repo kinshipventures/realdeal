@@ -1,0 +1,30 @@
+{
+  "date": "2026-04-06",
+  "window": "7d",
+  "metrics": {
+    "commits": 502,
+    "contributors": 2,
+    "prs_merged": 0,
+    "insertions": 48753,
+    "deletions": 10786,
+    "net_loc": 37967,
+    "test_loc": 0,
+    "test_ratio": 0,
+    "active_days": 8,
+    "sessions": 12,
+    "deep_sessions": 6,
+    "avg_session_minutes": 55,
+    "loc_per_session_hour": 4300,
+    "feat_pct": 0.33,
+    "fix_pct": 0.17,
+    "peak_hour": 22,
+    "ai_assisted_commits": 320
+  },
+  "authors": {
+    "Gabriel Murray": { "commits": 182, "insertions": 36296, "deletions": 6379, "test_ratio": 0, "top_area": "docs/.planning/" },
+    "gpt-engineer-app[bot]": { "commits": 320, "insertions": 12457, "deletions": 4407, "test_ratio": 0, "top_area": "src/components/" }
+  },
+  "version_range": ["v2.0", "v2.1"],
+  "streak_days": 8,
+  "tweetable": "Week of Mar 30: 502 commits (2 contributors), 48.8k LOC, 0% tests, 8 active days, peak: 10pm | Streak: 8d"
+}
