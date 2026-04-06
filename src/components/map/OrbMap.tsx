@@ -203,14 +203,8 @@ function buildHomeNodes({
   return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
 }
 
-function buildHomeEdges(pods: Pod[], equityByPod: Record<string, number>): Edge[] {
-  return pods.map(pod => ({
-    id: `hub-${pod.id}`,
-    source: MOJ_ID,
-    target: pod.id,
-    type: 'gradient',
-    data: { healthPercent: equityByPod[pod.id] ?? 0 },
-  }))
+function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edge[] {
+  return []
 }
 
 const DRILL_RADIUS = 200
