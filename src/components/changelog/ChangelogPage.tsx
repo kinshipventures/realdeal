@@ -1,5 +1,17 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
 
 type EntryType = 'feature' | 'fix' | 'design' | 'infra'
 
@@ -14,6 +26,7 @@ interface Spotlight {
   icon: string
   gradient: [string, string]
   area: string
+  link?: string
 }
 
 interface Release {
@@ -45,6 +58,7 @@ const releases: Release[] = [
         icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
         gradient: ['#1C1C1E', '#3A3A3C'],
         area: 'Map',
+        link: '/pods',
       },
       {
         title: 'Equity Scoring',
@@ -52,6 +66,7 @@ const releases: Release[] = [
         icon: 'M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z',
         gradient: ['#25B439', '#1A8A2A'],
         area: 'Scoring',
+        link: '/learn',
       },
       {
         title: 'Follow-ups & Focus',
@@ -59,6 +74,7 @@ const releases: Release[] = [
         icon: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
         gradient: ['#FF9800', '#E65100'],
         area: 'Nurturing',
+        link: '/pulse/nurturing',
       },
       {
         title: 'Pod Sharing',
@@ -73,6 +89,7 @@ const releases: Release[] = [
         icon: 'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z',
         gradient: ['#1565C0', '#0D47A1'],
         area: 'Platform',
+        link: '/account',
       },
       {
         title: 'Supabase Migration',
@@ -83,7 +100,6 @@ const releases: Release[] = [
       },
     ],
     entries: [
-      // Remaining features not covered by spotlights
       { type: 'feature', text: 'Collapsible sidebar navigation - map is home, Pulse is the dashboard' },
       { type: 'feature', text: 'Renamed "Maps" to "Pods" and "Contacts" to "People" across the UI' },
       { type: 'feature', text: 'Contact detail redesigned as centered two-column modal' },
@@ -103,7 +119,6 @@ const releases: Release[] = [
       { type: 'feature', text: 'Onboarding flow with flexible navigation' },
       { type: 'feature', text: 'Error boundary and 404 page' },
 
-      // Fixes
       { type: 'fix', text: 'Contact modal no longer renders behind dashboard content' },
       { type: 'fix', text: 'Dark mode - project cards, replaced hardcoded rgba with CSS vars' },
       { type: 'fix', text: 'Sub-pod member cap enforced correctly' },
@@ -117,17 +132,21 @@ const releases: Release[] = [
       { type: 'fix', text: 'Widget reorder rewritten with pointer events' },
       { type: 'fix', text: 'Supabase junction query pagination for large datasets' },
 
-      // Design
       { type: 'design', text: 'Touch targets expanded to 44px minimum' },
       { type: 'design', text: 'Dashboard heading hierarchy corrected' },
       { type: 'design', text: 'Typography - Playfair Display replaced with Fraunces' },
 
-      // Infrastructure
       { type: 'infra', text: 'Airtable-to-Supabase migration script' },
       { type: 'infra', text: 'Security hardening for alpha readiness' },
     ],
   },
 ]
+
+function countByType(entries: Entry[]): Record<EntryType, number> {
+  const counts = { feature: 0, fix: 0, design: 0, infra: 0 }
+  for (const e of entries) counts[e.type]++
+  return counts
+}
 
 export function ChangelogPage() {
   const navigate = useNavigate()
@@ -181,7 +200,10 @@ export function ChangelogPage() {
 }
 
 function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boolean }) {
+  const navigate = useNavigate()
+  const mobile = useIsMobile()
   const grouped = groupByType(release.entries)
+  const counts = countByType(release.entries)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
 
   const toggleSection = (type: string) => {
@@ -211,7 +233,7 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
       </div>
 
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24,
+        display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20,
       }}>
         <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>
           {release.date}
@@ -219,6 +241,33 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
         <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
           {release.title}
         </span>
+      </div>
+
+      {/* Stats summary */}
+      <div style={{
+        display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap',
+      }}>
+        {([
+          ['feature', counts.feature, 'features'],
+          ['fix', counts.fix, 'fixes'],
+          ['design', counts.design, 'design'],
+          ['infra', counts.infra, 'infra'],
+        ] as const).filter(([, c]) => c > 0).map(([type, count, label]) => (
+          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: TYPE_META[type].color,
+            }} />
+            <span style={{
+              fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 600,
+            }}>
+              {count}
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              {label}
+            </span>
+          </div>
+        ))}
       </div>
 
       <p style={{
@@ -231,12 +280,16 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
       {/* Spotlight cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
+        gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)',
         gap: 16,
         marginBottom: 32,
       }}>
         {release.spotlights.map(s => (
-          <SpotlightCard key={s.title} spotlight={s} />
+          <SpotlightCard
+            key={s.title}
+            spotlight={s}
+            onClick={s.link ? () => navigate(s.link!) : undefined}
+          />
         ))}
       </div>
 
@@ -248,74 +301,28 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
           const meta = TYPE_META[type]
           const expanded = expandedSections[type] ?? false
           return (
-            <div key={type}>
-              <button
-                type="button"
-                onClick={() => toggleSection(type)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '12px 16px', background: 'none', border: 'none',
-                  borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                  transition: 'background 0.12s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-              >
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%', background: meta.color, flexShrink: 0,
-                }} />
-                <span style={{
-                  fontSize: 13, fontWeight: 600, color: meta.color,
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                }}>
-                  {meta.label}
-                </span>
-                <span style={{
-                  fontSize: 12, color: 'var(--color-text-tertiary)',
-                  background: 'var(--tint)', padding: '1px 8px', borderRadius: 100,
-                }}>
-                  {entries.length}
-                </span>
-                <svg
-                  width="14" height="14" viewBox="0 0 24 24"
-                  fill="none" stroke="var(--color-text-tertiary)" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round"
-                  style={{
-                    marginLeft: 'auto', flexShrink: 0,
-                    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-
-              <div style={{
-                overflow: 'hidden',
-                maxHeight: expanded ? entries.length * 40 + 24 : 0,
-                opacity: expanded ? 1 : 0,
-                transition: 'max-height 0.25s ease, opacity 0.2s ease',
-              }}>
-                <div style={{
-                  padding: '8px 16px 16px 34px',
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                }}>
-                  {entries.map((entry, j) => (
-                    <div key={j} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-                      <span style={{
-                        width: 4, height: 4, borderRadius: '50%', flexShrink: 0,
-                        background: 'var(--color-text-tertiary)', marginTop: 7,
-                      }} />
-                      <span style={{
-                        fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.5,
-                      }}>
-                        {entry.text}
-                      </span>
-                    </div>
-                  ))}
+            <CollapsibleSection
+              key={type}
+              label={meta.label}
+              color={meta.color}
+              count={entries.length}
+              expanded={expanded}
+              onToggle={() => toggleSection(type)}
+            >
+              {entries.map((entry, j) => (
+                <div key={j} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                  <span style={{
+                    width: 4, height: 4, borderRadius: '50%', flexShrink: 0,
+                    background: 'var(--color-text-tertiary)', marginTop: 7,
+                  }} />
+                  <span style={{
+                    fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.5,
+                  }}>
+                    {entry.text}
+                  </span>
                 </div>
-              </div>
-            </div>
+              ))}
+            </CollapsibleSection>
           )
         })}
       </div>
@@ -323,11 +330,98 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
   )
 }
 
-function SpotlightCard({ spotlight }: { spotlight: Spotlight }) {
+function CollapsibleSection({
+  label, color, count, expanded, onToggle, children,
+}: {
+  label: string
+  color: string
+  count: number
+  expanded: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+
+  const measure = useCallback(() => {
+    if (contentRef.current) setHeight(contentRef.current.scrollHeight)
+  }, [])
+
+  useEffect(() => { measure() }, [expanded, measure])
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 16px', background: 'none', border: 'none',
+          borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+          transition: 'background 0.12s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+      >
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0,
+        }} />
+        <span style={{
+          fontSize: 13, fontWeight: 600, color,
+          textTransform: 'uppercase', letterSpacing: '0.05em',
+        }}>
+          {label}
+        </span>
+        <span style={{
+          fontSize: 12, color: 'var(--color-text-tertiary)',
+          background: 'var(--tint)', padding: '1px 8px', borderRadius: 100,
+        }}>
+          {count}
+        </span>
+        <svg
+          width="14" height="14" viewBox="0 0 24 24"
+          fill="none" stroke="var(--color-text-tertiary)" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          style={{
+            marginLeft: 'auto', flexShrink: 0,
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      <div style={{
+        overflow: 'hidden',
+        maxHeight: expanded ? height : 0,
+        opacity: expanded ? 1 : 0,
+        transition: 'max-height 0.3s ease, opacity 0.2s ease',
+      }}>
+        <div
+          ref={contentRef}
+          style={{
+            padding: '8px 16px 16px 34px',
+            display: 'flex', flexDirection: 'column', gap: 6,
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SpotlightCard({ spotlight, onClick }: { spotlight: Spotlight; onClick?: () => void }) {
   const [hovered, setHovered] = useState(false)
+  const interactive = !!onClick
 
   return (
     <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={interactive ? e => { if (e.key === 'Enter') onClick!() } : undefined}
+      onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -337,7 +431,7 @@ function SpotlightCard({ spotlight }: { spotlight: Spotlight }) {
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
         boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
-        cursor: 'default',
+        cursor: interactive ? 'pointer' : 'default',
       }}
     >
       {/* Gradient hero */}
@@ -365,12 +459,23 @@ function SpotlightCard({ spotlight }: { spotlight: Spotlight }) {
 
       {/* Content */}
       <div style={{ padding: '14px 16px 16px' }}>
-        <h3 style={{
-          fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)',
-          margin: '0 0 6px', letterSpacing: '-0.01em',
-        }}>
-          {spotlight.title}
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <h3 style={{
+            fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)',
+            margin: 0, letterSpacing: '-0.01em',
+          }}>
+            {spotlight.title}
+          </h3>
+          {interactive && (
+            <svg
+              width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="var(--color-text-tertiary)" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M7 17l9.2-9.2M17 17V7H7" />
+            </svg>
+          )}
+        </div>
         <p style={{
           fontSize: 12, color: 'var(--color-text-secondary)',
           margin: 0, lineHeight: 1.55,
