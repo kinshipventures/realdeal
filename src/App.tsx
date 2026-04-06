@@ -8,7 +8,7 @@ import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
 import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
-import { SearchPalette } from './components/search/SearchPalette'
+import { SearchPalette, type SearchResult } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
 import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
@@ -290,6 +290,17 @@ function AppShell() {
       {showSearch && (
         <SearchPalette
           onClose={closeSearch}
+          onSelect={(result: SearchResult) => {
+            setShowSearch(false)
+            const routes: Record<string, string> = {
+              contact: `/contact/${result.id}`,
+              company: `/contact/${result.id}`,
+              pod: `/pod/${result.id}`,
+              pipeline: '/pipelines',
+              project: `/projects/${result.id}`,
+            }
+            navigate(routes[result.type] || '/')
+          }}
           onSelectContact={(contact) => {
             setShowSearch(false)
             if (isPods && contact.list_ids.length > 0) {

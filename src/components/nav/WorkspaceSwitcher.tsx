@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
-import { supabase } from '@/integrations/supabase/client'
+import { createWorkspaceInvite } from '@/lib/supabase-data'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
@@ -42,23 +42,17 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   }
 
   const handleInvite = async () => {
-    if (!inviteEmail.trim() || !activeWorkspace || !session?.user?.id) return
+    if (!inviteEmail.trim() || !activeWorkspace) return
     setInviteStatus('sending')
     try {
-      const { error } = await supabase.from('workspace_invites').insert({
-        workspace_id: activeWorkspace.id,
-        email: inviteEmail.trim().toLowerCase(),
-        role: 'member' as const,
-        invited_by: session.user.id,
-      })
-      if (error) throw error
+      await createWorkspaceInvite(activeWorkspace.id, inviteEmail.trim())
       setInviteStatus('sent')
       setTimeout(() => {
         setInviteEmail('')
         setInviting(false)
         setInviteStatus('idle')
       }, 2000)
-    } catch {
+    } catch (err) {
       setInviteStatus('error')
       setTimeout(() => setInviteStatus('idle'), 2000)
     }

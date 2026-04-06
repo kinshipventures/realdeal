@@ -8,7 +8,7 @@ export interface Workspace {
   id: string
   name: string
   slug: string
-  role: string
+  role: 'owner' | 'admin' | 'member'
   created_at: string
 }
 

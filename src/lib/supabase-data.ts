@@ -1000,6 +1000,120 @@ export async function mergeRecords(survivorId: string, loserId: string, fieldOve
   }
 }
 
+// ── Workspace management ─────────────────────────────────────────────────────
+
+export interface WorkspaceMember {
+  id: string
+  user_id: string
+  role: 'owner' | 'admin' | 'member'
+  created_at: string
+  display_name: string | null
+  email: string | null
+}
+
+export interface WorkspaceInvite {
+  id: string
+  email: string
+  role: 'owner' | 'admin' | 'member'
+  token: string
+  accepted_at: string | null
+  created_at: string
+  invited_by: string
+}
+
+export async function fetchWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+  const { data, error } = await supabase
+    .from('workspace_members')
+    .select('id, user_id, role, created_at, profiles:user_id(display_name, email)')
+    .eq('workspace_id', workspaceId)
+  if (error) throw error
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    user_id: row.user_id,
+    role: row.role,
+    created_at: row.created_at,
+    display_name: row.profiles?.display_name ?? null,
+    email: row.profiles?.email ?? null,
+  }))
+}
+
+export async function fetchPendingInvites(workspaceId: string): Promise<WorkspaceInvite[]> {
+  const { data, error } = await supabase
+    .from('workspace_invites')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .is('accepted_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createWorkspaceInvite(workspaceId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<WorkspaceInvite> {
+  const userId = await getUserId()
+  // Check for existing pending invite
+  const { data: existing } = await supabase
+    .from('workspace_invites')
+    .select('id')
+    .eq('workspace_id', workspaceId)
+    .eq('email', email.toLowerCase())
+    .is('accepted_at', null)
+    .limit(1)
+  if (existing && existing.length > 0) throw new Error('Already invited')
+
+  const { data, error } = await supabase
+    .from('workspace_invites')
+    .insert({ workspace_id: workspaceId, email: email.toLowerCase(), role, invited_by: userId })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function revokeInvite(inviteId: string): Promise<void> {
+  // Check if already accepted
+  const { data: invite } = await supabase
+    .from('workspace_invites')
+    .select('accepted_at')
+    .eq('id', inviteId)
+    .single()
+  if (invite?.accepted_at) throw new Error('Already accepted')
+
+  const { error } = await supabase.from('workspace_invites').delete().eq('id', inviteId)
+  if (error) throw error
+}
+
+export async function removeMember(memberId: string, workspaceId: string): Promise<void> {
+  // Prevent removing the last owner
+  const { data: owners } = await supabase
+    .from('workspace_members')
+    .select('id')
+    .eq('workspace_id', workspaceId)
+    .eq('role', 'owner')
+  if (!owners || owners.length <= 1) {
+    const { data: target } = await supabase.from('workspace_members').select('role').eq('id', memberId).single()
+    if (target?.role === 'owner') throw new Error('Cannot remove the last owner')
+  }
+  const { error } = await supabase.from('workspace_members').delete().eq('id', memberId)
+  if (error) throw error
+}
+
+export async function updateMemberRole(memberId: string, role: 'owner' | 'admin' | 'member', workspaceId: string): Promise<void> {
+  // Prevent demoting the last owner
+  if (role !== 'owner') {
+    const { data: current } = await supabase.from('workspace_members').select('role').eq('id', memberId).single()
+    if (current?.role === 'owner') {
+      const { data: owners } = await supabase
+        .from('workspace_members')
+        .select('id')
+        .eq('workspace_id', workspaceId)
+        .eq('role', 'owner')
+      if (!owners || owners.length <= 1) throw new Error('Cannot demote the last owner')
+    }
+  }
+  const { error } = await supabase.from('workspace_members').update({ role }).eq('id', memberId)
+  if (error) throw error
+}
+
 // ── Contact filter helpers ────────────────────────────────────────────────────
 
 export async function getContactsByType(type: RelationshipType): Promise<Contact[]> {
