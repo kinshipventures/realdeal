@@ -410,7 +410,7 @@ export function ImportPanel() {
                   No pods yet. Create a pod first to import people into it.
                 </p>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {pods.map(p => {
                     const isSelected = selectedPodIds.includes(p.id)
                     const shift = p.color ? (POD_SHIFT_COLORS[p.color] ?? p.color) : '#25B439'
