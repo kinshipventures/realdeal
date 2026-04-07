@@ -418,7 +418,7 @@ export function Dashboard() {
         </div>
 
         {/* Rest of dashboard on light background */}
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 120px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
@@ -432,7 +432,10 @@ export function Dashboard() {
                 heading="No pulse yet"
                 subtext="Log your first interaction to start building your network health score."
                 ctaLabel="Log interaction"
-                onCta={() => {}}
+                onCta={() => {
+                  const first = focusItems[0]
+                  if (first) setSelectedContact(first.contact)
+                }}
                 orbColor="#25B439"
                 ghosts={2}
               />
@@ -518,18 +521,21 @@ interface OrderedWidgetProps {
 }
 
 // Section metadata — drives headings and grouping
-const SECTION_MAP: Record<string, { heading: string; tooltip: string }> = {
+const SECTION_MAP: Record<string, { heading: string; tooltip: string; tier: 'primary' | 'secondary' | 'tertiary' }> = {
+  'action-items': {
+    heading: 'your day',
+    tooltip: 'People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.',
+    tier: 'primary',
+  },
   'network-pulse': {
     heading: 'network pulse',
     tooltip: 'How your relationship network is performing - pod health scores and key insights.',
-  },
-  'action-items': {
-    heading: 'action items',
-    tooltip: 'People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.',
+    tier: 'secondary',
   },
   'activity-links': {
     heading: 'activity & links',
     tooltip: 'Recent interaction history and shortcuts to your active campaigns and pipelines.',
+    tier: 'tertiary',
   },
 }
 
@@ -591,9 +597,16 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
     if (!widgets?.length) continue
     const meta = SECTION_MAP[sectionId]
 
+    const isPrimary = meta.tier === 'primary'
+    const isTertiary = meta.tier === 'tertiary'
+
     elements.push(
-      <div key={sectionId} className="dashboard-section widget-enter" style={{ '--stagger': stagger++ } as React.CSSProperties}>
-        <div className="dashboard-heading" role="heading" aria-level={2}>
+      <div
+        key={sectionId}
+        className={`dashboard-section widget-enter${isPrimary ? ' dashboard-section-primary' : ''}`}
+        style={{ '--stagger': stagger++ } as React.CSSProperties}
+      >
+        <div className={isPrimary ? 'dashboard-heading-primary' : 'dashboard-heading'} role="heading" aria-level={2}>
           <span className="widget-tooltip-wrap">
             {meta.heading}
             <span className="widget-tooltip-icon" aria-label="Info">?</span>

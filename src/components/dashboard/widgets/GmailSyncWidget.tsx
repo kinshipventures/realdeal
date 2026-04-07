@@ -49,7 +49,7 @@ export function GmailSyncWidget() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="hsla(0, 70%, 50%, 0.7)"/>
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#EA4335"/>
               </svg>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>Gmail</span>
             </div>
@@ -75,7 +75,7 @@ export function GmailSyncWidget() {
               whiteSpace: 'nowrap',
             }}
           >
-            {syncing ? 'Syncing...' : 'Sync now'}
+            {syncing ? 'Syncing...' : 'Sync emails'}
           </button>
         </div>
 

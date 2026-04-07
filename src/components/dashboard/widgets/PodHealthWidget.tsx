@@ -18,10 +18,17 @@ function Sparkline({ data, color, width = 60, height = 24 }: {
   const areaPath = `${linePath} L${width},${height} L0,${height} Z`
   return (
     <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
-      <path d={areaPath} fill={`${color}1F`} />
+      <path d={areaPath} fill={`${color}33`} />
       <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
+}
+
+function healthLabel(score: number): { text: string; color: string; bg: string } {
+  if (score >= 85) return { text: 'Thriving', color: '#16a34a', bg: 'rgba(22,163,74,0.08)' }
+  if (score >= 70) return { text: 'Steady', color: '#2563eb', bg: 'rgba(37,99,235,0.08)' }
+  if (score >= 40) return { text: 'Cooling', color: '#d97706', bg: 'rgba(217,119,6,0.08)' }
+  return { text: 'Fading', color: '#dc2626', bg: 'rgba(220,38,38,0.08)' }
 }
 
 function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline }: {
@@ -30,6 +37,7 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
 }) {
   const color = pod.color ?? '#718096'
   const cadence = pod.cadence ?? 'monthly'
+  const health = scoreReady ? healthLabel(score) : null
 
   return (
     <div
@@ -57,8 +65,19 @@ function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline
           {pod.name.slice(0, 2).toUpperCase()}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginBottom: 4, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-            {pod.name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+              {pod.name}
+            </span>
+            {health && (
+              <span style={{
+                fontSize: 9, fontWeight: 600, letterSpacing: '0.02em',
+                padding: '1px 6px', borderRadius: 6,
+                color: health.color, background: health.bg,
+              }}>
+                {health.text}
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 8, fontSize: 11, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)' }}>
             <span>{contactCount} people</span>

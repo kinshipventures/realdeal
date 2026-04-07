@@ -31,7 +31,7 @@ function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) 
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <Avatar name={item.contact.name} size={28} variant="subtle" />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', flex: 1 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', flex: 1, letterSpacing: '-0.01em' }}>
           {item.contact.name}
         </span>
         <span style={{

@@ -256,20 +256,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Utilities */}
       <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
-          icon={<LearnIcon />}
-          label="How It Works"
-          active={isLearn}
-          collapsed={collapsed}
-          onClick={() => navigate('/learn')}
-        />
-        <NavItem
-          icon={<ChangelogIcon />}
-          label="What's New"
-          active={isChangelog}
-          collapsed={collapsed}
-          onClick={() => navigate('/changelog')}
-        />
-        <NavItem
           icon={<SearchIcon />}
           label="Search"
           active={false}
@@ -277,34 +263,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={onSearch}
           hint={collapsed ? undefined : 'Cmd+K'}
         />
-        {onDemoToggle && (
-        <NavItem
-          icon={
-            <div style={{
-              width: 20,
-              height: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <div style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: demo ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
-                transition: 'background 0.15s ease',
-              }} />
-            </div>
-          }
-          label={demo ? 'Demo on' : 'Demo off'}
-          active={false}
-          collapsed={collapsed}
-          onClick={onDemoToggle}
-          labelStyle={demo ? { color: 'var(--color-brand)', fontWeight: 600 } : undefined}
-        />
-        )}
-
-        <Divider />
 
         <NavItem
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
@@ -314,14 +272,67 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={() => navigate('/account')}
         />
 
-        <NavItem
-          icon={<SignOutIcon />}
-          label="Sign out"
-          active={false}
-          collapsed={collapsed}
-          onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
-        />
-
+        {!collapsed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Divider />
+            <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <button
+                type="button"
+                onClick={() => navigate('/learn')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)',
+                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
+                  borderRadius: 6, minHeight: 32,
+                  transition: 'color 0.12s ease',
+                }}
+              >
+                How It Works
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/changelog')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)',
+                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
+                  borderRadius: 6, minHeight: 32,
+                  transition: 'color 0.12s ease',
+                }}
+              >
+                What's New
+              </button>
+              <button
+                type="button"
+                onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)',
+                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
+                  borderRadius: 6, minHeight: 32,
+                  transition: 'color 0.12s ease',
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+            {onDemoToggle && import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={onDemoToggle}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: demo ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                  fontWeight: demo ? 600 : 400,
+                  padding: '4px 16px', textAlign: 'left', fontFamily: 'inherit',
+                  transition: 'color 0.12s ease',
+                }}
+              >
+                {demo ? 'Demo on' : 'Demo off'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   )

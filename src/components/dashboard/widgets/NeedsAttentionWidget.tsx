@@ -29,7 +29,7 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
     >
       <Avatar name={contact.name} size={32} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
           {contact.name}
         </div>
         {podName && (
@@ -73,7 +73,7 @@ function FollowUpOverdueRow({ contact, overdueDays, podName, action, onClick }: 
         <line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
           {contact.name}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -111,18 +111,18 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
     }}>
       <Avatar name={contact.name} size={28} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>{contact.name}</div>
         <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
           {dormancyLabel} · {days ? `${days}d ago` : 'Never reached'}
         </div>
       </div>
       {confirming ? (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button type="button" onClick={onConfirmRemove} style={{ fontSize: 11, fontWeight: 500, color: 'rgba(180,40,40,0.85)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Confirm
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button type="button" onClick={onCancelRemove} className="action-pill-hig">
+            Cancel
           </button>
-          <button type="button" onClick={onCancelRemove} style={{ fontSize: 11, color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            cancel
+          <button type="button" onClick={onConfirmRemove} className="action-pill-hig destructive">
+            Remove
           </button>
         </div>
       ) : (
@@ -237,7 +237,7 @@ export function NeedsAttentionWidget({
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {dormantContacts.length} gone quiet
+              {dormantContacts.length} {dormantContacts.length === 1 ? 'relationship' : 'relationships'} cooling off
             </span>
             <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
               &#9662;
