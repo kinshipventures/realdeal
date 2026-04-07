@@ -309,10 +309,11 @@ export function ImportPanel() {
 
         {/* Step 2: Configure */}
         {state === 'preview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, animation: 'fadeIn 0.2s ease' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* File info */}
             <div style={{
               display: 'flex',
+              opacity: 0, animation: 'import-stagger 0.35s ease-out 0ms forwards',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '10px 14px',
@@ -347,7 +348,7 @@ export function ImportPanel() {
             </div>
 
             {/* Record type */}
-            <div>
+            <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 60ms forwards' }}>
               <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
                 Import as
               </p>
@@ -391,7 +392,7 @@ export function ImportPanel() {
             </div>
 
             {/* Pod selector */}
-            <div>
+            <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 120ms forwards' }}>
               <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
                 Import into pod(s) <span style={{ color: '#25B439' }}>*</span>
               </p>
@@ -440,7 +441,7 @@ export function ImportPanel() {
             </div>
 
             {/* Column mapping */}
-            <div>
+            <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 180ms forwards' }}>
               <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
                 Column mapping
               </p>
@@ -563,7 +564,7 @@ export function ImportPanel() {
             </div>
 
             {/* Validation summary */}
-            <div style={{
+            <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 240ms forwards',
               padding: '12px 14px',
               background: invalidCount > 0 ? 'rgba(255,149,0,0.05)' : 'rgba(37,180,57,0.05)',
               border: `1px solid ${invalidCount > 0 ? 'rgba(255,149,0,0.15)' : 'rgba(37,180,57,0.15)'}`,
@@ -590,7 +591,7 @@ export function ImportPanel() {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, opacity: 0, animation: 'import-stagger 0.35s ease-out 300ms forwards' }}>
               <button
                 type="button"
                 onClick={handleImport}
