@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
+import { useEscape } from '../../lib/escapeStack'
 import type { HexColor } from '../../lib/types'
 
 interface Props {
@@ -152,11 +153,27 @@ export function OnboardingFlow({ onComplete }: Props) {
     }, 180)
   }, [isExiting])
 
-  const next = () => {
+  const next = useCallback(() => {
     if (step < STEP_COUNT - 1) transitionTo(step + 1, 'forward')
     else onComplete()
-  }
-  const back = () => { if (step > 0) transitionTo(step - 1, 'back') }
+  }, [step, transitionTo, onComplete])
+
+  const back = useCallback(() => {
+    if (step > 0) transitionTo(step - 1, 'back')
+  }, [step, transitionTo])
+
+  // Escape to go back (integrates with app-wide escape stack)
+  useEscape(back)
+
+  // Arrow keys + Enter to navigate
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); next() }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); back() }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [next, back])
 
   return (
     <div style={{
