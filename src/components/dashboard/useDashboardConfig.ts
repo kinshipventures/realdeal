@@ -35,17 +35,17 @@ export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
 // Orderable widgets (equity lives in header band, not the widget flow)
 export const DEFAULT_ORDER: WidgetId[] = [
   'pending-tray',
-  'pod-health',
-  'wrapped',
   'todays-focus',
   'coming-up',
   'needs-attention',
+  'pod-health',
+  'wrapped',
   'recent-activity',
   'quick-links',
   'gmail-sync',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v3'
+const STORAGE_KEY = 'realdeal:dashboard-config:v4'
 
 interface StoredConfig {
   preset: Preset

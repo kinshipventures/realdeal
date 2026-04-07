@@ -686,17 +686,6 @@ export function RecordsList() {
 
       {/* Header */}
       <div style={{ padding: '32px 32px 0', flexShrink: 0 }}>
-        <p style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-          marginBottom: 4,
-          margin: 0,
-        }}>
-          People
-        </p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
@@ -706,7 +695,7 @@ export function RecordsList() {
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',
           }}>
-            People
+            Your People
           </h1>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
             {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
@@ -1313,7 +1302,10 @@ export function RecordsList() {
                       <td key={col.id} style={{ padding: '12px 12px', height: 44, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
                         {col.id === 'name' && (
                           <span style={{
-                            fontWeight: contact.type === 'Company' ? 600 : 500,
+                            fontFamily: 'var(--font-serif)',
+                            fontWeight: contact.type === 'Company' ? 700 : 600,
+                            fontSize: 14,
+                            letterSpacing: '-0.01em',
                             color: 'var(--color-text-primary)',
                           }}>
                             {contact.name}
