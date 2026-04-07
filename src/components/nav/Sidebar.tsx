@@ -77,8 +77,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: collapsed ? 44 : 36,
-            height: 36,
+            width: 44,
+            height: 44,
             margin: collapsed ? '0 auto' : '0 0 0 auto',
             background: 'none',
             border: 'none',
@@ -177,7 +177,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
               alignItems: 'center',
               gap: 6,
               width: '100%',
-              minHeight: 36,
+              minHeight: 44,
               padding: '6px 8px',
               background: 'none',
               border: 'none',
@@ -216,7 +216,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                     alignItems: 'center',
                     gap: 10,
                     width: '100%',
-                    minHeight: 40,
+                    minHeight: 44,
                     padding: '6px 8px 6px 16px',
                     background: activePodId === pod.id ? 'var(--tint-hover)' : 'transparent',
                     border: 'none',
@@ -283,7 +283,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
                   padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 32,
+                  borderRadius: 6, minHeight: 44,
                   transition: 'color 0.12s ease',
                 }}
               >
@@ -296,7 +296,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
                   padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 32,
+                  borderRadius: 6, minHeight: 44,
                   transition: 'color 0.12s ease',
                 }}
               >
@@ -309,7 +309,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
                   padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 32,
+                  borderRadius: 6, minHeight: 44,
                   transition: 'color 0.12s ease',
                 }}
               >

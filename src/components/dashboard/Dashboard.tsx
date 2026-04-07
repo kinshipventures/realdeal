@@ -402,7 +402,7 @@ export function Dashboard() {
                 type="button"
                 onClick={() => setShowSettings(true)}
                 style={{
-                  width: 36, height: 36, borderRadius: 8,
+                  width: 44, height: 44, borderRadius: 8,
                   background: 'rgba(255,255,255,0.15)', border: 'none',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'rgba(255,255,255,0.80)', flexShrink: 0,
