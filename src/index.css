@@ -752,6 +752,31 @@ body::after {
   color: rgba(180,40,40,0.65);
 }
 
+/* ── Responsive breakpoints ────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .equity-layout {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .equity-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .pod-card-scroll {
+    gap: 8px !important;
+  }
+  .pod-card-scroll > .widget-card {
+    min-width: 135px !important;
+  }
+  .focus-cards {
+    flex-direction: column !important;
+  }
+  .dashboard-section {
+    padding: 16px 16px 20px;
+    border-radius: 16px;
+  }
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

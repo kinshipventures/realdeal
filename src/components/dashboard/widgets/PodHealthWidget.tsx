@@ -150,6 +150,7 @@ export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
       }} />
       <div
         ref={scrollRef}
+        className="pod-card-scroll"
         style={{
           display: 'flex', gap: 12, overflowX: 'auto', padding: '6px 2px',
           scrollbarWidth: 'none', scrollSnapType: 'x mandatory',

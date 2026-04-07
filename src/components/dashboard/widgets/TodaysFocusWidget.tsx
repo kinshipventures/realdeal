@@ -74,7 +74,7 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
           See all
         </button>
       </div>
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div className="focus-cards" style={{ display: 'flex', gap: 12 }}>
         {items.map(item => (
           <FocusCard key={item.contact.id} item={item} onClick={() => onContactClick(item.contact)} />
         ))}

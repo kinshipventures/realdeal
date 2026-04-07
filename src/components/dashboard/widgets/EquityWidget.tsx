@@ -233,7 +233,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+      <div className="equity-layout" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         {/* Equity score ring */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '0 0 auto' }}>
           {interactionsLoading ? (
@@ -276,7 +276,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 24px rgba(0,0,0,0.08)',
         }}>
           {!dataReady ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="equity-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
               {[1, 2, 3, 4].map(i => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <div className="skeleton" style={{ width: 40, height: 24, background: 'rgba(255,255,255,0.12)' }} />
@@ -285,7 +285,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="equity-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
               <StatBlock label="Pods" value={podCount} />
               <StatBlock label="People" value={contactCount} />
               <StatBlock label="Reached this week" value={recentlyContacted} />
