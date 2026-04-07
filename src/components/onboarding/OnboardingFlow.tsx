@@ -143,11 +143,12 @@ export function OnboardingFlow({ onComplete }: Props) {
     setIsExiting(true)
     pendingRef.current = { step: target, dir }
     setTimeout(() => {
-      if (pendingRef.current) {
-        setStep(pendingRef.current.step)
-        setMaxStep(m => Math.max(m, pendingRef.current!.step))
-        setDirection(pendingRef.current.dir)
+      const pending = pendingRef.current
+      if (pending) {
         pendingRef.current = null
+        setStep(pending.step)
+        setMaxStep(m => Math.max(m, pending.step))
+        setDirection(pending.dir)
       }
       setIsExiting(false)
     }, 180)
