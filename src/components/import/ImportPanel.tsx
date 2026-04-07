@@ -177,24 +177,55 @@ export function ImportPanel() {
       <div style={{ width: '100%', maxWidth: 640 }}>
         <h1 style={{
           fontFamily: 'var(--font-serif)',
-          fontWeight: 700,
-          fontSize: 18,
+          fontWeight: 800,
+          fontSize: 28,
           color: 'var(--color-text-primary)',
           margin: '0 0 8px',
+          letterSpacing: '-0.02em',
         }}>
-          Import Records
+          Bring your people in
         </h1>
 
         <StepIndicator current={stepNumber} />
 
         {/* Step 1: Upload */}
         {state === 'upload' && (
-          <div style={{ animation: 'fadeIn 0.2s ease' }}>
+          <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+            {/* Network constellation visual - mirrors onboarding step 4 */}
+            <div style={{
+              display: 'flex', justifyContent: 'center', margin: '0 0 24px',
+              opacity: 0, animation: 'fadeIn 0.4s ease-out 0.1s forwards',
+            }}>
+              <svg width="160" height="140" viewBox="-90 -80 180 160" style={{ animation: 'import-float 5s ease-in-out infinite' }}>
+                {[
+                  { x: -44, y: -32, color: '#6366F1' }, { x: 48, y: -26, color: '#EC4899' },
+                  { x: -30, y: 38, color: '#F59E0B' }, { x: 42, y: 34, color: '#8B5CF6' },
+                  { x: -56, y: 8, color: '#14B8A6' }, { x: 58, y: 6, color: '#F97316' },
+                  { x: 0, y: -48, color: '#F43F5E' }, { x: -16, y: -50, color: '#0EA5E9' },
+                ].map((n, i) => (
+                  <line key={`l${i}`} x1={0} y1={0} x2={n.x} y2={n.y}
+                    stroke={n.color} strokeWidth="1" strokeOpacity="0.15" />
+                ))}
+                {[
+                  { x: 0, y: 0, size: 14, color: '#25B439' },
+                  { x: -44, y: -32, size: 9, color: '#6366F1' }, { x: 48, y: -26, size: 10, color: '#EC4899' },
+                  { x: -30, y: 38, size: 7, color: '#F59E0B' }, { x: 42, y: 34, size: 8, color: '#8B5CF6' },
+                  { x: -56, y: 8, size: 6, color: '#14B8A6' }, { x: 58, y: 6, size: 5, color: '#F97316' },
+                  { x: 0, y: -48, size: 6, color: '#F43F5E' }, { x: -16, y: -50, size: 4, color: '#0EA5E9' },
+                ].map((n, i) => (
+                  <g key={`n${i}`}>
+                    <circle cx={n.x} cy={n.y} r={n.size * 2} fill={n.color} fillOpacity="0.06" />
+                    <circle cx={n.x} cy={n.y} r={n.size} fill={n.color} fillOpacity={i === 0 ? 1 : 0.85} />
+                  </g>
+                ))}
+              </svg>
+            </div>
+
             <p style={{
               fontSize: 14,
               color: 'var(--color-text-secondary)',
               margin: '0 0 24px',
-              lineHeight: 1.5,
+              lineHeight: 1.6,
             }}>
               Import people from a CSV file. We'll match your columns automatically.
             </p>
