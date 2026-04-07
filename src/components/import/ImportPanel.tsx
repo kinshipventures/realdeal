@@ -24,50 +24,28 @@ function generateTemplate() {
 
 function StepIndicator({ current }: { current: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 32 }}>
+    <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 3, background: 'var(--tint)', marginBottom: 32, width: 'fit-content' }}>
       {STEPS.map((label, i) => {
         const stepNum = i + 1
         const isActive = stepNum === current
         const isDone = stepNum < current
         return (
-          <div key={label} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-                fontWeight: 600,
-                background: isDone ? 'var(--color-brand)' : isActive ? 'var(--color-brand)' : 'var(--tint)',
-                color: isDone || isActive ? '#fff' : 'var(--color-text-tertiary)',
-                border: isDone || isActive ? 'none' : '1px solid var(--edge-strong)',
-                transition: 'all 0.2s',
-              }}>
-                {isDone ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                ) : stepNum}
-              </div>
-              <span style={{
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--color-text-primary)' : isDone ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
-                transition: 'all 0.2s',
-              }}>{label}</span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div style={{
-                width: 40,
-                height: 1,
-                background: isDone ? 'var(--color-brand)' : 'var(--edge-strong)',
-                margin: '0 12px',
-                transition: 'background 0.2s',
-              }} />
-            )}
+          <div
+            key={label}
+            style={{
+              padding: '6px 14px', borderRadius: 8, border: 'none',
+              fontSize: 11, fontWeight: isActive ? 600 : 400,
+              fontFamily: 'var(--font-sans)', letterSpacing: '0.01em',
+              color: isActive ? '#fff' : isDone ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)',
+              background: isActive ? 'var(--color-brand)' : 'transparent',
+              opacity: isDone || isActive ? 1 : 0.5,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: isDone ? 'pointer' : 'default',
+              minHeight: 32,
+              display: 'flex', alignItems: 'center',
+            }}
+          >
+            {label}
           </div>
         )
       })}
