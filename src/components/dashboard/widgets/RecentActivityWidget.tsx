@@ -23,7 +23,7 @@ function RecentActivityRow({ interaction, contact, onClick }: { interaction: Int
       className="interactive-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
-        width: '100%', padding: '12px 24px',
+        width: '100%', minHeight: 44, padding: '12px 24px',
         background: 'none', border: 'none',
         borderBottom: '1px solid var(--divider)',
         cursor: 'pointer', textAlign: 'left',
