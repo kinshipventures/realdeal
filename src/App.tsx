@@ -101,6 +101,7 @@ function AppShell() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
+      <a href="#main-content" className="sr-only">Skip to main content</a>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
 
       {!isMobile && (
@@ -113,7 +114,7 @@ function AppShell() {
         />
       )}
 
-      <div style={{
+      <div id="main-content" style={{
         paddingLeft: isMobile ? 0 : (collapsed ? 56 : 220),
         paddingBottom: isMobile ? 56 : 0,
         height: '100%',

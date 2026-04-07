@@ -367,7 +367,8 @@ export function Dashboard() {
         />
       )}
 
-      <main style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
+      <main id="main-content" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
+        <h1 className="sr-only">Dashboard</h1>
 
         {/* Green header band */}
         <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>

@@ -172,7 +172,9 @@ export function NeedsAttentionWidget({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <WidgetHeading title="needs attention" tooltip="Contacts past their cadence deadline or going dormant. Reach out to keep relationships healthy." />
           {(overdueContacts.length + followUpOverdue.length) > 0 && (
-            <span style={{
+            <span
+              aria-live="polite"
+              style={{
               display: 'inline-flex', alignItems: 'center',
               padding: '2px 7px', borderRadius: 100,
               background: 'hsla(20, 80%, 45%, 0.10)',
