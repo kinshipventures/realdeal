@@ -178,19 +178,21 @@ export function ImportPanel() {
         <h1 style={{
           fontFamily: 'var(--font-serif)',
           fontWeight: 800,
-          fontSize: 28,
+          fontSize: state === 'upload' ? 28 : 18,
           color: 'var(--color-text-primary)',
           margin: '0 0 8px',
           letterSpacing: '-0.02em',
+          textAlign: state === 'upload' ? 'center' : undefined,
+          transition: 'font-size 0.3s ease',
         }}>
-          Bring your people in
+          {state === 'upload' ? 'Bring your people in' : 'Import Records'}
         </h1>
 
         <StepIndicator current={stepNumber} />
 
         {/* Step 1: Upload */}
         {state === 'upload' && (
-          <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <div style={{ animation: 'fadeIn 0.3s ease-out', textAlign: 'center' }}>
             {/* Network constellation visual - mirrors onboarding step 4 */}
             <div style={{
               display: 'flex', justifyContent: 'center', margin: '0 0 24px',
