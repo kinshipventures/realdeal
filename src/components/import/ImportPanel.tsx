@@ -298,7 +298,8 @@ export function ImportPanel() {
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 marginTop: 12,
-                padding: 0,
+                padding: '10px 0',
+                minHeight: 44,
               }}
             >
               Need a template? Download sample CSV
@@ -337,6 +338,8 @@ export function ImportPanel() {
                   color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  padding: '10px 8px',
+                  minHeight: 44,
                 }}
               >
                 Change file
@@ -414,14 +417,15 @@ export function ImportPanel() {
                         type="button"
                         onClick={() => togglePod(p.id)}
                         style={{
-                          padding: '5px 12px',
+                          padding: '8px 16px',
                           borderRadius: 100,
                           border: '1px solid',
                           borderColor: isSelected ? (p.color ?? '#25B439') : 'var(--edge-strong)',
                           background: isSelected ? shift : 'transparent',
                           color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                          fontSize: 11,
-                          fontWeight: isSelected ? 700 : 400,
+                          fontSize: 12,
+                          fontWeight: isSelected ? 600 : 400,
+                          minHeight: 36,
                           cursor: 'pointer',
                           fontFamily: 'inherit',
                           transition: 'all 0.12s',
@@ -497,7 +501,8 @@ export function ImportPanel() {
                   color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
-                  padding: 0,
+                  padding: '10px 0',
+                  minHeight: 44,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
@@ -737,7 +742,8 @@ export function ImportPanel() {
                       color: '#CC7700',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
-                      padding: 0,
+                      padding: '10px 0',
+                      minHeight: 44,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 4,
