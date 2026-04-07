@@ -25,10 +25,10 @@ function Sparkline({ data, color, width = 60, height = 24 }: {
 }
 
 function healthLabel(score: number): { text: string; color: string; bg: string } {
-  if (score >= 85) return { text: 'Thriving', color: '#16a34a', bg: 'rgba(22,163,74,0.08)' }
-  if (score >= 70) return { text: 'Steady', color: '#2563eb', bg: 'rgba(37,99,235,0.08)' }
-  if (score >= 40) return { text: 'Cooling', color: '#d97706', bg: 'rgba(217,119,6,0.08)' }
-  return { text: 'Fading', color: '#dc2626', bg: 'rgba(220,38,38,0.08)' }
+  if (score >= 85) return { text: 'Thriving', color: 'var(--health-thriving)', bg: 'var(--health-thriving-bg)' }
+  if (score >= 70) return { text: 'Steady', color: 'var(--health-steady)', bg: 'var(--health-steady-bg)' }
+  if (score >= 40) return { text: 'Cooling', color: 'var(--health-cooling)', bg: 'var(--health-cooling-bg)' }
+  return { text: 'Fading', color: 'var(--health-fading)', bg: 'var(--health-fading-bg)' }
 }
 
 function PodCard({ pod, contactCount, overdueCount, score, scoreReady, sparkline }: {
