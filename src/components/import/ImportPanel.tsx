@@ -591,17 +591,19 @@ export function ImportPanel() {
                 onClick={handleImport}
                 disabled={selectedPodIds.length === 0 || validCount === 0}
                 style={{
-                  padding: '10px 28px',
+                  padding: '14px 32px',
                   background: 'var(--color-brand)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 500,
+                  borderRadius: 100,
+                  fontSize: 14,
+                  fontWeight: 600,
                   cursor: selectedPodIds.length > 0 && validCount > 0 ? 'pointer' : 'not-allowed',
                   opacity: selectedPodIds.length > 0 && validCount > 0 ? 1 : 0.5,
                   fontFamily: 'inherit',
-                  transition: 'opacity 0.12s',
+                  letterSpacing: '0.01em',
+                  boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
+                  transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.12s',
                 }}
               >
                 Import {validCount > 0 ? `${validCount} ` : ''}{recordType === 'Company' ? 'Companies' : 'People'}
@@ -610,12 +612,16 @@ export function ImportPanel() {
                 type="button"
                 onClick={handleReset}
                 style={{
-                  background: 'none',
-                  border: 'none',
+                  padding: '12px 32px',
+                  borderRadius: 100,
+                  border: '1px solid var(--edge-strong)',
+                  background: 'transparent',
                   fontSize: 13,
+                  fontWeight: 500,
                   color: 'var(--color-text-secondary)',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  transition: 'transform 0.15s, background 0.15s, border-color 0.15s',
                 }}
               >
                 Cancel
@@ -759,15 +765,18 @@ export function ImportPanel() {
                 type="button"
                 onClick={() => navigate('/pods')}
                 style={{
-                  padding: '10px 24px',
+                  padding: '14px 32px',
                   background: 'var(--color-brand)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 500,
+                  borderRadius: 100,
+                  fontSize: 14,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  letterSpacing: '0.01em',
+                  boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
+                  transition: 'transform 0.15s, box-shadow 0.15s',
                 }}
               >
                 View in Pods
@@ -776,15 +785,16 @@ export function ImportPanel() {
                 type="button"
                 onClick={handleReset}
                 style={{
-                  padding: '10px 24px',
-                  background: 'var(--tint)',
-                  color: 'var(--color-text-primary)',
-                  border: '1px solid var(--edge)',
-                  borderRadius: 8,
+                  padding: '12px 32px',
+                  borderRadius: 100,
+                  border: '1px solid var(--edge-strong)',
+                  background: 'transparent',
+                  color: 'var(--color-text-secondary)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  transition: 'transform 0.15s, background 0.15s, border-color 0.15s',
                 }}
               >
                 Import Another
