@@ -86,18 +86,32 @@ export function LoginPage() {
         <h1 style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 32,
-          fontWeight: 700,
+          fontWeight: 800,
           color: 'var(--color-text-primary)',
           margin: 0,
+          letterSpacing: '-0.02em',
         }}>
           RealDeal
         </h1>
         <p style={{
-          fontSize: 14,
+          fontSize: 15,
+          fontFamily: 'var(--font-serif)',
+          fontWeight: 400,
           color: 'var(--color-text-secondary)',
-          margin: '8px 0 0',
+          margin: '6px 0 0',
+          letterSpacing: '-0.01em',
         }}>
-          Sign in to continue
+          Feed what feeds you
+        </p>
+        <p style={{
+          fontSize: 12,
+          color: 'var(--color-text-tertiary)',
+          margin: '8px 0 0',
+          lineHeight: 1.5,
+          textAlign: 'center',
+          maxWidth: 260,
+        }}>
+          Track the health of your relationships like you track your fitness.
         </p>
 
         <button
@@ -215,20 +229,28 @@ export function LoginPage() {
             window.location.href = '/'
           }}
           style={{
-            marginTop: 12,
-            background: 'none',
-            border: 'none',
+            marginTop: 16,
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '10px 20px',
+            borderRadius: 8,
+            border: '1px dashed var(--edge-strong)',
+            background: 'transparent',
             cursor: 'pointer',
             fontSize: 13,
-            color: 'var(--color-text-tertiary)',
+            fontWeight: 500,
+            color: 'var(--color-text-secondary)',
             fontFamily: 'var(--font-sans)',
-            padding: '8px 16px',
-            transition: 'color 0.15s ease',
+            transition: 'border-color 0.15s ease, color 0.15s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--edge-strong)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
         >
-          Try demo mode
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Explore with sample data
         </button>
       </div>
     </div>
