@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import type { HexColor } from '../../lib/types'
@@ -128,18 +128,35 @@ export function OnboardingFlow({ onComplete }: Props) {
   const [step, setStep] = useState(saved.step)
   const [maxStep, setMaxStep] = useState(saved.maxStep)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
+  const [isExiting, setIsExiting] = useState(false)
+  const pendingRef = useRef<{ step: number; dir: 'forward' | 'back' } | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, maxStep }))
   }, [step, maxStep])
 
+  const transitionTo = useCallback((target: number, dir: 'forward' | 'back') => {
+    if (isExiting) return
+    setDirection(dir)
+    setIsExiting(true)
+    pendingRef.current = { step: target, dir }
+    setTimeout(() => {
+      if (pendingRef.current) {
+        setStep(pendingRef.current.step)
+        setMaxStep(m => Math.max(m, pendingRef.current!.step))
+        setDirection(pendingRef.current.dir)
+        pendingRef.current = null
+      }
+      setIsExiting(false)
+    }, 180)
+  }, [isExiting])
+
   const next = () => {
-    setDirection('forward')
-    if (step < STEP_COUNT - 1) { const ns = step + 1; setStep(ns); setMaxStep(m => Math.max(m, ns)) }
+    if (step < STEP_COUNT - 1) transitionTo(step + 1, 'forward')
     else onComplete()
   }
-  const back = () => { if (step > 0) { setDirection('back'); setStep(step - 1) } }
+  const back = () => { if (step > 0) transitionTo(step - 1, 'back') }
 
   return (
     <div style={{
@@ -192,6 +209,12 @@ export function OnboardingFlow({ onComplete }: Props) {
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        @keyframes onboard-exit-left {
+          to { opacity: 0; transform: translateX(-30px); }
+        }
+        @keyframes onboard-exit-right {
+          to { opacity: 0; transform: translateX(30px); }
+        }
         .onboard-btn-primary:hover {
           transform: scale(1.03) !important;
           box-shadow: 0 6px 24px rgba(37,180,57,0.40) !important;
@@ -202,6 +225,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         .onboard-btn-secondary:hover {
           background: var(--tint) !important;
           border-color: var(--edge-strong) !important;
+          transform: scale(1.02);
         }
         .onboard-btn-secondary:active {
           transform: scale(0.97) !important;
@@ -263,7 +287,7 @@ export function OnboardingFlow({ onComplete }: Props) {
                 type="button"
                 disabled={!visited}
                 className="onboard-progress-label"
-                onClick={() => { if (!visited) return; setDirection(i > step ? 'forward' : 'back'); setStep(i) }}
+                onClick={() => { if (!visited || i === step) return; transitionTo(i, i > step ? 'forward' : 'back') }}
                 style={{
                   padding: '6px 14px', borderRadius: 8, border: 'none',
                   fontSize: 11, fontWeight: i === step ? 600 : 400,
@@ -291,9 +315,11 @@ export function OnboardingFlow({ onComplete }: Props) {
         overflowY: 'auto', maxHeight: '100vh',
       }}>
         <div key={step} style={{
-          animation: step === 0
-            ? 'onboard-enter 0.4s ease-out'
-            : `${direction === 'forward' ? 'onboard-slide-left' : 'onboard-slide-right'} 0.35s cubic-bezier(0.4, 0, 0.2, 1)`,
+          animation: isExiting
+            ? `${direction === 'forward' ? 'onboard-exit-left' : 'onboard-exit-right'} 0.18s cubic-bezier(0.4, 0, 1, 1) forwards`
+            : step === 0 && maxStep === 0
+              ? 'onboard-enter 0.4s ease-out'
+              : `${direction === 'forward' ? 'onboard-slide-left' : 'onboard-slide-right'} 0.3s cubic-bezier(0.25, 1, 0.5, 1)`,
           display: 'contents',
         }}>
           {step === 0 && <StepWelcome onNext={next} />}
@@ -636,6 +662,7 @@ const secondaryBtnStyle: React.CSSProperties = {
   border: '1px solid var(--edge-strong)', background: 'transparent',
   color: 'var(--color-text-secondary)', fontSize: 13, fontWeight: 500,
   fontFamily: 'var(--font-sans)', cursor: 'pointer',
+  transition: 'transform 0.15s, background 0.15s, border-color 0.15s',
   width: '100%', maxWidth: 280,
 }
 
