@@ -296,7 +296,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         </span>
 
         {/* Progress: labels as segmented bar */}
-        <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 3, background: 'var(--tint)' }}>
+        <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 4, background: 'var(--tint)' }}>
           {STEP_LABELS.map((label, i) => {
             const visited = i <= maxStep
             return (
@@ -477,7 +477,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
       <div style={{ ...stagger(120), display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 440, textAlign: 'left' }}>
         {PRINCIPLES.map((p, i) => (
           <div key={p.label} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 18px',
+            display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px',
             borderRadius: 14, background: 'var(--tint)',
             border: `1px solid ${PRINCIPLE_COLORS[i]}15`,
             opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 120}ms forwards`,
@@ -566,7 +566,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)' }}>
           How often do you want to check in?
         </span>
-        <div className="onboard-cadence-row" style={{ display: 'flex', gap: 6 }}>
+        <div className="onboard-cadence-row" style={{ display: 'flex', gap: 8 }}>
           {cadenceOptions.map(o => {
             const selected = cadence === o.value
             return (
