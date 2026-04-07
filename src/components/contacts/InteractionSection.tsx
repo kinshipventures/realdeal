@@ -86,6 +86,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
   const [logNotes, setLogNotes] = useState('')
   const [opState, setOpState] = useState<'idle' | 'logging' | 'deleting' | 'updating'>('idle')
+  const [logSuccess, setLogSuccess] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingInteraction, setEditingInteraction] = useState<EditingInteraction>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -141,6 +142,8 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       setLogNotes('')
       setLogType('call')
       setLogDate(new Date().toISOString().slice(0, 10))
+      setLogSuccess(true)
+      setTimeout(() => setLogSuccess(false), 2000)
       if (logType !== 'note') {
         onContactUpdated({ ...contact, last_contacted_at: logDate })
       }
@@ -237,7 +240,17 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
 
       {/* Interactions header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={sectionLabel}>interactions</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={sectionLabel}>interactions</div>
+          {logSuccess && (
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: 'var(--color-brand)',
+              animation: 'fadeIn 0.2s ease',
+            }}>
+              Logged!
+            </span>
+          )}
+        </div>
         <button
           className="action-ghost"
           onClick={() => setShowLogForm(v => !v)}

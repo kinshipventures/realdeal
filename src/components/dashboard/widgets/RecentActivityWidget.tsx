@@ -68,7 +68,7 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <WidgetHeading title="recent activity" tooltip="Your latest logged interactions across all contacts, sorted by most recent." />
+        <WidgetHeading title="recent activity" tooltip="What you've been up to lately -- your most recent check-ins and conversations." />
         <button
           type="button"
           onClick={() => navigate('/pulse/nurturing?filter=activity')}

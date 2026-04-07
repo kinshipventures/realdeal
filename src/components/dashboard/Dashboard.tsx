@@ -58,7 +58,7 @@ export function Dashboard() {
   useEffect(() => {
     getContacts()
       .then(d => setContacts(d))
-      .catch(() => setError('Couldn\'t load your data. Try again?'))
+      .catch(() => setError('Something hiccupped. Refresh to try again.'))
       .finally(() => setContactsLoading(false))
     getPods()
       .then(d => setPods(d))
@@ -525,17 +525,17 @@ interface OrderedWidgetProps {
 const SECTION_MAP: Record<string, { heading: string; tooltip: string; tier: 'primary' | 'secondary' | 'tertiary' }> = {
   'action-items': {
     heading: 'your day',
-    tooltip: 'People and events that need your attention today - focus contacts, upcoming dates, and overdue outreach.',
+    tooltip: 'Who needs you today -- the people and moments that matter most right now.',
     tier: 'primary',
   },
   'network-pulse': {
     heading: 'network pulse',
-    tooltip: 'How your relationship network is performing - pod health scores and key insights.',
+    tooltip: 'The big picture -- how your relationship network is doing overall.',
     tier: 'secondary',
   },
   'activity-links': {
     heading: 'activity & links',
-    tooltip: 'Recent interaction history and shortcuts to your active campaigns and pipelines.',
+    tooltip: 'What you\'ve been up to and where your active outreach stands.',
     tier: 'tertiary',
   },
 }

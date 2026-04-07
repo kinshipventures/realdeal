@@ -713,7 +713,7 @@ export function RecordsList() {
             Your People
           </h1>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
+            {filtered.length}
           </span>
         </div>
 
@@ -1313,18 +1313,18 @@ export function RecordsList() {
                     </td>
 
                     {visibleCols.map(col => (
-                      <td key={col.id} style={{ padding: '12px 12px', height: 44, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
+                      <td key={col.id} style={{ padding: '10px 12px', height: 52, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
                         {col.id === 'name' && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span style={{
-                              width: 28,
-                              height: 28,
+                              width: 34,
+                              height: 34,
                               borderRadius: '50%',
                               background: avatarColor(contact.name),
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: 600,
                               color: '#fff',
                               flexShrink: 0,
@@ -1332,14 +1332,27 @@ export function RecordsList() {
                             }}>
                               {initials(contact.name)}
                             </span>
-                            <span style={{
-                              fontFamily: 'var(--font-serif)',
-                              fontWeight: contact.type === 'Company' ? 700 : 600,
-                              fontSize: 14,
-                              letterSpacing: '-0.01em',
-                              color: 'var(--color-text-primary)',
-                            }}>
-                              {contact.name}
+                            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                              <span style={{
+                                fontFamily: 'var(--font-serif)',
+                                fontWeight: contact.type === 'Company' ? 700 : 600,
+                                fontSize: 14,
+                                letterSpacing: '-0.01em',
+                                color: 'var(--color-text-primary)',
+                              }}>
+                                {contact.name}
+                              </span>
+                              {contact.last_contacted_at && (
+                                <span style={{
+                                  fontSize: 11,
+                                  color: 'var(--color-text-tertiary)',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}>
+                                  Last talked {formatRelativeTime(contact.last_contacted_at)}
+                                </span>
+                              )}
                             </span>
                           </span>
                         )}

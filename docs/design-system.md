@@ -44,7 +44,7 @@ All color tokens are defined in `src/styles/globals.css` in the `@theme` block (
 |---|---|---|---|
 | `--color-text-primary` | `rgba(0,0,0,0.82)` | ~12:1 ✅ AAA | Names, headings, primary content |
 | `--color-text-secondary` | `rgba(0,0,0,0.45)` | ~5.2:1 ✅ AA | Company, subtitles, secondary content |
-| `--color-text-tertiary` | `rgba(0,0,0,0.28)` | ~3.2:1 ⚠️ AA large only | Timestamps, metadata, hints |
+| `--color-text-tertiary` | `rgba(0,0,0,0.40)` | ~4.4:1 ✅ AA | Timestamps, metadata, hints |
 
 #### Text (on green band)
 
@@ -235,7 +235,7 @@ All easing values match the Dia browser motion language.
 |---|---|---|
 | Orb nodes not keyboard-focusable | Medium | `nodesFocusable={false}` in ReactFlow — intentional for now |
 | Close button (×) has no `aria-label` | Medium | Screen readers will read "×" literally |
-| `text-tertiary` at 10px | Low | `rgba(0,0,0,0.28)` is borderline at small sizes — use for non-critical metadata only |
+| `text-tertiary` at 10px | Low | `rgba(0,0,0,0.40)` passes AA but small sizes can still be hard to read — use for non-critical metadata only |
 
 ---
 

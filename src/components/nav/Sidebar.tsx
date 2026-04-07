@@ -146,35 +146,51 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           collapsed={collapsed}
           onClick={() => navigate('/contacts')}
         />
-        <NavItem
-          icon={<CompaniesIcon />}
-          label="Companies"
-          active={isCompanies}
-          collapsed={collapsed}
-          onClick={() => navigate('/companies')}
-        />
-        <NavItem
-          icon={<PipelinesIcon />}
-          label="Pipelines"
-          active={isPipelines}
-          collapsed={collapsed}
-          onClick={() => navigate('/pipelines')}
-        />
-        <NavItem
-          icon={<ProjectsIcon />}
-          label="Projects"
-          active={isProjects}
-          collapsed={collapsed}
-          onClick={() => navigate('/projects')}
-        />
-        <NavItem
-          icon={<ReportsIcon />}
-          label="Reports"
-          active={isReports}
-          collapsed={collapsed}
-          onClick={() => navigate('/reports')}
-        />
       </div>
+
+      {/* Secondary section - collapsible */}
+      {!collapsed && (
+        <div style={{ padding: '4px 8px' }}>
+          <DisclosureSection label="More" defaultOpen={isCompanies || isPipelines || isProjects || isReports}>
+            <NavItem
+              icon={<CompaniesIcon />}
+              label="Companies"
+              active={isCompanies}
+              collapsed={collapsed}
+              onClick={() => navigate('/companies')}
+            />
+            <NavItem
+              icon={<PipelinesIcon />}
+              label="Pipelines"
+              active={isPipelines}
+              collapsed={collapsed}
+              onClick={() => navigate('/pipelines')}
+            />
+            <NavItem
+              icon={<ProjectsIcon />}
+              label="Projects"
+              active={isProjects}
+              collapsed={collapsed}
+              onClick={() => navigate('/projects')}
+            />
+            <NavItem
+              icon={<ReportsIcon />}
+              label="Reports"
+              active={isReports}
+              collapsed={collapsed}
+              onClick={() => navigate('/reports')}
+            />
+          </DisclosureSection>
+        </div>
+      )}
+      {collapsed && (
+        <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <NavItem icon={<CompaniesIcon />} label="Companies" active={isCompanies} collapsed={collapsed} onClick={() => navigate('/companies')} />
+          <NavItem icon={<PipelinesIcon />} label="Pipelines" active={isPipelines} collapsed={collapsed} onClick={() => navigate('/pipelines')} />
+          <NavItem icon={<ProjectsIcon />} label="Projects" active={isProjects} collapsed={collapsed} onClick={() => navigate('/projects')} />
+          <NavItem icon={<ReportsIcon />} label="Reports" active={isReports} collapsed={collapsed} onClick={() => navigate('/reports')} />
+        </div>
+      )}
 
       <Divider />
 
@@ -416,6 +432,53 @@ function NavItem({
 
 function Divider() {
   return <div style={{ height: 1, background: 'var(--divider)', margin: '4px 12px' }} />
+}
+
+function DisclosureSection({ label, defaultOpen = false, children }: { label: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          width: '100%',
+          minHeight: 44,
+          padding: '6px 8px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 11,
+          fontWeight: 600,
+          color: 'var(--color-text-tertiary)',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase' as const,
+          fontFamily: 'inherit',
+        }}
+      >
+        <svg
+          width="10" height="10" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          style={{
+            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease',
+          }}
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        {label}
+      </button>
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@ export function GmailSyncWidget() {
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ marginBottom: 12 }}>
-        <WidgetHeading title="email sync" tooltip="Sync your Gmail inbox to auto-populate contact timelines with email interactions." />
+        <WidgetHeading title="email sync" tooltip="Connect Gmail to automatically track your email conversations on each person's timeline." />
       </div>
       <div
         className="widget-card"

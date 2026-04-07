@@ -256,7 +256,7 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
                   <ScoreLabelChip label={label} />
                   <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
                     <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
-                    <span className="widget-tooltip-bubble">Overall relationship health across all pods. Based on recency-weighted interaction history within each pod's cadence window.</span>
+                    <span className="widget-tooltip-bubble">How strong your connections are overall -- based on how recently and how often you've been in touch.</span>
                   </span>
                 </div>
               </div>
@@ -264,16 +264,13 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
           )}
         </div>
 
-        {/* Stats panel - liquid glass */}
+        {/* Stats panel */}
         <div style={{
-          background: 'rgba(255,255,255,0.10)',
-          backdropFilter: 'blur(24px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
-          borderRadius: 16,
-          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.12)',
           padding: '20px 28px',
           flex: 1,
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 24px rgba(0,0,0,0.08)',
         }}>
           {!dataReady ? (
             <div className="equity-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>

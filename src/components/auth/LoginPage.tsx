@@ -85,7 +85,7 @@ export function LoginPage() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 320 }}>
         <h1 style={{
           fontFamily: 'var(--font-serif)',
-          fontSize: 32,
+          fontSize: 28,
           fontWeight: 800,
           color: 'var(--color-text-primary)',
           margin: 0,
@@ -94,22 +94,23 @@ export function LoginPage() {
           RealDeal
         </h1>
         <p style={{
-          fontSize: 15,
+          fontSize: 22,
           fontFamily: 'var(--font-serif)',
-          fontWeight: 400,
-          color: 'var(--color-text-secondary)',
-          margin: '6px 0 0',
-          letterSpacing: '-0.01em',
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
+          margin: '12px 0 0',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
         }}>
           Feed what feeds you
         </p>
         <p style={{
-          fontSize: 12,
-          color: 'var(--color-text-tertiary)',
-          margin: '8px 0 0',
+          fontSize: 14,
+          color: 'var(--color-text-secondary)',
+          margin: '10px 0 0',
           lineHeight: 1.5,
           textAlign: 'center',
-          maxWidth: 260,
+          maxWidth: 280,
         }}>
           Track the health of your relationships like you track your fitness.
         </p>
@@ -229,28 +230,28 @@ export function LoginPage() {
             window.location.href = '/'
           }}
           style={{
-            marginTop: 16,
+            marginTop: 20,
             width: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            padding: '10px 20px',
-            borderRadius: 8,
-            border: '1px dashed var(--edge-strong)',
-            background: 'transparent',
+            padding: '12px 20px',
+            borderRadius: 10,
+            border: '1px solid rgba(37,180,57,0.25)',
+            background: 'rgba(37,180,57,0.06)',
             cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: 500,
-            color: 'var(--color-text-secondary)',
+            fontSize: 14,
+            fontWeight: 600,
+            color: 'var(--color-brand)',
             fontFamily: 'var(--font-sans)',
-            transition: 'border-color 0.15s ease, color 0.15s ease',
+            transition: 'background 0.15s ease, border-color 0.15s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--edge-strong)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,180,57,0.12)'; e.currentTarget.style.borderColor = 'rgba(37,180,57,0.40)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(37,180,57,0.06)'; e.currentTarget.style.borderColor = 'rgba(37,180,57,0.25)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Explore with sample data
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Take a look around
         </button>
       </div>
     </div>
