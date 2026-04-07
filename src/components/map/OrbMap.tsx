@@ -16,8 +16,9 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
-import { indexByContact, podEquityScore, overallEquityScore, scoreLabel } from '../../lib/equity'
+import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type ScoreLabel } from '../../lib/equity'
 import type { Category, Pod } from '../../lib/types'
+import { POD_SHIFT_COLORS } from './SolidOrb'
 import { useAuth } from '../../contexts/AuthContext'
 import { isDemoMode } from '../../lib/sampleData'
 import { EmptyState } from '../empty/EmptyState'
@@ -262,6 +263,213 @@ function loadViewport(): Viewport | null {
   } catch { return null }
 }
 
+const HEALTH_COLORS: Record<ScoreLabel, { color: string; bg: string }> = {
+  Thriving: { color: 'var(--health-thriving)', bg: 'var(--health-thriving-bg)' },
+  Steady: { color: 'var(--health-steady)', bg: 'var(--health-steady-bg)' },
+  Cooling: { color: 'var(--health-cooling)', bg: 'var(--health-cooling-bg)' },
+  Fading: { color: 'var(--health-fading)', bg: 'var(--health-fading-bg)' },
+}
+
+function ViewToggle({ mode, onChange }: { mode: 'map' | 'list'; onChange: (m: 'map' | 'list') => void }) {
+  return (
+    <div style={{
+      display: 'flex',
+      borderRadius: 10,
+      background: 'var(--tint)',
+      border: '1px solid var(--edge)',
+      overflow: 'hidden',
+    }}>
+      <button
+        type="button"
+        aria-label="Switch to map view"
+        aria-pressed={mode === 'map'}
+        onClick={() => onChange('map')}
+        style={{
+          width: 36, height: 36,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: 'none', cursor: 'pointer',
+          background: mode === 'map' ? 'var(--color-brand)' : 'transparent',
+          color: mode === 'map' ? '#fff' : 'var(--color-text-secondary)',
+          transition: 'background 0.15s, color 0.15s',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="4" cy="4" r="2.5" /><circle cx="12" cy="4" r="2.5" />
+          <circle cx="4" cy="12" r="2.5" /><circle cx="12" cy="12" r="2.5" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        aria-label="Switch to list view"
+        aria-pressed={mode === 'list'}
+        onClick={() => onChange('list')}
+        style={{
+          width: 36, height: 36,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: 'none', cursor: 'pointer',
+          background: mode === 'list' ? 'var(--color-brand)' : 'transparent',
+          color: mode === 'list' ? '#fff' : 'var(--color-text-secondary)',
+          transition: 'background 0.15s, color 0.15s',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="1" y="2" width="14" height="2" rx="1" />
+          <rect x="1" y="7" width="14" height="2" rx="1" />
+          <rect x="1" y="12" width="14" height="2" rx="1" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+interface PodListViewProps {
+  pods: Pod[]
+  countsByPod: Record<string, PodCounts>
+  equityByPod: Record<string, number>
+  categoriesByPod: Record<string, Category[]>
+  selectedPod: Pod | null
+  onPodClick: (pod: Pod) => void
+  onCategoryClick: (categoryId: string) => void
+  onBack: () => void
+}
+
+function PodListView({
+  pods, countsByPod, equityByPod, categoriesByPod,
+  selectedPod, onPodClick, onCategoryClick, onBack,
+}: PodListViewProps) {
+  if (selectedPod) {
+    const cats = categoriesByPod[selectedPod.id] ?? []
+    return (
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: 24 }}>
+        <nav role="navigation" aria-label="Breadcrumb" style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          marginBottom: 16,
+        }}>
+          <button onClick={onBack} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <button onClick={onBack} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            fontSize: 12, color: 'var(--color-text-secondary)',
+          }}>All pods</button>
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>/</span>
+          <span style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)',
+          }}>{selectedPod.name}</span>
+        </nav>
+
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {cats.length === 0 && (
+            <li style={{ fontSize: 13, color: 'var(--color-text-secondary)', padding: 16, textAlign: 'center' }}>
+              No categories in this pod
+            </li>
+          )}
+          {cats.map((cat, i) => (
+            <li key={cat.id} className="widget-enter" style={{ '--stagger': i } as React.CSSProperties}>
+              <button
+                onClick={() => onCategoryClick(cat.id)}
+                className="widget-card"
+                style={{
+                  width: '100%',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px',
+                  background: 'var(--surface-panel)',
+                  border: '1px solid var(--edge)',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <span style={{
+                  fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-serif)',
+                }}>{cat.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: 24, overflowY: 'auto', height: '100%' }}>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {pods.map((pod, i) => {
+          const counts = countsByPod[pod.id] ?? { total: 0, overdue: 0 }
+          const equity = equityByPod[pod.id] ?? 0
+          const label = scoreLabel(equity)
+          const healthStyle = HEALTH_COLORS[label]
+          const color = pod.color ?? '#1C1C1E'
+          const shiftColor = POD_SHIFT_COLORS[color] ?? color
+
+          return (
+            <li key={pod.id} className="widget-enter" style={{ '--stagger': i } as React.CSSProperties}>
+              <button
+                onClick={() => onPodClick(pod)}
+                className="widget-card"
+                style={{
+                  width: '100%',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px',
+                  background: 'var(--surface-panel)',
+                  border: '1px solid var(--edge)',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {/* Mini orb */}
+                <div style={{
+                  width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                  background: `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`,
+                  boxShadow: `0 2px 8px rgba(0,0,0,0.15)`,
+                }} />
+
+                {/* Name + cadence */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)',
+                    fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{pod.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+                    {counts.total} {counts.total === 1 ? 'person' : 'people'}
+                    {pod.cadence ? ` - ${pod.cadence}` : ''}
+                  </div>
+                </div>
+
+                {/* Health badge */}
+                <span style={{
+                  fontSize: 10, fontWeight: 600,
+                  padding: '3px 8px', borderRadius: 100,
+                  color: healthStyle.color,
+                  background: healthStyle.bg,
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                }}>{label}</span>
+
+                {/* Equity score */}
+                <span style={{
+                  fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-sans)', letterSpacing: '-0.03em',
+                  minWidth: 28, textAlign: 'right', flexShrink: 0,
+                }}>{equity}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -270,6 +478,10 @@ export function OrbMap() {
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
+
+  const [viewMode, setViewMode] = useState<'map' | 'list'>(() =>
+    (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
+  )
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
@@ -677,6 +889,27 @@ export function OrbMap() {
   // Orbit ring radii for home view — match hub layout radii from DESIGN.md
   const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
 
+  const handleViewModeChange = useCallback((mode: 'map' | 'list') => {
+    setViewMode(mode)
+    localStorage.setItem('realdeal:pods-view-mode', mode)
+  }, [])
+
+  const handleListPodClick = useCallback((pod: Pod) => {
+    setMapView('pod')
+    mapViewRef.current = 'pod'
+    setSelectedPod(pod)
+  }, [])
+
+  const handleListBack = useCallback(() => {
+    setMapView('hub')
+    mapViewRef.current = 'hub'
+    setSelectedPod(null)
+  }, [])
+
+  const handleListCategoryClick = useCallback((categoryId: string) => {
+    navigate(`/category/${categoryId}`)
+  }, [navigate])
+
   const handleResetLayout = useCallback(() => {
     clearAllPositions()
     localStorage.removeItem(VIEWPORT_KEY)
@@ -744,8 +977,8 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Breadcrumb — visible during drill-down */}
-      {mapView === 'pod' && selectedPod && (
+      {/* Breadcrumb — visible during map drill-down */}
+      {viewMode === 'map' && mapView === 'pod' && selectedPod && (
         <div style={{
           position: 'absolute', top: 12, left: 12, zIndex: 20,
           display: 'flex', alignItems: 'center', gap: 8,
@@ -768,189 +1001,208 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Reset layout button */}
-      {mapView === 'hub' && podsLoaded && podsCount > 0 && (
-        <button
-          type="button"
-          onClick={handleResetLayout}
-          title="Reset orb positions"
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            zIndex: 20,
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            border: '1px solid var(--edge)',
-            background: 'var(--nav-bg)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-text-secondary)',
-            transition: 'background 0.15s, color 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 4v6h6" />
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-          </svg>
-        </button>
-      )}
-
-      {/* Pod hover tooltip - tracks cursor */}
-      {hoveredPod && (
-        <div
-          ref={tooltipRef}
-          style={{
-            position: 'fixed',
-            left: cursorRef.current.x + 16,
-            top: cursorRef.current.y + 16,
-            zIndex: 30,
-            background: 'var(--nav-bg)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid var(--edge)',
-            borderRadius: 10,
-            padding: '10px 14px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            pointerEvents: 'none',
-            minWidth: 140,
-            opacity: 0,
-            animation: 'tooltip-fade-in 0.15s ease forwards',
-          }}
-        >
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-            {hoveredPod.pod.name}
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-            {hoveredPod.health} - {scoreLabel(hoveredPod.health)}
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-            {hoveredPod.contactCount} people - {hoveredPod.overdueCount} overdue
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-            Last: {formatLastInteracted(hoveredPod.lastInteracted)}
-          </span>
+      {/* Top-right controls: view toggle + reset layout */}
+      {podsLoaded && podsCount > 0 && (
+        <div style={{
+          position: 'absolute', top: 12, right: 12, zIndex: 20,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          {viewMode === 'map' && mapView === 'hub' && (
+            <button
+              type="button"
+              onClick={handleResetLayout}
+              title="Reset orb positions"
+              style={{
+                width: 32, height: 32, borderRadius: 8,
+                border: '1px solid var(--edge)',
+                background: 'var(--nav-bg)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--color-text-secondary)',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 4v6h6" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
+          )}
+          <ViewToggle mode={viewMode} onChange={handleViewModeChange} />
         </div>
       )}
 
-      {/* Orbit rings with subtle glow — hidden during drill-down */}
-      <svg
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 0,
-          overflow: 'visible',
-          display: mapView === 'pod' ? 'none' : undefined,
-        }}
-      >
-        <defs>
-          <filter id="ring-glow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
-          {activeRings.map((r, ri) => (
-            <circle
-              key={r}
-              className="ring-enter"
-              style={{ '--ring-delay': `${ri * 0.15}s` } as React.CSSProperties}
-              cx={0}
-              cy={0}
-              r={r}
-              fill="none"
-              stroke="var(--stroke-subtle)"
-              strokeWidth={1.5 / viewport.zoom}
-              strokeOpacity={0.5 - ri * 0.1}
-              filter="url(#ring-glow)"
-            />
-          ))}
-        </g>
-      </svg>
-
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodeDragStart={handleNodeDragStart}
-        onNodeDrag={handleNodeDrag}
-        onNodeDragStop={handleNodeDragStop}
-        fitView={fitViewEnabled}
-        fitViewOptions={{ padding: 0.22 }}
-        minZoom={0.15}
-        maxZoom={2.5}
-        translateExtent={[[-800, -800], [800, 800]]}
-        nodesDraggable
-        edgesReconnectable={false}
-        edgesFocusable={false}
-        nodesFocusable={false}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          color="var(--edge)"
-          gap={52}
-          size={1}
+      {/* List view */}
+      {viewMode === 'list' && podsLoaded && (
+        <PodListView
+          pods={podsRef.current}
+          countsByPod={countsByPodRef.current}
+          equityByPod={equityByPodRef.current}
+          categoriesByPod={categoriesByPodRef.current}
+          selectedPod={selectedPod}
+          onPodClick={handleListPodClick}
+          onCategoryClick={handleListCategoryClick}
+          onBack={handleListBack}
         />
-      </ReactFlow>
+      )}
 
-      {/* FAB: Add Pod */}
-      {mapView === 'hub' && podsLoaded && (
-        <button
-          type="button"
-          onClick={() => setShowCreatePod(true)}
-          title="Create new pod"
-          style={{
-            position: 'absolute',
-            bottom: 24,
-            right: 24,
-            zIndex: 20,
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            border: 'none',
-            background: '#25B439',
-            color: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
-            transition: 'transform 0.15s, box-shadow 0.15s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'scale(1.1)'
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,180,57,0.45)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'scale(1)'
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)'
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+      {/* Map view */}
+      {viewMode === 'map' && (
+        <>
+          {/* Pod hover tooltip - tracks cursor */}
+          {hoveredPod && (
+            <div
+              ref={tooltipRef}
+              style={{
+                position: 'fixed',
+                left: cursorRef.current.x + 16,
+                top: cursorRef.current.y + 16,
+                zIndex: 30,
+                background: 'var(--nav-bg)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid var(--edge)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                pointerEvents: 'none',
+                minWidth: 140,
+                opacity: 0,
+                animation: 'tooltip-fade-in 0.15s ease forwards',
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                {hoveredPod.pod.name}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
+                {hoveredPod.health} - {scoreLabel(hoveredPod.health)}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                {hoveredPod.contactCount} people - {hoveredPod.overdueCount} overdue
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                Last: {formatLastInteracted(hoveredPod.lastInteracted)}
+              </span>
+            </div>
+          )}
+
+          {/* Orbit rings with subtle glow — hidden during drill-down */}
+          <svg
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 0,
+              overflow: 'visible',
+              display: mapView === 'pod' ? 'none' : undefined,
+            }}
+          >
+            <defs>
+              <filter id="ring-glow">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
+              {activeRings.map((r, ri) => (
+                <circle
+                  key={r}
+                  className="ring-enter"
+                  style={{ '--ring-delay': `${ri * 0.15}s` } as React.CSSProperties}
+                  cx={0}
+                  cy={0}
+                  r={r}
+                  fill="none"
+                  stroke="var(--stroke-subtle)"
+                  strokeWidth={1.5 / viewport.zoom}
+                  strokeOpacity={0.5 - ri * 0.1}
+                  filter="url(#ring-glow)"
+                />
+              ))}
+            </g>
           </svg>
-        </button>
+
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodeDragStart={handleNodeDragStart}
+            onNodeDrag={handleNodeDrag}
+            onNodeDragStop={handleNodeDragStop}
+            fitView={fitViewEnabled}
+            fitViewOptions={{ padding: 0.22 }}
+            minZoom={0.15}
+            maxZoom={2.5}
+            translateExtent={[[-800, -800], [800, 800]]}
+            nodesDraggable
+            edgesReconnectable={false}
+            edgesFocusable={false}
+            nodesFocusable={false}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              color="var(--edge)"
+              gap={52}
+              size={1}
+            />
+          </ReactFlow>
+
+          {/* FAB: Add Pod */}
+          {mapView === 'hub' && podsLoaded && (
+            <button
+              type="button"
+              onClick={() => setShowCreatePod(true)}
+              title="Create new pod"
+              style={{
+                position: 'absolute',
+                bottom: 24,
+                right: 24,
+                zIndex: 20,
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                border: 'none',
+                background: '#25B439',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
+                transition: 'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'scale(1.1)'
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,180,57,0.45)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)'
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          )}
+        </>
       )}
 
       <PodCreateModal
