@@ -105,6 +105,20 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Workspace switcher */}
       <WorkspaceSwitcher collapsed={collapsed} />
 
+      {/* Search - promoted to top for quick access */}
+      <div style={{ padding: '4px 8px' }}>
+        <NavItem
+          icon={<SearchIcon />}
+          label="Search"
+          active={false}
+          collapsed={collapsed}
+          onClick={onSearch}
+          hint={collapsed ? undefined : 'Cmd+K'}
+        />
+      </div>
+
+      <Divider />
+
       {/* Map - primary */}
       <div style={{ padding: '4px 8px' }}>
         <NavItem
@@ -115,8 +129,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={() => navigate('/pods')}
         />
       </div>
-
-      <Divider />
 
       {/* Core section */}
       <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -253,17 +265,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Utilities */}
+      {/* Account + utilities */}
       <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <NavItem
-          icon={<SearchIcon />}
-          label="Search"
-          active={false}
-          collapsed={collapsed}
-          onClick={onSearch}
-          hint={collapsed ? undefined : 'Cmd+K'}
-        />
-
         <NavItem
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
           label="Account"
@@ -274,42 +277,43 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 
         {!collapsed && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            <Divider />
-            <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ display: 'flex', gap: 4, padding: '4px 8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => navigate('/learn')}
+                className="sidebar-link"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 44,
+                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
                   transition: 'color 0.12s ease',
                 }}
               >
-                How It Works
+                Help
               </button>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', opacity: 0.4 }}>·</span>
               <button
                 type="button"
                 onClick={() => navigate('/changelog')}
+                className="sidebar-link"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 44,
+                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
                   transition: 'color 0.12s ease',
                 }}
               >
                 What's New
               </button>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', opacity: 0.4 }}>·</span>
               <button
                 type="button"
                 onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+                className="sidebar-link"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '6px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  borderRadius: 6, minHeight: 44,
+                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
                   transition: 'color 0.12s ease',
                 }}
               >
@@ -321,11 +325,15 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
                 type="button"
                 onClick={onDemoToggle}
                 style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
+                  background: demo ? 'rgba(37,180,57,0.08)' : 'none',
+                  border: demo ? '1px solid rgba(37,180,57,0.2)' : '1px solid transparent',
+                  borderRadius: 6,
+                  cursor: 'pointer',
                   fontSize: 11, color: demo ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
                   fontWeight: demo ? 600 : 400,
-                  padding: '4px 16px', textAlign: 'left', fontFamily: 'inherit',
-                  transition: 'color 0.12s ease',
+                  padding: '4px 8px', textAlign: 'left', fontFamily: 'inherit',
+                  transition: 'all 0.12s ease',
+                  margin: '2px 8px',
                 }}
               >
                 {demo ? 'Demo on' : 'Demo off'}

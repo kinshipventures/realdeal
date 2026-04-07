@@ -220,7 +220,7 @@ export function LoginPage() {
         </button>
 
         {error && (
-          <p style={{ color: '#dc2626', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>
+          <p style={{ color: 'var(--health-fading)', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>
         )}
 
         <button

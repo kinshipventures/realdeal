@@ -58,7 +58,7 @@ export function Dashboard() {
   useEffect(() => {
     getContacts()
       .then(d => setContacts(d))
-      .catch(() => setError('Couldn\'t reach Airtable. Try again?'))
+      .catch(() => setError('Couldn\'t load your data. Try again?'))
       .finally(() => setContactsLoading(false))
     getPods()
       .then(d => setPods(d))

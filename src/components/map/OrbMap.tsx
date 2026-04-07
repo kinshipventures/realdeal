@@ -485,6 +485,7 @@ export function OrbMap() {
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
+  const [showOrbHint, setShowOrbHint] = useState(() => !localStorage.getItem('realdeal:orb-hint-dismissed'))
   const [fitViewEnabled, setFitViewEnabled] = useState(true)
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
@@ -603,6 +604,7 @@ export function OrbMap() {
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
+    if (showOrbHint) { setShowOrbHint(false); localStorage.setItem('realdeal:orb-hint-dismissed', '1') }
 
     // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
     setMapView('pod')
@@ -974,6 +976,39 @@ export function OrbMap() {
               onCta={() => setShowCreatePod(true)}
             />
           </div>
+        </div>
+      )}
+
+      {/* First-use hint — click an orb to explore */}
+      {showOrbHint && viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
+        <div style={{
+          position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 20, display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 16px', borderRadius: 10,
+          background: 'var(--nav-bg)', backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid var(--edge)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+          animation: 'modal-fade-in 0.4s ease-out',
+        }}>
+          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+            Click a pod to see who's inside
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setShowOrbHint(false)
+              localStorage.setItem('realdeal:orb-hint-dismissed', '1')
+            }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--color-text-tertiary)', padding: '0 2px',
+              fontSize: 16, lineHeight: 1,
+            }}
+            aria-label="Dismiss hint"
+          >
+            x
+          </button>
         </div>
       )}
 

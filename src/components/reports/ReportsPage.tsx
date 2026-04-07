@@ -157,28 +157,36 @@ export function ReportsPage() {
       )}
 
       {view === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          <ReportCard
-            title="Pod Distribution"
-            subtitle={`${pods.length} pods, ${contacts.length} people`}
-            onClick={() => setView('pod-distribution')}
-          >
-            <MiniPodBars data={podDist} />
-          </ReportCard>
-          <ReportCard
-            title="Pipeline Velocity"
-            subtitle={`${pipelines.length} pipeline${pipelines.length !== 1 ? 's' : ''}, ${opportunities.length} opportunities`}
-            onClick={() => setView('pipeline-velocity')}
-          >
-            <MiniPipelineSummary data={pipelineVel} />
-          </ReportCard>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Hero card - Engagement spans full width */}
           <ReportCard
             title="Engagement Activity"
-            subtitle={`${engagementSummary.totalInteractions} interactions in ${days} days`}
+            subtitle={engagementSummary.totalInteractions > 0
+              ? `${engagementSummary.totalInteractions} interactions across ${engagementSummary.activeDays} active days`
+              : 'Start logging interactions to see your activity'
+            }
             onClick={() => setView('engagement')}
+            hero
           >
             <MiniSparkline data={engagementData} />
           </ReportCard>
+          {/* Secondary cards side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            <ReportCard
+              title="Pod Distribution"
+              subtitle={`${pods.length} pods, ${contacts.length} people`}
+              onClick={() => setView('pod-distribution')}
+            >
+              <MiniPodBars data={podDist} />
+            </ReportCard>
+            <ReportCard
+              title="Pipeline Velocity"
+              subtitle={`${pipelines.length} pipeline${pipelines.length !== 1 ? 's' : ''}, ${opportunities.length} opportunities`}
+              onClick={() => setView('pipeline-velocity')}
+            >
+              <MiniPipelineSummary data={pipelineVel} />
+            </ReportCard>
+          </div>
         </div>
       )}
 
@@ -214,11 +222,12 @@ export function ReportsPage() {
 
 // ── Report card (overview) ──────────────────────────────────────────────────
 
-function ReportCard({ title, subtitle, onClick, children }: {
+function ReportCard({ title, subtitle, onClick, children, hero }: {
   title: string
   subtitle: string
   onClick: () => void
   children: React.ReactNode
+  hero?: boolean
 }) {
   const [hovered, setHovered] = useState(false)
   return (
@@ -229,26 +238,32 @@ function ReportCard({ title, subtitle, onClick, children }: {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--nav-bg)',
-        border: '1px solid var(--edge)',
-        borderRadius: 12,
-        padding: 20,
+        background: hero ? 'var(--color-brand)' : 'var(--nav-bg)',
+        border: hero ? 'none' : '1px solid var(--edge)',
+        borderRadius: hero ? 16 : 12,
+        padding: hero ? '24px 24px 20px' : 20,
         cursor: 'pointer',
         transition: 'box-shadow 0.15s, transform 0.15s',
-        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.18)' : 'none',
+        boxShadow: hovered
+          ? hero ? '0 8px 32px rgba(37,180,57,0.24)' : '0 4px 16px rgba(0,0,0,0.18)'
+          : hero ? '0 2px 12px rgba(37,180,57,0.12)' : 'none',
         transform: hovered ? 'translateY(-1px)' : 'none',
       }}
     >
       <h2 style={{
-        fontFamily: 'var(--font-serif)', fontSize: 15, fontWeight: 600,
-        color: 'var(--color-text-primary)', margin: '0 0 4px',
+        fontFamily: 'var(--font-serif)', fontSize: hero ? 17 : 15, fontWeight: 600,
+        color: hero ? '#fff' : 'var(--color-text-primary)', margin: '0 0 4px',
       }}>
         {title}
       </h2>
-      <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '0 0 16px' }}>
+      <p style={{ fontSize: 12, color: hero ? 'rgba(255,255,255,0.70)' : 'var(--color-text-secondary)', margin: '0 0 16px' }}>
         {subtitle}
       </p>
-      {children}
+      {hero ? (
+        <div style={{ opacity: 0.9, filter: 'brightness(2.5) saturate(0)' }}>
+          {children}
+        </div>
+      ) : children}
     </div>
   )
 }

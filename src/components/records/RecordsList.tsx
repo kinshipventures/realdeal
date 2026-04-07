@@ -85,13 +85,28 @@ function saveViews(views: SavedView[]) {
   localStorage.setItem(VIEWS_KEY, JSON.stringify(views))
 }
 
-// ── Equity badge colors ──────────────────────────────────────────────────────
+// ── Equity badge colors (using health semantic colors) ──────────────────────
 
 const EQUITY_BADGE: Record<string, { bg: string; color: string }> = {
-  Thriving: { bg: 'rgba(37,180,57,0.12)',  color: '#16a34a' },
-  Steady:   { bg: 'rgba(37,180,57,0.07)',  color: '#4ade80' },
-  Cooling:  { bg: 'rgba(251,146,60,0.12)', color: '#ea580c' },
-  Fading:   { bg: 'rgba(239,68,68,0.12)',  color: '#dc2626' },
+  Thriving: { bg: 'var(--health-thriving-bg)',  color: 'var(--health-thriving)' },
+  Steady:   { bg: 'var(--health-steady-bg)',    color: 'var(--health-steady)' },
+  Cooling:  { bg: 'var(--health-cooling-bg)',   color: 'var(--health-cooling)' },
+  Fading:   { bg: 'var(--health-fading-bg)',    color: 'var(--health-fading)' },
+}
+
+// ── Avatar color from name hash ─────────────────────────────────────────────
+
+function avatarColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  const h = ((hash % 360) + 360) % 360
+  return `hsl(${h}, 45%, 55%)`
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? ''
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1227,11 +1242,10 @@ export function RecordsList() {
                       style={{
                         textAlign: 'left',
                         padding: '10px 12px',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        letterSpacing: '0.01em',
+                        color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                         cursor: canDrag ? 'grab' : 'pointer',
                         userSelect: 'none',
                         whiteSpace: 'nowrap',
@@ -1301,14 +1315,32 @@ export function RecordsList() {
                     {visibleCols.map(col => (
                       <td key={col.id} style={{ padding: '12px 12px', height: 44, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
                         {col.id === 'name' && (
-                          <span style={{
-                            fontFamily: 'var(--font-serif)',
-                            fontWeight: contact.type === 'Company' ? 700 : 600,
-                            fontSize: 14,
-                            letterSpacing: '-0.01em',
-                            color: 'var(--color-text-primary)',
-                          }}>
-                            {contact.name}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: '50%',
+                              background: avatarColor(contact.name),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: '#fff',
+                              flexShrink: 0,
+                              letterSpacing: '0.02em',
+                            }}>
+                              {initials(contact.name)}
+                            </span>
+                            <span style={{
+                              fontFamily: 'var(--font-serif)',
+                              fontWeight: contact.type === 'Company' ? 700 : 600,
+                              fontSize: 14,
+                              letterSpacing: '-0.01em',
+                              color: 'var(--color-text-primary)',
+                            }}>
+                              {contact.name}
+                            </span>
                           </span>
                         )}
                         {col.id === 'company' && (

@@ -182,7 +182,7 @@ export function ContactPanel({ categoryId, categoryName, onClose }: ContactPanel
           <Spinner />
         ) : loadError ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
-            Couldn't reach Airtable. Try again?
+            Couldn't load contacts. Try again?
           </div>
         ) : filtered.length === 0 ? (
           search ? (
