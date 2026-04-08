@@ -291,71 +291,46 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={() => navigate('/account')}
         />
 
-        {!collapsed && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            <div style={{ display: 'flex', gap: 4, padding: '4px 8px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => navigate('/learn')}
-                className="sidebar-link"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
-                  transition: 'color 0.12s ease',
-                }}
-              >
-                Help
-              </button>
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', opacity: 0.4 }}>·</span>
-              <button
-                type="button"
-                onClick={() => navigate('/changelog')}
-                className="sidebar-link"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
-                  transition: 'color 0.12s ease',
-                }}
-              >
-                What's New
-              </button>
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', opacity: 0.4 }}>·</span>
-              <button
-                type="button"
-                onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
-                className="sidebar-link"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, color: 'var(--color-text-tertiary)',
-                  padding: '4px 0', textAlign: 'left', fontFamily: 'inherit',
-                  transition: 'color 0.12s ease',
-                }}
-              >
-                Sign out
-              </button>
-            </div>
-            {onDemoToggle && import.meta.env.DEV && (
-              <button
-                type="button"
-                onClick={onDemoToggle}
-                style={{
-                  background: demo ? 'rgba(37,180,57,0.08)' : 'none',
-                  border: demo ? '1px solid rgba(37,180,57,0.2)' : '1px solid transparent',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  fontSize: 11, color: demo ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
-                  fontWeight: demo ? 600 : 400,
-                  padding: '4px 8px', textAlign: 'left', fontFamily: 'inherit',
-                  transition: 'all 0.12s ease',
-                  margin: '2px 8px',
-                }}
-              >
-                {demo ? 'Demo on' : 'Demo off'}
-              </button>
-            )}
-          </div>
+        <NavItem
+          icon={<LearnIcon />}
+          label="Help"
+          active={isLearn}
+          collapsed={collapsed}
+          onClick={() => navigate('/learn')}
+        />
+        <NavItem
+          icon={<ChangelogIcon />}
+          label="What's New"
+          active={isChangelog}
+          collapsed={collapsed}
+          onClick={() => navigate('/changelog')}
+        />
+        <NavItem
+          icon={<SignOutIcon />}
+          label="Sign out"
+          active={false}
+          collapsed={collapsed}
+          onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+          labelStyle={{ color: 'var(--color-text-tertiary)' }}
+        />
+        {!collapsed && onDemoToggle && import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={onDemoToggle}
+            style={{
+              background: demo ? 'rgba(37,180,57,0.08)' : 'none',
+              border: demo ? '1px solid rgba(37,180,57,0.2)' : '1px solid transparent',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 11, color: demo ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+              fontWeight: demo ? 600 : 400,
+              padding: '8px', textAlign: 'left', fontFamily: 'inherit',
+              transition: 'all 0.12s ease',
+              margin: '0 8px',
+            }}
+          >
+            {demo ? 'Demo on' : 'Demo off'}
+          </button>
         )}
       </div>
     </nav>
