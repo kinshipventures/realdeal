@@ -540,10 +540,10 @@ export function ImportPanel() {
                           color: isSelected ? '#fff' : 'var(--color-text-secondary)',
                           fontSize: 12,
                           fontWeight: isSelected ? 600 : 400,
-                          minHeight: 36,
+                          minHeight: 44,
                           cursor: 'pointer',
                           fontFamily: 'inherit',
-                          transition: 'all 0.12s',
+                          transition: 'background 0.12s, border-color 0.12s, color 0.12s',
                         }}
                       >
                         {p.name}
