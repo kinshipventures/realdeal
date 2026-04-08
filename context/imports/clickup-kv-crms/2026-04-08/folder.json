@@ -1,0 +1,730 @@
+{
+  "id": "90171097431",
+  "name": "KV CRMs",
+  "orderindex": 3,
+  "override_statuses": true,
+  "hidden": false,
+  "space": {
+    "id": "90171161757",
+    "name": "CRM",
+    "access": true
+  },
+  "task_count": "2324",
+  "archived": false,
+  "statuses": [
+    {
+      "id": "c90171097431_pjnJvM0k",
+      "status": "to connect",
+      "orderindex": 0,
+      "color": "#87909e",
+      "type": "open"
+    },
+    {
+      "id": "c90171097431_Xx6ohjzo",
+      "status": "outreach sent",
+      "orderindex": 1,
+      "color": "#f8ae00",
+      "type": "custom"
+    },
+    {
+      "id": "c90171097431_1RfRAEl2",
+      "status": "follow-up",
+      "orderindex": 2,
+      "color": "#5f55ee",
+      "type": "custom"
+    },
+    {
+      "id": "c90171097431_y8X7xcdU",
+      "status": "active/warm",
+      "orderindex": 3,
+      "color": "#b660e0",
+      "type": "custom"
+    },
+    {
+      "id": "c90171097431_BFjKlrRT",
+      "status": "nurture",
+      "orderindex": 4,
+      "color": "#ee5e99",
+      "type": "custom"
+    },
+    {
+      "id": "c90171097431_792Qo6R2",
+      "status": "re-engage",
+      "orderindex": 5,
+      "color": "#0f9d9f",
+      "type": "custom"
+    },
+    {
+      "id": "c90171097431_2wqOEo7o",
+      "status": "on hold",
+      "orderindex": 6,
+      "color": "#f76808",
+      "type": "done"
+    },
+    {
+      "id": "c90171097431_IH0TVRYP",
+      "status": "inactive",
+      "orderindex": 7,
+      "color": "#8d8d8d",
+      "type": "done"
+    },
+    {
+      "id": "c90171097431_K3dJQrmZ",
+      "status": "archive",
+      "orderindex": 8,
+      "color": "#008844",
+      "type": "closed"
+    }
+  ],
+  "deleted": false,
+  "lists": [
+    {
+      "id": "901701142696",
+      "name": "Maps",
+      "orderindex": 6,
+      "content": "",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 493,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "s901701142696_wvxJPZmG",
+          "status": "to connect",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_4BH9Ceff",
+          "status": "outreach sent",
+          "orderindex": 1,
+          "color": "#f8ae00",
+          "type": "custom",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_Jvw3FlPM",
+          "status": "follow-up",
+          "orderindex": 2,
+          "color": "#5f55ee",
+          "type": "custom",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_jS143bMG",
+          "status": "active/warm",
+          "orderindex": 3,
+          "color": "#b660e0",
+          "type": "custom",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_NoxpxNyO",
+          "status": "nurture",
+          "orderindex": 4,
+          "color": "#ee5e99",
+          "type": "custom",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_rIfkzk15",
+          "status": "re-engage",
+          "orderindex": 5,
+          "color": "#0f9d9f",
+          "type": "custom",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_K0Jv4ejs",
+          "status": "on hold",
+          "orderindex": 6,
+          "color": "#f76808",
+          "type": "done",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_AfBUFLCK",
+          "status": "inactive",
+          "orderindex": 7,
+          "color": "#8d8d8d",
+          "type": "done",
+          "status_group": "subcat_901701142696"
+        },
+        {
+          "id": "sc901701142696_TRmiHjJM",
+          "status": "archive",
+          "orderindex": 8,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901701142696"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901702848864",
+      "name": "SPV",
+      "orderindex": 16,
+      "content": "",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 72,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "sc901702848864_g5889cnY",
+          "status": "for connecting",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_JQNhfUPw",
+          "status": "waiting for response",
+          "orderindex": 1,
+          "color": "#5f55ee",
+          "type": "unstarted",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_ZKrrwdhv",
+          "status": "circle back",
+          "orderindex": 2,
+          "color": "#5f55ee",
+          "type": "unstarted",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_bYliiOwT",
+          "status": "intro call",
+          "orderindex": 3,
+          "color": "#e16b16",
+          "type": "unstarted",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_ZnYo9bek",
+          "status": "in data room & pitch",
+          "orderindex": 4,
+          "color": "#f8ae00",
+          "type": "custom",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_YUI4b7TS",
+          "status": "passed (fund 2)",
+          "orderindex": 5,
+          "color": "#008844",
+          "type": "custom",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_B67IMYM3",
+          "status": "in diligence",
+          "orderindex": 6,
+          "color": "#3db88b",
+          "type": "custom",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_Jrsl0Gyo",
+          "status": "not a fit",
+          "orderindex": 7,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901702848864"
+        },
+        {
+          "id": "sc901702848864_2hpyE43r",
+          "status": "closed/won",
+          "orderindex": 8,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901702848864"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901703408530",
+      "name": "Talent",
+      "orderindex": 19,
+      "content": "",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 101,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "sc901703408530_j6J4RbA9",
+          "status": "Open",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901703408530"
+        },
+        {
+          "id": "sc901703408530_JeYHh3MP",
+          "status": "Closed",
+          "orderindex": 1,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901703408530"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901700640645",
+      "name": "Companies",
+      "orderindex": 20,
+      "content": "File to be uploaded.",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 152,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_jLV8m7TM",
+          "status": "incoming lead",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_wKQ4Jxcs",
+          "status": "in conversation",
+          "orderindex": 1,
+          "color": "#ee5e99",
+          "type": "custom",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_aRLqJYNq",
+          "status": "in negotiation",
+          "orderindex": 2,
+          "color": "#ee5e99",
+          "type": "custom",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_SZ7QiDIO",
+          "status": "in contract",
+          "orderindex": 3,
+          "color": "#b660e0",
+          "type": "custom",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_EeQQumUN",
+          "status": "not the right fit",
+          "orderindex": 4,
+          "color": "#656f7d",
+          "type": "done",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_EnLjgGUT",
+          "status": "no, but future potential",
+          "orderindex": 5,
+          "color": "#656f7d",
+          "type": "done",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_oGO4GEPu",
+          "status": "lost",
+          "orderindex": 6,
+          "color": "#656f7d",
+          "type": "done",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "sc901700640645_hMkXc8f6",
+          "status": "current",
+          "orderindex": 7,
+          "color": "#008844",
+          "type": "done",
+          "status_group": "subcat_901700640645"
+        },
+        {
+          "id": "subcat901700640645_subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_pSdOIlRM",
+          "status": "closed/won",
+          "orderindex": 8,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901700640645"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901703657385",
+      "name": "Pipeline",
+      "orderindex": 21,
+      "content": "",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 51,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "sc901703657385_DtbbhWuw",
+          "status": "new",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_kBuXOpvf",
+          "status": "interest check",
+          "orderindex": 1,
+          "color": "#656f7d",
+          "type": "unstarted",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_90iGlCht",
+          "status": "initial outreach",
+          "orderindex": 2,
+          "color": "#f8ae00",
+          "type": "custom",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_mdKp1Peg",
+          "status": "for follow-up",
+          "orderindex": 3,
+          "color": "#5f55ee",
+          "type": "custom",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_mnjNmhNH",
+          "status": "for connecting",
+          "orderindex": 4,
+          "color": "#b660e0",
+          "type": "custom",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_SbQ5xmQs",
+          "status": "meeting",
+          "orderindex": 5,
+          "color": "#ee5e99",
+          "type": "custom",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_nfYUAVjp",
+          "status": "next steps",
+          "orderindex": 6,
+          "color": "#0f9d9f",
+          "type": "custom",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_VXXXp6o2",
+          "status": "transferred",
+          "orderindex": 7,
+          "color": "#3db88b",
+          "type": "done",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_Clkrnsvh",
+          "status": "pass",
+          "orderindex": 8,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901703657385"
+        },
+        {
+          "id": "sc901703657385_l2c7smuO",
+          "status": "Closed",
+          "orderindex": 9,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901703657385"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901700633304",
+      "name": "Maps Lite/For sorting",
+      "orderindex": 22,
+      "content": "Add to Maps Lite",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 951,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "subcat901700633304_subcat901700393089_subcat901100559491_subcat901100559287_sc900500098911_jLV8m7TM",
+          "status": "new",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_KtbWQcjB",
+          "status": "checking",
+          "orderindex": 1,
+          "color": "#656f7d",
+          "type": "unstarted",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_Jwy3KYbV",
+          "status": "for connecting",
+          "orderindex": 2,
+          "color": "#d33d44",
+          "type": "unstarted",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_hbCvCLfH",
+          "status": "initial follow-up",
+          "orderindex": 3,
+          "color": "#e16b16",
+          "type": "unstarted",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_Unzc9lCk",
+          "status": "in data room & pitch",
+          "orderindex": 4,
+          "color": "#f8ae00",
+          "type": "custom",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_8SEEx8Hm",
+          "status": "passed (fund 2)",
+          "orderindex": 5,
+          "color": "#008844",
+          "type": "custom",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_W3vItxjY",
+          "status": "in diligence",
+          "orderindex": 6,
+          "color": "#3db88b",
+          "type": "custom",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_S4k9Y3WL",
+          "status": "kv to follow-up",
+          "orderindex": 7,
+          "color": "#0f9d9f",
+          "type": "custom",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_UBvsjRhL",
+          "status": "not a fit",
+          "orderindex": 8,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_J20QA2Pa",
+          "status": "not responding",
+          "orderindex": 9,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_YfCBFRGc",
+          "status": "for transfer",
+          "orderindex": 10,
+          "color": "#008844",
+          "type": "done",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_ie0JPXLB",
+          "status": "for future",
+          "orderindex": 11,
+          "color": "#b660e0",
+          "type": "done",
+          "status_group": "subcat_901700633304"
+        },
+        {
+          "id": "sc901700633304_NXm8zrof",
+          "status": "closed/won",
+          "orderindex": 12,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901700633304"
+        }
+      ],
+      "permission_level": "create"
+    },
+    {
+      "id": "901706859063",
+      "name": "Service Providers",
+      "orderindex": 25,
+      "content": "",
+      "status": null,
+      "priority": null,
+      "assignee": null,
+      "task_count": 504,
+      "due_date": null,
+      "start_date": null,
+      "archived": false,
+      "override_statuses": true,
+      "statuses": [
+        {
+          "id": "sc901706859063_CmJcu2Bq",
+          "status": "new",
+          "orderindex": 0,
+          "color": "#87909e",
+          "type": "open",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_ROX5lQ8V",
+          "status": "checking",
+          "orderindex": 1,
+          "color": "#656f7d",
+          "type": "unstarted",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_y192Jlsd",
+          "status": "for connecting",
+          "orderindex": 2,
+          "color": "#d33d44",
+          "type": "unstarted",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_wcSPprNF",
+          "status": "initial follow-up",
+          "orderindex": 3,
+          "color": "#e16b16",
+          "type": "unstarted",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_8QpgiCDa",
+          "status": "in data room & pitch",
+          "orderindex": 4,
+          "color": "#f8ae00",
+          "type": "custom",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_FEP56p1i",
+          "status": "passed (fund 2)",
+          "orderindex": 5,
+          "color": "#008844",
+          "type": "custom",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_4GA7BHjo",
+          "status": "in diligence",
+          "orderindex": 6,
+          "color": "#3db88b",
+          "type": "custom",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_Pebl6jsc",
+          "status": "kv to follow-up",
+          "orderindex": 7,
+          "color": "#0f9d9f",
+          "type": "custom",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_AlfADQGG",
+          "status": "not a fit",
+          "orderindex": 8,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_B8gLoYQH",
+          "status": "not responding",
+          "orderindex": 9,
+          "color": "#d33d44",
+          "type": "done",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_mBs7xex7",
+          "status": "for transfer",
+          "orderindex": 10,
+          "color": "#008844",
+          "type": "done",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_E2XH71OA",
+          "status": "for future",
+          "orderindex": 11,
+          "color": "#b660e0",
+          "type": "done",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_RvH4Le3o",
+          "status": "closed/won",
+          "orderindex": 12,
+          "color": "#008844",
+          "type": "closed",
+          "status_group": "subcat_901706859063"
+        },
+        {
+          "id": "sc901706859063_LTxiNHuL",
+          "status": "circle back",
+          "orderindex": 13,
+          "color": "#5f55ee",
+          "type": "unstarted",
+          "status_group": "subcat_901706859063"
+        }
+      ],
+      "permission_level": "create"
+    }
+  ],
+  "permission_level": "create"
+}

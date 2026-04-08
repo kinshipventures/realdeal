@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "source": {
+    "workspace_id": "9017085020",
+    "folder_id": "90171097431",
+    "folder_name": "KV CRMs",
+    "export_path": "context/imports/clickup-kv-crms/2026-04-08"
+  },
+  "strategy": {
+    "mode": "normalize-not-mirror",
+    "preserve_raw_clickup_metadata": true,
+    "include_subtasks": true
+  },
+  "pods": [
+    { "slug": "maps", "name": "Maps", "source_lists": ["maps"] },
+    { "slug": "maps-lite", "name": "Maps Lite", "source_lists": ["maps-lite-for-sorting"] },
+    { "slug": "talent", "name": "Talent", "source_lists": ["talent"] },
+    { "slug": "service-providers", "name": "Service Providers", "source_lists": ["service-providers"] },
+    { "slug": "spv", "name": "SPV", "source_lists": ["spv"] }
+  ],
+  "list_mapping": {
+    "maps": {
+      "primary_target": "contacts",
+      "pod": "maps",
+      "category_fields": ["Category", "Maps Category", "Talent Category"],
+      "treat_as": "relationship_rows"
+    },
+    "maps-lite-for-sorting": {
+      "primary_target": "contacts",
+      "pod": "maps-lite",
+      "category_fields": ["Category", "Maps Category"],
+      "treat_as": "relationship_rows"
+    },
+    "talent": {
+      "primary_target": "contacts",
+      "pod": "talent",
+      "category_fields": ["Talent Category", "Talent Subcategories ", "Category", "Affilation  (labels)"],
+      "treat_as": "relationship_rows"
+    },
+    "service-providers": {
+      "primary_target": "contacts",
+      "pod": "service-providers",
+      "category_fields": ["Service Category", "TYPE", "Type", "Specialization"],
+      "treat_as": "relationship_rows"
+    },
+    "spv": {
+      "primary_target": "contacts",
+      "pod": "spv",
+      "category_fields": ["SPV Investor", "Areas of Interest"],
+      "treat_as": "relationship_rows"
+    },
+    "companies": {
+      "primary_target": "companies",
+      "secondary_target": "contacts",
+      "pod": null,
+      "treat_as": "mixed_company_and_action_rows",
+      "classification_required": true
+    },
+    "pipeline": {
+      "primary_target": "opportunities",
+      "secondary_targets": ["pipelines", "pipeline_stages", "opportunity_contacts"],
+      "pod": null,
+      "treat_as": "opportunity_rows"
+    }
+  },
+  "field_aliases": {
+    "contacts": {
+      "first_name": ["FIRST NAME"],
+      "last_name": ["LAST NAME"],
+      "email": ["💌 Email", "✉️ Email"],
+      "email_2": ["Email 2"],
+      "phone": ["📞 Phone", "Mobile Number"],
+      "company": ["🏢 Company"],
+      "role": ["💼 Job Title"],
+      "website": ["🌐 Website"],
+      "linkedin": ["LinkedIn"],
+      "country": ["COUNTRY"],
+      "global_region": ["🌎 GLOBAL REGION"],
+      "gender": ["GENDER"],
+      "recommended_by": ["Referred by"],
+      "introduced_by": ["Introduced By"],
+      "relationship_owner": ["Relationship Owner"],
+      "specialization": ["Specialization"],
+      "birthday": ["🎂 Birthday", "🎉 Birthday"],
+      "spv_investor": ["SPV Investor"],
+      "needs_review": ["Needs Update", "Need Update?"],
+      "notes": ["Notes"]
+    },
+    "companies": {
+      "name": ["task.name", "🏢 Company"],
+      "website": ["🌐 Website"],
+      "location": ["🏢 Address", "HQ", "CITY", "State", "COUNTRY"],
+      "industry_or_type": ["Sector", "Company Type", "Type"],
+      "stage": ["Current Fundraise", "Investment Stage", "STAGE"],
+      "notes": ["Comments", "Summary", "TLDR", "✍️ Noteables", "Assistant Info"]
+    },
+    "opportunities": {
+      "name": ["task.name"],
+      "stage_candidates": ["Status", "Pipeline Status", "STAGE", "KV Status", "Fundraise Status"],
+      "custom_fields": [
+        "Estimated Close Date",
+        "🔄 Next Contact",
+        "Current Fundraise",
+        "Capital Raised to Date",
+        "👍 Likelihood",
+        "Pitch Deck",
+        "Investment Entity"
+      ]
+    }
+  },
+  "pod_membership_fields": {
+    "primary": ["Main List"],
+    "secondary": ["Additional Lists"]
+  },
+  "ignore_fields_first_pass": [
+    "Progress Tracker",
+    "Remove",
+    "Points Estimate Rolled Up",
+    "Date Updated",
+    "Date Closed",
+    "Latest Comment",
+    "Task Content"
+  ],
+  "classification_rules": {
+    "contact_signals": [
+      "FIRST NAME",
+      "LAST NAME",
+      "💌 Email",
+      "✉️ Email",
+      "📞 Phone",
+      "💼 Job Title"
+    ],
+    "company_signals": [
+      "🌐 Website",
+      "🏢 Company",
+      "HQ",
+      "Sector",
+      "Company Type"
+    ],
+    "action_row_name_patterns": [
+      "^Schedule ",
+      "^Follow up ",
+      "^Send ",
+      "^Intro ",
+      "^Book ",
+      "^Call ",
+      "^Email "
+    ]
+  },
+  "ingestion_order": [
+    "pods",
+    "contacts",
+    "contact_pods",
+    "companies",
+    "company_linking",
+    "pipelines",
+    "pipeline_stages",
+    "opportunities",
+    "opportunity_contacts"
+  ],
+  "always_preserve_in_custom_fields": [
+    "clickup_task_id",
+    "clickup_list_id",
+    "clickup_folder_id",
+    "clickup_url",
+    "clickup_status",
+    "clickup_raw_custom_fields"
+  ]
+}

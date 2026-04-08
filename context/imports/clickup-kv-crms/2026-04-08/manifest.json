@@ -1,0 +1,483 @@
+{
+  "exported_at": "2026-04-08T21:48:36Z",
+  "workspace_id": "9017085020",
+  "folder": {
+    "id": "90171097431",
+    "name": "KV CRMs",
+    "space": {
+      "id": "90171161757",
+      "name": "CRM",
+      "access": true
+    }
+  },
+  "lists": [
+    {
+      "id": "901701142696",
+      "name": "Maps",
+      "slug": "maps",
+      "task_count_reported": 493,
+      "task_count_exported": 493,
+      "field_count": 56,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/maps"
+    },
+    {
+      "id": "901702848864",
+      "name": "SPV",
+      "slug": "spv",
+      "task_count_reported": 72,
+      "task_count_exported": 35,
+      "field_count": 41,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/spv"
+    },
+    {
+      "id": "901703408530",
+      "name": "Talent",
+      "slug": "talent",
+      "task_count_reported": 101,
+      "task_count_exported": 99,
+      "field_count": 62,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/talent"
+    },
+    {
+      "id": "901700640645",
+      "name": "Companies",
+      "slug": "companies",
+      "task_count_reported": 152,
+      "task_count_exported": 186,
+      "field_count": 58,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/companies"
+    },
+    {
+      "id": "901703657385",
+      "name": "Pipeline",
+      "slug": "pipeline",
+      "task_count_reported": 51,
+      "task_count_exported": 65,
+      "field_count": 48,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/pipeline"
+    },
+    {
+      "id": "901700633304",
+      "name": "Maps Lite/For sorting",
+      "slug": "maps-lite-for-sorting",
+      "task_count_reported": 951,
+      "task_count_exported": 826,
+      "field_count": 48,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/maps-lite-for-sorting"
+    },
+    {
+      "id": "901706859063",
+      "name": "Service Providers",
+      "slug": "service-providers",
+      "task_count_reported": 504,
+      "task_count_exported": 573,
+      "field_count": 50,
+      "includes_subtasks": true,
+      "path": "context/imports/clickup-kv-crms/2026-04-08/service-providers"
+    }
+  ],
+  "common_fields": [
+    {
+      "name": "Comments",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Progress Tracker",
+      "present_in_lists": 7
+    },
+    {
+      "name": "KV LP Status",
+      "present_in_lists": 7
+    },
+    {
+      "name": "STAGE",
+      "present_in_lists": 7
+    },
+    {
+      "name": "GENDER",
+      "present_in_lists": 7
+    },
+    {
+      "name": "FUND TYPE",
+      "present_in_lists": 7
+    },
+    {
+      "name": "🏢 Company",
+      "present_in_lists": 7
+    },
+    {
+      "name": "🌐 Website",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Remove",
+      "present_in_lists": 7
+    },
+    {
+      "name": "CITY",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Main List",
+      "present_in_lists": 7
+    },
+    {
+      "name": "FIRST NAME",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Assistant Info",
+      "present_in_lists": 7
+    },
+    {
+      "name": "🔗 Upwork Link",
+      "present_in_lists": 7
+    },
+    {
+      "name": "SPV INVESTOR",
+      "present_in_lists": 7
+    },
+    {
+      "name": "👍 Likelihood",
+      "present_in_lists": 7
+    },
+    {
+      "name": "TLDR",
+      "present_in_lists": 7
+    },
+    {
+      "name": "💌 Email",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Additional Lists",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Summary",
+      "present_in_lists": 7
+    },
+    {
+      "name": "LAST NAME",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Substack Bucket",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Needs Update",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Relationship Owner",
+      "present_in_lists": 7
+    },
+    {
+      "name": "🌎 GLOBAL REGION",
+      "present_in_lists": 7
+    },
+    {
+      "name": "🏢 Address",
+      "present_in_lists": 7
+    },
+    {
+      "name": "📞 Phone",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Investment Entity",
+      "present_in_lists": 7
+    },
+    {
+      "name": "✍️ Noteables",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Fundraise Status",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Referred by",
+      "present_in_lists": 7
+    },
+    {
+      "name": "COUNTRY",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Company Type",
+      "present_in_lists": 7
+    },
+    {
+      "name": "LinkedIn",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Kinship Investor",
+      "present_in_lists": 7
+    },
+    {
+      "name": "Meeting Date",
+      "present_in_lists": 7
+    },
+    {
+      "name": "SPV Investor",
+      "present_in_lists": 7
+    },
+    {
+      "name": "💼 Job Title",
+      "present_in_lists": 5
+    },
+    {
+      "name": "Phonetic Name",
+      "present_in_lists": 4
+    },
+    {
+      "name": "Email Domian",
+      "present_in_lists": 4
+    },
+    {
+      "name": "Job Description",
+      "present_in_lists": 4
+    },
+    {
+      "name": "Notes",
+      "present_in_lists": 4
+    },
+    {
+      "name": "State",
+      "present_in_lists": 4
+    },
+    {
+      "name": "Meeting Type",
+      "present_in_lists": 3
+    },
+    {
+      "name": "Maps Lite",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Category",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Points Estimate Rolled Up",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Talent Category",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Date Updated",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Last contact",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Affilation  (labels)",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Maps Category",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Specialization",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Sector",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Mobile Number",
+      "present_in_lists": 2
+    },
+    {
+      "name": "TYPE",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Credentials",
+      "present_in_lists": 2
+    },
+    {
+      "name": "MINORITY STATUS",
+      "present_in_lists": 2
+    },
+    {
+      "name": "Podcast",
+      "present_in_lists": 1
+    },
+    {
+      "name": "🎂 Birthday",
+      "present_in_lists": 1
+    },
+    {
+      "name": "🎉 Birthday",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Areas of Interest",
+      "present_in_lists": 1
+    },
+    {
+      "name": "SPV Distribution List",
+      "present_in_lists": 1
+    },
+    {
+      "name": "🎵 Spotify Views",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Latest Comment",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Phone 3",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Email 2",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Talent Subcategories ",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Task Content",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Secondary Emergency | Phone Number",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Date Closed",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Investment Area of Interest",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Note Date",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Outreach",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Pipeline Status",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Investing Fund",
+      "present_in_lists": 1
+    },
+    {
+      "name": "✉️ Email",
+      "present_in_lists": 1
+    },
+    {
+      "name": "DECK",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Sent",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Introduced By",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Type",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Investment Stage",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Need Update?",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Under Represented Founder?",
+      "present_in_lists": 1
+    },
+    {
+      "name": "REASON WHY PASSED",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Expected Next Raise",
+      "present_in_lists": 1
+    },
+    {
+      "name": "HQ",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Logo",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Contacts",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Capital Raised to Date",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Current Fundraise",
+      "present_in_lists": 1
+    },
+    {
+      "name": "KV Status",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Pitch Deck",
+      "present_in_lists": 1
+    },
+    {
+      "name": "🔗 Link",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Anything Else",
+      "present_in_lists": 1
+    },
+    {
+      "name": "🔄 Next Contact",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Estimated Close Date",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Status",
+      "present_in_lists": 1
+    },
+    {
+      "name": "Service Category",
+      "present_in_lists": 1
+    }
+  ]
+}

@@ -1,0 +1,3699 @@
+[
+  {
+    "id": "00d34b5a-a3f8-4b4f-a83b-4a41594c48fe",
+    "name": "TYPE",
+    "type": "labels",
+    "type_config": {
+      "options": [
+        {
+          "id": "465c70d8-6825-4983-aa9a-6633938df608",
+          "label": "Family Office",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "d61acc51-93fe-435e-8f53-22d94933fddb",
+          "label": "Institution",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "1992f46d-3a10-4f32-9346-579fa56c7f79",
+          "label": "High Net Worth",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "892fd158-51bb-4bb1-82b8-5c6af3a59a8d",
+          "label": "Strategic",
+          "color": null,
+          "orderindex": 3
+        }
+      ]
+    },
+    "date_created": "1702592212925",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "03d63527-d129-4d9f-a380-1a1c4c4eca8d",
+    "name": "Kinship Investor",
+    "type": "checkbox",
+    "type_config": {},
+    "date_created": "1766446718265",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "0d88ae07-d39e-493e-ac9b-73ff56d4e8dd",
+    "name": "Progress Tracker",
+    "type": "automatic_progress",
+    "type_config": {
+      "tracking": {
+        "subtasks": true,
+        "checklists": true,
+        "assigned_comments": true
+      },
+      "complete_on": 3,
+      "subtask_rollup": false
+    },
+    "date_created": "1751415014475",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "12077cc6-b826-4aa6-aeaf-a12f5608d901",
+    "name": "Service Category",
+    "type": "drop_down",
+    "type_config": {
+      "options": [
+        {
+          "id": "54d60ace-aed0-4108-a7d9-88fd8f793a64",
+          "name": "PR",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "4f220731-a184-4bea-9420-73a86d4ef6da",
+          "name": "SEO",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "54cec024-4ccf-4a41-bd18-b2d0995d80f0",
+          "name": "Legal",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "790ca0c9-8d8e-4643-8da7-1854ddd2aa12",
+          "name": "Sales",
+          "color": null,
+          "orderindex": 3
+        },
+        {
+          "id": "cb96490d-5e87-473b-ac4e-47cb55560dc5",
+          "name": "Design",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "6700e37d-6dd1-4404-addc-c490b63e98d4",
+          "name": "Finance",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "d7aa6875-1b00-4153-8f1d-cafff45e38e6",
+          "name": "Branding",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "318c0299-4ef1-4139-8f5d-b264ae79942a",
+          "name": "Dev Shops",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "01e96ba2-0ecf-46df-9fbb-610439412b2a",
+          "name": "Recruiting",
+          "color": null,
+          "orderindex": 8
+        },
+        {
+          "id": "c21a62dd-6499-44a0-9b63-7981fcd707df",
+          "name": "Copywriters",
+          "color": null,
+          "orderindex": 9
+        },
+        {
+          "id": "ecec31e6-068e-4498-a7ca-25cfdc7190a3",
+          "name": "HR & Benefits",
+          "color": null,
+          "orderindex": 10
+        },
+        {
+          "id": "091dabfb-ea84-40f6-987b-279258082e64",
+          "name": "Product Design",
+          "color": null,
+          "orderindex": 11
+        },
+        {
+          "id": "f01cb4cb-e189-4316-84c7-afd513bd92e2",
+          "name": "Swag Providers",
+          "color": null,
+          "orderindex": 12
+        },
+        {
+          "id": "409dcc77-d672-43bd-bbdb-1db50f0dd906",
+          "name": "Customer Support",
+          "color": null,
+          "orderindex": 13
+        },
+        {
+          "id": "0c1c5bf1-ec9c-4559-ae6e-0d18102bde5a",
+          "name": "Pricing Strategy",
+          "color": null,
+          "orderindex": 14
+        },
+        {
+          "id": "78d1848e-7ce9-4036-9277-7f503c6ae7fd",
+          "name": "Digital Marketing",
+          "color": null,
+          "orderindex": 15
+        },
+        {
+          "id": "79918f8f-0e77-4864-b347-de01ee8cfca4",
+          "name": "Virtual Assistant",
+          "color": null,
+          "orderindex": 16
+        },
+        {
+          "id": "bd3be985-ba86-4ea4-8b09-4512887f7ea6",
+          "name": "Executive Coaching",
+          "color": null,
+          "orderindex": 17
+        },
+        {
+          "id": "f182bf7c-05f1-432d-8178-9ce99daf390d",
+          "name": "Venue (NYC Events)",
+          "color": null,
+          "orderindex": 18
+        },
+        {
+          "id": "bed9051a-32e8-49c3-8acd-ef764d2d8dd6",
+          "name": "Performance & Growth",
+          "color": null,
+          "orderindex": 19
+        },
+        {
+          "id": "c8d5a586-7566-407a-ad26-094f13268683",
+          "name": "Web Development & Design",
+          "color": null,
+          "orderindex": 20
+        },
+        {
+          "id": "8a7f1a4b-0e04-40b2-a36a-f3ccfab0042d",
+          "name": "Virtual Events & Video Production",
+          "color": null,
+          "orderindex": 21
+        }
+      ]
+    },
+    "date_created": "1773181704436",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "129a9608-3a67-44c2-93be-32ed86b199a9",
+    "name": "LinkedIn",
+    "type": "url",
+    "type_config": {},
+    "date_created": "1770994897031",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "13d0a971-a242-4d0b-affd-40de92ead8a7",
+    "name": "Comments",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1729701741892",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "15dd697b-65a2-47e4-8a90-4d1c1531c975",
+    "name": "🌐 Website",
+    "type": "url",
+    "type_config": {},
+    "date_created": "1719498679090",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "1761e56f-c80c-4597-83f4-d1738ee49ab0",
+    "name": "Referred by",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1701803842078",
+    "hide_from_guests": false,
+    "required": null
+  },
+  {
+    "id": "1d2f6087-9545-436f-9b37-f34dd6f54c5b",
+    "name": "Summary",
+    "type": "text",
+    "type_config": {
+      "ai": {
+        "format": "bullet",
+        "source": "summary"
+      }
+    },
+    "date_created": "1770059090038",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "25d809b6-9e71-460c-8205-b98ef3dbc9d8",
+    "name": "Substack Bucket",
+    "type": "drop_down",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "89e7f51b-0e75-44d4-9d2b-0911a65deb12",
+          "name": "General",
+          "color": "#FF4081",
+          "orderindex": 0
+        },
+        {
+          "id": "16715bcf-eeff-47f2-b871-64c6e46c70a1",
+          "name": "Industry",
+          "color": "#1bbc9c",
+          "orderindex": 1
+        },
+        {
+          "id": "6b284877-4a70-4bf0-8a9d-3addc7ae5b28",
+          "name": "VIP",
+          "color": "#ff7800",
+          "orderindex": 2
+        }
+      ]
+    },
+    "date_created": "1761862264961",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "27430281-e623-48c8-b450-ef63b3c77605",
+    "name": "Relationship Owner",
+    "type": "users",
+    "type_config": {
+      "single_user": false,
+      "include_groups": false,
+      "include_guests": false,
+      "include_team_members": true
+    },
+    "date_created": "1772328166646",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "2fabf96b-b279-4fc6-a56f-c01111a29859",
+    "name": "TLDR",
+    "type": "text",
+    "type_config": {
+      "ai": {
+        "format": "bullet",
+        "prompt": "Given information about a task, your role is to:\n\nSummarize the task to get the most important details and latest updates.\nUse up to 4 lines\nUse very simple wording and language and avoid fluffy language\nDon't reference \"the task\" just use short-hand to outline key details\nAlways mention users using their names (e.g. John Doe). Never mention them just by their id. Only include what is important for the assignee(s).",
+        "source": "summary"
+      }
+    },
+    "date_created": "1773346535666",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "36318e80-8fed-4cbc-95ec-e314c898213b",
+    "name": "🏢 Company",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1719972193200",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "386f9510-7ec5-4281-a78f-496331aa6189",
+    "name": "SPV Investor",
+    "type": "labels",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "8776a260-efa1-48e5-990d-87f97d40ab44",
+          "label": "Moonpay",
+          "color": "#0231E8",
+          "orderindex": 0
+        },
+        {
+          "id": "cd27c6fa-943f-4d0e-83e4-0591a562eeed",
+          "label": "Republic Realm",
+          "color": "#1bbc9c",
+          "orderindex": 1
+        },
+        {
+          "id": "34ee0e9f-0ab7-4b8d-9144-72c8dca305e0",
+          "label": "OpenAI",
+          "color": "#3397dd",
+          "orderindex": 2
+        },
+        {
+          "id": "c864ee6f-6369-43a5-86a6-b665fe63ef2c",
+          "label": "TeraWulf",
+          "color": "#ff7800",
+          "orderindex": 3
+        },
+        {
+          "id": "174de2ac-2898-4b88-8441-ff33b2c4e4dc",
+          "label": "Carta",
+          "color": "#e50000",
+          "orderindex": 4
+        },
+        {
+          "id": "c2014bb0-faee-42cb-8757-0b37a1602af2",
+          "label": "Clubhouse",
+          "color": "#3397dd",
+          "orderindex": 5
+        },
+        {
+          "id": "f0c459a9-f3d5-474d-8907-ad7b15f4a565",
+          "label": "Starface",
+          "color": "#f900ea",
+          "orderindex": 6
+        },
+        {
+          "id": "94aacdcd-899a-471e-95dd-4eecf639fc91",
+          "label": "Olipop",
+          "color": "#b5bcc2",
+          "orderindex": 7
+        },
+        {
+          "id": "0b62cd8b-3908-4c06-a632-d9a39db978fa",
+          "label": "Applyboard",
+          "color": "#EA80FC",
+          "orderindex": 8
+        },
+        {
+          "id": "f174c72f-638c-45e5-b762-0e7e59c0e099",
+          "label": "Lovable",
+          "color": "#FF4081",
+          "orderindex": 9
+        }
+      ]
+    },
+    "date_created": "1721057527669",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "3da61018-559d-4fa9-a117-97d9822a0517",
+    "name": "Notes",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1728897830508",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "3db7f6b8-6d1d-46dd-99bd-0361ee455e79",
+    "name": "FUND TYPE",
+    "type": "drop_down",
+    "type_config": {
+      "default": 0,
+      "placeholder": null,
+      "options": [
+        {
+          "id": "7c0b8f8a-e9a8-443d-9ea7-2360b1d3f056",
+          "name": "Family Office",
+          "color": "#81B1FF",
+          "orderindex": 0
+        },
+        {
+          "id": "236c13e7-368e-4c42-8594-90cd12228b71",
+          "name": "Institution",
+          "color": "#3397dd",
+          "orderindex": 1
+        },
+        {
+          "id": "a38a8eba-93f9-4f11-b9ac-3edc963d2854",
+          "name": "High Net Worth",
+          "color": "#3082B7",
+          "orderindex": 2
+        },
+        {
+          "id": "9959cbc2-e938-49e2-bfcd-0ded23004cd9",
+          "name": "Strategic",
+          "color": "#04A9F4",
+          "orderindex": 3
+        },
+        {
+          "id": "0a31aeb3-bc76-47b4-a369-2b6fac12e423",
+          "name": "86dr45rak",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "3df3c38c-427a-4428-bd83-4ac6bdca78c2",
+          "name": "86dr45rn4",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "de8f1b05-d730-4611-a405-c977f5f1f651",
+          "name": "AMER",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "5b430f46-17be-4946-af0c-1089f53efb44",
+          "name": "86dr45ry7",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "4e5574df-c115-4c5d-9ebe-98e9605e0d69",
+          "name": "86dr45t75",
+          "color": null,
+          "orderindex": 8
+        },
+        {
+          "id": "e6ee1262-b01f-4f23-87fc-44f1d861317e",
+          "name": "86dub50tm",
+          "color": null,
+          "orderindex": 9
+        },
+        {
+          "id": "e5faf9da-74ca-452a-80ea-59a438d8905d",
+          "name": "86dr45wbx",
+          "color": null,
+          "orderindex": 10
+        },
+        {
+          "id": "4961ccc9-e736-46aa-96dd-5502d15e84ab",
+          "name": "86dr45qxv",
+          "color": null,
+          "orderindex": 11
+        },
+        {
+          "id": "ec87c17a-045f-429c-9a09-6d6a6241d820",
+          "name": "86dr45xc6",
+          "color": null,
+          "orderindex": 12
+        },
+        {
+          "id": "d1c91cf6-4efa-43af-91df-7996d7dd495e",
+          "name": "86dr45xxw",
+          "color": null,
+          "orderindex": 13
+        },
+        {
+          "id": "e9fec6fc-a9fc-44a3-ab2e-aefaaaf1446e",
+          "name": "86dr45r63",
+          "color": null,
+          "orderindex": 14
+        },
+        {
+          "id": "8842d881-4921-4a12-94d8-04446cbbb4b0",
+          "name": "86dr45yyf",
+          "color": null,
+          "orderindex": 15
+        },
+        {
+          "id": "f07ede4a-e91f-48d5-9052-f99981ec5412",
+          "name": "86du1ceuu",
+          "color": null,
+          "orderindex": 16
+        },
+        {
+          "id": "ece07a0d-de46-426e-9fdf-a165d6048eb6",
+          "name": "86dr45rbx",
+          "color": null,
+          "orderindex": 17
+        },
+        {
+          "id": "0a9a16a7-4be3-46e3-aca9-185075fc7d89",
+          "name": "86dr45rd6",
+          "color": null,
+          "orderindex": 18
+        },
+        {
+          "id": "7f814022-3087-4bbb-89c4-97397bfb03dd",
+          "name": "86dr45t4e",
+          "color": null,
+          "orderindex": 19
+        },
+        {
+          "id": "a005ea10-3e34-4319-8a03-c0a5306b5cd0",
+          "name": "86dr45waq",
+          "color": null,
+          "orderindex": 20
+        },
+        {
+          "id": "12303c0f-2f7a-405c-8f83-36943250044d",
+          "name": "86dr45qmk",
+          "color": null,
+          "orderindex": 21
+        },
+        {
+          "id": "a2fa9bab-88c0-494b-83d3-f8bad2eb9677",
+          "name": "86dr45wkn",
+          "color": null,
+          "orderindex": 22
+        },
+        {
+          "id": "a2e729a0-c9f9-4420-bdbe-4616aef5fc15",
+          "name": "86dr45yqx",
+          "color": null,
+          "orderindex": 23
+        },
+        {
+          "id": "b41cd549-6445-4612-b368-78a5969026aa",
+          "name": "86dr45z44",
+          "color": null,
+          "orderindex": 24
+        },
+        {
+          "id": "47bb3085-75ba-441d-b5b8-f9a4cb7d99c3",
+          "name": "86dr45zfn",
+          "color": null,
+          "orderindex": 25
+        }
+      ]
+    },
+    "date_created": "1711655335656",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "3dbdd429-e2d2-4652-b530-c8781b3f02fc",
+    "name": "Main List",
+    "type": "drop_down",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "9981b05b-1dbe-4913-b2f2-d244fd658f9a",
+          "name": "Maps",
+          "color": "#3082B7",
+          "orderindex": 0
+        },
+        {
+          "id": "fac6e1cb-c61b-469b-917e-55e32bc80ad7",
+          "name": "Maps Lite",
+          "color": "#2ecd6f",
+          "orderindex": 1
+        },
+        {
+          "id": "f4fa185f-2605-4682-b144-29ac161d3249",
+          "name": "Talent",
+          "color": "#EA80FC",
+          "orderindex": 2
+        },
+        {
+          "id": "22568fc6-d8c6-4d51-b433-16374fe70ec4",
+          "name": "Services Providers",
+          "color": "#f900ea",
+          "orderindex": 3
+        },
+        {
+          "id": "16134411-af9f-4300-9931-07258649a31d",
+          "name": "Companies",
+          "color": "#667684",
+          "orderindex": 4
+        },
+        {
+          "id": "100f4757-d046-46a6-93b4-b1fde5088ba1",
+          "name": "Pipeline",
+          "color": "#04A9F4",
+          "orderindex": 5
+        },
+        {
+          "id": "1873518d-9d7b-442e-b8e1-08f9c8d70687",
+          "name": "SPVs",
+          "color": "#7C4DFF",
+          "orderindex": 6
+        },
+        {
+          "id": "93012334-7f39-4595-9ce6-9a03ae984f9b",
+          "name": "LP Internal",
+          "color": "#1bbc9c",
+          "orderindex": 7
+        },
+        {
+          "id": "75034663-ad13-4f82-9d56-46c7119d8f3e",
+          "name": "LP ABG",
+          "color": "#ff7800",
+          "orderindex": 8
+        },
+        {
+          "id": "e319a9c9-25e1-41f4-b534-c7445acc90ee",
+          "name": "LP Princess Reema",
+          "color": "#800000",
+          "orderindex": 9
+        }
+      ]
+    },
+    "date_created": "1761865371494",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "3ee0b85c-4ab5-4d66-951b-e2d126ac22b1",
+    "name": "Credentials",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1704814050811",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "45112f9f-1224-4ffb-a6b7-4151f710f9ea",
+    "name": "GENDER",
+    "type": "drop_down",
+    "type_config": {
+      "default": 0,
+      "placeholder": null,
+      "options": [
+        {
+          "id": "e24441dd-2ecd-4e25-beb0-e8a5632b3f05",
+          "name": "MALE",
+          "color": "#04A9F4",
+          "orderindex": 0
+        },
+        {
+          "id": "cb09196a-a749-4b7f-a918-143b3165eed4",
+          "name": "FEMALE",
+          "color": "#FF7FAB",
+          "orderindex": 1
+        },
+        {
+          "id": "f1077172-880f-45c6-97aa-4c538092cce1",
+          "name": "OTHER",
+          "color": "#bf55ec",
+          "orderindex": 2
+        }
+      ]
+    },
+    "date_created": "1719972351780",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "465ccb67-815f-4e83-b484-e8d1a93055e3",
+    "name": "🔗 Upwork Link",
+    "type": "url",
+    "type_config": {},
+    "date_created": "1719877299476",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "4663ff99-f93d-400d-8209-42720ce1de17",
+    "name": "SPV INVESTOR",
+    "type": "checkbox",
+    "type_config": {},
+    "date_created": "1702613613120",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "47f604ce-5d7f-40b2-8fca-2cbc3b21c763",
+    "name": "LinkedIn",
+    "type": "labels",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "26f81652-9285-4c79-b0aa-4f41f045227f",
+          "label": "To Create",
+          "color": "#800000",
+          "orderindex": 0
+        },
+        {
+          "id": "b004b5a4-1651-47b3-8c00-8adc8bd0cc29",
+          "label": "Active",
+          "color": "#1bbc9c",
+          "orderindex": 1
+        },
+        {
+          "id": "37389360-3d05-43cf-8023-e760235530c6",
+          "label": "To Promote",
+          "color": "#f900ea",
+          "orderindex": 2
+        },
+        {
+          "id": "071f5972-87da-48e4-a707-56418bdc9515",
+          "label": "On Hold",
+          "color": "#ff7800",
+          "orderindex": 3
+        },
+        {
+          "id": "204958f8-b53f-4ab5-b9d9-3fd6cfa361c2",
+          "label": "Urgent",
+          "color": "#e50000",
+          "orderindex": 4
+        },
+        {
+          "id": "b6723113-7500-4972-a5c5-1f3bede70d3f",
+          "label": "n/a",
+          "color": "#b5bcc2",
+          "orderindex": 5
+        }
+      ]
+    },
+    "date_created": "1748462716919",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "60c342f7-365f-43f9-9c2f-390664f9d188",
+    "name": "Needs Update",
+    "type": "checkbox",
+    "type_config": {},
+    "date_created": "1761842648896",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "628a9551-8b31-4342-83d6-96a154cceaf1",
+    "name": "Mobile Number",
+    "type": "phone",
+    "type_config": {},
+    "date_created": "1761830945013",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "68a5be08-ae6c-4900-b2c3-f1b00cac4b9b",
+    "name": "Remove",
+    "type": "checkbox",
+    "type_config": {},
+    "date_created": "1761842612498",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "696713a0-2657-4445-839a-71609bc7a670",
+    "name": "KV LP Status",
+    "type": "drop_down",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "c90f4c5c-85b3-4b8f-9554-2be903c98392",
+          "name": "First Close Committed",
+          "color": "#FF4081",
+          "orderindex": 0
+        },
+        {
+          "id": "71483e45-8d6a-4d07-9270-2c3f793fcb1c",
+          "name": "Second Close Committed",
+          "color": "#f9d900",
+          "orderindex": 1
+        },
+        {
+          "id": "f20a5204-4248-4dd0-985b-7fcf8609a774",
+          "name": "First Close Target",
+          "color": "#7C4DFF",
+          "orderindex": 2
+        },
+        {
+          "id": "7d0e8239-f18a-4d40-834d-6d70408458dd",
+          "name": "Second Close Target",
+          "color": "#1bbc9c",
+          "orderindex": 3
+        }
+      ]
+    },
+    "date_created": "1766446471865",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "6acb5140-b223-4447-acc9-a17f3e8a599e",
+    "name": "💌 Email",
+    "type": "email",
+    "type_config": {},
+    "date_created": "1719972105482",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "6b564a28-9b22-4257-ab6a-98ada9ef8ac7",
+    "name": "Fundraise Status",
+    "type": "drop_down",
+    "type_config": {
+      "ai": {
+        "prompt": "Select the dropdown option that best matches the details from the task.\n\nProspect: LP identified and added to pipeline, no outreach yet\nIn Outreach: Outreach initiated, conversation in progress\nSoft Circle: Verbal or written indication of interest, not committed\nVerbal Commit: ⚠ KYC automation trigger — see Stage 3\nSubscription Docs Sent: Not triggered until KYC Status = Cleared\nSubscription Docs Signed: Counter-signature in progress\nClosed / Won: Wire received, LP moves to KV LPs Tracker\nPassed: LP declined, CRM record updated accordingly",
+        "source": "custom_dropdown"
+      },
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "d2dbf328-9e05-4bff-a038-23000c56dc4b",
+          "name": "Prospect ",
+          "color": "#d1b9b0",
+          "orderindex": 0
+        },
+        {
+          "id": "8dc50ca8-3782-4494-a188-860b3ad739ae",
+          "name": "In Outreach",
+          "color": "#b6b6ff",
+          "orderindex": 1
+        },
+        {
+          "id": "c9fd586e-7bf5-4cb3-bfbf-f9a5a4b8e640",
+          "name": "Soft Circle",
+          "color": "#8dcec3",
+          "orderindex": 2
+        },
+        {
+          "id": "1b129734-12c5-4b8f-832e-c97db9c5b9a1",
+          "name": "Verbal Commit",
+          "color": "#dfafe3",
+          "orderindex": 3
+        },
+        {
+          "id": "adfcae8f-4833-495c-b3c5-01b616859b0b",
+          "name": "Docs Sent",
+          "color": "#96c7f2",
+          "orderindex": 4
+        },
+        {
+          "id": "56df1b48-77b2-4221-8f12-b4f3e7141cbe",
+          "name": "Docs Signed",
+          "color": "#ffaa7d",
+          "orderindex": 5
+        },
+        {
+          "id": "36171f8a-03c7-4238-97fc-d68a2a2dd44f",
+          "name": "Closed",
+          "color": "#12a594",
+          "orderindex": 6
+        },
+        {
+          "id": "c4dacd33-a328-4682-af19-c554ddb3d103",
+          "name": "Passed",
+          "color": "#e93d82",
+          "orderindex": 7
+        }
+      ]
+    },
+    "date_created": "1772221068488",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "79f3cc13-e542-4c35-b4df-8893934919f8",
+    "name": "Investment Entity",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1766446768737",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "88d1cb75-a333-443a-ae85-cd1ece0d2357",
+    "name": "✍️ Noteables",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1719876761876",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "95ae774e-15d8-4950-bf56-51c10a07bc0d",
+    "name": "👍 Likelihood",
+    "type": "drop_down",
+    "type_config": {
+      "options": [
+        {
+          "id": "1e932395-8216-46bd-be7d-d1db88e14b67",
+          "name": "HIGH",
+          "color": "#2ecd6f",
+          "orderindex": 0
+        },
+        {
+          "id": "0ecba2e2-29a8-4995-b475-4d222db7a7d5",
+          "name": "MEDIUM",
+          "color": "#f9d900",
+          "orderindex": 1
+        },
+        {
+          "id": "13ffa70d-59bf-4c36-9208-67d38ec8d8a1",
+          "name": "LOW",
+          "color": "#e50000",
+          "orderindex": 2
+        },
+        {
+          "id": "07992bb3-124f-4cfc-991a-aa2d0775be0e",
+          "name": "PASSED",
+          "color": null,
+          "orderindex": 3
+        }
+      ]
+    },
+    "date_created": "1719499122937",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "9fa02732-0ee9-4f73-a6b0-42df44f4d3fa",
+    "name": "MINORITY STATUS",
+    "type": "labels",
+    "type_config": {
+      "options": [
+        {
+          "id": "4bc25343-92b5-4421-b036-e290eaa5494b",
+          "label": "LGBTQIA",
+          "color": "#7C4DFF",
+          "orderindex": 0
+        },
+        {
+          "id": "127b7054-910a-4f13-a9a9-edd24c1827ad",
+          "label": "BIPOC",
+          "color": "#02BCD4",
+          "orderindex": 1
+        }
+      ]
+    },
+    "date_created": "1702613529051",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "a1749248-4896-45e9-8204-1e1fa39fb211",
+    "name": "LAST NAME",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1701803839474",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "a2a21197-ad55-4d24-b8e1-4847d6e01b33",
+    "name": "Job Description",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1704813055348",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "a2a8ed60-a1be-48cd-b615-fcc707a5d689",
+    "name": "COUNTRY",
+    "type": "drop_down",
+    "type_config": {
+      "options": [
+        {
+          "id": "d7178ff7-7856-406e-ab77-f29c1d497b39",
+          "name": "Afghanistan",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "ae507b4a-5009-4d3c-b698-40be40777189",
+          "name": "Albania",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "1c1d2b0d-60ec-4b8e-9341-ebcebe897296",
+          "name": "Algeria",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "91165f25-5dea-4196-b64d-5d1f3fc72e72",
+          "name": "Andorra",
+          "color": null,
+          "orderindex": 3
+        },
+        {
+          "id": "23c0a575-e83e-421e-b108-309352ab26ac",
+          "name": "Angola",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "f913bd20-08b1-4c4f-9423-c5f607b73491",
+          "name": "Antigua and Barbuda",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "095b31e8-8728-447f-ba78-bf3e7351f285",
+          "name": "Argentina",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "63dc1d2e-472b-4dd5-9edd-f61f249377ab",
+          "name": "Armenia",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "73ac424d-1a4f-4e18-adb9-85b30c3409ac",
+          "name": "Australia",
+          "color": null,
+          "orderindex": 8
+        },
+        {
+          "id": "7d02e79f-8654-42de-a040-6643d5242d2f",
+          "name": "Austria",
+          "color": null,
+          "orderindex": 9
+        },
+        {
+          "id": "b3c60773-0633-4c75-8a50-759c8d40bb0f",
+          "name": "Azerbaijan",
+          "color": null,
+          "orderindex": 10
+        },
+        {
+          "id": "67d44fe0-30c8-4653-a3b4-a3b8ff44ff7d",
+          "name": "Bahamas",
+          "color": null,
+          "orderindex": 11
+        },
+        {
+          "id": "0c7717a7-19a0-4879-b62a-0481fc8e0048",
+          "name": "Bahrain",
+          "color": null,
+          "orderindex": 12
+        },
+        {
+          "id": "a215b089-8d0f-49a7-a1ec-9f6c3c58dc02",
+          "name": "Bangladesh",
+          "color": null,
+          "orderindex": 13
+        },
+        {
+          "id": "f7be23c4-ecef-46c5-93ad-e482264aed26",
+          "name": "Barbados",
+          "color": null,
+          "orderindex": 14
+        },
+        {
+          "id": "051e2976-71bb-46a9-ac72-e493e0b673a6",
+          "name": "Belarus",
+          "color": null,
+          "orderindex": 15
+        },
+        {
+          "id": "8fbb6737-6a41-41d4-a7f4-2d5fd51043d1",
+          "name": "Belgium",
+          "color": null,
+          "orderindex": 16
+        },
+        {
+          "id": "6620893a-124a-418d-aa46-2eae5406152a",
+          "name": "Belize",
+          "color": null,
+          "orderindex": 17
+        },
+        {
+          "id": "c10693f8-3e88-4f66-b9e2-fd6921548ebf",
+          "name": "Benin",
+          "color": null,
+          "orderindex": 18
+        },
+        {
+          "id": "ae7f736c-d024-4033-83bb-751052c2869d",
+          "name": "Bhutan",
+          "color": null,
+          "orderindex": 19
+        },
+        {
+          "id": "0a4bb050-e43a-4838-a502-618988677a76",
+          "name": "Bolivia",
+          "color": null,
+          "orderindex": 20
+        },
+        {
+          "id": "5b8f8fd0-f725-48f2-a173-d81c53edfade",
+          "name": "Bosnia and Herzegovina",
+          "color": null,
+          "orderindex": 21
+        },
+        {
+          "id": "a5337d9a-0aa0-4452-9a8b-989e32f578eb",
+          "name": "Botswana",
+          "color": null,
+          "orderindex": 22
+        },
+        {
+          "id": "e86b923c-352b-4383-92be-e6d6f58ec88a",
+          "name": "Brazil",
+          "color": null,
+          "orderindex": 23
+        },
+        {
+          "id": "7515cb3a-1e56-451b-921d-ac3609512d18",
+          "name": "Brunei",
+          "color": null,
+          "orderindex": 24
+        },
+        {
+          "id": "6330b3d3-4199-4de4-8e52-edc7950566e2",
+          "name": "Bulgaria",
+          "color": null,
+          "orderindex": 25
+        },
+        {
+          "id": "3e46be69-24b3-41e7-b25c-b53fa3edba9e",
+          "name": "Burkina Faso",
+          "color": null,
+          "orderindex": 26
+        },
+        {
+          "id": "e5b10b21-73c7-4d8f-8f33-31ce38ed507e",
+          "name": "Burundi",
+          "color": null,
+          "orderindex": 27
+        },
+        {
+          "id": "f6891c1e-bbc0-4e4f-8d90-bf5739a5f01c",
+          "name": "Cabo Verde",
+          "color": null,
+          "orderindex": 28
+        },
+        {
+          "id": "b01d370a-d3fd-4f99-8f98-b4c6904ea8d1",
+          "name": "Cambodia",
+          "color": null,
+          "orderindex": 29
+        },
+        {
+          "id": "487c0d20-a62e-43a4-b8b5-d3e01edc9619",
+          "name": "Cameroon",
+          "color": null,
+          "orderindex": 30
+        },
+        {
+          "id": "044cf936-cbd7-4817-b23e-7e1f78cd43be",
+          "name": "Canada",
+          "color": null,
+          "orderindex": 31
+        },
+        {
+          "id": "d380a84d-f7a1-4f00-8073-9f6f6c0f5ee8",
+          "name": "Central African Republic",
+          "color": null,
+          "orderindex": 32
+        },
+        {
+          "id": "d9cff7ac-41dd-41bc-b060-2477e256aa29",
+          "name": "Chad",
+          "color": null,
+          "orderindex": 33
+        },
+        {
+          "id": "4d5b745a-17b3-4f91-9363-5c2144ae3101",
+          "name": "Chile",
+          "color": null,
+          "orderindex": 34
+        },
+        {
+          "id": "cadd674c-f10e-449a-9c75-f8830daca12c",
+          "name": "China",
+          "color": null,
+          "orderindex": 35
+        },
+        {
+          "id": "56ae0da2-4146-434e-aec6-5ee35474f40c",
+          "name": "Colombia",
+          "color": null,
+          "orderindex": 36
+        },
+        {
+          "id": "d99d825d-c0f2-410b-b66c-37a0621aa025",
+          "name": "Comoros",
+          "color": null,
+          "orderindex": 37
+        },
+        {
+          "id": "1ef1bc6d-6931-4b02-b839-e8e54977acbf",
+          "name": "Congo, Democratic Republic of the",
+          "color": null,
+          "orderindex": 38
+        },
+        {
+          "id": "8209f5fe-0662-4bc8-b033-9180fd2fe3ed",
+          "name": "Congo, Republic of the",
+          "color": null,
+          "orderindex": 39
+        },
+        {
+          "id": "cef7fdfd-3cd5-43ee-8853-3157a934bf8b",
+          "name": "Costa Rica",
+          "color": null,
+          "orderindex": 40
+        },
+        {
+          "id": "44f2760e-82d7-4272-b819-f4c0b297323e",
+          "name": "Cote d'Ivoire",
+          "color": null,
+          "orderindex": 41
+        },
+        {
+          "id": "f30b7b32-a75e-4bf2-b27a-5c8cca10af83",
+          "name": "Croatia",
+          "color": null,
+          "orderindex": 42
+        },
+        {
+          "id": "8f458389-2618-4116-aa77-82f324c3d09d",
+          "name": "Cuba",
+          "color": null,
+          "orderindex": 43
+        },
+        {
+          "id": "52af1d93-78c3-49a6-89a1-a38b805185d5",
+          "name": "Cyprus",
+          "color": null,
+          "orderindex": 44
+        },
+        {
+          "id": "55f991ca-1327-4f84-9390-823199b24981",
+          "name": "Czech Republic",
+          "color": null,
+          "orderindex": 45
+        },
+        {
+          "id": "7a4f6d90-865f-418c-a38e-1d25f9043ef0",
+          "name": "Denmark",
+          "color": null,
+          "orderindex": 46
+        },
+        {
+          "id": "97ed7e08-4af4-4829-a2c8-3793432ff6c2",
+          "name": "Djibouti",
+          "color": null,
+          "orderindex": 47
+        },
+        {
+          "id": "9aed4040-2eee-42c6-913b-d39198ac66fc",
+          "name": "Dominica",
+          "color": null,
+          "orderindex": 48
+        },
+        {
+          "id": "2669ecfb-1f00-410f-8fcb-77a376c64733",
+          "name": "Dominican Republic",
+          "color": null,
+          "orderindex": 49
+        },
+        {
+          "id": "c506338e-4881-44bc-9f7a-dcdd9614b96e",
+          "name": "Ecuador",
+          "color": null,
+          "orderindex": 50
+        },
+        {
+          "id": "665fc77a-3362-447f-a3a7-1c09e673f14d",
+          "name": "Egypt",
+          "color": null,
+          "orderindex": 51
+        },
+        {
+          "id": "c28ee3d7-fcf7-4c90-90fc-6cd1687d76f2",
+          "name": "El Salvador",
+          "color": null,
+          "orderindex": 52
+        },
+        {
+          "id": "ba40ae24-064e-48ff-be27-65a7fcead34e",
+          "name": "Equatorial Guinea",
+          "color": null,
+          "orderindex": 53
+        },
+        {
+          "id": "d506faaa-d383-4a39-8568-da48e961f0b9",
+          "name": "Eritrea",
+          "color": null,
+          "orderindex": 54
+        },
+        {
+          "id": "815de70b-45c7-4604-b53f-de05f6964011",
+          "name": "Estonia",
+          "color": null,
+          "orderindex": 55
+        },
+        {
+          "id": "02f09828-b628-4a29-9d70-5795b6e3221e",
+          "name": "Eswatini",
+          "color": null,
+          "orderindex": 56
+        },
+        {
+          "id": "8c02402e-4c55-4147-80ed-ee0d3e5a66fb",
+          "name": "Ethiopia",
+          "color": null,
+          "orderindex": 57
+        },
+        {
+          "id": "ab922e9a-6985-4ce0-818d-f492dffc40fa",
+          "name": "Fiji",
+          "color": null,
+          "orderindex": 58
+        },
+        {
+          "id": "bccbd559-d0f9-4419-903b-4067d31b1df5",
+          "name": "Finland",
+          "color": null,
+          "orderindex": 59
+        },
+        {
+          "id": "26f37f8c-fa04-4206-a54b-017181e82a04",
+          "name": "France",
+          "color": null,
+          "orderindex": 60
+        },
+        {
+          "id": "3def9d59-6974-4a4a-8bd1-963e5f515862",
+          "name": "Gabon",
+          "color": null,
+          "orderindex": 61
+        },
+        {
+          "id": "1400a0b9-7c06-44bb-8ffb-22f0cda68f32",
+          "name": "Gambia",
+          "color": null,
+          "orderindex": 62
+        },
+        {
+          "id": "0921b5c3-beeb-42b7-b6c4-03d3c818cd3c",
+          "name": "Georgia",
+          "color": null,
+          "orderindex": 63
+        },
+        {
+          "id": "c5ae10aa-6787-4450-a381-503c84216915",
+          "name": "Germany",
+          "color": null,
+          "orderindex": 64
+        },
+        {
+          "id": "bff4e22e-4fcf-496b-88dc-719f24ce68b6",
+          "name": "Ghana",
+          "color": null,
+          "orderindex": 65
+        },
+        {
+          "id": "ecf64be9-2078-4c76-bd14-e4cec5670a86",
+          "name": "Greece",
+          "color": null,
+          "orderindex": 66
+        },
+        {
+          "id": "3d18c32f-8593-4896-8d78-be53d6171519",
+          "name": "Grenada",
+          "color": null,
+          "orderindex": 67
+        },
+        {
+          "id": "f15d8dc8-ef75-4ea6-824c-fd9c573450e2",
+          "name": "Guatemala",
+          "color": null,
+          "orderindex": 68
+        },
+        {
+          "id": "f9aba442-e5e7-42bc-a903-8e7da7006b2a",
+          "name": "Guinea",
+          "color": null,
+          "orderindex": 69
+        },
+        {
+          "id": "b355d78a-3f8c-4f48-8929-6c6e7f7990dd",
+          "name": "Guinea-Bissau",
+          "color": null,
+          "orderindex": 70
+        },
+        {
+          "id": "581aa125-57cd-44bd-b7bb-87199b93c331",
+          "name": "Guyana",
+          "color": null,
+          "orderindex": 71
+        },
+        {
+          "id": "64f1d68b-d36f-4050-b140-519742bdc070",
+          "name": "Haiti",
+          "color": null,
+          "orderindex": 72
+        },
+        {
+          "id": "29ea8075-0399-4979-8972-ebf45b4aedaa",
+          "name": "Honduras",
+          "color": null,
+          "orderindex": 73
+        },
+        {
+          "id": "1402ff49-1b39-470f-8645-bf877a92a466",
+          "name": "Hungary",
+          "color": null,
+          "orderindex": 74
+        },
+        {
+          "id": "91c3fb5b-140a-44d5-9980-1ead74837f60",
+          "name": "Iceland",
+          "color": null,
+          "orderindex": 75
+        },
+        {
+          "id": "7e4354fa-a7c1-4bb0-8ffb-91ce94e4d4cf",
+          "name": "India",
+          "color": null,
+          "orderindex": 76
+        },
+        {
+          "id": "be59fca9-2a3a-4fa9-ac6b-ccf4a4e7d150",
+          "name": "Indonesia",
+          "color": null,
+          "orderindex": 77
+        },
+        {
+          "id": "a02f00e5-b6bf-4118-832e-40c91cb6ab9e",
+          "name": "Iran",
+          "color": null,
+          "orderindex": 78
+        },
+        {
+          "id": "8b3f5565-28c8-4bb5-a199-56e039facc14",
+          "name": "Iraq",
+          "color": null,
+          "orderindex": 79
+        },
+        {
+          "id": "2e3933f8-1562-4a0f-bec2-b3ea6c2be7e9",
+          "name": "Ireland",
+          "color": null,
+          "orderindex": 80
+        },
+        {
+          "id": "e5162fb2-25dc-40d0-bda8-bc3cce19f917",
+          "name": "Israel",
+          "color": null,
+          "orderindex": 81
+        },
+        {
+          "id": "5c8d86e0-7971-4784-8766-b11f322d3835",
+          "name": "Italy",
+          "color": null,
+          "orderindex": 82
+        },
+        {
+          "id": "709ba0e6-864c-4fd0-a2c0-afa4f83642aa",
+          "name": "Jamaica",
+          "color": null,
+          "orderindex": 83
+        },
+        {
+          "id": "15649c25-8930-4145-8107-df93bf365976",
+          "name": "Japan",
+          "color": null,
+          "orderindex": 84
+        },
+        {
+          "id": "37c2232e-af85-4d84-833a-01ab0ff7fc55",
+          "name": "Jordan",
+          "color": null,
+          "orderindex": 85
+        },
+        {
+          "id": "1a0fc984-d42b-47fc-9260-a8ad56f71d5a",
+          "name": "Kazakhstan",
+          "color": null,
+          "orderindex": 86
+        },
+        {
+          "id": "165c68d6-7dd7-4497-a5f5-ddbad6604d21",
+          "name": "Kenya",
+          "color": null,
+          "orderindex": 87
+        },
+        {
+          "id": "13d66ca3-78ad-4161-98c6-39799fdc64f4",
+          "name": "Kiribati",
+          "color": null,
+          "orderindex": 88
+        },
+        {
+          "id": "70e5a500-f0fd-4388-b103-13f81b375221",
+          "name": "Korea, North",
+          "color": null,
+          "orderindex": 89
+        },
+        {
+          "id": "4039a971-97c6-4b47-8f30-f1e824a51e64",
+          "name": "Korea, South",
+          "color": null,
+          "orderindex": 90
+        },
+        {
+          "id": "ca835643-f0cd-401b-aec3-1106b4120c2f",
+          "name": "Kosovo",
+          "color": null,
+          "orderindex": 91
+        },
+        {
+          "id": "239c1425-5637-42c9-b871-6166c50b2693",
+          "name": "Kuwait",
+          "color": null,
+          "orderindex": 92
+        },
+        {
+          "id": "9fce9187-1119-44c4-a51a-fcaf3309d7ba",
+          "name": "Kyrgyzstan",
+          "color": null,
+          "orderindex": 93
+        },
+        {
+          "id": "94ff1fcf-f9b4-4f47-bc12-671e0ba08e03",
+          "name": "Laos",
+          "color": null,
+          "orderindex": 94
+        },
+        {
+          "id": "e198deba-4df2-4ec9-b96f-e4fec4ef6ee5",
+          "name": "Latvia",
+          "color": null,
+          "orderindex": 95
+        },
+        {
+          "id": "6ccc42e7-aed6-425c-a460-b588c6889374",
+          "name": "Lebanon",
+          "color": null,
+          "orderindex": 96
+        },
+        {
+          "id": "a74b7aef-0c28-4abd-a095-73b5b2977c15",
+          "name": "Lesotho",
+          "color": null,
+          "orderindex": 97
+        },
+        {
+          "id": "a8401a71-bc76-4644-8c60-ed94bf26cc35",
+          "name": "Liberia",
+          "color": null,
+          "orderindex": 98
+        },
+        {
+          "id": "7c4998a2-3a19-4325-a40a-5e91645fcca9",
+          "name": "Libya",
+          "color": null,
+          "orderindex": 99
+        },
+        {
+          "id": "b3617779-c30a-4ae2-9d4c-a325ec440a69",
+          "name": "Liechtenstein",
+          "color": null,
+          "orderindex": 100
+        },
+        {
+          "id": "7ec12ddc-6e27-45d2-8cc8-00ab25f48f75",
+          "name": "Lithuania",
+          "color": null,
+          "orderindex": 101
+        },
+        {
+          "id": "4334997e-bbb1-4428-9997-c45619f8d083",
+          "name": "Luxembourg",
+          "color": null,
+          "orderindex": 102
+        },
+        {
+          "id": "f2283ef4-568d-4f53-8122-a4d7b464e4ab",
+          "name": "Madagascar",
+          "color": null,
+          "orderindex": 103
+        },
+        {
+          "id": "2c94e6e2-0f2e-49ec-9a7a-9605471684e1",
+          "name": "Malawi",
+          "color": null,
+          "orderindex": 104
+        },
+        {
+          "id": "a3127947-cc17-4d75-8303-7d684976a0b1",
+          "name": "Malaysia",
+          "color": null,
+          "orderindex": 105
+        },
+        {
+          "id": "9cc84b49-7306-4d4e-a2c7-c0d7ac9d19ce",
+          "name": "Maldives",
+          "color": null,
+          "orderindex": 106
+        },
+        {
+          "id": "375c44b7-990d-41be-8a4b-b54caaa273f7",
+          "name": "Mali",
+          "color": null,
+          "orderindex": 107
+        },
+        {
+          "id": "4dda278c-9db2-4dc2-b142-2904a149ef92",
+          "name": "Malta",
+          "color": null,
+          "orderindex": 108
+        },
+        {
+          "id": "ecad2383-ead3-4696-b627-7fcbfdd25288",
+          "name": "Marshall Islands",
+          "color": null,
+          "orderindex": 109
+        },
+        {
+          "id": "84b4131a-cb4b-4366-ae08-2f59226abf57",
+          "name": "Mauritania",
+          "color": null,
+          "orderindex": 110
+        },
+        {
+          "id": "7f32b2f4-331a-4e93-ab4f-1c19aed881d1",
+          "name": "Mauritius",
+          "color": null,
+          "orderindex": 111
+        },
+        {
+          "id": "2a2a4e01-0779-4eff-9632-bb0c0618bd69",
+          "name": "Mexico",
+          "color": null,
+          "orderindex": 112
+        },
+        {
+          "id": "446ccc83-7bd9-4509-b397-79e5e76e5092",
+          "name": "Micronesia",
+          "color": null,
+          "orderindex": 113
+        },
+        {
+          "id": "76de3d9e-8a8b-4384-9653-47002cca71cb",
+          "name": "Moldova",
+          "color": null,
+          "orderindex": 114
+        },
+        {
+          "id": "4a56fcdd-0a9f-4e84-a457-53f550dbeb08",
+          "name": "Monaco",
+          "color": null,
+          "orderindex": 115
+        },
+        {
+          "id": "d5aecfcf-f807-4265-8a8d-e4c663de1e71",
+          "name": "Mongolia",
+          "color": null,
+          "orderindex": 116
+        },
+        {
+          "id": "e9e90682-e0c0-407c-abe0-0349df03e121",
+          "name": "Montenegro",
+          "color": null,
+          "orderindex": 117
+        },
+        {
+          "id": "8235ee6d-1dcc-4d27-ac92-8aaef9318c0f",
+          "name": "Morocco",
+          "color": null,
+          "orderindex": 118
+        },
+        {
+          "id": "7cfd994e-0d17-4bbc-b8be-003705762885",
+          "name": "Mozambique",
+          "color": null,
+          "orderindex": 119
+        },
+        {
+          "id": "72c515f2-be05-428b-9093-26e923f13f58",
+          "name": "Myanmar",
+          "color": null,
+          "orderindex": 120
+        },
+        {
+          "id": "598d9032-688f-4ec9-95d2-16acf2d71993",
+          "name": "Namibia",
+          "color": null,
+          "orderindex": 121
+        },
+        {
+          "id": "c879ff10-636b-460d-b7c6-f24ae466ea22",
+          "name": "Nauru",
+          "color": null,
+          "orderindex": 122
+        },
+        {
+          "id": "701b7d61-43f5-4119-8597-d1c32a35ce03",
+          "name": "Nepal",
+          "color": null,
+          "orderindex": 123
+        },
+        {
+          "id": "b75ea185-3b47-4152-b777-a24588129358",
+          "name": "Netherlands",
+          "color": null,
+          "orderindex": 124
+        },
+        {
+          "id": "e95088ec-6f3c-4b88-a729-eb2ca56059e2",
+          "name": "New Zealand",
+          "color": null,
+          "orderindex": 125
+        },
+        {
+          "id": "99176759-1170-4159-8aaf-86948df23825",
+          "name": "Nicaragua",
+          "color": null,
+          "orderindex": 126
+        },
+        {
+          "id": "dc5c8466-1349-4056-9e70-c670912a20e3",
+          "name": "Niger",
+          "color": null,
+          "orderindex": 127
+        },
+        {
+          "id": "d9cdcc00-69a4-4382-80a2-d294c99a849f",
+          "name": "Nigeria",
+          "color": null,
+          "orderindex": 128
+        },
+        {
+          "id": "da04d799-ad77-41fe-b29c-3c51045aa3ea",
+          "name": "North Macedonia",
+          "color": null,
+          "orderindex": 129
+        },
+        {
+          "id": "df97f4b7-282f-4091-ad77-548e7f603978",
+          "name": "Norway",
+          "color": null,
+          "orderindex": 130
+        },
+        {
+          "id": "2e532e59-e585-4a2f-a073-0a5dbc424d36",
+          "name": "Oman",
+          "color": null,
+          "orderindex": 131
+        },
+        {
+          "id": "2d012d63-60e8-4d1a-b0c5-84bcb594eba3",
+          "name": "Pakistan",
+          "color": null,
+          "orderindex": 132
+        },
+        {
+          "id": "5b59a416-2ccb-4dc7-8db7-ad1b378c6267",
+          "name": "Palau",
+          "color": null,
+          "orderindex": 133
+        },
+        {
+          "id": "126e77b9-52a0-4b71-916f-9700c6b2bf56",
+          "name": "Panama",
+          "color": null,
+          "orderindex": 134
+        },
+        {
+          "id": "02b6b0e1-22b5-4b4b-a8b8-8878384eb7c4",
+          "name": "Papua New Guinea",
+          "color": null,
+          "orderindex": 135
+        },
+        {
+          "id": "adc958b5-5511-4bda-a0a2-0a1c96bcd5be",
+          "name": "Paraguay",
+          "color": null,
+          "orderindex": 136
+        },
+        {
+          "id": "d83b4612-0cec-41e9-9ac0-d0bc3803f0c1",
+          "name": "Peru",
+          "color": null,
+          "orderindex": 137
+        },
+        {
+          "id": "47fa5b51-5ee8-477e-bf28-24b8e7084ae2",
+          "name": "Philippines",
+          "color": null,
+          "orderindex": 138
+        },
+        {
+          "id": "ed4eeb88-162c-4c22-bf74-a40d8ebc1712",
+          "name": "Poland",
+          "color": null,
+          "orderindex": 139
+        },
+        {
+          "id": "b7584555-eb0f-4604-a95a-95466a8415a1",
+          "name": "Portugal",
+          "color": null,
+          "orderindex": 140
+        },
+        {
+          "id": "edeb44f3-fa9d-40ef-b37e-0e7cfe24b4fd",
+          "name": "Qatar",
+          "color": null,
+          "orderindex": 141
+        },
+        {
+          "id": "0a9b9083-256f-4989-9f28-f8057ae58bb0",
+          "name": "Romania",
+          "color": null,
+          "orderindex": 142
+        },
+        {
+          "id": "06e81748-391a-4f15-a45d-78f6482afbf2",
+          "name": "Russia",
+          "color": null,
+          "orderindex": 143
+        },
+        {
+          "id": "4a9cf39b-533c-495a-a13b-3650215000e2",
+          "name": "Rwanda",
+          "color": null,
+          "orderindex": 144
+        },
+        {
+          "id": "b9417252-5577-46c7-ba8f-0eee50deda65",
+          "name": "Saint Kitts and Nevis",
+          "color": null,
+          "orderindex": 145
+        },
+        {
+          "id": "729d8a07-7bbc-43e5-b089-96d050618166",
+          "name": "Saint Lucia",
+          "color": null,
+          "orderindex": 146
+        },
+        {
+          "id": "46796a5c-d4af-42e0-b94e-fdb7aa82b418",
+          "name": "Saint Vincent and the Grenadines",
+          "color": null,
+          "orderindex": 147
+        },
+        {
+          "id": "e13bca35-c6a1-48c8-8163-799ea54716e5",
+          "name": "Samoa",
+          "color": null,
+          "orderindex": 148
+        },
+        {
+          "id": "40fe4684-7ae3-408c-8f1a-9630e43173aa",
+          "name": "San Marino",
+          "color": null,
+          "orderindex": 149
+        },
+        {
+          "id": "af72fd49-1f4a-43b8-9c8e-f244b97c0fa6",
+          "name": "Sao Tome and Principe",
+          "color": null,
+          "orderindex": 150
+        },
+        {
+          "id": "43a72672-26e1-4cf1-832f-458291702030",
+          "name": "Saudi Arabia",
+          "color": null,
+          "orderindex": 151
+        },
+        {
+          "id": "74d9cb5e-1541-4acc-a5de-21293908f384",
+          "name": "Senegal",
+          "color": null,
+          "orderindex": 152
+        },
+        {
+          "id": "5acb12b5-acbb-458b-936c-d594c6ec9275",
+          "name": "Serbia",
+          "color": null,
+          "orderindex": 153
+        },
+        {
+          "id": "f2e371d3-a1c1-494f-a4bf-fb007aa1cbbd",
+          "name": "Seychelles",
+          "color": null,
+          "orderindex": 154
+        },
+        {
+          "id": "8a2d6dea-903a-4a2b-9639-4f97962100c4",
+          "name": "Sierra Leone",
+          "color": null,
+          "orderindex": 155
+        },
+        {
+          "id": "0ae62187-c9f8-4f06-aa41-fedc3358ba80",
+          "name": "Singapore",
+          "color": null,
+          "orderindex": 156
+        },
+        {
+          "id": "5106ddd2-a4d2-4407-a245-4dadbe66793c",
+          "name": "Slovakia",
+          "color": null,
+          "orderindex": 157
+        },
+        {
+          "id": "2ba70a9d-c1c6-49c0-920a-afdaacdbc846",
+          "name": "Slovenia",
+          "color": null,
+          "orderindex": 158
+        },
+        {
+          "id": "b9f76d52-88b6-4368-8007-3f0825f41bcd",
+          "name": "Solomon Islands",
+          "color": null,
+          "orderindex": 159
+        },
+        {
+          "id": "3fc714ae-d8bd-4632-b89f-f8381495322c",
+          "name": "Somalia",
+          "color": null,
+          "orderindex": 160
+        },
+        {
+          "id": "62e515b1-c26f-44c9-85d9-425dc07407e5",
+          "name": "South Africa",
+          "color": null,
+          "orderindex": 161
+        },
+        {
+          "id": "ee2a8c43-8dcb-44a4-bed2-ebaf8beade3e",
+          "name": "South Sudan",
+          "color": null,
+          "orderindex": 162
+        },
+        {
+          "id": "d3439ef8-b2ea-4432-9b09-9cfe4579c8bc",
+          "name": "Spain",
+          "color": null,
+          "orderindex": 163
+        },
+        {
+          "id": "6272f01b-be66-410b-8e7f-e650b627b84f",
+          "name": "Sri Lanka",
+          "color": null,
+          "orderindex": 164
+        },
+        {
+          "id": "16cfcfaa-daf8-4ee8-bac5-390ee932e9ee",
+          "name": "Sudan",
+          "color": null,
+          "orderindex": 165
+        },
+        {
+          "id": "21f84a4f-efd6-453a-aca6-5a790c137376",
+          "name": "Suriname",
+          "color": null,
+          "orderindex": 166
+        },
+        {
+          "id": "0c59eda5-8703-4219-8350-53a53d7605b3",
+          "name": "Sweden",
+          "color": null,
+          "orderindex": 167
+        },
+        {
+          "id": "2db3beb4-aa13-4356-a607-d81718f41ed5",
+          "name": "Switzerland",
+          "color": null,
+          "orderindex": 168
+        },
+        {
+          "id": "ff17b5c6-670b-4927-bc6f-5ed8df40e815",
+          "name": "Syria",
+          "color": null,
+          "orderindex": 169
+        },
+        {
+          "id": "ac42c16b-c129-4194-b1ad-beeb22f74309",
+          "name": "Taiwan",
+          "color": null,
+          "orderindex": 170
+        },
+        {
+          "id": "a1dfa28c-913f-436d-8409-df71d0bdd99c",
+          "name": "Tajikistan",
+          "color": null,
+          "orderindex": 171
+        },
+        {
+          "id": "98fffd58-d1a0-49a7-9570-7896859a1142",
+          "name": "Tanzania",
+          "color": null,
+          "orderindex": 172
+        },
+        {
+          "id": "6f0f058b-c44c-4bd1-9ad7-1e0c37a88616",
+          "name": "Thailand",
+          "color": null,
+          "orderindex": 173
+        },
+        {
+          "id": "561f9d13-d30a-43e1-824f-ac48f46fa9c3",
+          "name": "Timor-Leste",
+          "color": null,
+          "orderindex": 174
+        },
+        {
+          "id": "cf78c402-9a70-4a34-8dcd-1d9aace78972",
+          "name": "Togo",
+          "color": null,
+          "orderindex": 175
+        },
+        {
+          "id": "8e3d6fc0-e9b7-4313-a112-d76acbc72015",
+          "name": "Tonga",
+          "color": null,
+          "orderindex": 176
+        },
+        {
+          "id": "f787dc44-f3ff-4fc0-a6b9-e145bfe3310e",
+          "name": "Trinidad and Tobago",
+          "color": null,
+          "orderindex": 177
+        },
+        {
+          "id": "8fd82c2d-1e0e-4db7-9e30-30d6341d4df0",
+          "name": "Tunisia",
+          "color": null,
+          "orderindex": 178
+        },
+        {
+          "id": "18eb53ed-20ec-4ae0-bb86-351f107a9fa4",
+          "name": "Turkey",
+          "color": null,
+          "orderindex": 179
+        },
+        {
+          "id": "3cb5edd8-0f99-40b6-b733-bdd3d9bc7e9d",
+          "name": "Turkmenistan",
+          "color": null,
+          "orderindex": 180
+        },
+        {
+          "id": "1b43dac2-bcdb-4c1e-9a92-1e239aa47bad",
+          "name": "Tuvalu",
+          "color": null,
+          "orderindex": 181
+        },
+        {
+          "id": "37e3efb6-ed2a-41e7-8eeb-71ca41543d7a",
+          "name": "Uganda",
+          "color": null,
+          "orderindex": 182
+        },
+        {
+          "id": "46454933-f6b9-41f3-94e2-0a3730c2d1dd",
+          "name": "Ukraine",
+          "color": null,
+          "orderindex": 183
+        },
+        {
+          "id": "2bf2268f-f206-42d1-b68c-87cbb7f8e4ef",
+          "name": "United Arab Emirates",
+          "color": null,
+          "orderindex": 184
+        },
+        {
+          "id": "f72c5b62-4056-4160-b748-4962876d51de",
+          "name": "United Kingdom",
+          "color": null,
+          "orderindex": 185
+        },
+        {
+          "id": "a640982a-f9be-4639-8a06-a2351d2e6590",
+          "name": "United States",
+          "color": null,
+          "orderindex": 186
+        },
+        {
+          "id": "c8c0f752-0eac-4f5d-b76a-e7b201710675",
+          "name": "Uruguay",
+          "color": null,
+          "orderindex": 187
+        },
+        {
+          "id": "c9f1f0da-f43a-42f5-831b-bcb4dce4fdc9",
+          "name": "Uzbekistan",
+          "color": null,
+          "orderindex": 188
+        },
+        {
+          "id": "9a7998cf-c8bc-49e1-aeec-f0b3cd0021f3",
+          "name": "Vanuatu",
+          "color": null,
+          "orderindex": 189
+        },
+        {
+          "id": "49a6a37d-73de-4c67-aa8a-5a2e54cda48d",
+          "name": "Vatican City",
+          "color": null,
+          "orderindex": 190
+        },
+        {
+          "id": "fde58afb-3159-4759-8b8a-519306fda68a",
+          "name": "Venezuela",
+          "color": null,
+          "orderindex": 191
+        },
+        {
+          "id": "abf36eaa-d8a4-47dc-a25e-61f13459cde3",
+          "name": "Vietnam",
+          "color": null,
+          "orderindex": 192
+        },
+        {
+          "id": "b7e7e623-0e1b-4b7d-93d2-adc945a27960",
+          "name": "Yemen",
+          "color": null,
+          "orderindex": 193
+        },
+        {
+          "id": "8b2aa21f-507f-4893-a1d7-b0b0df4dd317",
+          "name": "Zambia",
+          "color": null,
+          "orderindex": 194
+        },
+        {
+          "id": "936a6b73-94f6-4811-963e-2dc8606a6869",
+          "name": "Zimbabwe",
+          "color": null,
+          "orderindex": 195
+        }
+      ]
+    },
+    "date_created": "1719500376189",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "a3a06257-c0a2-4fbe-9700-5b9d2172462c",
+    "name": "FIRST NAME",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1719499295239",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "a8f5ee42-42dd-4eb1-b169-d8fc7d3967ad",
+    "name": "CITY",
+    "type": "drop_down",
+    "type_config": {
+      "sorting": "manual",
+      "new_drop_down": true,
+      "options": [
+        {
+          "id": "2461775c-ee1d-4b28-9223-884fe3e086fc",
+          "name": "New York",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "101da9ad-74ee-4803-8336-abc433ce1529",
+          "name": "Manama",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "258aa3f8-bd40-42c6-80a0-08a612813d67",
+          "name": "Paris",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "73fd6aeb-d27a-4603-a274-1402ae23f0ea",
+          "name": "Atlanta",
+          "color": null,
+          "orderindex": 3
+        },
+        {
+          "id": "667c8dc3-8e9f-4dfe-b4c2-f2ca0c0435de",
+          "name": "Riyadh",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "c1c7b8c4-cb3f-4bcd-b241-12b370d84443",
+          "name": "Los Angeles",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "147372a5-cb08-4847-9546-b3ae7187b01d",
+          "name": "San Francisco",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "e7aef389-e47d-4076-8464-2d2150f5fcfd",
+          "name": "Aspen",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "2a26b827-d2f9-4632-b86f-139928592d53",
+          "name": "London",
+          "color": null,
+          "orderindex": 8
+        },
+        {
+          "id": "e3455b14-76b9-4ba1-b8e9-c93f43c1485f",
+          "name": "Dubai",
+          "color": null,
+          "orderindex": 9
+        },
+        {
+          "id": "0680fb03-4756-4b11-bbf3-820ecf45da41",
+          "name": "Londi",
+          "color": null,
+          "orderindex": 10
+        },
+        {
+          "id": "0eed24ea-53c1-4cdd-9e0d-dc2edd54017b",
+          "name": "Philadelphia",
+          "color": null,
+          "orderindex": 11
+        },
+        {
+          "id": "8230b26a-6431-41bd-884a-30d4427db941",
+          "name": "United States",
+          "color": null,
+          "orderindex": 12
+        },
+        {
+          "id": "605fe936-21cc-46de-903d-84774bd3e080",
+          "name": "Chappaqua",
+          "color": null,
+          "orderindex": 13
+        },
+        {
+          "id": "cef4fe7c-2452-41c9-bc24-9d3c93f8215f",
+          "name": "Malibu",
+          "color": null,
+          "orderindex": 14
+        },
+        {
+          "id": "c4044d28-042e-4374-b85e-071ec2a862de",
+          "name": "Saddle River",
+          "color": null,
+          "orderindex": 15
+        },
+        {
+          "id": "cec8c7d6-0976-4d65-b199-6c80ee106597",
+          "name": "Miami",
+          "color": null,
+          "orderindex": 16
+        },
+        {
+          "id": "c086cd1a-7c77-4141-9b22-56fbdbcec599",
+          "name": "Abu Dhabi",
+          "color": null,
+          "orderindex": 17
+        },
+        {
+          "id": "1f67c6c7-796d-4f11-b101-861abc23f23a",
+          "name": "Santa Monica",
+          "color": null,
+          "orderindex": 18
+        },
+        {
+          "id": "1257ea52-6272-4f75-b52f-54656af1cb65",
+          "name": "Beverky Hills",
+          "color": null,
+          "orderindex": 19
+        },
+        {
+          "id": "a8fcd98c-bb18-4b6f-8003-e9fd451355ee",
+          "name": "Beverly Hills",
+          "color": null,
+          "orderindex": 20
+        },
+        {
+          "id": "5082f550-8f8e-4715-b11e-839f4468ab92",
+          "name": "Newport Beach",
+          "color": null,
+          "orderindex": 21
+        },
+        {
+          "id": "a27e2951-a9d9-43bd-98f2-ca109a0a831e",
+          "name": "Oakland",
+          "color": null,
+          "orderindex": 22
+        },
+        {
+          "id": "de52a538-329b-4d36-9656-8468581ebb95",
+          "name": "Pasadena",
+          "color": null,
+          "orderindex": 23
+        },
+        {
+          "id": "755136a1-079e-49a0-9eba-425f3584f302",
+          "name": "Orange County",
+          "color": null,
+          "orderindex": 24
+        },
+        {
+          "id": "cd881a43-cbea-40bc-9434-7b1161a9206b",
+          "name": "Westlake Village",
+          "color": null,
+          "orderindex": 25
+        },
+        {
+          "id": "1e501ded-4102-434d-8a5b-6eed18ee525d",
+          "name": "New Jersey",
+          "color": null,
+          "orderindex": 26
+        },
+        {
+          "id": "4780efbf-be25-486b-9631-19cc77970bc3",
+          "name": "Saddle Brook",
+          "color": null,
+          "orderindex": 27
+        }
+      ]
+    },
+    "date_created": "1719500116661",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "a9e1e5af-e97d-4f09-9c01-9d4db227a82e",
+    "name": "🌎 GLOBAL REGION",
+    "type": "drop_down",
+    "type_config": {
+      "default": 0,
+      "sorting": "manual",
+      "placeholder": null,
+      "new_drop_down": true,
+      "options": [
+        {
+          "id": "9447c5d9-4e86-4f51-b29f-5df35f560c5a",
+          "name": "AMER",
+          "color": "#7C4DFF",
+          "orderindex": 0
+        },
+        {
+          "id": "82311426-4be4-4120-8fe7-a2b773cf7ba8",
+          "name": "APAC",
+          "color": "#5d7dff",
+          "orderindex": 1
+        },
+        {
+          "id": "c67a2bbe-f147-4a2e-9422-4159f8a40385",
+          "name": "ME",
+          "color": "#75b9ff",
+          "orderindex": 2
+        },
+        {
+          "id": "ec788621-5898-45cf-8dc2-621336d05301",
+          "name": "LATAM",
+          "color": "#ff7800",
+          "orderindex": 3
+        },
+        {
+          "id": "9033bfa8-7f06-4e90-bfff-719bee0e42a8",
+          "name": "EU",
+          "color": "#e50000",
+          "orderindex": 4
+        }
+      ]
+    },
+    "date_created": "1719499081365",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "ae32d69e-b650-4e69-8853-ec727dafdde5",
+    "name": "Additional Lists",
+    "type": "labels",
+    "type_config": {
+      "sorting": "manual",
+      "options": [
+        {
+          "id": "70c24445-1b5f-4e25-913a-ba1069536f8a",
+          "label": "LP Internal",
+          "color": "#b5bcc2",
+          "orderindex": 0
+        },
+        {
+          "id": "78b992c9-44d9-49f2-b204-00c426ed34ca",
+          "label": "LP ABG",
+          "color": "#02BCD4",
+          "orderindex": 1
+        },
+        {
+          "id": "c15ec799-8f32-40b8-82bf-d97b2b0e7aa4",
+          "label": "LP PR",
+          "color": "#f9d900",
+          "orderindex": 2
+        },
+        {
+          "id": "6be1ed20-5f53-4308-b810-0192f9afa5ab",
+          "label": "SPV",
+          "color": "#bf55ec",
+          "orderindex": 3
+        },
+        {
+          "id": "9ac5917a-499c-4b41-921e-91778581c21c",
+          "label": "Talent",
+          "color": "#3397dd",
+          "orderindex": 4
+        },
+        {
+          "id": "3bc83231-e6ce-4312-8553-ec1c534e6f8b",
+          "label": "Maps",
+          "color": "#AF7E2E",
+          "orderindex": 5
+        },
+        {
+          "id": "ca789f4f-4281-4296-8e93-3f41486cd33c",
+          "label": "Companies",
+          "color": "#bf55ec",
+          "orderindex": 6
+        },
+        {
+          "id": "ddde02c8-9836-496f-aa3b-f95aa32a2a0f",
+          "label": "Pipeline",
+          "color": "#2ecd6f",
+          "orderindex": 7
+        },
+        {
+          "id": "f1879391-237e-414a-b46e-b10bec6bb5e0",
+          "label": "Maps Lite",
+          "color": "#ff7800",
+          "orderindex": 8
+        },
+        {
+          "id": "a2c05f8a-17e3-4847-a8bd-3c2c6a5884c2",
+          "label": "Services",
+          "color": "#667684",
+          "orderindex": 9
+        }
+      ]
+    },
+    "date_created": "1759340153545",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "b24910e1-f2c4-49c0-9be1-636870da3619",
+    "name": "Meeting Date",
+    "type": "date",
+    "type_config": {},
+    "date_created": "1738117988139",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "b39c44c0-33f4-418e-94dd-390ed1350cf6",
+    "name": "🏢 Address",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1719932917519",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "c8de2134-ec73-4d40-bf9e-4f5c3767dc8e",
+    "name": "💼 Job Title",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1709776899456",
+    "hide_from_guests": false,
+    "required": null
+  },
+  {
+    "id": "cb749d1f-30ae-4da6-a793-5c20d65977f7",
+    "name": "Specialization",
+    "type": "drop_down",
+    "type_config": {
+      "options": [
+        {
+          "id": "328b4b4f-aaff-4420-8ee9-4556f54d5c8e",
+          "name": "B2B",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "dfa3fe63-6f5a-44d6-9bf8-f979ec7d7a38",
+          "name": "DE&I",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "875bc774-49fe-4911-b8d9-c93498760b07",
+          "name": "SaaS",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "d6567149-2798-4e51-bfc2-3bc77fb165a1",
+          "name": "Tech",
+          "color": null,
+          "orderindex": 3
+        },
+        {
+          "id": "151d788a-bdbb-4d3a-a03b-d65be7b0b16a",
+          "name": "Type",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "2277df14-c998-4482-87bc-33f43fe642e6",
+          "name": "Brand",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "5d6360b5-5272-4839-9590-494fef7978c8",
+          "name": "Beauty",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "5e6ec40d-cc6c-4ff5-99da-556b67bf4307",
+          "name": "Mobile",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "8f494227-edba-41c4-bfcb-749d9f35283a",
+          "name": "Retail",
+          "color": null,
+          "orderindex": 8
+        },
+        {
+          "id": "f406baa2-2c87-4fc3-9856-cbcdbed86874",
+          "name": "FinTech",
+          "color": null,
+          "orderindex": 9
+        },
+        {
+          "id": "1e614638-968a-4d28-9eea-a8d5375df985",
+          "name": "Shopify",
+          "color": null,
+          "orderindex": 10
+        },
+        {
+          "id": "72558100-3d82-42c0-a348-4aaa6e414160",
+          "name": "Creative",
+          "color": null,
+          "orderindex": 11
+        },
+        {
+          "id": "f765ed92-9bdd-4f9f-b90f-c7ac42f1ab6e",
+          "name": "Corporate",
+          "color": null,
+          "orderindex": 12
+        },
+        {
+          "id": "3944d173-382b-4ae5-b707-e543cc7de53b",
+          "name": "Logo,Type",
+          "color": null,
+          "orderindex": 13
+        },
+        {
+          "id": "6e667269-d9d9-4ef3-a6c6-2919fc02a404",
+          "name": "Marketing",
+          "color": null,
+          "orderindex": 14
+        },
+        {
+          "id": "bd3965a2-06d7-4e92-a2ab-5c100d8840ad",
+          "name": "DTC Brands",
+          "color": null,
+          "orderindex": 15
+        },
+        {
+          "id": "6cc77564-5f14-46cf-85e9-570ee7250a2f",
+          "name": "Healthcare",
+          "color": null,
+          "orderindex": 16
+        },
+        {
+          "id": "4626a804-5c6f-4062-aea2-458f021b8dd8",
+          "name": "Advertising",
+          "color": null,
+          "orderindex": 17
+        },
+        {
+          "id": "8eb85f7e-676d-4f68-a8e0-df7100b7eef0",
+          "name": "Consultancy",
+          "color": null,
+          "orderindex": 18
+        },
+        {
+          "id": "eef5729f-966b-4978-b2f1-a36ed9a47d40",
+          "name": "Immigration",
+          "color": null,
+          "orderindex": 19
+        },
+        {
+          "id": "15199acd-a06d-4ab9-ab3e-5f2b210efcc1",
+          "name": "SEO,PPC,CRO",
+          "color": null,
+          "orderindex": 20
+        },
+        {
+          "id": "d356c8b9-f1b0-41c8-9128-af9c0a8ccbe6",
+          "name": "Brand,Design",
+          "color": null,
+          "orderindex": 21
+        },
+        {
+          "id": "b471d823-faba-458a-b798-b4a26886e0eb",
+          "name": "CFO,Modeling",
+          "color": null,
+          "orderindex": 22
+        },
+        {
+          "id": "55359aa2-c11d-4965-81f4-1d2cac8ae6de",
+          "name": "GTM Consumer",
+          "color": null,
+          "orderindex": 23
+        },
+        {
+          "id": "6e232c4f-d293-48e0-8050-51944931072d",
+          "name": "Member Group",
+          "color": null,
+          "orderindex": 24
+        },
+        {
+          "id": "5a0a740b-783d-4877-8ada-e1b524b92d8a",
+          "name": "Brand,Content",
+          "color": null,
+          "orderindex": 25
+        },
+        {
+          "id": "9bb50404-5100-4f47-9387-b5dc01ecc70a",
+          "name": "Brand,Digital",
+          "color": null,
+          "orderindex": 26
+        },
+        {
+          "id": "d51bd7c7-f139-4144-82b4-479c4aa19748",
+          "name": "Life Sciences",
+          "color": null,
+          "orderindex": 27
+        },
+        {
+          "id": "31adbb47-7728-4c03-a058-2ae70eb9a610",
+          "name": "Brand Identity",
+          "color": null,
+          "orderindex": 28
+        },
+        {
+          "id": "e50ed356-704c-4e20-a607-c8670ffb4eeb",
+          "name": "Creative,Brand",
+          "color": null,
+          "orderindex": 29
+        },
+        {
+          "id": "dfd9f52e-9b17-42fc-aa16-384e89bdbf0e",
+          "name": "Digital Health",
+          "color": null,
+          "orderindex": 30
+        },
+        {
+          "id": "2e1972b7-8973-4145-812c-61dfbd6e4a7a",
+          "name": "Fractional CFO",
+          "color": null,
+          "orderindex": 31
+        },
+        {
+          "id": "375494ec-4ed6-41e4-9189-08f94b8979b6",
+          "name": "Shopify brands",
+          "color": null,
+          "orderindex": 32
+        },
+        {
+          "id": "507f1a69-d902-46d5-8cc7-c907df1c753e",
+          "name": "Bookkeeping,Tax",
+          "color": null,
+          "orderindex": 33
+        },
+        {
+          "id": "846e586b-d15f-4cb3-8867-85797e94a279",
+          "name": "Brand,Marketing",
+          "color": null,
+          "orderindex": 34
+        },
+        {
+          "id": "bffa9617-1256-4aa0-b20b-b5e6d57b46d1",
+          "name": "Consumer Brands",
+          "color": null,
+          "orderindex": 35
+        },
+        {
+          "id": "ae4a5187-7890-4da0-a2d2-f191220a58bd",
+          "name": "Strategy,Design",
+          "color": null,
+          "orderindex": 36
+        },
+        {
+          "id": "27733ea2-1e41-450b-b67e-33beb7c10ab1",
+          "name": "Tech recruiting",
+          "color": null,
+          "orderindex": 37
+        },
+        {
+          "id": "d650ce4f-3919-4fc5-8182-9af36a923f21",
+          "name": "Tech,HealthTech",
+          "color": null,
+          "orderindex": 38
+        },
+        {
+          "id": "fcbc9bca-d010-4b7d-ab96-8b639406f887",
+          "name": "Various Sectors",
+          "color": null,
+          "orderindex": 39
+        },
+        {
+          "id": "d07e4cdc-16c2-4432-b217-b3cf30fc9eb1",
+          "name": "Creative,Digital",
+          "color": null,
+          "orderindex": 40
+        },
+        {
+          "id": "63e329e4-4e1e-483f-9e35-2d8d453aa8e8",
+          "name": "Digital,Creative",
+          "color": null,
+          "orderindex": 41
+        },
+        {
+          "id": "e5bdb979-f136-495b-9dcc-069734a05b95",
+          "name": "Finance, GTM, HR",
+          "color": null,
+          "orderindex": 42
+        },
+        {
+          "id": "e218f109-49d8-49f2-8f62-ef48a6ed6317",
+          "name": "Naming,Brand,Web",
+          "color": null,
+          "orderindex": 43
+        },
+        {
+          "id": "9f2e53f5-6e4d-42a9-8d89-11edc44609bc",
+          "name": "Varioius Sectors",
+          "color": null,
+          "orderindex": 44
+        },
+        {
+          "id": "106f1eda-0f34-476f-b2dc-8ef06f28a97f",
+          "name": "Accounting,Tax,HR",
+          "color": null,
+          "orderindex": 45
+        },
+        {
+          "id": "ad086e7f-1206-4089-834b-905c4150c5ee",
+          "name": "Brand,Interactive",
+          "color": null,
+          "orderindex": 46
+        },
+        {
+          "id": "f6d35010-17a2-4bb6-a236-2e71661f7b5b",
+          "name": "Digital Marketing",
+          "color": null,
+          "orderindex": 47
+        },
+        {
+          "id": "c5afc9c1-8fce-453b-814a-cae7ca9bf090",
+          "name": "People Leadership",
+          "color": null,
+          "orderindex": 48
+        },
+        {
+          "id": "8a7efd07-0bff-43b7-a2df-9e4ecda97a98",
+          "name": "Brand,Product,Tech",
+          "color": null,
+          "orderindex": 49
+        },
+        {
+          "id": "e7102f98-bbe9-4f30-867d-200345281c7e",
+          "name": "DE&I (Black-Owned)",
+          "color": null,
+          "orderindex": 50
+        },
+        {
+          "id": "93242fec-9577-460a-b006-5ee00cf93291",
+          "name": "Performance,Growth",
+          "color": null,
+          "orderindex": 51
+        },
+        {
+          "id": "826e2f32-8d17-4a7b-88be-d4feacbbc9b4",
+          "name": "Software Engineers",
+          "color": null,
+          "orderindex": 52
+        },
+        {
+          "id": "6dfe1356-1ec5-4e4d-ad20-a50fb639ab38",
+          "name": "DE&I (Female Execs)",
+          "color": null,
+          "orderindex": 53
+        },
+        {
+          "id": "91b7f31b-df82-434e-bfae-8aa0a089cafc",
+          "name": "FinTech & Investing",
+          "color": null,
+          "orderindex": 54
+        },
+        {
+          "id": "e1224d8c-9dbc-43d1-aa9d-018ca95ee8a4",
+          "name": "Brand,Design,Digital",
+          "color": null,
+          "orderindex": 55
+        },
+        {
+          "id": "f6cc4eb2-8f09-4b31-932b-535fe68fdb69",
+          "name": "Frontend Engineering",
+          "color": null,
+          "orderindex": 56
+        },
+        {
+          "id": "6c6a2772-393e-494d-9139-13bdd1467223",
+          "name": "Tech,Consumer Brands",
+          "color": null,
+          "orderindex": 57
+        },
+        {
+          "id": "157041b4-e0b9-4fc9-94a9-96ce6caa2f9e",
+          "name": "Web Dev,Design,Brand",
+          "color": null,
+          "orderindex": 58
+        },
+        {
+          "id": "fc9a0b86-1cea-40ba-9fed-f489fe4ca86d",
+          "name": "Deck Design,Freelance",
+          "color": null,
+          "orderindex": 59
+        },
+        {
+          "id": "526833be-1a66-4d68-9626-bf52a046497e",
+          "name": "Design,Brand,Creative",
+          "color": null,
+          "orderindex": 60
+        },
+        {
+          "id": "926a5933-15f0-4a1c-8525-1509aaae3dc1",
+          "name": "Performance Marketing",
+          "color": null,
+          "orderindex": 61
+        },
+        {
+          "id": "9d593bdf-c8ff-48af-9842-da9a11fbe1ce",
+          "name": "Branding,Web,Packaging",
+          "color": null,
+          "orderindex": 62
+        },
+        {
+          "id": "1ab94c0d-6ce5-4af1-af07-bbdcc71a130e",
+          "name": "CFO,Modeling,Analytics",
+          "color": null,
+          "orderindex": 63
+        },
+        {
+          "id": "1cfb43f8-c65f-4d81-afec-1ccc914621ef",
+          "name": "Accounting,Modeling,Tax",
+          "color": null,
+          "orderindex": 64
+        },
+        {
+          "id": "9195f1a2-c828-4a4c-8b3b-1750e79118d4",
+          "name": "Brand,Identity,Strategy",
+          "color": null,
+          "orderindex": 65
+        },
+        {
+          "id": "d7c12e7b-f91c-442c-a275-60685d74e812",
+          "name": "Branding,Communications",
+          "color": null,
+          "orderindex": 66
+        },
+        {
+          "id": "5ba8e9f7-a67b-4a10-99ef-ca8ad460d9dd",
+          "name": "Design,strategy,content",
+          "color": null,
+          "orderindex": 67
+        },
+        {
+          "id": "c3e1a76c-1b46-4b91-8598-149529c7c9eb",
+          "name": "Design , Brand , Web Dev",
+          "color": null,
+          "orderindex": 68
+        },
+        {
+          "id": "56e1845e-6b75-46b8-af15-1112d07f08df",
+          "name": "Tech & Digital Marketing",
+          "color": null,
+          "orderindex": 69
+        },
+        {
+          "id": "5c029fc1-c86e-4267-8f0e-3d48d6f33694",
+          "name": "Brand,Digital,Interactive",
+          "color": null,
+          "orderindex": 70
+        },
+        {
+          "id": "5415668c-9fef-4fde-b120-f24cbb4b0d10",
+          "name": "Vets and curates devshops",
+          "color": null,
+          "orderindex": 71
+        },
+        {
+          "id": "b65ebb1d-1737-4dfe-b1c0-7e5ac17c8c0b",
+          "name": "Adversiting-Focused Design",
+          "color": null,
+          "orderindex": 72
+        },
+        {
+          "id": "52e615e3-dde6-47da-b8ea-bb89336e8510",
+          "name": "Brand,Naming,Design,Content",
+          "color": null,
+          "orderindex": 73
+        },
+        {
+          "id": "a05b2f01-435d-48ec-b3d3-ef10512e4cf5",
+          "name": "Corporate,Litigation,IP,Tax",
+          "color": null,
+          "orderindex": 74
+        },
+        {
+          "id": "05696385-9cee-4fb5-9259-ea2601f7f534",
+          "name": "Digital,Brand,Marketing,Web",
+          "color": null,
+          "orderindex": 75
+        },
+        {
+          "id": "7236f99b-042b-4778-97d0-7f90ff4474de",
+          "name": "Glossier,Grohe,Band&Olufsen",
+          "color": null,
+          "orderindex": 76
+        },
+        {
+          "id": "64ee64fe-e897-4d3c-b6ff-1c790aebec28",
+          "name": "Strategy,Design,Advertising",
+          "color": null,
+          "orderindex": 77
+        },
+        {
+          "id": "437a0172-9c99-402d-b6f6-7bdeedfe92d3",
+          "name": "Bookkeeping,Payroll,Modeling",
+          "color": null,
+          "orderindex": 78
+        },
+        {
+          "id": "8635607a-c1ea-4afb-a533-8e8314bf3f1e",
+          "name": "Digital,Experiences,Products",
+          "color": null,
+          "orderindex": 79
+        },
+        {
+          "id": "bdc23ba4-9490-418f-a006-ca9ac3594e8a",
+          "name": "Brand,Brand Identity,Creative",
+          "color": null,
+          "orderindex": 80
+        },
+        {
+          "id": "6d1399b7-572f-49a0-aa7b-245ff14980c2",
+          "name": "Brand,Digital,Various Sectors",
+          "color": null,
+          "orderindex": 81
+        },
+        {
+          "id": "a860878a-b5ad-42ab-9555-f84fd9abe4e5",
+          "name": "Corporate,M&A,Tax,Real Estate",
+          "color": null,
+          "orderindex": 82
+        },
+        {
+          "id": "d1a8b74b-1688-41df-b46a-43dd4dc218fb",
+          "name": "Creative,Design,Art,UI/UX,Web",
+          "color": null,
+          "orderindex": 83
+        },
+        {
+          "id": "cbfca382-4df3-45fd-911e-1e9d89bc5df0",
+          "name": "Fractional CFO,Accounting,Tax",
+          "color": null,
+          "orderindex": 84
+        },
+        {
+          "id": "3405c046-6736-47bf-ba8b-0021d0601f76",
+          "name": "Tech, Health, Consumer Brands",
+          "color": null,
+          "orderindex": 85
+        },
+        {
+          "id": "d307cb8d-a001-4e0a-b776-b4781e55311a",
+          "name": "Brand,Communications,Experience",
+          "color": null,
+          "orderindex": 86
+        },
+        {
+          "id": "8a512fc6-140d-4425-93fa-9dbb46338d20",
+          "name": "Engineering, Product and Design",
+          "color": null,
+          "orderindex": 87
+        },
+        {
+          "id": "71879a14-5d27-431f-9c51-c03a91e25322",
+          "name": "Tech, Wine & Breweries, Apparel",
+          "color": null,
+          "orderindex": 88
+        },
+        {
+          "id": "4429cab9-875d-440e-86ae-b87edd6e31f6",
+          "name": "Branding,Strategy,Brand Identity",
+          "color": null,
+          "orderindex": 89
+        },
+        {
+          "id": "378403a4-0feb-47d1-b302-741d2484188e",
+          "name": "Brand,Positioning,Launch Strategy",
+          "color": null,
+          "orderindex": 90
+        },
+        {
+          "id": "26e77451-e004-47e3-ba69-fa31b6ebd53d",
+          "name": "Brand,Strategy,Advertising,Design",
+          "color": null,
+          "orderindex": 91
+        },
+        {
+          "id": "d80fc849-5e87-46b7-976d-21450b9b9c09",
+          "name": "Brand,Strategy,Digital,Interactive",
+          "color": null,
+          "orderindex": 92
+        },
+        {
+          "id": "43c8988e-2534-4f6f-9ade-7be9fcb677d2",
+          "name": "Corporate,IP,Litigation,Regulatory",
+          "color": null,
+          "orderindex": 93
+        },
+        {
+          "id": "ceeb14da-58e8-4f56-aa22-eab68511dbaa",
+          "name": "Corporate,Litigation,Regulatory,IP",
+          "color": null,
+          "orderindex": 94
+        },
+        {
+          "id": "6ddfcefc-486c-4ceb-9328-128310c04cf3",
+          "name": "Creative,Product,Content,Campaigns",
+          "color": null,
+          "orderindex": 95
+        },
+        {
+          "id": "85b1f3fc-ac85-4d4e-992d-2ba25263e67c",
+          "name": "Design,Messaging,Digital,Packaging",
+          "color": null,
+          "orderindex": 96
+        },
+        {
+          "id": "c1bc576f-02e8-4922-aa39-799c1a352c4a",
+          "name": "Executive, Product, Sales and Tech",
+          "color": null,
+          "orderindex": 97
+        },
+        {
+          "id": "0c3eb304-c7aa-411f-b52f-93d91824efc4",
+          "name": "Position,Brand,Execution,Marketing",
+          "color": null,
+          "orderindex": 98
+        },
+        {
+          "id": "3a5144e2-0d8a-40bc-87a2-ca9d6e597bf6",
+          "name": "Wide Variety of Industries/Sectors",
+          "color": null,
+          "orderindex": 99
+        },
+        {
+          "id": "df0fb406-7598-44fc-a036-585e598b0cff",
+          "name": "Brand Identity,UI/UX,Graphic Design",
+          "color": null,
+          "orderindex": 100
+        },
+        {
+          "id": "982eeaf3-8c25-42cd-8329-ba150a331312",
+          "name": "Brand,Advertising,Marketing,Web Dev",
+          "color": null,
+          "orderindex": 101
+        },
+        {
+          "id": "07979a1a-e3d7-4354-8232-93a0d144b475",
+          "name": "Brand,Design,Technology,Development",
+          "color": null,
+          "orderindex": 102
+        },
+        {
+          "id": "a3dc662a-86a6-4fb7-9509-086cfcd7c4ec",
+          "name": "Executive Search, Senior Tech Roles",
+          "color": null,
+          "orderindex": 103
+        },
+        {
+          "id": "5cf3b1d0-d22c-4928-886a-e37f468e2bb9",
+          "name": "Mobile,Backend Engineering,Design,UX",
+          "color": null,
+          "orderindex": 104
+        },
+        {
+          "id": "6be0b090-b967-47d9-b9df-b43ef273a4a6",
+          "name": "Pricing Changes, Feedback, Education",
+          "color": null,
+          "orderindex": 105
+        },
+        {
+          "id": "0f70aec1-0c36-4a74-9f86-78e50af6da79",
+          "name": "DE&I (Women, POC, and LGBTQIA talent)",
+          "color": null,
+          "orderindex": 106
+        },
+        {
+          "id": "a26fb2f8-b9d7-4ead-b7f2-a69b512fad32",
+          "name": "eComm, Shopify, Front-end development",
+          "color": null,
+          "orderindex": 107
+        },
+        {
+          "id": "154541d2-a0a6-42d3-bf00-b9d6d3406c0c",
+          "name": "Market Research,Brand,Naming,Strategy",
+          "color": null,
+          "orderindex": 108
+        },
+        {
+          "id": "66e77e30-216e-4246-a860-f2ef2c0f32f7",
+          "name": "Positioning,Brand,Execution,Marketing",
+          "color": null,
+          "orderindex": 109
+        },
+        {
+          "id": "d3910c97-2cdc-4543-98dc-5d318e351941",
+          "name": "Bookkeeping,CFO,Accounting,HR,Modeling",
+          "color": null,
+          "orderindex": 110
+        },
+        {
+          "id": "0db80a67-d9c4-40ea-934d-791843dacf40",
+          "name": "Brand Identity,Strategy,Branding,UI/UX",
+          "color": null,
+          "orderindex": 111
+        },
+        {
+          "id": "fddcb1ee-4ccd-4e83-8168-65e02aeb74c9",
+          "name": "Brand,Communications,Campaigns,Creative",
+          "color": null,
+          "orderindex": 112
+        },
+        {
+          "id": "c825bfa2-3916-49f7-9a09-83b29b48afe6",
+          "name": "Marketing,Positioning,Content,Design,UI",
+          "color": null,
+          "orderindex": 113
+        },
+        {
+          "id": "a83fe726-d446-4def-a4c3-f26a7addf4e2",
+          "name": "Print,Packaging,Brand,Web,Art Direction",
+          "color": null,
+          "orderindex": 114
+        },
+        {
+          "id": "8a0bebe7-aba2-4327-a2de-e4e31ddd3ab2",
+          "name": "Various Sectors & Influencer Media Kits",
+          "color": null,
+          "orderindex": 115
+        },
+        {
+          "id": "3755be93-8043-4424-a260-d22d6bb1cb6c",
+          "name": "Various Sectors,Visual Design,Packaging",
+          "color": null,
+          "orderindex": 116
+        },
+        {
+          "id": "71daa1e1-9fa9-4bcc-b9d7-e0d4a6a7f868",
+          "name": "Creative,Design,Consumer Brands,Social Media",
+          "color": null,
+          "orderindex": 117
+        },
+        {
+          "id": "12347f9d-dc4a-43b9-813f-e4584ca6f57b",
+          "name": "Brand,Digital Media,Strategy,Marketing,Analytics",
+          "color": null,
+          "orderindex": 118
+        },
+        {
+          "id": "d440d1ed-55d1-4e33-8be4-9abdc6bbfef2",
+          "name": "Partnerships,Design,Strategy,Content,Programming",
+          "color": null,
+          "orderindex": 119
+        },
+        {
+          "id": "af13c625-8e76-4e73-a486-eb2304d33bbc",
+          "name": "Beauty,Personal Care,Food & Bev,Health & Wellness",
+          "color": null,
+          "orderindex": 120
+        },
+        {
+          "id": "d1292eea-e835-421a-a6c6-a373aec5f1d0",
+          "name": "Corporate,Formation,Governance; VC Financing,M&As",
+          "color": null,
+          "orderindex": 121
+        },
+        {
+          "id": "3e2e638f-ce84-4d6e-9e74-6d06b8c19deb",
+          "name": "Full Stack,Machine Learning,API Engineering,Mobile",
+          "color": null,
+          "orderindex": 122
+        },
+        {
+          "id": "30152eea-509f-471e-82c2-64a7b431c39c",
+          "name": "Food & Beverage,Beauty,Online,Fashion,Music,Jewelry",
+          "color": null,
+          "orderindex": 123
+        },
+        {
+          "id": "02aee395-0066-4f0d-8226-bb5f56772274",
+          "name": "Growth roles across Marketing, Product, Design, etc.",
+          "color": null,
+          "orderindex": 124
+        },
+        {
+          "id": "df266416-c6db-4dbb-9c9e-73b827f02ed2",
+          "name": "Branding,Graphic Design,Creative,Digital,Social Media",
+          "color": null,
+          "orderindex": 125
+        },
+        {
+          "id": "f959b186-e097-47b2-9096-c2a7fedc6712",
+          "name": "Consumer, Financial Services, Education, Health, Tech",
+          "color": null,
+          "orderindex": 126
+        },
+        {
+          "id": "c77dab26-6deb-4cdc-9b6b-b749dc11e010",
+          "name": "Visual Communication,Digital Media,Design,Brand Identity",
+          "color": null,
+          "orderindex": 127
+        },
+        {
+          "id": "1a0537d4-1666-4370-bba1-2db44a015433",
+          "name": "Formation,Funding,Sales,Hiring,IP Protection,Data Privacy",
+          "color": null,
+          "orderindex": 128
+        },
+        {
+          "id": "1088e40a-bc7d-49ca-8623-a8f3f8b66b87",
+          "name": "SEO,Social Media,Analytics,Shopping,SEM Audit,Advertising",
+          "color": null,
+          "orderindex": 129
+        },
+        {
+          "id": "3c230597-4fc9-4517-a292-86e315fa9e21",
+          "name": "Digital Media,Social Media,Growth Marketing,Paid Marketing",
+          "color": null,
+          "orderindex": 130
+        },
+        {
+          "id": "ab9f8733-d31e-4203-b8b3-e66d19a696f5",
+          "name": "Brand,Packaging,Deck Design,Freelance,Retail,Design,App Design",
+          "color": null,
+          "orderindex": 131
+        },
+        {
+          "id": "6fef1c3f-1fa6-4383-8d03-de1974900908",
+          "name": "Brand,Integrated Marketing,Content Marketing,Social Media,Email",
+          "color": null,
+          "orderindex": 132
+        },
+        {
+          "id": "6fde8ff0-efeb-448f-961e-0d19c60a97cc",
+          "name": "Consumer Brands, Social Media, Fashion, Beauty, Lifestyle, Tech",
+          "color": null,
+          "orderindex": 133
+        },
+        {
+          "id": "885e3add-d857-4315-87d6-7319cc3921ee",
+          "name": "Saas: B2B (mid-market,SMB),B2C,Marketplaces,Prosumer (Software)",
+          "color": null,
+          "orderindex": 134
+        },
+        {
+          "id": "f87dd3d8-4977-47c0-88dc-caf225c6fdef",
+          "name": "Tech,Energy & Infrastructure,Finance,Litigation & IP,Transactions",
+          "color": null,
+          "orderindex": 135
+        },
+        {
+          "id": "48935ed4-a9ae-4627-9756-77c97009f03b",
+          "name": "Design,Brand,Brand Identity,Strategy,Typography,Packaging,Experiences",
+          "color": null,
+          "orderindex": 136
+        },
+        {
+          "id": "aa980756-0d1d-4ead-a7db-72fc4932f32e",
+          "name": "Mobile,Web Dev,Cloud Computing,Entertainment,AR/VR,Embedded Development",
+          "color": null,
+          "orderindex": 137
+        },
+        {
+          "id": "c7c9a906-00d0-467b-9c50-4214fc1a0360",
+          "name": "Wide Variety of Industries/Sectors; specific \"Entrepreneur Startup Package\"",
+          "color": null,
+          "orderindex": 138
+        },
+        {
+          "id": "d55972f6-0c27-4e95-a12a-7fda1dba657d",
+          "name": "Brand Identity,Visual Communication,Tactile,Media,Digital Media,Environments",
+          "color": null,
+          "orderindex": 139
+        },
+        {
+          "id": "9262d22d-697c-4598-be77-2c3ae2321597",
+          "name": "Brand,Identity,Visual Communication,Tactile,Media,Digital Media,Environments",
+          "color": null,
+          "orderindex": 140
+        },
+        {
+          "id": "f520eddb-58fd-44c4-baee-9e27f12c0974",
+          "name": "Tech, Marketing & Advertising, Finance, Nonprofit, CPG, Professional Services",
+          "color": null,
+          "orderindex": 141
+        },
+        {
+          "id": "167da022-ff4f-46ea-ba7e-261a3223cc5a",
+          "name": "deep bench of engineers who all come out of top brands (Amazon, Google, Facebook etc",
+          "color": null,
+          "orderindex": 142
+        },
+        {
+          "id": "e200d6ef-f232-4de4-bd78-92c784debc52",
+          "name": "really flexible, speak English, and do excellent work for a better price than US dev teams.",
+          "color": null,
+          "orderindex": 143
+        },
+        {
+          "id": "4ad1dd60-203a-4fac-883d-1b958db6140f",
+          "name": "Brand,Identity,Visual Communication,Packaging,Design,Creative,Content,Marketing,Partnerships",
+          "color": null,
+          "orderindex": 144
+        },
+        {
+          "id": "9933dd51-799b-46e5-ae73-80547684d512",
+          "name": "Lifestyle,Fashion & Footwear,Gaming,Tech,Social Platforms,Sports,Beer & Spirits,Entertainment",
+          "color": null,
+          "orderindex": 145
+        },
+        {
+          "id": "765c8dc9-504b-4e43-8349-dd0b3cb04484",
+          "name": "Corporate Counseling,Company-Side Venture Financings,VC Clients,M&As,Enterprise Commercial Transactions",
+          "color": null,
+          "orderindex": 146
+        },
+        {
+          "id": "c0a852d6-d5d5-43f1-83ec-be537ed4d19a",
+          "name": "VC & Capital Raising Transactions,Restructurings,M&As,Company Formations,Commercial Contracts,IP,Data Privacy",
+          "color": null,
+          "orderindex": 147
+        },
+        {
+          "id": "725eeeee-ee6c-48e8-8c12-aadde88652dd",
+          "name": "People Leadership, Consumer, EdTech, Enterprise, Financial Services, Gaming/Media, Healthcare, Life Sciences, Security",
+          "color": null,
+          "orderindex": 148
+        },
+        {
+          "id": "189f4036-fb57-442c-b189-2f151b4fb184",
+          "name": "Entrepreneurs & Emerging Companies: Venture Financing,M&As,Licensing,Strategic Partnering & Commercial Transactions,Tax,Executive Compensation,Labor & Employment,Privacy & Data",
+          "color": null,
+          "orderindex": 149
+        }
+      ]
+    },
+    "date_created": "1773181703822",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "d129893b-4058-45fd-a795-06185d3c640a",
+    "name": "Phonetic Name",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1761831017332",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "d8ed2aef-3105-4a63-9bbc-2ca8ce1abfe6",
+    "name": "State",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1719967282892",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "db92e2ec-18f1-4b0f-a02e-cef25d89e472",
+    "name": "Email Domian",
+    "type": "short_text",
+    "type_config": {},
+    "date_created": "1761830273630",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "f19fa666-2ae1-4ae8-8d3f-c34c0177f4ae",
+    "name": "Assistant Info",
+    "type": "text",
+    "type_config": {},
+    "date_created": "1719876688052",
+    "hide_from_guests": true,
+    "required": false
+  },
+  {
+    "id": "f53212d1-930a-492a-a0c3-579e50322f46",
+    "name": "STAGE",
+    "type": "drop_down",
+    "type_config": {
+      "options": [
+        {
+          "id": "ab365ef1-a664-42ea-89a1-567d933a9733",
+          "name": "Pre-Seed",
+          "color": null,
+          "orderindex": 0
+        },
+        {
+          "id": "9ddd699d-99e6-47a5-8434-70b13691cc66",
+          "name": "Seed",
+          "color": null,
+          "orderindex": 1
+        },
+        {
+          "id": "01269628-37f6-498c-b08d-8dcf2dfccada",
+          "name": "Series A",
+          "color": null,
+          "orderindex": 2
+        },
+        {
+          "id": "506ebd80-6f2f-4101-a245-0d272c7dbfb5",
+          "name": "Series B",
+          "color": null,
+          "orderindex": 3
+        },
+        {
+          "id": "3be7779a-9a0e-4575-84a3-4cde8e357341",
+          "name": "Series C",
+          "color": null,
+          "orderindex": 4
+        },
+        {
+          "id": "87c70861-ad90-4905-a6a5-4f6d63341f75",
+          "name": "Series D",
+          "color": null,
+          "orderindex": 5
+        },
+        {
+          "id": "8b9c262a-93a5-4f84-be15-711154241c15",
+          "name": "Common",
+          "color": null,
+          "orderindex": 6
+        },
+        {
+          "id": "49141a15-6364-4ca3-84c6-c53b6bf78435",
+          "name": "Total",
+          "color": null,
+          "orderindex": 7
+        },
+        {
+          "id": "6239da36-7e36-47a9-926b-200ed6eb99db",
+          "name": "Other",
+          "color": null,
+          "orderindex": 8
+        }
+      ]
+    },
+    "date_created": "1719499880120",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "ff105728-ea72-4cae-a254-04439387c74b",
+    "name": "Company Type",
+    "type": "drop_down",
+    "type_config": {
+      "new_drop_down": true,
+      "options": [
+        {
+          "id": "65c982c9-44ab-41dc-b654-4764ba15e251",
+          "name": "B2B",
+          "color": "#7C4DFF",
+          "orderindex": 0
+        },
+        {
+          "id": "910c8272-79bf-4fa7-8b1c-0da344b3fc0f",
+          "name": "Beauty",
+          "color": "#800000",
+          "orderindex": 1
+        },
+        {
+          "id": "cd503600-786a-46af-a96f-4c5fd3618a08",
+          "name": "Consumer Tech",
+          "color": "#FF4081",
+          "orderindex": 2
+        },
+        {
+          "id": "00e5e667-c5ff-4b9a-87d9-7b7316de4f1b",
+          "name": "Fashion",
+          "color": "#EA80FC",
+          "orderindex": 3
+        },
+        {
+          "id": "e8d86379-40b9-4fcf-a6b4-a3327783d7c9",
+          "name": "Fintech",
+          "color": "#3397dd",
+          "orderindex": 4
+        },
+        {
+          "id": "38f5d490-5088-4026-87b9-534fd5ee179d",
+          "name": "F&B",
+          "color": "#e50000",
+          "orderindex": 5
+        },
+        {
+          "id": "81733571-8ffe-40c6-9ed7-961fd151040c",
+          "name": "Health & Wellness",
+          "color": "#9b59b6",
+          "orderindex": 6
+        },
+        {
+          "id": "67b93d45-7d3f-4117-9eef-7238019e64bf",
+          "name": "Home Products",
+          "color": "#81B1FF",
+          "orderindex": 7
+        },
+        {
+          "id": "ea57f145-9df9-4799-a62a-29b8c3a1557a",
+          "name": "Media",
+          "color": "#0231E8",
+          "orderindex": 8
+        },
+        {
+          "id": "2e54637b-1007-41d2-835a-e3729d7d750e",
+          "name": "Medical",
+          "color": "#ff7800",
+          "orderindex": 9
+        },
+        {
+          "id": "3ec54fe7-de2d-48d4-9740-d4646e949d7d",
+          "name": "Proptech",
+          "color": "#FF7FAB",
+          "orderindex": 10
+        },
+        {
+          "id": "7bde9383-dc73-4bfb-8f54-bf681fe4a4d9",
+          "name": "Retail",
+          "color": "#f900ea",
+          "orderindex": 11
+        },
+        {
+          "id": "f3ea7361-ff09-45cb-9564-8ad6433d1bed",
+          "name": "Web 3.0",
+          "color": "#bf55ec",
+          "orderindex": 12
+        },
+        {
+          "id": "db46f26b-3c30-48a6-8439-81980ded9ba3",
+          "name": "SaaS",
+          "color": "#AF7E2E",
+          "orderindex": 13
+        },
+        {
+          "id": "374fea98-2333-4370-bd7d-6589104fde84",
+          "name": "Frontier Tech",
+          "color": "#3082B7",
+          "orderindex": 14
+        },
+        {
+          "id": "383d6a0c-0ca8-437e-a7a3-79c6a4be14c8",
+          "name": "AI",
+          "color": "#04A9F4",
+          "orderindex": 15
+        },
+        {
+          "id": "0f5b44d7-41b8-4a5d-89f2-9783cd7378e4",
+          "name": "Other",
+          "color": "#02BCD4",
+          "orderindex": 16
+        },
+        {
+          "id": "40fd0148-d3c3-4e1f-9989-d87a39add189",
+          "name": "Bank",
+          "color": "#800D98",
+          "orderindex": 17
+        },
+        {
+          "id": "233847db-7fc4-466a-b974-e1851362a32e",
+          "name": "Cars",
+          "color": "#ED2AD3",
+          "orderindex": 18
+        },
+        {
+          "id": "525fbc26-1e0e-4864-9185-d99b9b8c7116",
+          "name": "Venture Capitalist",
+          "color": "#1bbc9c",
+          "orderindex": 19
+        },
+        {
+          "id": "70255cd3-b6ef-482c-8025-4533f723b34e",
+          "name": "Film/TV",
+          "color": "#DB6DA8",
+          "orderindex": 20
+        },
+        {
+          "id": "c9256707-f404-4616-aeca-fd12f1d57d21",
+          "name": "Politics",
+          "color": "#EF00B3",
+          "orderindex": 21
+        },
+        {
+          "id": "934d7f07-352f-43f4-af19-6f425af824b3",
+          "name": "Law",
+          "color": "#E08E81",
+          "orderindex": 22
+        },
+        {
+          "id": "3d738c0a-5bc6-4f02-ab26-21dbf076c453",
+          "name": "Finance",
+          "color": "#92376A",
+          "orderindex": 23
+        }
+      ]
+    },
+    "date_created": "1719499819584",
+    "hide_from_guests": false,
+    "required": false
+  },
+  {
+    "id": "ff1b0bd2-c687-4b29-aab4-0ab515825ad6",
+    "name": "📞 Phone",
+    "type": "phone",
+    "type_config": {},
+    "date_created": "1719499361831",
+    "hide_from_guests": true,
+    "required": false
+  }
+]

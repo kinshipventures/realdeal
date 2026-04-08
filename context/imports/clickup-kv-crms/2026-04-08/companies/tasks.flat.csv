@@ -1,0 +1,860 @@
+id,custom_id,name,status,priority,date_created,date_updated,date_closed,start_date,due_date,url,archived,parent,assignees,tags,text_content,description,Additional Lists,Appointment Date,Assistant Info,CITY,COUNTRY,Comments,Company Type,Contacts,DECK,Expected Next Raise,FIRST NAME,FUND TYPE,Fundraise Status,GENDER,HQ,In Scope?,Introduced By,Investing Fund,Investment Entity,Investment Stage,KV LP Status,Kinship Investor,LAST NAME,Latest Comment,LinkedIn,Logo,Main List,Meeting Date,Meeting Type,Need Update?,Needs Update,Note Date,Outreach,Personal Priorities,Pipeline Stage,Pipeline Status,Progress Tracker,Progress Updates,Project,Projects (out of scope),REASON WHY PASSED,Recurring,Referred by,Relationship Owner,Remove,SPV INVESTOR,SPV Investor,STAGE,Scope,Sector,Sent,Substack Bucket,Summary,TLDR,Task Type,Time Blocking,Timeline,To assign,Type,Under Represented Founder?,✉️ Email,✍️ Noteables,🌎 GLOBAL REGION,🌐 Website,🏢 Address,🏢 Company,👍 Likelihood,💌 Email,💼 Job Title,📞 Phone,🔗 Upwork Link,🧑‍🤝‍🧑 Staff
+86e07u8ta,,Schedule intro call with Brian Ree / Ester AI — Wed–Fri next week,incoming lead,high,2026-03-06T19:25:54.063000Z,2026-03-17T21:39:35.557000Z,,,2026-03-13T11:00:00Z,https://app.clickup.com/t/86e07u8ta,False,86e07u8pc,[],[],"Brian Ree requested times Wed–Fri (Mar 11–13). Moj replied via email — EA to confirm and lock in a 30-min call.
+
+Email thread: Re: Ester AI connect","Brian Ree requested times Wed–Fri (Mar 11–13). Moj replied via email — EA to confirm and lock in a 30-min call.
+
+Email thread: Re: Ester AI connect",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07u8pc,,Ester AI — Brian Ree (CEO),incoming lead,high,2026-03-06T19:25:48.116000Z,2026-03-23T13:01:58.851000Z,,2026-03-06T12:00:00Z,2026-03-27T11:00:00Z,https://app.clickup.com/t/86e07u8pc,False,,[],[],"Company: Ester AI
+CEO: Brian Ree — brianree@gmail.com
+Intro via: Doug Hirsch (cc) + Trina Spear
+Deck: DocsEnd | Promo Video
+
+Context: Doug Hirsch (Trevor's partner) introduced Brian Ree (Ester AI CEO) to Trina, who then looped in Moj. Trina endorsed the connection. Brian is asking for a call Wed–Fri next week.
+
+Source email thread: Re: Ester AI connect","Company: Ester AI
+CEO: Brian Ree — brianree@gmail.com
+Intro via: Doug Hirsch (cc) + Trina Spear
+Deck: DocsEnd | Promo Video
+
+Context: Doug Hirsch (Trevor's partner) introduced Brian Ree (Ester AI CEO) to Trina, who then looped in Moj. Trina endorsed the connection. Brian is asking for a call Wed–Fri next week.
+
+Source email thread: Re: Ester AI connect",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cxzh,,Buff Beauty,incoming lead,,2026-03-06T02:35:57.548000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cxzh,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,5,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cw2d,,Midi Health,incoming lead,,2026-03-06T02:25:16.869000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cw2d,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,5,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cw14,,Ara / Mechanism of Action (MOA),incoming lead,,2026-03-06T02:25:04.851000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cw14,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,5,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvzy,,Function Health (Mark Hyman),incoming lead,,2026-03-06T02:24:44.334000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvzy,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,5,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvyw,,Imago Systems,incoming lead,,2026-03-06T02:24:32.375000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvyw,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvyd,,SLAM Bio,incoming lead,,2026-03-06T02:24:23.604000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvyd,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvy2,,HistoSonics,incoming lead,,2026-03-06T02:24:14.552000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvy2,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvxf,,Seed Lip (New Co),incoming lead,,2026-03-06T02:24:05.895000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvxf,False,,[],[],,,,,,,,,,,,,,,,,,,,,,0,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvx4,,Cancer Check Labs,incoming lead,,2026-03-06T02:23:55.958000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvx4,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvwa,,Albourz + Health Tech Portfolio,incoming lead,,2026-03-06T02:23:46.966000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvwa,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvuw,,Laurette Bio,incoming lead,,2026-03-06T02:23:22.909000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvuw,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvub,,Wabi,incoming lead,,2026-03-06T02:23:10.996000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvub,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvtn,,Seed (Warrants Pre-Sale),incoming lead,,2026-03-06T02:23:00.864000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvtn,False,,[],[],,,,,,,,,,,,,,,,,,,,,,0,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvrn,,Hone Health,incoming lead,,2026-03-06T02:22:51.637000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvrn,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvr8,,Marker Health,incoming lead,,2026-03-06T02:22:40.697000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvr8,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvqv,,Eight Sleep,incoming lead,,2026-03-06T02:22:32.759000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvqv,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvqg,,Audrill,incoming lead,,2026-03-06T02:22:24.143000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvqg,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvq1,,Anthropic,incoming lead,,2026-03-06T02:22:11.596000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvq1,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,6,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07cvnj,,Lovable AI,incoming lead,,2026-03-06T02:21:53.216000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07cvnj,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,4,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e07ch93,,Farm to People,incoming lead,,2026-03-06T01:49:41.863000Z,2026-03-17T21:39:36.531000Z,,,,https://app.clickup.com/t/86e07ch93,False,,[],[],"Company Overview
+
+Farm to People is a New York City-based grocery delivery platform connecting local farms directly to consumers through a proprietary logistics and technology model. The platform offers pantry staples, prepared foods, animal proteins, baked goods, and private label products, delivered within 24 hours, 7 days a week in reusable totes.
+
+Source
+
+Introduced via Elly Truesdell (New Fare Partners) through the Nic Jammet / Quentin connection.
+
+Financial Highlights
+
+2025 Gross Revenue: $23M+ (grew over 100% YoY)
+2026 Current Run Rate: $40M+
+2025 Delivered Profit Margin: 32%
+2025 EBITDA Margin: 11%
+Capital Raised to Date: $0 (bootstrapped)
+
+Deal Proposal
+
+Lead: New Fare Partners — $1.5M–$2.5M check
+Pre-money Valuation: $40M
+Target Ownership: ~3.5%–5.5%
+Status: Term Sheet signed (as of March 5, 2026)
+
+Committed Investors
+
+Fred Wilson (first investor in Twitter, Etsy, Coinbase, Foursquare)
+Todd Lachman (Sovos Brands)
+Williamson Family (Forager Project)
+David Barber
+Jon Rosen (WME)
+
+Notes
+
+SPV opportunity potentially available for Kinship Ventures
+Elly open to setting up a direct call with founder Michael","Company Overview
+
+Farm to People is a New York City-based grocery delivery platform connecting local farms directly to consumers through a proprietary logistics and technology model. The platform offers pantry staples, prepared foods, animal proteins, baked goods, and private label products, delivered within 24 hours, 7 days a week in reusable totes.
+
+Source
+
+Introduced via Elly Truesdell (New Fare Partners) through the Nic Jammet / Quentin connection.
+
+Financial Highlights
+
+2025 Gross Revenue: $23M+ (grew over 100% YoY)
+2026 Current Run Rate: $40M+
+2025 Delivered Profit Margin: 32%
+2025 EBITDA Margin: 11%
+Capital Raised to Date: $0 (bootstrapped)
+
+Deal Proposal
+
+Lead: New Fare Partners — $1.5M–$2.5M check
+Pre-money Valuation: $40M
+Target Ownership: ~3.5%–5.5%
+Status: Term Sheet signed (as of March 5, 2026)
+
+Committed Investors
+
+Fred Wilson (first investor in Twitter, Etsy, Coinbase, Foursquare)
+Todd Lachman (Sovos Brands)
+Williamson Family (Forager Project)
+David Barber
+Jon Rosen (WME)
+
+Notes
+
+SPV opportunity potentially available for Kinship Ventures
+Elly open to setting up a direct call with founder Michael",,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,"[""Moj Mahdara""]",,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86e05hh69,,Ruth AI,incoming lead,normal,2026-03-03T15:47:48.125000Z,2026-03-17T21:39:36.531000Z,,2026-03-03T12:00:00Z,2026-03-11T11:00:00Z,https://app.clickup.com/t/86e05hh69,False,,[],[],"Contact Name: Valerie Chapman
+Email: valerie@ruthapp.ai
+Company: Ruth AI
+Role/Title: Co-Founder / Founder
+LinkedIn/Website: 
+Situation Summary:
+Valerie Chapman, co-founder of Ruth AI, reached out regarding their seed round raise and is seeking a call with Kinship Ventures. Jenny responded directing her to complete the Kinship Intake Form for review. 
+Relevant Context:
+Ruth AI is building AI agents focused on helping women close the gender wage gap (salary negotiation, personal branding, career advancement).
+Claims 7M+ organic views in 2026.
+Mentions inbound enterprise/partnership interest from Canva, Reddit, and The Female Quotient.
+Founder published a Fortune piece on the $1.6T AI gender gap after a conversation with Sam Altman.
+Based in San Francisco, CA.
+Action Needed:
+Await completion of Kinship Intake Form and pitch deck submission; review for alignment with Kinship’s consumer wellness and women-focused investment thesis. Follow up if qualified for intro call.","Contact Name: Valerie Chapman
+Email: valerie@ruthapp.ai
+Company: Ruth AI
+Role/Title: Co-Founder / Founder
+LinkedIn/Website: 
+Situation Summary:
+Valerie Chapman, co-founder of Ruth AI, reached out regarding their seed round raise and is seeking a call with Kinship Ventures. Jenny responded directing her to complete the Kinship Intake Form for review. 
+Relevant Context:
+Ruth AI is building AI agents focused on helping women close the gender wage gap (salary negotiation, personal branding, career advancement).
+Claims 7M+ organic views in 2026.
+Mentions inbound enterprise/partnership interest from Canva, Reddit, and The Female Quotient.
+Founder published a Fortune piece on the $1.6T AI gender gap after a conversation with Sam Altman.
+Based in San Francisco, CA.
+Action Needed:
+Await completion of Kinship Intake Form and pitch deck submission; review for alignment with Kinship’s consumer wellness and women-focused investment thesis. Follow up if qualified for intro call.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,2,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,valerie@ruthapp.ai,,,,,,,valerie@ruthapp.ai,,,,
+86e01vx71,,"Amit Vaishnav, Arihafoods Private Limited",incoming lead,normal,2026-02-25T16:10:18.806000Z,2026-03-23T13:01:58.851000Z,,2026-02-25T12:00:00Z,2026-03-27T11:00:00Z,https://app.clickup.com/t/86e01vx71,False,,[],[],"Contact Name: Amit Vaishnav
+Email: investor.arihafoods@gmail.com
+Company: Arihafoods Private Limited
+Role/Title: Co-Founder
+LinkedIn/Website: Not provided (no link included in thread)
+Situation Summary:
+Amit Vaishnav is pitching Arihafoods Private Limited as a high-agency investment opportunity aligned with Kinship Ventures’ thesis, currently raising ₹3 Cr at a ₹15 Cr valuation.
+Relevant Context:
+Low glycemic index breads fortified with prebiotic fiber; positioned in health & wellness infrastructure.
+Claims 100+ field trials showing positive blood glucose impact; patents filed for 30-day shelf-life via advanced baking + MAP technology.
+Reported ₹1.3 Cr FY25 revenue; ₹12–13L monthly sales run-rate; fully bootstrapped.
+GTM strategy: D2C + healthcare institutions + Café/QSR expansion.
+Moj Office responded requesting completion of Kinship Intake Form before review.","Contact Name: Amit Vaishnav
+Email: investor.arihafoods@gmail.com
+Company: Arihafoods Private Limited
+Role/Title: Co-Founder
+LinkedIn/Website: Not provided (no link included in thread)
+Situation Summary:
+Amit Vaishnav is pitching Arihafoods Private Limited as a high-agency investment opportunity aligned with Kinship Ventures’ thesis, currently raising ₹3 Cr at a ₹15 Cr valuation.
+Relevant Context:
+Low glycemic index breads fortified with prebiotic fiber; positioned in health & wellness infrastructure.
+Claims 100+ field trials showing positive blood glucose impact; patents filed for 30-day shelf-life via advanced baking + MAP technology.
+Reported ₹1.3 Cr FY25 revenue; ₹12–13L monthly sales run-rate; fully bootstrapped.
+GTM strategy: D2C + healthcare institutions + Café/QSR expansion.
+Moj Office responded requesting completion of Kinship Intake Form before review.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,investor.arihafoods@gmail.com,,,,,,,,,,,
+86dzgq2dx,,XHealth,incoming lead,normal,2026-01-28T23:27:18.429000Z,2026-03-30T18:23:36.812000Z,,2026-01-28T12:00:00Z,2026-04-01T11:00:00Z,https://app.clickup.com/t/86dzgq2dx,False,,[],[],"Contact Name: Benyamin Amlashi 
+Email: benyamin.amlashi@gmail.com 
+Company: XHealth 
+Role/Title: Founder & CEO 
+LinkedIn/Website: Not found / not provided
+Situation Summary:
+Benyamin Amlashi reached out to introduce XHealth, an AI-powered digital health and care startup in early formation in Armenia, and requested a review with the goal of exploring potential collaboration. 
+Relevant Context:
+Founder has 15+ years of experience studying, working, and living in Armenia 
+XHealth targets elderly users, pregnant women, and patients with chronic conditions 
+Product is a 24/7 AI-powered app with physician support and medical chat 
+Includes health monitoring, high-risk condition detection, SOS ambulance dispatch, and weekly PDF health reports 
+Startup is currently in research, design, and early implementation phase 
+Action Needed:
+Log this inbound pitch in ClickUp and determine whether to schedule a brief intro call or request the one-pager for internal review before responding.","Contact Name: Benyamin Amlashi 
+Email: benyamin.amlashi@gmail.com 
+Company: XHealth 
+Role/Title: Founder & CEO 
+LinkedIn/Website: Not found / not provided
+Situation Summary:
+Benyamin Amlashi reached out to introduce XHealth, an AI-powered digital health and care startup in early formation in Armenia, and requested a review with the goal of exploring potential collaboration. 
+Relevant Context:
+Founder has 15+ years of experience studying, working, and living in Armenia 
+XHealth targets elderly users, pregnant women, and patients with chronic conditions 
+Product is a 24/7 AI-powered app with physician support and medical chat 
+Includes health monitoring, high-risk condition detection, SOS ambulance dispatch, and weekly PDF health reports 
+Startup is currently in research, design, and early implementation phase 
+Action Needed:
+Log this inbound pitch in ClickUp and determine whether to schedule a brief intro call or request the one-pager for internal review before responding.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,
+86dzgpw8p,,Jabin Beverage Co.,incoming lead,normal,2026-01-28T23:20:14.614000Z,2026-03-26T11:46:43.072000Z,,2026-01-28T12:00:00Z,2026-04-03T11:00:00Z,https://app.clickup.com/t/86dzgpw8p,False,,[],[],"Contact Name: Homayoon Ershadi
+Email: homayoon@drinkjabin.com
+Company: Jabin Beverage Co.
+Role/Title: Founder
+LinkedIn/Website:   (LinkedIn not found)
+Situation Summary:
+Founder of a Persian-inspired CPG beverage brand followed up via email after an IG DM to introduce Drink Jabin and request a conversation and product sampling.
+Relevant Context:
+Left the tech industry to start a beverage company rooted in Persian heritage.
+Product is based on Sekanjabin, a traditional Persian drink.
+Emphasizes clean-label ingredients: real fruits and herbs, no synthetics.
+Targeting health-conscious U.S. consumers.
+Open to sending product samples and scheduling a conversation.
+Action Needed:
+Review fit for Kinship/Trolley network and decide whether to accept intro call and product sample.","Contact Name: Homayoon Ershadi
+Email: homayoon@drinkjabin.com
+Company: Jabin Beverage Co.
+Role/Title: Founder
+LinkedIn/Website:   (LinkedIn not found)
+Situation Summary:
+Founder of a Persian-inspired CPG beverage brand followed up via email after an IG DM to introduce Drink Jabin and request a conversation and product sampling.
+Relevant Context:
+Left the tech industry to start a beverage company rooted in Persian heritage.
+Product is based on Sekanjabin, a traditional Persian drink.
+Emphasizes clean-label ingredients: real fruits and herbs, no synthetics.
+Targeting health-conscious U.S. consumers.
+Open to sending product samples and scheduling a conversation.
+Action Needed:
+Review fit for Kinship/Trolley network and decide whether to accept intro call and product sample.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,homayoon@drinkjabin.com,,,,,,,,"Founder
+",,,
+86dzb9jgt,,Calexo,incoming lead,normal,2026-01-19T22:47:20.107000Z,2026-03-30T18:24:33.731000Z,,2026-01-19T12:00:00Z,2026-04-01T11:00:00Z,https://app.clickup.com/t/86dzb9jgt,False,,[],[],"Contact Name: Sekou Foley
+Email: sekou@calexo.ai
+Company: Calexo
+Role/Title: Co-Founder & CEO
+LinkedIn/Website: Not provided (not found in email)
+Situation Summary:
+Sekou Foley reached out to introduce Calexo, an AI-enabled holding company focused on acquiring and transforming legacy service businesses, and requested a brief introductory call to discuss their AI-driven roll-up strategy. 
+Relevant Context:
+Calexo is pursuing an AI-enabled roll-up strategy, starting with HVAC services.
+Initial proof point includes a proprietary AI customer service agent that reduces ticket handling and support costs.
+Broader expansion vision spans facilities services, logistics, insurance brokerages, and IT services.
+Founding team has strong institutional and technical backgrounds (Apollo PE, Blackstone PE, Google, Meta, CD&R, MIT CS).
+Action Needed:
+Add to ClickUp and determine whether to accept a short intro call to assess strategic fit and potential next steps.","Contact Name: Sekou Foley
+Email: sekou@calexo.ai
+Company: Calexo
+Role/Title: Co-Founder & CEO
+LinkedIn/Website: Not provided (not found in email)
+Situation Summary:
+Sekou Foley reached out to introduce Calexo, an AI-enabled holding company focused on acquiring and transforming legacy service businesses, and requested a brief introductory call to discuss their AI-driven roll-up strategy. 
+Relevant Context:
+Calexo is pursuing an AI-enabled roll-up strategy, starting with HVAC services.
+Initial proof point includes a proprietary AI customer service agent that reduces ticket handling and support costs.
+Broader expansion vision spans facilities services, logistics, insurance brokerages, and IT services.
+Founding team has strong institutional and technical backgrounds (Apollo PE, Blackstone PE, Google, Meta, CD&R, MIT CS).
+Action Needed:
+Add to ClickUp and determine whether to accept a short intro call to assess strategic fit and potential next steps.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,sekou@calexo.ai,,,,,,,sekou@calexo.ai,"Co-Founder & CEO
+",,,
+86dzb9d4h,,Namier Capital,incoming lead,normal,2026-01-19T22:38:55.424000Z,2026-03-30T18:24:53.936000Z,,2026-01-19T12:00:00Z,2026-04-01T11:00:00Z,https://app.clickup.com/t/86dzb9d4h,False,,[],[],"Contact Name: Tej Rathor
+Email: trathor@namiercapital.com
+Company: Namier Capital
+Role/Title: Senior Associate
+LinkedIn/Website:  
+Situation Summary:
+Tej Rathor of Namier Capital followed up with Kinship Ventures after previously sharing multiple consumer, beauty, and wellness investment opportunities, seeking feedback or interest in reviewing materials.
+Relevant Context:
+Outreach is part of a broader investor–operator introduction effort; initial contact made in November 2025.
+Moj Mahdara indicated no time for a call but willingness to review decks and data rooms.
+Tej subsequently shared multiple investment opportunities across Food & Beverage, Beauty, and Health/Wellness.
+Opportunities include UK- and US-scaling brands with active raises (Seed to Series A).
+Latest email (Jan 15, 2026) is a follow-up asking if there is interest in learning more about any of the shared companies.
+Action Needed:
+Log this thread in ClickUp and determine whether Kinship wants to review any specific decks or formally decline; send a brief response to Tej acknowledging status or next steps.","Contact Name: Tej Rathor
+Email: trathor@namiercapital.com
+Company: Namier Capital
+Role/Title: Senior Associate
+LinkedIn/Website:  
+Situation Summary:
+Tej Rathor of Namier Capital followed up with Kinship Ventures after previously sharing multiple consumer, beauty, and wellness investment opportunities, seeking feedback or interest in reviewing materials.
+Relevant Context:
+Outreach is part of a broader investor–operator introduction effort; initial contact made in November 2025.
+Moj Mahdara indicated no time for a call but willingness to review decks and data rooms.
+Tej subsequently shared multiple investment opportunities across Food & Beverage, Beauty, and Health/Wellness.
+Opportunities include UK- and US-scaling brands with active raises (Seed to Series A).
+Latest email (Jan 15, 2026) is a follow-up asking if there is interest in learning more about any of the shared companies.
+Action Needed:
+Log this thread in ClickUp and determine whether Kinship wants to review any specific decks or formally decline; send a brief response to Tej acknowledging status or next steps.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,Trathor@namiercapital.com,,,http://www.namiercapital.com,"   11 Manchester Square  ,   London  ,   W1U 3PW  ,   United Kingdom      ",,,Trathor@namiercapital.com,"Senior Associate
+",,,
+86dz8ez16,,Weare Better,incoming lead,normal,2026-01-14T12:49:24.590000Z,2026-03-26T12:07:27.677000Z,,2026-01-14T12:00:00Z,2026-04-03T11:00:00Z,https://app.clickup.com/t/86dz8ez16,False,,[],[],"Contact Name: Phoebe Walker
+Email: phoebe@weare-better.com
+Company: Better (brand name inferred from domain; legal entity not specified)
+Role/Title: Founder & CEO
+LinkedIn/Website: ❗Not provided
+Situation Summary:
+Phoebe Walker reached out to Kinship Ventures to introduce a non-toxic women’s underwear startup addressing reproductive health risks from toxins in conventional intimates, and requested a brief introductory call.
+Relevant Context:
+Targeting hidden toxins in women’s underwear (PFAS, microplastics, heavy metals, endocrine disruptors).
+Positioning the brand as a category-disrupting, non-toxic alternative in a $45B global market.
+Prototypes are being finalized; company is pre-scale and seeking the right partner.
+Looking for support on production scale, go-to-market strategy, and category education.
+Explicitly identified Kinship Ventures as a strong strategic fit.
+Action Needed:
+Decide whether to add to pipeline and respond to schedule an initial exploratory call.","Contact Name: Phoebe Walker
+Email: phoebe@weare-better.com
+Company: Better (brand name inferred from domain; legal entity not specified)
+Role/Title: Founder & CEO
+LinkedIn/Website: ❗Not provided
+Situation Summary:
+Phoebe Walker reached out to Kinship Ventures to introduce a non-toxic women’s underwear startup addressing reproductive health risks from toxins in conventional intimates, and requested a brief introductory call.
+Relevant Context:
+Targeting hidden toxins in women’s underwear (PFAS, microplastics, heavy metals, endocrine disruptors).
+Positioning the brand as a category-disrupting, non-toxic alternative in a $45B global market.
+Prototypes are being finalized; company is pre-scale and seeking the right partner.
+Looking for support on production scale, go-to-market strategy, and category education.
+Explicitly identified Kinship Ventures as a strong strategic fit.
+Action Needed:
+Decide whether to add to pipeline and respond to schedule an initial exploratory call.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,phoebe@weare-better.com,,,,,,,,"Founder & CEO
+",,,
+86dz7u5rq,,Phia,incoming lead,normal,2026-01-13T15:19:07.107000Z,2026-03-30T16:52:00.369000Z,,2026-01-13T12:00:00Z,2026-04-03T11:00:00Z,https://app.clickup.com/t/86dz7u5rq,False,,[],[],"Attaching our deck here and sharing a quick highlight below.
+
+UPDATED DATE: 03/30/2026
+Phoebe Gates 
+Mar 24, 2026, 9:51 AM (6 days ago) 
+to Moj, Sophia, Trina, GP, me, Jessica 
+Hi Moj, 
+It was so great connecting a couple weeks ago. Really enjoyed learning more about what you are building at Kinship, the portfolio is incredibly impressive. 
+Wanted to circle back as we're nearing the end of our strategic allocation and would love to have you and GP participate if there's interest on your end. Let me know if there's anything else you need from us, happy to send over whatever would be helpful. 
+Warmly, 
+Phoebe
+
+Contact Name: Phoebe Gates
+Email: phoebe@phia.com
+Company: Phia
+Role/Title: Co-founder (title not explicitly stated in email)
+LinkedIn/Website:   (LinkedIn not provided)
+Situation Summary:
+Phoebe Gates reached out to Kinship Ventures to explore a strategic angel investment from Gwyneth Paltrow in Phia, following the close of Phia’s $30M Series A at a $180M valuation.
+Relevant Context:
+Phia is a fashion discovery platform and personalized AI shopping agent targeting Gen Z and millennial women.
+Recently closed a $30M Series A led by Notable, Khosla Ventures, and Kleiner Perkins.
+Currently allocating remaining strategic checks with no minimum check size, prioritizing culturally aligned investors.
+Highlights strong traction: 900K downloads, 87%+ monthly retention, $13M/month GMV, $1M+/month revenue, already profitable.
+Positioning Gwyneth Paltrow as a culturally aligned investor whose style resonates strongly with Phia’s user base.
+Action Needed:
+Review the attached deck and determine whether to introduce or explore Gwyneth Paltrow as a strategic angel investor; decide on next-step call or follow-up with Phoebe.","Attaching our deck here and sharing a quick highlight below.
+
+UPDATED DATE: 03/30/2026
+Phoebe Gates 
+Mar 24, 2026, 9:51 AM (6 days ago) 
+to Moj, Sophia, Trina, GP, me, Jessica 
+Hi Moj, 
+It was so great connecting a couple weeks ago. Really enjoyed learning more about what you are building at Kinship, the portfolio is incredibly impressive. 
+Wanted to circle back as we're nearing the end of our strategic allocation and would love to have you and GP participate if there's interest on your end. Let me know if there's anything else you need from us, happy to send over whatever would be helpful. 
+Warmly, 
+Phoebe
+
+Contact Name: Phoebe Gates
+Email: phoebe@phia.com
+Company: Phia
+Role/Title: Co-founder (title not explicitly stated in email)
+LinkedIn/Website:   (LinkedIn not provided)
+Situation Summary:
+Phoebe Gates reached out to Kinship Ventures to explore a strategic angel investment from Gwyneth Paltrow in Phia, following the close of Phia’s $30M Series A at a $180M valuation.
+Relevant Context:
+Phia is a fashion discovery platform and personalized AI shopping agent targeting Gen Z and millennial women.
+Recently closed a $30M Series A led by Notable, Khosla Ventures, and Kleiner Perkins.
+Currently allocating remaining strategic checks with no minimum check size, prioritizing culturally aligned investors.
+Highlights strong traction: 900K downloads, 87%+ monthly retention, $13M/month GMV, $1M+/month revenue, already profitable.
+Positioning Gwyneth Paltrow as a culturally aligned investor whose style resonates strongly with Phia’s user base.
+Action Needed:
+Review the attached deck and determine whether to introduce or explore Gwyneth Paltrow as a strategic angel investor; decide on next-step call or follow-up with Phoebe.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,phoebe@phia.com,,,,,,,,,,,
+86dy8bfmw,,OpenAI SPV,incoming lead,,2025-10-30T22:02:05.176000Z,2025-10-30T22:02:05.176000Z,,,,https://app.clickup.com/t/86dy8bfmw,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dy8bc11,,goop,incoming lead,,2025-10-30T21:53:58.762000Z,2025-10-30T21:53:58.762000Z,,,,https://app.clickup.com/t/86dy8bc11,False,,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dy82e9j,,Brad  Lightcap,incoming lead,,2025-10-30T14:01:24.324000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82e9j,False,86dy8bfmw,[],[],,,,,,,,,,,,,Brad,,,,,,,,,,,,Lightcap,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,brad@openai.com,,,,
+86dy82e9c,,Mou Chengpeng,incoming lead,,2025-10-30T14:01:23.463000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82e9c,False,86dy8bfmw,[],[],,,,,,,,,,,,,Mou,,,,,,,,,,,,Chengpeng,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,cmou@openai.com,,,,
+86dy82e97,,Joyce  Shi,incoming lead,,2025-10-30T14:01:22.586000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82e97,False,86dy8bfmw,[],[],,,,,,,,,,,,,Joyce,,,,,,,,,,,,Shi,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,joyce@openai.com,,,,
+86dy82e8w,,Theresa Jolles,incoming lead,,2025-10-30T14:01:21.604000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82e8w,False,86dy8bfmw,[],[],,,,,,,,,,,,,Theresa,,,,,,,,,,,,Jolles,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,theresa@openai.com,,,,
+86dy82dnc,,Gary Briggs,incoming lead,,2025-10-30T14:00:23.444000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82dnc,False,86dy8bfmw,[],[],,,,,,,,,,,,,Gary,,,,,,,,,,,,Briggs,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,gary.briggs@openai.com,,,,
+86dy82bfb,,Bill Peebles,incoming lead,,2025-10-30T13:55:53.781000Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82bfb,False,86dy8bfmw,[],[],,,,,,,,,,,,,Bill,,,,,,,,,,,,Peebles,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,billpeebles@openai.com,,,,
+86dy6qu5z,,Lovable SPV,in conversation,high,2025-10-27T17:07:15.552000Z,2026-03-06T14:40:59.188000Z,,,,https://app.clickup.com/t/86dy6qu5z,False,,[],[],"Moj will be raising funds for our allocation in Lovable via an SPV
+This task is to track this SPV's activities
+The individuals that are in the pipeline can we found in the Pipeline list and will be linked to this task","Moj will be raising funds for our allocation in Lovable via an SPV
+This task is to track this SPV's activities
+The individuals that are in the pipeline can we found in the Pipeline list and will be linked to this task",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,http://lovabke.dev,,,,,,,,
+86dy82b44,,Marti Crampshee,incoming lead,,2025-10-20T23:22:00Z,2025-10-30T21:54:18.454000Z,,,,https://app.clickup.com/t/86dy82b44,False,86dy8bc11,[],[],,,,,,,,,,,,,Marti,,,,,,,,,,,,Crampshee,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,marti.crampshee@goop.com,,,,
+86dy82b8n,,Jenna Arnold-King,incoming lead,,2025-10-17T03:08:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82b8n,False,86dy8bfmw,[],[],,,,,,,,,,,,,Jenna,,,,,,,,,,,,Arnold-King,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,jenna@openai.com,,,,
+86dy82b9g,,Elle Malet,incoming lead,,2025-10-17T01:10:00Z,2025-10-30T21:54:18.454000Z,,,,https://app.clickup.com/t/86dy82b9g,False,86dy8bc11,[],[],,,,,,,,,,,,,Elle,,,,,,,,,,,,Malet,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,elle.malet@goop.com,"DIRECTOR, BRAND COMMUNICATIONS",+14153029690,,
+86dy82ba1,,Antonio  Di Francesco,incoming lead,,2025-10-16T23:47:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82ba1,False,86dy8bfmw,[],[],,,,,,,,,,,,,Antonio,,,,,,,,,,,,Di Francesco,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,antonio@openai.com,,,,
+86dy82bah,,Anna McKean,incoming lead,,2025-10-16T22:06:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82bah,False,86dy8bfmw,[],[],,,,,,,,,,,,,Anna,,,,,,,,,,,,McKean,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,mckean@openai.com,,,,
+86dy213xj,,Patrick Drake; Autonomy Foods,incoming lead,normal,2025-10-14T23:52:39.292000Z,2026-03-23T13:01:34.806000Z,,2025-10-14T11:00:00Z,2026-03-25T11:00:00Z,https://app.clickup.com/t/86dy213xj,False,,[],[],"📌 Meeting Context Snapshot
+Contact Name: Patrick Drake
+Email: patrick@autonomyfoods.com
+Company: Autonomy Foods
+Role/Title: Founder / Operator (title not explicitly stated)
+LinkedIn/Website:  
+Situation Summary:
+Patrick Drake of Autonomy Foods is in active discussions with Kinship Ventures regarding a potential strategic investment as part of an open capital raise. He is proposing a mid-January catch-up now that he is back in Los Angeles and has shared recent traction and press to support the conversation.
+Relevant Context:
+Autonomy Foods positions itself as the “Nespresso of wellness,” offering superfood coffee and matcha products.
+Recent partnerships include Nobu, Proper Hotels, 1 Hotel, Aero Jets, Alo, and Goop Health.
+Patrick has been on a roadshow onboarding new partners and recently circulated a press release about major hospitality launches.
+Moj Mahdara requested additional information and suggested a Zoom or in-person meeting depending on travel.
+Internal request from Briell Huddleston to log this in ClickUp for Moj’s review and approval has been acknowledged by Moj’s office.
+Action Needed:
+Add this interaction to ClickUp and coordinate with Moj Mahdara to approve and schedule a mid-January meeting (Zoom or in-person) with Patrick Drake to evaluate strategic investment fit.
+
+
+CRM Contact: 
+Co-founder of HelloFresh and is now building his latest venture Autonomy - a coffee matcha replacement product
+Steph Simon made the intro and Patrick suggested meeting in person as he is also LA based","📌 Meeting Context Snapshot
+Contact Name: Patrick Drake
+Email: patrick@autonomyfoods.com
+Company: Autonomy Foods
+Role/Title: Founder / Operator (title not explicitly stated)
+LinkedIn/Website:  
+Situation Summary:
+Patrick Drake of Autonomy Foods is in active discussions with Kinship Ventures regarding a potential strategic investment as part of an open capital raise. He is proposing a mid-January catch-up now that he is back in Los Angeles and has shared recent traction and press to support the conversation.
+Relevant Context:
+Autonomy Foods positions itself as the “Nespresso of wellness,” offering superfood coffee and matcha products.
+Recent partnerships include Nobu, Proper Hotels, 1 Hotel, Aero Jets, Alo, and Goop Health.
+Patrick has been on a roadshow onboarding new partners and recently circulated a press release about major hospitality launches.
+Moj Mahdara requested additional information and suggested a Zoom or in-person meeting depending on travel.
+Internal request from Briell Huddleston to log this in ClickUp for Moj’s review and approval has been acknowledged by Moj’s office.
+Action Needed:
+Add this interaction to ClickUp and coordinate with Moj Mahdara to approve and schedule a mid-January meeting (Zoom or in-person) with Patrick Drake to evaluate strategic investment fit.
+
+
+CRM Contact: 
+Co-founder of HelloFresh and is now building his latest venture Autonomy - a coffee matcha replacement product
+Steph Simon made the intro and Patrick suggested meeting in person as he is also LA based",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dy82bdz,,Stacie  Faggioli,incoming lead,,2025-10-14T02:14:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82bdz,False,86dy8bfmw,[],[],,,,,,,,,,,,,Stacie,,,,,,,,,,,,Faggioli,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,stacie@openai.com,,,,
+86dy82be3,,David Duxin,incoming lead,,2025-10-14T01:19:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82be3,False,86dy8bfmw,[],[],,,,,,,,,,,,,David,,,,,,,,,,,,Duxin,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,duxin@openai.com,,,,
+86dy82bed,,Nathalia  Brenes,incoming lead,,2025-10-13T23:45:00Z,2025-10-30T21:58:53.544000Z,,,,https://app.clickup.com/t/86dy82bed,False,86dy6qu5z,[],[],,,,,,,,,,,,,Nathalia,,,,,,,,,,,,Brenes,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,nathalia.brenes@lovable.dev,,,,
+86dy82bek,,Andy Toung,incoming lead,,2025-10-13T23:40:00Z,2025-10-30T21:58:53.544000Z,,,,https://app.clickup.com/t/86dy82bek,False,86dy6qu5z,[],[],,,,,,,,,,,,,Andy,,,,,,,,,,,,Toung,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,andy@lovable.dev,Head of FBOS,+1.818.472.7326,,
+86dy82bfq,,Jess Manzano,incoming lead,,2025-10-12T20:06:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82bfq,False,86dy8bfmw,[],[],,,,,,,,,,,,,Jess,,,,,,,,,,,,Manzano,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,jessm@openai.com,,,,
+86dxzhbyf,,Ivan Soto-Wright,incoming lead,,2025-10-07T16:40:53.824000Z,2025-10-07T16:41:33.095000Z,,,,https://app.clickup.com/t/86dxzhbyf,False,86dxzhbu2,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,Moonpay,,ivan@moonpay.com,,,,
+86dxzhbu2,,Moonpay,current,,2025-10-07T16:40:22.558000Z,2025-10-07T16:42:09.141000Z,,,,https://app.clickup.com/t/86dxzhbu2,False,,[],[],"MoonPay offers a fast and simple way to buy and sell cryptocurrencies
+Founded by Ivan Soto-Wright and Victor Faramond
+Moj's SPV company
+
+LP Updates
+2025
+Q2: Draft","MoonPay offers a fast and simple way to buy and sell cryptocurrencies
+Founded by Ivan Soto-Wright and Victor Faramond
+Moj's SPV company
+
+LP Updates
+2025
+Q2: Draft",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxzh6tm,,Brian Hogan,incoming lead,,2025-10-07T16:30:15.912000Z,2025-10-07T16:30:46.555000Z,,,,https://app.clickup.com/t/86dxzh6tm,False,86duwmwzk,[],[],"Contact Name: Brian Hogan
+Email: brian@domesquad.com
+Company: Dome Squad / 444 Gemini SPV, LLC
+Role/Title: Partner / Manager (Investment SPV Lead)
+LinkedIn/Website: domesquad.com
+Situation Summary:
+Moj requested a call with Brian Hogan to clarify unresolved issues related to Kinship 3.0 LLC’s investment in Gemini via the 444 Gemini SPV. LPs are dissatisfied with the information provided, and Moj seeks to determine how to close out the position without incurring additional costs. Scheduling is underway for early October 2025.
+Relevant Context:
+Kinship Ventures invested $1M (25% of total) into 444 Gemini SPV, which in turn invested in Newflow Amity Fund I, LP, leading to an indirect stake in Gemini Space Station (GEMI).
+The Gemini IPO launched at $28/share (valuation: $3.3B market cap, $5.3B enterprise value), now trading near $24/share post-IPO.
+Kinship’s estimated holding: ~35,714 shares, valued around $860K–$1M depending on post-lockup pricing.
+The SPV has no management fees or carry, with expenses capped at 2% (~$80K).
+180-day IPO lockup remains in effect; distributions (cash or stock) to LPs are pending clarification from Newflow Amity Partners.","Contact Name: Brian Hogan
+Email: brian@domesquad.com
+Company: Dome Squad / 444 Gemini SPV, LLC
+Role/Title: Partner / Manager (Investment SPV Lead)
+LinkedIn/Website: domesquad.com
+Situation Summary:
+Moj requested a call with Brian Hogan to clarify unresolved issues related to Kinship 3.0 LLC’s investment in Gemini via the 444 Gemini SPV. LPs are dissatisfied with the information provided, and Moj seeks to determine how to close out the position without incurring additional costs. Scheduling is underway for early October 2025.
+Relevant Context:
+Kinship Ventures invested $1M (25% of total) into 444 Gemini SPV, which in turn invested in Newflow Amity Fund I, LP, leading to an indirect stake in Gemini Space Station (GEMI).
+The Gemini IPO launched at $28/share (valuation: $3.3B market cap, $5.3B enterprise value), now trading near $24/share post-IPO.
+Kinship’s estimated holding: ~35,714 shares, valued around $860K–$1M depending on post-lockup pricing.
+The SPV has no management fees or carry, with expenses capped at 2% (~$80K).
+180-day IPO lockup remains in effect; distributions (cash or stock) to LPs are pending clarification from Newflow Amity Partners.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxye0yh,,Francis Henri,incoming lead,normal,2025-10-03T21:08:10.390000Z,2026-03-23T13:01:34.806000Z,,2025-10-01T11:00:00Z,2026-03-25T11:00:00Z,https://app.clickup.com/t/86dxye0yh,False,,[],[],"Email received 10/3/25 to RM cc talk to moj
+
+Hi Moj & Gwyneth!
+
+I hope you've both had a lovely week. I've recently been introduced to Kinship Ventures - I'm so incredibly impressed with everything you've built throughout your career, Moj, and of course all things goop! What an impressive duo to join forces. I'd love to introduce myself and my business in the hopes of opening a partnership conversation.
+
+My name is Katherine, and I own Francis Henri, a company with overwhelming potential to be a leader in the next wave of retail in a market that is massively overlooked here in the United States - kids. 
+
+Currently, we are a multibrand children's retail company with a focus on children's clothing - dressing kiddos from newborn to 6 with all the best international brands that are tricky to find in the United States. We carry a sprinkling of accessories, toys, decor and many drops of magic that enhance those special years of early childhood. We reach customers anywhere they'd like to find us - an e-commerce store, two brick & mortar stores, via social, buy online/pick up in store and the occasional traveling pop up.
+
+I have a big dream to grow Francis Henri to retail locations in key markets all over the U.S., owning the early childhood retail experience at a national level. We'll encompass clothing, home goods, bath & body, shoes, toys, play. In addition, the Francis Henri brand lends itself to so much more - hospitality, entertainment, collaborations, private label, etc.! My goal is to find the right partners to help make this big dream happen, and Kinship seems like such an incredible match. For transparency, I also sent our deck to Amy at G9, who I know is a personal friend and another incredible investor! 
+
+HERE will find a deck with all kinds of details about our business. It would be wonderful to continue our conversation, as there's so much more to cover in the world of Francis Henri than a couple of slides can do justice. 
+
+I so appreciate your time, and truly hope we're able to connect.
+
+Enjoy your weekend! 
+Katherine
+
+Katherine Oyer
+Founder, Francis Henri
+Modern shops for little ones, featuring the very best European, Australian, UK & International baby brands that are tricky to find stateside.
+
+Based in Westfield, NJ
+www.francishenri.com
+
+Let's be friends! 
+IG @shopfrancishenri
+Pinterest @shopfrancishenri","Email received 10/3/25 to RM cc talk to moj
+
+Hi Moj & Gwyneth!
+
+I hope you've both had a lovely week. I've recently been introduced to Kinship Ventures - I'm so incredibly impressed with everything you've built throughout your career, Moj, and of course all things goop! What an impressive duo to join forces. I'd love to introduce myself and my business in the hopes of opening a partnership conversation.
+
+My name is Katherine, and I own Francis Henri, a company with overwhelming potential to be a leader in the next wave of retail in a market that is massively overlooked here in the United States - kids. 
+
+Currently, we are a multibrand children's retail company with a focus on children's clothing - dressing kiddos from newborn to 6 with all the best international brands that are tricky to find in the United States. We carry a sprinkling of accessories, toys, decor and many drops of magic that enhance those special years of early childhood. We reach customers anywhere they'd like to find us - an e-commerce store, two brick & mortar stores, via social, buy online/pick up in store and the occasional traveling pop up.
+
+I have a big dream to grow Francis Henri to retail locations in key markets all over the U.S., owning the early childhood retail experience at a national level. We'll encompass clothing, home goods, bath & body, shoes, toys, play. In addition, the Francis Henri brand lends itself to so much more - hospitality, entertainment, collaborations, private label, etc.! My goal is to find the right partners to help make this big dream happen, and Kinship seems like such an incredible match. For transparency, I also sent our deck to Amy at G9, who I know is a personal friend and another incredible investor! 
+
+HERE will find a deck with all kinds of details about our business. It would be wonderful to continue our conversation, as there's so much more to cover in the world of Francis Henri than a couple of slides can do justice. 
+
+I so appreciate your time, and truly hope we're able to connect.
+
+Enjoy your weekend! 
+Katherine
+
+Katherine Oyer
+Founder, Francis Henri
+Modern shops for little ones, featuring the very best European, Australian, UK & International baby brands that are tricky to find stateside.
+
+Based in Westfield, NJ
+www.francishenri.com
+
+Let's be friends! 
+IG @shopfrancishenri
+Pinterest @shopfrancishenri",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,
+86dxxk0xk,,Caddis,current,,2025-10-01T23:56:10.130000Z,2025-10-01T23:59:11.338000Z,,,,https://app.clickup.com/t/86dxxk0xk,False,,[],"[""needs moj""]","10/1: They just received the latest 409a valuation and the paperwork around the additional shares should be ready by early next week. 
+Last call","10/1: They just received the latest 409a valuation and the paperwork around the additional shares should be ready by early next week. 
+Last call",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 100}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxxjy74,,ApplyBoard,current,,2025-10-01T23:47:45.914000Z,2025-10-01T23:55:33.970000Z,,,,https://app.clickup.com/t/86dxxjy74,False,,[],[],"Moj sent LPs an update on 9/29/25
+Last meeting  
+
+
+Note: We need to check in with him once a quarter to prepare for when they go forward with an IPO.","Moj sent LPs an update on 9/29/25
+Last meeting  
+
+
+Note: We need to check in with him once a quarter to prepare for when they go forward with an IPO.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 100}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxx0p8d,,Ron Robinson,incoming lead,,2025-09-30T20:08:28.784000Z,2025-09-30T20:09:22.949000Z,,,,https://app.clickup.com/t/86dxx0p8d,False,86dxx0nn6,[],[],"Quick Reference Profile
+Ron Robinson – Founder & CEO, BeautyStat
+ ✨ Former Estée Lauder, Avon, and Revlon chemist; recognized for pioneering Vitamin C stabilization in skincare.
+ 🧴 Founder of BeautyStat, scaling from cult DTC brand into major retail (Ulta, Sephora, QVC).
+ 🎙 Media voice on science-based beauty, founder resilience, and consumer trust.
+ 💍 Recently married (Sept 2025); hosted LA welcome party.
+ 🌎 Balances credibility as a chemist-founder with authenticity as a consumer-facing entrepreneur.
+Ron Robinson
+Personal & Career Background:
+Highly regarded for bridging hard science + beauty storytelling.
+Entrepreneurial operator who has personally steered BeautyStat through rebrand, category expansion, and retail growth.
+Current Updates / Recent Moves (last 90 days):
+Personal: Wedding + honeymoon in early Sept; resumed schedule end of Sept.
+Business:
+Feb 2025 rebrand repositioned BeautyStat around “Brightenaging” (Marie Claire).
+New launches (May–July 2025): C Lip Serum SPF 30, Sunrise Glow Duo; new shade expansions.
+Celebrity visibility: Hailey Bieber and Bethenny Frankel boosting Universal C Skin Refiner.
+Event thought leadership: Slated to speak at Beauty Accelerate 2025 on science-based beauty.
+Press traction: Forbes, People, Marie Claire, Page Six — mix of glowing endorsements and skeptical reviews (helpful to note for board risk/opportunity framing).
+Relationship Touchpoints:
+Moj + Ron had paused summer comms due to personal/workload; reconvening now.
+Moj congratulated on wedding milestone; rapport reinforced with Sept 5 LA invite.
+This board call doubles as catch-up + strategic alignment.","Quick Reference Profile
+Ron Robinson – Founder & CEO, BeautyStat
+ ✨ Former Estée Lauder, Avon, and Revlon chemist; recognized for pioneering Vitamin C stabilization in skincare.
+ 🧴 Founder of BeautyStat, scaling from cult DTC brand into major retail (Ulta, Sephora, QVC).
+ 🎙 Media voice on science-based beauty, founder resilience, and consumer trust.
+ 💍 Recently married (Sept 2025); hosted LA welcome party.
+ 🌎 Balances credibility as a chemist-founder with authenticity as a consumer-facing entrepreneur.
+Ron Robinson
+Personal & Career Background:
+Highly regarded for bridging hard science + beauty storytelling.
+Entrepreneurial operator who has personally steered BeautyStat through rebrand, category expansion, and retail growth.
+Current Updates / Recent Moves (last 90 days):
+Personal: Wedding + honeymoon in early Sept; resumed schedule end of Sept.
+Business:
+Feb 2025 rebrand repositioned BeautyStat around “Brightenaging” (Marie Claire).
+New launches (May–July 2025): C Lip Serum SPF 30, Sunrise Glow Duo; new shade expansions.
+Celebrity visibility: Hailey Bieber and Bethenny Frankel boosting Universal C Skin Refiner.
+Event thought leadership: Slated to speak at Beauty Accelerate 2025 on science-based beauty.
+Press traction: Forbes, People, Marie Claire, Page Six — mix of glowing endorsements and skeptical reviews (helpful to note for board risk/opportunity framing).
+Relationship Touchpoints:
+Moj + Ron had paused summer comms due to personal/workload; reconvening now.
+Moj congratulated on wedding milestone; rapport reinforced with Sept 5 LA invite.
+This board call doubles as catch-up + strategic alignment.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxx0nn6,,BeautyStat Cosmetics,current,,2025-09-30T20:07:49.362000Z,2026-03-06T14:41:03.702000Z,,,,https://app.clickup.com/t/86dxx0nn6,False,,[],[],"Moj is a Board Member + Seed Investor 
+Intuition Capital invested in there seed round in 2022
+Last meeting 
+
+
+BeautyStat Cosmetics is a science-backed skincare brand founded by cosmetic chemist Ron Robinson (formerly of Estée Lauder, Clinique, and Revlon).
+It’s best known for its Universal C Skin Refiner, a patented stabilized vitamin C serum that stays potent and effective over time. The brand focuses on clean, clinically tested formulas with proven results — fragrance-free, paraben-free, and designed for all skin types.
+Product lineup includes:
+Vitamin C serum (flagship)
+Moisturizers & squalane essence
+Microbiome purifying masks
+Cleansers and treatments
+Overall, BeautyStat is praised for combining chemistry expertise with clean beauty and visible results.","Moj is a Board Member + Seed Investor 
+Intuition Capital invested in there seed round in 2022
+Last meeting 
+
+
+BeautyStat Cosmetics is a science-backed skincare brand founded by cosmetic chemist Ron Robinson (formerly of Estée Lauder, Clinique, and Revlon).
+It’s best known for its Universal C Skin Refiner, a patented stabilized vitamin C serum that stays potent and effective over time. The brand focuses on clean, clinically tested formulas with proven results — fragrance-free, paraben-free, and designed for all skin types.
+Product lineup includes:
+Vitamin C serum (flagship)
+Moisturizers & squalane essence
+Microbiome purifying masks
+Cleansers and treatments
+Overall, BeautyStat is praised for combining chemistry expertise with clean beauty and visible results.",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dxp7b76,,Founder Inquiry - Spooli,incoming lead,low,2025-09-05T20:01:06.675000Z,2026-03-23T13:22:05.153000Z,,2025-09-08T11:00:00Z,2026-03-27T11:00:00Z,https://app.clickup.com/t/86dxp7b76,False,,[],[],"Dear Moj,
+
+I’m in the very early stages of building spoolli, a niche photo-sharing and marketplace app for the home sewing community. It’s a passionate, tight-knit, and high-value market that is overlooked by investors. The community (majority women) includes people who sew for sustainability, plus-size makers seeking more control over their style, and non-binary folk tailoring clothes to their own bodies and aesthetics.
+So far, I’ve secured the website domain, social handles, and started creating app mockups. I would love to share more with you and hear your perspective on how best to grow and fund this idea.
+
+Richelle
++1-631-678-7020","Dear Moj,
+
+I’m in the very early stages of building spoolli, a niche photo-sharing and marketplace app for the home sewing community. It’s a passionate, tight-knit, and high-value market that is overlooked by investors. The community (majority women) includes people who sew for sustainability, plus-size makers seeking more control over their style, and non-binary folk tailoring clothes to their own bodies and aesthetics.
+So far, I’ve secured the website domain, social handles, and started creating app mockups. I would love to share more with you and hear your perspective on how best to grow and fund this idea.
+
+Richelle
++1-631-678-7020",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86dy82dh0,,Chris Saveri,incoming lead,,2025-08-13T17:51:00Z,2025-10-30T21:51:10.446000Z,,,,https://app.clickup.com/t/86dy82dh0,False,86duwmwzk,[],[],,,,,,,,,,,,,Chris,,,,,,,,,,,,Saveri,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,christopher.saveri@gemini.com,,,,
+86dy82dhv,,Tyler  Meade,incoming lead,,2025-08-13T05:38:00Z,2025-10-30T21:51:10.446000Z,,,,https://app.clickup.com/t/86dy82dhv,False,86duwmwzk,[],[],,,,,,,,,,,,,Tyler,,,,,,,,,,,,Meade,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,tyler.meade@gemini.com,,,,
+86dy82dhk,,Dan  Chen,incoming lead,,2025-08-13T05:38:00Z,2025-10-30T21:51:10.446000Z,,,,https://app.clickup.com/t/86dy82dhk,False,86duwmwzk,[],[],,,,,,,,,,,,,Dan,,,,,,,,,,,,Chen,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,dan.chen@gemini.com,,,,
+86dy82dj8,,Sarah  Russell,incoming lead,,2025-08-13T05:03:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82dj8,False,86dy8bfmw,[],[],,,,,,,,,,,,,Sarah,,,,,,,,,,,,Russell,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,sarah.russell@openai.com,Marketing Team,,,
+86dy82dj0,,Austin MacPhee,incoming lead,,2025-08-13T05:03:00Z,2025-10-30T22:02:22.607000Z,,,,https://app.clickup.com/t/86dy82dj0,False,86dy8bfmw,[],[],,,,,,,,,,,,,Austin,,,,,,,,,,,,MacPhee,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,amacphee@openai.com,,,,
+86dy82e2u,,Harsh Chowdhary,incoming lead,,2025-08-04T21:16:00Z,2025-10-30T21:54:18.454000Z,,,,https://app.clickup.com/t/86dy82e2u,False,86dy8bc11,[],[],,,,,,,,,,,,,Harsh,,,,,,,,,,,,Chowdhary,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,harsh@goopkitchen.com,CFO,+19094503857,,
+86dy82e3f,,Kate Freedman,incoming lead,,2025-08-04T19:19:00Z,2025-10-30T21:51:10.446000Z,,,,https://app.clickup.com/t/86dy82e3f,False,86duwmwzk,[],[],,,,,,,,,,,,,Kate,,,,,,,,,,,,Freedman,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,kate.freedman@gemini.com,Senior Corporate Counsel,,,
+86dy82ejy,,Mindaugas Petrutis,incoming lead,,2025-07-27T22:15:00Z,2025-10-30T21:58:53.544000Z,,,,https://app.clickup.com/t/86dy82ejy,False,86dy6qu5z,[],[],,,,,,,,,,,,,Mindaugas,,,,,,,,,,,,Petrutis,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,mindaugas@lovable.dev,,,,
+86duwmx3c,,Yasmin Sewell,incoming lead,,2024-10-11T06:51:52.417000Z,2024-10-11T06:52:12.821000Z,,,,https://app.clickup.com/t/86duwmx3c,False,86duwmbk0,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,yasmin@vyrao.com,,+44 7766 543300,,
+86duwmx1g,,Marshall Beard,incoming lead,,2024-10-11T06:49:14.558000Z,2024-10-11T06:51:08.846000Z,,,,https://app.clickup.com/t/86duwmx1g,False,86duwmwzk,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,marshall.beard@gemini.com,,,,
+86duwmx1c,,Marty Stenson,incoming lead,,2024-10-11T06:49:08.397000Z,2024-10-11T06:51:01.420000Z,,,,https://app.clickup.com/t/86duwmx1c,False,86duwmwzk,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,marty.stenson@gemini.com,,,,
+86duwmx1b,,Tyler Winklevoss,incoming lead,,2024-10-11T06:49:06.838000Z,2024-10-11T06:49:48.612000Z,,,,https://app.clickup.com/t/86duwmx1b,False,86duwmwzk,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,tyler@gemini.com,,,,
+86duwmx17,,Cameron Winklevos,incoming lead,,2024-10-11T06:48:53.324000Z,2024-10-11T06:49:38.814000Z,,,,https://app.clickup.com/t/86duwmx17,False,86duwmwzk,[],[],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,cameron@gemini.com,,,,
+86duwmwzk,,Gemini,current,,2024-10-11T06:47:33.283000Z,2025-10-07T22:26:55.166000Z,,,,https://app.clickup.com/t/86duwmwzk,False,,[],[],"Gemini is a global Cryptocurrency exchange
+One of the companies that Moj is an investor under Kinship LLC
+Below are the quarterly updates on Gemini.
+
+Investor Updates
+
+2025
+Q2
+Gemini Investor Update
+
+Confidential – Please Do Not Forward or Share
+
+Gemini successfully completed its IPO last week, pricing at $28/share and debuting on NASDAQ under the ticker GEMI. The listing reflects a $3.3B market cap and $5.3B enterprise value, positioning the company as one of the most closely watched public offerings in the sector this year.
+
+Kinship Ventures participated in Gemini through our $1M commitment to 444 Gemini SPV, LLC (25% of the vehicle). Based on the IPO reference price, our investment is expected to translate into approximately 35,714 shares, equivalent to ~1x invested capital pre-expenses. Final allocations will be confirmed once Newflow provides official distributions.
+
+As of market close on Friday, September 19, GEMI traded at $24.14/share, implying a mark-to-market value of roughly $861K for our position. While near-term value is subject to market volatility and a 180-day IPO lockup, the company has reiterated that any appreciation above IPO pricing will be immediately accretive once shares are released.
+
+Importantly, the structure of this SPV remains favorable to investors:
+
+• No management fee or carry at either the Amity Fund or SPV level.
+• Expenses capped at 2% of committed capital (Kinship prepaid 1% at entry, which will be credited back).
+• Any cost savings below the 2% cap will be proportionally returned to LPs.
+
+Looking ahead, Newflow has indicated their historic bias is to distribute as soon as practicable post-lockup, with the option for LPs to elect cash or shares. Our intent is to forward proceeds promptly once we confirm receipt.
+
+Gemini's filings are publicly available via the SEC (S-1), and the Depository Trust Company (DTC) will serve as custodian for public shares. We will continue to provide updates as allocation, expense, and distribution details are finalized.
+
+Thank you for your continued support. Please keep this information strictly confidential.
+
+— Kinship Ventures
+
+Hey Jeff, Briell here, I work with Moj on managing our LPs. 
+What we're trying to work on here is that it looks like there's a loss. We have expenses on our side, both in filing and there will be distribution expenses. 
+Can someone join from your side that oversees finance so that we can talk through the following: 
+Distribution expenses. 
+Timing. 
+Waterfall 
+
+Thank you so much. We are heads down on taxes today. Looking forward to getting to know you better. 
+I've heard great things about you. 
+Briell","Gemini is a global Cryptocurrency exchange
+One of the companies that Moj is an investor under Kinship LLC
+Below are the quarterly updates on Gemini.
+
+Investor Updates
+
+2025
+Q2
+Gemini Investor Update
+
+Confidential – Please Do Not Forward or Share
+
+Gemini successfully completed its IPO last week, pricing at $28/share and debuting on NASDAQ under the ticker GEMI. The listing reflects a $3.3B market cap and $5.3B enterprise value, positioning the company as one of the most closely watched public offerings in the sector this year.
+
+Kinship Ventures participated in Gemini through our $1M commitment to 444 Gemini SPV, LLC (25% of the vehicle). Based on the IPO reference price, our investment is expected to translate into approximately 35,714 shares, equivalent to ~1x invested capital pre-expenses. Final allocations will be confirmed once Newflow provides official distributions.
+
+As of market close on Friday, September 19, GEMI traded at $24.14/share, implying a mark-to-market value of roughly $861K for our position. While near-term value is subject to market volatility and a 180-day IPO lockup, the company has reiterated that any appreciation above IPO pricing will be immediately accretive once shares are released.
+
+Importantly, the structure of this SPV remains favorable to investors:
+
+• No management fee or carry at either the Amity Fund or SPV level.
+• Expenses capped at 2% of committed capital (Kinship prepaid 1% at entry, which will be credited back).
+• Any cost savings below the 2% cap will be proportionally returned to LPs.
+
+Looking ahead, Newflow has indicated their historic bias is to distribute as soon as practicable post-lockup, with the option for LPs to elect cash or shares. Our intent is to forward proceeds promptly once we confirm receipt.
+
+Gemini's filings are publicly available via the SEC (S-1), and the Depository Trust Company (DTC) will serve as custodian for public shares. We will continue to provide updates as allocation, expense, and distribution details are finalized.
+
+Thank you for your continued support. Please keep this information strictly confidential.
+
+— Kinship Ventures
+
+Hey Jeff, Briell here, I work with Moj on managing our LPs. 
+What we're trying to work on here is that it looks like there's a loss. We have expenses on our side, both in filing and there will be distribution expenses. 
+Can someone join from your side that oversees finance so that we can talk through the following: 
+Distribution expenses. 
+Timing. 
+Waterfall 
+
+Thank you so much. We are heads down on taxes today. Looking forward to getting to know you better. 
+I've heard great things about you. 
+Briell",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,https://www.gemini.com/,,Gemini,,investor@gemini.com,,,,
+86duwmbk0,,Vyrao,incoming lead,,2024-10-11T03:45:23.616000Z,2026-02-09T20:44:02.359000Z,,,,https://app.clickup.com/t/86duwmbk0,False,,[],[],"Update details from here:
+https://mail.google.com/mail/u/0/#inbox/FMfcgzQXJZsPCjrPrdDKwNqqLrzmgZFC","Update details from here:
+https://mail.google.com/mail/u/0/#inbox/FMfcgzQXJZsPCjrPrdDKwNqqLrzmgZFC",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+86du9x7ba,,David Manshoory,incoming lead,,2024-08-03T01:05:28.616000Z,2025-10-29T22:37:21.438000Z,,,,https://app.clickup.com/t/86du9x7ba,False,86dtvvavp,[],[],COO,COO,,,,,,,,David Manshoory,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,david@meetalleyoop.com,,+1 310 666 2949,,
+86dtvvbe7,,Awe Inspired,incoming lead,,2024-06-20T16:03:42.467000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbe7,False,,[],[],,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,1,,,,,,,,,,,https://www.linkedin.com/company/aweinspired/,
+86dtvvbe5,,Easyway,incoming lead,,2024-06-20T16:03:42.011000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbe5,False,,[],[],,,,,,,,,,,,,,,,,,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvbe4,,Estiesse,incoming lead,,2024-06-20T16:03:41.540000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbe4,False,,[],[],,,,,,,,,,,,,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvbdz,,Parade,incoming lead,,2024-06-20T16:03:41.088000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbdz,False,,[],[],,,,,,,,,,,,,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvbdv,,Julie,incoming lead,,2024-06-20T16:03:40.628000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbdv,False,,[],[],,,,,,,,,,,,,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvbdt,,Alice,incoming lead,,2024-06-20T16:03:40.148000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbdt,False,,[],[],,,,,,,,,,,,,,,,,5,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvbdj,,Copper Banking,incoming lead,,2024-06-20T16:03:39.518000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbdj,False,,[],[],,,,,,,,,,Eddie Behringer,,,,,,,10,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,0,,,,,,,,eddie@getcopper.com,,,,
+86dtvvbde,,Taltrics,incoming lead,,2024-06-20T16:03:38.909000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbde,False,,[],[],,,,,,,,,,Alex Marshal,,,,,,,1,,Founder,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,alex@taltrics.com,,,,
+86dtvvbd5,,Nucleus,incoming lead,,2024-06-20T16:03:38.280000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbd5,False,,[],[],,,,,,,,,,Kian Sadeghi,,,,,,,0,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,ks@mynucleus.com,,,,
+86dtvvbcq,,Alice,incoming lead,,2024-06-20T16:03:37.070000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbcq,False,,[],[],,,,,,,,,,Charlotte Cruz,,,,,,,5,,Founder,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,charlotte@alicemushrooms.com,,,,
+86dtvvbck,,Chain Brands,incoming lead,,2024-06-20T16:03:36.484000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbck,False,,[],[],,,,,,,,,,BJ Novak,,,,,,,1,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,10,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvbch,,WHOP,incoming lead,,2024-06-20T16:03:35.915000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbch,False,,[],[],steven@whop.com,steven@whop.com,,,,,,,,"Steven Schwartz, Cameron Zoub, Jack Sharkey",,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,14,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvbcb,,Wander,incoming lead,,2024-06-20T16:03:35.316000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbcb,False,,[],[],,,,,,,,,,John Andrew Entwistle,,,,,,,8,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,15,,,,,,,,,,1,,,,,,,,jae@wander.com,,,,
+86dtvvbc7,,Digital Reef (Vyng),incoming lead,,2024-06-20T16:03:34.717000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbc7,False,,[],[],,,,,,,,,,"Jeffrey Chernick, Paul Kats",,,,,,,1,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvbbz,,Voices Inc.,incoming lead,,2024-06-20T16:03:34.066000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbz,False,,[],[],,,,,,,,,,Alex Bystrov,,,,,,,0,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,0,,,,,,,,ab@leam.xyz,,,,
+86dtvvbbx,,Vise Technologies,incoming lead,,2024-06-20T16:03:33.420000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbx,False,,[],[],,,,,,,,,,"Samir Vasavada, Runik Mehrotra",,,,,,,0,,Founder,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvbbt,,Versus Game,incoming lead,,2024-06-20T16:03:32.700000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbt,False,,[],[],,,,,,,,,,John Vitti,,,,,,,1,,Advisor,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,1,,,,,,,,john@versusgame.com,,,,
+86dtvvbbk,,Vacation,incoming lead,,2024-06-20T16:03:32.021000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbk,False,,[],[],,,,,,,,,,Dakota Green,,August,,,,,4,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,dakota@vacation.inc,,,,
+86dtvvbbe,,Uni Products,incoming lead,,2024-06-20T16:03:31.387000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbe,False,,[],[],,,,,,,,,,Alexandra Keating,,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,ak@weareuni.com,,,,
+86dtvvbbc,,Thirteen Lune,incoming lead,,2024-06-20T16:03:30.660000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbbc,False,,[],[],,,,,,,,,,Nyakio Grieco,,Small allocation,,,,,1,,Founder,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,nyakio.grieco@thirteenlune.com,,,,
+86dtvvbb5,,Thingy Thing (EXTRA),incoming lead,,2024-06-20T16:03:29.959000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbb5,False,,[],[],,,,,,,,,,"Max Hellerstein, Cyrus Summerlin",,,,,,,0,,Intuition Sourced,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,max@extra.app,,,,
+86dtvvbax,,ThingTesting,incoming lead,,2024-06-20T16:03:29.278000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbax,False,,[],[],,,,,,,,,,Jenny Gyllander,,$3-5M Series A in Q3/Q4,,,,,0,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,14,,,,,,,,,,0,,,,,,,,jenny@thingtesting.com,,,,
+86dtvvban,,The Culinistas,incoming lead,,2024-06-20T16:03:28.590000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvban,False,,[],[],,,,,,,,,,Jill Donenfeld,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""JB""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,jill@theculinistas.com,,,,
+86dtvvbak,,Terradepth,incoming lead,,2024-06-20T16:03:27.948000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbak,False,,[],[],joe@terradepth.com : Joe Wolfel <,joe@terradepth.com : Joe Wolfel <,,,,,,,,"Joe Wolfell, Judson Kauffman",,,,,,,8,,,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,11,,,,,,,,,,1,,,,,,,,joe@terradepth.com,,,,
+86dtvvbad,,Sweet Rehab,incoming lead,,2024-06-20T16:03:27.361000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbad,False,,[],[],Sweet Rehab <anne.hirsch@sweetrehabnyc.com>,Sweet Rehab <anne.hirsch@sweetrehabnyc.com>,,,,,,,,Anne Hirsche,,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,10,,,,,,,,,,0,,,,,,,,anne.hirsch@sweetrehabnyc.com,,,,
+86dtvvbaa,,Supersystem,incoming lead,,2024-06-20T16:03:26.690000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvbaa,False,,[],[],,,,,,,,,,Morgan Von Steen,,,,,,,2,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,0,,,,,,,,mvonsteen@supersystem.us,,,,
+86dtvvba4,,SUPERPLASTIC,incoming lead,,2024-06-20T16:03:25.972000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvba4,False,,[],[],,,,,,,,,,Paul Budnitz,,,,,,,3,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,1,,,,,,,,paul@superplastic.co,,,,
+86dtvvb9z,,Superpeer,incoming lead,,2024-06-20T16:03:25.363000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb9z,False,,[],[],,,,,,,,,,Devrim Yasar,,Good amount of runway,,,,,1,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,0,,,,,,,,devrim@superpeer.com,,,,
+86dtvvb9r,,Stitch,incoming lead,,2024-06-20T16:03:24.703000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb9r,False,,[],[],,,,,,,,,,Kiaan Pillay ,,,,,,,9,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,0,,,,,,,,kiaan@stitch.money,,,,
+86dtvvb9j,,Step Mobile,incoming lead,,2024-06-20T16:03:23.976000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb9j,False,,[],[],,,,,,,,,,CJ MacDonald,,,,,,,1,,Celebrity,1,,,,,,,,,,,,0,,,"[""JB""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,cj@step.com,,,,
+86dtvvb9d,,Starface,incoming lead,,2024-06-20T16:03:23.340000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb9d,False,,[],[],"brian@starfaceworld.com
+
+julie@starfaceworld.com","brian@starfaceworld.com
+
+julie@starfaceworld.com",,,,,,,,"Julie Schott, Bryan Bordainick",,Closed Series B,,,,,0,,Founder,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,brian@starfaceworld.com,,,,
+86dtvvb9a,,Something Navy,incoming lead,,2024-06-20T16:03:22.663000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb9a,False,,[],[],,,,,,,,,,"Arielle Charnas, Matt Scanlon",,,,,,,0,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,0,,,,,,,,matt@somethingnavy.com,,,,
+86dtvvb94,,SNIF,incoming lead,,2024-06-20T16:03:22.037000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb94,False,,[],[],"Bryan Edwards <bryan@snif.co>
+to:	Moj Mahdara <moj@intuitioncap.com>
+cc:	Patrick Finnegan <pf@intuitioncap.com>,
+Phil Riportella <phil@snif.co>,","Bryan Edwards <bryan@snif.co>
+to:	Moj Mahdara <moj@intuitioncap.com>
+cc:	Patrick Finnegan <pf@intuitioncap.com>,
+Phil Riportella <phil@snif.co>,",,,,,,,,"Phil Riportella, Bryan Edwards",,,,,,,0,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,1,,,,,,,,bryan@snif.co,,,,
+86dtvvb8z,,Slang,incoming lead,,2024-06-20T16:03:21.400000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8z,False,,[],[],,,,,,,,,,Diego Villegas,,,,,,,3,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,diego@slangapp.com,,,,
+86dtvvb8x,,SIMULATE (NUGGS),incoming lead,,2024-06-20T16:03:20.707000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8x,False,,[],[],,,,,,,,,,Ben Pasternak,,,,,,,1,,Intuition Sourced,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,1,,,,,,,,ben@simulate.com,,,,
+86dtvvb8t,,Selfbook,incoming lead,,2024-06-20T16:03:20.074000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8t,False,,[],[],,,,,,,,,,"Khalid Meniri, Elsa Price",,,,,,,0,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,15,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb8p,,Saturn Technologies,incoming lead,,2024-06-20T16:03:19.491000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8p,False,,[],[],,,,,,,,,,"Dylan Diamond, Max Baron",,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb8g,,Safely,incoming lead,,2024-06-20T16:03:18.806000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8g,False,,[],[],,,,,,,,,,"Emma Grede, Chrissy Teigen, Kris Jenner",,,,,,,1,,Celebrity,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,6,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb8c,,Refill It (Path Water),incoming lead,,2024-06-20T16:03:18.156000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb8c,False,,[],[],,,,,,,,,,"Shadi Bakour, Amer Orabi",,"Raising $5M bridge Now, Series A Q1 2023",,,,,1,,Founder,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,,,,,,,,,,0,,,,,,,,shadi@drinkpath.com,,,,
+86dtvvb85,,Rae Wellness,incoming lead,,2024-06-20T16:03:17.497000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb85,False,,[],[],,,,,,,,,,"Angela Tebbe, Eric Carl",,Raising Series B now,,,,,6,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,angie@raewellness.co,,,,
+86dtvvb81,,Public.com,incoming lead,,2024-06-20T16:03:16.825000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb81,False,,[],[],"From: Leif Abraham <leif@public.com>
+Cc: Jannick Malling <jannick@public.com>","From: Leif Abraham <leif@public.com>
+Cc: Jannick Malling <jannick@public.com>",,,,,,,,"Jannick Malling, Leif Abraham",,,,,,,0,,Founder,1,,,,,,,,,,,,0,,,"[""PF"", ""JB (Moj reply first)""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,leif@public.com,,,,
+86dtvvb7w,,Producers Market,incoming lead,,2024-06-20T16:03:16.184000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb7w,False,,[],[],,,,,,,,,,Keith Agoada,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,14,,,,,,,,,,1,,,,,,,,keith@producersmarket.com,,,,
+86dtvvb7n,,Poppi,incoming lead,,2024-06-20T16:03:15.496000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb7n,False,,[],[],,,,,,,,,,"Allison Ellsworth, Stephen Ellsworth",,,,,,,8,,VC,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,,,,,,,,,,0,,,,,,,,stephen@drinkpoppi.com,,,,
+86dtvvb7j,,Popa's Pops,incoming lead,,2024-06-20T16:03:14.836000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb7j,False,,[],[],,,,,,,,,,Victor Bauer,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb7d,,Point Up,incoming lead,,2024-06-20T16:03:14.204000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb7d,False,,[],[],,,,,,,,,,Patrick Mrozowski,,No near term cash needs,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,patrick@getpoint.io,,,,
+86dtvvb78,,PicsArt,incoming lead,,2024-06-20T16:03:13.512000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb78,False,,[],[],,,,,,,,,,"Hovhannes Avoyan, Artavazd Mehrabyan, Mikayel Vardanyan",,Q1 BOD Deck - no cash/fundraise update,,,,,4,,Advisor,1,,,,,,,,,,,,,,2022-09-04T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb70,,PearPop,incoming lead,,2024-06-20T16:03:12.797000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb70,False,,[],[],,,,,,,,,,"Cole Mason, Guy Oseary, Spencer Markel",,,,,,,0,,Advisor,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,2022-12-04T20:00:00Z,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb6v,,Passport Global,incoming lead,,2024-06-20T16:03:12.107000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb6v,False,,[],[],,,,,,,,,,Alex Yancher,,No raise until Q1 2024,,,,,1,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,Alex@passportshipping.com,,,,
+86dtvvb6m,,Owner.com,incoming lead,,2024-06-20T16:03:11.412000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb6m,False,,[],[],,,,,,,,,,"Adam Guild, Dean Bloembergen",,,,,,,1,,Founder,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb6d,,Outlier Collective,incoming lead,,2024-06-20T16:03:10.778000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb6d,False,,[],[],,,,,,,,,,Alex Lin,,,,,,,1,,,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,7,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb68,,OPUS,incoming lead,,2024-06-20T16:03:10.071000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb68,False,,[],[],Christopher Schenk <investors@feelopus.com>,Christopher Schenk <investors@feelopus.com>,,,,,,,,"Christopher Schenk, Adam Schlender",,Series A Q4 2022,,,,,8,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,1,,,,,,,,investors@feelopus.com,,,,
+86dtvvb61,,OBE Fitness,incoming lead,,2024-06-20T16:03:09.418000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb61,False,,[],[],,,,,,,,,,"Mark Mullett, Ashley Mills",,,,,,,0,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb5x,,Myro,incoming lead,,2024-06-20T16:03:08.733000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb5x,False,,[],[],,,,,,,,,,Greg Laptevsky,,Raising now,,,,,0,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,1,,,,,,,,greg@mymyro.com,,,,
+86dtvvb5m,,MOOV Technologies,incoming lead,,2024-06-20T16:03:08.028000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb5m,False,,[],[],,,,,,,,,,"Wade Arnold, Steven Zhou",,,,,,,7,,Founder,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,14,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb5c,,Moonpay,incoming lead,,2024-06-20T16:03:07.438000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb5c,False,,[],[],,,,,,,,,,"
+Ivan Soto-Wright",,,,,,,4,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb56,,Minna,incoming lead,,2024-06-20T16:03:06.652000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb56,False,,[],[],,,,,,,,,,"Ryan Fortwendel, Anshu Dua",,,,,,,0,,VC,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,2022-12-04T20:00:00Z,,,,,,,,,0,,,,,,,,anshu@drinkminna.com,,,,
+86dtvvb53,,Marble Technologies / Pearl,incoming lead,,2024-06-20T16:03:05.959000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb53,False,,[],[],,,,,,,,,,Matthew DeMarcantonio,,,,,,,4,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,Matthew@marbletech.co,,,,
+86dtvvb51,,Magic Spoon,incoming lead,,2024-06-20T16:03:05.403000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb51,False,,[],[],,,,,,,,,,"Gabi Lewis, Greg Sewitz",,Raising $100M at a $300M pre,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb4x,,Loops Beauty,incoming lead,,2024-06-20T16:03:04.785000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb4x,False,,[],[],,,,,,,,,,"Colin Peek, Tushar Adya, Aditya Julka",,Thinking raise late Q3 / Q4 2022,,,,,0,,Founder,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb4u,,Looped Live,incoming lead,,2024-06-20T16:03:04.171000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb4u,False,,[],[],,,,,,,,,,"Prajit Gopal, Ben Kornick, Faisel Durrani, Sandeep Peddada",,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb4p,,Limit Break,incoming lead,,2024-06-20T16:03:03.467000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb4p,False,,[],[],,,,,,,,,,"Gabe Leydon, Halbert Nakagawa",,,,,,,6,,VC,1,,,,,,,,x,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,1,,,,,,,,gabrielleydon@gmail.com,,,,
+86dtvvb4c,,Lightyear AI,incoming lead,,2024-06-20T16:03:02.355000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb4c,False,,[],[],,,,,,,,,,Dennis Thankachan,,"2 Years Runway, $16.6M Cash",,,,,0,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,0,,,,,,,,dennis@lightyear.ai,,,,
+86dtvvb46,,Lemonada,incoming lead,,2024-06-20T16:03:01.645000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb46,False,,[],[],,,,,,,,,,Jessica Cordova Kramer,,Include,,,,,6,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,12,,,,,,,,,,0,,,,,,,,jess@lemonadamedia.com,,,,
+86dtvvb3z,,Kroma Superfoods,incoming lead,,2024-06-20T16:03:00.969000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb3z,False,,[],[],"Lisa Odenweller <lisa@kromawellness.com>
+cc:	Alex Rodal <alex@kromawellness.com>,","Lisa Odenweller <lisa@kromawellness.com>
+cc:	Alex Rodal <alex@kromawellness.com>,",,,,,,,,"Alex Rodal, Aaron Rodal, Lisa Odenweller",,Raising now at a $60M cap,,,,,1,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,lisa@kromawellness.com,,,,
+86dtvvb3r,,Kinship,incoming lead,,2024-06-20T16:03:00.339000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb3r,False,,[],[],,,,,,,,,,"Christn Powell, Alison Haljun",,Raising Series A now,,,,,1,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb3k,,KARD,incoming lead,,2024-06-20T16:02:59.591000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb3k,False,,[],[],,,,,,,,,,"Amine Bounjou, Fabien Penso, Scott Gordon",,Raising $4M round at a $25M pre money,,,,,2,,,1,,,,,,,,,,,,,,2022-03-05T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,Scott.gordon@kard.eu,,,,
+86dtvvb3f,,Kangaroo,incoming lead,,2024-06-20T16:02:58.894000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb3f,False,,[],[],,,,,,,,,,Katie Mishra,,,,,,,1,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,0,,,,,,,,katie@kangaroointeractive.com,,,,
+86dtvvb30,,Judy,incoming lead,,2024-06-20T16:02:58.217000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb30,False,,[],[],,,,,,,,,,"Simon Huck, Joshua Udashkin",,,,,,,0,,Advisor,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,6,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb2x,,Jambys,incoming lead,,2024-06-20T16:02:57.528000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2x,False,,[],[],Jack Ambrose <jack@jambys.com>,Jack Ambrose <jack@jambys.com>,,,,,,,,"Jack Ambrose, Andrew Goble",,Raising $750k - $1M bridge,,,,,0,,Founder,1,,,,,,,,,,,,,,2022-12-04T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,1,,,,,,,,jack@jambys.com,,,,
+86dtvvb2q,,ItsMe,incoming lead,,2024-06-20T16:02:56.848000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2q,False,,[],[],,,,,,,,,,"Aakash Sastry, John Mullan",,,,,,,4,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,0,,,,,,,,aakash@itsme.cool,,,,
+86dtvvb2m,,Italic,incoming lead,,2024-06-20T16:02:56.084000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2m,False,,[],[],,,,,,,,,,Jeremy Cai,,,,,,,6,,Founder,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,0,,,,,,,,jeremy@italic.com,,,,
+86dtvvb2j,,It's Good,incoming lead,,2024-06-20T16:02:55.466000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2j,False,,[],[],,,,,,,,,,Mike Rosenthal,,,,,,,1,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,13,,,,,,,,,,1,,,,,,,,mike@mikerosenthal.net,,,,
+86dtvvb2g,,Wonderskin / Ionic Synergy,incoming lead,,2024-06-20T16:02:54.782000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2g,False,,[],[],,,,,,,,,,Doug Cooper ,,,,,,,0,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,1,,,,,,,,dcooper@cmgbranding.com,,,,
+86dtvvb2d,,INBLOOM,incoming lead,,2024-06-20T16:02:54.120000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb2d,False,,[],[],,,,,,,,,,"Tushar Adya, Kate Hudson",,Thinking raise Q4 2022,,,,,0,,Celebrity,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,tushar@syllablestudio.com,,,,
+86dtvvb29,,Home Financial (Dwelling),incoming lead,,2024-06-20T16:02:53.418000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb29,False,,[],[],,,,,,,,,,Craig Hunter,,,,,,,5,,,1,,,,,,,,x,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,1,,,,,,,,Craig@craighunter.ca,,,,
+86dtvvb26,,Hollywood Unlocked,incoming lead,,2024-06-20T16:02:52.643000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb26,False,,[],[],,,,,,,,,,Jason Lee,,,,,,,1,,LP,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,12,,,,,,,,,,1,,,,,,,,j@hollywoodunlocked.com,,,,
+86dtvvb20,,Helm.ai,incoming lead,,2024-06-20T16:02:51.970000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb20,False,,[],[],,,,,,,,,,"Vlad Voroninski, Tudor Achim",,,,,,,1,,Founder,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,11,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb1t,,Happy Hour,incoming lead,,2024-06-20T16:02:51.303000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb1t,False,,[],[],,,,,,,,,,Greg Sokolowski,,,,,,,0,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvb1n,,Hally,incoming lead,,2024-06-20T16:02:50.574000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb1n,False,,[],[],,,,,,,,,,Kathryn Winokur,,Thinking raise Q4 2022,,,,,0,,LP,1,,,,,,,,,,,,,,2022-11-04T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,kathryn@hallyhair.com,,,,
+86dtvvb1g,,Halfday Tonics,incoming lead,,2024-06-20T16:02:49.931000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb1g,False,,[],[],Kayvon Jahanbakhsh <kayvon@drinkhalfday.com>,Kayvon Jahanbakhsh <kayvon@drinkhalfday.com>,,,,,,,,"Kayvon Jahanbakhsh, Mike Lombardo",,"Raising bridge now $12M cap, Series A end of summer",,,,,0,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,,,,,,,,,,0,,,,,,,,kayvon@drinkhalfday.com,,,,
+86dtvvb1d,,Golden Rice,incoming lead,,2024-06-20T16:02:49.172000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb1d,False,,[],[],,,,,,,,,,Sophia Parsa,,,,,,,1,,Influencer,1,,,,,,,,,,,,0,,2022-08-05T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,10,,,,,,,,,,0,,,,,,,,sophparsa@gmail.com,,,,
+86dtvvb1a,,Glassie,incoming lead,,2024-06-20T16:02:48.440000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb1a,False,,[],[],,,,,,,,,,Neels Visser,,,,,,,1,,Influencer,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,1,,,,,,,,neels@glassie.co,,,,
+86dtvvb13,,Ghia,incoming lead,,2024-06-20T16:02:47.691000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb13,False,,[],[],,,,,,,,,,Melanie Masarin,,,,,,,1,,Advisor,1,,,,,,,,,,,,0,,,"[""PF/JB""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,9,,,,,,,,,,0,,,,,,,,Melanie@drinkghia.com,,,,
+86dtvvb0z,,Gente,incoming lead,,2024-06-20T16:02:46.964000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb0z,False,,[],[],,,,,,,,,,"Marianne Fonseca, Nathalia Maia",,,,,,,1,,Celebrity,1,,,,,,,,x,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb0t,,Geneva Technologies,incoming lead,,2024-06-20T16:02:46.272000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb0t,False,,[],[],,,,,,,,,,Justin Hauser,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,1,,,,,,,,justin@genevachat.com,,,,
+86dtvvb0k,,Futurewise,incoming lead,,2024-06-20T16:02:45.559000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb0k,False,,[],[],Ashley Payne <ashley@brandnewholdings.co>,Ashley Payne <ashley@brandnewholdings.co>,,,,,,,,"Brian Bordainick, Janet Park ",,,,,,,0,,Founder,1,,,,,,,,x,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,ashley@brandnewholdings.co,,,,
+86dtvvb0e,,FunFunFun,incoming lead,,2024-06-20T16:02:44.898000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb0e,False,,[],[],,,,,,,,,,Farbood Nivi,,,,,,,1,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvb08,,Focal Point,incoming lead,,2024-06-20T16:02:44.180000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb08,False,,[],[],,,,,,,,,,Anders Lillevik,,,,,,,4,,Advisor,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,8,,,,,,,,,,1,,,,,,,,anders@getfocalpoint.com,,,,
+86dtvvb03,,Fifty Foods (Immi),incoming lead,,2024-06-20T16:02:43.488000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvb03,False,,[],[],,,,,,,,,,"Kevin Lee, Kevin Chanthasiriphan",,,,,,,1,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,klee@immieats.com,,,,
+86dtvvazy,,FEAST,incoming lead,,2024-06-20T16:02:42.810000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvazy,False,,[],[],Amanda Marmer <amanda@shopfeast.com>,Amanda Marmer <amanda@shopfeast.com>,,,,,,,,"Amanda Marmer, Summer Wheaton",,,,,,,0,,Intuition Sourced,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,amanda@shopfeast.com,,,,
+86dtvvazr,,Guest in Residence,incoming lead,,2024-06-20T16:02:42.060000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvazr,False,,[],[],,,,,,,,,,"Isaac Ross , Gigi Hadid",,,,,,,0,,Celebrity,1,,,,,,,,x,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,0,,,,,,,,isaacross@gmail.com,,,,
+86dtvvazh,,Dieux,incoming lead,,2024-06-20T16:02:41.352000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvazh,False,,[],[],,,,,,,,,,Charlotte Palermino,,,,,,,0,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,charlotte@dieuxskin.com,,,,
+86dtvvaza,,Cryptoys,incoming lead,,2024-06-20T16:02:40.450000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvaza,False,,[],[],,,,,,,,,,Will Weinraub,,,,,,,4,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,7,,,,,,,,,,1,,,,,,,,will@onchainstudios.com,,,,
+86dtvvaz4,,Comrad,incoming lead,,2024-06-20T16:02:39.540000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvaz4,False,,[],[],,,,,,,,,,Andrew Ferenci,,Raising bridge now $18M cap,,,,,1,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,1,,,,,,,,andrew@comradsocks.com,,,,
+86dtvvayy,,Cleancult,incoming lead,,2024-06-20T16:02:38.812000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvayy,False,,[],[],,,,,,,,,,"Ryan Lupberger, Zachary Bedrosian",,No immediate cash needs,,,,,0,,,1,,,,,,,,,,,,,,2022-01-05T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,6,,,,,,,,,,1,,,,,,,,Ryan@cleancult.com,,,,
+86dtvvayr,,Ceremonia,incoming lead,,2024-06-20T16:02:38.097000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvayr,False,,[],[],,,,,,,,,,Babba C. Rivera,,Will probably raise in Q2 2023,,,,,0,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,babba@ceremonia.com,,,,
+86dtvvayh,,Bright Live,incoming lead,,2024-06-20T16:02:37.381000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvayh,False,,[],[],Michael Powers,Michael Powers,,,,,,,,"Guy Oseary, Michael Powers",,,,,,,1,,Advisor,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,5,,,,,,,,,,1,,,,,,,,powers@brightlive.com,,,,
+86dtvvayc,,Bombas,incoming lead,,2024-06-20T16:02:36.707000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvayc,False,,[],[],,,,,,,,,,"David Heath, Randy Goldberg",,,,,,,0,,LP,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,4,,,,,,,,,,1,,,,,,,,,,,,
+86dtvvay7,,Bokksu,incoming lead,,2024-06-20T16:02:36.034000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvay7,False,,[],[],,,,,,,,,,Danny Taing,,,,,,,0,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,danny@bokksu.com,,,,
+86dtvvay0,,Blip,incoming lead,,2024-06-20T16:02:35.293000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvay0,False,,[],[],Alyson Lord <alyson@blipclub.co>,Alyson Lord <alyson@blipclub.co>,,,,,,,,"Alyson Lord, Princess Josephine , Brian Bordainick",,Just closed $5M Seed Round,,,,,0,,Founder,1,,,,,,,,x,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,3,,,,,,,,,,0,,,,,,,,alyson@blipclub.co,,,,
+86dtvvaxz,,Bilt Technologies,incoming lead,,2024-06-20T16:02:34.603000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvaxz,False,,[],[],,,,,,,,,,Ankur Jain,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""PF""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,2,,,,,,,,,,0,,,,,,,,ankur@kairoshq.com,,,,
+86dtvvaxx,,Belli Welli,incoming lead,,2024-06-20T16:02:33.841000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvaxx,False,,[],[],Katie Wilson <katie@belliwelli.com>,Katie Wilson <katie@belliwelli.com>,,,,,,,,Katie Wilson,,,,,,,1,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,katie@belliwelli.com,,,,
+86dtvvaxf,,Behave Foods,incoming lead,,2024-06-20T16:02:33.098000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvaxf,False,,[],[],"Mayssa Chehata <mayssa@eatbehave.com>
+Cc: Emily Gu <emily@eatbehave.com>","Mayssa Chehata <mayssa@eatbehave.com>
+Cc: Emily Gu <emily@eatbehave.com>",,,,,,,,Mayssa Chehata,,Raising $2M on $8M cap now,,,,,0,,,1,,,,,,,,,,,,,,2022-01-05T20:00:00Z,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,0,,,,,,,,mayssa@eatbehave.com,,,,
+86dtvvax6,,BeautyStat,incoming lead,,2024-06-20T16:02:32.438000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvax6,False,,[],[],"""Ron@beautystat.com"" <ron@beautystat.com>,
+""jules.zecchino@beautystatcosmetics.com"" <jules.zecchino@beautystatcosmetics.com>,
+""si.wang@beautystatcosmetics.com"" <si.wang@beautystatcosmetics.com>,","""Ron@beautystat.com"" <ron@beautystat.com>,
+""jules.zecchino@beautystatcosmetics.com"" <jules.zecchino@beautystatcosmetics.com>,
+""si.wang@beautystatcosmetics.com"" <si.wang@beautystatcosmetics.com>,",,,,,,,,Ron Robinson,,Closing Series A June 2022,,,,,0,,Advisor,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,,,,,
+86dtvvax2,,Banza,incoming lead,,2024-06-20T16:02:31.756000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvax2,False,,[],[],Scott Rudolph <scott@eatbanza.com>,Scott Rudolph <scott@eatbanza.com>,,,,,,,,"Brain Rudolph, Scott Rudolph",,Exit Q4 2022 / Q1 2023,,,,,0,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,1,,,,,,,,,,1,,,,,,,,scott@eatbanza.com,,,,
+86dtvvawz,,B.A.I. Technologies,incoming lead,,2024-06-20T16:02:31.088000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvawz,False,,[],[],"Sophie Bai <sophie@bai-lab.com>
+Sophie Bai <sophie@baibiosciences.com>","Sophie Bai <sophie@bai-lab.com>
+Sophie Bai <sophie@baibiosciences.com>",,,,,,,,Sophie Bai,,,,,,,3,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,,,,,sophie@baibiosciences.com,,,,
+86dtvvawg,,Augustinus Bader,incoming lead,,2024-06-20T16:02:30.480000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvawg,False,,[],[],"Anand Lala <anand.lala@augustinusbader.com>
+Charles Rosier <charles.rosier@augustinusbader.com>
+David Nass <david.nass@augustinusbader.com>
+Matteo Stassano <matteo.stassano@augustinusbader.com>
+Stephanie Ibanez <stephanie.rosier@augustinusbader.com>","Anand Lala <anand.lala@augustinusbader.com>
+Charles Rosier <charles.rosier@augustinusbader.com>
+David Nass <david.nass@augustinusbader.com>
+Matteo Stassano <matteo.stassano@augustinusbader.com>
+Stephanie Ibanez <stephanie.rosier@augustinusbader.com>",,,,,,,,,,,,,,,2,,,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,1,,,,,,,,anand.lala@augustinusbader.com,,,https://www.linkedin.com/company/augustinus-bader/,
+86dtvvavx,,Ami Colé,incoming lead,,2024-06-20T16:02:29.654000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvavx,False,,[],[],,,,,,,,,,Diarrha Ndiaye,,,,,,,0,,VC,1,,,,,,,,,,,,0,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,http://www.AmiCole.com,,,,diarrha@amicole.com,,,https://www.linkedin.com/company/ami-col%C3%A9/,
+86dtvvavp,,Alleyoop -David Manshoory,incoming lead,,2024-06-20T16:02:28.933000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvavp,False,,[],[],,,,,,,,,,"Leila Kashani, David Manshoory",,Finalizing SAFE. Series A in 12 months,,,,,1,,,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,http://www.meetalleyoop.com,,,,david@meetalleyoop.com,,,https://www.linkedin.com/company/meetalleyoop/,
+86dtvvavf,,3rd Ritual,incoming lead,,2024-06-20T16:02:28.095000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvavf,False,,[],[],,,,,,,,,,Jenn Tardif,,,,,,,0,,,1,,,,,,,,,,,,0,,,"[""MG""]",,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,0,,,,https://3rdritual.com,,,,jenn@3rdritual.com,,,https://www.linkedin.com/company/3rdritual/,
+86dtvvav8,,10 Beauty,incoming lead,,2024-06-20T16:02:26.962000Z,2025-10-29T22:37:26.955000Z,,,,https://app.clickup.com/t/86dtvvav8,False,,[],[],,,,,,,,,,Justin Effron,,Raising A-1 now $70M pre-money,,,,,0,,VC,1,,,,,,,,,,,,,,,,,,,"{""percent_complete"": 0}",,,,,,,,,,,,,0,,,,,,,,,,1,,,,http://www.10beauty.co,,,,Justin@10beauty.co,,,https://www.linkedin.com/company/10beauty/,
