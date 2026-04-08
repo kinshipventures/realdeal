@@ -41,7 +41,7 @@ function StepIndicator({ current }: { current: number }) {
               color: isActive ? '#fff' : isDone ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)',
               background: isActive ? 'var(--color-brand)' : 'transparent',
               opacity: isDone || isActive ? 1 : 0.5,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'background 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               cursor: isDone ? 'pointer' : 'default',
               minHeight: 32,
               display: 'flex', alignItems: 'center',
