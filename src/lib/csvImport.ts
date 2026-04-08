@@ -11,22 +11,70 @@ export type ImportProgress = { current: number; total: number; imported: number;
 
 export type ImportResult = { imported: number; skipped: number; errors: string[] }
 
-// ── Known field aliases ───────────────────────────────────────────────────────
+// ── Target fields (what RealDeal accepts) ────────────────────────────────────
 
-const KNOWN_FIELDS: Record<string, string> = {
-  'name': 'Name',
-  'email': 'Email',
-  'phone': 'Phone',
-  'company': 'Company',
-  'role': 'Role',
-  'location': 'Location',
-  'website': 'Website',
-  'notes': 'Notes',
-  'specialization': 'Specialization',
-  'recommended by': 'Recommended By',
+export const TARGET_FIELDS = [
+  'Name', 'First Name', 'Last Name',
+  'Email', 'Phone', 'Company', 'Role', 'Location',
+  'Website', 'LinkedIn', 'Notes', 'Birthday',
+  'Industry', 'Domain', 'Stage', 'Ticker',
+  'Specialization', 'Recommended By', 'Past Clients',
+  'Country', 'Gender',
+] as const
+
+export type TargetField = typeof TARGET_FIELDS[number]
+
+// ── Known field aliases ───────────────────────────────────────────────────────
+// Maps normalized CSV header -> RealDeal target field.
+// Covers Google Contacts, Apple Contacts, LinkedIn, Outlook, HubSpot, Salesforce.
+
+const KNOWN_ALIASES: Record<string, TargetField> = {
+  // Name
+  'name': 'Name', 'full name': 'Name', 'display name': 'Name', 'contact name': 'Name',
+  'agency': 'Name', 'company name': 'Name',
+  'first name': 'First Name', 'given name': 'First Name', 'first': 'First Name', 'firstname': 'First Name',
+  'last name': 'Last Name', 'family name': 'Last Name', 'surname': 'Last Name', 'last': 'Last Name', 'lastname': 'Last Name',
+  // Email
+  'email': 'Email', 'email address': 'Email', 'e-mail': 'Email', 'e-mail address': 'Email',
+  'primary email': 'Email', 'email 1': 'Email', 'email 1 - value': 'Email',
+  'work email': 'Email', 'personal email': 'Email', 'home email': 'Email',
+  // Phone
+  'phone': 'Phone', 'phone number': 'Phone', 'mobile': 'Phone', 'mobile phone': 'Phone',
+  'cell': 'Phone', 'cell phone': 'Phone', 'telephone': 'Phone', 'contact info': 'Phone',
+  'phone 1 - value': 'Phone', 'work phone': 'Phone', 'home phone': 'Phone',
+  // Company
+  'company': 'Company', 'organization': 'Company', 'organization 1 - name': 'Company',
+  'employer': 'Company', 'firm': 'Company', 'account name': 'Company',
+  'company/organization': 'Company',
+  // Role
+  'role': 'Role', 'title': 'Role', 'job title': 'Role', 'position': 'Role',
+  'organization 1 - title': 'Role', 'designation': 'Role',
+  // Location
+  'location': 'Location', 'city': 'Location', 'address': 'Location',
+  'city/town': 'Location', 'home city': 'Location', 'work city': 'Location',
+  'address 1 - formatted': 'Location',
+  // Website
+  'website': 'Website', 'url': 'Website', 'web page': 'Website',
+  'website 1 - value': 'Website', 'personal website': 'Website', 'blog': 'Website',
+  // LinkedIn
+  'linkedin': 'LinkedIn', 'linkedin url': 'LinkedIn', 'linkedin profile': 'LinkedIn',
+  'linkedin profile url': 'LinkedIn',
+  // Notes
+  'notes': 'Notes', 'note': 'Notes', 'description': 'Notes', 'comments': 'Notes', 'bio': 'Notes',
+  // Birthday
+  'birthday': 'Birthday', 'date of birth': 'Birthday', 'dob': 'Birthday', 'birthdate': 'Birthday',
+  // Industry
+  'industry': 'Industry', 'sector': 'Industry',
+  // Domain
+  'domain': 'Domain', 'company domain': 'Domain', 'website domain': 'Domain',
+  // Other
+  'specialization': 'Specialization', 'specialty': 'Specialization', 'expertise': 'Specialization',
+  'recommended by': 'Recommended By', 'referred by': 'Recommended By', 'referral': 'Recommended By', 'source': 'Recommended By',
   'past clients': 'Past Clients',
-  'contact info': 'Phone',
-  'agency': 'Name',
+  'country': 'Country', 'country/region': 'Country', 'nation': 'Country',
+  'gender': 'Gender', 'sex': 'Gender',
+  'stage': 'Stage', 'funding stage': 'Stage',
+  'ticker': 'Ticker', 'stock ticker': 'Ticker', 'symbol': 'Ticker',
   'category': '_category',
 }
 
@@ -63,12 +111,44 @@ export function parseCSV(content: string): ParsedCSV {
 
 // ── Column detection ─────────────────────────────────────────────────────────
 
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()
+}
+
 export function detectColumns(headers: string[]): ColumnMapping {
+  const used = new Set<string>()
   return headers.map(csvHeader => {
-    const lower = csvHeader.toLowerCase().trim()
-    const airtableField = KNOWN_FIELDS[lower] ?? null
-    return { csvHeader, airtableField }
+    const norm = normalize(csvHeader)
+    const match = KNOWN_ALIASES[norm] ?? null
+    // Avoid mapping two CSV columns to the same target (first wins)
+    if (match && !match.startsWith('_') && used.has(match)) {
+      return { csvHeader, airtableField: null }
+    }
+    if (match && !match.startsWith('_')) used.add(match)
+    return { csvHeader, airtableField: match }
   })
+}
+
+// ── Mapping helpers ──────────────────────────────────────────────────────────
+
+/** Given a column mapping and a row, resolve the value for a target field. */
+function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
+  const col = mapping.find(m => m.airtableField === target)
+  if (!col) return ''
+  return (row[col.csvHeader] ?? '').trim()
+}
+
+/** Resolve name: handles Name, or First Name + Last Name merge. */
+function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: RelationshipType): string {
+  const direct = resolve(row, mapping, 'Name')
+  if (direct) return direct
+  if (type === 'Company') {
+    const companyName = resolve(row, mapping, 'Company')
+    if (companyName) return companyName
+  }
+  const first = resolve(row, mapping, 'First Name')
+  const last = resolve(row, mapping, 'Last Name')
+  return [first, last].filter(Boolean).join(' ')
 }
 
 // ── Import ────────────────────────────────────────────────────────────────────
@@ -79,26 +159,28 @@ function delay(ms: number) {
 
 export function countInvalidRows(
   rows: Record<string, string>[],
-  type: RelationshipType
+  type: RelationshipType,
+  mapping?: ColumnMapping
 ): number {
-  return rows.filter(row => {
-    if (type === 'Company') {
+  if (!mapping) {
+    // Legacy fallback
+    return rows.filter(row => {
       const name = (row['Name'] ?? row['Agency'] ?? row['Company Name'] ?? '').trim()
       return !name
-    }
-    const name = (row['Name'] ?? row['Agency'] ?? '').trim()
-    return !name
-  }).length
+    }).length
+  }
+  return rows.filter(row => !resolveName(row, mapping, type)).length
 }
 
 export async function importContacts(
   rows: Record<string, string>[],
   podId: string,
   onProgress?: (progress: ImportProgress) => void,
-  options?: { type?: RelationshipType; podIds?: string[] }
+  options?: { type?: RelationshipType; podIds?: string[]; mapping?: ColumnMapping }
 ): Promise<ImportResult> {
   const recordType: RelationshipType = options?.type ?? 'Contact'
   const listIds: string[] = options?.podIds ?? [podId]
+  const mapping = options?.mapping
   const existing = await getContacts()
 
   // Build dual dedup index
@@ -113,15 +195,25 @@ export async function importContacts(
   let skipped = 0
   const errors: string[] = []
 
+  // Helper: resolve a value using mapping or legacy hardcoded keys
+  const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
+    if (mapping) return resolve(row, mapping, target)
+    for (const k of legacyKeys) {
+      const v = (row[k] ?? '').trim()
+      if (v) return v
+    }
+    return ''
+  }
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
 
-    // Resolve name — support different column conventions
-    const name = (
-      recordType === 'Company'
-        ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
-        : (row['Name'] ?? row['Agency'] ?? '')
-    ).trim()
+    const name = mapping
+      ? resolveName(row, mapping, recordType)
+      : (recordType === 'Company'
+          ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
+          : (row['Name'] ?? row['Agency'] ?? '')
+        ).trim()
 
     if (!name) {
       skipped++
@@ -129,7 +221,7 @@ export async function importContacts(
       continue
     }
 
-    const email = (row['Email'] ?? '').trim()
+    const email = r(row, 'Email', 'Email')
     const nameLower = name.toLowerCase()
     const emailLower = email.toLowerCase()
 
@@ -140,35 +232,41 @@ export async function importContacts(
       continue
     }
 
+    const firstName = mapping ? resolve(row, mapping, 'First Name') : null
+    const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
+
     try {
       const contact = await createContact({
         name,
         type: recordType,
         status: 'Pending',
         email: email || null,
-        phone: (row['Phone'] ?? row['Contact Info'] ?? '').trim() || null,
-        company: (row['Company'] ?? '').trim() || null,
-        role: (row['Role'] ?? '').trim() || null,
-        location: (row['Location'] ?? '').trim() || null,
-        website: (row['Website'] ?? '').trim() || null,
-        notes: (row['Notes'] ?? '').trim() || null,
-        recommended_by: (row['Recommended By'] ?? '').trim() || null,
-        specialization: (row['Specialization'] ?? '').trim() || null,
-        past_clients: (row['Past Clients'] ?? '').trim() || null,
-        industry: (row['Industry'] ?? '').trim() || null,
-        domain: (row['Domain'] ?? '').trim() || null,
-        stage: (row['Stage'] ?? '').trim() || null,
-        ticker: (row['Ticker'] ?? '').trim() || null,
-        linkedin: (row['LinkedIn'] ?? row['Linkedin'] ?? '').trim() || null,
-        birthday: null,
+        phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
+        company: r(row, 'Company', 'Company') || null,
+        role: r(row, 'Role', 'Role') || null,
+        location: r(row, 'Location', 'Location') || null,
+        website: r(row, 'Website', 'Website') || null,
+        notes: r(row, 'Notes', 'Notes') || null,
+        recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
+        specialization: r(row, 'Specialization', 'Specialization') || null,
+        past_clients: r(row, 'Past Clients', 'Past Clients') || null,
+        industry: r(row, 'Industry', 'Industry') || null,
+        domain: r(row, 'Domain', 'Domain') || null,
+        stage: r(row, 'Stage', 'Stage') || null,
+        ticker: r(row, 'Ticker', 'Ticker') || null,
+        linkedin: r(row, 'LinkedIn', 'LinkedIn', 'Linkedin') || null,
+        birthday: r(row, 'Birthday', 'Birthday') || null,
         milestones: null,
         interests: null,
         relationship_context: null,
         last_contacted_at: null,
         list_ids: listIds,
         category_ids: [],
-        first_name: null, last_name: null,
-        country: null, global_region: null, gender: null,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        country: r(row, 'Country', 'Country') || null,
+        global_region: null,
+        gender: r(row, 'Gender', 'Gender') as any || null,
         introduced_by: null, intel_notes: null, relationship_owner: null,
         contact_frequency: null, next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
@@ -177,7 +275,6 @@ export async function importContacts(
         email_2: null, email_3: null, communication_preferences: null,
       })
 
-      // Update dedup index with newly created contact
       if (email) emailIndex.set(emailLower, contact.id)
       nameIndex.set(nameLower, contact.id)
       imported++
@@ -186,7 +283,7 @@ export async function importContacts(
     }
 
     onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
-    await delay(250) // Airtable rate limit: 5 req/sec
+    await delay(250)
   }
 
   return { imported, skipped, errors }

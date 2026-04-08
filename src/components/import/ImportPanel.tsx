@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, invalidateContactsCache } from '../../lib/airtable'
-import { parseCSV, detectColumns, importContacts, countInvalidRows } from '../../lib/csvImport'
+import { parseCSV, detectColumns, importContacts, countInvalidRows, TARGET_FIELDS } from '../../lib/csvImport'
 import type { Pod } from '../../lib/types'
 import type { RelationshipType } from '../../lib/types'
-import type { ImportProgress, ImportResult } from '../../lib/csvImport'
+import type { ImportProgress, ImportResult, ColumnMapping } from '../../lib/csvImport'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 
 type ImportState = 'upload' | 'preview' | 'importing' | 'done'
@@ -135,7 +135,7 @@ export function ImportPanel() {
       parsedRows,
       selectedPodIds[0],
       (p) => setProgress(p),
-      { type: recordType, podIds: selectedPodIds }
+      { type: recordType, podIds: selectedPodIds, mapping: columnMapping }
     )
     invalidateContactsCache()
     setResult(res)
@@ -148,6 +148,7 @@ export function ImportPanel() {
     setFileName('')
     setParsedHeaders([])
     setParsedRows([])
+    setColumnMapping([])
     setProgress(null)
     setResult(null)
     setSelectedPodIds([])
@@ -156,9 +157,26 @@ export function ImportPanel() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const columnMapping = detectColumns(parsedHeaders)
-  const invalidCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType) : 0
+  const [columnMapping, setColumnMapping] = useState<ColumnMapping>([])
+
+  // Re-detect columns when headers change
+  useEffect(() => {
+    if (parsedHeaders.length > 0) {
+      setColumnMapping(detectColumns(parsedHeaders))
+    }
+  }, [parsedHeaders])
+
+  function updateMapping(csvHeader: string, targetField: string | null) {
+    setColumnMapping(prev => prev.map(m =>
+      m.csvHeader === csvHeader ? { ...m, airtableField: targetField } : m
+    ))
+  }
+
+  const invalidCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, columnMapping) : 0
   const validCount = parsedRows.length - invalidCount
+  const hasNameMapping = columnMapping.some(m =>
+    m.airtableField === 'Name' || m.airtableField === 'First Name'
+  )
 
   const stepNumber = state === 'upload' ? 1 : state === 'preview' ? 2 : 3
   const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
@@ -444,52 +462,116 @@ export function ImportPanel() {
 
             {/* Column mapping */}
             <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 180ms forwards' }}>
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
-                Column mapping
-              </p>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 8px' }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>
+                  Column mapping
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
+                  {columnMapping.filter(m => m.airtableField && !m.airtableField.startsWith('_')).length} of {columnMapping.length} mapped
+                </p>
+              </div>
               <div style={{
                 background: 'var(--color-surface)',
                 border: '1px solid var(--edge)',
                 borderRadius: 8,
                 overflow: 'hidden',
               }}>
+                {/* Header row */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 24px 1fr',
+                  alignItems: 'center',
+                  padding: '6px 12px',
+                  borderBottom: '1px solid var(--edge)',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--color-text-tertiary)',
+                }}>
+                  <span>Your column</span>
+                  <span />
+                  <span>Maps to</span>
+                </div>
                 {columnMapping.map(({ csvHeader, airtableField }, idx) => {
                   const matched = airtableField && !airtableField.startsWith('_')
+                  const preview = parsedRows[0]?.[csvHeader] ?? ''
+                  // Which targets are already used by other columns?
+                  const usedTargets = new Set(
+                    columnMapping
+                      .filter(m => m.csvHeader !== csvHeader && m.airtableField && !m.airtableField.startsWith('_'))
+                      .map(m => m.airtableField)
+                  )
                   return (
                     <div key={csvHeader} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 24px 1fr',
                       alignItems: 'center',
                       padding: '8px 12px',
                       borderBottom: idx < columnMapping.length - 1 ? '1px solid var(--divider)' : 'none',
                       fontSize: 13,
                     }}>
-                      <span style={{ color: 'var(--color-text-primary)' }}>{csvHeader}</span>
-                      <span style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        color: matched ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
-                      }}>
-                        {matched ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                          </svg>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{csvHeader}</div>
+                        {preview && (
+                          <div style={{
+                            fontSize: 11,
+                            color: 'var(--color-text-tertiary)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: 200,
+                            marginTop: 1,
+                          }}>
+                            {preview}
+                          </div>
                         )}
-                        {matched
-                          ? airtableField
-                          : airtableField === '_category'
-                            ? 'Category (skipped)'
-                            : 'Skipped'}
-                      </span>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke={matched ? 'var(--color-brand)' : 'var(--color-text-tertiary)'}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ justifySelf: 'center', opacity: 0.5 }}>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="15 6 19 12 15 18"/>
+                      </svg>
+                      <select
+                        value={airtableField ?? ''}
+                        onChange={e => updateMapping(csvHeader, e.target.value || null)}
+                        style={{
+                          background: matched ? 'rgba(37,180,57,0.06)' : 'var(--tint)',
+                          border: `1px solid ${matched ? 'rgba(37,180,57,0.2)' : 'var(--edge)'}`,
+                          borderRadius: 6,
+                          padding: '5px 8px',
+                          fontSize: 12,
+                          color: matched ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                          fontFamily: 'inherit',
+                          fontWeight: matched ? 500 : 400,
+                          cursor: 'pointer',
+                          outline: 'none',
+                          width: '100%',
+                        }}
+                      >
+                        <option value="">Skip</option>
+                        {TARGET_FIELDS.map(tf => (
+                          <option key={tf} value={tf} disabled={usedTargets.has(tf)}>
+                            {tf}{usedTargets.has(tf) ? ' (used)' : ''}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )
                 })}
               </div>
+              {!hasNameMapping && (
+                <p style={{
+                  fontSize: 12, color: '#CC7700', marginTop: 8, display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CC7700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Map at least one column to Name (or First Name) to import
+                </p>
+              )}
             </div>
 
             {/* Collapsible preview */}
@@ -597,7 +679,7 @@ export function ImportPanel() {
               <button
                 type="button"
                 onClick={handleImport}
-                disabled={selectedPodIds.length === 0 || validCount === 0}
+                disabled={selectedPodIds.length === 0 || validCount === 0 || !hasNameMapping}
                 style={{
                   padding: '14px 32px',
                   background: 'var(--color-brand)',
@@ -606,8 +688,8 @@ export function ImportPanel() {
                   borderRadius: 100,
                   fontSize: 14,
                   fontWeight: 600,
-                  cursor: selectedPodIds.length > 0 && validCount > 0 ? 'pointer' : 'not-allowed',
-                  opacity: selectedPodIds.length > 0 && validCount > 0 ? 1 : 0.5,
+                  cursor: selectedPodIds.length > 0 && validCount > 0 && hasNameMapping ? 'pointer' : 'not-allowed',
+                  opacity: selectedPodIds.length > 0 && validCount > 0 && hasNameMapping ? 1 : 0.5,
                   fontFamily: 'inherit',
                   letterSpacing: '0.01em',
                   boxShadow: '0 4px 16px rgba(37,180,57,0.30)',
