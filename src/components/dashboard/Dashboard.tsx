@@ -377,15 +377,14 @@ export function Dashboard() {
                     dataReady={dataReady}
                     scoreTrend={scoreTrend}
                     onQuickAction={() => {
-                      const first = focusItems[0]
-                      if (first) setSelectedContact(first.contact)
+                      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
                     }}
                   />
                 </div>
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                   <span style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
-                    Dashboard
+                    Pulse
                   </span>
                 </div>
               )}

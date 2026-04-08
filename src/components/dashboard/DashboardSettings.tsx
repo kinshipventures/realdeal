@@ -107,7 +107,7 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
         {/* Header */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--divider)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-            Dashboard
+            Pulse
           </span>
           <button
             type="button"

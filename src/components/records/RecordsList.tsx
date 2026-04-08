@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download } from 'lucide-react'
-import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
+import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { MergeModal } from '../merge/MergeModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
-import type { Contact, Pod, Project, RelationshipType, RelationshipStatus } from '../../lib/types'
+import type { Contact, Pod, Category, Project, RelationshipType, RelationshipStatus } from '../../lib/types'
 import type { Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -41,6 +41,7 @@ type RecencyFilter = 'any' | '7d' | '30d' | '90d' | 'never'
 interface FilterState {
   search: string
   pod: string | null
+  category: string | null
   type: RelationshipType | null
   status: RelationshipStatus | null
   recency: RecencyFilter
@@ -49,6 +50,7 @@ interface FilterState {
 const DEFAULT_FILTERS: FilterState = {
   search: '',
   pod: null,
+  category: null,
   type: null,
   status: null,
   recency: 'any',
@@ -142,6 +144,7 @@ export function RecordsList() {
   // Data
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -233,15 +236,17 @@ export function RecordsList() {
   useEffect(() => {
     let stale = false
     async function load() {
-      const [allContacts, allPods, allInteractions, allProjects] = await Promise.all([
+      const [allContacts, allPods, allCategories, allInteractions, allProjects] = await Promise.all([
         getContacts(),
         getPods(),
+        getCategories(),
         getAllInteractions(),
         getProjects(),
       ])
       if (stale) return
 
       setPods(allPods)
+      setCategories(allCategories)
       setContacts(allContacts)
       setProjects(allProjects)
 
@@ -303,12 +308,10 @@ export function RecordsList() {
       )
     }
 
-    if (filters.pod) {
+    if (filters.category) {
+      result = result.filter(c => c.category_ids.includes(filters.category!))
+    } else if (filters.pod) {
       result = result.filter(c => c.list_ids.includes(filters.pod!))
-    }
-
-    if (filters.type) {
-      result = result.filter(c => c.type === filters.type)
     }
 
     if (filters.status) {
@@ -455,7 +458,7 @@ export function RecordsList() {
     setFilters(DEFAULT_FILTERS)
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.type || filters.status || filters.recency !== 'any'
+  const hasActiveFilters = filters.search || filters.pod || filters.status || filters.recency !== 'any'
 
   // ── Bulk action handlers ──────────────────────────────────────────────────
 
@@ -817,25 +820,27 @@ export function RecordsList() {
 
           {/* Pod filter */}
           <select
-            value={filters.pod ?? ''}
-            onChange={e => setFilters(f => ({ ...f, pod: e.target.value || null }))}
+            value={filters.category ? `cat:${filters.category}` : filters.pod ?? ''}
+            onChange={e => {
+              const v = e.target.value
+              if (v.startsWith('cat:')) {
+                setFilters(f => ({ ...f, pod: null, category: v.slice(4) }))
+              } else {
+                setFilters(f => ({ ...f, pod: v || null, category: null }))
+              }
+            }}
             style={selectStyle}
           >
             <option value="">All Pods</option>
-            {pods.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-
-          {/* Type filter */}
-          <select
-            value={filters.type ?? ''}
-            onChange={e => setFilters(f => ({ ...f, type: (e.target.value as RelationshipType) || null }))}
-            style={selectStyle}
-          >
-            <option value="">All Types</option>
-            <option value="Contact">Person</option>
-            <option value="Company">Company</option>
+            {pods.map(p => {
+              const podCats = categories.filter(c => c.list_id === p.id)
+              return [
+                <option key={p.id} value={p.id}>{p.name}</option>,
+                ...podCats.map(c => (
+                  <option key={c.id} value={`cat:${c.id}`}>&nbsp;&nbsp;{c.name}</option>
+                )),
+              ]
+            })}
           </select>
 
           {/* Status filter */}
@@ -917,6 +922,14 @@ export function RecordsList() {
                   style={dropdownItemStyle}
                 >
                   {copyFeedback ? 'Copied!' : 'Copy to clipboard'}
+                </div>
+                <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                  <div
+                    onClick={() => { navigate('/import'); setShowExportDropdown(false) }}
+                    style={dropdownItemStyle}
+                  >
+                    Import CSV
+                  </div>
                 </div>
               </div>
             )}

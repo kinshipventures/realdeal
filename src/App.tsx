@@ -61,15 +61,22 @@ function AppShell() {
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    if (isDemoMode()) return false
-    return !localStorage.getItem('realdeal:onboarding-complete')
-  })
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  // Show onboarding for any user who hasn't completed it (scoped per user email)
+  useEffect(() => {
+    if (!session || isDemoMode()) return
+    const email = session.user?.email ?? ''
+    const key = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
+    if (!localStorage.getItem(key)) setShowOnboarding(true)
+  }, [session])
 
   const completeOnboarding = useCallback(() => {
-    localStorage.setItem('realdeal:onboarding-complete', '1')
+    const email = session?.user?.email ?? ''
+    const key = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
+    localStorage.setItem(key, '1')
     setShowOnboarding(false)
-  }, [])
+  }, [session])
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
 
