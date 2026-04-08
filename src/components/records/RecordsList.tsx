@@ -149,10 +149,18 @@ export function RecordsList() {
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // Filters - pre-fill pod from URL query param
+  // Filters - restore from URL query params
   const [filters, setFilters] = useState<FilterState>(() => {
-    const podParam = searchParams.get('pod')
-    return podParam ? { ...DEFAULT_FILTERS, pod: podParam } : DEFAULT_FILTERS
+    const f = { ...DEFAULT_FILTERS }
+    const pod = searchParams.get('pod')
+    const cat = searchParams.get('category')
+    const search = searchParams.get('q')
+    const recency = searchParams.get('recency')
+    if (pod) f.pod = pod
+    if (cat) f.category = cat
+    if (search) f.search = search
+    if (recency && ['7d', '30d', '90d', 'never'].includes(recency)) f.recency = recency as any
+    return f
   })
 
   // Sort
@@ -548,6 +556,19 @@ export function RecordsList() {
     setTimeout(() => setCopyFeedback(false), 2000)
   }
 
+  async function handleShareAsLink() {
+    const params = new URLSearchParams()
+    if (filters.pod) params.set('pod', filters.pod)
+    if (filters.category) params.set('category', filters.category)
+    if (filters.search) params.set('q', filters.search)
+    if (filters.recency !== 'any') params.set('recency', filters.recency)
+    const qs = params.toString()
+    const url = `${window.location.origin}/contacts${qs ? `?${qs}` : ''}`
+    await navigator.clipboard.writeText(url)
+    setCopyFeedback(true)
+    setTimeout(() => setCopyFeedback(false), 2000)
+  }
+
   // ── Column drag-reorder handlers ──────────────────────────────────────────
 
   function handleColDragStart(e: React.DragEvent, colId: ColumnId) {
@@ -902,10 +923,10 @@ export function RecordsList() {
                   Download CSV
                 </div>
                 <div
-                  onClick={() => { void handleCopyToClipboard(filtered); setShowExportDropdown(false) }}
+                  onClick={() => { void handleShareAsLink(); setShowExportDropdown(false) }}
                   style={dropdownItemStyle}
                 >
-                  {copyFeedback ? 'Copied!' : 'Copy to clipboard'}
+                  {copyFeedback ? 'Link copied!' : 'Share as a link'}
                 </div>
                 <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                   <div
