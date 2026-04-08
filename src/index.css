@@ -221,42 +221,38 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(0,0,0,0.45);
+  color: var(--color-text-secondary);
   transition: color 0.15s ease;
 }
-.action-ghost:hover { color: rgba(0,0,0,0.82); }
+.action-ghost:hover { color: var(--color-text-primary); }
 
 /* Pill-shaped button — type selectors, log button */
 .action-pill {
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.action-pill:hover { background: rgba(0,0,0,0.06); }
+.action-pill:hover { background: var(--tint-hover); }
 
 /* Circular close button */
 .close-trigger {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.close-trigger:hover { background: rgba(0,0,0,0.06); }
+.close-trigger:hover { background: var(--tint-hover); }
 
 /* Row highlight on hover — ContactCard, OverdueRow, feed rows */
 .interactive-row {
   transition: background 0.15s ease;
 }
-.interactive-row:hover { background: rgba(0,0,0,0.03); }
+.interactive-row:hover { background: var(--tint); }
 
 /* ── Dark mode component overrides ─────────────────────────────────────────── */
 
 @media (prefers-color-scheme: dark) {
-  .action-ghost { color: rgba(255,255,255,0.45); }
-  .action-ghost:hover { color: rgba(255,255,255,0.87); }
-  .action-pill:hover { background: rgba(255,255,255,0.06); }
-  .close-trigger:hover { background: rgba(255,255,255,0.06); }
-  .interactive-row:hover { background: rgba(255,255,255,0.03); }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+  /* action-ghost, action-pill, close-trigger, interactive-row now use CSS vars - no overrides needed */
+  ::-webkit-scrollbar-thumb { background: var(--edge); }
   body::after { opacity: 0.015; }
-  .moj-orb { border: 1px solid rgba(255,255,255,0.06); }
+  .moj-orb { border: 1px solid var(--tint); }
 }
 
 /* ── Animations ────────────────────────────────────────────────────────────── */
@@ -500,7 +496,7 @@
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--edge-strong); border-radius: 2px; }
 
 /* ── Grain overlay ──────────────────────────────────────────────────────────── */
 
@@ -863,18 +859,18 @@ body::after {
 .icon-picker-search {
   width: 100%;
   padding: 6px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--edge);
   border-radius: 8px;
   font-size: 12px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--tint);
   outline: none;
   margin-bottom: 6px;
   font-family: var(--font-sans);
 }
 
 .icon-picker-search:focus {
-  border-color: rgba(0, 0, 0, 0.15);
-  background: white;
+  border-color: var(--edge-strong);
+  background: var(--color-surface);
 }
 
 .icon-picker-grid {
@@ -900,13 +896,13 @@ body::after {
 }
 
 .icon-picker-item:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--tint-hover);
 }
 
 .icon-picker-item.active {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--edge);
 }
 
 .icon-picker-remove {
-  border: 1px dashed rgba(0, 0, 0, 0.15);
+  border: 1px dashed var(--edge-strong);
 }

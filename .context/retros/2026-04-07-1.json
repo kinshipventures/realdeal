@@ -1,0 +1,58 @@
+{
+  "date": "2026-04-07",
+  "window": "7d",
+  "metrics": {
+    "commits": 507,
+    "contributors": 2,
+    "prs_merged": 0,
+    "insertions": 41831,
+    "deletions": 13395,
+    "net_loc": 28436,
+    "test_loc": 0,
+    "test_ratio": 0,
+    "active_days": 8,
+    "sessions": 23,
+    "deep_sessions": 12,
+    "avg_session_minutes": 56,
+    "loc_per_session_hour": 1400,
+    "feat_pct": 0.27,
+    "fix_pct": 0.19,
+    "style_pct": 0.15,
+    "docs_pct": 0.34,
+    "peak_hour": 1,
+    "ai_assisted_commits": 101
+  },
+  "authors": {
+    "Gabriel Murray": {
+      "commits": 186,
+      "insertions": 30368,
+      "deletions": 7873,
+      "test_ratio": 0,
+      "top_area": "src/components/"
+    },
+    "gpt-engineer-app[bot]": {
+      "commits": 321,
+      "insertions": 11463,
+      "deletions": 5522,
+      "test_ratio": 0,
+      "top_area": "src/components/onboarding/"
+    }
+  },
+  "streak_days": 10,
+  "personal_streak_days": 3,
+  "tweetable": "Week of Mar 31: 507 commits (2 contributors), 41.8k LOC, 0% tests, 0 PRs, peak: 1am | Streak: 10d",
+  "backlog": {
+    "total_open": 2,
+    "p0_p1": 0,
+    "p2": 2,
+    "completed_this_period": 0,
+    "added_this_period": 0
+  },
+  "skill_usage": {
+    "qa": 2,
+    "office-hours": 2,
+    "design-shotgun": 1,
+    "cso": 1,
+    "retro": 1
+  }
+}
