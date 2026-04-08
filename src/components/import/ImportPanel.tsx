@@ -641,7 +641,6 @@ export function ImportPanel() {
                           fontFamily: 'inherit',
                           fontWeight: matched ? 500 : 400,
                           cursor: 'pointer',
-                          outline: 'none',
                           width: '100%',
                         }}
                       >
