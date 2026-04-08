@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download } from 'lucide-react'
 import { getContacts, getPods, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
+import { EmptyState } from '../empty/EmptyState'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { MergeModal } from '../merge/MergeModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
@@ -676,11 +677,11 @@ export function RecordsList() {
   if (loading) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
-        <div className="skeleton-stagger" style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+        <div className="skeleton-stagger" style={{ padding: '28px clamp(16px, 4vw, 40px) 0', flexShrink: 0 }}>
           <div className="skeleton" style={{ width: 140, height: 28, borderRadius: 8, marginBottom: 20 }} />
           <div className="skeleton" style={{ width: '100%', height: 36, borderRadius: 8, marginBottom: 16 }} />
         </div>
-        <div className="skeleton-stagger" style={{ flex: 1, padding: '0 40px 40px' }}>
+        <div className="skeleton-stagger" style={{ flex: 1, padding: '0 clamp(16px, 4vw, 40px) 40px' }}>
           <div className="skeleton" style={{ width: '100%', height: 12, borderRadius: 4, marginBottom: 16 }} />
           <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
           <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
@@ -697,7 +698,7 @@ export function RecordsList() {
     <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
 
       {/* Header */}
-      <div style={{ padding: '32px 32px 0', flexShrink: 0 }}>
+      <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
@@ -1176,7 +1177,16 @@ export function RecordsList() {
       )}
 
       {/* Table area */}
-      {filtered.length === 0 ? (
+      {contacts.length === 0 ? (
+        <EmptyState
+          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+          heading="Your people live here"
+          subtext="Import a CSV or add your first contact to start building your network."
+          ctaLabel="Import contacts"
+          onCta={() => navigate('/import')}
+          ghosts={3}
+        />
+      ) : filtered.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No people match your filters</span>
           {hasActiveFilters && (
@@ -1199,7 +1209,7 @@ export function RecordsList() {
           )}
         </div>
       ) : (
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '0 40px 40px', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '0 clamp(16px, 4vw, 40px) 40px', WebkitOverflowScrolling: 'touch' }}>
           {/* Table */}
           <table
             className="records-table"

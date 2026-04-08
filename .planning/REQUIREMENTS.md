@@ -9,11 +9,11 @@ Requirements for MVP completion. Closes gaps identified in Kinship Brain MVP PDF
 
 ### Reporting
 
-- [ ] **RPT-01**: User can view pod distribution report (contacts per pod, health breakdown)
-- [ ] **RPT-02**: User can view pipeline conversion/velocity report (stage progression, time-in-stage)
-- [ ] **RPT-03**: User can view engagement report (touchpoint activity over time, by type)
-- [ ] **RPT-04**: User can export any report as CSV
-- [ ] **RPT-05**: User can save a report configuration as a favorite for quick access
+- [x] **RPT-01**: User can view pod distribution report (contacts per pod, health breakdown)
+- [x] **RPT-02**: User can view pipeline conversion/velocity report (stage progression, time-in-stage)
+- [x] **RPT-03**: User can view engagement report (touchpoint activity over time, by type)
+- [x] **RPT-04**: User can export any report as CSV
+- [x] **RPT-05**: User can save a report configuration as a favorite for quick access
 
 ### Sharing
 
@@ -78,11 +78,11 @@ Deferred to future release.
 | FLW-02 | Phase 19 | Complete |
 | FLW-03 | Phase 19 | Complete |
 | FLW-04 | Phase 19 | Complete |
-| RPT-01 | Phase 20 | Pending |
-| RPT-02 | Phase 20 | Pending |
-| RPT-03 | Phase 20 | Pending |
-| RPT-04 | Phase 20 | Pending |
-| RPT-05 | Phase 20 | Pending |
+| RPT-01 | Phase 20 | Complete |
+| RPT-02 | Phase 20 | Complete |
+| RPT-03 | Phase 20 | Complete |
+| RPT-04 | Phase 20 | Complete |
+| RPT-05 | Phase 20 | Complete |
 | SHR-01 | Phase 21 | Complete |
 | SHR-02 | Phase 21 | Complete |
 | SHR-03 | Phase 21 | Complete |

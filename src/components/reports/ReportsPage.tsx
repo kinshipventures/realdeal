@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
   getPods, getContacts, getAllInteractions, getPipelines,
   getPipelineStages, getOpportunities,
@@ -12,6 +13,7 @@ import {
   type EngagementSummary, type ReportType, type SavedReportConfig,
 } from '@/lib/reporting'
 import { Spinner } from '../ui'
+import { EmptyState } from '../empty/EmptyState'
 
 type ActiveView = 'overview' | ReportType
 
@@ -32,6 +34,7 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export function ReportsPage() {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ActiveView>('overview')
   const [days, setDays] = useState(30)
@@ -67,6 +70,35 @@ export function ReportsPage() {
     )
   }
 
+  if (contacts.length === 0 && pods.length === 0 && interactions.length === 0) {
+    return (
+      <div style={{ padding: '32px clamp(16px, 4vw, 32px) 96px', maxWidth: 1040, margin: '0 auto' }}>
+        <div style={{ marginBottom: 24 }}>
+          <p style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 4,
+          }}>
+            Reports
+          </p>
+          <h1 style={{
+            fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700,
+            color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
+          }}>
+            Reports
+          </h1>
+        </div>
+        <EmptyState
+          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>}
+          heading="Nothing to report yet"
+          subtext="Reports light up once you have contacts, pods, and interactions. Start by importing your network."
+          ctaLabel="Import contacts"
+          onCta={() => navigate('/import')}
+          ghosts={3}
+        />
+      </div>
+    )
+  }
+
   // Computed reports
   const podDist = computePodDistribution(pods, contacts, interactions)
   const pipelineVel = computePipelineVelocity(pipelines, stages, opportunities)
@@ -98,7 +130,7 @@ export function ReportsPage() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 96px', maxWidth: 1040, margin: '0 auto' }}>
+    <div style={{ padding: '32px clamp(16px, 4vw, 32px) 96px', maxWidth: 1040, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <p style={{

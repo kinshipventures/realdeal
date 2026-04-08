@@ -613,6 +613,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         style={{
           position: 'fixed',
           top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
           width: 'min(880px, calc(100vw - 48px))',
           maxHeight: 'calc(100vh - 80px)',
           display: 'flex',

@@ -4,6 +4,7 @@ import { NurturingRow } from './NurturingRow'
 import { Avatar } from '../ui'
 import { Spinner } from '../ui'
 import { getContacts, getPods, getAllInteractions, isOverdue, isInGracePeriod } from '../../lib/airtable'
+import { EmptyState } from '../empty/EmptyState'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact, contactCadenceDays, todaysFocus } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
@@ -300,7 +301,7 @@ export function NurturingHub() {
     <div style={{
       maxWidth: 720,
       margin: '0 auto',
-      padding: '32px 32px 96px',
+      padding: '32px clamp(16px, 4vw, 32px) 96px',
       background: 'var(--color-bg)',
       minHeight: '100vh',
     }}>
@@ -634,8 +635,20 @@ export function NurturingHub() {
         )}
       </div>
 
-      {/* All empty state */}
-      {needsAttentionContacts.length === 0 && staleContacts.length === 0 && upcomingDates.length === 0 && (
+      {/* Zero-data empty state */}
+      {contacts.length === 0 && (
+        <EmptyState
+          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>}
+          heading="No one to nurture yet"
+          subtext="Add contacts and log interactions to see who needs attention, upcoming dates, and follow-up reminders."
+          ctaLabel="Add contacts"
+          onCta={() => navigate('/import')}
+          ghosts={3}
+        />
+      )}
+
+      {/* All caught up state */}
+      {contacts.length > 0 && needsAttentionContacts.length === 0 && staleContacts.length === 0 && upcomingDates.length === 0 && (
         <div style={{
           textAlign: 'center',
           padding: '48px 24px',

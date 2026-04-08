@@ -208,8 +208,9 @@ function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edg
   return []
 }
 
-const DRILL_RADIUS = 200
+const BASE_DRILL_RADIUS = 200
 const CAT_SIZE = 64
+const MAX_PER_RING = 8
 
 function buildDrillNodes(
   pod: Pod,
@@ -233,10 +234,17 @@ function buildDrillNodes(
     },
   }
 
+  // Multi-ring layout: spread categories across rings to avoid overlap
+  const ringCount = Math.ceil(categories.length / MAX_PER_RING)
   const catNodes: Node[] = categories.map((cat, i) => {
-    const angle = (i / categories.length) * 2 * Math.PI - Math.PI / 2
-    const x = Math.cos(angle) * DRILL_RADIUS - CAT_SIZE / 2
-    const y = Math.sin(angle) * DRILL_RADIUS - CAT_SIZE / 2
+    const ring = Math.floor(i / MAX_PER_RING)
+    const indexInRing = i % MAX_PER_RING
+    const countInRing = Math.min(MAX_PER_RING, categories.length - ring * MAX_PER_RING)
+    const radius = BASE_DRILL_RADIUS + ring * 120
+    const angleOffset = ring * (Math.PI / MAX_PER_RING / 2)
+    const angle = (indexInRing / countInRing) * 2 * Math.PI - Math.PI / 2 + angleOffset
+    const x = Math.cos(angle) * radius - CAT_SIZE / 2
+    const y = Math.sin(angle) * radius - CAT_SIZE / 2
     return {
       id: cat.id,
       type: 'category',
@@ -1222,9 +1230,9 @@ export function OrbMap() {
             onNodeDragStop={handleNodeDragStop}
             fitView={fitViewEnabled}
             fitViewOptions={{ padding: 0.22 }}
-            minZoom={0.15}
+            minZoom={0.3}
             maxZoom={2.5}
-            translateExtent={[[-800, -800], [800, 800]]}
+            translateExtent={[[-1500, -1500], [1500, 1500]]}
             nodesDraggable
             edgesReconnectable={false}
             edgesFocusable={false}

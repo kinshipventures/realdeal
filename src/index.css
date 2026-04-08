@@ -811,6 +811,19 @@ body::after {
     padding: 16px 16px 20px;
     border-radius: 16px;
   }
+  .records-table th,
+  .records-table td {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 12px !important;
+  }
+  .records-table th:first-child,
+  .records-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--color-bg);
+    z-index: 2;
+  }
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────────── */

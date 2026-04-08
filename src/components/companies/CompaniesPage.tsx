@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getContacts, getPods, getAllInteractions } from '../../lib/airtable'
+import { EmptyState } from '../empty/EmptyState'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import type { Contact, Pod } from '../../lib/types'
@@ -131,7 +132,7 @@ export function CompaniesPage() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{
-        padding: '28px 32px 16px',
+        padding: '28px clamp(16px, 4vw, 32px) 16px',
         borderBottom: '1px solid var(--divider)',
         background: 'var(--surface-panel)',
       }}>
@@ -172,10 +173,19 @@ export function CompaniesPage() {
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 32px' }}>
-        {filtered.length === 0 ? (
+      <div style={{ flex: 1, overflow: 'auto', padding: '0 clamp(16px, 4vw, 32px)' }}>
+        {contacts.length === 0 ? (
+          <EmptyState
+            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/></svg>}
+            heading="No companies yet"
+            subtext="Companies appear here when your contacts have company info. Import contacts or add company details to get started."
+            ctaLabel="Import contacts"
+            onCta={() => navigate('/import')}
+            ghosts={2}
+          />
+        ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
-            {search ? 'No companies match your search.' : 'No companies yet.'}
+            No companies match your search.
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
