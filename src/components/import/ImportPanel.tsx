@@ -312,20 +312,20 @@ export function ImportPanel() {
             }}>
               <svg width="160" height="140" viewBox="-90 -80 180 160" style={{ animation: 'import-float 5s ease-in-out infinite' }}>
                 {[
-                  { x: -44, y: -32, color: '#6366F1' }, { x: 48, y: -26, color: '#EC4899' },
-                  { x: -30, y: 38, color: '#F59E0B' }, { x: 42, y: 34, color: '#8B5CF6' },
-                  { x: -56, y: 8, color: '#14B8A6' }, { x: 58, y: 6, color: '#F97316' },
-                  { x: 0, y: -48, color: '#F43F5E' }, { x: -16, y: -50, color: '#0EA5E9' },
+                  { x: -44, y: -32, color: '#E53935' }, { x: 48, y: -26, color: '#FF6B8A' },
+                  { x: -30, y: 38, color: '#F5A623' }, { x: 42, y: 34, color: '#7E57C2' },
+                  { x: -56, y: 8, color: '#FF6B4A' }, { x: 58, y: 6, color: '#FFD54F' },
+                  { x: 0, y: -48, color: '#5C6BC0' }, { x: -16, y: -50, color: '#FF8FA5' },
                 ].map((n, i) => (
                   <line key={`l${i}`} x1={0} y1={0} x2={n.x} y2={n.y}
                     stroke={n.color} strokeWidth="1" strokeOpacity="0.15" />
                 ))}
                 {[
                   { x: 0, y: 0, size: 14, color: '#25B439' },
-                  { x: -44, y: -32, size: 9, color: '#6366F1' }, { x: 48, y: -26, size: 10, color: '#EC4899' },
-                  { x: -30, y: 38, size: 7, color: '#F59E0B' }, { x: 42, y: 34, size: 8, color: '#8B5CF6' },
-                  { x: -56, y: 8, size: 6, color: '#14B8A6' }, { x: 58, y: 6, size: 5, color: '#F97316' },
-                  { x: 0, y: -48, size: 6, color: '#F43F5E' }, { x: -16, y: -50, size: 4, color: '#0EA5E9' },
+                  { x: -44, y: -32, size: 9, color: '#E53935' }, { x: 48, y: -26, size: 10, color: '#FF6B8A' },
+                  { x: -30, y: 38, size: 7, color: '#F5A623' }, { x: 42, y: 34, size: 8, color: '#7E57C2' },
+                  { x: -56, y: 8, size: 6, color: '#FF6B4A' }, { x: 58, y: 6, size: 5, color: '#FFD54F' },
+                  { x: 0, y: -48, size: 6, color: '#5C6BC0' }, { x: -16, y: -50, size: 4, color: '#FF8FA5' },
                 ].map((n, i) => (
                   <g key={`n${i}`}>
                     <circle cx={n.x} cy={n.y} r={n.size * 2} fill={n.color} fillOpacity="0.06" />
