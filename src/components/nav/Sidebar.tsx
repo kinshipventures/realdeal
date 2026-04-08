@@ -203,7 +203,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
               width: '100%',
               minHeight: 44,
               padding: '6px 8px',
@@ -406,7 +406,7 @@ function NavItem({
 }
 
 function Divider() {
-  return <div style={{ height: 1, background: 'var(--divider)', margin: '4px 12px' }} />
+  return <div style={{ height: 1, background: 'var(--divider)', margin: '8px 12px' }} />
 }
 
 function DisclosureSection({ label, defaultOpen = false, children }: { label: string; defaultOpen?: boolean; children: React.ReactNode }) {
@@ -419,7 +419,7 @@ function DisclosureSection({ label, defaultOpen = false, children }: { label: st
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 8,
           width: '100%',
           minHeight: 44,
           padding: '6px 8px',
