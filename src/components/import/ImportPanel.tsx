@@ -352,6 +352,7 @@ export function ImportPanel() {
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+              className="import-dropzone"
               style={{
                 minHeight: 200,
                 border: `2px dashed ${dragOver ? 'var(--color-brand)' : 'var(--edge-strong)'}`,
@@ -363,7 +364,7 @@ export function ImportPanel() {
                 gap: 8,
                 cursor: 'pointer',
                 background: dragOver ? 'rgba(37,180,57,0.04)' : 'var(--color-surface)',
-                transition: 'all 0.15s',
+                transition: 'border-color 0.15s, background 0.15s',
                 padding: 32,
               }}
             >
