@@ -910,3 +910,7 @@ body::after {
 .icon-picker-remove {
   border: 1px dashed var(--edge-strong);
 }
+
+.subpod-pill:hover .subpod-delete {
+  opacity: 1 !important;
+}

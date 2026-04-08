@@ -5,7 +5,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink, InteractionType } from '../../lib/types'
 import { HUMAN_TYPES } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getPods, getContacts, getCategories, getAllInteractions, updatePod, updateContact, createCategory, updateCategory } from '../../lib/airtable'
+import { getPods, getContacts, getCategories, getAllInteractions, updatePod, deletePod, updateContact, createCategory, updateCategory, deleteCategory } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { contactEquityScore, podEquityScore, scoreLabel, daysSinceContact, indexByContact } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
@@ -219,6 +219,15 @@ export function PodDetailPage() {
   const [newSubPodName, setNewSubPodName] = useState('')
   const newSubPodInputRef = useRef<HTMLInputElement>(null)
 
+  // Rename/delete state
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [renamingPod, setRenamingPod] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [editingCatId, setEditingCatId] = useState<string | null>(null)
+  const [editCatName, setEditCatName] = useState('')
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+
   // Icon picker state
   const [iconPickerCatId, setIconPickerCatId] = useState<string | null>(null)
   const [iconPickerAnchor, setIconPickerAnchor] = useState<HTMLElement | null>(null)
@@ -307,9 +316,45 @@ export function PodDetailPage() {
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, icon } : c))
   }, [])
 
+  const handleRenamePod = useCallback(async () => {
+    if (!podId || !renameValue.trim() || renameValue.trim() === pod?.name) {
+      setRenamingPod(false)
+      return
+    }
+    await save({ name: renameValue.trim() })
+    setRenamingPod(false)
+  }, [podId, renameValue, pod?.name, save])
+
+  const handleDeletePod = useCallback(async () => {
+    if (!podId) return
+    await deletePod(podId)
+    navigate('/pods')
+  }, [podId, navigate])
+
+  const handleRenameCategory = useCallback(async (catId: string) => {
+    if (!editCatName.trim()) { setEditingCatId(null); return }
+    await updateCategory(catId, { name: editCatName.trim() })
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, name: editCatName.trim() } : c))
+    setEditingCatId(null)
+  }, [editCatName])
+
+  const handleDeleteCategory = useCallback(async (catId: string) => {
+    await deleteCategory(catId)
+    setCategories(prev => prev.filter(c => c.id !== catId))
+  }, [])
+
   useEffect(() => {
     if (addingSubPod) newSubPodInputRef.current?.focus()
   }, [addingSubPod])
+
+  useEffect(() => {
+    if (!showMoreMenu) return
+    function handleClick(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setShowMoreMenu(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showMoreMenu])
 
   const otherPods = useMemo(() => allPods.filter(p => p.id !== podId), [allPods, podId])
 
@@ -434,10 +479,31 @@ export function PodDetailPage() {
                 width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                 background: `linear-gradient(135deg, ${podColor}, ${shiftColor})`,
               }} />
-              <h1 style={{
-                fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
-                color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
-              }}>{pod.name}</h1>
+              {renamingPod ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleRenamePod()
+                    if (e.key === 'Escape') setRenamingPod(false)
+                  }}
+                  onBlur={handleRenamePod}
+                  style={{
+                    fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
+                    color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
+                    background: 'var(--tint)', border: '1px solid var(--edge)',
+                    borderRadius: 6, padding: '2px 8px', outline: 'none',
+                    width: '100%',
+                  }}
+                />
+              ) : (
+                <h1 style={{
+                  fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
+                  color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
+                }}>{pod.name}</h1>
+              )}
               <span style={{
                 fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
                 color: EQUITY_COLORS[podLabel], background: `${EQUITY_COLORS[podLabel]}14`,
@@ -454,38 +520,118 @@ export function PodDetailPage() {
             )}
           </div>
 
-          {/* Share button */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button
-              type="button"
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setShowSharePopover(v => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: 'var(--tint)', border: '1px solid var(--edge)',
-                borderRadius: 8, padding: '8px 14px', fontSize: 13,
-                fontWeight: 500, color: 'var(--color-text-primary)',
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              Share
-            </button>
-            {showSharePopover && (
-              <SharePopover
-                podId={podId!}
-                members={members}
-                onCreated={(link) => {
-                  setShareLinks(prev => [link, ...prev])
-                  setShowSharePopover(false)
+          {/* Share + More menu */}
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onMouseDown={e => e.stopPropagation()}
+                onClick={() => setShowSharePopover(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'var(--tint)', border: '1px solid var(--edge)',
+                  borderRadius: 8, padding: '8px 14px', fontSize: 13,
+                  fontWeight: 500, color: 'var(--color-text-primary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
                 }}
-                onClose={() => setShowSharePopover(false)}
-              />
-            )}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                Share
+              </button>
+              {showSharePopover && (
+                <SharePopover
+                  podId={podId!}
+                  members={members}
+                  onCreated={(link) => {
+                    setShareLinks(prev => [link, ...prev])
+                    setShowSharePopover(false)
+                  }}
+                  onClose={() => setShowSharePopover(false)}
+                />
+              )}
+            </div>
+            <div ref={moreMenuRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowMoreMenu(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--tint)', border: '1px solid var(--edge)',
+                  borderRadius: 8, width: 36, height: 36,
+                  cursor: 'pointer', color: 'var(--color-text-secondary)',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+              {showMoreMenu && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 4,
+                  background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+                  borderRadius: 10, padding: 4, minWidth: 140, zIndex: 20,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                }}>
+                  <div
+                    onClick={() => {
+                      setRenameValue(pod.name)
+                      setRenamingPod(true)
+                      setShowMoreMenu(false)
+                    }}
+                    style={{ padding: '8px 12px', fontSize: 13, borderRadius: 6, cursor: 'pointer', color: 'var(--color-text-primary)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    Rename
+                  </div>
+                  <div
+                    onClick={() => { setConfirmDelete(true); setShowMoreMenu(false) }}
+                    style={{ padding: '8px 12px', fontSize: 13, borderRadius: 6, cursor: 'pointer', color: '#dc2626' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    Delete pod
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Delete confirmation */}
+          {confirmDelete && (
+            <>
+              <div onClick={() => setConfirmDelete(false)} style={{ position: 'fixed', inset: 0, background: 'var(--overlay-dim)', zIndex: 200 }} />
+              <div style={{
+                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                background: 'var(--surface-panel)', border: '1px solid var(--edge)', borderRadius: 14,
+                padding: 24, width: 320, zIndex: 201, boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+              }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>Delete "{pod.name}"?</p>
+                <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 20px' }}>
+                  This will remove the pod and its sub-pods. Members will remain in your contacts.
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    style={{ padding: '8px 16px', background: 'var(--tint)', border: '1px solid var(--edge)', borderRadius: 7, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--color-text-primary)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeletePod}
+                    style={{ padding: '8px 16px', background: '#dc2626', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#fff' }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Members (primary content) ── */}
@@ -645,35 +791,74 @@ export function PodDetailPage() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
               {categories.map(cat => (
-                <div key={cat.id} style={{ display: 'flex', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/category/${cat.id}`)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '6px 12px', background: 'var(--tint)',
-                      border: '1px solid var(--edge)', borderRadius: 100,
-                      cursor: 'pointer', fontSize: 13,
-                      color: 'var(--color-text-primary)', fontFamily: 'inherit',
-                      transition: 'background 0.15s',
-                    }}
-                  >
-                    {cat.icon ? (
+                <div key={cat.id} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  {editingCatId === cat.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editCatName}
+                      onChange={e => setEditCatName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleRenameCategory(cat.id)
+                        if (e.key === 'Escape') setEditingCatId(null)
+                      }}
+                      onBlur={() => handleRenameCategory(cat.id)}
+                      style={{
+                        padding: '6px 12px', background: 'var(--tint)',
+                        border: '1px solid var(--color-brand)', borderRadius: 100,
+                        fontSize: 13, color: 'var(--color-text-primary)',
+                        fontFamily: 'inherit', outline: 'none', width: 140,
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/category/${cat.id}`)}
+                      onDoubleClick={e => {
+                        e.preventDefault()
+                        setEditingCatId(cat.id)
+                        setEditCatName(cat.name)
+                      }}
+                      className="subpod-pill"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '6px 12px', background: 'var(--tint)',
+                        border: '1px solid var(--edge)', borderRadius: 100,
+                        cursor: 'pointer', fontSize: 13,
+                        color: 'var(--color-text-primary)', fontFamily: 'inherit',
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      {cat.icon ? (
+                        <span
+                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                          style={{ lineHeight: 0, cursor: 'pointer' }}
+                        >
+                          <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
+                        </span>
+                      ) : (
+                        <span
+                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                          style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
+                          title="Set icon"
+                        />
+                      )}
+                      {cat.name}
                       <span
-                        onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                        style={{ lineHeight: 0, cursor: 'pointer' }}
+                        onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
+                        style={{
+                          marginLeft: 2, width: 16, height: 16, borderRadius: '50%',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, color: 'var(--color-text-tertiary)',
+                          opacity: 0, transition: 'opacity 0.15s',
+                        }}
+                        className="subpod-delete"
+                        title="Remove sub-pod"
                       >
-                        <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
+                        x
                       </span>
-                    ) : (
-                      <span
-                        onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                        style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
-                        title="Set icon"
-                      />
-                    )}
-                    {cat.name}
-                  </button>
+                    </button>
+                  )}
                 </div>
               ))}
               {iconPickerCatId && (

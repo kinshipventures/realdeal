@@ -29,6 +29,20 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
 
   const equityWidget = ALL_WIDGETS.find(w => w.id === 'equity')!
 
+  // Section labels so toggle names map to dashboard headings
+  const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
+    'pending-tray': 'standalone',
+    'todays-focus': 'Your Day',
+    'coming-up': 'Your Day',
+    'needs-attention': 'Your Day',
+    'pod-health': 'Network Pulse',
+    'wrapped': 'Network Pulse',
+    'recent-activity': 'Activity & Links',
+    'quick-links': 'Activity & Links',
+    'gmail-sync': 'Activity & Links',
+    'granola-sync': 'Activity & Links',
+  }
+
   function getInsertIndex(clientY: number): number {
     for (let i = 0; i < rowRefs.current.length; i++) {
       const row = rowRefs.current[i]
@@ -234,33 +248,42 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
             draggable={false}
           />
 
-          {/* Orderable widgets */}
+          {/* Orderable widgets with section headers */}
           {orderedWidgets.map((widget, index) => {
             const isDragging = dragIndex === index
             const indicator = showIndicator(index)
+            const section = WIDGET_SECTION[widget.id]
+            const prevSection = index > 0 ? WIDGET_SECTION[orderedWidgets[index - 1].id] : null
+            const showSectionHeader = section && section !== 'standalone' && section !== prevSection
             return (
-              <div
-                key={widget.id}
-                ref={el => { rowRefs.current[index] = el }}
-                style={{
-                  opacity: isDragging ? 0.4 : 1,
-                  position: 'relative',
-                  transition: isDragging ? 'none' : 'opacity 0.15s',
-                }}
-              >
-                {indicator === 'above' && (
-                  <div style={{ position: 'absolute', top: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
+              <div key={widget.id}>
+                {showSectionHeader && (
+                  <div style={{ padding: '14px 20px 4px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {section}
+                  </div>
                 )}
-                <WidgetRow
-                  widget={widget}
-                  visible={config.visible.has(widget.id)}
-                  onToggle={onToggle}
-                  draggable
-                  onGripPointerDown={e => handlePointerDown(e, index)}
-                />
-                {indicator === 'below' && (
-                  <div style={{ position: 'absolute', bottom: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
-                )}
+                <div
+                  ref={el => { rowRefs.current[index] = el }}
+                  style={{
+                    opacity: isDragging ? 0.4 : 1,
+                    position: 'relative',
+                    transition: isDragging ? 'none' : 'opacity 0.15s',
+                  }}
+                >
+                  {indicator === 'above' && (
+                    <div style={{ position: 'absolute', top: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
+                  )}
+                  <WidgetRow
+                    widget={widget}
+                    visible={config.visible.has(widget.id)}
+                    onToggle={onToggle}
+                    draggable
+                    onGripPointerDown={e => handlePointerDown(e, index)}
+                  />
+                  {indicator === 'below' && (
+                    <div style={{ position: 'absolute', bottom: 0, left: 20, right: 20, height: 2, background: 'var(--color-brand)', borderRadius: 1, zIndex: 1 }} />
+                  )}
+                </div>
               </div>
             )
           })}

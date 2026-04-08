@@ -133,6 +133,17 @@ export async function updatePod(id: string, data: Partial<{
   return mapPod(row)
 }
 
+export async function deletePod(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_PODS.findIndex(p => p.id === id)
+    if (idx >= 0) DEMO_PODS.splice(idx, 1)
+    return
+  }
+  const { error } = await supabase.from('pods').delete().eq('id', id)
+  if (error) throw error
+  _podsCache = null
+}
+
 // ── Categories ───────────────────────────────────────────────────────────────
 
 function mapCategory(r: any): Category {
@@ -182,6 +193,17 @@ export async function updateCategory(id: string, data: Partial<Pick<Category, 'n
   if (error) throw error
   _categoriesCache = null
   return mapCategory(row)
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_CATEGORIES.findIndex(c => c.id === id)
+    if (idx >= 0) DEMO_CATEGORIES.splice(idx, 1)
+    return
+  }
+  const { error } = await supabase.from('categories').delete().eq('id', id)
+  if (error) throw error
+  _categoriesCache = null
 }
 
 // ── Contacts ─────────────────────────────────────────────────────────────────
