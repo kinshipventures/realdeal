@@ -60,6 +60,14 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Fetch workspace name for the welcome screen
+    const { data: ws } = await adminClient
+      .from('workspaces')
+      .select('name')
+      .eq('id', invite.workspace_id)
+      .single()
+    const workspace_name = ws?.name ?? null
+
     // Check if already a member
     const { data: existing } = await adminClient
       .from('workspace_members')
@@ -71,7 +79,7 @@ Deno.serve(async (req) => {
     if (existing) {
       // Mark invite accepted anyway
       await adminClient.from('workspace_invites').update({ accepted_at: new Date().toISOString() }).eq('id', invite.id)
-      return new Response(JSON.stringify({ workspace_id: invite.workspace_id, already_member: true }), {
+      return new Response(JSON.stringify({ workspace_id: invite.workspace_id, workspace_name, already_member: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -92,7 +100,7 @@ Deno.serve(async (req) => {
     // Mark accepted
     await adminClient.from('workspace_invites').update({ accepted_at: new Date().toISOString() }).eq('id', invite.id)
 
-    return new Response(JSON.stringify({ workspace_id: invite.workspace_id, role: invite.role }), {
+    return new Response(JSON.stringify({ workspace_id: invite.workspace_id, workspace_name, role: invite.role }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {

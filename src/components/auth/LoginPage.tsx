@@ -5,6 +5,31 @@ import { lovable } from '@/integrations/lovable/index'
 import { supabase } from '@/integrations/supabase/client'
 import { setDemoMode } from '@/lib/sampleData'
 
+// Mini orb for login hero - a single breathing health ring
+function LoginOrb() {
+  const size = 80
+  const r = (size - 6) / 2
+  const circ = 2 * Math.PI * r
+  return (
+    <svg width={size} height={size} style={{ marginBottom: 24 }}>
+      {/* Ghost track */}
+      <circle cx={size / 2} cy={size / 2} r={r}
+        fill="none" stroke="var(--edge)" strokeWidth={3} />
+      {/* Health arc - ~75% filled */}
+      <circle cx={size / 2} cy={size / 2} r={r}
+        fill="none" stroke="var(--color-brand)" strokeWidth={3}
+        strokeLinecap="round"
+        strokeDasharray={`${circ * 0.75} ${circ * 0.25}`}
+        strokeDashoffset={circ * 0.25}
+        style={{ transition: 'stroke-dasharray 1s ease' }}
+      />
+      {/* Center dot */}
+      <circle cx={size / 2} cy={size / 2} r={6} fill="var(--color-brand)" opacity={0.15} />
+      <circle cx={size / 2} cy={size / 2} r={3} fill="var(--color-brand)" />
+    </svg>
+  )
+}
+
 export function LoginPage() {
   const { session } = useAuth()
   const navigate = useNavigate()
@@ -83,50 +108,41 @@ export function LoginPage() {
       color: 'var(--color-text-primary)',
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 320 }}>
+        <LoginOrb />
         <h1 style={{
           fontFamily: 'var(--font-serif)',
-          fontSize: 28,
-          fontWeight: 800,
+          fontSize: 32,
+          fontWeight: 900,
           color: 'var(--color-text-primary)',
           margin: 0,
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.03em',
         }}>
           RealDeal
         </h1>
         <p style={{
-          fontSize: 22,
+          fontSize: 18,
           fontFamily: 'var(--font-serif)',
           fontWeight: 700,
-          color: 'var(--color-text-primary)',
-          margin: '12px 0 0',
+          color: 'var(--color-text-secondary)',
+          margin: '8px 0 0',
           letterSpacing: '-0.02em',
           lineHeight: 1.2,
         }}>
           Feed what feeds you
-        </p>
-        <p style={{
-          fontSize: 14,
-          color: 'var(--color-text-secondary)',
-          margin: '10px 0 0',
-          lineHeight: 1.5,
-          textAlign: 'center',
-          maxWidth: 280,
-        }}>
-          Track the health of your relationships like you track your fitness.
         </p>
 
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
           style={{
-            marginTop: 32,
+            marginTop: 40,
             width: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 12,
             padding: '12px 24px',
-            borderRadius: 8,
+            borderRadius: 10,
             border: '1px solid var(--edge-strong)',
             background: 'var(--color-surface)',
             cursor: loading ? 'wait' : 'pointer',
@@ -156,11 +172,11 @@ export function LoginPage() {
           alignItems: 'center',
           gap: 12,
           width: '100%',
-          margin: '24px 0',
+          margin: '20px 0',
         }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--edge-strong)' }} />
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>or</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--edge-strong)' }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>or sign in with email</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
         </div>
 
         {/* Email form */}
@@ -224,35 +240,36 @@ export function LoginPage() {
           <p style={{ color: 'var(--health-fading)', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>
         )}
 
-        <button
-          onClick={() => {
-            setDemoMode(true)
-            window.location.href = '/'
-          }}
-          style={{
-            marginTop: 20,
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '12px 20px',
-            borderRadius: 10,
-            border: '1px solid rgba(37,180,57,0.25)',
-            background: 'rgba(37,180,57,0.06)',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-brand)',
-            fontFamily: 'var(--font-sans)',
-            transition: 'background 0.15s ease, border-color 0.15s ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,180,57,0.12)'; e.currentTarget.style.borderColor = 'rgba(37,180,57,0.40)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(37,180,57,0.06)'; e.currentTarget.style.borderColor = 'rgba(37,180,57,0.25)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Take a look around
-        </button>
+        {/* Demo - visually separated */}
+        <div style={{
+          marginTop: 32,
+          paddingTop: 24,
+          borderTop: '1px solid var(--edge)',
+          width: '100%',
+          textAlign: 'center',
+        }}>
+          <button
+            onClick={() => {
+              setDemoMode(true)
+              window.location.href = '/'
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--color-brand)',
+              fontFamily: 'var(--font-sans)',
+              padding: '4px 8px',
+              transition: 'opacity 0.15s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.7' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          >
+            Just looking? Try the demo
+          </button>
+        </div>
       </div>
     </div>
   )

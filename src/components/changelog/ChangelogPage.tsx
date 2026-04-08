@@ -82,10 +82,11 @@ const releases: Release[] = [
         icon: 'M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z',
         gradient: ['#7B1FA2', '#4A148C'],
         area: 'Sharing',
+        link: '/learn',
       },
       {
-        title: 'Workspaces',
-        description: 'Multi-workspace foundation with switcher UI, invite system, and workspace-scoped data. Collaborate with your team on shared relationship networks.',
+        title: 'Teams',
+        description: 'Multi-team foundation with switcher UI, invite system, and team-scoped data. Collaborate with your team on shared relationship networks.',
         icon: 'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z',
         gradient: ['#1565C0', '#0D47A1'],
         area: 'Platform',
@@ -97,6 +98,7 @@ const releases: Release[] = [
         icon: 'M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z',
         gradient: ['#3ECF8E', '#1C8656'],
         area: 'Infrastructure',
+        link: '/account',
       },
     ],
     entries: [
@@ -152,7 +154,7 @@ export function ChangelogPage() {
   const navigate = useNavigate()
 
   return (
-    <div style={{ padding: '32px 32px 96px', maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ padding: '32px 32px 48px', maxWidth: 720, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 40 }}>
         <div style={{
@@ -185,17 +187,31 @@ export function ChangelogPage() {
       <ComingNext />
 
       {/* Footer */}
-      <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)' }}>
+      <div style={{
+        marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--edge)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
         <button
           type="button"
-          onClick={() => navigate('/pulse')}
+          onClick={() => navigate(-1 as any)}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 13, color: 'var(--color-text-secondary)', padding: 0,
             fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
           }}
         >
-          Back to Pulse
+          Go back
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/learn')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: 'var(--color-text-secondary)', padding: 0,
+            fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
+          }}
+        >
+          How it works
         </button>
       </div>
     </div>

@@ -103,7 +103,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         </button>
       </div>
 
-      {/* Workspace switcher */}
+      {/* Team switcher */}
       <WorkspaceSwitcher collapsed={collapsed} />
 
       {/* Search - promoted to top for quick access */}

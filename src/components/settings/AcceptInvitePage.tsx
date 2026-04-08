@@ -12,6 +12,7 @@ export function AcceptInvitePage() {
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
+  const [teamName, setTeamName] = useState('')
 
   useEffect(() => {
     if (!token) { setStatus('error'); setMessage('No invite token provided.'); return }
@@ -30,10 +31,11 @@ export function AcceptInvitePage() {
           switchWorkspace(data.workspace_id)
           localStorage.setItem('realdeal:onboarding-complete', '1')
         }
+        if (data?.workspace_name) setTeamName(data.workspace_name)
 
         setStatus('success')
-        setMessage(data?.already_member ? 'You are already a member of this workspace.' : 'You have joined the workspace!')
-        setTimeout(() => navigate('/'), 2000)
+        setMessage(data?.already_member ? 'You are already on this team.' : "You're in!")
+        setTimeout(() => navigate('/'), 2500)
       } catch (err: any) {
         setStatus('error')
         setMessage(err?.message || 'Failed to accept invite.')
@@ -44,11 +46,11 @@ export function AcceptInvitePage() {
 
   if (!session) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-body, system-ui)', background: 'var(--color-bg, #F5F4F0)' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600 }}>Sign in to accept invite</h1>
-        <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>You need to sign in or create an account first.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-sans)', background: 'var(--color-bg)' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em' }}>Sign in to join</h1>
+        <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: 280 }}>You need an account to accept this invite. Sign in or create one to get started.</p>
         <button type="button" onClick={() => navigate(`/login?return_to=${encodeURIComponent('/invite?token=' + token)}`)}
-          style={{ padding: '10px 24px', fontSize: 14, fontWeight: 600, background: 'var(--color-brand, #7C5CFC)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+          style={{ padding: '10px 24px', fontSize: 14, fontWeight: 600, background: 'var(--color-brand)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           Sign in
         </button>
       </div>
@@ -56,21 +58,48 @@ export function AcceptInvitePage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-body, system-ui)', background: 'var(--color-bg, #F5F4F0)' }}>
-      {status === 'loading' && <p style={{ fontSize: 16 }}>Accepting invite...</p>}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-sans)', background: 'var(--color-bg)' }}>
+      {status === 'loading' && (
+        <>
+          <div className="spinner" style={{ width: 32, height: 32 }} />
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Joining team...</p>
+        </>
+      )}
       {status === 'success' && (
         <>
-          <div style={{ fontSize: 48 }}>&#10003;</div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: '#48BB78' }}>{message}</h1>
-          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Redirecting...</p>
+          {/* Brand-colored success ring */}
+          <svg width="56" height="56" style={{ marginBottom: 8 }}>
+            <circle cx="28" cy="28" r="24" fill="none" stroke="var(--color-brand)" strokeWidth="3" opacity="0.15" />
+            <circle cx="28" cy="28" r="24" fill="none" stroke="var(--color-brand)" strokeWidth="3"
+              strokeDasharray={`${2 * Math.PI * 24}`} strokeDashoffset="0"
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+            <polyline points="18,28 25,35 38,22" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
+            {message}
+          </h1>
+          {teamName && (
+            <p style={{ fontSize: 15, color: 'var(--color-text-secondary)', margin: 0 }}>
+              Welcome to <strong style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{teamName}</strong>
+            </p>
+          )}
+          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '8px 0 0' }}>Taking you there now...</p>
         </>
       )}
       {status === 'error' && (
         <>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: '#E53E3E' }}>Invite error</h1>
-          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>{message}</p>
+          <svg width="56" height="56" style={{ marginBottom: 8 }}>
+            <circle cx="28" cy="28" r="24" fill="none" stroke="var(--health-fading)" strokeWidth="3" opacity="0.15" />
+            <line x1="20" y1="20" x2="36" y2="36" stroke="var(--health-fading)" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="36" y1="20" x2="20" y2="36" stroke="var(--health-fading)" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em', color: 'var(--health-fading)' }}>
+            Something went wrong
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: 280 }}>{message}</p>
           <button type="button" onClick={() => navigate('/')}
-            style={{ padding: '10px 24px', fontSize: 14, fontWeight: 600, background: 'var(--color-brand, #7C5CFC)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+            style={{ marginTop: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, background: 'var(--color-brand)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
             Go home
           </button>
         </>
