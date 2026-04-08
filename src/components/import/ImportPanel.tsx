@@ -712,9 +712,9 @@ export function ImportPanel() {
                           type="button"
                           onClick={() => setUnmatchedDecisions(p => ({ ...p, [csvHeader]: 'create' }))}
                           style={{
-                            padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500,
-                            fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.12s',
-                            border: '1px solid',
+                            padding: '8px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                            fontFamily: 'inherit', cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+                            border: '1px solid', minHeight: 36,
                             borderColor: decision === 'create' ? 'var(--color-brand)' : 'var(--edge)',
                             background: decision === 'create' ? 'rgba(37,180,57,0.08)' : 'transparent',
                             color: decision === 'create' ? 'var(--color-brand)' : 'var(--color-text-secondary)',
@@ -726,9 +726,9 @@ export function ImportPanel() {
                           type="button"
                           onClick={() => setUnmatchedDecisions(p => ({ ...p, [csvHeader]: 'skip' }))}
                           style={{
-                            padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500,
-                            fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.12s',
-                            border: '1px solid',
+                            padding: '8px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                            fontFamily: 'inherit', cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+                            border: '1px solid', minHeight: 36,
                             borderColor: decision === 'skip' ? 'var(--edge-strong)' : 'var(--edge)',
                             background: decision === 'skip' ? 'var(--tint)' : 'transparent',
                             color: decision === 'skip' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
