@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, type RefObject } from 'react'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getFieldConfigs } from '../../lib/fieldConfig'
-import { getPods } from '../../lib/airtable'
+import { getPods, updateContact } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { CategorizationModal } from './CategorizationModal'
 
@@ -218,6 +218,16 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
     handleSkip()
   }
 
+  async function handleArchive() {
+    if (!currentContact) return
+    await updateContact(currentContact.id, { status: 'Archived' as any })
+    setQueue(prev => prev.filter(c => c.id !== currentContact.id))
+    if (currentIndex > 0 && currentIndex >= queue.length - 1) {
+      setCurrentIndex(prev => Math.max(0, prev - 1))
+    }
+    onCategorized(currentContact.id)
+  }
+
   if (queue.length === 0) {
     return (
       <dialog ref={dialogRef} className="overlay-dialog" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -341,6 +351,21 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           display: 'flex', gap: 16, marginTop: 24,
           alignItems: 'center',
         }}>
+          <button
+            type="button"
+            onClick={handleArchive}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.6)', borderRadius: 10, padding: '10px 16px',
+              fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+            </svg>
+            Archive
+          </button>
           <button
             type="button"
             onClick={handleSkip}

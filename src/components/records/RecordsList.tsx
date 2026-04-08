@@ -314,10 +314,6 @@ export function RecordsList() {
       result = result.filter(c => c.list_ids.includes(filters.pod!))
     }
 
-    if (filters.status) {
-      result = result.filter(c => c.status === filters.status)
-    }
-
     if (filters.recency !== 'any') {
       result = result.filter(c => matchesRecency(c, filters.recency))
     }
@@ -458,7 +454,7 @@ export function RecordsList() {
     setFilters(DEFAULT_FILTERS)
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.status || filters.recency !== 'any'
+  const hasActiveFilters = filters.search || filters.pod || filters.recency !== 'any'
 
   // ── Bulk action handlers ──────────────────────────────────────────────────
 
@@ -841,18 +837,6 @@ export function RecordsList() {
                 )),
               ]
             })}
-          </select>
-
-          {/* Status filter */}
-          <select
-            value={filters.status ?? ''}
-            onChange={e => setFilters(f => ({ ...f, status: (e.target.value as RelationshipStatus) || null }))}
-            style={selectStyle}
-          >
-            <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Pending">Pending</option>
-            <option value="Archived">Archived</option>
           </select>
 
           {/* Recency filter (LIST-01) */}
