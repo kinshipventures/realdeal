@@ -27,6 +27,10 @@ interface RecordHeaderProps {
   onUpdate: (data: Partial<Contact>) => void
 }
 
+function initials(name: string) {
+  return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
+}
+
 export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   const navigate = useNavigate()
   const [editingName, setEditingName] = useState(false)
@@ -198,7 +202,17 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{contact.name}</span>
       </nav>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'rgba(37,180,57,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, fontWeight: 700, color: '#1A8A2A',
+          flexShrink: 0, marginTop: 2,
+          fontFamily: 'var(--font-serif)',
+        }}>
+          {initials(contact.name)}
+        </div>
         {editingName ? (
           <input
             autoFocus
@@ -272,7 +286,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           {showOverflow && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: 'rgba(255,255,255,0.96)', border: '1px solid var(--edge)',
+              background: 'var(--surface-panel)', border: '1px solid var(--edge)',
               borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
               zIndex: 50, minWidth: 160, overflow: 'hidden',
             }}>
@@ -304,12 +318,12 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       </div>
 
       {companySubtitle && (
-        <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: contact.type === 'Contact' ? 4 : 10 }}>
           {companySubtitle}
         </div>
       )}
 
-      {/* Company link/typeahead — Contact type only */}
+      {/* Company link/typeahead -- Contact type only */}
       {contact.type === 'Contact' && (
         <div style={{ marginBottom: 10, position: 'relative', display: 'inline-block' }}>
           {!showTypeahead ? (
@@ -365,7 +379,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   top: '100%',
                   left: 0,
                   minWidth: 220,
-                  background: 'rgba(255,255,255,0.96)',
+                  background: 'var(--surface-panel)',
                   border: '1px solid var(--edge)',
                   borderRadius: 8,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
@@ -446,7 +460,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setMergeSearchOpen(false)} />
           <div style={{
-            position: 'relative', background: '#fff', borderRadius: 12,
+            position: 'relative', background: 'var(--surface-panel)', borderRadius: 12,
             padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
@@ -511,7 +525,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setConfirmDelete(false)} />
           <div style={{
-            position: 'relative', background: '#fff', borderRadius: 12,
+            position: 'relative', background: 'var(--surface-panel)', borderRadius: 12,
             padding: 24, width: 320, textAlign: 'center',
             boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>

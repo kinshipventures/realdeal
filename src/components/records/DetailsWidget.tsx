@@ -1,14 +1,7 @@
 import { useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { Contact } from '../../lib/types'
-
-const WIDGET_STYLE: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  border: '1px solid var(--edge)',
-  borderRadius: 12,
-  padding: '16px 20px',
-  marginBottom: 12,
-}
+import { WIDGET_STYLE } from './shared'
 
 interface DetailsWidgetProps {
   contact: Contact
@@ -16,8 +9,12 @@ interface DetailsWidgetProps {
   requiredFieldKeys?: Set<string>
 }
 
+const SECONDARY_CONTACT_FIELDS: (keyof Contact)[] = ['gender', 'country', 'global_region', 'contact_frequency', 'communication_preferences', 'email_2', 'email_3', 'website']
+
 export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsWidgetProps) {
   const [editingField, setEditingField] = useState<keyof Contact | null>(null)
+  const hasSecondaryData = contact.type === 'Contact' && SECONDARY_CONTACT_FIELDS.some(k => contact[k])
+  const [showAll, setShowAll] = useState(hasSecondaryData)
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -163,24 +160,46 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
         Details
       </div>
 
-      {contact.type === 'Contact' && (
+      {contact.type === 'Contact' ? (
         <>
+          {field('email', 'Email')}
           {field('birthday', 'Birthday')}
-          {field('gender', 'Gender')}
           {field('location', 'Location')}
           {field('linkedin', 'LinkedIn')}
-          {field('country', 'Country')}
-          {field('global_region', 'Region')}
-          {field('contact_frequency', 'Contact Frequency')}
-          {field('communication_preferences', 'Comm Preferences', true)}
+          {field('notes', 'Notes', true)}
+          {showAll && (
+            <>
+              {field('gender', 'Gender')}
+              {field('country', 'Country')}
+              {field('global_region', 'Region')}
+              {field('contact_frequency', 'Contact Frequency')}
+              {field('communication_preferences', 'Comm Preferences', true)}
+              {field('email_2', 'Email 2')}
+              {field('email_3', 'Email 3')}
+              {field('website', 'Website')}
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowAll(v => !v)}
+            style={{
+              background: 'none', border: 'none', padding: 0,
+              fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            {showAll ? 'Show less' : `Show all fields (${SECONDARY_CONTACT_FIELDS.length} more)`}
+          </button>
+        </>
+      ) : (
+        <>
+          {field('email', 'Email')}
+          {field('email_2', 'Email 2')}
+          {field('email_3', 'Email 3')}
+          {field('website', 'Website')}
+          {field('notes', 'Notes', true)}
         </>
       )}
-
-      {field('email', 'Email')}
-      {field('email_2', 'Email 2')}
-      {field('email_3', 'Email 3')}
-      {field('website', 'Website')}
-      {field('notes', 'Notes', true)}
     </div>
   )
 }

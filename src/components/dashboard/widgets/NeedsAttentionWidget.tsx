@@ -101,6 +101,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
   onKeep: () => void; onReachOut: () => void; onRemove: () => void
   onConfirmRemove: () => void; onCancelRemove: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const dormancyLabel = (days ?? 0) >= 180 ? 'Slipping away' : (days ?? 0) >= 120 ? 'Going quiet' : 'Cooling off'
 
   return (
@@ -126,21 +127,55 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 6 }}>
-          {[
-            { label: 'Keep', action: onKeep },
-            { label: 'Reach out', action: onReachOut },
-            { label: 'Let go', action: onRemove },
-          ].map(({ label, action }) => (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button type="button" onClick={onReachOut} className="action-pill-hig">
+            Reach out
+          </button>
+          <button type="button" onClick={onKeep} className="action-pill-hig">
+            Keep
+          </button>
+          <div style={{ position: 'relative' }}>
             <button
-              key={label}
               type="button"
-              onClick={action}
-              className={`action-pill-hig${label === 'Let go' ? ' destructive' : ''}`}
+              onClick={() => setMenuOpen(v => !v)}
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                background: 'none', border: '1px solid var(--edge)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--color-text-tertiary)', fontSize: 14, lineHeight: 1,
+              }}
+              aria-label="More actions"
             >
-              {label}
+              ...
             </button>
-          ))}
+            {menuOpen && (
+              <div
+                style={{
+                  position: 'absolute', right: 0, top: '100%', marginTop: 4,
+                  background: 'var(--surface-panel)', backdropFilter: 'var(--panel-blur)',
+                  border: '1px solid var(--edge)', borderRadius: 8,
+                  padding: 4, zIndex: 10, minWidth: 100,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                }}
+                onMouseLeave={() => setMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setMenuOpen(false); onRemove() }}
+                  style={{
+                    width: '100%', padding: '6px 12px', borderRadius: 6,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 500, color: 'hsla(0, 65%, 50%, 0.90)',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'hsla(0, 65%, 50%, 0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                >
+                  Let go
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -156,11 +191,12 @@ interface NeedsAttentionWidgetProps {
   onContactClick: (contact: Contact) => void
   onSnooze: (id: string) => void
   onRemoveContact: (id: string) => Promise<void>
+  onRetry?: () => void
 }
 
 export function NeedsAttentionWidget({
   overdueContacts, followUpOverdue, dormantContacts, contactsLoading, error,
-  onContactClick, onSnooze, onRemoveContact,
+  onContactClick, onSnooze, onRemoveContact, onRetry,
 }: NeedsAttentionWidgetProps) {
   const navigate = useNavigate()
   const [dormantExpanded, setDormantExpanded] = useState(false)
@@ -204,8 +240,20 @@ export function NeedsAttentionWidget({
             ))}
           </div>
         ) : error ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
-            {error}
+          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: 13, marginBottom: onRetry ? 12 : 0 }}>
+              {error}
+            </div>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="action-pill-hig"
+                style={{ fontSize: 12 }}
+              >
+                Try again
+              </button>
+            )}
           </div>
         ) : overdueContacts.length === 0 && followUpOverdue.length === 0 ? (
           <EmptyState

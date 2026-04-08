@@ -544,35 +544,74 @@ body::after {
   }
 }
 
+/* ── Loading transitions ───────────────────────────────────────────────────── */
+
+@keyframes skeleton-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.skeleton-stagger > .skeleton {
+  opacity: 0;
+  animation: skeleton-enter 0.3s var(--ease-enter, cubic-bezier(0.25, 1, 0.5, 1)) forwards,
+             shimmer 1.5s ease-in-out 0.3s infinite;
+}
+
+.skeleton-stagger > .skeleton:nth-child(1)  { animation-delay: 0s, 0.3s; }
+.skeleton-stagger > .skeleton:nth-child(2)  { animation-delay: 0.05s, 0.35s; }
+.skeleton-stagger > .skeleton:nth-child(3)  { animation-delay: 0.1s, 0.4s; }
+.skeleton-stagger > .skeleton:nth-child(4)  { animation-delay: 0.15s, 0.45s; }
+.skeleton-stagger > .skeleton:nth-child(5)  { animation-delay: 0.2s, 0.5s; }
+.skeleton-stagger > .skeleton:nth-child(6)  { animation-delay: 0.25s, 0.55s; }
+.skeleton-stagger > .skeleton:nth-child(7)  { animation-delay: 0.3s, 0.6s; }
+.skeleton-stagger > .skeleton:nth-child(8)  { animation-delay: 0.35s, 0.65s; }
+
+@keyframes content-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.content-enter {
+  animation: content-enter 0.35s var(--ease-enter, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
 /* ── Dashboard HIG classes ──────────────────────────────────────────────────── */
 
 /* Section grouping container */
 .dashboard-section {
-  background: rgba(0,0,0,0.018);
-  border: 1px solid rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.015);
+  border: 1px solid rgba(0,0,0,0.04);
   border-radius: 20px;
   padding: 20px 24px 24px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
   .dashboard-section {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.05);
   }
   .dashboard-section-primary {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.10);
   }
+}
+
+/* Primary section - "your day" gets real visual weight */
+.dashboard-section-primary {
+  background: rgba(0,0,0,0.035);
+  border-color: rgba(0,0,0,0.08);
+  padding: 24px 24px 28px;
+  margin-bottom: 24px;
 }
 
 /* Primary section heading - hero group title */
 .dashboard-heading-primary {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   font-family: var(--font-serif);
   color: var(--color-text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   text-transform: none;
   margin: 0 0 16px;
   line-height: 1.2;
@@ -580,24 +619,18 @@ body::after {
 
 /* Secondary section heading - group title */
 .dashboard-heading {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   font-family: var(--font-serif);
-  color: var(--color-text-secondary);
-  letter-spacing: 0;
-  text-transform: none;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   margin: 0 0 16px;
   line-height: 1.2;
 }
 .dashboard-heading-primary .widget-tooltip-icon {
   width: 15px;
   height: 15px;
-}
-
-/* Primary section - slightly more visual presence */
-.dashboard-section-primary {
-  background: rgba(0,0,0,0.025);
-  border-color: rgba(0,0,0,0.06);
 }
 
 /* Sub-widget heading (Fraunces, 15px) */
@@ -765,13 +798,6 @@ body::after {
 /* ── Responsive breakpoints ────────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
-  .equity-layout {
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  .equity-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
   .pod-card-scroll {
     gap: 8px !important;
   }
@@ -801,6 +827,8 @@ body::after {
   .widget-card { transition: none; }
   .satellite-expand { transition: none; }
   .parallax-layer { transform: none !important; }
+  .skeleton-stagger > .skeleton { animation: none; opacity: 1; }
+  .content-enter { animation: none; opacity: 1; }
 }
 
 /* Icon picker */

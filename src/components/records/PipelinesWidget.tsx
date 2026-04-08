@@ -4,14 +4,7 @@ import { Plus } from 'lucide-react'
 import { getOpportunities, getPipelineStages, getPipelines, createOpportunity, invalidateOpportunitiesCache } from '../../lib/airtable'
 import type { Contact, Opportunity, Pipeline, PipelineStage } from '../../lib/types'
 import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
-
-const WIDGET_STYLE: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  border: '1px solid var(--edge)',
-  borderRadius: 12,
-  padding: '16px 20px',
-  marginBottom: 12,
-}
+import { WIDGET_STYLE } from './shared'
 
 interface PipelinesWidgetProps {
   contact: Contact
@@ -57,11 +50,9 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{
           fontFamily: 'var(--font-serif)',
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'var(--color-text-tertiary)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
+          fontSize: 16,
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
         }}>
           Pipelines
         </span>
@@ -84,14 +75,9 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
       </div>
 
       {opportunities.length === 0 ? (
-        <div>
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 4px' }}>
-            Not in any pipelines
-          </p>
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
-            Add this contact to a pipeline to track progress.
-          </p>
-        </div>
+        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5 }}>
+          No deals in motion yet
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {opportunities.map(opp => {

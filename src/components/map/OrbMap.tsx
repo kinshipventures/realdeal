@@ -957,6 +957,23 @@ export function OrbMap() {
       position: 'relative',
     }}>
 
+      {/* Loading state — centered pulsing orb placeholder */}
+      {!podsLoaded && !initError && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none', zIndex: 10,
+          gap: 16,
+        }}>
+          <div className="skeleton" style={{
+            width: 96, height: 96, borderRadius: '50%',
+          }} />
+          <div className="skeleton" style={{
+            width: 80, height: 12, borderRadius: 6,
+          }} />
+        </div>
+      )}
+
       {/* Init failure — indistinguishable from loading without this */}
       {initError && (
         <div style={{
@@ -1127,14 +1144,27 @@ export function OrbMap() {
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 {hoveredPod.pod.name}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                {hoveredPod.health} - {scoreLabel(hoveredPod.health)}
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '1px 6px',
+                  borderRadius: 100,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: HEALTH_COLORS[scoreLabel(hoveredPod.health)]?.bg,
+                  color: HEALTH_COLORS[scoreLabel(hoveredPod.health)]?.color,
+                }}>
+                  {scoreLabel(hoveredPod.health)} {hoveredPod.health}
+                </span>
               </span>
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} people - {hoveredPod.overdueCount} overdue
+                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
+                {hoveredPod.overdueCount > 0 && (
+                  <span style={{ color: 'var(--health-cooling)' }}> - {hoveredPod.overdueCount} overdue</span>
+                )}
               </span>
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                Last: {formatLastInteracted(hoveredPod.lastInteracted)}
+                Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
               </span>
             </div>
           )}

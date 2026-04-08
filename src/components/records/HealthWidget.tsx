@@ -1,19 +1,12 @@
 import type { Contact, Interaction, Pod } from '../../lib/types'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
+import { WIDGET_STYLE } from './shared'
 
 const LABEL_COLORS: Record<string, string> = {
   Thriving: '#1A8A2A',
   Steady: '#25B439',
   Cooling: '#CC7700',
   Fading: '#FF3B30',
-}
-
-const WIDGET_STYLE: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  border: '1px solid var(--edge)',
-  borderRadius: 12,
-  padding: '16px 20px',
-  marginBottom: 12,
 }
 
 interface HealthWidgetProps {

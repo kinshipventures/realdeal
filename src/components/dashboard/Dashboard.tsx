@@ -281,12 +281,6 @@ export function Dashboard() {
     [contacts, snoozedIds]
   )
 
-  // Stats
-  const recentlyContacted = useMemo(() => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    return contacts.filter(c => c.last_contacted_at && new Date(c.last_contacted_at).getTime() > sevenDaysAgo).length
-  }, [contacts])
-
   // Score trend — compare this week's interactions to last week's
   const scoreTrend = useMemo((): 'up' | 'down' | 'flat' => {
     if (interactionsLoading || allInteractions.length === 0) return 'flat'
@@ -367,7 +361,7 @@ export function Dashboard() {
         />
       )}
 
-      <main id="main-content" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
+      <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
         {/* Green header band */}
@@ -378,10 +372,6 @@ export function Dashboard() {
                 <div style={{ flex: 1 }}>
                   <EquityWidget
                     overallScore={overallScore}
-                    podCount={pods.length}
-                    contactCount={contacts.length}
-                    recentlyContacted={recentlyContacted}
-                    overdueCount={overdueContacts.length}
                     interactionsLoading={interactionsLoading}
                     dataReady={dataReady}
                     scoreTrend={scoreTrend}
@@ -454,6 +444,14 @@ export function Dashboard() {
             onContactClick: handleContactClick,
             onSnooze: handleSnooze,
             onRemoveContact: handleRemoveContact,
+            onRetry: () => {
+              setError(null)
+              setContactsLoading(true)
+              getContacts()
+                .then(d => setContacts(d))
+                .catch(() => setError('Something hiccupped. Refresh to try again.'))
+                .finally(() => setContactsLoading(false))
+            },
             onReview: () => setShowQueue(true),
           })}
         </div>
@@ -518,6 +516,7 @@ interface OrderedWidgetProps {
   onContactClick: (c: Contact) => void
   onSnooze: (id: string) => void
   onRemoveContact: (id: string) => Promise<void>
+  onRetry: () => void
   onReview: () => void
 }
 
@@ -556,7 +555,7 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
     order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
     focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
     contactsLoading, error, recentActivity, campaigns, campaignContacts,
-    campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onReview,
+    campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onRetry, onReview,
   } = props
 
   // Collect sections in order of first appearance
@@ -632,21 +631,21 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
           }
           if (id === 'todays-focus') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
               </div>
             )
           }
           if (id === 'coming-up') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
               </div>
             )
           }
           if (id === 'needs-attention') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <NeedsAttentionWidget
                   overdueContacts={overdueContacts}
                   followUpOverdue={followUpOverdue}
@@ -656,20 +655,21 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
                   onContactClick={onContactClick}
                   onSnooze={onSnooze}
                   onRemoveContact={onRemoveContact}
+                  onRetry={onRetry}
                 />
               </div>
             )
           }
           if (id === 'recent-activity') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
               </div>
             )
           }
           if (id === 'quick-links') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <QuickLinksWidget
                   campaigns={campaigns}
                   campaignContacts={campaignContacts}
@@ -680,7 +680,7 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
           }
           if (id === 'gmail-sync') {
             return (
-              <div key={id} style={{ marginTop: spacer ? 20 : 0 }}>
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <GmailSyncWidget />
               </div>
             )
@@ -700,58 +700,27 @@ function DashboardSkeleton() {
   return (
     <div>
       <div style={{ background: 'var(--header-band-bg)', padding: '28px 24px 32px', borderRadius: '0 0 20px 20px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: '0 0 auto' }}>
-            <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="skeleton" style={{ width: 48, height: 28, background: 'rgba(255,255,255,0.15)' }} />
-              <div className="skeleton" style={{ width: 56, height: 14, background: 'rgba(255,255,255,0.15)' }} />
-            </div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 'var(--panel-radius)', padding: '20px 24px', flex: 1 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                  <div className="skeleton" style={{ width: 40, height: 22, background: 'rgba(255,255,255,0.15)' }} />
-                  <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.15)' }} />
-                </div>
-              ))}
+              <div className="skeleton" style={{ width: 60, height: 20, background: 'rgba(255,255,255,0.12)', borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: 180, height: 14, background: 'rgba(255,255,255,0.12)', borderRadius: 8 }} />
             </div>
           </div>
         </div>
       </div>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
+      <div className="skeleton-stagger" style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
         {/* Network Pulse section skeleton */}
-        <div className="dashboard-section" style={{ marginBottom: 24 }}>
-          <div className="skeleton" style={{ width: 140, height: 18, marginBottom: 16 }} />
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="skeleton" style={{ width: 155, height: 100, borderRadius: 12 }} />
-            ))}
-          </div>
-          <div className="skeleton" style={{ width: '100%', height: 80, borderRadius: 12 }} />
-        </div>
+        <div className="skeleton" style={{ width: 140, height: 18, borderRadius: 8, marginBottom: 16 }} />
+        <div className="skeleton" style={{ width: '100%', height: 100, borderRadius: 12, marginBottom: 16 }} />
+        <div className="skeleton" style={{ width: '100%', height: 80, borderRadius: 12, marginBottom: 32 }} />
         {/* Action Items section skeleton */}
-        <div className="dashboard-section" style={{ marginBottom: 24 }}>
-          <div className="skeleton" style={{ width: 120, height: 18, marginBottom: 16 }} />
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-            {[1, 2].map(i => (
-              <div key={i} className="skeleton" style={{ flex: 1, height: 90, borderRadius: 14 }} />
-            ))}
-          </div>
-          <div style={{ borderRadius: 'var(--panel-radius)', overflow: 'hidden' }}>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
-            ))}
-          </div>
-        </div>
-        {/* Activity section skeleton */}
-        <div className="dashboard-section">
-          <div className="skeleton" style={{ width: 130, height: 18, marginBottom: 16 }} />
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
-          ))}
-        </div>
+        <div className="skeleton" style={{ width: 120, height: 18, borderRadius: 8, marginBottom: 16 }} />
+        <div className="skeleton" style={{ width: '100%', height: 90, borderRadius: 14, marginBottom: 16 }} />
+        <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 8, marginBottom: 1 }} />
+        <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 8, marginBottom: 1 }} />
+        <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 8, marginBottom: 32 }} />
       </div>
     </div>
   )

@@ -16,6 +16,8 @@ interface InteractionSectionProps {
   onContactUpdated: (contact: Contact) => void  // fires after any mutation that changes the contact
   activeFilters?: Set<InteractionType>           // which human types to show (undefined = show all)
   showSystemEvents?: boolean                     // system events toggle
+  interactions?: Interaction[]                   // externally managed interactions
+  onInteractionsChange?: (interactions: Interaction[]) => void
 }
 
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
@@ -78,9 +80,18 @@ type EditingInteraction = {
   notes: string | null
 } | null
 
-export function InteractionSection({ contact, onContactUpdated, activeFilters, showSystemEvents = false }: InteractionSectionProps) {
-  const [interactions, setInteractions] = useState<Interaction[]>([])
+export function InteractionSection({ contact, onContactUpdated, activeFilters, showSystemEvents = false, interactions: externalInteractions, onInteractionsChange }: InteractionSectionProps) {
+  const [localInteractions, setLocalInteractions] = useState<Interaction[]>([])
   const [interactionsError, setInteractionsError] = useState(false)
+  const interactions = externalInteractions ?? localInteractions
+  const setInteractions = (updater: Interaction[] | ((prev: Interaction[]) => Interaction[])) => {
+    const next = typeof updater === 'function' ? updater(interactions) : updater
+    if (externalInteractions !== undefined) {
+      onInteractionsChange?.(next)
+    } else {
+      setLocalInteractions(next)
+    }
+  }
   const [showLogForm, setShowLogForm] = useState(false)
   const [logType, setLogType] = useState<InteractionType>('call')
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
@@ -92,14 +103,14 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!contact?.id) return
+    if (externalInteractions !== undefined || !contact?.id) return
     let canceled = false
     setInteractionsError(false)
     getInteractions(contact.id)
-      .then(data => { if (!canceled) setInteractions(data) })
+      .then(data => { if (!canceled) setLocalInteractions(data) })
       .catch(() => { if (!canceled) setInteractionsError(true) })
     return () => { canceled = true }
-  }, [contact.id])  // depend on primitive, not object reference
+  }, [contact.id, externalInteractions])
 
   // Summary bar — memoized per-type recency for primary channels
   const typeRecency = useMemo(() => {

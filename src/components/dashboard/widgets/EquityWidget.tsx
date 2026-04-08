@@ -3,7 +3,7 @@ import { scoreLabel, type ScoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
   const safeScore = Number.isFinite(score) ? score : 0
-  const strokeWidth = 7
+  const strokeWidth = 8
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (safeScore / 100) * circumference
@@ -14,8 +14,8 @@ function EquityRing({ score, size }: { score: number; size: number }) {
   }, [])
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.25))' }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={strokeWidth} />
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.20))' }}>
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={strokeWidth} />
       <circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none"
@@ -61,23 +61,6 @@ function AnimatedNumber({ value, duration = 1200 }: { value: number; duration?: 
   }, [value, duration])
 
   return <span ref={ref}>{Number.isFinite(value) ? value : 0}</span>
-}
-
-function StatBlock({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
-  return (
-    <div style={{ textAlign: 'center', minWidth: 0 }}>
-      <div style={{
-        fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1,
-        color: accent && value > 0 ? 'hsla(0, 85%, 60%, 0.95)' : '#ffffff',
-        fontVariantNumeric: 'tabular-nums',
-      }}>
-        <AnimatedNumber value={value} />
-      </div>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 5, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500 }}>
-        {label}
-      </div>
-    </div>
-  )
 }
 
 function ScorePulse({ value }: { value: number }) {
@@ -150,6 +133,19 @@ const LABEL_COLORS: Record<ScoreLabel, { bg: string; text: string }> = {
   Fading:   { bg: 'rgba(255, 130, 130, 0.18)', text: 'hsla(0, 80%, 78%, 1)' },
 }
 
+const SCORE_NUDGES: Record<ScoreLabel, string[]> = {
+  Thriving: ['Your network is humming.', 'Keep showing up like this.', 'Relationships are strong.'],
+  Steady:   ['You\'re keeping up nicely.', 'Solid momentum this week.', 'A few check-ins would keep this going.'],
+  Cooling:  ['Some people miss hearing from you.', 'A couple of quick check-ins would help.', 'Your network could use some love.'],
+  Fading:   ['Your network needs you.', 'Time to reconnect.', 'A few conversations would change this.'],
+}
+
+function getNudge(label: ScoreLabel): string {
+  const options = SCORE_NUDGES[label]
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
+  return options[dayOfYear % options.length]
+}
+
 function ScoreLabelChip({ label }: { label: ScoreLabel }) {
   const colors = LABEL_COLORS[label]
   return (
@@ -179,17 +175,13 @@ function getGreeting(): string {
 
 export interface EquityWidgetProps {
   overallScore: number
-  podCount: number
-  contactCount: number
-  recentlyContacted: number
-  overdueCount: number
   interactionsLoading: boolean
   dataReady: boolean
   scoreTrend?: 'up' | 'down' | 'flat'
   onQuickAction?: () => void
 }
 
-export function EquityWidget({ overallScore, podCount, contactCount, recentlyContacted, overdueCount, interactionsLoading, dataReady, scoreTrend, onQuickAction }: EquityWidgetProps) {
+export function EquityWidget({ overallScore, interactionsLoading, dataReady, scoreTrend, onQuickAction }: EquityWidgetProps) {
   const label = scoreLabel(overallScore)
 
   return (
@@ -233,63 +225,47 @@ export function EquityWidget({ overallScore, podCount, contactCount, recentlyCon
         )}
       </div>
 
-      <div className="equity-layout" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        {/* Equity score ring */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '0 0 auto' }}>
-          {interactionsLoading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <div className="skeleton" style={{ width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div className="skeleton" style={{ width: 52, height: 32, background: 'rgba(255,255,255,0.12)' }} />
-                <div className="skeleton" style={{ width: 60, height: 14, background: 'rgba(255,255,255,0.12)' }} />
+      {/* Equity score - the hero moment */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        {interactionsLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="skeleton" style={{ width: 160, height: 16, background: 'rgba(255,255,255,0.12)', borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: 60, height: 14, background: 'rgba(255,255,255,0.12)', borderRadius: 6 }} />
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Ring with score inside */}
+            <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+              <EquityRing score={overallScore} size={120} />
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
               </div>
             </div>
-          ) : (
-            <>
-              <EquityRing score={overallScore} size={96} />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
-                  {scoreTrend && <TrendArrow trend={scoreTrend} />}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                  <ScoreLabelChip label={label} />
-                  <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
-                    <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
-                    <span className="widget-tooltip-bubble">How strong your connections are overall -- based on how recently and how often you've been in touch.</span>
-                  </span>
-                </div>
+            {/* Label + nudge */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <ScoreLabelChip label={label} />
+                {scoreTrend && <TrendArrow trend={scoreTrend} />}
+                <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
+                  <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
+                  <span className="widget-tooltip-bubble">How strong your connections are overall -- based on how recently and how often you've been in touch.</span>
+                </span>
               </div>
-            </>
-          )}
-        </div>
-
-        {/* Stats panel */}
-        <div style={{
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.12)',
-          padding: '20px 28px',
-          flex: 1,
-        }}>
-          {!dataReady ? (
-            <div className="equity-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                  <div className="skeleton" style={{ width: 40, height: 24, background: 'rgba(255,255,255,0.12)' }} />
-                  <div className="skeleton" style={{ width: 60, height: 12, background: 'rgba(255,255,255,0.12)' }} />
-                </div>
-              ))}
+              <div style={{
+                fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.75)',
+                lineHeight: 1.4, letterSpacing: '0.01em',
+              }}>
+                {getNudge(label)}
+              </div>
             </div>
-          ) : (
-            <div className="equity-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <StatBlock label="Pods" value={podCount} />
-              <StatBlock label="People" value={contactCount} />
-              <StatBlock label="Reached this week" value={recentlyContacted} />
-              <StatBlock label="Overdue" value={overdueCount} accent />
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   )

@@ -121,14 +121,24 @@ interface PodHealthWidgetProps {
 export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrolledLeft, setScrolledLeft] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [canScroll, setCanScroll] = useState(false)
 
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    const onScroll = () => setScrolledLeft(el.scrollLeft > 8)
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [])
+    const check = () => {
+      setScrolledLeft(el.scrollLeft > 8)
+      setCanScroll(el.scrollWidth > el.clientWidth + 8)
+      const maxScroll = el.scrollWidth - el.clientWidth
+      setScrollProgress(maxScroll > 0 ? el.scrollLeft / maxScroll : 0)
+    }
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => { el.removeEventListener('scroll', check); ro.disconnect() }
+  }, [podStats.length])
 
   if (!dataReady || podStats.length === 0) return null
 
@@ -160,6 +170,24 @@ export function PodHealthWidget({ podStats, dataReady }: PodHealthWidgetProps) {
           <PodCard key={pod.id} pod={pod} contactCount={contactCount} overdueCount={overdueCount} score={score} scoreReady={scoreReady} sparkline={sparkline} />
         ))}
       </div>
+      {canScroll && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 8 }}>
+          <div style={{
+            width: 32, height: 3, borderRadius: 2,
+            background: 'var(--color-text-tertiary)',
+            opacity: 0.3,
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{
+              position: 'absolute', top: 0, left: 0,
+              width: '100%', height: '100%', borderRadius: 2,
+              background: 'var(--color-text-secondary)',
+              transform: `translateX(${(scrollProgress - 1) * 100}%)`,
+              transition: 'transform 0.15s ease',
+            }} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

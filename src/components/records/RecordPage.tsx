@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'react-router'
 import type { Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getContacts, getPods, updateContact, isOverdue, isInGracePeriod } from '../../lib/airtable'
+import { getContacts, getPods, getInteractions, updateContact, isOverdue, isInGracePeriod } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
@@ -47,12 +47,14 @@ export function RecordPage() {
       getContacts().then(all => all.find(c => c.id === id) ?? null),
       getPods(),
       getFieldConfigs(),
-    ]).then(([found, fetchedPods, fetchedConfigs]) => {
+      getInteractions(id),
+    ]).then(([found, fetchedPods, fetchedConfigs, fetchedInteractions]) => {
       if (canceled) return
       if (!found) { setNotFound(true); setLoading(false); return }
       setContact(found)
       setPods(fetchedPods)
       setFieldConfigs(fetchedConfigs)
+      setInteractions(fetchedInteractions)
       setLoading(false)
     }).catch(() => {
       if (!canceled) { setNotFound(true); setLoading(false) }
@@ -75,6 +77,10 @@ export function RecordPage() {
 
   const handleContactUpdated = useCallback((updated: Contact) => {
     setContact(updated)
+  }, [])
+
+  const handleInteractionsChange = useCallback((updated: Interaction[]) => {
+    setInteractions(updated)
   }, [])
 
   // Sync banner dismissed state when contact changes
@@ -183,21 +189,27 @@ export function RecordPage() {
         padding: '24px 32px',
         alignItems: 'start',
       }}>
-        <RecordTimeline
-          contact={contact}
-          onContactUpdated={handleContactUpdated}
-        />
+        <div style={{ order: isMobile ? 2 : 1 }}>
+          <RecordTimeline
+            contact={contact}
+            onContactUpdated={handleContactUpdated}
+            interactions={interactions}
+            onInteractionsChange={handleInteractionsChange}
+          />
+        </div>
 
-        <RecordWidgets
-          contact={contact}
-          pods={pods}
-          interactions={interactions}
-          fieldConfigs={fieldConfigs}
-          onUpdate={handleUpdate}
-          onFieldConfigsRefresh={setFieldConfigs}
-          upcomingBirthday={upcomingBirthday}
-          missingFieldCount={missingFieldCount}
-        />
+        <div style={{ order: isMobile ? 1 : 2 }}>
+          <RecordWidgets
+            contact={contact}
+            pods={pods}
+            interactions={interactions}
+            fieldConfigs={fieldConfigs}
+            onUpdate={handleUpdate}
+            onFieldConfigsRefresh={setFieldConfigs}
+            upcomingBirthday={upcomingBirthday}
+            missingFieldCount={missingFieldCount}
+          />
+        </div>
       </div>
     </div>
   )

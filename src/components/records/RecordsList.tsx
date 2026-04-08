@@ -94,6 +94,13 @@ const EQUITY_BADGE: Record<string, { bg: string; color: string }> = {
   Fading:   { bg: 'var(--health-fading-bg)',    color: 'var(--health-fading)' },
 }
 
+const HEALTH_RING_COLOR: Record<string, string> = {
+  Thriving: 'var(--health-thriving)',
+  Steady:   'var(--health-steady)',
+  Cooling:  'var(--health-cooling)',
+  Fading:   'var(--health-fading)',
+}
+
 // ── Avatar color from name hash ─────────────────────────────────────────────
 
 function avatarColor(name: string): string {
@@ -669,51 +676,41 @@ export function RecordsList() {
   if (loading) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
-        <div style={{ padding: '28px 40px 0', flexShrink: 0 }}>
+        <div className="skeleton-stagger" style={{ padding: '28px 40px 0', flexShrink: 0 }}>
           <div className="skeleton" style={{ width: 140, height: 28, borderRadius: 8, marginBottom: 20 }} />
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            {[80, 180, 100, 90, 90, 90].map((w, i) => (
-              <div key={i} className="skeleton" style={{ width: w, height: 36, borderRadius: 8 }} />
-            ))}
-          </div>
+          <div className="skeleton" style={{ width: '100%', height: 36, borderRadius: 8, marginBottom: 16 }} />
         </div>
-        <div style={{ flex: 1, padding: '0 40px 40px' }}>
-          <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--edge)' }}>
-            {[40, 120, 100, 80, 60].map((w, i) => (
-              <div key={i} className="skeleton" style={{ width: w, height: 12, borderRadius: 4 }} />
-            ))}
-          </div>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--edge)', opacity: 1 - i * 0.08 }}>
-              <div className="skeleton" style={{ width: 16, height: 16, borderRadius: 3 }} />
-              <div className="skeleton" style={{ width: 140 + Math.random() * 60, height: 14, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: 90, height: 14, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: 60, height: 22, borderRadius: 100 }} />
-            </div>
-          ))}
+        <div className="skeleton-stagger" style={{ flex: 1, padding: '0 40px 40px' }}>
+          <div className="skeleton" style={{ width: '100%', height: 12, borderRadius: 4, marginBottom: 16 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
+          <div className="skeleton" style={{ width: '100%', height: 52, borderRadius: 0, marginBottom: 1 }} />
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
+    <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
 
       {/* Header */}
       <div style={{ padding: '32px 32px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 24,
-            fontWeight: 700,
+            fontSize: 28,
+            fontWeight: 800,
             margin: 0,
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.03em',
           }}>
             Your People
           </h1>
-          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {filtered.length}
+          <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', fontWeight: 400 }}>
+            {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
           </span>
         </div>
 
@@ -1317,8 +1314,8 @@ export function RecordsList() {
                         {col.id === 'name' && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span style={{
-                              width: 34,
-                              height: 34,
+                              width: 36,
+                              height: 36,
                               borderRadius: '50%',
                               background: avatarColor(contact.name),
                               display: 'flex',
@@ -1329,13 +1326,14 @@ export function RecordsList() {
                               color: '#fff',
                               flexShrink: 0,
                               letterSpacing: '0.02em',
+                              boxShadow: `0 0 0 2px ${HEALTH_RING_COLOR[label] ?? 'var(--edge)'}`,
                             }}>
                               {initials(contact.name)}
                             </span>
                             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                               <span style={{
                                 fontFamily: 'var(--font-serif)',
-                                fontWeight: contact.type === 'Company' ? 700 : 600,
+                                fontWeight: contact.type === 'Company' ? 800 : 700,
                                 fontSize: 14,
                                 letterSpacing: '-0.01em',
                                 color: 'var(--color-text-primary)',
@@ -1350,7 +1348,7 @@ export function RecordsList() {
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                 }}>
-                                  Last talked {formatRelativeTime(contact.last_contacted_at)}
+                                  {formatRelativeTime(contact.last_contacted_at)}
                                 </span>
                               )}
                             </span>

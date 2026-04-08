@@ -20,6 +20,13 @@ export const MOJ_SIZE = 136
 const DEFAULT_BG = 'linear-gradient(135deg, #1C1C1E 0%, #2C2C30 100%)'
 const shadow = '0 0 24px rgba(0,0,0,0.20), 0 10px 30px -4px rgba(0,0,0,0.25)'
 
+const LABEL_COLORS: Record<string, string> = {
+  Thriving: 'rgba(74,222,128,0.85)',
+  Steady:   'rgba(96,165,250,0.85)',
+  Cooling:  'rgba(251,191,36,0.85)',
+  Fading:   'rgba(248,113,113,0.85)',
+}
+
 export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
   const { overallHealth, totalContacts, userName, podName, podColor, podId } = data
   const navigate = useNavigate()
@@ -76,6 +83,17 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
             {hasData ? (
               <>
                 <span style={{
+                  fontSize: 8,
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.45)',
+                  userSelect: 'none',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase' as const,
+                  marginBottom: 2,
+                }}>
+                  Network Health
+                </span>
+                <span style={{
                   fontSize: 28,
                   fontWeight: 800,
                   fontFamily: 'var(--font-serif)',
@@ -88,8 +106,8 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                 </span>
                 <span style={{
                   fontSize: 10,
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.60)',
+                  fontWeight: 600,
+                  color: LABEL_COLORS[scoreLabel(overallHealth!)] ?? 'rgba(255,255,255,0.60)',
                   userSelect: 'none',
                   marginTop: 4,
                 }}>

@@ -1,14 +1,16 @@
 import { useState, useCallback } from 'react'
-import type { Contact, InteractionType } from '../../lib/types'
+import type { Contact, Interaction, InteractionType } from '../../lib/types'
 import { HUMAN_TYPES } from '../../lib/types'
 import { InteractionSection } from '../contacts/InteractionSection'
 
 interface RecordTimelineProps {
   contact: Contact
   onContactUpdated: (contact: Contact) => void
+  interactions: Interaction[]
+  onInteractionsChange: (interactions: Interaction[]) => void
 }
 
-export function RecordTimeline({ contact, onContactUpdated }: RecordTimelineProps) {
+export function RecordTimeline({ contact, onContactUpdated, interactions, onInteractionsChange }: RecordTimelineProps) {
   const [activeFilters, setActiveFilters] = useState<Set<InteractionType>>(() => new Set(HUMAN_TYPES))
   const [showSystemEvents, setShowSystemEvents] = useState(false)
 
@@ -72,6 +74,8 @@ export function RecordTimeline({ contact, onContactUpdated }: RecordTimelineProp
         onContactUpdated={onContactUpdated}
         activeFilters={activeFilters}
         showSystemEvents={showSystemEvents}
+        interactions={interactions}
+        onInteractionsChange={onInteractionsChange}
       />
     </div>
   )

@@ -2,17 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import type { Contact } from '../../lib/types'
 import { getContacts, getContactsByType, updateContact } from '../../lib/airtable'
+import { WIDGET_STYLE } from './shared'
 
 interface Props {
   contact: Contact  // the Company record
-}
-
-const WIDGET_STYLE: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  border: '1px solid var(--edge)',
-  borderRadius: 12,
-  padding: '16px 20px',
-  marginBottom: 12,
 }
 
 function initials(name: string) {
@@ -83,14 +76,9 @@ export function AssociatedPeopleWidget({ contact }: Props) {
       {loading ? (
         <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '4px 0' }}>Loading...</div>
       ) : people.length === 0 ? (
-        <div style={{ padding: '8px 0 4px' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 2 }}>
-            No linked contacts
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            Search for existing contacts to link.
-          </div>
-        </div>
+        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '8px 0 4px', lineHeight: 1.5 }}>
+          No one linked yet
+        </p>
       ) : (
         <div>
           {people.map(person => (
@@ -179,7 +167,7 @@ export function AssociatedPeopleWidget({ contact }: Props) {
                 top: '100%',
                 left: 0,
                 right: 0,
-                background: 'rgba(255,255,255,0.96)',
+                background: 'var(--surface-panel)',
                 border: '1px solid var(--edge)',
                 borderRadius: 8,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.1)',

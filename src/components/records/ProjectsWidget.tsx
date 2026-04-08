@@ -3,14 +3,7 @@ import { useNavigate } from 'react-router'
 import { Plus } from 'lucide-react'
 import { getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
 import type { Contact, Project } from '../../lib/types'
-
-const WIDGET_STYLE: React.CSSProperties = {
-  background: 'var(--surface-panel)',
-  border: '1px solid var(--edge)',
-  borderRadius: 12,
-  padding: '16px 20px',
-  marginBottom: 12,
-}
+import { WIDGET_STYLE } from './shared'
 
 interface ProjectsWidgetProps {
   contact: Contact
@@ -44,11 +37,9 @@ export function ProjectsWidget({ contact }: ProjectsWidgetProps) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{
           fontFamily: 'var(--font-serif)',
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'var(--color-text-tertiary)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
+          fontSize: 16,
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
         }}>
           Projects
         </span>
@@ -106,14 +97,9 @@ export function ProjectsWidget({ contact }: ProjectsWidgetProps) {
       )}
 
       {linked.length === 0 ? (
-        <div>
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 4px' }}>
-            Not in any projects
-          </p>
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
-            Add this contact to a project to track initiatives.
-          </p>
-        </div>
+        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5 }}>
+          Not part of any projects yet
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {linked.map(project => (

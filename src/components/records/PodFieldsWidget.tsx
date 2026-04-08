@@ -118,19 +118,9 @@ export function PodFieldsWidget({
       </div>
 
       {podFields.length === 0 && !showAddForm && (
-        <div style={{ marginBottom: 14 }}>
-          <div style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--color-text-secondary)',
-            marginBottom: 4,
-          }}>
-            No fields yet
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            Add a field to track details specific to this pod.
-          </div>
-        </div>
+        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 14px', lineHeight: 1.5 }}>
+          No custom fields yet
+        </p>
       )}
 
       {podFields.map(fc => {

@@ -1,468 +1,432 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-type Section = 'overview' | 'scoring' | 'recency' | 'health' | 'focus' | 'cadence'
 
-const sections: { id: Section; title: string }[] = [
-  { id: 'overview', title: 'What is Equity?' },
-  { id: 'scoring', title: 'How Scoring Works' },
-  { id: 'recency', title: 'Recency Decay' },
-  { id: 'health', title: 'Health Labels' },
-  { id: 'focus', title: "Today's Focus" },
-  { id: 'cadence', title: 'Cadence & Frequency' },
+type Topic = 'start' | 'pods' | 'interactions' | 'scoring' | 'focus' | 'sharing'
+
+const topics: { id: Topic; title: string; subtitle: string; icon: string; color: string }[] = [
+  { id: 'start', title: 'Getting Started', subtitle: 'What this is and how to use it', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', color: 'var(--color-brand)' },
+  { id: 'pods', title: 'Pods & Categories', subtitle: 'Organize your people into groups', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', color: '#7B1FA2' },
+  { id: 'interactions', title: 'Logging Interactions', subtitle: 'Track how you stay in touch', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', color: '#1565C0' },
+  { id: 'scoring', title: 'Equity Scoring', subtitle: 'How relationship health is measured', icon: 'M22 12h-4l-3 9L9 3l-3 9H2', color: '#25B439' },
+  { id: 'focus', title: 'Focus & Nurturing', subtitle: 'Who to reach out to and when', icon: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2', color: '#FF9800' },
+  { id: 'sharing', title: 'Sharing & Import', subtitle: 'Share pods and bring in contacts', icon: 'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13', color: '#E53935' },
 ]
 
 export function LearnPage() {
   const navigate = useNavigate()
-  const [active, setActive] = useState<Section>('overview')
+  const [active, setActive] = useState<Topic | null>(null)
 
   return (
-    <div style={{ padding: '32px 32px 96px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: '32px 32px 48px', maxWidth: 800, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <p style={{
-          fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
-          textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 4,
-        }}>
-          Learn
-        </p>
         <h1 style={{
           fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700,
           color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
         }}>
-          How Equity Scoring Works
+          How It Works
         </h1>
         <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginTop: 8, lineHeight: 1.6 }}>
-          Equity is a measure of relationship health. It tells you who you're investing in,
-          who's cooling off, and where to focus next.
+          Everything you need to know about keeping your relationships healthy.
         </p>
       </div>
 
-      {/* Section nav */}
+      {/* Topic cards */}
       <div style={{
-        display: 'flex', gap: 0, borderBottom: '1px solid var(--edge)',
-        marginBottom: 32, overflowX: 'auto',
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+        gap: 12, marginBottom: 32,
       }}>
-        {sections.map(s => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setActive(s.id)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '10px 14px', fontSize: 13, fontFamily: 'inherit',
-              fontWeight: active === s.id ? 600 : 400,
-              color: active === s.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              borderBottom: active === s.id ? '2px solid var(--color-text-primary)' : '2px solid transparent',
-              marginBottom: -1, whiteSpace: 'nowrap', transition: 'color 0.15s',
-            }}
-          >
-            {s.title}
-          </button>
+        {topics.map(t => (
+          <TopicCard
+            key={t.id}
+            topic={t}
+            selected={active === t.id}
+            onClick={() => setActive(active === t.id ? null : t.id)}
+          />
         ))}
       </div>
 
       {/* Content */}
-      {active === 'overview' && <OverviewSection />}
+      {active === 'start' && <StartSection />}
+      {active === 'pods' && <PodsSection />}
+      {active === 'interactions' && <InteractionsSection />}
       {active === 'scoring' && <ScoringSection />}
-      {active === 'recency' && <RecencySection />}
-      {active === 'health' && <HealthSection />}
       {active === 'focus' && <FocusSection />}
-      {active === 'cadence' && <CadenceSection />}
+      {active === 'sharing' && <SharingSection />}
 
-      {/* Back to dashboard */}
-      <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)' }}>
+      {!active && (
+        <div style={{
+          padding: '32px 24px', borderRadius: 12, background: 'var(--nav-bg)',
+          border: '1px solid var(--edge)', textAlign: 'center',
+        }}>
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', margin: 0 }}>
+            Pick a topic above to learn more.
+          </p>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--edge)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
         <button
           type="button"
-          onClick={() => navigate('/pulse')}
+          onClick={() => navigate(-1 as any)}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 13, color: 'var(--color-text-secondary)', padding: 0,
             fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
           }}
         >
-          Back to Pulse
+          Go back
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/changelog')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: 'var(--color-text-secondary)', padding: 0,
+            fontFamily: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2,
+          }}
+        >
+          See what's new
         </button>
       </div>
     </div>
   )
 }
 
-// ── Overview ────────────────────────────────────────────────────────────────
+// ── Topic Card ─────────────────────────────────────────────────────────────
 
-function OverviewSection() {
+function TopicCard({ topic, selected, onClick }: {
+  topic: typeof topics[number]
+  selected: boolean
+  onClick: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: 12,
+        padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+        background: selected ? `${topic.color}0A` : hovered ? 'var(--tint)' : 'var(--nav-bg)',
+        border: selected ? `1.5px solid ${topic.color}40` : '1px solid var(--edge)',
+        fontFamily: 'inherit', textAlign: 'left',
+        transition: 'all 0.15s ease',
+      }}
+    >
+      <div style={{
+        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+        background: `${topic.color}14`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke={topic.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <path d={topic.icon} />
+        </svg>
+      </div>
+      <div>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)',
+          marginBottom: 2,
+        }}>
+          {topic.title}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>
+          {topic.subtitle}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ── Getting Started ────────────────────────────────────────────────────────
+
+function StartSection() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Prose>
-        Equity scoring answers one question: <strong>how healthy is this relationship right now?</strong>
-      </Prose>
-      <Prose>
-        Every contact gets a score from 0 to 100 based on your recent interactions with them.
-        The score reflects both the <em>quality</em> and <em>recency</em> of your engagement.
-        An intro you made last week counts more than an email you sent two months ago.
+        RealDeal is a relationship health tracker. Think of it like a fitness app for your
+        network - it shows you who you're investing in, who's fading, and where to put
+        your energy today.
       </Prose>
 
-      <Card title="The core idea">
+      <Card title="The daily ritual">
         <Prose>
-          Relationships decay without investment. An equity score quantifies that decay
-          so you can see it happening before a relationship goes cold.
+          Most people open this in the morning or between meetings. A quick check:
+          How's my network doing? Who needs a touchpoint? Anyone I've been neglecting?
+          Five minutes, and you know exactly where you stand.
         </Prose>
       </Card>
 
-      <Card title="Three levels of equity">
+      <Card title="Core concepts">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <LevelRow
-            label="Contact"
-            description="Each person's individual score based on your interaction history with them"
+          <ConceptRow
+            label="Pods"
+            description="Groups of people you care about - investors, collaborators, family. Each pod has its own health score."
+            color="#7B1FA2"
           />
-          <LevelRow
-            label="Pod"
-            description="Average of all contact scores within a pod - tells you how healthy a group is overall"
+          <ConceptRow
+            label="Equity"
+            description="A 0-100 health score for each relationship, based on how recently and deeply you've been in touch."
+            color="#25B439"
           />
-          <LevelRow
-            label="Overall"
-            description="Average across your priority pods - your network health at a glance"
+          <ConceptRow
+            label="Focus"
+            description="A daily shortlist of who needs your attention most. It picks for you based on priority and cadence."
+            color="#FF9800"
+          />
+          <ConceptRow
+            label="Interactions"
+            description="Every call, meeting, text, email, or intro you log adds to a contact's health score."
+            color="#1565C0"
           />
         </div>
       </Card>
 
       <Prose>
-        The score is not a judgment of the relationship's importance. A quarterly check-in
-        with a mentor can be perfectly healthy at a lower score than a weekly collaborator.
-        That's why cadence settings exist - more on that in the Cadence section.
+        The whole point is to make relationship maintenance feel like something
+        you're on top of - not something you're behind on.
       </Prose>
     </div>
   )
 }
 
-// ── Scoring ─────────────────────────────────────────────────────────────────
+// ── Pods & Categories ──────────────────────────────────────────────────────
 
-function ScoringSection() {
-  const weights = [
-    { type: 'intro', weight: 5, label: 'Intro', why: 'Making a connection for someone is the highest-leverage relationship act' },
-    { type: 'meeting', weight: 4, label: 'Meeting', why: 'Face-to-face time builds the deepest trust' },
-    { type: 'call', weight: 3, label: 'Call', why: 'Real-time conversation shows genuine investment' },
-    { type: 'text', weight: 2, label: 'Text', why: 'Quick, personal, low-friction check-ins' },
-    { type: 'email', weight: 2, label: 'Email', why: 'Formal or semi-formal communication' },
-    { type: 'note', weight: 0, label: 'Note', why: 'Internal context - doesn\'t represent a real interaction' },
+function PodsSection() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <Prose>
+        Pods are how you organize your people. Think of them as circles -
+        your investors, your talent network, your service providers, your family.
+        Each pod is its own world with its own health score.
+      </Prose>
+
+      <Card title="Creating a pod">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <StepRow number={1} title="Hit the + button" description="On the map or in the sidebar under Pods." />
+          <StepRow number={2} title="Name it" description="Something you'd actually say out loud. 'Investors' not 'Investment Stakeholder Network.'" />
+          <StepRow number={3} title="Set a cadence" description="How often do you want to touch base with people in this group? Weekly, biweekly, monthly, or quarterly." />
+          <StepRow number={4} title="Add people" description="Drag contacts in, or add them from a contact's detail page." />
+        </div>
+      </Card>
+
+      <Card title="Categories">
+        <Prose>
+          Categories subdivide pods. If you have a "Companies" pod, you might have categories
+          like "Active Partners" and "Prospects." They show up as smaller orbs around the pod
+          on the map.
+        </Prose>
+      </Card>
+
+      <Card title="Priority pods">
+        <Prose>
+          Mark a pod as priority and it gets special treatment: its contacts show up in
+          Today's Focus, and it contributes to your overall network health score.
+          Non-priority pods are tracked but don't drive your daily agenda.
+        </Prose>
+      </Card>
+    </div>
+  )
+}
+
+// ── Interactions ───────────────────────────────────────────────────────────
+
+function InteractionsSection() {
+  const types = [
+    { label: 'Intro', weight: 5, color: '#E91E63', why: 'Making a connection for someone. Highest leverage.' },
+    { label: 'Meeting', weight: 4, color: '#9C27B0', why: 'Face-to-face time. Builds the deepest trust.' },
+    { label: 'Call', weight: 3, color: '#2196F3', why: 'Real-time conversation. Shows genuine investment.' },
+    { label: 'Text', weight: 2, color: '#4CAF50', why: 'Quick, personal, low-friction.' },
+    { label: 'Email', weight: 2, color: '#FF9800', why: 'Formal or semi-formal communication.' },
+    { label: 'Note', weight: 0, color: 'var(--color-text-tertiary)', why: 'Internal context only. Doesn\'t count toward the score.' },
   ]
-
-  const maxWeight = 5
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Prose>
-        Each interaction you log adds to a contact's equity score. Not all interactions
-        are equal - an intro carries more weight than an email because making a connection
-        for someone requires more effort and creates more value.
+        Every time you connect with someone, log it. A quick call, a lunch meeting,
+        a text to check in. Each interaction adds to that person's equity score -
+        and not all interactions are equal.
       </Prose>
 
-      <Card title="Interaction weights">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {weights.map(w => (
-            <div key={w.type}>
+      <Card title="Interaction types">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {types.map(t => (
+            <div key={t.label}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                 <span style={{
                   fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)',
-                  width: 64, flexShrink: 0,
+                  width: 56, flexShrink: 0,
                 }}>
-                  {w.label}
+                  {t.label}
                 </span>
                 <div style={{ flex: 1, display: 'flex', gap: 4 }}>
-                  {Array.from({ length: maxWeight }).map((_, i) => (
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} style={{
                       width: 24, height: 8, borderRadius: 4,
-                      background: i < w.weight ? 'var(--color-brand)' : 'var(--tint)',
-                      transition: 'background 0.2s',
+                      background: i < t.weight ? t.color : 'var(--tint)',
                     }} />
                   ))}
                 </div>
-                <span style={{
-                  fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)',
-                  width: 16, textAlign: 'right',
-                }}>
-                  {w.weight}
-                </span>
               </div>
               <p style={{
-                fontSize: 12, color: 'var(--color-text-tertiary)', margin: '0 0 0 76px',
+                fontSize: 12, color: 'var(--color-text-tertiary)', margin: '0 0 0 68px',
                 lineHeight: 1.4,
               }}>
-                {w.why}
+                {t.why}
               </p>
             </div>
           ))}
         </div>
       </Card>
 
-      <Card title="The formula">
-        <div style={{
-          padding: '16px 20px', borderRadius: 8,
-          background: 'var(--tint)', fontFamily: 'monospace', fontSize: 13,
-          color: 'var(--color-text-primary)', lineHeight: 1.8,
-        }}>
-          <div>score = sum of (weight x recency_multiplier) for each interaction</div>
-          <div>final = min(score x 5, 100)</div>
-        </div>
-        <Prose style={{ marginTop: 12 }}>
-          The x5 multiplier means a single high-weight recent interaction can meaningfully
-          move the needle. Two intros in the last month would contribute 2 x 5 x 1.0 x 5 = 50 points.
-        </Prose>
-      </Card>
-
-      <Card title="Example">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <ExampleRow label="Call 5 days ago" calc="3 x 1.0 = 3.0" />
-          <ExampleRow label="Email 20 days ago" calc="2 x 1.0 = 2.0" />
-          <ExampleRow label="Meeting 45 days ago" calc="4 x 0.6 = 2.4" />
-          <ExampleRow label="Text 80 days ago" calc="2 x 0.3 = 0.6" />
-          <div style={{
-            borderTop: '1px solid var(--edge)', paddingTop: 8,
-            display: 'flex', justifyContent: 'space-between',
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-              Raw total: 8.0
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-brand)' }}>
-              Final score: 40
-            </span>
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0 }}>
-            8.0 x 5 = 40. This contact is "Cooling" - recent activity but not enough depth.
-          </p>
-        </div>
-      </Card>
-    </div>
-  )
-}
-
-// ── Recency ─────────────────────────────────────────────────────────────────
-
-function RecencySection() {
-  const bands = [
-    { range: '0 - 30 days', multiplier: '1.0 (100%)', color: 'var(--color-brand)', width: 100, description: 'Full credit. Recent interactions carry their full weight.' },
-    { range: '31 - 60 days', multiplier: '0.6 (60%)', color: '#FF9800', width: 60, description: 'Starting to fade. The interaction still counts, but less.' },
-    { range: '61 - 90 days', multiplier: '0.3 (30%)', color: '#E53935', width: 30, description: 'Significantly faded. Only high-weight interactions still register.' },
-    { range: '90+ days', multiplier: '0 (0%)', color: 'var(--color-text-tertiary)', width: 0, description: 'Gone. Interactions older than 90 days contribute nothing to the score.' },
-  ]
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Prose>
-        Recency is the other half of the equation. A meeting last week matters more
-        than a meeting two months ago. The system uses a <strong>90-day rolling window</strong> with
-        three decay bands.
-      </Prose>
-
-      <Card title="Recency decay bands">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {bands.map(b => (
-            <div key={b.range}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                <span style={{
-                  fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
-                  width: 100, flexShrink: 0,
-                }}>
-                  {b.range}
-                </span>
-                <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--tint)' }}>
-                  {b.width > 0 && (
-                    <div style={{
-                      width: `${b.width}%`, height: '100%',
-                      borderRadius: 4, background: b.color,
-                    }} />
-                  )}
-                </div>
-                <span style={{
-                  fontSize: 12, fontWeight: 600, color: b.color,
-                  width: 70, textAlign: 'right', flexShrink: 0,
-                }}>
-                  {b.multiplier}
-                </span>
-              </div>
-              <p style={{
-                fontSize: 12, color: 'var(--color-text-tertiary)', margin: '0 0 0 112px',
-                lineHeight: 1.4,
-              }}>
-                {b.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card title="Why 90 days?">
-        <Prose>
-          90 days is the longest reasonable cadence for maintaining a professional relationship.
-          If you haven't interacted with someone in 3 months, the relationship is effectively
-          dormant regardless of how strong it was before. The score should reflect that reality,
-          not past glory.
-        </Prose>
-      </Card>
-
-      <Prose>
-        This means equity scores are always forward-looking. They answer "how healthy is
-        this relationship right now?" not "how much history do we have?" A 10-year friendship
-        with no recent contact will score lower than a new connection you've been actively nurturing.
+        Log from a contact's detail page - hit the + on their timeline. Pick the type,
+        add a note if you want, and the score updates instantly.
       </Prose>
     </div>
   )
 }
 
-// ── Health Labels ───────────────────────────────────────────────────────────
+// ── Scoring ───────────────────────────────────────────────────────────────
 
-function HealthSection() {
+function ScoringSection() {
   const labels = [
-    {
-      label: 'Thriving', range: '85 - 100', color: '#25B439',
-      meaning: 'Strong, active relationship. Multiple recent interactions of varying types.',
-      example: 'You had a meeting last week, texted them yesterday, and made an intro for them this month.',
-    },
-    {
-      label: 'Steady', range: '70 - 84', color: '#2196F3',
-      meaning: 'Healthy and maintained. Regular contact within expected cadence.',
-      example: 'A few calls and emails in the last month. On track but not exceptional.',
-    },
-    {
-      label: 'Cooling', range: '40 - 69', color: '#FF9800',
-      meaning: 'Starting to slip. Interactions are becoming less frequent or less substantive.',
-      example: 'One email three weeks ago. Still on radar but trending down.',
-    },
-    {
-      label: 'Fading', range: '0 - 39', color: '#E53935',
-      meaning: 'At risk. Little to no recent meaningful contact. Needs attention.',
-      example: 'Last interaction was a text 2 months ago. The relationship is going cold.',
-    },
+    { label: 'Thriving', range: '85+', color: '#25B439', meaning: 'You\'re showing up. Multiple recent interactions, variety of types.' },
+    { label: 'Steady', range: '70 - 84', color: '#2196F3', meaning: 'On track. Regular contact within cadence.' },
+    { label: 'Cooling', range: '40 - 69', color: '#FF9800', meaning: 'Starting to slip. Time for a check-in.' },
+    { label: 'Fading', range: 'Under 40', color: '#E53935', meaning: 'Going cold. This person needs attention.' },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Prose>
-        Every score maps to a health label. These labels appear on contact cards,
-        pod health rings, and the dashboard. They're designed to be glanceable -
-        you should be able to scan your network health in seconds.
+        Every contact gets a score from 0 to 100. It answers one question:
+        <strong> how healthy is this relationship right now?</strong>
       </Prose>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {labels.map(l => (
-          <div key={l.label} style={{
-            padding: '16px 20px', borderRadius: 12,
-            background: 'var(--nav-bg)', border: '1px solid var(--edge)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <div style={{
-                width: 12, height: 12, borderRadius: '50%', background: l.color, flexShrink: 0,
-              }} />
-              <span style={{ fontSize: 15, fontWeight: 600, color: l.color, fontFamily: 'var(--font-serif)' }}>
-                {l.label}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
-                {l.range}
-              </span>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--color-text-primary)', margin: '0 0 6px', lineHeight: 1.5 }}>
-              {l.meaning}
-            </p>
-            <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.4, fontStyle: 'italic' }}>
-              {l.example}
-            </p>
-          </div>
-        ))}
-      </div>
+      <Card title="What goes into the score">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ConceptRow
+            label="Weight"
+            description="Each interaction type has a weight. An intro (5) counts more than a text (2)."
+            color="#7B1FA2"
+          />
+          <ConceptRow
+            label="Recency"
+            description="Recent interactions count fully. Older ones fade - 60% after a month, 30% after two, gone after three."
+            color="#FF9800"
+          />
+          <ConceptRow
+            label="Window"
+            description="Only the last 90 days matter. A 10-year friendship with no recent contact will score low."
+            color="#1565C0"
+          />
+        </div>
+      </Card>
 
-      <Card title="Health rings">
+      <Card title="Health labels">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {labels.map(l => (
+            <div key={l.label} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 14px', borderRadius: 10,
+              background: `${l.color}08`,
+            }}>
+              <div style={{
+                width: 10, height: 10, borderRadius: '50%', background: l.color, flexShrink: 0,
+              }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+                  <span style={{
+                    fontSize: 14, fontWeight: 600, color: l.color,
+                    fontFamily: 'var(--font-serif)',
+                  }}>
+                    {l.label}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                    {l.range}
+                  </span>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+                  {l.meaning}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Three levels">
         <Prose>
-          The colored rings you see on orbs and contact cards are segmented by interaction type.
-          Each segment's arc length corresponds to how much that type contributes to the total score.
-          A ring that's mostly green (calls) tells a different story than one that's mostly blue (email).
+          Scores work at three levels: each <strong>contact</strong> has their own score,
+          each <strong>pod</strong> averages its contacts, and your <strong>overall</strong> score
+          averages your priority pods. The colored rings on orbs and contact cards show you
+          all of this at a glance.
         </Prose>
       </Card>
+
+      <Prose>
+        The score isn't a judgment of how important someone is. A quarterly mentor can be
+        perfectly healthy at a lower score than a weekly collaborator. That's what cadence
+        settings are for.
+      </Prose>
     </div>
   )
 }
 
-// ── Focus ───────────────────────────────────────────────────────────────────
+// ── Focus & Nurturing ──────────────────────────────────────────────────────
 
 function FocusSection() {
+  const cadences = [
+    { label: 'Weekly', days: '7 days', use: 'Close collaborators, active deals' },
+    { label: 'Biweekly', days: '14 days', use: 'Regular contacts' },
+    { label: 'Monthly', days: '30 days', use: 'Most professional relationships' },
+    { label: 'Quarterly', days: '90 days', use: 'Advisors, mentors, seasonal' },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Prose>
-        The "Today's Focus" section on your dashboard surfaces the contacts who need
-        your attention most. It's not random - it uses a priority-based algorithm.
+        Today's Focus is your daily shortlist. It picks the people who need your attention
+        most so you don't have to figure it out yourself.
       </Prose>
 
-      <Card title="How focus picks are chosen">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <StepRow
-            number={1}
-            title="Priority pods only"
-            description="Focus only looks at contacts in pods you've marked as priority. Non-priority pods are excluded."
-          />
-          <StepRow
-            number={2}
-            title="Most overdue first"
-            description="Contacts are ranked by how far past their cadence they are. Someone 30 days overdue on a weekly cadence ranks higher than someone 5 days overdue on a monthly cadence."
-          />
-          <StepRow
-            number={3}
-            title="Serendipity fills the gaps"
-            description="If fewer than 3 contacts are overdue, remaining slots are filled with random picks from priority pods. These rotate daily so you reconnect with people you wouldn't otherwise think of."
-          />
+      <Card title="How picks are chosen">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <StepRow number={1} title="Priority pods only" description="Focus only looks at people in pods you've marked as priority." />
+          <StepRow number={2} title="Most overdue first" description="Ranked by how far past their cadence they are. Someone 30 days overdue on a weekly cadence ranks above someone 5 days overdue on monthly." />
+          <StepRow number={3} title="Never contacted = top priority" description="If someone's in a priority pod but you've never logged a touchpoint, they surface first." />
+          <StepRow number={4} title="Serendipity fills gaps" description="If fewer than 3 are overdue, random picks from priority pods rotate in. Keeps you reconnecting with people you wouldn't otherwise think of." />
         </div>
       </Card>
 
-      <Card title="Never contacted = highest urgency">
-        <Prose>
-          Contacts with no interaction history are always surfaced first. If someone
-          is in a priority pod but you've never logged a touchpoint with them, the system
-          treats that as maximally overdue.
-        </Prose>
-      </Card>
-    </div>
-  )
-}
-
-// ── Cadence ─────────────────────────────────────────────────────────────────
-
-function CadenceSection() {
-  const cadences = [
-    { label: 'Weekly', days: 7, use: 'Close collaborators, active deals, people you talk to all the time' },
-    { label: 'Biweekly', days: 14, use: 'Regular contacts who don\'t need weekly attention' },
-    { label: 'Monthly', days: 30, use: 'Default. Most professional relationships fall here.' },
-    { label: 'Quarterly', days: 90, use: 'Advisors, mentors, seasonal contacts' },
-  ]
-
-  const frequencies = [
-    { label: 'Weekly', days: 7 },
-    { label: 'Monthly', days: 30 },
-    { label: 'Quarterly', days: 90 },
-    { label: 'Annual', days: 365 },
-    { label: 'As Needed', days: 999 },
-  ]
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <Prose>
-        Not every relationship needs the same attention. Cadence controls when a contact
-        is considered "overdue" and surfaces in your focus list. There are two layers:
-        pod-level cadence and per-contact frequency.
-      </Prose>
-
-      <Card title="Pod cadence (group-level)">
+      <Card title="Cadence settings">
         <Prose style={{ marginBottom: 12 }}>
-          Set on the pod itself. Every contact in the pod inherits this cadence unless
-          they have a personal override.
+          Cadence controls when a contact is considered "overdue." Set it on the pod
+          (everyone inherits it) or override it per person.
         </Prose>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {cadences.map(c => (
             <div key={c.label} style={{
               display: 'flex', alignItems: 'baseline', gap: 12,
               padding: '8px 12px', borderRadius: 8, background: 'var(--tint)',
             }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', width: 80, flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', width: 72, flexShrink: 0 }}>
                 {c.label}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', width: 50, flexShrink: 0 }}>
-                {c.days}d
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', width: 48, flexShrink: 0 }}>
+                {c.days}
               </span>
               <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 {c.use}
@@ -472,41 +436,40 @@ function CadenceSection() {
         </div>
       </Card>
 
-      <Card title="Contact frequency (per-person override)">
-        <Prose style={{ marginBottom: 12 }}>
-          Set on individual contacts. Overrides the pod cadence for that person only.
-          Useful when one person in a "monthly" pod actually needs weekly attention.
-        </Prose>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {frequencies.map(f => (
-            <div key={f.label} style={{
-              padding: '6px 12px', borderRadius: 6, background: 'var(--tint)',
-              border: '1px solid var(--edge)',
-            }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                {f.label}
-              </span>
-              {f.days < 999 && (
-                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 6 }}>
-                  {f.days}d
-                </span>
-              )}
-            </div>
-          ))}
+      <Prose>
+        Per-contact frequency always wins over pod cadence. Useful when one person in a
+        "monthly" pod needs weekly attention.
+      </Prose>
+    </div>
+  )
+}
+
+// ── Sharing & Import ───────────────────────────────────────────────────────
+
+function SharingSection() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <Card title="Sharing a pod">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <StepRow number={1} title="Open a pod" description="Navigate to the pod you want to share." />
+          <StepRow number={2} title="Hit share" description="Choose which contacts to include or exclude." />
+          <StepRow number={3} title="Send the link" description="Recipients see a clean, read-only view. No login required." />
         </div>
       </Card>
 
-      <Card title="Priority order">
-        <Prose>
-          When determining a contact's cadence, the system checks in this order:
-        </Prose>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-          <StepRow number={1} title="Contact cadence override" description="If set, this always wins." />
-          <StepRow number={2} title="Contact frequency field" description="Per-contact frequency setting." />
-          <StepRow number={3} title="Pod cadence" description="Falls back to the pod's group setting." />
-          <StepRow number={4} title="Default: monthly (30 days)" description="If nothing is configured anywhere." />
+      <Card title="Importing contacts">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <StepRow number={1} title="Prepare a CSV" description="Columns for name, email, phone, company - whatever you have. The importer maps them." />
+          <StepRow number={2} title="Go to Import" description="In the sidebar under More, or navigate to /import directly." />
+          <StepRow number={3} title="Map your columns" description="The wizard walks you through matching your CSV columns to contact fields." />
+          <StepRow number={4} title="Assign to a pod" description="Imported contacts land in the pod you choose. You can move them later." />
         </div>
       </Card>
+
+      <Prose>
+        Contacts can belong to multiple pods. Moving someone doesn't remove them from
+        where they were - you're adding a connection, not transferring ownership.
+      </Prose>
     </div>
   )
 }
@@ -541,30 +504,21 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   )
 }
 
-function LevelRow({ label, description }: { label: string; description: string }) {
+function ConceptRow({ label, description, color }: { label: string; description: string; color: string }) {
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-      <span style={{
-        fontSize: 13, fontWeight: 600, color: 'var(--color-brand)',
-        width: 64, flexShrink: 0,
-      }}>
-        {label}
-      </span>
-      <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-        {description}
-      </span>
-    </div>
-  )
-}
-
-function ExampleRow({ label, calc }: { label: string; calc: string }) {
-  return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '6px 0',
-    }}>
-      <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{label}</span>
-      <span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--color-text-tertiary)' }}>{calc}</span>
+      <div style={{
+        width: 8, height: 8, borderRadius: '50%', background: color,
+        flexShrink: 0, marginTop: 5,
+      }} />
+      <div>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+          {label}
+        </span>
+        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginLeft: 6 }}>
+          - {description}
+        </span>
+      </div>
     </div>
   )
 }
