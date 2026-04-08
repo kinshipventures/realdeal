@@ -31,8 +31,9 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
 
   return (
     <div>
-      <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
+      {/* Health first - the answer to "how's this relationship?" */}
       <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
+      <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
       {assignedPods.map(pod => (
         <PodFieldsWidget
           key={pod.id}

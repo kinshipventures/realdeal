@@ -75,9 +75,19 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
       </div>
 
       {opportunities.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5 }}>
-          No deals in motion yet
-        </p>
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          style={{
+            fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5,
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+            fontFamily: 'inherit', textAlign: 'left',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-brand)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+        >
+          + Add to a pipeline
+        </button>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {opportunities.map(opp => {

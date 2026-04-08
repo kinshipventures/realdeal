@@ -150,10 +150,9 @@ export function RecordPage() {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 32px',
-          margin: '0 32px 0 32px',
-          marginTop: 12,
+          gap: 12,
+          padding: '8px 16px 8px 32px',
+          margin: '12px 32px 0',
           borderRadius: 8,
           borderLeft: `3px solid ${urgentSignal.color}`,
           background: urgentSignal.type === 'overdue'
@@ -162,7 +161,22 @@ export function RecordPage() {
           fontSize: 13,
           color: 'var(--color-text-primary)',
         }}>
-          <span>{urgentSignal.message}</span>
+          <span style={{ flex: 1 }}>{urgentSignal.message}</span>
+          <button
+            type="button"
+            onClick={() => {
+              const timeline = document.querySelector('[data-log-trigger]') as HTMLButtonElement
+              if (timeline) timeline.click()
+            }}
+            style={{
+              fontSize: 12, fontWeight: 600, padding: '4px 12px',
+              background: urgentSignal.color, color: '#fff',
+              border: 'none', borderRadius: 6, cursor: 'pointer',
+              fontFamily: 'inherit', whiteSpace: 'nowrap',
+            }}
+          >
+            Log now
+          </button>
           <button
             onClick={() => {
               sessionStorage.setItem(`realdeal:signal-dismissed:${contact.id}`, '1')
@@ -176,9 +190,10 @@ export function RecordPage() {
               fontSize: 16,
               padding: 4,
               lineHeight: 1,
+              flexShrink: 0,
             }}
             aria-label="Dismiss signal"
-          >×</button>
+          >x</button>
         </div>
       )}
 

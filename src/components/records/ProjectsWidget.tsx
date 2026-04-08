@@ -97,9 +97,19 @@ export function ProjectsWidget({ contact }: ProjectsWidgetProps) {
       )}
 
       {linked.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5 }}>
-          Not part of any projects yet
-        </p>
+        <button
+          type="button"
+          onClick={() => setShowPicker(v => !v)}
+          style={{
+            fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5,
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+            fontFamily: 'inherit', textAlign: 'left',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-brand)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+        >
+          + Add to a project
+        </button>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {linked.map(project => (

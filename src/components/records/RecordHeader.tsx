@@ -5,6 +5,7 @@ import type { Contact, Pod } from '../../lib/types'
 import { getContactsByType, getContacts, createContact, deleteContact, invalidateContactsCache } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { MergeModal } from '../merge/MergeModal'
+import { avatarColor, avatarBg } from './shared'
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   Active: { bg: 'rgba(37,180,57,0.12)', color: '#1A8A2A' },
@@ -36,18 +37,15 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(contact.name)
 
-  // Overflow menu state
   const [showOverflow, setShowOverflow] = useState(false)
   const overflowRef = useRef<HTMLDivElement>(null)
 
-  // Merge state
   const [mergeSearchOpen, setMergeSearchOpen] = useState(false)
   const [mergeQuery, setMergeQuery] = useState('')
   const [mergeResults, setMergeResults] = useState<Contact[]>([])
   const [mergeTarget, setMergeTarget] = useState<Contact | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // Company typeahead state (Contact type only)
   const [showTypeahead, setShowTypeahead] = useState(false)
   const [companyQuery, setCompanyQuery] = useState('')
   const [companyResults, setCompanyResults] = useState<Contact[]>([])
@@ -77,7 +75,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     }
   }
 
-  // Debounced company search
   useEffect(() => {
     if (!showTypeahead || companyQuery.length < 1) {
       setCompanyResults([])
@@ -94,7 +91,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     return () => clearTimeout(t)
   }, [companyQuery, showTypeahead])
 
-  // Outside-click for overflow menu
   useEffect(() => {
     if (!showOverflow) return
     function handleClick(e: MouseEvent) {
@@ -104,7 +100,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showOverflow])
 
-  // Merge target search
   useEffect(() => {
     if (!mergeSearchOpen || mergeQuery.length < 1) { setMergeResults([]); return }
     const t = setTimeout(async () => {
@@ -121,7 +116,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       await deleteContact(contact.id)
       invalidateContactsCache()
       navigate(-1)
-    } catch { /* surface nothing - navigation handles it */ }
+    } catch { /* navigation handles it */ }
   }
 
   async function handleSelectCompany(c: Contact) {
@@ -161,7 +156,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       )}
       {contact.company_record_id ? (
         <span
-          style={{ cursor: 'pointer', color: '#25B439', textDecoration: 'none' }}
+          style={{ cursor: 'pointer', color: 'var(--color-brand)', textDecoration: 'none' }}
           onClick={() => navigate(`/contact/${contact.company_record_id}`)}
         >
           {contact.company || 'Company'}
@@ -173,7 +168,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
   ) : contact.type === 'Company' && (contact.industry || contact.domain) ? (
     <span>
       {contact.industry && <span>{contact.industry}</span>}
-      {contact.industry && contact.domain && <span style={{ color: 'var(--color-text-tertiary)' }}> · </span>}
+      {contact.industry && contact.domain && <span style={{ color: 'var(--color-text-tertiary)' }}> - </span>}
       {contact.domain && <span>{contact.domain}</span>}
     </span>
   ) : null
@@ -183,6 +178,9 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     contact.phone ? { label: contact.phone, href: `tel:${contact.phone}` } : null,
     contact.linkedin ? { label: 'LinkedIn', href: contact.linkedin.startsWith('http') ? contact.linkedin : `https://${contact.linkedin}`, external: true } : null,
   ].filter(Boolean) as Array<{ label: string; href: string; external?: boolean }>
+
+  const acColor = avatarColor(contact.name)
+  const acBg = avatarBg(contact.name)
 
   return (
     <div style={{
@@ -198,79 +196,99 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         >
           {contact.type === 'Company' ? 'Companies' : 'People'}
         </button>
-        <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-tertiary)' }}>
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
         <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{contact.name}</span>
       </nav>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 6, position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8, position: 'relative' }}>
         <div style={{
           width: 48, height: 48, borderRadius: '50%',
-          background: 'rgba(37,180,57,0.12)',
+          background: acBg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, fontWeight: 700, color: '#1A8A2A',
+          fontSize: 16, fontWeight: 700, color: acColor,
           flexShrink: 0, marginTop: 2,
           fontFamily: 'var(--font-serif)',
         }}>
           {initials(contact.name)}
         </div>
-        {editingName ? (
-          <input
-            autoFocus
-            type="text"
-            value={nameVal}
-            onChange={e => setNameVal(e.target.value)}
-            onBlur={e => handleNameBlur(e.target.value)}
-            onKeyDown={handleNameKeyDown}
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 22,
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              background: 'var(--tint)',
-              border: '1px solid var(--edge-strong)',
-              borderRadius: 6,
-              outline: 'none',
-              padding: '2px 8px',
-              minWidth: 200,
-            }}
-          />
-        ) : (
-          <div
-            onClick={() => setEditingName(true)}
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 22,
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text-primary)',
-              cursor: 'text',
-            }}
-          >
-            {nameVal}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+            {editingName ? (
+              <input
+                autoFocus
+                type="text"
+                value={nameVal}
+                onChange={e => setNameVal(e.target.value)}
+                onBlur={e => handleNameBlur(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 22,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--color-text-primary)',
+                  background: 'var(--tint)',
+                  border: '1px solid var(--edge-strong)',
+                  borderRadius: 6,
+                  outline: 'none',
+                  padding: '2px 8px',
+                  minWidth: 200,
+                }}
+              />
+            ) : (
+              <div
+                onClick={() => setEditingName(true)}
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 22,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--color-text-primary)',
+                  cursor: 'text',
+                }}
+              >
+                {nameVal}
+              </div>
+            )}
+            <span style={{ ...PILL_STYLE, background: 'var(--tint)', color: 'var(--color-text-secondary)', fontSize: 10 }}>
+              {contact.type}
+            </span>
+            <span style={{ ...PILL_STYLE, background: statusStyle.bg, color: statusStyle.color, fontSize: 10 }}>
+              {status}
+            </span>
           </div>
-        )}
 
-        <span style={{
-          ...PILL_STYLE,
-          background: 'var(--tint)',
-          color: 'var(--color-text-secondary)',
-        }}>
-          {contact.type}
-        </span>
+          {companySubtitle && (
+            <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: 2 }}>
+              {companySubtitle}
+            </div>
+          )}
 
-        <span style={{
-          ...PILL_STYLE,
-          background: statusStyle.bg,
-          color: statusStyle.color,
-        }}>
-          {status}
-        </span>
+          {contactMethods.length > 0 && (
+            <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap', marginTop: 4 }}>
+              {contactMethods.map((m, i) => (
+                <span key={m.href}>
+                  {i > 0 && <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', padding: '0 6px' }}>-</span>}
+                  <a
+                    href={m.href}
+                    target={m.external ? '_blank' : undefined}
+                    rel={m.external ? 'noopener noreferrer' : undefined}
+                    style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
+                  >
+                    {m.label}
+                  </a>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Overflow menu */}
-        <div ref={overflowRef} style={{ marginLeft: 'auto', position: 'relative' }}>
+        <div ref={overflowRef} style={{ position: 'relative', flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setShowOverflow(v => !v)}
@@ -286,46 +304,46 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           {showOverflow && (
             <div style={{
               position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+              background: 'var(--color-surface)', border: '1px solid var(--edge)',
               borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
               zIndex: 50, minWidth: 160, overflow: 'hidden',
             }}>
-              <div
+              <button
+                type="button"
                 onClick={() => { setShowOverflow(false); setMergeSearchOpen(true); setMergeQuery('') }}
                 style={{
+                  width: '100%', textAlign: 'left',
                   padding: '10px 14px', fontSize: 13, cursor: 'pointer',
                   color: 'var(--color-text-primary)', minHeight: 40, display: 'flex', alignItems: 'center',
+                  background: 'transparent', border: 'none', fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Merge with...
-              </div>
-              <div
+              </button>
+              <button
+                type="button"
                 onClick={() => { setShowOverflow(false); setConfirmDelete(true) }}
                 style={{
+                  width: '100%', textAlign: 'left',
                   padding: '10px 14px', fontSize: 13, cursor: 'pointer',
-                  color: '#D93025', minHeight: 40, display: 'flex', alignItems: 'center',
+                  color: 'var(--health-fading)', minHeight: 40, display: 'flex', alignItems: 'center',
+                  background: 'transparent', border: 'none', fontFamily: 'inherit',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(217,48,37,0.04)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.04)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Delete
-              </div>
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {companySubtitle && (
-        <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: contact.type === 'Contact' ? 4 : 10 }}>
-          {companySubtitle}
-        </div>
-      )}
-
       {/* Company link/typeahead -- Contact type only */}
       {contact.type === 'Contact' && (
-        <div style={{ marginBottom: 10, position: 'relative', display: 'inline-block' }}>
+        <div style={{ marginLeft: 64, marginBottom: 4, position: 'relative', display: 'inline-block' }}>
           {!showTypeahead ? (
             contact.company_record_id ? (
               <button
@@ -349,7 +367,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   fontFamily: 'inherit',
                 }}
               >
-                Add company
+                + Add company
               </button>
             )
           ) : (
@@ -366,7 +384,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   fontFamily: 'inherit',
                   outline: 'none',
                   border: 'none',
-                  borderBottom: '1px solid #25B439',
+                  borderBottom: '1px solid var(--color-brand)',
                   background: 'transparent',
                   color: 'var(--color-text-primary)',
                   padding: '2px 0',
@@ -379,42 +397,49 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                   top: '100%',
                   left: 0,
                   minWidth: 220,
-                  background: 'var(--surface-panel)',
+                  background: 'var(--color-surface)',
                   border: '1px solid var(--edge)',
                   borderRadius: 8,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                   zIndex: 50,
                   marginTop: 4,
                 }}>
-                  {companyResults.map(c => (
-                    <div
-                      key={c.id}
-                      onMouseDown={() => handleSelectCompany(c)}
-                      style={{
-                        padding: '10px 12px',
-                        fontSize: 13,
-                        color: 'var(--color-text-primary)',
-                        cursor: 'pointer',
-                        minHeight: 44,
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderBottom: '1px solid var(--divider)',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <strong>{c.name.substring(0, c.name.toLowerCase().indexOf(companyQuery.toLowerCase()))}</strong>
-                      <strong style={{ color: '#25B439' }}>{c.name.substring(c.name.toLowerCase().indexOf(companyQuery.toLowerCase()), c.name.toLowerCase().indexOf(companyQuery.toLowerCase()) + companyQuery.length)}</strong>
-                      {c.name.substring(c.name.toLowerCase().indexOf(companyQuery.toLowerCase()) + companyQuery.length)}
-                    </div>
-                  ))}
+                  {companyResults.map(c => {
+                    const idx = c.name.toLowerCase().indexOf(companyQuery.toLowerCase())
+                    return (
+                      <div
+                        key={c.id}
+                        onMouseDown={() => handleSelectCompany(c)}
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: 13,
+                          color: 'var(--color-text-primary)',
+                          cursor: 'pointer',
+                          minHeight: 44,
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderBottom: '1px solid var(--divider)',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        {idx >= 0 ? (
+                          <>
+                            {c.name.substring(0, idx)}
+                            <strong style={{ color: 'var(--color-brand)' }}>{c.name.substring(idx, idx + companyQuery.length)}</strong>
+                            {c.name.substring(idx + companyQuery.length)}
+                          </>
+                        ) : c.name}
+                      </div>
+                    )
+                  })}
                   {companyQuery.length > 2 && !companyResults.find(c => c.name.toLowerCase() === companyQuery.toLowerCase()) && (
                     <div
                       onMouseDown={() => handleCreateAndLinkCompany(companyQuery.trim())}
                       style={{
                         padding: '10px 12px',
                         fontSize: 13,
-                        color: '#25B439',
+                        color: 'var(--color-brand)',
                         fontWeight: 500,
                         cursor: 'pointer',
                         minHeight: 44,
@@ -434,24 +459,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         </div>
       )}
 
-      {contactMethods.length > 0 && (
-        <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
-          {contactMethods.map((m, i) => (
-            <span key={m.href}>
-              {i > 0 && <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', padding: '0 6px' }}>·</span>}
-              <a
-                href={m.href}
-                target={m.external ? '_blank' : undefined}
-                rel={m.external ? 'noopener noreferrer' : undefined}
-                style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
-              >
-                {m.label}
-              </a>
-            </span>
-          ))}
-        </div>
-      )}
-
       {/* Merge target search */}
       {mergeSearchOpen && (
         <div style={{
@@ -460,7 +467,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setMergeSearchOpen(false)} />
           <div style={{
-            position: 'relative', background: 'var(--surface-panel)', borderRadius: 12,
+            position: 'relative', background: 'var(--color-surface)', borderRadius: 12,
             padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
@@ -502,7 +509,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         </div>
       )}
 
-      {/* Merge modal */}
       {mergeTarget && (
         <MergeModal
           recordA={contact}
@@ -517,7 +523,6 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         />
       )}
 
-      {/* Delete confirm */}
       {confirmDelete && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9998,
@@ -525,7 +530,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setConfirmDelete(false)} />
           <div style={{
-            position: 'relative', background: 'var(--surface-panel)', borderRadius: 12,
+            position: 'relative', background: 'var(--color-surface)', borderRadius: 12,
             padding: 24, width: 320, textAlign: 'center',
             boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
@@ -550,7 +555,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
                 type="button" onClick={handleDelete}
                 style={{
                   padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
-                  background: '#D93025', border: 'none',
+                  background: 'var(--health-fading)', border: 'none',
                   fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'inherit',
                 }}
               >
@@ -563,4 +568,3 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
     </div>
   )
 }
-

@@ -4,7 +4,7 @@ import { WIDGET_STYLE } from './shared'
 
 const LABEL_COLORS: Record<string, string> = {
   Thriving: '#1A8A2A',
-  Steady: '#25B439',
+  Steady: '#2563eb',
   Cooling: '#CC7700',
   Fading: '#FF3B30',
 }

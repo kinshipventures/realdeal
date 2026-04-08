@@ -99,6 +99,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   const [opState, setOpState] = useState<'idle' | 'logging' | 'deleting' | 'updating'>('idle')
   const [logSuccess, setLogSuccess] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [editingInteraction, setEditingInteraction] = useState<EditingInteraction>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -228,14 +229,26 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
 
   return (
     <div>
-      {/* Summary bar */}
-      <div style={{ padding: '12px 0', borderTop: '1px solid var(--divider)', marginBottom: 20 }}>
+      {/* Summary bar - clickable cells to quick-log */}
+      <div style={{ padding: '12px 0', borderTop: '1px solid var(--divider)', marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {(['call', 'email', 'text', 'meeting'] as const).map(t => {
             const date = typeRecency[t]
             const never = !date
             return (
-              <div key={t} style={{ textAlign: 'center' }}>
+              <button
+                key={t}
+                type="button"
+                onClick={() => { setLogType(t); setShowLogForm(true) }}
+                title={`Log a ${t}`}
+                style={{
+                  textAlign: 'center', background: 'none', border: '1px solid transparent',
+                  borderRadius: 8, padding: '6px 4px', cursor: 'pointer',
+                  fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.background = 'var(--tint)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent' }}
+              >
                 <div style={{ color: never ? 'var(--color-text-tertiary)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   {TYPE_ICONS[t]}
                   <span style={{ fontSize: 10 }}>{TYPE_LABELS[t]}</span>
@@ -243,13 +256,13 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 <div style={{ fontSize: 11, color: never ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', marginTop: 2 }}>
                   {date ? formatRelativeTime(date) : 'Never'}
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
       </div>
 
-      {/* Interactions header */}
+      {/* Log interaction button - prominent when form is closed */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={sectionLabel}>interactions</div>
@@ -263,11 +276,21 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
           )}
         </div>
         <button
-          className="action-ghost"
+          type="button"
+          data-log-trigger
           onClick={() => setShowLogForm(v => !v)}
-          style={{ fontSize: 11, fontWeight: 500, padding: '2px 0', letterSpacing: '0.01em' }}
+          style={showLogForm ? {
+            fontSize: 11, fontWeight: 500, padding: '2px 0',
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--color-text-tertiary)', fontFamily: 'inherit',
+          } : {
+            fontSize: 12, fontWeight: 600, padding: '5px 14px',
+            background: 'var(--color-brand)', color: '#fff',
+            border: 'none', borderRadius: 6, cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
         >
-          {showLogForm ? 'cancel' : '+ log'}
+          {showLogForm ? 'Cancel' : '+ Log'}
         </button>
       </div>
 
@@ -533,19 +556,45 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                   >
                     edit
                   </button>
-                  <button
-                    onClick={() => handleDeleteInteraction(interaction.id)}
-                    className="interaction-action"
-                    style={{
-                      fontSize: 10, color: 'var(--color-text-tertiary)',
-                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                      opacity: 0, transition: 'opacity 0.15s',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
-                  >
-                    del
-                  </button>
+                  {confirmDeleteId === interaction.id ? (
+                    <span style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <button
+                        onClick={() => { setConfirmDeleteId(null); handleDeleteInteraction(interaction.id) }}
+                        style={{
+                          fontSize: 10, fontWeight: 600, color: 'var(--health-fading)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        confirm
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        style={{
+                          fontSize: 10, color: 'var(--color-text-tertiary)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(interaction.id)}
+                      className="interaction-action"
+                      style={{
+                        fontSize: 10, color: 'var(--color-text-tertiary)',
+                        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                        opacity: 0, transition: 'opacity 0.15s',
+                        fontFamily: 'inherit',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                    >
+                      del
+                    </button>
+                  )}
                   {interaction.actor && (
                     <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginRight: 4 }}>
                       {interaction.actor}
