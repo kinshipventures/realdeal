@@ -282,6 +282,7 @@ function ViewToggle({ mode, onChange }: { mode: 'map' | 'list'; onChange: (m: 'm
       <button
         type="button"
         aria-label="Switch to map view"
+        title="Map view"
         aria-pressed={mode === 'map'}
         onClick={() => onChange('map')}
         style={{
@@ -301,6 +302,7 @@ function ViewToggle({ mode, onChange }: { mode: 'map' | 'list'; onChange: (m: 'm
       <button
         type="button"
         aria-label="Switch to list view"
+        title="List view"
         aria-pressed={mode === 'list'}
         onClick={() => onChange('list')}
         style={{
