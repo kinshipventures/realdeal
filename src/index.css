@@ -249,7 +249,6 @@
 /* ── Dark mode component overrides ─────────────────────────────────────────── */
 
 @media (prefers-color-scheme: dark) {
-  /* action-ghost, action-pill, close-trigger, interactive-row now use CSS vars - no overrides needed */
   ::-webkit-scrollbar-thumb { background: var(--edge); }
   body::after { opacity: 0.015; }
   .moj-orb { border: 1px solid var(--tint); }

@@ -27,7 +27,7 @@ import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
-import { getPositions, savePosition, clearAllPositions } from '../../hooks/useNodePositions'
+import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
 
 const LIST_SIZE = 96
@@ -63,7 +63,6 @@ const RING_RADII = typeof window !== 'undefined' && window.innerWidth < 500
 
 function hubLayout(
   lists: { id: string; is_priority?: boolean }[],
-  savedPositions: Record<string, { x: number; y: number }>,
 ): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }>; activeRings: number[]; ringIndexByPod: Map<string, number> } {
   const mojPos = { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 }
   const listPositions = new Map<string, { x: number; y: number }>()
@@ -110,7 +109,7 @@ function hubLayout(
     const angleOffset = r * (Math.PI / rings.length / 2)
     bucket.forEach((item, i) => {
       const angle = (i / bucket.length) * 2 * Math.PI - Math.PI / 2 + angleOffset
-      listPositions.set(item.id, savedPositions[item.id] ?? {
+      listPositions.set(item.id, {
         x: Math.cos(angle) * radius - LIST_SIZE / 2,
         y: Math.sin(angle) * radius - LIST_SIZE / 2,
       })
@@ -127,7 +126,6 @@ interface BuildHomeNodesParams {
   countsByPod: Record<string, PodCounts>
   equityByPod: Record<string, number>
   categoriesByPod: Record<string, Category[]>
-  savedPositions: Record<string, { x: number; y: number }>
   memberCountByPod: Record<string, number>
   overallHealth?: number
   totalContacts?: number
@@ -143,7 +141,6 @@ function buildHomeNodes({
   countsByPod,
   equityByPod,
   categoriesByPod,
-  savedPositions,
   memberCountByPod,
   overallHealth,
   totalContacts,
@@ -153,7 +150,7 @@ function buildHomeNodes({
   onPodHoverLeave,
   onDrillIn,
 }: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number> } {
-  const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods, savedPositions)
+  const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods)
   const DEPTH_BY_RING = [1.0, 0.92, 0.85]
 
   const mojNode: Node = {
@@ -593,13 +590,12 @@ export function OrbMap() {
     setHoveredPod(null)
   }, [])
 
-  const rebuildHomeView = useCallback((savedPositions: Record<string, { x: number; y: number }>) => {
+  const rebuildHomeView = useCallback(() => {
     const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
       pods: podsRef.current,
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
       categoriesByPod: categoriesByPodRef.current,
-      savedPositions,
       memberCountByPod: memberCountByPodRef.current,
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
@@ -671,7 +667,7 @@ export function OrbMap() {
       setMapView('hub')
       mapViewRef.current = 'hub'
       setSelectedPod(null)
-      rebuildHomeView(getPositions())
+      rebuildHomeView({})
 
       requestAnimationFrame(() => {
         fitView({ padding: 0.22, duration: 250 })
@@ -766,7 +762,7 @@ export function OrbMap() {
       }
       lastInteractedByPodRef.current = lastInteractedByPod
 
-      rebuildHomeView(getPositions())
+      rebuildHomeView({})
       setPodsCount(allPods.length)
     } catch (err) {
       console.error('Failed to refresh pods after creation:', err)
@@ -833,13 +829,12 @@ export function OrbMap() {
         }
         categoriesByPodRef.current = catsByPod
 
-        const savedPositions = getPositions()
         const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
           pods: allPods,
           countsByPod,
           equityByPod,
           categoriesByPod: catsByPod,
-          savedPositions,
+
           memberCountByPod,
           overallHealth,
           totalContacts: allContacts.length,
@@ -871,7 +866,7 @@ export function OrbMap() {
     if (mapView !== 'hub') return
     if (node.id === MOJ_ID) return
     const ringIdx = ringByPodRef.current.get(node.id)
-    if (ringIdx === undefined) { savePosition(node.id, node.position.x, node.position.y); return }
+    if (ringIdx === undefined) return
 
     // Animate snap-to-ring with gravitational pull feel
     const radius = RING_RADII[ringIdx]
@@ -900,8 +895,6 @@ export function OrbMap() {
 
       if (t < 1) {
         requestAnimationFrame(animate)
-      } else {
-        savePosition(node.id, snapX, snapY)
       }
     }
     requestAnimationFrame(animate)

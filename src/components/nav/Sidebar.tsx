@@ -152,7 +152,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Secondary section - collapsible */}
       {!collapsed && (
         <div style={{ padding: '4px 8px' }}>
-          <DisclosureSection label="More" defaultOpen={isCompanies || isPipelines || isProjects || isReports}>
+          <DisclosureSection label="More" defaultOpen={isCompanies || isPipelines || isReports}>
             <NavItem
               icon={<CompaniesIcon />}
               label="Companies"
@@ -170,9 +170,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             <NavItem
               icon={<ProjectsIcon />}
               label="Projects"
-              active={isProjects}
+              active={false}
               collapsed={collapsed}
-              onClick={() => navigate('/projects')}
+              onClick={() => {}}
+              hint="Soon"
+              labelStyle={{ color: 'var(--color-text-tertiary)' }}
             />
             <NavItem
               icon={<ReportsIcon />}
@@ -188,7 +190,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <NavItem icon={<CompaniesIcon />} label="Companies" active={isCompanies} collapsed={collapsed} onClick={() => navigate('/companies')} />
           <NavItem icon={<PipelinesIcon />} label="Pipelines" active={isPipelines} collapsed={collapsed} onClick={() => navigate('/pipelines')} />
-          <NavItem icon={<ProjectsIcon />} label="Projects" active={isProjects} collapsed={collapsed} onClick={() => navigate('/projects')} />
+          <NavItem icon={<ProjectsIcon />} label="Projects" active={false} collapsed={collapsed} onClick={() => {}} />
           <NavItem icon={<ReportsIcon />} label="Reports" active={isReports} collapsed={collapsed} onClick={() => navigate('/reports')} />
         </div>
       )}

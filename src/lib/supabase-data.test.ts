@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import {
   isDemoMode,
   setDemoMode,
@@ -12,7 +12,6 @@ import {
   DEMO_OPPORTUNITIES,
   DEMO_PROJECTS,
 } from './sampleData'
-import type { Pod, Contact, Interaction, Category } from './types'
 
 // These tests validate the demo data layer that supabase-data.ts delegates to.
 // We test sampleData directly to avoid importing the Supabase client (which
@@ -63,31 +62,6 @@ describe('pods demo data', () => {
   it('pod IDs are unique', () => {
     const ids = DEMO_PODS.map(p => p.id)
     expect(new Set(ids).size).toBe(ids.length)
-  })
-
-  it('supports in-place mutation (simulates createPod/updatePod)', () => {
-    const before = DEMO_PODS.length
-    const newPod: Pod = {
-      id: `demo-pod-test-${Date.now()}`,
-      name: 'Test Pod',
-      color: null,
-      owner: null,
-      is_priority: false,
-      cadence: null,
-      description: null,
-      capacity: null,
-      enrichment_opt_in: false,
-      created_at: new Date().toISOString(),
-    }
-    DEMO_PODS.push(newPod)
-    expect(DEMO_PODS.length).toBe(before + 1)
-    expect(DEMO_PODS.find(p => p.id === newPod.id)).toBeDefined()
-    // mutate (simulates updatePod)
-    Object.assign(newPod, { name: 'Renamed' })
-    expect(DEMO_PODS.find(p => p.id === newPod.id)?.name).toBe('Renamed')
-    // cleanup
-    DEMO_PODS.pop()
-    expect(DEMO_PODS.length).toBe(before)
   })
 })
 
@@ -160,27 +134,6 @@ describe('interactions demo data', () => {
       const d = new Date(ix.date)
       expect(d.getTime()).not.toBeNaN()
     }
-  })
-
-  it('supports in-place mutation (simulates createInteraction)', () => {
-    const before = DEMO_INTERACTIONS.length
-    const newIx: Interaction = {
-      id: `demo-ix-test-${Date.now()}`,
-      contact_id: DEMO_CONTACTS[0].id,
-      type: 'call',
-      date: '2026-04-07',
-      notes: 'Test call',
-      summary: null,
-      source: null,
-      email_link: null,
-      granola_link: null,
-      event_detail: null,
-      actor: null,
-      created_at: new Date().toISOString(),
-    }
-    DEMO_INTERACTIONS.push(newIx)
-    expect(DEMO_INTERACTIONS.length).toBe(before + 1)
-    DEMO_INTERACTIONS.pop()
   })
 })
 

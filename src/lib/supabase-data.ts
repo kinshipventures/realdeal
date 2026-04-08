@@ -1,8 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
-// Every exported function must check isDemoMode() before hitting Supabase.
-// See sharing.ts and fieldConfig.ts for the same pattern in other data modules.
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
 
 // Re-export TABLES for backward compat (some imports reference it)

@@ -33,6 +33,7 @@ import { ComingUpWidget } from './widgets/ComingUpWidget'
 import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
+import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
@@ -548,6 +549,7 @@ const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
   'recent-activity': 'activity-links',
   'quick-links': 'activity-links',
   'gmail-sync': 'activity-links',
+  'granola-sync': 'activity-links',
 }
 
 function renderOrderedWidgets(props: OrderedWidgetProps) {
@@ -682,6 +684,13 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
             return (
               <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <GmailSyncWidget />
+              </div>
+            )
+          }
+          if (id === 'granola-sync') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
+                <GranolaSyncWidget />
               </div>
             )
           }

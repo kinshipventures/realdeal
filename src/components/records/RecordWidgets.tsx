@@ -5,6 +5,7 @@ import { DetailsWidget } from './DetailsWidget'
 import { HealthWidget } from './HealthWidget'
 import { AssociatedPeopleWidget } from './AssociatedPeopleWidget'
 import { PodFieldsWidget } from './PodFieldsWidget'
+import { RelationshipWidget } from './RelationshipWidget'
 import { PipelinesWidget } from './PipelinesWidget'
 import { ProjectsWidget } from './ProjectsWidget'
 
@@ -33,6 +34,9 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
     <div>
       {/* Health first - the answer to "how's this relationship?" */}
       <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
+      {contact.type === 'Contact' && (
+        <RelationshipWidget contact={contact} onUpdate={onUpdate} />
+      )}
       <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
       {assignedPods.map(pod => (
         <PodFieldsWidget

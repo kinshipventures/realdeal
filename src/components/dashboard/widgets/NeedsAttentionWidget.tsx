@@ -287,7 +287,7 @@ export function NeedsAttentionWidget({
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
-              {dormantContacts.length} {dormantContacts.length === 1 ? 'relationship' : 'relationships'} cooling off
+              {dormantContacts.length} {dormantContacts.length === 1 ? 'person' : 'people'} - still belong on your list?
             </span>
             <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', transform: dormantExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
               &#9662;

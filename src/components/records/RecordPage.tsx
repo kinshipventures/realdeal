@@ -104,7 +104,8 @@ export function RecordPage() {
 
     if (isDormant(contact)) {
       const days = daysSinceContact(contact)
-      return { type: 'stale' as const, message: `No contact in ${days ?? '90+'} days`, color: 'hsla(20, 80%, 45%, 1)' }
+      const label = (days ?? 0) >= 180 ? 'Slipping away' : (days ?? 0) >= 120 ? 'Going quiet' : 'Cooling off'
+      return { type: 'stale' as const, message: `${label} - ${days ?? '90+'}d since last contact. Do they still belong here?`, color: 'hsla(20, 80%, 45%, 1)' }
     }
 
     return null
@@ -175,8 +176,25 @@ export function RecordPage() {
               fontFamily: 'inherit', whiteSpace: 'nowrap',
             }}
           >
-            Log now
+            {urgentSignal.type === 'stale' ? 'Reach out' : 'Log now'}
           </button>
+          {urgentSignal.type === 'stale' && (
+            <button
+              type="button"
+              onClick={() => {
+                handleUpdate({ status: 'Archived' })
+                setIsBannerDismissed(true)
+              }}
+              style={{
+                fontSize: 12, fontWeight: 600, padding: '4px 12px',
+                background: 'none', color: 'hsla(20, 80%, 45%, 0.8)',
+                border: '1px solid hsla(20, 80%, 45%, 0.3)', borderRadius: 6, cursor: 'pointer',
+                fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}
+            >
+              Let go
+            </button>
+          )}
           <button
             onClick={() => {
               sessionStorage.setItem(`realdeal:signal-dismissed:${contact.id}`, '1')

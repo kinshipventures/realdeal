@@ -9,7 +9,7 @@ interface DetailsWidgetProps {
   requiredFieldKeys?: Set<string>
 }
 
-const SECONDARY_CONTACT_FIELDS: (keyof Contact)[] = ['gender', 'country', 'global_region', 'contact_frequency', 'communication_preferences', 'email_2', 'email_3', 'website']
+const SECONDARY_CONTACT_FIELDS: (keyof Contact)[] = ['gender', 'country', 'global_region', 'contact_frequency', 'email_2', 'email_3', 'website']
 
 export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsWidgetProps) {
   const [editingField, setEditingField] = useState<keyof Contact | null>(null)
@@ -173,7 +173,7 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
               {field('country', 'Country')}
               {field('global_region', 'Region')}
               {field('contact_frequency', 'Contact Frequency')}
-              {field('communication_preferences', 'Comm Preferences', true)}
+
               {field('email_2', 'Email 2')}
               {field('email_3', 'Email 3')}
               {field('website', 'Website')}

@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
+import { DndContext, DragOverlay, closestCorners, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink, InteractionType } from '../../lib/types'
 import { HUMAN_TYPES } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getPods, getContacts, getCategories, getAllInteractions, updatePod, createCategory, updateCategory } from '../../lib/airtable'
+import { getPods, getContacts, getCategories, getAllInteractions, updatePod, updateContact, createCategory, updateCategory } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { contactEquityScore, podEquityScore, scoreLabel, daysSinceContact, indexByContact } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
@@ -151,11 +153,44 @@ function lastHumanInteraction(interactions: Interaction[]): { type: InteractionT
   return { type: latest.type, daysAgo }
 }
 
+function DraggableMemberRow({ contact, children }: { contact: Contact; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: contact.id })
+  return (
+    <div ref={setNodeRef} {...listeners} {...attributes} style={{ opacity: isDragging ? 0.4 : 1, touchAction: 'none' }}>
+      {children}
+    </div>
+  )
+}
+
+function PodDropTarget({ pod, isOver }: { pod: Pod; isOver?: boolean }) {
+  const { setNodeRef, isOver: dndIsOver } = useDroppable({ id: pod.id })
+  const active = isOver ?? dndIsOver
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        padding: '6px 14px',
+        borderRadius: 100,
+        fontSize: 12,
+        fontWeight: 500,
+        border: active ? `2px solid ${pod.color ?? 'var(--color-brand)'}` : '2px dashed var(--edge)',
+        background: active ? `${pod.color ?? 'var(--color-brand)'}14` : 'transparent',
+        color: active ? (pod.color ?? 'var(--color-brand)') : 'var(--color-text-secondary)',
+        transition: 'all 0.15s ease',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {pod.name}
+    </div>
+  )
+}
+
 export function PodDetailPage() {
   const { id: podId } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
   const [pod, setPod] = useState<Pod | null>(null)
+  const [allPods, setAllPods] = useState<Pod[]>([])
   const [members, setMembers] = useState<Contact[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
@@ -164,6 +199,11 @@ export function PodDetailPage() {
   const [podScore, setPodScore] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  // Drag-and-drop state
+  const [dragContactId, setDragContactId] = useState<string | null>(null)
+  const [dndToast, setDndToast] = useState<{ message: string; onUndo: () => void } | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Editable state
   const [description, setDescription] = useState('')
@@ -220,6 +260,7 @@ export function PodDetailPage() {
       const score = podEquityScore(podMembers, byContact)
 
       setPod(found)
+      setAllPods(pods)
       setDescription(found.description ?? '')
       setCadence(found.cadence ?? '')
       setCapacity(found.capacity != null ? String(found.capacity) : '')
@@ -269,6 +310,50 @@ export function PodDetailPage() {
   useEffect(() => {
     if (addingSubPod) newSubPodInputRef.current?.focus()
   }, [addingSubPod])
+
+  const otherPods = useMemo(() => allPods.filter(p => p.id !== podId), [allPods, podId])
+
+  function handleDragStart(event: DragStartEvent) {
+    setDragContactId(String(event.active.id))
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    setDragContactId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const contactId = String(active.id)
+    const targetPodId = String(over.id)
+
+    const contact = members.find(m => m.id === contactId)
+    const targetPod = otherPods.find(p => p.id === targetPodId)
+    if (!contact || !targetPod) return
+    if (contact.list_ids.includes(targetPodId)) return // already in that pod
+
+    const prevListIds = [...contact.list_ids]
+    const newListIds = [...contact.list_ids, targetPodId]
+
+    // Optimistic update
+    setMembers(prev => prev.map(m =>
+      m.id === contactId ? { ...m, list_ids: newListIds } : m
+    ))
+
+    // Show toast with undo
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setDndToast({
+      message: `Added ${contact.name} to ${targetPod.name}`,
+      onUndo: () => {
+        setMembers(prev => prev.map(m =>
+          m.id === contactId ? { ...m, list_ids: prevListIds } : m
+        ))
+        updateContact(contactId, { list_ids: prevListIds }).catch(console.error)
+        setDndToast(null)
+      },
+    })
+    toastTimerRef.current = setTimeout(() => setDndToast(null), 4000)
+
+    await updateContact(contactId, { list_ids: newListIds }).catch(console.error)
+  }
 
   if (loading) {
     return (
@@ -404,6 +489,7 @@ export function PodDetailPage() {
         </div>
 
         {/* ── Members (primary content) ── */}
+        <DndContext collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <section style={{ marginBottom: 32 }}>
           <div style={{ ...sectionHeadStyle, justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -420,6 +506,22 @@ export function PodDetailPage() {
               </button>
             )}
           </div>
+
+          {/* Drop targets - appear when dragging */}
+          {dragContactId && otherPods.length > 0 && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 8,
+              padding: '12px 16px', marginBottom: 12,
+              background: 'var(--tint)', borderRadius: 10,
+              border: '1px dashed var(--edge)',
+            }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', alignSelf: 'center', marginRight: 4 }}>
+                Drop to add:
+              </span>
+              {otherPods.map(p => <PodDropTarget key={p.id} pod={p} />)}
+            </div>
+          )}
+
           {members.length === 0 ? (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 8px' }}>No members yet.</p>
@@ -435,57 +537,105 @@ export function PodDetailPage() {
                 const lastIx = lastHumanInteraction(interactionMap.get(m.id) ?? [])
                 const days = daysSinceContact(m)
                 return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => navigate(`/contact/${m.id}`)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px 12px', background: 'transparent',
-                      border: 'none', borderRadius: 8, cursor: 'pointer',
-                      textAlign: 'left', fontFamily: 'inherit',
-                      transition: 'background 0.12s', width: '100%',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <Avatar name={m.name} size={32} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {m.name}
-                        </span>
-                        {isPrimary && (
-                          <span style={{ fontSize: 9, fontWeight: 600, color: podColor, background: `${podColor}18`, borderRadius: 4, padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>Primary</span>
+                  <DraggableMemberRow key={m.id} contact={m}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/contact/${m.id}`)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 12px', background: 'transparent',
+                        border: 'none', borderRadius: 8, cursor: 'grab',
+                        textAlign: 'left', fontFamily: 'inherit',
+                        transition: 'background 0.12s', width: '100%',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <Avatar name={m.name} size={32} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {m.name}
+                          </span>
+                          {isPrimary && (
+                            <span style={{ fontSize: 9, fontWeight: 600, color: podColor, background: `${podColor}18`, borderRadius: 4, padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>Primary</span>
+                          )}
+                        </div>
+                        {(m.company || m.role) && (
+                          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {[m.role, m.company].filter(Boolean).join(' - ')}
+                          </div>
                         )}
                       </div>
-                      {(m.company || m.role) && (
-                        <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {[m.role, m.company].filter(Boolean).join(' - ')}
-                        </div>
-                      )}
-                    </div>
-                    {/* Last interaction context */}
-                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'right', flexShrink: 0, minWidth: 56 }}>
-                      {lastIx ? (
-                        <span>{formatDaysAgo(lastIx.daysAgo)} - {INTERACTION_LABELS[lastIx.type] ?? lastIx.type}</span>
-                      ) : days !== null ? (
-                        <span>{formatDaysAgo(days)}</span>
-                      ) : (
-                        <span style={{ color: '#ea580c' }}>never</span>
-                      )}
-                    </div>
-                    {/* Score */}
-                    <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 40 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: labelColor }}>{score}</div>
-                      <div style={{ fontSize: 10, color: labelColor, opacity: 0.8 }}>{label}</div>
-                    </div>
-                  </button>
+                      {/* Last interaction context */}
+                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'right', flexShrink: 0, minWidth: 56 }}>
+                        {lastIx ? (
+                          <span>{formatDaysAgo(lastIx.daysAgo)} - {INTERACTION_LABELS[lastIx.type] ?? lastIx.type}</span>
+                        ) : days !== null ? (
+                          <span>{formatDaysAgo(days)}</span>
+                        ) : (
+                          <span style={{ color: '#ea580c' }}>never</span>
+                        )}
+                      </div>
+                      {/* Score */}
+                      <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 40 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: labelColor }}>{score}</div>
+                        <div style={{ fontSize: 10, color: labelColor, opacity: 0.8 }}>{label}</div>
+                      </div>
+                    </button>
+                  </DraggableMemberRow>
                 )
               })}
             </div>
           )}
         </section>
+
+        {/* Drag overlay - ghost of the dragged contact */}
+        <DragOverlay>
+          {dragContactId && (() => {
+            const m = members.find(c => c.id === dragContactId)
+            if (!m) return null
+            return (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 14px', background: 'var(--color-surface)',
+                border: '1px solid var(--edge)', borderRadius: 8,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
+                fontFamily: 'inherit',
+              }}>
+                <Avatar name={m.name} size={24} />
+                {m.name}
+              </div>
+            )
+          })()}
+        </DragOverlay>
+        </DndContext>
+
+        {/* DnD undo toast */}
+        {dndToast && (
+          <div style={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            background: 'var(--color-text-primary)', color: 'var(--color-bg)',
+            padding: '10px 20px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 12,
+            fontSize: 13, fontWeight: 500, zIndex: 200,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          }}>
+            {dndToast.message}
+            <button
+              type="button"
+              onClick={dndToast.onUndo}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--color-brand)', fontSize: 13, fontWeight: 600,
+                fontFamily: 'inherit', padding: 0,
+              }}
+            >
+              Undo
+            </button>
+          </div>
+        )}
 
         {/* ── Sub-pods ── */}
         {(categories.length > 0 || true) && (
