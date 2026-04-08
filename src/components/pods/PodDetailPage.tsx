@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink } from '../../lib/types'
+import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink, InteractionType } from '../../lib/types'
+import { HUMAN_TYPES } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getPods, getContacts, getCategories, getAllInteractions, updatePod, createCategory, updateCategory } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
-import { contactEquityScore, scoreLabel } from '../../lib/equity'
-import { indexByContact } from '../../lib/equity'
+import { contactEquityScore, podEquityScore, scoreLabel, daysSinceContact, indexByContact } from '../../lib/equity'
+import type { ScoreLabel } from '../../lib/equity'
 import { Avatar, Spinner } from '../ui'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { LucideIcon } from '../LucideIcon'
@@ -18,6 +19,22 @@ const EQUITY_COLORS: Record<string, string> = {
   Steady:   '#4ade80',
   Cooling:  '#ea580c',
   Fading:   '#dc2626',
+}
+
+const INTERACTION_LABELS: Partial<Record<InteractionType, string>> = {
+  call: 'call',
+  email: 'email',
+  text: 'text',
+  meeting: 'meeting',
+  intro: 'intro',
+  note: 'note',
+}
+
+const POD_NUDGES: Record<ScoreLabel, string> = {
+  Thriving: 'This pod is humming. Keep showing up.',
+  Steady:   'Solid momentum. A few check-ins would keep it going.',
+  Cooling:  'Some people in this pod miss hearing from you.',
+  Fading:   'This pod needs your attention.',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -81,6 +98,59 @@ function TypeBadge({ type }: { type: string }) {
   )
 }
 
+// Oura-style health ring for pod detail (light background variant)
+function PodHealthRing({ score, color, size }: { score: number; color: string; size: number }) {
+  const strokeWidth = 6
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setMounted(true))
+  }, [])
+
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--edge)" strokeWidth={strokeWidth} />
+      <circle
+        cx={size / 2} cy={size / 2} r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={mounted ? offset : circumference}
+        strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        opacity={0.85}
+      />
+    </svg>
+  )
+}
+
+function formatDaysAgo(days: number | null): string {
+  if (days === null) return 'never'
+  if (days === 0) return 'today'
+  if (days === 1) return '1d ago'
+  if (days < 7) return `${days}d ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`
+  return `${Math.floor(days / 365)}y ago`
+}
+
+function lastHumanInteraction(interactions: Interaction[]): { type: InteractionType; daysAgo: number } | null {
+  const now = Date.now()
+  const humanTypes = new Set(HUMAN_TYPES as readonly string[])
+  let latest: Interaction | null = null
+  for (const ix of interactions) {
+    if (!humanTypes.has(ix.type)) continue
+    if (!latest || ix.date > latest.date) latest = ix
+  }
+  if (!latest) return null
+  const daysAgo = Math.floor((now - new Date(latest.date).getTime()) / (24 * 60 * 60 * 1000))
+  return { type: latest.type, daysAgo }
+}
+
 export function PodDetailPage() {
   const { id: podId } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -90,6 +160,8 @@ export function PodDetailPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
+  const [interactionMap, setInteractionMap] = useState<Map<string, Interaction[]>>(new Map())
+  const [podScore, setPodScore] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -100,6 +172,7 @@ export function PodDetailPage() {
   const [owner, setOwner] = useState<Owner | ''>('')
   const [isPriority, setIsPriority] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Add sub-pod state
   const [addingSubPod, setAddingSubPod] = useState(false)
@@ -144,6 +217,8 @@ export function PodDetailPage() {
         eqMap[c.id] = contactEquityScore(byContact.get(c.id) ?? [])
       }
 
+      const score = podEquityScore(podMembers, byContact)
+
       setPod(found)
       setDescription(found.description ?? '')
       setCadence(found.cadence ?? '')
@@ -154,6 +229,8 @@ export function PodDetailPage() {
       setCategories(cats)
       setFieldConfigs(configs.filter(fc => fc.scope_pod_id === podId))
       setEquityMap(eqMap)
+      setInteractionMap(byContact)
+      setPodScore(score)
       setShareLinks(activeLinks)
       setLoading(false)
     }
@@ -217,6 +294,11 @@ export function PodDetailPage() {
   const capacityNum = capacity ? parseInt(capacity, 10) : null
   const atCapacity = capacityNum != null && members.length >= capacityNum
   const capacityColor = atCapacity ? '#ea580c' : '#16a34a'
+  const podLabel = scoreLabel(podScore)
+  const needsAttention = members.filter(m => {
+    const s = equityMap[m.id] ?? 0
+    return scoreLabel(s) === 'Cooling' || scoreLabel(s) === 'Fading'
+  }).length
 
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 96 }}>
@@ -232,47 +314,73 @@ export function PodDetailPage() {
           </button>
           <span style={{ color: 'var(--color-text-tertiary)' }}>›</span>
           <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{pod.name}</span>
+          {saving && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>Saving...</span>}
         </nav>
 
-        {/* Pod header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: `linear-gradient(135deg, ${podColor}, ${shiftColor})`,
-            flexShrink: 0,
-            marginTop: 4,
-          }} />
-          <div style={{ flex: 1 }}>
-            <h1 style={{
-              fontFamily: 'var(--font-serif)',
-              fontWeight: 700,
-              fontSize: 28,
-              color: 'var(--color-text-primary)',
-              margin: 0,
-              lineHeight: 1.2,
-            }}>{pod.name}</h1>
+        {/* ── Health Hero ── */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 24,
+          marginBottom: 32,
+          padding: '24px 28px',
+          background: 'var(--color-surface)',
+          borderRadius: 16,
+          border: '1px solid var(--edge)',
+        }}>
+          {/* Ring with score */}
+          <div style={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
+            <PodHealthRing score={podScore} color={podColor} size={88} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{
+                fontSize: 28, fontWeight: 800, color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-serif)', lineHeight: 1, letterSpacing: '-0.02em',
+              }}>{podScore}</span>
+            </div>
           </div>
-          {saving && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 8 }}>Saving…</span>}
+
+          {/* Pod identity + status */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                background: `linear-gradient(135deg, ${podColor}, ${shiftColor})`,
+              }} />
+              <h1 style={{
+                fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
+                color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
+              }}>{pod.name}</h1>
+              <span style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+                color: EQUITY_COLORS[podLabel], background: `${EQUITY_COLORS[podLabel]}14`,
+                padding: '2px 8px', borderRadius: 6,
+              }}>{podLabel}</span>
+            </div>
+            <p style={{
+              fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5,
+            }}>{POD_NUDGES[podLabel]}</p>
+            {needsAttention > 0 && (
+              <p style={{ fontSize: 12, color: '#ea580c', margin: '6px 0 0', fontWeight: 500 }}>
+                {needsAttention} of {members.length} {needsAttention === 1 ? 'member needs' : 'members need'} attention
+              </p>
+            )}
+          </div>
+
+          {/* Share button */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               type="button"
               onMouseDown={e => e.stopPropagation()}
               onClick={() => setShowSharePopover(v => !v)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'var(--tint)',
-                border: '1px solid var(--edge)',
-                borderRadius: 8,
-                padding: '8px 14px',
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--color-text-primary)',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'var(--tint)', border: '1px solid var(--edge)',
+                borderRadius: 8, padding: '8px 14px', fontSize: 13,
+                fontWeight: 500, color: 'var(--color-text-primary)',
+                cursor: 'pointer', fontFamily: 'inherit',
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -295,355 +403,8 @@ export function PodDetailPage() {
           </div>
         </div>
 
-        {/* Description */}
-        <div style={{ marginBottom: 24 }}>
-          <label style={labelStyle}>Description</label>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            onBlur={() => save({ description: description || null })}
-            placeholder="What is this pod for?"
-            rows={2}
-            style={{ ...inputStyle, width: '100%', resize: 'vertical', lineHeight: 1.5 }}
-          />
-        </div>
-
-        {/* Settings row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 32 }}>
-          <div>
-            <label style={labelStyle}>Cadence</label>
-            <select
-              value={cadence}
-              onChange={e => {
-                const val = e.target.value as Cadence | ''
-                setCadence(val)
-                save({ cadence: val || null })
-              }}
-              style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
-            >
-              <option value="">None</option>
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Biweekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-            </select>
-          </div>
-
-          <div>
-            <label style={labelStyle}>
-              Capacity
-              {capacityNum != null && (
-                <span style={{ fontWeight: 400, marginLeft: 6, color: capacityColor }}>
-                  {members.length}/{capacityNum}
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              value={capacity}
-              min={1}
-              onChange={e => setCapacity(e.target.value)}
-              onBlur={() => {
-                const num = capacity ? parseInt(capacity, 10) : null
-                save({ capacity: num })
-              }}
-              placeholder="Unlimited"
-              style={{ ...inputStyle, width: '100%' }}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Owner</label>
-            <select
-              value={owner}
-              onChange={e => {
-                const val = e.target.value as Owner | ''
-                setOwner(val)
-                save({ owner: val || null })
-              }}
-              style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
-            >
-              <option value="">None</option>
-              <option value="moj_mahdara">Moj Mahdara</option>
-              <option value="kinship_ventures">Kinship Ventures</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}>
-            <input
-              type="checkbox"
-              id="is-priority"
-              checked={isPriority}
-              onChange={e => {
-                setIsPriority(e.target.checked)
-                save({ is_priority: e.target.checked })
-              }}
-              style={{ width: 14, height: 14, cursor: 'pointer' }}
-            />
-            <label htmlFor="is-priority" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Priority pod</label>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type="checkbox"
-                id="enrichment-opt-in"
-                checked={pod.enrichment_opt_in}
-                onChange={e => save({ enrichment_opt_in: e.target.checked })}
-                style={{ width: 14, height: 14, cursor: 'pointer' }}
-              />
-              <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
-          </div>
-        </div>
-
-        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
-
-        {/* Required Fields section */}
+        {/* ── Members (primary content) ── */}
         <section style={{ marginBottom: 32 }}>
-          <div style={sectionHeadStyle}>
-            Required Questions <Badge label={String(fieldConfigs.length)} />
-          </div>
-          {fieldConfigs.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>No required fields for this pod yet.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {fieldConfigs.map(fc => (
-                <div key={fc.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 14px',
-                  background: 'var(--tint)',
-                  borderRadius: 8,
-                  border: '1px solid var(--edge)',
-                }}>
-                  {fc.required && (
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} />
-                  )}
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{fc.name}</span>
-                  <TypeBadge type={fc.field_type} />
-                </div>
-              ))}
-            </div>
-          )}
-          {members.length > 0 && (
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, marginBottom: 0 }}>
-              Manage fields from a{' '}
-              <button
-                type="button"
-                onClick={() => navigate(`/contact/${members[0].id}`)}
-                style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-              >
-                member's record
-              </button>
-            </p>
-          )}
-        </section>
-
-        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
-
-        {/* Sub-pods section */}
-        <section style={{ marginBottom: 32 }}>
-          <div style={sectionHeadStyle}>
-            Sub-pods <Badge label={String(categories.length)} />
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {categories.map(cat => (
-              <div key={cat.id} style={{ display: 'flex', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/category/${cat.id}`)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 12px',
-                    background: 'var(--tint)',
-                    border: '1px solid var(--edge)',
-                    borderRadius: 100,
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    color: 'var(--color-text-primary)',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                >
-                  {cat.icon ? (
-                    <span
-                      onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                      style={{ lineHeight: 0, cursor: 'pointer' }}
-                    >
-                      <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
-                    </span>
-                  ) : (
-                    <span
-                      onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                      style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
-                      title="Set icon"
-                    />
-                  )}
-                  {cat.name}
-                </button>
-              </div>
-            ))}
-            {iconPickerCatId && (
-              <IconPicker
-                value={categories.find(c => c.id === iconPickerCatId)?.icon ?? null}
-                onChange={icon => handleIconChange(iconPickerCatId, icon)}
-                anchorEl={iconPickerAnchor}
-                onClose={() => { setIconPickerCatId(null); setIconPickerAnchor(null) }}
-              />
-            )}
-          </div>
-          {addingSubPod ? (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input
-                ref={newSubPodInputRef}
-                type="text"
-                value={newSubPodName}
-                onChange={e => setNewSubPodName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleAddSubPod()
-                  if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName('') }
-                }}
-                placeholder="Sub-pod name"
-                style={{ ...inputStyle, flex: 1 }}
-              />
-              <button
-                type="button"
-                onClick={handleAddSubPod}
-                disabled={!newSubPodName.trim()}
-                style={{
-                  padding: '8px 14px',
-                  background: 'var(--color-brand)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 7,
-                  fontSize: 13,
-                  fontFamily: 'inherit',
-                  cursor: newSubPodName.trim() ? 'pointer' : 'not-allowed',
-                  opacity: newSubPodName.trim() ? 1 : 0.5,
-                }}
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={() => { setAddingSubPod(false); setNewSubPodName('') }}
-                style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAddingSubPod(true)}
-              style={{
-                background: 'none',
-                border: '1px dashed var(--edge-strong)',
-                borderRadius: 100,
-                padding: '5px 14px',
-                fontSize: 12,
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              + Add Sub-pod
-            </button>
-          )}
-        </section>
-
-        <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />
-
-        {/* Shared links section */}
-        {shareLinks.length > 0 && (
-          <section style={{ marginBottom: 32 }}>
-            <div style={sectionHeadStyle}>
-              Shared links <Badge label={String(shareLinks.length)} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {shareLinks.map(link => {
-                const expiresAt = new Date(link.expires_at)
-                const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                const isConfirming = confirmRevoke === link.id
-                return (
-                  <div
-                    key={link.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 14px',
-                      background: 'var(--tint)',
-                      borderRadius: 8,
-                      border: '1px solid var(--edge)',
-                    }}
-                  >
-                    {isConfirming ? (
-                      <>
-                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)' }}>Revoke this link?</span>
-                        <button
-                          type="button"
-                          disabled={revokingId === link.id}
-                          onClick={async () => {
-                            setRevokingId(link.id)
-                            try {
-                              await revokeShareLink(link.id)
-                              setShareLinks(prev => prev.filter(l => l.id !== link.id))
-                              setConfirmRevoke(null)
-                            } finally {
-                              setRevokingId(null)
-                            }
-                          }}
-                          style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                        >
-                          {revokingId === link.id ? 'Revoking...' : 'Yes, revoke'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmRevoke(null)}
-                          style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          /s/{link.token}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                          {link.pin_hash && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', background: 'var(--edge)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>PIN</span>
-                          )}
-                          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                            in {daysLeft}d
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmRevoke(link.id)}
-                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-                          >
-                            Revoke
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {shareLinks.length > 0 && <div style={{ borderTop: '1px solid var(--divider)', marginBottom: 32 }} />}
-
-        {/* Members section */}
-        <section>
           <div style={{ ...sectionHeadStyle, justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               Members{' '}
@@ -671,24 +432,19 @@ export function PodDetailPage() {
                 const label = scoreLabel(score)
                 const labelColor = EQUITY_COLORS[label] ?? 'var(--color-text-secondary)'
                 const isPrimary = m.primary_list_id === podId
+                const lastIx = lastHumanInteraction(interactionMap.get(m.id) ?? [])
+                const days = daysSinceContact(m)
                 return (
                   <button
                     key={m.id}
                     type="button"
                     onClick={() => navigate(`/contact/${m.id}`)}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontFamily: 'inherit',
-                      transition: 'background 0.12s',
-                      width: '100%',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 12px', background: 'transparent',
+                      border: 'none', borderRadius: 8, cursor: 'pointer',
+                      textAlign: 'left', fontFamily: 'inherit',
+                      transition: 'background 0.12s', width: '100%',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -705,17 +461,376 @@ export function PodDetailPage() {
                       </div>
                       {(m.company || m.role) && (
                         <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {[m.role, m.company].filter(Boolean).join(' · ')}
+                          {[m.role, m.company].filter(Boolean).join(' - ')}
                         </div>
                       )}
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    {/* Last interaction context */}
+                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'right', flexShrink: 0, minWidth: 56 }}>
+                      {lastIx ? (
+                        <span>{formatDaysAgo(lastIx.daysAgo)} - {INTERACTION_LABELS[lastIx.type] ?? lastIx.type}</span>
+                      ) : days !== null ? (
+                        <span>{formatDaysAgo(days)}</span>
+                      ) : (
+                        <span style={{ color: '#ea580c' }}>never</span>
+                      )}
+                    </div>
+                    {/* Score */}
+                    <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 40 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: labelColor }}>{score}</div>
                       <div style={{ fontSize: 10, color: labelColor, opacity: 0.8 }}>{label}</div>
                     </div>
                   </button>
                 )
               })}
+            </div>
+          )}
+        </section>
+
+        {/* ── Sub-pods ── */}
+        {(categories.length > 0 || true) && (
+          <section style={{ marginBottom: 32 }}>
+            <div style={sectionHeadStyle}>
+              Sub-pods <Badge label={String(categories.length)} />
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+              {categories.map(cat => (
+                <div key={cat.id} style={{ display: 'flex', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/category/${cat.id}`)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '6px 12px', background: 'var(--tint)',
+                      border: '1px solid var(--edge)', borderRadius: 100,
+                      cursor: 'pointer', fontSize: 13,
+                      color: 'var(--color-text-primary)', fontFamily: 'inherit',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    {cat.icon ? (
+                      <span
+                        onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                        style={{ lineHeight: 0, cursor: 'pointer' }}
+                      >
+                        <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
+                      </span>
+                    ) : (
+                      <span
+                        onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                        style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
+                        title="Set icon"
+                      />
+                    )}
+                    {cat.name}
+                  </button>
+                </div>
+              ))}
+              {iconPickerCatId && (
+                <IconPicker
+                  value={categories.find(c => c.id === iconPickerCatId)?.icon ?? null}
+                  onChange={icon => handleIconChange(iconPickerCatId, icon)}
+                  anchorEl={iconPickerAnchor}
+                  onClose={() => { setIconPickerCatId(null); setIconPickerAnchor(null) }}
+                />
+              )}
+            </div>
+            {addingSubPod ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  ref={newSubPodInputRef}
+                  type="text"
+                  value={newSubPodName}
+                  onChange={e => setNewSubPodName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleAddSubPod()
+                    if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName('') }
+                  }}
+                  placeholder="Sub-pod name"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddSubPod}
+                  disabled={!newSubPodName.trim()}
+                  style={{
+                    padding: '8px 14px', background: 'var(--color-brand)',
+                    color: '#fff', border: 'none', borderRadius: 7,
+                    fontSize: 13, fontFamily: 'inherit',
+                    cursor: newSubPodName.trim() ? 'pointer' : 'not-allowed',
+                    opacity: newSubPodName.trim() ? 1 : 0.5,
+                  }}
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddingSubPod(false); setNewSubPodName('') }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddingSubPod(true)}
+                style={{
+                  background: 'none', border: '1px dashed var(--edge-strong)',
+                  borderRadius: 100, padding: '5px 14px', fontSize: 12,
+                  color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                + Add Sub-pod
+              </button>
+            )}
+          </section>
+        )}
+
+        {/* ── Shared links (if any) ── */}
+        {shareLinks.length > 0 && (
+          <>
+            <section style={{ marginBottom: 32 }}>
+              <div style={sectionHeadStyle}>
+                Shared links <Badge label={String(shareLinks.length)} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {shareLinks.map(link => {
+                  const expiresAt = new Date(link.expires_at)
+                  const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  const isConfirming = confirmRevoke === link.id
+                  return (
+                    <div
+                      key={link.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 14px', background: 'var(--tint)',
+                        borderRadius: 8, border: '1px solid var(--edge)',
+                      }}
+                    >
+                      {isConfirming ? (
+                        <>
+                          <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)' }}>Revoke this link?</span>
+                          <button
+                            type="button"
+                            disabled={revokingId === link.id}
+                            onClick={async () => {
+                              setRevokingId(link.id)
+                              try {
+                                await revokeShareLink(link.id)
+                                setShareLinks(prev => prev.filter(l => l.id !== link.id))
+                                setConfirmRevoke(null)
+                              } finally {
+                                setRevokingId(null)
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            {revokingId === link.id ? 'Revoking...' : 'Yes, revoke'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRevoke(null)}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            /s/{link.token}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            {link.pin_hash && (
+                              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-text-secondary)', background: 'var(--edge)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>PIN</span>
+                            )}
+                            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                              in {daysLeft}d
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRevoke(link.id)}
+                              style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* ── Pod Settings (collapsible) ── */}
+        <section style={{ marginBottom: 32 }}>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(v => !v)}
+            style={{
+              ...sectionHeadStyle,
+              background: 'none', border: 'none', padding: 0,
+              cursor: 'pointer', width: '100%',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Pod Settings
+            </span>
+            <svg
+              width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--color-text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: settingsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {settingsOpen && (
+            <div style={{ paddingTop: 8 }}>
+              {/* Description */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={labelStyle}>Description</label>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  onBlur={() => save({ description: description || null })}
+                  placeholder="What is this pod for?"
+                  rows={2}
+                  style={{ ...inputStyle, width: '100%', resize: 'vertical', lineHeight: 1.5 }}
+                />
+              </div>
+
+              {/* Settings grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
+                <div>
+                  <label style={labelStyle}>Cadence</label>
+                  <select
+                    value={cadence}
+                    onChange={e => {
+                      const val = e.target.value as Cadence | ''
+                      setCadence(val)
+                      save({ cadence: val || null })
+                    }}
+                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
+                  >
+                    <option value="">None</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Biweekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Capacity
+                    {capacityNum != null && (
+                      <span style={{ fontWeight: 400, marginLeft: 6, color: capacityColor }}>
+                        {members.length}/{capacityNum}
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    value={capacity}
+                    min={1}
+                    onChange={e => setCapacity(e.target.value)}
+                    onBlur={() => {
+                      const num = capacity ? parseInt(capacity, 10) : null
+                      save({ capacity: num })
+                    }}
+                    placeholder="Unlimited"
+                    style={{ ...inputStyle, width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Owner</label>
+                  <select
+                    value={owner}
+                    onChange={e => {
+                      const val = e.target.value as Owner | ''
+                      setOwner(val)
+                      save({ owner: val || null })
+                    }}
+                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
+                  >
+                    <option value="">None</option>
+                    <option value="moj_mahdara">Moj Mahdara</option>
+                    <option value="kinship_ventures">Kinship Ventures</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}>
+                  <input
+                    type="checkbox"
+                    id="is-priority"
+                    checked={isPriority}
+                    onChange={e => {
+                      setIsPriority(e.target.checked)
+                      save({ is_priority: e.target.checked })
+                    }}
+                    style={{ width: 14, height: 14, cursor: 'pointer' }}
+                  />
+                  <label htmlFor="is-priority" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Priority pod</label>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      id="enrichment-opt-in"
+                      checked={pod.enrichment_opt_in}
+                      onChange={e => save({ enrichment_opt_in: e.target.checked })}
+                      style={{ width: 14, height: 14, cursor: 'pointer' }}
+                    />
+                    <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
+                </div>
+              </div>
+
+              {/* Required fields (only shown when there are some) */}
+              {fieldConfigs.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ ...sectionHeadStyle, fontSize: 14 }}>
+                    Required Questions <Badge label={String(fieldConfigs.length)} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {fieldConfigs.map(fc => (
+                      <div key={fc.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 14px', background: 'var(--tint)',
+                        borderRadius: 8, border: '1px solid var(--edge)',
+                      }}>
+                        {fc.required && (
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} />
+                        )}
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{fc.name}</span>
+                        <TypeBadge type={fc.field_type} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {members.length > 0 && fieldConfigs.length > 0 && (
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+                  Manage fields from a{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/contact/${members[0].id}`)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                  >
+                    member's record
+                  </button>
+                </p>
+              )}
             </div>
           )}
         </section>
