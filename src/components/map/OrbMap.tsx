@@ -530,6 +530,15 @@ export function OrbMap() {
   const totalContactsRef = useRef<number>(0)
   const lastInteractedByPodRef = useRef<Record<string, string | null>>({})
 
+  // Auto-open create pod modal from sidebar "+" button
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('create') === '1') {
+      setShowCreatePod(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   const [hoveredPod, setHoveredPod] = useState<{
     pod: Pod; health: number; contactCount: number; overdueCount: number; lastInteracted: string | null
   } | null>(null)

@@ -197,40 +197,60 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Pods sub-nav */}
       {!collapsed && pods.length > 0 && (
         <div style={{ padding: '4px 8px' }}>
-          <button
-            type="button"
-            onClick={togglePods}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              width: '100%',
-              minHeight: 44,
-              padding: '6px 8px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--color-text-tertiary)',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase' as const,
-              fontFamily: 'inherit',
-            }}
-          >
-            <svg
-              width="10" height="10" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round"
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={togglePods}
               style={{
-                transform: podsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                transition: 'transform 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flex: 1,
+                minHeight: 44,
+                padding: '6px 8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'var(--color-text-tertiary)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase' as const,
+                fontFamily: 'inherit',
               }}
             >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            Pods
-          </button>
+              <svg
+                width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round"
+                style={{
+                  transform: podsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Pods
+            </button>
+            <button
+              type="button"
+              title="Create pod"
+              onClick={() => navigate('/pods?create=1')}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 6,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--color-text-tertiary)',
+                transition: 'color 0.12s ease, background 0.12s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-secondary)'; e.currentTarget.style.background = 'var(--tint)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
           {podsOpen && (
             <div style={{ overflowY: 'auto', maxHeight: 260 }}>
               {pods.map(pod => (
