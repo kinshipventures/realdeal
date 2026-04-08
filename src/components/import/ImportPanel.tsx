@@ -80,6 +80,14 @@ export function ImportPanel() {
   const [podCategories, setPodCategories] = useState<Category[]>([])
   const [unmatchedDecisions, setUnmatchedDecisions] = useState<Record<string, 'skip' | 'create'>>({})
   const [rowWarnings, setRowWarnings] = useState<RowWarning[]>([])
+  const [columnMapping, setColumnMapping] = useState<ColumnMapping>([])
+
+  // Re-detect columns when headers change
+  useEffect(() => {
+    if (parsedHeaders.length > 0) {
+      setColumnMapping(detectColumns(parsedHeaders))
+    }
+  }, [parsedHeaders])
 
   useEffect(() => {
     getPods().then(setPods)
@@ -242,15 +250,6 @@ export function ImportPanel() {
     setPodCategories([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
-
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>([])
-
-  // Re-detect columns when headers change
-  useEffect(() => {
-    if (parsedHeaders.length > 0) {
-      setColumnMapping(detectColumns(parsedHeaders))
-    }
-  }, [parsedHeaders])
 
   function updateMapping(csvHeader: string, targetField: string | null) {
     setColumnMapping(prev => prev.map(m =>
