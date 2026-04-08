@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { ShareLink } from './types'
 import { getActiveWorkspaceId } from './workspace'
+import { isDemoMode } from './sampleData'
 
 // ── Token + PIN helpers ──────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export async function createShareLink(data: {
   expires_in_days: 7 | 30 | 90
   pin?: string
 }): Promise<ShareLink> {
+  if (isDemoMode()) return { id: 'demo', token: generateToken(), pod_id: data.pod_id, excluded_contact_ids: [], visible_columns: data.visible_columns, expires_at: new Date(Date.now() + data.expires_in_days * 24 * 60 * 60 * 1000).toISOString(), created_at: new Date().toISOString() } as unknown as ShareLink
   const userId = await getUserId()
   const token = generateToken()
   const expires_at = new Date(Date.now() + data.expires_in_days * 24 * 60 * 60 * 1000).toISOString()
@@ -68,6 +70,7 @@ export async function createShareLink(data: {
 }
 
 export async function getActiveShareLinks(podId: string): Promise<ShareLink[]> {
+  if (isDemoMode()) return []
   const now = new Date().toISOString()
   const { data, error } = await supabase
     .from('share_links')
@@ -82,6 +85,7 @@ export async function getActiveShareLinks(podId: string): Promise<ShareLink[]> {
 }
 
 export async function revokeShareLink(id: string): Promise<void> {
+  if (isDemoMode()) return
   const { error } = await supabase
     .from('share_links')
     .update({ revoked_at: new Date().toISOString() })
