@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, invalidateContactsCache } from '../../lib/airtable'
-import { parseCSV, detectColumns, importContacts, countInvalidRows, TARGET_FIELDS } from '../../lib/csvImport'
-import type { Pod } from '../../lib/types'
+import { getPods, getContacts, getCategories, createCategory, invalidateContactsCache } from '../../lib/airtable'
+import { parseCSV, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, TARGET_FIELDS } from '../../lib/csvImport'
+import { getFieldConfigs, createCustomField, getFieldConfigsForRecord } from '../../lib/fieldConfig'
+import type { FieldConfig } from '../../lib/fieldConfig'
+import type { Pod, Category, Contact } from '../../lib/types'
 import type { RelationshipType } from '../../lib/types'
-import type { ImportProgress, ImportResult, ColumnMapping } from '../../lib/csvImport'
+import type { ImportProgress, ImportResult, ColumnMapping, RowWarning } from '../../lib/csvImport'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 
 type ImportState = 'upload' | 'preview' | 'importing' | 'done'
@@ -73,9 +75,35 @@ export function ImportPanel() {
   const [showPreview, setShowPreview] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
 
+  const [customFields, setCustomFields] = useState<FieldConfig[]>([])
+  const [existingContacts, setExistingContacts] = useState<Contact[]>([])
+  const [podCategories, setPodCategories] = useState<Category[]>([])
+  const [unmatchedDecisions, setUnmatchedDecisions] = useState<Record<string, 'skip' | 'create'>>({})
+  const [rowWarnings, setRowWarnings] = useState<RowWarning[]>([])
+
   useEffect(() => {
-    getPods().then(data => setPods(data))
+    getPods().then(setPods)
+    getFieldConfigs().then(setCustomFields)
+    getContacts().then(setExistingContacts)
   }, [])
+
+  const primaryPodId = selectedPodIds[0] ?? null
+
+  useEffect(() => {
+    if (!primaryPodId) { setPodCategories([]); return }
+    getCategories(primaryPodId).then(setPodCategories)
+  }, [primaryPodId])
+
+  useEffect(() => {
+    if (parsedRows.length === 0 || columnMapping.length === 0) return
+    const emailIdx = new Map<string, string>()
+    const nameIdx = new Map<string, string>()
+    for (const c of existingContacts) {
+      if (c.email) emailIdx.set(c.email.toLowerCase(), c.id)
+      if (c.name) nameIdx.set(c.name.toLowerCase().trim(), c.id)
+    }
+    setRowWarnings(getRowWarnings(parsedRows, columnMapping, emailIdx, nameIdx))
+  }, [parsedRows, columnMapping, existingContacts])
 
   function togglePod(id: string) {
     setSelectedPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
@@ -131,11 +159,66 @@ export function ImportPanel() {
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
+    // Create custom fields for unmatched columns marked 'create'
+    const customFieldMap: Record<string, string> = {}
+
+    // Collect existing cf: mappings
+    for (const m of columnMapping) {
+      if (m.airtableField?.startsWith('cf:')) {
+        customFieldMap[m.csvHeader] = m.airtableField.slice(3)
+      }
+    }
+
+    // Create new fields for 'create' decisions
+    const toCreate = Object.entries(unmatchedDecisions).filter(([, action]) => action === 'create')
+    for (const [csvHeader] of toCreate) {
+      try {
+        const field = await createCustomField({
+          name: csvHeader,
+          field_type: 'text',
+          scope_type: recordType === 'Company' ? 'Company' : 'Both',
+          scope_pod_id: null,
+          required: false,
+          display_order: 99,
+        })
+        customFieldMap[csvHeader] = field.id
+      } catch (err) {
+        // Surface error but continue with other fields
+        console.error(`Failed to create field "${csvHeader}":`, err)
+      }
+    }
+
+    // Build category map: normalized name -> category id
+    const categoryMap = new Map<string, string>()
+    for (const cat of podCategories) {
+      categoryMap.set(normalize(cat.name), cat.id)
+    }
+
+    // Auto-create categories for values not in the map
+    const catCol = columnMapping.find(m => m.airtableField === '_category')
+    if (catCol && selectedPodIds[0]) {
+      const distinctValues = new Set<string>()
+      for (const row of parsedRows) {
+        const val = (row[catCol.csvHeader] ?? '').trim()
+        if (val) distinctValues.add(val)
+      }
+      for (const val of distinctValues) {
+        if (!categoryMap.has(normalize(val))) {
+          try {
+            const cat = await createCategory(val, selectedPodIds[0])
+            categoryMap.set(normalize(val), cat.id)
+          } catch (err) {
+            console.error(`Failed to create category "${val}":`, err)
+          }
+        }
+      }
+    }
+
     const res = await importContacts(
       parsedRows,
       selectedPodIds[0],
       (p) => setProgress(p),
-      { type: recordType, podIds: selectedPodIds, mapping: columnMapping }
+      { type: recordType, podIds: selectedPodIds, mapping: columnMapping, customFieldMap, categoryMap }
     )
     invalidateContactsCache()
     setResult(res)
@@ -154,6 +237,9 @@ export function ImportPanel() {
     setSelectedPodIds([])
     setShowPreview(false)
     setShowErrors(false)
+    setUnmatchedDecisions({})
+    setRowWarnings([])
+    setPodCategories([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -177,6 +263,15 @@ export function ImportPanel() {
   const hasNameMapping = columnMapping.some(m =>
     m.airtableField === 'Name' || m.airtableField === 'First Name'
   )
+
+  // Custom fields scoped to current record type + selected pods
+  const relevantCustomFields = useMemo(() =>
+    getFieldConfigsForRecord(customFields, recordType, selectedPodIds),
+    [customFields, recordType, selectedPodIds]
+  )
+
+  // Columns with no mapping (not standard, not custom, not _category)
+  const unmatchedColumns = columnMapping.filter(m => m.airtableField === null)
 
   const stepNumber = state === 'upload' ? 1 : state === 'preview' ? 2 : 3
   const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
@@ -467,7 +562,7 @@ export function ImportPanel() {
                   Column mapping
                 </p>
                 <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
-                  {columnMapping.filter(m => m.airtableField && !m.airtableField.startsWith('_')).length} of {columnMapping.length} mapped
+                  {columnMapping.filter(m => m.airtableField !== null).length} of {columnMapping.length} mapped
                 </p>
               </div>
               <div style={{
@@ -494,12 +589,12 @@ export function ImportPanel() {
                   <span>Maps to</span>
                 </div>
                 {columnMapping.map(({ csvHeader, airtableField }, idx) => {
-                  const matched = airtableField && !airtableField.startsWith('_')
+                  const matched = !!airtableField
                   const preview = parsedRows[0]?.[csvHeader] ?? ''
                   // Which targets are already used by other columns?
                   const usedTargets = new Set(
                     columnMapping
-                      .filter(m => m.csvHeader !== csvHeader && m.airtableField && !m.airtableField.startsWith('_'))
+                      .filter(m => m.csvHeader !== csvHeader && m.airtableField)
                       .map(m => m.airtableField)
                   )
                   return (
@@ -557,6 +652,18 @@ export function ImportPanel() {
                             {tf}{usedTargets.has(tf) ? ' (used)' : ''}
                           </option>
                         ))}
+                        {relevantCustomFields.length > 0 && (
+                          <optgroup label="Custom Fields">
+                            {relevantCustomFields.map(cf => {
+                              const cfKey = `cf:${cf.id}`
+                              return (
+                                <option key={cf.id} value={cfKey} disabled={usedTargets.has(cfKey)}>
+                                  {cf.name}{usedTargets.has(cfKey) ? ' (used)' : ''}
+                                </option>
+                              )
+                            })}
+                          </optgroup>
+                        )}
                       </select>
                     </div>
                   )
@@ -574,7 +681,71 @@ export function ImportPanel() {
               )}
             </div>
 
-            {/* Collapsible preview */}
+            {/* Unmatched columns */}
+            {unmatchedColumns.length > 0 && (
+              <div style={{
+                background: 'var(--tint)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                opacity: 0, animation: 'import-stagger 0.35s ease-out 200ms forwards',
+              }}>
+                <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', margin: '0 0 8px' }}>
+                  {unmatchedColumns.length} column{unmatchedColumns.length !== 1 ? 's' : ''} unmatched
+                </p>
+                {unmatchedColumns.map(({ csvHeader }) => {
+                  const preview = parsedRows[0]?.[csvHeader] ?? ''
+                  const decision = unmatchedDecisions[csvHeader]
+                  return (
+                    <div key={csvHeader} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '6px 0',
+                      borderBottom: '1px solid var(--divider)',
+                    }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>{csvHeader}</span>
+                        {preview && (
+                          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 8 }}>
+                            {preview.slice(0, 30)}{preview.length > 30 ? '...' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => setUnmatchedDecisions(p => ({ ...p, [csvHeader]: 'create' }))}
+                          style={{
+                            padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                            fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.12s',
+                            border: '1px solid',
+                            borderColor: decision === 'create' ? 'var(--color-brand)' : 'var(--edge)',
+                            background: decision === 'create' ? 'rgba(37,180,57,0.08)' : 'transparent',
+                            color: decision === 'create' ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                          }}
+                        >
+                          Create field
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setUnmatchedDecisions(p => ({ ...p, [csvHeader]: 'skip' }))}
+                          style={{
+                            padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                            fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.12s',
+                            border: '1px solid',
+                            borderColor: decision === 'skip' ? 'var(--edge-strong)' : 'var(--edge)',
+                            background: decision === 'skip' ? 'var(--tint)' : 'transparent',
+                            color: decision === 'skip' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                          }}
+                        >
+                          Skip
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Annotated preview */}
             <div>
               <button
                 type="button"
@@ -612,6 +783,14 @@ export function ImportPanel() {
                   }}>
                     <thead>
                       <tr>
+                        <th style={{
+                          padding: '8px 8px', textAlign: 'center', fontSize: 10, fontWeight: 500,
+                          color: 'var(--color-text-tertiary)', borderBottom: '1px solid var(--edge)',
+                          width: 28,
+                        }}>#</th>
+                        <th style={{
+                          padding: '8px 4px', width: 20, borderBottom: '1px solid var(--edge)',
+                        }} />
                         {parsedHeaders.map(h => (
                           <th key={h} style={{
                             padding: '8px 12px',
@@ -626,21 +805,50 @@ export function ImportPanel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {parsedRows.slice(0, 5).map((row, i) => (
-                        <tr key={i}>
-                          {parsedHeaders.map(h => (
-                            <td key={h} style={{
-                              padding: '8px 12px',
-                              color: 'var(--color-text-primary)',
+                      {parsedRows.slice(0, 5).map((row, i) => {
+                        const warns = rowWarnings.filter(w => w.rowIndex === i)
+                        const hasWarning = warns.length > 0
+                        return (
+                          <tr key={i} style={{
+                            background: hasWarning ? 'rgba(255,149,0,0.04)' : undefined,
+                          }}>
+                            <td style={{
+                              padding: '8px 8px', textAlign: 'center',
+                              fontSize: 11, color: 'var(--color-text-tertiary)',
                               borderBottom: i < 4 ? '1px solid var(--divider)' : 'none',
-                              whiteSpace: 'nowrap',
-                              maxWidth: 200,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}>{row[h] ?? ''}</td>
-                          ))}
-                        </tr>
-                      ))}
+                            }}>{i + 1}</td>
+                            <td style={{
+                              padding: '8px 4px',
+                              borderBottom: i < 4 ? '1px solid var(--divider)' : 'none',
+                            }}>
+                              {hasWarning && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CC7700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                  style={{ display: 'block' }}
+                                  title={warns.map(w =>
+                                    w.kind === 'missing_name' ? 'Missing name'
+                                    : w.kind === 'duplicate' ? `Duplicate: ${w.detail}`
+                                    : `Bad date: ${w.detail}`
+                                  ).join(', ')}>
+                                  <circle cx="12" cy="12" r="10"/>
+                                  <line x1="12" y1="8" x2="12" y2="12"/>
+                                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                              )}
+                            </td>
+                            {parsedHeaders.map(h => (
+                              <td key={h} style={{
+                                padding: '8px 12px',
+                                color: 'var(--color-text-primary)',
+                                borderBottom: i < 4 ? '1px solid var(--divider)' : 'none',
+                                whiteSpace: 'nowrap',
+                                maxWidth: 200,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>{row[h] ?? ''}</td>
+                            ))}
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -671,6 +879,9 @@ export function ImportPanel() {
               <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
                 {validCount} {recordType === 'Company' ? 'companies' : 'people'} ready
                 {invalidCount > 0 && ` - ${invalidCount} will be skipped (no name)`}
+                {rowWarnings.filter(w => w.kind === 'duplicate').length > 0 && (
+                  ` - ${rowWarnings.filter(w => w.kind === 'duplicate').length} duplicate${rowWarnings.filter(w => w.kind === 'duplicate').length !== 1 ? 's' : ''} detected`
+                )}
               </span>
             </div>
 
