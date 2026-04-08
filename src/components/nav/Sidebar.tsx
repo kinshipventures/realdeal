@@ -63,7 +63,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         display: 'flex',
         flexDirection: 'column',
         zIndex: 100,
-        overflow: 'hidden',
+        overflowX: 'hidden',
+        overflowY: 'auto',
       }}
     >
       {/* Collapse toggle - top */}
