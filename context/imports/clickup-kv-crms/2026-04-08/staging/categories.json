@@ -1,0 +1,1370 @@
+[
+  {
+    "id": "e088f26d-2843-4da4-9bf9-e4ffdf6c3bc8",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Notable Founders",
+    "color": null
+  },
+  {
+    "id": "db6773a6-d3dd-4112-94ba-ed0c78c72615",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Silicon Valley/Tech",
+    "color": null
+  },
+  {
+    "id": "80ff797d-407a-4119-a0ec-be3c2db82e83",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Talent",
+    "color": null
+  },
+  {
+    "id": "208f8368-447d-4aab-b32e-b7a19404260e",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Capital Investor",
+    "color": null
+  },
+  {
+    "id": "4c7c0eb9-04d9-425a-aef2-72540e8c381b",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Film & TV",
+    "color": null
+  },
+  {
+    "id": "c7111ac3-d582-495e-bf97-fda145a599a4",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Multimedia Arts",
+    "color": null
+  },
+  {
+    "id": "edf0e345-3f42-4f08-aab5-0d877ef25a8d",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Hospitality",
+    "color": null
+  },
+  {
+    "id": "ab09cca2-67f9-4f9d-bfb4-c53e7fc11ead",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "New York Times",
+    "color": null
+  },
+  {
+    "id": "07b9146c-4da6-4095-b648-88130c1ea5df",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Marketing/PR Agency",
+    "color": null
+  },
+  {
+    "id": "7f93874d-2f17-4618-9903-226b33d4b05d",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Non-Beauty Press/Media",
+    "color": null
+  },
+  {
+    "id": "764ce014-2e9b-40e1-8b96-b42199bd7259",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Content (Streaming)",
+    "color": null
+  },
+  {
+    "id": "968f1ebf-7e90-49ce-baf1-402a859ca733",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Social Media Influencer",
+    "color": null
+  },
+  {
+    "id": "9596e2d7-3749-4f99-b2dd-8b389eb1e711",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Thought Leaders",
+    "color": null
+  },
+  {
+    "id": "d3cf81a4-69f0-49f6-b985-f6ef9aea5e5a",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Writing",
+    "color": null
+  },
+  {
+    "id": "95875899-75f0-4489-a00d-1b21c2209ab9",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Art",
+    "color": null
+  },
+  {
+    "id": "72d4e376-2282-46b2-800b-7a6eb5ec4a70",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Experiential",
+    "color": null
+  },
+  {
+    "id": "b8694833-5b77-4fde-bde3-9e0b4ac550ea",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Academics",
+    "color": null
+  },
+  {
+    "id": "1e5e377a-cd92-4506-89e9-41654ce7a6eb",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Non-profit/Philanthropy",
+    "color": null
+  },
+  {
+    "id": "6ddbb769-70cf-4ee6-ae0e-13104585aab0",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Social Justice/Activism",
+    "color": null
+  },
+  {
+    "id": "c76f5d31-c089-45fb-b1fe-de9d4c3e3864",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Consulting/Services",
+    "color": null
+  },
+  {
+    "id": "e2ffb83f-fdbc-4388-81a0-ec69600d42fe",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Law",
+    "color": null
+  },
+  {
+    "id": "acd54241-d155-4efa-9958-efaaefd315e0",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Government",
+    "color": null
+  },
+  {
+    "id": "c8f4acc7-55f7-49a6-8668-785692acec9b",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Wellness",
+    "color": null
+  },
+  {
+    "id": "c00786ef-0ba2-4b72-b69a-b84d02c93ebf",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Fashion & Design",
+    "color": null
+  },
+  {
+    "id": "fedf530b-c5bc-447e-ab5c-be070f17934e",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Press",
+    "color": null
+  },
+  {
+    "id": "f3b9b839-af51-4ccd-a9c2-bbc3289e1dfe",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty PR",
+    "color": null
+  },
+  {
+    "id": "67412d75-d3c5-4f65-8121-e77bae4b0a52",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - ELC",
+    "color": null
+  },
+  {
+    "id": "b1b43e69-a685-4b27-bb8c-93873268911a",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - Unilever",
+    "color": null
+  },
+  {
+    "id": "36c3eaf9-0949-4fb5-90b6-0026c6ab5ad9",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - COTY",
+    "color": null
+  },
+  {
+    "id": "b3162398-6afd-457b-8a65-633995e3971d",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - L'Oreal",
+    "color": null
+  },
+  {
+    "id": "c266f00b-8fa1-4d75-9649-f46108524a74",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - Other Holdco",
+    "color": null
+  },
+  {
+    "id": "d72d85b5-fff7-4784-89cb-5ba9160e0c45",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Executives - Indepedent",
+    "color": null
+  },
+  {
+    "id": "67f08135-7da5-4c5b-86f8-ee617ea7c5a9",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Retail",
+    "color": null
+  },
+  {
+    "id": "dd5f3193-302a-4108-945c-e6388b56deed",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Finance",
+    "color": null
+  },
+  {
+    "id": "726133e1-8cb7-4e67-8561-3da12391a5d1",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Founders - Cosmetics",
+    "color": null
+  },
+  {
+    "id": "5fdb7782-8364-48fa-8297-8d2377e4c65e",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Manufacturing & Tech",
+    "color": null
+  },
+  {
+    "id": "b44234c1-682b-4897-8abc-34abbbd6ae68",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Founders - Celebrity",
+    "color": null
+  },
+  {
+    "id": "3924a056-ed26-4c8b-bbd3-f82968191eec",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Haircare",
+    "color": null
+  },
+  {
+    "id": "1c3efac7-f9b8-4d6b-a746-383fcc717b9a",
+    "pod_id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Beauty Founders - Skincare",
+    "color": null
+  },
+  {
+    "id": "56900665-3aea-4305-b20a-b0af7496c01a",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "AI Automation, No-Code Platforms, Software Engineering",
+    "color": null
+  },
+  {
+    "id": "c1e60886-f030-4251-a4b3-9851f0794e3a",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Music & Entertainment",
+    "color": null
+  },
+  {
+    "id": "6aa64677-b3cc-4729-839e-4b37a9930a9d",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Film & TV",
+    "color": null
+  },
+  {
+    "id": "5a3aa628-49dc-4d9c-8e4b-f5a428b5df8a",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Social Media Influencer",
+    "color": null
+  },
+  {
+    "id": "13ea893d-471f-49dd-a804-178635c3e97a",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Fashion & Design",
+    "color": null
+  },
+  {
+    "id": "79ad4fb6-e9f8-4874-9c24-f54574b083b6",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Athlete",
+    "color": null
+  },
+  {
+    "id": "2c6d00c0-c613-46fa-8eed-30254138a28d",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Literature",
+    "color": null
+  },
+  {
+    "id": "592e0b1c-5f80-459c-b2f2-fd516d936a44",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Multimedia Arts",
+    "color": null
+  },
+  {
+    "id": "518a1398-25a8-43b3-93d6-46d54ccde415",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Social Justice/Activism",
+    "color": null
+  },
+  {
+    "id": "6270febc-7517-4fe2-a305-b90942efbc95",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Government",
+    "color": null
+  },
+  {
+    "id": "477fddab-ef80-41ac-a9de-581a853aa5ff",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Entrepreneur",
+    "color": null
+  },
+  {
+    "id": "04faaa65-d28f-4524-8946-18ddff9db924",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Art",
+    "color": null
+  },
+  {
+    "id": "84fd7804-d068-4c9a-8066-e1a91c462209",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Medical",
+    "color": null
+  },
+  {
+    "id": "d4c3c1c1-5d32-4a08-9a36-2c9ca8252a0a",
+    "pod_id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Beauty Founders - Celebrity",
+    "color": null
+  },
+  {
+    "id": "41ccd3ec-e81a-4e55-86fc-bc3f98fa5307",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Branding",
+    "color": null
+  },
+  {
+    "id": "cf77c7da-10b6-4d68-ab97-2f62aff9f668",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design,Brand,Creative",
+    "color": null
+  },
+  {
+    "id": "9d8b06a9-41b3-447d-b0c0-11ab0c253a74",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Advertising",
+    "color": null
+  },
+  {
+    "id": "b0581e5f-03c7-416f-906d-4874f716b252",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital,Brand,Marketing,Web",
+    "color": null
+  },
+  {
+    "id": "37de512a-f4c8-4190-b462-d0fddf933545",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Various Sectors",
+    "color": null
+  },
+  {
+    "id": "99d3a063-5eff-41ea-8fb8-a7e0887078a2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Communications,Experience",
+    "color": null
+  },
+  {
+    "id": "41475c0b-4172-4517-ab47-86ee02d7572f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative",
+    "color": null
+  },
+  {
+    "id": "cd174b42-90de-467e-a989-17af8687ea7a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Positioning,Brand,Execution,Marketing",
+    "color": null
+  },
+  {
+    "id": "ca6e8790-8d2b-4b94-8c64-e7aa62083b52",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative,Design,Consumer Brands,Social Media",
+    "color": null
+  },
+  {
+    "id": "176fa1ca-4e6f-47cc-a8c6-eebc9f9a8ab3",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand Identity,Strategy,Branding,UI/UX",
+    "color": null
+  },
+  {
+    "id": "8bb5b872-a1a8-4343-81ff-dc73d19a443c",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative,Design,Art,UI/UX,Web",
+    "color": null
+  },
+  {
+    "id": "d0311bac-b95f-45e1-8c40-801717190743",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Consumer Brands",
+    "color": null
+  },
+  {
+    "id": "1ae33c6e-4d7a-4466-b7d3-f2fc650025d7",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Strategy,Design",
+    "color": null
+  },
+  {
+    "id": "c7c6ab47-b8aa-495a-b9d4-ffb4f8ee13ba",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Beauty,Personal Care,Food & Bev,Health & Wellness",
+    "color": null
+  },
+  {
+    "id": "b835f302-a026-4e2a-9bcd-22828a6c536a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Positioning,Launch Strategy",
+    "color": null
+  },
+  {
+    "id": "a08f7296-953c-4474-9da6-720acc031b51",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Digital",
+    "color": null
+  },
+  {
+    "id": "696e9c7d-63b0-48ca-bfd2-9d08ecb33340",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Naming,Design,Content",
+    "color": null
+  },
+  {
+    "id": "c2e831c7-ba18-4984-a484-dbbb8578d554",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Interactive",
+    "color": null
+  },
+  {
+    "id": "65d68b2a-6b9f-4143-898b-2e8ed9035f5e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative,Brand",
+    "color": null
+  },
+  {
+    "id": "8cf60bef-382a-436a-b1da-0d77f4ac1e05",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Design,Technology,Development",
+    "color": null
+  },
+  {
+    "id": "0ac1edf0-36fb-466d-9118-585276b3712d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand",
+    "color": null
+  },
+  {
+    "id": "9593014c-b2d8-4bb7-ae8d-09463581fdd5",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech,Consumer Brands",
+    "color": null
+  },
+  {
+    "id": "59ed3227-9371-425e-a761-d8b6d28df909",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Marketing",
+    "color": null
+  },
+  {
+    "id": "e1152b75-afac-4220-9708-79f2670e6942",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Branding,Graphic Design,Creative,Digital,Social Media",
+    "color": null
+  },
+  {
+    "id": "42900e00-44ca-4bc3-bbb8-12e939e3c990",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Digital,Various Sectors",
+    "color": null
+  },
+  {
+    "id": "6801fa35-775e-4db3-9e9d-3dc062f30a94",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech,HealthTech",
+    "color": null
+  },
+  {
+    "id": "b5dec556-01b4-4ab9-b18e-868ac7b070a4",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Strategy,Digital,Interactive",
+    "color": null
+  },
+  {
+    "id": "eb740c7d-cedc-4048-996f-2a624badd6d0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Identity,Visual Communication,Packaging,Design,Creative,Content,Marketing,Partnerships",
+    "color": null
+  },
+  {
+    "id": "09bd276d-e452-4400-a9ce-01196fc56f23",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Identity,Visual Communication,Tactile,Media,Digital Media,Environments",
+    "color": null
+  },
+  {
+    "id": "d84e71d5-0e39-4983-a6cf-4f9b8c031181",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Branding,Web,Packaging",
+    "color": null
+  },
+  {
+    "id": "ee59939f-a7e5-4ba2-aad6-f672ab563d56",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "B2B",
+    "color": null
+  },
+  {
+    "id": "a1b5c839-7b86-4957-a5f4-9855f5e51083",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Strategy,Advertising,Design",
+    "color": null
+  },
+  {
+    "id": "3ced87e4-fb41-46c4-8d01-ae6944e3ef1f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Design,Digital",
+    "color": null
+  },
+  {
+    "id": "9e6f8c39-833c-4267-98c2-29e5e42d3c8a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Print,Packaging,Brand,Web,Art Direction",
+    "color": null
+  },
+  {
+    "id": "b532c2de-7a82-4780-8332-cb9c557bd644",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital,Creative",
+    "color": null
+  },
+  {
+    "id": "ee8c4ef8-b684-40a4-81f4-ab646ade0444",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Market Research,Brand,Naming,Strategy",
+    "color": null
+  },
+  {
+    "id": "38954e2c-b7ea-4815-be40-057a03326adb",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital Marketing",
+    "color": null
+  },
+  {
+    "id": "7b39ec45-f18d-4d2d-ba69-a25d92a97db2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Various Sectors,Visual Design,Packaging",
+    "color": null
+  },
+  {
+    "id": "50db4612-28be-485a-8094-2239fce98986",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Identity,Strategy",
+    "color": null
+  },
+  {
+    "id": "8799dc1d-cab4-4962-ae6c-5b9d6ff9b165",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Naming,Brand,Web",
+    "color": null
+  },
+  {
+    "id": "9b877368-2f82-4a4f-b11f-75c68b7807c1",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Content",
+    "color": null
+  },
+  {
+    "id": "8719d312-1dc8-4c9f-a1e5-add01667abd5",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Brand Identity,Creative",
+    "color": null
+  },
+  {
+    "id": "9809e560-d7e6-4a2f-ba23-c15e24d11f50",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Branding,Strategy,Brand Identity",
+    "color": null
+  },
+  {
+    "id": "e9686e11-003e-438d-bc79-92905d7caf6d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Product,Tech",
+    "color": null
+  },
+  {
+    "id": "e9bab5b1-f90d-40c9-8ae9-abda46c92cbd",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative,Product,Content,Campaigns",
+    "color": null
+  },
+  {
+    "id": "44377e2c-b155-4b5d-995a-96252de82a9b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Partnerships,Design,Strategy,Content,Programming",
+    "color": null
+  },
+  {
+    "id": "344b630f-3e8e-4546-97da-67742a601598",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Design",
+    "color": null
+  },
+  {
+    "id": "48905bfe-0f41-4a11-a7a1-b0206ce083a9",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Communications,Campaigns,Creative",
+    "color": null
+  },
+  {
+    "id": "1651659e-402a-43ce-ba07-9478d6b1e434",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Creative,Digital",
+    "color": null
+  },
+  {
+    "id": "01cebbb1-0c8b-4edf-8a2c-0221aa1e58e0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand Identity",
+    "color": null
+  },
+  {
+    "id": "31c5d1c5-3884-45a9-ad97-51fc1a50d82e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand Identity,UI/UX,Graphic Design",
+    "color": null
+  },
+  {
+    "id": "181eeb81-dd05-438b-9d55-1b56dadc4f0a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Branding,Communications",
+    "color": null
+  },
+  {
+    "id": "358aafee-0acd-416b-b571-cb8ec302e9cf",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Copywriters",
+    "color": null
+  },
+  {
+    "id": "f1c2f69d-ae26-4732-b498-101184d50ccd",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Customer Support",
+    "color": null
+  },
+  {
+    "id": "b8fdf6cf-3557-47f6-b27b-90b4f5372aa6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design",
+    "color": null
+  },
+  {
+    "id": "0123ad1e-f716-4704-a2da-5d2a52bb0096",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Web Dev,Design,Brand",
+    "color": null
+  },
+  {
+    "id": "ee33aa74-292d-4802-8b8b-6308ff617656",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital Health",
+    "color": null
+  },
+  {
+    "id": "50776f24-c441-4c0b-8ff1-9c8dfeb589a7",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Retail",
+    "color": null
+  },
+  {
+    "id": "479de83f-9dc6-43b5-b440-def35ea3726b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design,Messaging,Digital,Packaging",
+    "color": null
+  },
+  {
+    "id": "cf90f6df-af6c-4d28-8952-9853f098cfdb",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Marketing,Positioning,Content,Design,UI",
+    "color": null
+  },
+  {
+    "id": "bb088c85-4f67-4d41-a000-9b84ae9798fc",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Food & Beverage,Beauty,Online,Fashion,Music,Jewelry",
+    "color": null
+  },
+  {
+    "id": "13c0739a-0cb5-418a-afb5-bd6ec873c0b0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Digital,Interactive",
+    "color": null
+  },
+  {
+    "id": "8dc5c475-9f6f-44a6-90a0-00b7d550eae6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Packaging,Deck Design,Freelance,Retail,Design,App Design",
+    "color": null
+  },
+  {
+    "id": "9a2e000d-f523-4684-a6a7-d11bf78b52bc",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Deck Design,Freelance",
+    "color": null
+  },
+  {
+    "id": "8267ced9-4081-474c-a58c-eb1a47d74ce8",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Logo,Type",
+    "color": null
+  },
+  {
+    "id": "145288ab-953e-4ce8-aa1e-3f12cbfeb5e0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Type",
+    "color": null
+  },
+  {
+    "id": "6a211acf-c73a-4756-9dfa-5b38737713cd",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Advertising,Marketing,Web Dev",
+    "color": null
+  },
+  {
+    "id": "02fd202a-1886-4af9-b3d3-e0950380c6fa",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Visual Communication,Digital Media,Design,Brand Identity",
+    "color": null
+  },
+  {
+    "id": "005d4791-f7a6-44bf-a131-972c08b7cbe2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design,Brand,Brand Identity,Strategy,Typography,Packaging,Experiences",
+    "color": null
+  },
+  {
+    "id": "f1b6dbce-34f9-4c37-acea-529f56d58e0c",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design,strategy,content",
+    "color": null
+  },
+  {
+    "id": "bc78e546-af0a-48b3-9d84-6b1b4d5c0405",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Lifestyle,Fashion & Footwear,Gaming,Tech,Social Platforms,Sports,Beer & Spirits,Entertainment",
+    "color": null
+  },
+  {
+    "id": "74dd1c13-3058-4fd0-bc2f-bb163b430417",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Adversiting-Focused Design",
+    "color": null
+  },
+  {
+    "id": "af72f68e-3c38-4dde-b677-da04d6a69b30",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Glossier,Grohe,Band&Olufsen",
+    "color": null
+  },
+  {
+    "id": "24dd5883-baf2-4993-af0c-a1e71075dbe1",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Dev Shops",
+    "color": null
+  },
+  {
+    "id": "bec94577-f197-4f49-b9a7-6fb33195213d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Mobile,Backend Engineering,Design,UX",
+    "color": null
+  },
+  {
+    "id": "1ea26628-efc1-4eaa-8c2d-38d2154e1f54",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Mobile",
+    "color": null
+  },
+  {
+    "id": "75f98b6b-7271-487d-98dc-23d6569fd5df",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Vets and curates devshops",
+    "color": null
+  },
+  {
+    "id": "87c28e61-586a-4e34-8c94-1306ed40f448",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Frontend Engineering",
+    "color": null
+  },
+  {
+    "id": "09f8b5f8-d188-4ce2-bcd0-4c7a67a645ba",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Full Stack,Machine Learning,API Engineering,Mobile",
+    "color": null
+  },
+  {
+    "id": "78f003df-4b8a-44ad-a8e9-bf659950e271",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Mobile,Web Dev,Cloud Computing,Entertainment,AR/VR,Embedded Development",
+    "color": null
+  },
+  {
+    "id": "0928932b-d4d5-4ac0-b907-6ae505ba9d82",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "SEO,PPC,CRO",
+    "color": null
+  },
+  {
+    "id": "b7d5bc18-f487-4543-8c3b-f45ec026f404",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "SEO,Social Media,Analytics,Shopping,SEM Audit,Advertising",
+    "color": null
+  },
+  {
+    "id": "d63b2924-95f0-475a-8d86-d917790a1def",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Position,Brand,Execution,Marketing",
+    "color": null
+  },
+  {
+    "id": "42b3d65c-7066-46dc-ab02-a6d4ecd1fb50",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Digital Media,Strategy,Marketing,Analytics",
+    "color": null
+  },
+  {
+    "id": "0116e823-e8f1-4bcb-8435-ca0099fd9b64",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Saas: B2B (mid-market,SMB),B2C,Marketplaces,Prosumer (Software)",
+    "color": null
+  },
+  {
+    "id": "625882ec-5967-4428-8691-696aa46d71a3",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand,Integrated Marketing,Content Marketing,Social Media,Email",
+    "color": null
+  },
+  {
+    "id": "6a8a00e1-c2df-4717-8a93-1e5cf7a625ee",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital Media,Social Media,Growth Marketing,Paid Marketing",
+    "color": null
+  },
+  {
+    "id": "032d04b1-110a-4375-9c41-37bb043e8cfc",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Brand Identity,Visual Communication,Tactile,Media,Digital Media,Environments",
+    "color": null
+  },
+  {
+    "id": "12abd930-322f-4416-b56d-69fecf921df8",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Strategy,Design,Advertising",
+    "color": null
+  },
+  {
+    "id": "9df80465-985a-4577-94f1-0982c5ceab3d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Shopify brands",
+    "color": null
+  },
+  {
+    "id": "8487dd0c-0f81-4cc1-9e5a-4fdc113b3878",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "DTC Brands",
+    "color": null
+  },
+  {
+    "id": "816031b7-d48d-4b9e-9385-9e31dac92a18",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Digital,Experiences,Products",
+    "color": null
+  },
+  {
+    "id": "df5e4959-81f5-40f2-82af-642c84dbed5f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Performance Marketing",
+    "color": null
+  },
+  {
+    "id": "517d0ed1-4483-4e88-ad79-a5f1af6c798e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Executive Coaching",
+    "color": null
+  },
+  {
+    "id": "65589f46-abc7-43d9-8c86-36b74a7f6fb2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Finance",
+    "color": null
+  },
+  {
+    "id": "9370285a-1267-4cd0-9b61-a9ce29ff0942",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Fractional CFO,Accounting,Tax",
+    "color": null
+  },
+  {
+    "id": "c9e95765-a492-4033-87bf-b4d3aa36089d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Fractional CFO",
+    "color": null
+  },
+  {
+    "id": "e0e5e7ab-b712-4bca-a97b-08ba441abfe0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "CFO,Modeling",
+    "color": null
+  },
+  {
+    "id": "7856a108-397c-47b7-aab7-7bf5153f6c65",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Bookkeeping,Tax",
+    "color": null
+  },
+  {
+    "id": "e92b4344-d71c-43de-8e8f-2540f9cfb26a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Accounting,Tax,HR",
+    "color": null
+  },
+  {
+    "id": "1f7566cb-7a5b-4b6e-a710-7f02c9e42c7a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Bookkeeping,Payroll,Modeling",
+    "color": null
+  },
+  {
+    "id": "f140edf3-7ec4-4253-bf1a-7abba3ad88b9",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Accounting,Modeling,Tax",
+    "color": null
+  },
+  {
+    "id": "527db3ca-8336-4331-bdcf-e30be687f3ae",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Bookkeeping,CFO,Accounting,HR,Modeling",
+    "color": null
+  },
+  {
+    "id": "6de5cce3-798e-46b7-9ede-fcfb76ceda25",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "CFO,Modeling,Analytics",
+    "color": null
+  },
+  {
+    "id": "3c45598f-119f-4301-88bb-66bfcea9a619",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "HR & Benefits",
+    "color": null
+  },
+  {
+    "id": "3363b0ef-338f-4d73-999d-780a628bfc92",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Legal",
+    "color": null
+  },
+  {
+    "id": "9b095dc1-320b-45e6-a0aa-73e8bab86f44",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate,IP,Litigation,Regulatory",
+    "color": null
+  },
+  {
+    "id": "7ac27fa8-16c3-43c5-8873-3c91c290ff40",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Wide Variety of Industries/Sectors",
+    "color": null
+  },
+  {
+    "id": "d720904d-b794-4246-855d-d3f1b4a9ff02",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate Counseling,Company-Side Venture Financings,VC Clients,M&As,Enterprise Commercial Transactions",
+    "color": null
+  },
+  {
+    "id": "c620f08a-e6a3-4d89-a431-fd86b3868fb6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Formation,Funding,Sales,Hiring,IP Protection,Data Privacy",
+    "color": null
+  },
+  {
+    "id": "52ffa29f-fa6d-4e94-9fa5-3d09645905a5",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate,M&A,Tax,Real Estate",
+    "color": null
+  },
+  {
+    "id": "edee5d00-743e-44d7-80f1-fffad917fe78",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate",
+    "color": null
+  },
+  {
+    "id": "f01db501-d16a-4f19-83d9-e25bc0b13873",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech,Energy & Infrastructure,Finance,Litigation & IP,Transactions",
+    "color": null
+  },
+  {
+    "id": "82892c1a-00ca-4878-90c5-787207c33c20",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "VC & Capital Raising Transactions,Restructurings,M&As,Company Formations,Commercial Contracts,IP,Data Privacy",
+    "color": null
+  },
+  {
+    "id": "9809e3dc-31dd-400e-a64a-25ae80c0efd4",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Entrepreneurs & Emerging Companies: Venture Financing,M&As,Licensing,Strategic Partnering & Commercial Transactions,Tax,Executive Compensation,Labor & Employment,Privacy & Data",
+    "color": null
+  },
+  {
+    "id": "87d5a119-0959-435b-8107-deec343e25ff",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Immigration",
+    "color": null
+  },
+  {
+    "id": "3d7a47fa-f78e-4031-b566-d5e572a80bd6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate,Litigation,IP,Tax",
+    "color": null
+  },
+  {
+    "id": "14fca787-bdc3-4a8e-a177-3a60677ca087",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate,Litigation,Regulatory,IP",
+    "color": null
+  },
+  {
+    "id": "6aeafff8-c1a3-4e40-beb3-03622c37724e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Corporate,Formation,Governance; VC Financing,M&As",
+    "color": null
+  },
+  {
+    "id": "220b7228-e25c-4846-877a-4ea053fcd48b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Wide Variety of Industries/Sectors; specific \"Entrepreneur Startup Package\"",
+    "color": null
+  },
+  {
+    "id": "e01de967-2b79-42c9-81d8-b790ced7021f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Performance & Growth",
+    "color": null
+  },
+  {
+    "id": "e254debf-2268-465b-ab47-edf66c4823e1",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Performance,Growth",
+    "color": null
+  },
+  {
+    "id": "dc4a3277-4a7d-441b-893c-407175179896",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "PR",
+    "color": null
+  },
+  {
+    "id": "a47d47dd-9e4e-4c24-823f-0447966ff896",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech, Health, Consumer Brands",
+    "color": null
+  },
+  {
+    "id": "bafc2105-47c6-4fd7-a72c-27c6575d2fc7",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Healthcare",
+    "color": null
+  },
+  {
+    "id": "b520d81a-a68f-4a8c-ab40-e1c51901896a",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "FinTech",
+    "color": null
+  },
+  {
+    "id": "03acf0fc-6eb2-45a5-85a4-dc774218809e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Life Sciences",
+    "color": null
+  },
+  {
+    "id": "f895d00f-461a-49c0-abfb-d07434c3e535",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Consumer Brands, Social Media, Fashion, Beauty, Lifestyle, Tech",
+    "color": null
+  },
+  {
+    "id": "fe3e521f-3a01-45c0-9c20-a9d81afe487f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Beauty",
+    "color": null
+  },
+  {
+    "id": "1f9c7e25-06d9-4d08-8c58-a69504020da9",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Consumer, Financial Services, Education, Health, Tech",
+    "color": null
+  },
+  {
+    "id": "960e930d-d64b-44d4-ba92-7f7fc9437149",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "FinTech & Investing",
+    "color": null
+  },
+  {
+    "id": "46202727-10b5-48a7-9ce1-8ce7f1a7da98",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Pricing Strategy",
+    "color": null
+  },
+  {
+    "id": "f87f77a2-c9ea-4199-a168-9758cbdce981",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Pricing Changes, Feedback, Education",
+    "color": null
+  },
+  {
+    "id": "423256c4-2a74-4807-8265-d1efcbee68e3",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "SaaS",
+    "color": null
+  },
+  {
+    "id": "9bf56b7a-bdbb-4041-b9e9-4809a6b75c7c",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Product Design",
+    "color": null
+  },
+  {
+    "id": "b9330770-6c6c-4ee3-87b2-d618eb46ac56",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Various Sectors & Influencer Media Kits",
+    "color": null
+  },
+  {
+    "id": "d7363e3c-cf83-4e2f-a5e3-2a3848cf53b0",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Varioius Sectors",
+    "color": null
+  },
+  {
+    "id": "6aa5cd18-c30a-42e5-9b12-db887b2a62a5",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech, Wine & Breweries, Apparel",
+    "color": null
+  },
+  {
+    "id": "12c4d2f4-1c9a-4453-90df-aa0ddd83cb87",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Recruiting",
+    "color": null
+  },
+  {
+    "id": "c8e2964b-7c4c-48e4-a6f3-7575bef5c797",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "People Leadership, Consumer, EdTech, Enterprise, Financial Services, Gaming/Media, Healthcare, Life Sciences, Security",
+    "color": null
+  },
+  {
+    "id": "fe80bc3a-7801-4bfe-b701-0481f63cba1f",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech",
+    "color": null
+  },
+  {
+    "id": "f406aa4e-f8d3-443f-b681-a0d20b73f49b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "DE&I (Female Execs)",
+    "color": null
+  },
+  {
+    "id": "b7998ab8-08e7-4973-9431-9ae185b8790d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Engineering, Product and Design",
+    "color": null
+  },
+  {
+    "id": "bf2dc3af-a87d-482c-b360-1141f2bf143e",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "DE&I",
+    "color": null
+  },
+  {
+    "id": "eb3fe28c-07f7-465c-bcc7-f6e2e5d3ee71",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech recruiting",
+    "color": null
+  },
+  {
+    "id": "3a55654c-4921-43f6-acd3-598606aa377b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech & Digital Marketing",
+    "color": null
+  },
+  {
+    "id": "659ed323-1eca-4375-86de-ab8e28477a35",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Marketing",
+    "color": null
+  },
+  {
+    "id": "faae3d62-55c5-45b6-b0e8-296d27e41770",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Finance, GTM, HR",
+    "color": null
+  },
+  {
+    "id": "a731827f-8408-4cb7-9da7-51a0a5f2816b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Executive, Product, Sales and Tech",
+    "color": null
+  },
+  {
+    "id": "8992e801-52c7-4d2f-9519-08395c1e5452",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Executive Search, Senior Tech Roles",
+    "color": null
+  },
+  {
+    "id": "51c4525c-1e8c-4d5a-8143-c37ec29e04fa",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Tech, Marketing & Advertising, Finance, Nonprofit, CPG, Professional Services",
+    "color": null
+  },
+  {
+    "id": "48095422-b4c6-4a68-bf5f-00ef02bd2588",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Software Engineers",
+    "color": null
+  },
+  {
+    "id": "c5f672db-0963-48dc-bf49-3b3c099d73b2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "DE&I (Black-Owned)",
+    "color": null
+  },
+  {
+    "id": "76c1610f-1a80-410d-9740-498615393779",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Growth roles across Marketing, Product, Design, etc.",
+    "color": null
+  },
+  {
+    "id": "6c55eff6-48dc-4701-9d59-9501f2f26772",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "GTM Consumer",
+    "color": null
+  },
+  {
+    "id": "c1ea2665-6caa-4b66-901f-4566601181e6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "DE&I (Women, POC, and LGBTQIA talent)",
+    "color": null
+  },
+  {
+    "id": "2e5a6c37-d3d0-4f19-9672-6ae2f0f0e25b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "People Leadership",
+    "color": null
+  },
+  {
+    "id": "866d465d-968c-413f-822b-2245c7425c9d",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Sales",
+    "color": null
+  },
+  {
+    "id": "483171b8-6ea7-4112-990d-abc37449f3b2",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Consultancy",
+    "color": null
+  },
+  {
+    "id": "11f7f51b-dc78-4063-a931-59466004f7d8",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Member Group",
+    "color": null
+  },
+  {
+    "id": "e9768991-027e-4ecf-952b-7ba4edf72a0b",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "SEO",
+    "color": null
+  },
+  {
+    "id": "5f8d9383-0362-4cad-9f15-adca32853dac",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Swag Providers",
+    "color": null
+  },
+  {
+    "id": "c66d8618-70b3-49da-8ebb-3b407bdbf8cf",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Venue (NYC Events)",
+    "color": null
+  },
+  {
+    "id": "9309af4e-88ed-4836-899a-0bc823f288ee",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Virtual Assistant",
+    "color": null
+  },
+  {
+    "id": "1a2ddb7c-8a9c-40cf-9cae-1b3fd7ebb9e6",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Virtual Events & Video Production",
+    "color": null
+  },
+  {
+    "id": "1ca35527-1ef6-4796-8b63-73ff2033a30c",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Web Development & Design",
+    "color": null
+  },
+  {
+    "id": "da75392e-1482-41c2-9121-ff8d02f3cdd1",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Design , Brand , Web Dev",
+    "color": null
+  },
+  {
+    "id": "4295d320-faa8-43af-82bf-9eef2e2ce3fd",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "eComm, Shopify, Front-end development",
+    "color": null
+  },
+  {
+    "id": "e4180c95-2aa9-4fbf-8244-c1d9a6ffcae8",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "really flexible, speak English, and do excellent work for a better price than US dev teams.",
+    "color": null
+  },
+  {
+    "id": "9f8edae6-c033-4972-be3f-0e33f44d8d1c",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Shopify",
+    "color": null
+  },
+  {
+    "id": "a1dbae55-46a0-4b37-bc36-36094dd5c595",
+    "pod_id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "deep bench of engineers who all come out of top brands (Amazon, Google, Facebook etc",
+    "color": null
+  },
+  {
+    "id": "e40c0acd-16bd-432d-9ee8-178c322eb54a",
+    "pod_id": "604b13d8-9c7a-4fb0-b175-e366679a8a17",
+    "name": "Olipop",
+    "color": null
+  },
+  {
+    "id": "34625d41-04b1-4ef4-8d8a-f698525067b7",
+    "pod_id": "604b13d8-9c7a-4fb0-b175-e366679a8a17",
+    "name": "Clubhouse",
+    "color": null
+  },
+  {
+    "id": "51e69ab7-b138-4840-a2b5-6cfccee98a58",
+    "pod_id": "604b13d8-9c7a-4fb0-b175-e366679a8a17",
+    "name": "Moonpay",
+    "color": null
+  },
+  {
+    "id": "19412933-dec5-470d-bc6b-8259ea6208be",
+    "pod_id": "604b13d8-9c7a-4fb0-b175-e366679a8a17",
+    "name": "Carta",
+    "color": null
+  }
+]

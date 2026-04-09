@@ -1,0 +1,51 @@
+[
+  {
+    "id": "bb009e65-e3ea-4a42-8d3e-26e8255a368b",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "New",
+    "color": null,
+    "order": 0
+  },
+  {
+    "id": "8b33cc6e-ac55-4b91-87d5-73d428be43d0",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "For Connecting",
+    "color": null,
+    "order": 2
+  },
+  {
+    "id": "748b8531-ad6f-45a4-8e50-a09ea1db167a",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "Initial Outreach",
+    "color": null,
+    "order": 3
+  },
+  {
+    "id": "065b37ff-97cd-4a46-917e-fda7ef710114",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "Meeting",
+    "color": null,
+    "order": 4
+  },
+  {
+    "id": "d574d37a-60e6-45f6-a84f-9b125a571228",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "For Follow-up",
+    "color": null,
+    "order": 5
+  },
+  {
+    "id": "807a2d9a-45f8-42c4-9faa-65b0f47c7d8d",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "Next Steps",
+    "color": null,
+    "order": 6
+  },
+  {
+    "id": "83faa11e-a135-4ede-b240-d8f90b1ca5e5",
+    "pipeline_id": "5b58b1b4-7ac0-44d5-b2ae-b30ac07bc266",
+    "name": "Closed",
+    "color": null,
+    "order": 7
+  }
+]

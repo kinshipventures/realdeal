@@ -1,0 +1,57 @@
+[
+  {
+    "id": "e23ca226-0d95-4d43-9967-d2892d93e67d",
+    "name": "Maps",
+    "color": null,
+    "owner": "moj_mahdara",
+    "is_priority": false,
+    "cadence": null,
+    "description": "Imported from ClickUp Maps list",
+    "capacity": null,
+    "enrichment_opt_in": false
+  },
+  {
+    "id": "235edebf-371e-4061-9207-d2a29ca2c0f9",
+    "name": "Maps Lite",
+    "color": null,
+    "owner": "moj_mahdara",
+    "is_priority": false,
+    "cadence": null,
+    "description": "Imported from ClickUp Maps Lite list",
+    "capacity": null,
+    "enrichment_opt_in": false
+  },
+  {
+    "id": "3cd91acd-f1af-4931-9de8-986b878d0ad5",
+    "name": "Talent",
+    "color": null,
+    "owner": "moj_mahdara",
+    "is_priority": false,
+    "cadence": null,
+    "description": "Imported from ClickUp Talent list",
+    "capacity": null,
+    "enrichment_opt_in": false
+  },
+  {
+    "id": "332a5d95-4da3-487f-a5a7-5a9786f9dfb9",
+    "name": "Service Providers",
+    "color": null,
+    "owner": "moj_mahdara",
+    "is_priority": false,
+    "cadence": null,
+    "description": "Imported from ClickUp Service Providers list",
+    "capacity": null,
+    "enrichment_opt_in": false
+  },
+  {
+    "id": "604b13d8-9c7a-4fb0-b175-e366679a8a17",
+    "name": "SPV",
+    "color": null,
+    "owner": "moj_mahdara",
+    "is_priority": false,
+    "cadence": null,
+    "description": "Imported from ClickUp SPV list",
+    "capacity": null,
+    "enrichment_opt_in": false
+  }
+]

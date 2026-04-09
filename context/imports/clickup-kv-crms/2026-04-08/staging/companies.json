@@ -1,0 +1,3285 @@
+[
+  {
+    "id": "cf75b453-908e-4990-86d2-a25a087e5f9b",
+    "name": "Ester AI — Brian Ree (CEO)",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07u8pc",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07u8pc",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound"
+    }
+  },
+  {
+    "id": "93f099a9-7e22-40c9-831e-be2ef304fc14",
+    "name": "Buff Beauty",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cxzh",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cxzh",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Passed ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "e2c731e1-9607-4fa5-ba47-b32e6d58b8d0",
+    "name": "Midi Health",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cw2d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cw2d",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Passed ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "cec1d3b2-6952-4eca-8dbe-e69d9a7b3e08",
+    "name": "Ara / Mechanism of Action (MOA)",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cw14",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cw14",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Passed ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "aa8a8a74-ac1f-4fd8-bd2f-bffad4684905",
+    "name": "Function Health (Mark Hyman)",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvzy",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvzy",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Passed ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "c5fe6f1b-1aa3-45fc-9e5d-726c5749c2ce",
+    "name": "Imago Systems",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvyw",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvyw",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "4d2dbcc9-0501-410b-acd9-a4ce06506757",
+    "name": "SLAM Bio",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvyd",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvyd",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "a365717f-efd0-46ce-b6be-f4d64a5c654c",
+    "name": "HistoSonics",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvy2",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvy2",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "276654f5-11d4-4cdc-86db-8b827aabfc75",
+    "name": "Seed Lip (New Co)",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": "Seed",
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvxf",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvxf",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "33a65910-f753-4634-8666-76024ffbc013",
+    "name": "Cancer Check Labs",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvx4",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvx4",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "9f836a21-58d0-4929-a1ff-f1bdd2751cb4",
+    "name": "Albourz + Health Tech Portfolio",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvwa",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvwa",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "dcce0da1-80d7-453b-9401-6f7d3c1324bc",
+    "name": "Laurette Bio",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvuw",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvuw",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "d2397e85-d3dd-4337-8464-0d5d45da1e92",
+    "name": "Wabi",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvub",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvub",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "b171e5e6-87af-4395-b860-b4020aa6df18",
+    "name": "Seed (Warrants Pre-Sale)",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": "Seed",
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvtn",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvtn",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "e5773071-6dd6-42aa-99e8-185100eaf2ad",
+    "name": "Hone Health",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvrn",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvrn",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "b78b8f35-fa2d-4a4f-8f3b-cf6465c1a0a9",
+    "name": "Marker Health",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvr8",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvr8",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "cb86234f-9219-46e0-beb2-7e267e608340",
+    "name": "Eight Sleep",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvqv",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvqv",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "1061691f-ee59-4401-bbba-b6cdfabaadaf",
+    "name": "Audrill",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvqg",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvqg",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Sourced ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "ce7cf92b-0a8e-4b30-8626-4d3fe601f9bc",
+    "name": "Anthropic",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvq1",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvq1",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Watch List",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "ded914a1-98f2-4194-a6e7-ebc4a915200b",
+    "name": "Lovable AI",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07cvnj",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07cvnj",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Committed ",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "c6336878-b113-4dfb-acc8-990ef476b23f",
+    "name": "Farm to People",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": "Series A",
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e07ch93",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e07ch93",
+      "clickup_status": "incoming lead",
+      "Relationship Owner": [
+        "Moj Mahdara"
+      ]
+    }
+  },
+  {
+    "id": "8f1ad053-7c1e-4fc2-b2e4-ade9f0062fe7",
+    "name": "Ruth AI",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e05hh69",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e05hh69",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "In Review",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "valerie@ruthapp.ai",
+      "💌 Email": "valerie@ruthapp.ai"
+    }
+  },
+  {
+    "id": "352f4c0b-10ec-43b7-bfc2-7e84a2b66d0b",
+    "name": "Amit Vaishnav, Arihafoods Private Limited",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86e01vx71",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86e01vx71",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "investor.arihafoods@gmail.com"
+    }
+  },
+  {
+    "id": "0c13d939-3e1f-4195-8f2f-e278caf6237d",
+    "name": "XHealth",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dzgq2dx",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dzgq2dx",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom"
+    }
+  },
+  {
+    "id": "c7f3b061-6f29-4294-a799-ca9dd728a25d",
+    "name": "Jabin Beverage Co.",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dzgpw8p",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dzgpw8p",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "homayoon@drinkjabin.com",
+      "💼 Job Title": "Founder\n"
+    }
+  },
+  {
+    "id": "7721c2a7-ac1d-4bd9-bbdd-42bf1bf4e79a",
+    "name": "Calexo",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dzb9jgt",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dzb9jgt",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "sekou@calexo.ai",
+      "💌 Email": "sekou@calexo.ai",
+      "💼 Job Title": "Co-Founder & CEO\n"
+    }
+  },
+  {
+    "id": "52e08e31-2f45-4607-b9ac-8b4759a2e668",
+    "name": "Namier Capital",
+    "website": "http://www.namiercapital.com",
+    "domain": "namiercapital.com",
+    "location": "   11 Manchester Square  ,   London  ,   W1U 3PW  ,   United Kingdom      ",
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dzb9d4h",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dzb9d4h",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "Trathor@namiercapital.com",
+      "💌 Email": "Trathor@namiercapital.com",
+      "💼 Job Title": "Senior Associate\n"
+    }
+  },
+  {
+    "id": "0346d084-2883-4520-bf63-67ac0a7ddd14",
+    "name": "Weare Better",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dz8ez16",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dz8ez16",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "phoebe@weare-better.com",
+      "💼 Job Title": "Founder & CEO\n"
+    }
+  },
+  {
+    "id": "baf71312-a287-49d0-9749-f697dedce529",
+    "name": "Phia",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dz7u5rq",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dz7u5rq",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound",
+      "Meeting Type": "Zoom",
+      "✉️ Email": "phoebe@phia.com"
+    }
+  },
+  {
+    "id": "6dd8dae4-ccb5-45f3-865f-28269c002861",
+    "name": "OpenAI SPV",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dy8bfmw",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dy8bfmw",
+      "clickup_status": "incoming lead"
+    }
+  },
+  {
+    "id": "b67283ed-0a6c-4c28-beac-dd3c34741bd1",
+    "name": "goop",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dy8bc11",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dy8bc11",
+      "clickup_status": "incoming lead"
+    }
+  },
+  {
+    "id": "9031b124-2286-4391-a84d-823242407baf",
+    "name": "Lovable SPV",
+    "website": "http://lovabke.dev",
+    "domain": "lovabke.dev",
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dy6qu5z",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dy6qu5z",
+      "clickup_status": "in conversation"
+    }
+  },
+  {
+    "id": "8ee89bf8-e77e-4270-a31f-1b17fd1ad69f",
+    "name": "Patrick Drake; Autonomy Foods",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dy213xj",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dy213xj",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound"
+    }
+  },
+  {
+    "id": "62a14af8-9010-4e74-a8e5-c7088da2362a",
+    "name": "Moonpay",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxzhbu2",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxzhbu2",
+      "clickup_status": "current"
+    }
+  },
+  {
+    "id": "cddbf319-1da7-4968-9f0c-8b59cc9beeb3",
+    "name": "Brian Hogan",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxzh6tm",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxzh6tm",
+      "clickup_status": "incoming lead"
+    }
+  },
+  {
+    "id": "5e9107d1-6b81-43d1-a92e-813b7da887d7",
+    "name": "Francis Henri",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Opportunity",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxye0yh",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxye0yh",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound"
+    }
+  },
+  {
+    "id": "71aec605-4aeb-4576-ba64-e74046834cb3",
+    "name": "Caddis",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxxk0xk",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxxk0xk",
+      "clickup_status": "current"
+    }
+  },
+  {
+    "id": "efc69e9b-1ae2-4792-9461-423d6d902288",
+    "name": "ApplyBoard",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxxjy74",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxxjy74",
+      "clickup_status": "current"
+    }
+  },
+  {
+    "id": "c97cf213-ad5d-4b70-8dd1-28f9597a3cea",
+    "name": "Ron Robinson",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxx0p8d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxx0p8d",
+      "clickup_status": "incoming lead"
+    }
+  },
+  {
+    "id": "7666035e-9392-4afe-afd4-3ef9845ba007",
+    "name": "BeautyStat Cosmetics",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxx0nn6",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxx0nn6",
+      "clickup_status": "current"
+    }
+  },
+  {
+    "id": "848664aa-22ae-4b57-aaa8-8f0f39db1968",
+    "name": "Founder Inquiry - Spooli",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dxp7b76",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dxp7b76",
+      "clickup_status": "incoming lead",
+      "Pipeline Status": "Cold Inbound"
+    }
+  },
+  {
+    "id": "e3057618-0c7f-4ac5-a8ed-676f01a68b75",
+    "name": "Gemini",
+    "website": "https://www.gemini.com/",
+    "domain": "gemini.com",
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86duwmwzk",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86duwmwzk",
+      "clickup_status": "current",
+      "🏢 Company": "Gemini",
+      "💌 Email": "investor@gemini.com"
+    }
+  },
+  {
+    "id": "da5c8226-e836-435b-ac96-790b709b35e1",
+    "name": "Vyrao",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": null,
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86duwmbk0",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86duwmbk0",
+      "clickup_status": "incoming lead"
+    }
+  },
+  {
+    "id": "3536653a-bdd3-42c5-a05a-fe1dc017964d",
+    "name": "Awe Inspired",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbe7",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbe7",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/aweinspired/"
+    }
+  },
+  {
+    "id": "1321e4d8-a807-48a1-ae27-7b8b6679507c",
+    "name": "Easyway",
+    "website": null,
+    "domain": null,
+    "location": null,
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbe5",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbe5",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "c68b3396-0dbc-4119-81ff-e1506604cfa7",
+    "name": "Estiesse",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbe4",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbe4",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "3402c515-440b-40b0-85db-335cd021759c",
+    "name": "Parade",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbdz",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbdz",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "0b6f473a-a388-4a81-b01f-06b5ea9a37bb",
+    "name": "Julie",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbdv",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbdv",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "851f5bb6-fbde-4237-a6f7-1c78c931c3e5",
+    "name": "Alice",
+    "website": null,
+    "domain": null,
+    "location": "CAN",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbdt",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbdt",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "249615d8-f6ff-4d91-8c43-7700a7f2b9a6",
+    "name": "Copper Banking",
+    "website": null,
+    "domain": null,
+    "location": "PacNW",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbdj",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbdj",
+      "clickup_status": "incoming lead",
+      "Contacts": "Eddie Behringer",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "eddie@getcopper.com"
+    }
+  },
+  {
+    "id": "7841dcb4-90d1-4255-86d3-b8037386b712",
+    "name": "Taltrics",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbde",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbde",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alex Marshal",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "alex@taltrics.com"
+    }
+  },
+  {
+    "id": "81aea791-c709-4b06-8764-13026638e561",
+    "name": "Nucleus",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbd5",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbd5",
+      "clickup_status": "incoming lead",
+      "Contacts": "Kian Sadeghi",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "ks@mynucleus.com"
+    }
+  },
+  {
+    "id": "04087d66-89cd-4571-a1c3-b6a940b88862",
+    "name": "Alice",
+    "website": null,
+    "domain": null,
+    "location": "CAN",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbcq",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbcq",
+      "clickup_status": "incoming lead",
+      "Contacts": "Charlotte Cruz",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "charlotte@alicemushrooms.com"
+    }
+  },
+  {
+    "id": "2fd7d145-a872-48ef-aaa5-c4c7192471ee",
+    "name": "Chain Brands",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Retail Concept",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbck",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbck",
+      "clickup_status": "incoming lead",
+      "Contacts": "BJ Novak",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "276f566d-c3b3-47d9-b617-02e893f8d18c",
+    "name": "WHOP",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Marketplace)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbch",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbch",
+      "clickup_status": "incoming lead",
+      "Contacts": "Steven Schwartz, Cameron Zoub, Jack Sharkey",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "c308a5d8-08bb-4b74-b13d-454220f4b710",
+    "name": "Wander",
+    "website": null,
+    "domain": null,
+    "location": "TX",
+    "industry": "Proptech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbcb",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbcb",
+      "clickup_status": "incoming lead",
+      "Contacts": "John Andrew Entwistle",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "jae@wander.com"
+    }
+  },
+  {
+    "id": "0b6f8ffa-c152-4050-ab9e-69f66fc762e9",
+    "name": "Digital Reef (Vyng)",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbc7",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbc7",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jeffrey Chernick, Paul Kats",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "913b5b37-b960-4f6e-9037-064c48a05eee",
+    "name": "Voices Inc.",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbz",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbz",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alex Bystrov",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "ab@leam.xyz"
+    }
+  },
+  {
+    "id": "5150a1e6-61e8-4a29-bd30-10a82e1cf806",
+    "name": "Vise Technologies",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbx",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbx",
+      "clickup_status": "incoming lead",
+      "Contacts": "Samir Vasavada, Runik Mehrotra",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "eb4f827a-4ad6-4ea6-bea2-17681883861e",
+    "name": "Versus Game",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbt",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbt",
+      "clickup_status": "incoming lead",
+      "Contacts": "John Vitti",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "john@versusgame.com"
+    }
+  },
+  {
+    "id": "22f358d3-4cad-46ac-ac1d-a2859b4e988c",
+    "name": "Vacation",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbk",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbk",
+      "clickup_status": "incoming lead",
+      "Contacts": "Dakota Green",
+      "Expected Next Raise": "August",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "dakota@vacation.inc"
+    }
+  },
+  {
+    "id": "0c886ada-17ef-4b7b-a042-3c1c4797c155",
+    "name": "Uni Products",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbe",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbe",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alexandra Keating",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "ak@weareuni.com"
+    }
+  },
+  {
+    "id": "28f3480e-9a0e-4ba3-bc6c-05658d099bf7",
+    "name": "Thirteen Lune",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbbc",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbbc",
+      "clickup_status": "incoming lead",
+      "Contacts": "Nyakio Grieco",
+      "Expected Next Raise": "Small allocation",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "nyakio.grieco@thirteenlune.com"
+    }
+  },
+  {
+    "id": "587331c1-7b44-4416-8212-49724535bba2",
+    "name": "Thingy Thing (EXTRA)",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbb5",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbb5",
+      "clickup_status": "incoming lead",
+      "Contacts": "Max Hellerstein, Cyrus Summerlin",
+      "Introduced By": "Intuition Sourced",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "max@extra.app"
+    }
+  },
+  {
+    "id": "8a4aad2b-41eb-40fe-98f0-5f18e1029b63",
+    "name": "ThingTesting",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Marketplace)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbax",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbax",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jenny Gyllander",
+      "Expected Next Raise": "$3-5M Series A in Q3/Q4",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "jenny@thingtesting.com"
+    }
+  },
+  {
+    "id": "2256eb05-5e0d-40eb-bcbb-cd428e5a59eb",
+    "name": "The Culinistas",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvban",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvban",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jill Donenfeld",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "JB"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "jill@theculinistas.com"
+    }
+  },
+  {
+    "id": "8fc8259a-e8d5-47bb-a435-7ddd8dc7363a",
+    "name": "Terradepth",
+    "website": null,
+    "domain": null,
+    "location": "TX",
+    "industry": "Artificial Intelligence",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbak",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbak",
+      "clickup_status": "incoming lead",
+      "Contacts": "Joe Wolfell, Judson Kauffman",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "joe@terradepth.com"
+    }
+  },
+  {
+    "id": "44f3f99a-3126-492f-9915-4c6b14c3d7da",
+    "name": "Sweet Rehab",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Retail Concept",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbad",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbad",
+      "clickup_status": "incoming lead",
+      "Contacts": "Anne Hirsche",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "anne.hirsch@sweetrehabnyc.com"
+    }
+  },
+  {
+    "id": "abe3be0e-5dd2-4e06-8a77-77e434a63fa7",
+    "name": "Supersystem",
+    "website": null,
+    "domain": null,
+    "location": "EU",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvbaa",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvbaa",
+      "clickup_status": "incoming lead",
+      "Contacts": "Morgan Von Steen",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "mvonsteen@supersystem.us"
+    }
+  },
+  {
+    "id": "a83546a7-54ad-4e5d-89d4-73b3e64c7689",
+    "name": "SUPERPLASTIC",
+    "website": null,
+    "domain": null,
+    "location": "Northeast",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvba4",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvba4",
+      "clickup_status": "incoming lead",
+      "Contacts": "Paul Budnitz",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "paul@superplastic.co"
+    }
+  },
+  {
+    "id": "100aeeab-6139-4b64-b7e0-ba0dc7a28e62",
+    "name": "Superpeer",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb9z",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb9z",
+      "clickup_status": "incoming lead",
+      "Contacts": "Devrim Yasar",
+      "Expected Next Raise": "Good amount of runway",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "devrim@superpeer.com"
+    }
+  },
+  {
+    "id": "c1ff3287-7069-422e-a28d-b19ab28fcc7f",
+    "name": "Stitch",
+    "website": null,
+    "domain": null,
+    "location": "ROW",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb9r",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb9r",
+      "clickup_status": "incoming lead",
+      "Contacts": "Kiaan Pillay ",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "kiaan@stitch.money"
+    }
+  },
+  {
+    "id": "516a07d7-2c60-488a-95b2-3c605d5cd5e7",
+    "name": "Step Mobile",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb9j",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb9j",
+      "clickup_status": "incoming lead",
+      "Contacts": "CJ MacDonald",
+      "Introduced By": "Celebrity",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "JB"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "cj@step.com"
+    }
+  },
+  {
+    "id": "d0bd1726-c02b-4f37-b772-3b862bf34830",
+    "name": "Starface",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb9d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb9d",
+      "clickup_status": "incoming lead",
+      "Contacts": "Julie Schott, Bryan Bordainick",
+      "Expected Next Raise": "Closed Series B",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "brian@starfaceworld.com"
+    }
+  },
+  {
+    "id": "3d5531d1-6697-4cc0-ba66-6e45330be86e",
+    "name": "Something Navy",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb9a",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb9a",
+      "clickup_status": "incoming lead",
+      "Contacts": "Arielle Charnas, Matt Scanlon",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "matt@somethingnavy.com"
+    }
+  },
+  {
+    "id": "db131899-4d75-49c0-9b87-031726824ea1",
+    "name": "SNIF",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb94",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb94",
+      "clickup_status": "incoming lead",
+      "Contacts": "Phil Riportella, Bryan Edwards",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "bryan@snif.co"
+    }
+  },
+  {
+    "id": "b107c06a-7d0a-4d27-854c-be0766799316",
+    "name": "Slang",
+    "website": null,
+    "domain": null,
+    "location": "Northeast",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8z",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8z",
+      "clickup_status": "incoming lead",
+      "Contacts": "Diego Villegas",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "diego@slangapp.com"
+    }
+  },
+  {
+    "id": "36ff42a0-980f-4123-a271-acf323e6b920",
+    "name": "SIMULATE (NUGGS)",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8x",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8x",
+      "clickup_status": "incoming lead",
+      "Contacts": "Ben Pasternak",
+      "Introduced By": "Intuition Sourced",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "ben@simulate.com"
+    }
+  },
+  {
+    "id": "8817cacf-b4b2-4f00-88db-0dc2d646c3ba",
+    "name": "Selfbook",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Proptech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8t",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8t",
+      "clickup_status": "incoming lead",
+      "Contacts": "Khalid Meniri, Elsa Price",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "8dd37cef-65d3-41aa-8186-3c95730c33ca",
+    "name": "Saturn Technologies",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8p",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8p",
+      "clickup_status": "incoming lead",
+      "Contacts": "Dylan Diamond, Max Baron",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "a21db526-0c7d-477a-bd7c-bec489bb098d",
+    "name": "Safely",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Home Products)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8g",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8g",
+      "clickup_status": "incoming lead",
+      "Contacts": "Emma Grede, Chrissy Teigen, Kris Jenner",
+      "Introduced By": "Celebrity",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "8599c3f9-bc06-454b-85ea-d30d570fa5df",
+    "name": "Refill It (Path Water)",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb8c",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb8c",
+      "clickup_status": "incoming lead",
+      "Contacts": "Shadi Bakour, Amer Orabi",
+      "Expected Next Raise": "Raising $5M bridge Now, Series A Q1 2023",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "shadi@drinkpath.com"
+    }
+  },
+  {
+    "id": "4ab1764f-279a-47c8-97c8-6b13feeafb95",
+    "name": "Rae Wellness",
+    "website": null,
+    "domain": null,
+    "location": "Midwest",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb85",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb85",
+      "clickup_status": "incoming lead",
+      "Contacts": "Angela Tebbe, Eric Carl",
+      "Expected Next Raise": "Raising Series B now",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "angie@raewellness.co"
+    }
+  },
+  {
+    "id": "63e0b69b-32ac-434b-ae8d-0762f96f4c36",
+    "name": "Public.com",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb81",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb81",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jannick Malling, Leif Abraham",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF",
+        "JB (Moj reply first)"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "leif@public.com"
+    }
+  },
+  {
+    "id": "0555b8d6-ea53-4b36-ba79-d16e5ca546ae",
+    "name": "Producers Market",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Marketplace)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb7w",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb7w",
+      "clickup_status": "incoming lead",
+      "Contacts": "Keith Agoada",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "keith@producersmarket.com"
+    }
+  },
+  {
+    "id": "279cfb16-cbdb-4095-b5f8-51e7209f3916",
+    "name": "Poppi",
+    "website": null,
+    "domain": null,
+    "location": "TX",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb7n",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb7n",
+      "clickup_status": "incoming lead",
+      "Contacts": "Allison Ellsworth, Stephen Ellsworth",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "stephen@drinkpoppi.com"
+    }
+  },
+  {
+    "id": "a465eddf-393c-40eb-8b2b-a72eb63dc75c",
+    "name": "Popa's Pops",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb7j",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb7j",
+      "clickup_status": "incoming lead",
+      "Contacts": "Victor Bauer",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "a923d175-5d28-4f45-a145-54a9eb4edb11",
+    "name": "Point Up",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb7d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb7d",
+      "clickup_status": "incoming lead",
+      "Contacts": "Patrick Mrozowski",
+      "Expected Next Raise": "No near term cash needs",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "patrick@getpoint.io"
+    }
+  },
+  {
+    "id": "d50408e2-5849-4333-8787-2736fda677ad",
+    "name": "PicsArt",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb78",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb78",
+      "clickup_status": "incoming lead",
+      "Contacts": "Hovhannes Avoyan, Artavazd Mehrabyan, Mikayel Vardanyan",
+      "Expected Next Raise": "Q1 BOD Deck - no cash/fundraise update",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-09-04T20:00:00Z",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "3d7a1b3b-8ef7-4106-ad50-84334e1faa77",
+    "name": "PearPop",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb70",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb70",
+      "clickup_status": "incoming lead",
+      "Contacts": "Cole Mason, Guy Oseary, Spencer Markel",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Sent": "2022-12-04T20:00:00Z",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "ae3dde9f-1877-4854-86b2-eec056f88549",
+    "name": "Passport Global",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb6v",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb6v",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alex Yancher",
+      "Expected Next Raise": "No raise until Q1 2024",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "Alex@passportshipping.com"
+    }
+  },
+  {
+    "id": "57d85576-01e9-468f-9e9a-55f178a59879",
+    "name": "Owner.com",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb6m",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb6m",
+      "clickup_status": "incoming lead",
+      "Contacts": "Adam Guild, Dean Bloembergen",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "7c80eed1-be01-45df-bafb-7e1f09d2927e",
+    "name": "Outlier Collective",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Crypto/NFT)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb6d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb6d",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alex Lin",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "7825d34d-7cb5-4cd3-8782-c3fdd9fbd5ed",
+    "name": "OPUS",
+    "website": null,
+    "domain": null,
+    "location": "TX",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb68",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb68",
+      "clickup_status": "incoming lead",
+      "Contacts": "Christopher Schenk, Adam Schlender",
+      "Expected Next Raise": "Series A Q4 2022",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "investors@feelopus.com"
+    }
+  },
+  {
+    "id": "a8aeb553-80ae-4110-afd4-8c0bf753723c",
+    "name": "OBE Fitness",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb61",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb61",
+      "clickup_status": "incoming lead",
+      "Contacts": "Mark Mullett, Ashley Mills",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "e0698fcb-c57b-4277-ae9a-061efd7bd64b",
+    "name": "Myro",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb5x",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb5x",
+      "clickup_status": "incoming lead",
+      "Contacts": "Greg Laptevsky",
+      "Expected Next Raise": "Raising now",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "greg@mymyro.com"
+    }
+  },
+  {
+    "id": "695ac1a8-a10f-4e00-87d7-2f926d75e15e",
+    "name": "MOOV Technologies",
+    "website": null,
+    "domain": null,
+    "location": "Southwest",
+    "industry": "Consumer Tech (Marketplace)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb5m",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb5m",
+      "clickup_status": "incoming lead",
+      "Contacts": "Wade Arnold, Steven Zhou",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "514b1031-a5d6-4397-b501-2003d7183700",
+    "name": "Moonpay",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb5c",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb5c",
+      "clickup_status": "incoming lead",
+      "Contacts": "\nIvan Soto-Wright",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "90080e80-3c68-4e26-abcc-477ccb2f2303",
+    "name": "Minna",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb56",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb56",
+      "clickup_status": "incoming lead",
+      "Contacts": "Ryan Fortwendel, Anshu Dua",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Sent": "2022-12-04T20:00:00Z",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "anshu@drinkminna.com"
+    }
+  },
+  {
+    "id": "c1bdcf61-4723-4b3d-96f1-0f3853dabd77",
+    "name": "Marble Technologies / Pearl",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb53",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb53",
+      "clickup_status": "incoming lead",
+      "Contacts": "Matthew DeMarcantonio",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "Matthew@marbletech.co"
+    }
+  },
+  {
+    "id": "799d138b-ab72-44f0-bd17-f85e10030f71",
+    "name": "Magic Spoon",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb51",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb51",
+      "clickup_status": "incoming lead",
+      "Contacts": "Gabi Lewis, Greg Sewitz",
+      "Expected Next Raise": "Raising $100M at a $300M pre",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "52c7890f-917a-4144-92c0-25afdf0f59d5",
+    "name": "Loops Beauty",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb4x",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb4x",
+      "clickup_status": "incoming lead",
+      "Contacts": "Colin Peek, Tushar Adya, Aditya Julka",
+      "Expected Next Raise": "Thinking raise late Q3 / Q4 2022",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "ef625a7f-0f93-449e-ad3a-d6ca13cab7b4",
+    "name": "Looped Live",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb4u",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb4u",
+      "clickup_status": "incoming lead",
+      "Contacts": "Prajit Gopal, Ben Kornick, Faisel Durrani, Sandeep Peddada",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "13338a19-0567-4a6b-8cb7-8aae14e0b309",
+    "name": "Limit Break",
+    "website": null,
+    "domain": null,
+    "location": "Midwest",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb4p",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb4p",
+      "clickup_status": "incoming lead",
+      "Contacts": "Gabe Leydon, Halbert Nakagawa",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "gabrielleydon@gmail.com"
+    }
+  },
+  {
+    "id": "73981351-c22e-4095-8797-3a825d1a3d07",
+    "name": "Lightyear AI",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb4c",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb4c",
+      "clickup_status": "incoming lead",
+      "Contacts": "Dennis Thankachan",
+      "Expected Next Raise": "2 Years Runway, $16.6M Cash",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "dennis@lightyear.ai"
+    }
+  },
+  {
+    "id": "3aaf9b2a-13fe-48b4-ac2d-f79e251f99e6",
+    "name": "Lemonada",
+    "website": null,
+    "domain": null,
+    "location": "Midwest",
+    "industry": "Media",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb46",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb46",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jessica Cordova Kramer",
+      "Expected Next Raise": "Include",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "jess@lemonadamedia.com"
+    }
+  },
+  {
+    "id": "b022ef31-94ef-4638-984d-63c017e2c36f",
+    "name": "Kroma Superfoods",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb3z",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb3z",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alex Rodal, Aaron Rodal, Lisa Odenweller",
+      "Expected Next Raise": "Raising now at a $60M cap",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "lisa@kromawellness.com"
+    }
+  },
+  {
+    "id": "9197b13a-41dc-472a-8647-84b6b59f3a92",
+    "name": "Kinship",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb3r",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb3r",
+      "clickup_status": "incoming lead",
+      "Contacts": "Christn Powell, Alison Haljun",
+      "Expected Next Raise": "Raising Series A now",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "82fff54b-0b1a-4800-abed-290a191b524d",
+    "name": "KARD",
+    "website": null,
+    "domain": null,
+    "location": "EU",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb3k",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb3k",
+      "clickup_status": "incoming lead",
+      "Contacts": "Amine Bounjou, Fabien Penso, Scott Gordon",
+      "Expected Next Raise": "Raising $4M round at a $25M pre money",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-03-05T20:00:00Z",
+      "Under Represented Founder?": "No",
+      "💌 Email": "Scott.gordon@kard.eu"
+    }
+  },
+  {
+    "id": "25ce704e-51a0-4609-8c8d-eabf977546a7",
+    "name": "Kangaroo",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb3f",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb3f",
+      "clickup_status": "incoming lead",
+      "Contacts": "Katie Mishra",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "katie@kangaroointeractive.com"
+    }
+  },
+  {
+    "id": "ab9c8dcc-184b-45ed-810f-cd3914f64670",
+    "name": "Judy",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Home Products)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb30",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb30",
+      "clickup_status": "incoming lead",
+      "Contacts": "Simon Huck, Joshua Udashkin",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "a8a8fa06-3fae-43bc-afa0-e09ac61fe82f",
+    "name": "Jambys",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2x",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2x",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jack Ambrose, Andrew Goble",
+      "Expected Next Raise": "Raising $750k - $1M bridge",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-12-04T20:00:00Z",
+      "Under Represented Founder?": "No",
+      "💌 Email": "jack@jambys.com"
+    }
+  },
+  {
+    "id": "679069d2-b08a-48e8-bb3e-fd7472d7a749",
+    "name": "ItsMe",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2q",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2q",
+      "clickup_status": "incoming lead",
+      "Contacts": "Aakash Sastry, John Mullan",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "aakash@itsme.cool"
+    }
+  },
+  {
+    "id": "802d5c2c-0f31-4a02-bee1-4dc72608b84c",
+    "name": "Italic",
+    "website": null,
+    "domain": null,
+    "location": "Midwest",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2m",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2m",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jeremy Cai",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "jeremy@italic.com"
+    }
+  },
+  {
+    "id": "4baccdfc-16c3-4941-81de-f3235a0bb72a",
+    "name": "It's Good",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Entertainment)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2j",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2j",
+      "clickup_status": "incoming lead",
+      "Contacts": "Mike Rosenthal",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "mike@mikerosenthal.net"
+    }
+  },
+  {
+    "id": "8199ffb7-2526-43d1-b011-a434dab66021",
+    "name": "Wonderskin / Ionic Synergy",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2g",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2g",
+      "clickup_status": "incoming lead",
+      "Contacts": "Doug Cooper ",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "dcooper@cmgbranding.com"
+    }
+  },
+  {
+    "id": "5f5b79c3-80a3-4373-9a32-e52b375982a0",
+    "name": "INBLOOM",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb2d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb2d",
+      "clickup_status": "incoming lead",
+      "Contacts": "Tushar Adya, Kate Hudson",
+      "Expected Next Raise": "Thinking raise Q4 2022",
+      "Introduced By": "Celebrity",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "tushar@syllablestudio.com"
+    }
+  },
+  {
+    "id": "bc3ae6c2-8c4c-4e6e-a141-e6326247fd20",
+    "name": "Home Financial (Dwelling)",
+    "website": null,
+    "domain": null,
+    "location": "CAN",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb29",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb29",
+      "clickup_status": "incoming lead",
+      "Contacts": "Craig Hunter",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "Craig@craighunter.ca"
+    }
+  },
+  {
+    "id": "69db3fb4-5561-4137-aeaa-0b8d967abfdc",
+    "name": "Hollywood Unlocked",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Media",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb26",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb26",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jason Lee",
+      "Introduced By": "LP",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "j@hollywoodunlocked.com"
+    }
+  },
+  {
+    "id": "ced16892-e893-455a-bcae-0cf57c13ecbe",
+    "name": "Helm.ai",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Artificial Intelligence",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb20",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb20",
+      "clickup_status": "incoming lead",
+      "Contacts": "Vlad Voroninski, Tudor Achim",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "ee2f8298-8dee-4647-8394-2b0102119f34",
+    "name": "Happy Hour",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb1t",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb1t",
+      "clickup_status": "incoming lead",
+      "Contacts": "Greg Sokolowski",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "a94e418d-0dd3-4336-af95-645dd996513d",
+    "name": "Hally",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb1n",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb1n",
+      "clickup_status": "incoming lead",
+      "Contacts": "Kathryn Winokur",
+      "Expected Next Raise": "Thinking raise Q4 2022",
+      "Introduced By": "LP",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-11-04T20:00:00Z",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "kathryn@hallyhair.com"
+    }
+  },
+  {
+    "id": "27a248db-e91a-48e2-9ec0-99a3a74c9ffe",
+    "name": "Halfday Tonics",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb1g",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb1g",
+      "clickup_status": "incoming lead",
+      "Contacts": "Kayvon Jahanbakhsh, Mike Lombardo",
+      "Expected Next Raise": "Raising bridge now $12M cap, Series A end of summer",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "kayvon@drinkhalfday.com"
+    }
+  },
+  {
+    "id": "dba54e4b-ed43-42ad-a01b-6d4bd2361573",
+    "name": "Golden Rice",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Retail Concept",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb1d",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb1d",
+      "clickup_status": "incoming lead",
+      "Contacts": "Sophia Parsa",
+      "Introduced By": "Influencer",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Note Date": "2022-08-05T20:00:00Z",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "sophparsa@gmail.com"
+    }
+  },
+  {
+    "id": "a94ec042-2edd-4242-a707-13ecb1c2184d",
+    "name": "Glassie",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb1a",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb1a",
+      "clickup_status": "incoming lead",
+      "Contacts": "Neels Visser",
+      "Introduced By": "Influencer",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "neels@glassie.co"
+    }
+  },
+  {
+    "id": "816dd6fa-b7f8-4b11-bcdc-b7585775a7c4",
+    "name": "Ghia",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Beverage)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb13",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb13",
+      "clickup_status": "incoming lead",
+      "Contacts": "Melanie Masarin",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF/JB"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "Melanie@drinkghia.com"
+    }
+  },
+  {
+    "id": "5fbe8d39-4fd0-4c69-ae9a-05e6a0927e84",
+    "name": "Gente",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb0z",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb0z",
+      "clickup_status": "incoming lead",
+      "Contacts": "Marianne Fonseca, Nathalia Maia",
+      "Introduced By": "Celebrity",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "0373baf6-c890-4d5e-8d71-891e53b8e71e",
+    "name": "Geneva Technologies",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb0t",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb0t",
+      "clickup_status": "incoming lead",
+      "Contacts": "Justin Hauser",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "justin@genevachat.com"
+    }
+  },
+  {
+    "id": "4714b2f0-c544-4f34-a9dd-78a249990d10",
+    "name": "Futurewise",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb0k",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb0k",
+      "clickup_status": "incoming lead",
+      "Contacts": "Brian Bordainick, Janet Park ",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "ashley@brandnewholdings.co"
+    }
+  },
+  {
+    "id": "c20e9db5-276d-4412-96c9-9cd4f1f75687",
+    "name": "FunFunFun",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb0e",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb0e",
+      "clickup_status": "incoming lead",
+      "Contacts": "Farbood Nivi",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "a72360e6-7716-4d46-a645-55530cca9035",
+    "name": "Focal Point",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "B2B Saas",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb08",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb08",
+      "clickup_status": "incoming lead",
+      "Contacts": "Anders Lillevik",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "💌 Email": "anders@getfocalpoint.com"
+    }
+  },
+  {
+    "id": "130140d8-c262-4022-9060-09ed89675d8a",
+    "name": "Fifty Foods (Immi)",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvb03",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvb03",
+      "clickup_status": "incoming lead",
+      "Contacts": "Kevin Lee, Kevin Chanthasiriphan",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "klee@immieats.com"
+    }
+  },
+  {
+    "id": "ba7576c9-7eee-4064-8e69-2b0e47732d90",
+    "name": "FEAST",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvazy",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvazy",
+      "clickup_status": "incoming lead",
+      "Contacts": "Amanda Marmer, Summer Wheaton",
+      "Introduced By": "Intuition Sourced",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "amanda@shopfeast.com"
+    }
+  },
+  {
+    "id": "d504b7fd-0c5a-4404-bae4-b145638ef4a9",
+    "name": "Guest in Residence",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvazr",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvazr",
+      "clickup_status": "incoming lead",
+      "Contacts": "Isaac Ross , Gigi Hadid",
+      "Introduced By": "Celebrity",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "isaacross@gmail.com"
+    }
+  },
+  {
+    "id": "561a1cd4-69a9-488b-881f-b7992b0fad67",
+    "name": "Dieux",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvazh",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvazh",
+      "clickup_status": "incoming lead",
+      "Contacts": "Charlotte Palermino",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "charlotte@dieuxskin.com"
+    }
+  },
+  {
+    "id": "5e2e7580-8183-4148-bf28-7b3c1b836e85",
+    "name": "Cryptoys",
+    "website": null,
+    "domain": null,
+    "location": "Southeast",
+    "industry": "Consumer Tech (Crypto/NFT)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvaza",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvaza",
+      "clickup_status": "incoming lead",
+      "Contacts": "Will Weinraub",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "will@onchainstudios.com"
+    }
+  },
+  {
+    "id": "6b1948bd-c616-4ccd-91b0-b09ff390c51e",
+    "name": "Comrad",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvaz4",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvaz4",
+      "clickup_status": "incoming lead",
+      "Contacts": "Andrew Ferenci",
+      "Expected Next Raise": "Raising bridge now $18M cap",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "andrew@comradsocks.com"
+    }
+  },
+  {
+    "id": "cb72c22c-7cc6-437d-88f3-5101267cebb9",
+    "name": "Cleancult",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Home Products)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvayy",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvayy",
+      "clickup_status": "incoming lead",
+      "Contacts": "Ryan Lupberger, Zachary Bedrosian",
+      "Expected Next Raise": "No immediate cash needs",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-01-05T20:00:00Z",
+      "Under Represented Founder?": "No",
+      "💌 Email": "Ryan@cleancult.com"
+    }
+  },
+  {
+    "id": "aedf2342-f79e-4d21-b6ac-10116006e522",
+    "name": "Ceremonia",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvayr",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvayr",
+      "clickup_status": "incoming lead",
+      "Contacts": "Babba C. Rivera",
+      "Expected Next Raise": "Will probably raise in Q2 2023",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "babba@ceremonia.com"
+    }
+  },
+  {
+    "id": "ad916332-d59b-43dd-b8cc-5938c6218559",
+    "name": "Bright Live",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer Tech (Communication)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvayh",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvayh",
+      "clickup_status": "incoming lead",
+      "Contacts": "Guy Oseary, Michael Powers",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "No",
+      "💌 Email": "powers@brightlive.com"
+    }
+  },
+  {
+    "id": "e666bcbc-3146-44a6-a1ac-a01c5dad9e00",
+    "name": "Bombas",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Fashion)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvayc",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvayc",
+      "clickup_status": "incoming lead",
+      "Contacts": "David Heath, Randy Goldberg",
+      "Introduced By": "LP",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No"
+    }
+  },
+  {
+    "id": "4dec859e-ec55-40dd-94d3-d9d7b10d7230",
+    "name": "Bokksu",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvay7",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvay7",
+      "clickup_status": "incoming lead",
+      "Contacts": "Danny Taing",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "danny@bokksu.com"
+    }
+  },
+  {
+    "id": "13600f34-253f-44f1-a189-d660b1356c2a",
+    "name": "Blip",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Wellness)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvay0",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvay0",
+      "clickup_status": "incoming lead",
+      "Contacts": "Alyson Lord, Princess Josephine , Brian Bordainick",
+      "Expected Next Raise": "Just closed $5M Seed Round",
+      "Introduced By": "Founder",
+      "Investing Fund": "Intuition Capital",
+      "Logo": "x",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "alyson@blipclub.co"
+    }
+  },
+  {
+    "id": "3569c557-afa9-4373-80c4-47ec4fab8b35",
+    "name": "Bilt Technologies",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Fintech",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvaxz",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvaxz",
+      "clickup_status": "incoming lead",
+      "Contacts": "Ankur Jain",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "PF"
+      ],
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "ankur@kairoshq.com"
+    }
+  },
+  {
+    "id": "2806f0fb-de87-4385-b0f4-5fae794576eb",
+    "name": "Belli Welli",
+    "website": null,
+    "domain": null,
+    "location": "CA",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvaxx",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvaxx",
+      "clickup_status": "incoming lead",
+      "Contacts": "Katie Wilson",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "katie@belliwelli.com"
+    }
+  },
+  {
+    "id": "714f33a4-e107-4579-ba79-22f5e32d1ba1",
+    "name": "Behave Foods",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvaxf",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvaxf",
+      "clickup_status": "incoming lead",
+      "Contacts": "Mayssa Chehata",
+      "Expected Next Raise": "Raising $2M on $8M cap now",
+      "Investing Fund": "Intuition Capital",
+      "Note Date": "2022-01-05T20:00:00Z",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "mayssa@eatbehave.com"
+    }
+  },
+  {
+    "id": "b836fa32-9acf-4372-8fb9-9afac7e4b991",
+    "name": "BeautyStat",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvax6",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvax6",
+      "clickup_status": "incoming lead",
+      "Contacts": "Ron Robinson",
+      "Expected Next Raise": "Closing Series A June 2022",
+      "Introduced By": "Advisor",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes"
+    }
+  },
+  {
+    "id": "312b45d4-cf42-483a-af42-4ef1fa2e4995",
+    "name": "Banza",
+    "website": null,
+    "domain": null,
+    "location": "NY",
+    "industry": "Consumer (Food)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvax2",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvax2",
+      "clickup_status": "incoming lead",
+      "Contacts": "Brain Rudolph, Scott Rudolph",
+      "Expected Next Raise": "Exit Q4 2022 / Q1 2023",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "💌 Email": "scott@eatbanza.com"
+    }
+  },
+  {
+    "id": "78f531f2-fb3e-486b-9983-43105cde1e47",
+    "name": "B.A.I. Technologies",
+    "website": null,
+    "domain": null,
+    "location": "Northeast",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvawz",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvawz",
+      "clickup_status": "incoming lead",
+      "Contacts": "Sophie Bai",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "💌 Email": "sophie@baibiosciences.com"
+    }
+  },
+  {
+    "id": "b5ebcc41-b1c3-4915-9095-0f31152365c4",
+    "name": "Augustinus Bader",
+    "website": null,
+    "domain": null,
+    "location": "EU",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvawg",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvawg",
+      "clickup_status": "incoming lead",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "No",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/augustinus-bader/",
+      "💌 Email": "anand.lala@augustinusbader.com"
+    }
+  },
+  {
+    "id": "958bb287-cf7f-439d-b6cf-9b13b49c9197",
+    "name": "Ami Colé",
+    "website": "http://www.AmiCole.com",
+    "domain": "amicole.com",
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvavx",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvavx",
+      "clickup_status": "incoming lead",
+      "Contacts": "Diarrha Ndiaye",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Under Represented Founder?": "Yes",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/ami-col%C3%A9/",
+      "💌 Email": "diarrha@amicole.com"
+    }
+  },
+  {
+    "id": "ab5afcd7-d478-4882-9712-d1fa28151667",
+    "name": "Alleyoop -David Manshoory",
+    "website": "http://www.meetalleyoop.com",
+    "domain": "meetalleyoop.com",
+    "location": "CA",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvavp",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvavp",
+      "clickup_status": "incoming lead",
+      "Contacts": "Leila Kashani, David Manshoory",
+      "Expected Next Raise": "Finalizing SAFE. Series A in 12 months",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "Yes",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/meetalleyoop/",
+      "💌 Email": "david@meetalleyoop.com"
+    }
+  },
+  {
+    "id": "cf660b50-7d8f-4888-8807-ce3022e962a3",
+    "name": "3rd Ritual",
+    "website": "https://3rdritual.com",
+    "domain": "3rdritual.com",
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvavf",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvavf",
+      "clickup_status": "incoming lead",
+      "Contacts": "Jenn Tardif",
+      "Investing Fund": "Intuition Capital",
+      "Need Update?": "Yes",
+      "Outreach": [
+        "MG"
+      ],
+      "Under Represented Founder?": "Yes",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/3rdritual/",
+      "💌 Email": "jenn@3rdritual.com"
+    }
+  },
+  {
+    "id": "020045b9-42c2-493e-9670-b90a64864d50",
+    "name": "10 Beauty",
+    "website": "http://www.10beauty.co",
+    "domain": "10beauty.co",
+    "location": "NY",
+    "industry": "Consumer (Beauty)",
+    "stage": null,
+    "notes": null,
+    "custom_fields": {
+      "clickup_task_id": "86dtvvav8",
+      "clickup_list": "Companies",
+      "clickup_url": "https://app.clickup.com/t/86dtvvav8",
+      "clickup_status": "incoming lead",
+      "Contacts": "Justin Effron",
+      "Expected Next Raise": "Raising A-1 now $70M pre-money",
+      "Introduced By": "VC",
+      "Investing Fund": "Intuition Capital",
+      "Under Represented Founder?": "No",
+      "🔗 Upwork Link": "https://www.linkedin.com/company/10beauty/",
+      "💌 Email": "Justin@10beauty.co"
+    }
+  }
+]
