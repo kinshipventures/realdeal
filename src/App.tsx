@@ -26,6 +26,7 @@ import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
 import { SharedListPage } from './components/sharing/SharedListPage'
+import { LandingRedirect } from './components/landing/LandingRedirect'
 import { ReportsPage } from './components/reports/ReportsPage'
 import { LearnPage } from './components/learn/LearnPage'
 import { ChangelogPage } from './components/changelog/ChangelogPage'
@@ -398,9 +399,9 @@ export default function App() {
       <Route path="s/:token" element={<SharedListPage />} />
       <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route path="invite" element={<AcceptInvitePage />} />
+      <Route index element={<LandingRedirect />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
-          <Route index element={<OrbMap />} />
           <Route path="pods" element={<OrbMap />} />
           <Route path="pulse" element={<Dashboard />} />
           <Route path="pulse/nurturing" element={<NurturingHub />} />
