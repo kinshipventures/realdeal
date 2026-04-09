@@ -1,21 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { getContacts, getPods, getAllInteractions } from '../../lib/airtable'
+import { getCompanies } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
-import { contactEquityScore, scoreLabel } from '../../lib/equity'
-import { formatRelativeTime } from '../../lib/utils'
-import type { Contact, Pod } from '../../lib/types'
-import type { Interaction } from '../../lib/types'
+import type { Company } from '../../lib/types'
 
-type SortCol = 'name' | 'industry' | 'stage' | 'domain' | 'location' | 'equity' | 'last_contact'
+type SortCol = 'name' | 'industry' | 'stage' | 'domain' | 'location'
 type SortDir = 'asc' | 'desc'
-
-const EQUITY_BADGE: Record<string, { bg: string; color: string }> = {
-  Thriving: { bg: 'rgba(37,180,57,0.12)', color: '#16a34a' },
-  Steady:   { bg: 'rgba(37,180,57,0.07)', color: '#4ade80' },
-  Cooling:  { bg: 'rgba(251,146,60,0.12)', color: '#ea580c' },
-  Fading:   { bg: 'rgba(239,68,68,0.12)', color: '#dc2626' },
-}
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active) return <span style={{ opacity: 0.3, marginLeft: 4, fontSize: 10 }}>↕</span>
@@ -24,39 +14,16 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 
 export function CompaniesPage() {
   const navigate = useNavigate()
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [pods, setPods] = useState<Pod[]>([])
-  const [equityMap, setEquityMap] = useState<Record<string, number>>({})
+  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir }>({ col: 'name', dir: 'asc' })
 
   useEffect(() => {
     let cancelled = false
-    async function load() {
-      const [allContacts, allPods, allInteractions] = await Promise.all([
-        getContacts(),
-        getPods(),
-        getAllInteractions(),
-      ])
-      if (cancelled) return
-      const companies = allContacts.filter(c => c.type === 'Company')
-      setContacts(companies)
-      setPods(allPods)
-
-      const interactionsByContact: Record<string, Interaction[]> = {}
-      for (const ix of allInteractions) {
-        ;(interactionsByContact[ix.contact_id] ??= []).push(ix)
-      }
-      const eMap: Record<string, number> = {}
-      for (const c of companies) {
-        const pod = allPods.find(p => c.list_ids.includes(p.id))
-        eMap[c.id] = contactEquityScore(interactionsByContact[c.id] ?? [])
-      }
-      setEquityMap(eMap)
-      setLoading(false)
-    }
-    load()
+    getCompanies().then(data => {
+      if (!cancelled) { setCompanies(data); setLoading(false) }
+    })
     return () => { cancelled = true }
   }, [])
 
@@ -65,7 +32,7 @@ export function CompaniesPage() {
   }, [])
 
   const filtered = useMemo(() => {
-    let list = contacts
+    let list = companies
     if (search) {
       const q = search.toLowerCase()
       list = list.filter(c =>
@@ -83,17 +50,11 @@ export function CompaniesPage() {
         case 'stage': return dir * (a.stage ?? '').localeCompare(b.stage ?? '')
         case 'domain': return dir * (a.domain ?? '').localeCompare(b.domain ?? '')
         case 'location': return dir * (a.location ?? '').localeCompare(b.location ?? '')
-        case 'equity': return dir * ((equityMap[a.id] ?? 0) - (equityMap[b.id] ?? 0))
-        case 'last_contact': {
-          const da = a.last_contacted_at ? new Date(a.last_contacted_at).getTime() : 0
-          const db = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0
-          return dir * (da - db)
-        }
         default: return 0
       }
     })
     return list
-  }, [contacts, search, sort, equityMap])
+  }, [companies, search, sort])
 
   const thStyle: React.CSSProperties = {
     padding: '10px 12px',
@@ -130,7 +91,6 @@ export function CompaniesPage() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
       <div style={{
         padding: '28px clamp(16px, 4vw, 32px) 16px',
         borderBottom: '1px solid var(--divider)',
@@ -172,14 +132,13 @@ export function CompaniesPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div style={{ flex: 1, overflow: 'auto', padding: '0 clamp(16px, 4vw, 32px)' }}>
-        {contacts.length === 0 ? (
+        {companies.length === 0 ? (
           <EmptyState
             icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/></svg>}
             heading="No companies yet"
-            subtext="Companies appear here when your contacts have company info. Import contacts or add company details to get started."
-            ctaLabel="Import contacts"
+            subtext="Import companies or add them manually to get started."
+            ctaLabel="Import"
             onCta={() => navigate('/import')}
             ghosts={2}
           />
@@ -196,42 +155,23 @@ export function CompaniesPage() {
                 <th style={thStyle} onClick={() => toggleSort('stage')}>Stage <SortIcon active={sort.col === 'stage'} dir={sort.dir} /></th>
                 <th style={thStyle} onClick={() => toggleSort('domain')}>Domain <SortIcon active={sort.col === 'domain'} dir={sort.dir} /></th>
                 <th style={thStyle} onClick={() => toggleSort('location')}>Location <SortIcon active={sort.col === 'location'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('equity')}>Equity <SortIcon active={sort.col === 'equity'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('last_contact')}>Last Contact <SortIcon active={sort.col === 'last_contact'} dir={sort.dir} /></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => {
-                const eq = equityMap[c.id] ?? 0
-                const label = scoreLabel(eq)
-                const badge = EQUITY_BADGE[label] ?? EQUITY_BADGE.Fading
-                return (
-                  <tr
-                    key={c.id}
-                    onClick={() => navigate(`/contact/${c.id}`)}
-                    style={{ cursor: 'pointer', transition: 'background 0.1s' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <td style={{ ...tdStyle, fontWeight: 500 }}>{c.name}</td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.industry ?? '-'}</td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.stage ?? '-'}</td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.domain ?? '-'}</td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.location ?? '-'}</td>
-                    <td style={tdStyle}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, borderRadius: 100,
-                        padding: '2px 8px', background: badge.bg, color: badge.color,
-                      }}>
-                        {label}
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>
-                      {c.last_contacted_at ? formatRelativeTime(c.last_contacted_at) : 'Never'}
-                    </td>
-                  </tr>
-                )
-              })}
+              {filtered.map(c => (
+                <tr
+                  key={c.id}
+                  style={{ cursor: 'pointer', transition: 'background 0.1s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td style={{ ...tdStyle, fontWeight: 500 }}>{c.name}</td>
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.industry ?? '-'}</td>
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.stage ?? '-'}</td>
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.domain ?? '-'}</td>
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.location ?? '-'}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
