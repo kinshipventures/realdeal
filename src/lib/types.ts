@@ -95,6 +95,21 @@ export interface Contact {
   created_at: string
 }
 
+export interface Company {
+  id: string
+  name: string
+  website: string | null
+  domain: string | null
+  ticker: string | null
+  location: string | null
+  stage: string | null
+  industry: string | null
+  notes: string | null
+  custom_fields: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
 export interface Interaction {
   id: string
   contact_id: string   // single linked Contact record ID

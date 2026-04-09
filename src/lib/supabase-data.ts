@@ -1148,6 +1148,33 @@ export async function getPendingContacts(): Promise<Contact[]> {
   const all = await getContacts(); return all.filter(c => c.status === 'Pending')
 }
 
+// ── Companies (from companies table) ────────────────────────────────────────
+
+export async function getCompanies(): Promise<import('./types').Company[]> {
+  const wsId = getActiveWorkspaceId()
+  if (!wsId) return []
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('workspace_id', wsId)
+    .order('name')
+  if (error) throw error
+  return (data ?? []).map(r => ({
+    id: r.id,
+    name: r.name,
+    website: r.website,
+    domain: r.domain,
+    ticker: r.ticker,
+    location: r.location,
+    stage: r.stage,
+    industry: r.industry,
+    notes: r.notes,
+    custom_fields: (r.custom_fields ?? {}) as Record<string, unknown>,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  }))
+}
+
 export function invalidateAllCaches(): void {
   _podsCache = null; _podsCacheTime = 0; _podsFetch = null
   _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null
