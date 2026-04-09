@@ -667,7 +667,7 @@ export function OrbMap() {
       setMapView('hub')
       mapViewRef.current = 'hub'
       setSelectedPod(null)
-      rebuildHomeView({})
+      rebuildHomeView()
 
       requestAnimationFrame(() => {
         fitView({ padding: 0.22, duration: 250 })
@@ -762,7 +762,7 @@ export function OrbMap() {
       }
       lastInteractedByPodRef.current = lastInteractedByPod
 
-      rebuildHomeView({})
+      rebuildHomeView()
       setPodsCount(allPods.length)
     } catch (err) {
       console.error('Failed to refresh pods after creation:', err)
@@ -932,7 +932,7 @@ export function OrbMap() {
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
       categoriesByPod: categoriesByPodRef.current,
-      savedPositions: {},
+      
       memberCountByPod: memberCountByPodRef.current,
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
