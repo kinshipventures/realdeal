@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
-type Topic = 'start' | 'pods' | 'interactions' | 'scoring' | 'focus' | 'sharing'
+type Topic = 'start' | 'pods' | 'relationships' | 'campaigns' | 'interactions' | 'scoring' | 'focus' | 'sharing'
 
 const topics: { id: Topic; title: string; subtitle: string; icon: string; color: string }[] = [
   { id: 'start', title: 'Getting Started', subtitle: 'What this is and how to use it', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', color: 'var(--color-brand)' },
-  { id: 'pods', title: 'Pods & Categories', subtitle: 'Organize your people into groups', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', color: '#7B1FA2' },
+  { id: 'pods', title: 'Pods', subtitle: 'Organize your people into groups', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', color: '#7B1FA2' },
+  { id: 'relationships', title: 'Relationships', subtitle: 'People and companies in your network', icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', color: '#1565C0' },
+  { id: 'campaigns', title: 'Campaigns', subtitle: 'Track events, fundraises, and outreach', icon: 'M2 3h5v18H2zM9.5 6h5v15h-5zM17 9h5v12h-5z', color: '#E91E63' },
   { id: 'interactions', title: 'Logging Interactions', subtitle: 'Track how you stay in touch', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', color: '#1565C0' },
   { id: 'scoring', title: 'Equity Scoring', subtitle: 'How relationship health is measured', icon: 'M22 12h-4l-3 9L9 3l-3 9H2', color: '#25B439' },
   { id: 'focus', title: 'Focus & Nurturing', subtitle: 'Who to reach out to and when', icon: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2', color: '#FF9800' },
@@ -49,6 +51,8 @@ export function LearnPage() {
       {/* Content */}
       {active === 'start' && <StartSection />}
       {active === 'pods' && <PodsSection />}
+      {active === 'relationships' && <RelationshipsSection />}
+      {active === 'campaigns' && <CampaignsSection />}
       {active === 'interactions' && <InteractionsSection />}
       {active === 'scoring' && <ScoringSection />}
       {active === 'focus' && <FocusSection />}
@@ -175,19 +179,24 @@ function StartSection() {
             color="#7B1FA2"
           />
           <ConceptRow
-            label="Equity"
-            description="A 0-100 health score for each relationship, based on how recently and deeply you've been in touch."
+            label="Relationships"
+            description="People and companies in your network. Toggle between them in one unified view."
+            color="#1565C0"
+          />
+          <ConceptRow
+            label="Campaigns"
+            description="Concrete projects with people attached - events, fundraises, outreach, trips. Track progress through stages."
+            color="#E91E63"
+          />
+          <ConceptRow
+            label="Dashboard"
+            description="Your daily command center. Relationship health metrics, campaign progress, and suggested actions."
             color="#25B439"
           />
           <ConceptRow
-            label="Focus"
-            description="A daily shortlist of who needs your attention most. It picks for you based on priority and cadence."
+            label="Equity"
+            description="A 0-100 health score for each relationship, based on how recently and deeply you've been in touch."
             color="#FF9800"
-          />
-          <ConceptRow
-            label="Interactions"
-            description="Every call, meeting, text, email, or intro you log adds to a contact's health score."
-            color="#1565C0"
           />
         </div>
       </Card>
@@ -233,6 +242,89 @@ function PodsSection() {
           Mark a pod as priority and it gets special treatment: its contacts show up in
           Today's Focus, and it contributes to your overall network health score.
           Non-priority pods are tracked but don't drive your daily agenda.
+        </Prose>
+      </Card>
+    </div>
+  )
+}
+
+// ── Relationships ─────────────────────────────────────────────────────
+
+function RelationshipsSection() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <Prose>
+        Relationships is your unified view of everyone in your network - both people
+        and companies. Toggle between them with the segmented control at the top.
+      </Prose>
+
+      <Card title="People vs Companies">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ConceptRow
+            label="People"
+            description="Individual contacts. Each person can belong to multiple pods and appear in multiple campaigns."
+            color="#1565C0"
+          />
+          <ConceptRow
+            label="Companies"
+            description="Organizations in your network. Searchable by industry, stage, domain, and location."
+            color="#7B1FA2"
+          />
+        </div>
+      </Card>
+
+      <Card title="Multi-pod membership">
+        <Prose>
+          A person can live in multiple pods. For example, someone might be in both
+          "Investors" and "NYC Network." The pod column in the table shows all memberships,
+          and you can manage them from the contact detail panel.
+        </Prose>
+      </Card>
+
+      <Card title="Bulk actions">
+        <Prose>
+          Select multiple people with checkboxes, then use the action bar to add/move them
+          to pods, add them to campaigns, update fields, merge duplicates, or export.
+        </Prose>
+      </Card>
+    </div>
+  )
+}
+
+// ── Campaigns ─────────────────────────────────────────────────────────
+
+function CampaignsSection() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <Prose>
+        Campaigns are concrete projects with people attached. Unlike pods (which are
+        ongoing groups), campaigns have a goal, a deadline, and stages that people
+        move through.
+      </Prose>
+
+      <Card title="Campaign types">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ConceptRow label="Event" description="Dinners, conferences, launches. Track who's invited, responded, and confirmed." color="#7B1FA2" />
+          <ConceptRow label="Investment" description="Fundraises, LP outreach, deal sourcing. Track pipeline from identified to committed." color="#25B439" />
+          <ConceptRow label="Outreach" description="Brand partnerships, collaborations, introductions. Track engagement stages." color="#1565C0" />
+          <ConceptRow label="Other" description="Anything else - trips, hiring pushes, seasonal projects." color="var(--color-text-tertiary)" />
+        </div>
+      </Card>
+
+      <Card title="How it works">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <StepRow number={1} title="Create a campaign" description="Give it a name, pick a type, set an optional deadline." />
+          <StepRow number={2} title="Add people" description="Search and add contacts from the campaign detail panel, or bulk-add from the Relationships view." />
+          <StepRow number={3} title="Track progress" description="Click status badges to advance people through stages: pending, reached, responded, confirmed." />
+          <StepRow number={4} title="Complete it" description="Mark the campaign done when the event is over or the goal is hit." />
+        </div>
+      </Card>
+
+      <Card title="Campaigns vs Pods">
+        <Prose>
+          Pods are ongoing relationship groups ("my investors"). Campaigns are time-bound
+          projects ("Fund III launch dinner on May 7th"). A person can be in a pod AND
+          in a campaign at the same time - they serve different purposes.
         </Prose>
       </Card>
     </div>

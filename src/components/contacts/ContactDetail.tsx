@@ -916,6 +916,95 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )}
             </div>
 
+            {/* Pods */}
+            {pods.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={sectionLabel}>pods</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {pods.map(pod => {
+                    const isIn = (draft.list_ids ?? []).includes(pod.id)
+                    const isPrimary = draft.primary_list_id === pod.id
+                    return (
+                      <button
+                        key={pod.id}
+                        type="button"
+                        onClick={() => {
+                          const currentIds = draft.list_ids ?? []
+                          let nextIds: string[]
+                          let nextPrimary = draft.primary_list_id
+                          if (isIn) {
+                            nextIds = currentIds.filter(id => id !== pod.id)
+                            if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
+                          } else {
+                            nextIds = [...currentIds, pod.id]
+                            if (!nextPrimary) nextPrimary = pod.id
+                          }
+                          setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary }))
+                          if (!isNew && contact) {
+                            updateContact(contact.id, { list_ids: nextIds, primary_list_id: nextPrimary } as Partial<Contact>)
+                              .then(onSaved)
+                          }
+                        }}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 100,
+                          fontSize: 11,
+                          fontWeight: isIn ? 600 : 400,
+                          border: '1px solid',
+                          borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
+                          background: isIn ? `${pod.color ?? 'var(--edge)'}18` : 'transparent',
+                          color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.12s',
+                        }}
+                      >
+                        {pod.name}{isPrimary ? ' *' : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+                {(draft.list_ids ?? []).length > 1 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginBottom: 4 }}>primary pod</div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {(draft.list_ids ?? []).map(podId => {
+                        const pod = pods.find(p => p.id === podId)
+                        if (!pod) return null
+                        const isPrimary = draft.primary_list_id === podId
+                        return (
+                          <button
+                            key={podId}
+                            type="button"
+                            onClick={() => {
+                              setDraft(prev => ({ ...prev, primary_list_id: podId }))
+                              if (!isNew && contact) {
+                                updateContact(contact.id, { primary_list_id: podId } as Partial<Contact>)
+                                  .then(onSaved)
+                              }
+                            }}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: 100,
+                              fontSize: 10,
+                              fontWeight: isPrimary ? 600 : 400,
+                              border: 'none',
+                              background: isPrimary ? (pod.color ?? 'var(--edge)') : 'var(--tint)',
+                              color: isPrimary ? '#fff' : 'var(--color-text-secondary)',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            {pod.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ marginBottom: 24 }}>
               <div style={sectionLabel}>relationship</div>
               {field('introduced_by', 'Introduced By')}

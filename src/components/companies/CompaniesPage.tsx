@@ -12,7 +12,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   return <span style={{ marginLeft: 4, fontSize: 10 }}>{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
-export function CompaniesPage() {
+export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
   const navigate = useNavigate()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
@@ -90,24 +90,28 @@ export function CompaniesPage() {
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
-        padding: '28px clamp(16px, 4vw, 32px) 16px',
-        borderBottom: '1px solid var(--divider)',
-        background: 'var(--surface-panel)',
-      }}>
-        <h1 style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: 22,
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          color: 'var(--color-text-primary)',
-          margin: 0,
-          marginBottom: 16,
+    <div style={{ height: embedded ? undefined : '100%', display: 'flex', flexDirection: 'column', flex: embedded ? 1 : undefined }}>
+      {!embedded && (
+        <div style={{
+          padding: '28px clamp(16px, 4vw, 32px) 16px',
+          borderBottom: '1px solid var(--divider)',
+          background: 'var(--surface-panel)',
         }}>
-          Companies
-        </h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <h1 style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            color: 'var(--color-text-primary)',
+            margin: 0,
+            marginBottom: 16,
+          }}>
+            Companies
+          </h1>
+        </div>
+      )}
+      <div style={{ padding: '12px clamp(16px, 4vw, 32px) 0' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <input
             type="text"
             placeholder="Search companies..."

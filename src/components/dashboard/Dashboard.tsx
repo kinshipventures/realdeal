@@ -32,6 +32,7 @@ import { NeedsAttentionWidget } from './widgets/NeedsAttentionWidget'
 import { ComingUpWidget } from './widgets/ComingUpWidget'
 import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
+import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
 
@@ -327,6 +328,16 @@ export function Dashboard() {
 
   const handleContactClick = useCallback((contact: Contact) => setSelectedContact(contact), [])
 
+  // Listen for campaign open events from child widgets
+  useEffect(() => {
+    function handleOpenCampaign(e: Event) {
+      const id = (e as CustomEvent).detail
+      if (id) setSelectedCampaignId(id)
+    }
+    window.addEventListener('dashboard:open-campaign', handleOpenCampaign)
+    return () => window.removeEventListener('dashboard:open-campaign', handleOpenCampaign)
+  }, [])
+
   const dataReady = !contactsLoading && !podsLoading
 
   if (contactsLoading && podsLoading) {
@@ -384,7 +395,7 @@ export function Dashboard() {
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                   <span style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
-                    Pulse
+                    Dashboard
                   </span>
                 </div>
               )}
@@ -522,33 +533,34 @@ interface OrderedWidgetProps {
 
 // Section metadata — drives headings and grouping
 const SECTION_MAP: Record<string, { heading: string; tooltip: string; tier: 'primary' | 'secondary' | 'tertiary' }> = {
-  'action-items': {
-    heading: 'your day',
-    tooltip: 'Who needs you today -- the people and moments that matter most right now.',
+  'nurture': {
+    heading: 'nurture',
+    tooltip: 'Relationship upkeep -- who needs attention, upcoming moments, and pod health.',
     tier: 'primary',
   },
-  'network-pulse': {
-    heading: 'network pulse',
-    tooltip: 'The big picture -- how your relationship network is doing overall.',
-    tier: 'secondary',
+  'campaigns': {
+    heading: 'campaigns',
+    tooltip: 'Active campaigns -- events, fundraises, outreach, and their progress.',
+    tier: 'primary',
   },
-  'activity-links': {
-    heading: 'activity & links',
-    tooltip: 'What you\'ve been up to and where your active outreach stands.',
+  'activity': {
+    heading: 'activity',
+    tooltip: 'Recent interactions and integrations.',
     tier: 'tertiary',
   },
 }
 
 const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
-  'pod-health': 'network-pulse',
-  'wrapped': 'network-pulse',
-  'todays-focus': 'action-items',
-  'coming-up': 'action-items',
-  'needs-attention': 'action-items',
-  'recent-activity': 'activity-links',
-  'quick-links': 'activity-links',
-  'gmail-sync': 'activity-links',
-  'granola-sync': 'activity-links',
+  'todays-focus': 'nurture',
+  'coming-up': 'nurture',
+  'needs-attention': 'nurture',
+  'pod-health': 'nurture',
+  'wrapped': 'nurture',
+  'campaign-progress': 'campaigns',
+  'quick-links': 'campaigns',
+  'recent-activity': 'activity',
+  'gmail-sync': 'activity',
+  'granola-sync': 'activity',
 }
 
 function renderOrderedWidgets(props: OrderedWidgetProps) {
@@ -665,6 +677,21 @@ function renderOrderedWidgets(props: OrderedWidgetProps) {
             return (
               <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
                 <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
+              </div>
+            )
+          }
+          if (id === 'campaign-progress') {
+            return (
+              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
+                <CampaignProgressWidget
+                  campaigns={campaigns}
+                  campaignContacts={campaignContacts}
+                  loading={campaignsLoading}
+                  onCampaignClick={(cId) => {
+                    // Dispatch to parent to open campaign detail
+                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                  }}
+                />
               </div>
             )
           }

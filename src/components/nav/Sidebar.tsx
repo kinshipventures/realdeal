@@ -33,12 +33,9 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   }
 
   const isPods = location.pathname === '/' || location.pathname === '/pods'
-  const isPulse = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
-  const isContacts = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/')
-  const isCompanies = location.pathname === '/companies'
-  const isPipelines = location.pathname.startsWith('/pipelines')
-  const isProjects = location.pathname.startsWith('/projects')
-  const isReports = location.pathname === '/reports'
+  const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
+  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
+  const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/pipelines') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
   const isChangelog = location.pathname === '/changelog'
 
@@ -120,8 +117,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 
       <Divider />
 
-      {/* Map - primary */}
-      <div style={{ padding: '4px 8px' }}>
+      {/* Primary nav */}
+      <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
           icon={<PodsIcon />}
           label="Pods"
@@ -129,71 +126,28 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           collapsed={collapsed}
           onClick={() => navigate('/pods')}
         />
-      </div>
-
-      {/* Core section */}
-      <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
-          icon={<PulseIcon />}
-          label="Pulse"
-          active={isPulse}
+          icon={<DashboardIcon />}
+          label="Dashboard"
+          active={isDashboard}
           collapsed={collapsed}
           onClick={() => navigate('/pulse')}
         />
         <NavItem
-          icon={<ContactsIcon />}
-          label="People"
-          active={isContacts}
+          icon={<RelationshipsIcon />}
+          label="Relationships"
+          active={isRelationships}
           collapsed={collapsed}
           onClick={() => navigate('/contacts')}
         />
+        <NavItem
+          icon={<CampaignsIcon />}
+          label="Campaigns"
+          active={isCampaigns}
+          collapsed={collapsed}
+          onClick={() => navigate('/campaigns')}
+        />
       </div>
-
-      {/* Secondary section - collapsible */}
-      {!collapsed && (
-        <div style={{ padding: '4px 8px' }}>
-          <DisclosureSection label="More" defaultOpen={isCompanies || isPipelines || isReports}>
-            <NavItem
-              icon={<CompaniesIcon />}
-              label="Companies"
-              active={isCompanies}
-              collapsed={collapsed}
-              onClick={() => navigate('/companies')}
-            />
-            <NavItem
-              icon={<PipelinesIcon />}
-              label="Pipelines"
-              active={isPipelines}
-              collapsed={collapsed}
-              onClick={() => navigate('/pipelines')}
-            />
-            <NavItem
-              icon={<ProjectsIcon />}
-              label="Projects"
-              active={false}
-              collapsed={collapsed}
-              onClick={() => {}}
-              hint="Soon"
-              labelStyle={{ color: 'var(--color-text-tertiary)' }}
-            />
-            <NavItem
-              icon={<ReportsIcon />}
-              label="Reports"
-              active={isReports}
-              collapsed={collapsed}
-              onClick={() => navigate('/reports')}
-            />
-          </DisclosureSection>
-        </div>
-      )}
-      {collapsed && (
-        <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <NavItem icon={<CompaniesIcon />} label="Companies" active={isCompanies} collapsed={collapsed} onClick={() => navigate('/companies')} />
-          <NavItem icon={<PipelinesIcon />} label="Pipelines" active={isPipelines} collapsed={collapsed} onClick={() => navigate('/pipelines')} />
-          <NavItem icon={<ProjectsIcon />} label="Projects" active={false} collapsed={collapsed} onClick={() => {}} />
-          <NavItem icon={<ReportsIcon />} label="Reports" active={isReports} collapsed={collapsed} onClick={() => navigate('/reports')} />
-        </div>
-      )}
 
       <Divider />
 
@@ -432,53 +386,6 @@ function Divider() {
   return <div style={{ height: 1, background: 'var(--divider)', margin: '8px 12px' }} />
 }
 
-function DisclosureSection({ label, defaultOpen = false, children }: { label: string; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          width: '100%',
-          minHeight: 44,
-          padding: '6px 8px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'var(--color-text-tertiary)',
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase' as const,
-          fontFamily: 'inherit',
-        }}
-      >
-        <svg
-          width="10" height="10" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-          style={{
-            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.15s ease',
-          }}
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-        {label}
-      </button>
-      {open && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
 const iconProps = {
@@ -499,7 +406,7 @@ function PodsIcon() {
   )
 }
 
-function PulseIcon() {
+function DashboardIcon() {
   return (
     <svg {...iconProps}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -507,7 +414,7 @@ function PulseIcon() {
   )
 }
 
-function ContactsIcon() {
+function RelationshipsIcon() {
   return (
     <svg {...iconProps}>
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -518,31 +425,12 @@ function ContactsIcon() {
   )
 }
 
-function PipelinesIcon() {
+function CampaignsIcon() {
   return (
     <svg {...iconProps}>
       <rect x="2" y="3" width="5" height="18" rx="1"/>
       <rect x="9.5" y="6" width="5" height="15" rx="1"/>
       <rect x="17" y="9" width="5" height="12" rx="1"/>
-    </svg>
-  )
-}
-
-function CompaniesIcon() {
-  return (
-    <svg {...iconProps}>
-      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
-      <line x1="9" y1="22" x2="9" y2="2"/>
-      <line x1="15" y1="22" x2="15" y2="2"/>
-      <line x1="4" y1="12" x2="20" y2="12"/>
-    </svg>
-  )
-}
-
-function ProjectsIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
     </svg>
   )
 }
@@ -564,16 +452,6 @@ function ChangelogIcon() {
       <polyline points="14 2 14 8 20 8"/>
       <line x1="16" y1="13" x2="8" y2="13"/>
       <line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>
-  )
-}
-
-function ReportsIcon() {
-  return (
-    <svg {...iconProps}>
-      <line x1="18" y1="20" x2="18" y2="10"/>
-      <line x1="12" y1="20" x2="12" y2="4"/>
-      <line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
   )
 }

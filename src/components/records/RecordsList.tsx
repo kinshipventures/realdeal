@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download } from 'lucide-react'
-import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getProjects, addRecordToProject, invalidateProjectsCache } from '../../lib/airtable'
+import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
-import { AddToPipelineModal } from '../pipelines/AddToPipelineModal'
 import { MergeModal } from '../merge/MergeModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
-import type { Contact, Pod, Category, Project, RelationshipType, RelationshipStatus } from '../../lib/types'
+import { CompaniesPage } from '../companies/CompaniesPage'
+import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus } from '../../lib/types'
 import type { Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -135,11 +135,48 @@ function matchesRecency(contact: Contact, recency: RecencyFilter): boolean {
   return new Date(contact.last_contacted_at).getTime() >= cutoff
 }
 
+// ── View toggle ─────────────────────────────────────────────────────────────
+
+function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onChange: (v: 'people' | 'companies') => void }) {
+  const base: React.CSSProperties = {
+    padding: '5px 14px',
+    fontSize: 12,
+    fontWeight: 500,
+    border: 'none',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    transition: 'background 0.12s, color 0.12s',
+  }
+  return (
+    <div style={{
+      display: 'inline-flex',
+      background: 'var(--tint)',
+      borderRadius: 8,
+      padding: 2,
+    }}>
+      <button type="button" onClick={() => onChange('people')} style={{
+        ...base,
+        background: active === 'people' ? 'var(--color-bg)' : 'transparent',
+        color: active === 'people' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+        boxShadow: active === 'people' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+      }}>People</button>
+      <button type="button" onClick={() => onChange('companies')} style={{
+        ...base,
+        background: active === 'companies' ? 'var(--color-bg)' : 'transparent',
+        color: active === 'companies' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+        boxShadow: active === 'companies' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+      }}>Companies</button>
+    </div>
+  )
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function RecordsList() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeView = searchParams.get('view') === 'companies' ? 'companies' : 'people'
 
   // Data
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -217,11 +254,10 @@ export function RecordsList() {
   const [updateField, setUpdateField] = useState('')
   const [updateValue, setUpdateValue] = useState('')
   const [bulkOperating, setBulkOperating] = useState(false)
-  const [showBulkPipelineModal, setShowBulkPipelineModal] = useState(false)
   const [showMergeModal, setShowMergeModal] = useState(false)
-  const [showAddToProject, setShowAddToProject] = useState(false)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [showAddToCampaign, setShowAddToCampaign] = useState(false)
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
@@ -244,19 +280,19 @@ export function RecordsList() {
   useEffect(() => {
     let stale = false
     async function load() {
-      const [allContacts, allPods, allCategories, allInteractions, allProjects] = await Promise.all([
+      const [allContacts, allPods, allCategories, allInteractions, allCampaigns] = await Promise.all([
         getContacts(),
         getPods(),
         getCategories(),
         getAllInteractions(),
-        getProjects(),
+        getCampaigns(),
       ])
       if (stale) return
 
       setPods(allPods)
       setCategories(allCategories)
       setContacts(allContacts)
-      setProjects(allProjects)
+      setCampaigns(allCampaigns)
 
       const eqMap: Record<string, number> = {}
       for (const contact of allContacts) {
@@ -466,21 +502,20 @@ export function RecordsList() {
 
   // ── Bulk action handlers ──────────────────────────────────────────────────
 
-  async function handleBulkAddToPod(podId: string) {
+  async function handleBulkPodAction(podId: string, mode: 'add' | 'move') {
     setShowPodPicker(false)
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
     const pod = pods.find(p => p.id === podId)
     for (const contact of selected) {
-      if (contact.list_ids.includes(podId)) continue
-      const newListIds = [...contact.list_ids, podId]
-      const primaryId = contact.primary_list_id ?? podId
-      await updateContact(contact.id, { list_ids: newListIds, primary_list_id: primaryId })
+      const newListIds = mode === 'move' ? [podId] : (contact.list_ids.includes(podId) ? contact.list_ids : [...contact.list_ids, podId])
+      if (mode === 'add' && contact.list_ids.includes(podId)) continue
+      await updateContact(contact.id, { list_ids: newListIds, primary_list_id: podId })
       await logSystemEvent({
         contactId: contact.id,
         type: 'pod_change',
-        detail: { action: 'added', pod: pod?.name ?? podId, podId },
-        notes: `Added to ${pod?.name ?? 'pod'}`,
+        detail: { action: mode === 'move' ? 'moved' : 'added', pod: pod?.name ?? podId, podId },
+        notes: `${mode === 'move' ? 'Moved to' : 'Added to'} ${pod?.name ?? 'pod'}`,
       })
     }
     invalidateContactsCache()
@@ -677,15 +712,15 @@ export function RecordsList() {
     setBulkOperating(false)
   }
 
-  async function handleAddToProject() {
-    if (!selectedProjectId) return
+  async function handleAddToCampaign() {
+    if (!selectedCampaignId) return
     for (const id of selectedIds) {
-      await addRecordToProject(selectedProjectId, id)
+      await addContactToCampaign(selectedCampaignId, id)
     }
-    invalidateProjectsCache()
+    invalidateCampaignsCache()
     setSelectedIds(new Set())
-    setShowAddToProject(false)
-    setSelectedProjectId(null)
+    setShowAddToCampaign(false)
+    setSelectedCampaignId(null)
   }
 
   // Ordered visible columns -- respects custom column order
@@ -714,12 +749,44 @@ export function RecordsList() {
     )
   }
 
+  const viewToggle = (
+    <ViewToggle active={activeView} onChange={(v) => {
+      const next = new URLSearchParams(searchParams)
+      if (v === 'companies') next.set('view', 'companies')
+      else next.delete('view')
+      setSearchParams(next, { replace: true })
+    }} />
+  )
+
+  if (activeView === 'companies') {
+    return (
+      <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
+        <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 0 }}>
+            <h1 style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 28,
+              fontWeight: 800,
+              margin: 0,
+              color: 'var(--color-text-primary)',
+              letterSpacing: '-0.03em',
+            }}>
+              Relationships
+            </h1>
+            {viewToggle}
+          </div>
+        </div>
+        <CompaniesPage embedded />
+      </div>
+    )
+  }
+
   return (
     <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
 
       {/* Header */}
       <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
             fontSize: 28,
@@ -728,8 +795,9 @@ export function RecordsList() {
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.03em',
           }}>
-            Your People
+            Relationships
           </h1>
+          {viewToggle}
           <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', fontWeight: 400 }}>
             {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
           </span>
@@ -958,7 +1026,7 @@ export function RecordsList() {
             {bulkOperating ? 'Working...' : `${selectedIds.size} selected`}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* Add to pod */}
+            {/* Pod actions */}
             <div ref={podPickerRef} style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -966,19 +1034,35 @@ export function RecordsList() {
                 disabled={bulkOperating}
                 style={bulkBtnStyle}
               >
-                Add to pod
+                Pod
+                <span style={{ marginLeft: 4, opacity: 0.5 }}>&#9662;</span>
               </button>
               {showPodPicker && (
-                <div style={{ ...dropdownStyle, minWidth: 160 }}>
+                <div style={{ ...dropdownStyle, minWidth: 200 }}>
+                  <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Add to pod
+                  </div>
                   {pods.map(pod => (
                     <div
-                      key={pod.id}
-                      onClick={() => handleBulkAddToPod(pod.id)}
+                      key={`add-${pod.id}`}
+                      onClick={() => handleBulkPodAction(pod.id, 'add')}
                       style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8 }}
                     >
-                      {pod.color && (
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />
-                      )}
+                      {pod.color && <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
+                      {pod.name}
+                    </div>
+                  ))}
+                  <div style={{ height: 1, background: 'var(--divider)', margin: '4px 0' }} />
+                  <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Move to pod
+                  </div>
+                  {pods.map(pod => (
+                    <div
+                      key={`move-${pod.id}`}
+                      onClick={() => handleBulkPodAction(pod.id, 'move')}
+                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8 }}
+                    >
+                      {pod.color && <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
                       {pod.name}
                     </div>
                   ))}
@@ -1098,19 +1182,11 @@ export function RecordsList() {
             </button>
             <button
               type="button"
-              onClick={() => setShowBulkPipelineModal(true)}
+              onClick={() => setShowAddToCampaign(true)}
               disabled={bulkOperating}
               style={bulkBtnStyle}
             >
-              Add to Pipeline
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAddToProject(true)}
-              disabled={bulkOperating}
-              style={bulkBtnStyle}
-            >
-              Add to Project
+              Add to Campaign
             </button>
           </div>
           <button
@@ -1121,15 +1197,6 @@ export function RecordsList() {
             Clear
           </button>
         </div>
-      )}
-
-      {showBulkPipelineModal && (
-        <AddToPipelineModal
-          open={showBulkPipelineModal}
-          onClose={() => setShowBulkPipelineModal(false)}
-          contactIds={Array.from(selectedIds)}
-          onCreated={() => { setShowBulkPipelineModal(false); setSelectedIds(new Set()) }}
-        />
       )}
 
       {showMergeModal && selectedIds.size === 2 && (() => {
@@ -1153,42 +1220,43 @@ export function RecordsList() {
         )
       })()}
 
-      {showAddToProject && (
+      {showAddToCampaign && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setShowAddToProject(false)} />
-          <div style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}>
-            <h3 style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600 }}>Add to Project</h3>
-            {projects.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No projects available.</p>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setShowAddToCampaign(false)} />
+          <div style={{ position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(20px)', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}>
+            <h3 style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
+            {campaigns.filter(c => c.status === 'active').length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No active campaigns.</p>
             ) : (
-              projects.map(p => (
+              campaigns.filter(c => c.status === 'active').map(c => (
                 <div
-                  key={p.id}
-                  onClick={() => setSelectedProjectId(p.id)}
+                  key={c.id}
+                  onClick={() => setSelectedCampaignId(c.id)}
                   style={{
                     padding: '8px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
-                    background: selectedProjectId === p.id ? 'var(--tint)' : 'transparent',
+                    background: selectedCampaignId === c.id ? 'var(--tint)' : 'transparent',
                   }}
-                  onMouseEnter={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'var(--tint)' }}
-                  onMouseLeave={e => { if (selectedProjectId !== p.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+                  onMouseEnter={e => { if (selectedCampaignId !== c.id) (e.currentTarget as HTMLDivElement).style.background = 'var(--tint)' }}
+                  onMouseLeave={e => { if (selectedCampaignId !== c.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
                 >
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{p.name}</div>
-                  {p.description && <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{p.description}</div>}
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>{c.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{c.type} - {c.contact_ids.length} people</div>
                 </div>
               ))
             )}
             <button
-              disabled={!selectedProjectId}
-              onClick={handleAddToProject}
+              disabled={!selectedCampaignId}
+              onClick={handleAddToCampaign}
               style={{
                 marginTop: 12, width: '100%', padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: selectedProjectId ? 'var(--color-text-primary)' : 'var(--edge-strong)',
-                color: selectedProjectId ? '#fff' : 'var(--color-text-tertiary)',
-                cursor: selectedProjectId ? 'pointer' : 'default',
+                background: selectedCampaignId ? 'var(--color-text-primary)' : 'var(--edge-strong)',
+                color: selectedCampaignId ? '#fff' : 'var(--color-text-tertiary)',
+                cursor: selectedCampaignId ? 'pointer' : 'default',
                 fontSize: 14, fontWeight: 500,
+                fontFamily: 'inherit',
               }}
             >
-              Add {selectedIds.size} record{selectedIds.size !== 1 ? 's' : ''}
+              Add {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}
             </button>
           </div>
         </div>
@@ -1387,24 +1455,23 @@ export function RecordsList() {
                             {contact.company ?? '—'}
                           </span>
                         )}
-                        {col.id === 'pod' && (
-                          primaryPod ? (
+                        {col.id === 'pod' && (() => {
+                          const contactPods = contact.list_ids.map(id => pods.find(p => p.id === id)).filter(Boolean) as Pod[]
+                          if (contactPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)' }}>--</span>
+                          return (
                             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {primaryPod.color && (
-                                <span style={{
-                                  width: 7,
-                                  height: 7,
-                                  borderRadius: '50%',
-                                  background: primaryPod.color,
-                                  flexShrink: 0,
-                                }} />
+                              {contactPods.map((p, i) => (
+                                <span key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.color ?? 'var(--edge)', flexShrink: 0 }} />
+                                  {i === 0 && <span style={{ color: 'var(--color-text-secondary)' }}>{p.name}</span>}
+                                </span>
+                              ))}
+                              {contactPods.length > 1 && (
+                                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>+{contactPods.length - 1}</span>
                               )}
-                              <span style={{ color: 'var(--color-text-secondary)' }}>{primaryPod.name}</span>
                             </span>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>
                           )
-                        )}
+                        })()}
                         {col.id === 'equity' && (
                           <span style={{
                             display: 'inline-flex',

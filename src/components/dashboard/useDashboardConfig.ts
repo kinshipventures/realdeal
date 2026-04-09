@@ -9,6 +9,7 @@ export type WidgetId =
   | 'coming-up'
   | 'recent-activity'
   | 'quick-links'
+  | 'campaign-progress'
   | 'pending-tray'
   | 'gmail-sync'
   | 'granola-sync'
@@ -24,14 +25,15 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
   { id: 'coming-up', label: 'Coming Up' },
   { id: 'recent-activity', label: 'Recent Activity' },
   { id: 'quick-links', label: 'Quick Links' },
+  { id: 'campaign-progress', label: 'Campaign Progress' },
   { id: 'pending-tray', label: 'Pending Tray' },
   { id: 'gmail-sync', label: 'Email Sync' },
   { id: 'granola-sync', label: 'Meeting Notes' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync', 'granola-sync'],
-  focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'quick-links'],
+  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync', 'granola-sync'],
+  focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress'],
 }
 
 // Orderable widgets (equity lives in header band, not the widget flow)
@@ -42,6 +44,7 @@ export const DEFAULT_ORDER: WidgetId[] = [
   'needs-attention',
   'pod-health',
   'wrapped',
+  'campaign-progress',
   'recent-activity',
   'quick-links',
   'gmail-sync',
