@@ -88,7 +88,7 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'introduced by': 'Introduced By', 'intro by': 'Introduced By',
   'intel notes': 'Intel Notes', 'intel': 'Intel Notes',
   'contact frequency': 'Contact Frequency', 'frequency': 'Contact Frequency', 'cadence': 'Contact Frequency',
-  'category': '_category',
+  'category': '_category' as any,
 }
 
 // ── CSV parsing ───────────────────────────────────────────────────────────────

@@ -823,7 +823,7 @@ export function ImportPanel() {
                               {hasWarning && (
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CC7700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                                   style={{ display: 'block' }}
-                                  title={warns.map(w =>
+                                  aria-label={warns.map(w =>
                                     w.kind === 'missing_name' ? 'Missing name'
                                     : w.kind === 'duplicate' ? `Duplicate: ${w.detail}`
                                     : `Bad date: ${w.detail}`

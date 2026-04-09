@@ -189,7 +189,8 @@ export async function updateCategory(id: string, data: Partial<Pick<Category, 'n
     if (cat) Object.assign(cat, data)
     return cat ?? ({ id, ...data } as Category)
   }
-  const { data: row, error } = await supabase.from('categories').update(data).eq('id', id).select().single()
+  const { icon, ...updateData } = data as any
+  const { data: row, error } = await supabase.from('categories').update(updateData).eq('id', id).select().single()
   if (error) throw error
   _categoriesCache = null
   return mapCategory(row)
@@ -358,7 +359,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   }
   if (data.company_record_id !== undefined) update.company_id = data.company_record_id
 
-  const { data: row, error } = await supabase.from('contacts').update(update).eq('id', id).select().single()
+  const { data: row, error } = await supabase.from('contacts').update(update as any).eq('id', id).select().single()
   if (error) throw error
 
   if (data.list_ids !== undefined) {
