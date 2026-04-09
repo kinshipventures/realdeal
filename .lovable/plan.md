@@ -1,48 +1,38 @@
 
 
-# Email/Password Fallback Login
+## Plan: Public Marketing Landing Page
 
-## What this does
-Adds email + password sign-up and sign-in as a second auth method on the login page, below the Google button. Testers who cannot use Google OAuth can create an account with email/password instead.
+### Summary
+Create a public landing page at `/` for unauthenticated visitors. Move the authenticated app shell to render under existing routes. The landing page will have a hero section, feature highlights, and CTA buttons leading to `/login`.
 
-## Changes
+### Routing changes
 
-### 1. LoginPage.tsx
-- Add a toggle or tab to switch between Google and email/password modes
-- Email mode shows: email input, password input, submit button, and a "Sign up / Sign in" toggle
-- Uses `supabase.auth.signUp()` and `supabase.auth.signInWithPassword()` directly
-- Show inline validation errors (wrong password, email taken, etc.)
-- Keep Google button always visible at top; email form below a divider ("or continue with email")
+- New public route: `/` renders `<LandingPage />` (only for unauthenticated users)
+- In `App.tsx`, add logic: if user is not logged in, `/` shows the landing page. If logged in, `/` redirects to `/pods` (or shows the app as it does now).
+- Simplest approach: add a `<Route index element={<LandingRedirect />} />` outside RequireAuth that checks session - if authenticated, renders `<Navigate to="/pods" />`, otherwise renders `<LandingPage />`.
 
-### 2. Enable auto-confirm for email signups
-Since this is for alpha testers, email verification adds friction. Use `cloud--configure_auth` to enable auto-confirm so testers can sign in immediately after signup.
+### New file: `src/components/landing/LandingPage.tsx`
 
-### 3. AccountPage.tsx
-- No changes needed - sign out already works for any auth method
+Sections (single scrolling page):
 
-## Layout sketch
+1. **Hero** - "RealDeal" heading in serif, tagline "Feed what feeds you", brief subtitle about relationship management, two CTAs ("Get Started" -> /login?signup=1, "Try the Demo" -> demo mode). Background uses the app's warm `#F5F4F0` with a subtle orb visual element.
 
-```text
-+---------------------------+
-|        RealDeal           |
-|   Sign in to continue     |
-|                           |
-| [G] Continue with Google  |
-|                           |
-|  ------- or -------       |
-|                           |
-|  Email  [____________]    |
-|  Password [__________]    |
-|                           |
-|  [  Sign in  ]            |
-|  Don't have an account?   |
-|  Sign up                  |
-|                           |
-|  Try demo mode            |
-+---------------------------+
-```
+2. **Features** - Three cards in a row (responsive to stacked on mobile):
+   - "Visual Network Map" - orb-based visualization
+   - "Social Equity Scoring" - relationship health tracking
+   - "Smart Pods" - organized contact groups with cadence
 
-## Files modified
-- `src/components/auth/LoginPage.tsx` - add email/password form
-- Auth config - enable auto-confirm for alpha
+3. **How it works** - Three numbered steps: Import contacts, Organize into pods, Stay connected with smart nudges.
+
+4. **CTA footer** - Final call to action with sign-up button.
+
+### Design approach
+- Uses existing CSS custom properties (`--color-brand`, `--font-serif`, `--font-sans`, `--color-bg`, etc.)
+- Inline styles consistent with the rest of the app (no Tailwind classes in this codebase pattern)
+- Responsive: flexbox layout, wraps on mobile
+- Sticky top nav with logo + "Sign in" / "Get Started" buttons
+
+### Files to modify
+- `src/App.tsx` - restructure index route for public/authenticated split
+- `src/components/landing/LandingPage.tsx` - new file
 
