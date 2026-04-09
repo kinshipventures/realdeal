@@ -1,38 +1,40 @@
 
 
-## Plan: Public Marketing Landing Page
+## Plan: Social Proof + App Preview for Landing Page
 
-### Summary
-Create a public landing page at `/` for unauthenticated visitors. Move the authenticated app shell to render under existing routes. The landing page will have a hero section, feature highlights, and CTA buttons leading to `/login`.
+### 1. App preview mockup in hero section
 
-### Routing changes
+Replace the decorative orbs with a faux browser-window mockup containing an SVG illustration of the app's dashboard/orb map. The mockup will have:
+- macOS-style window chrome (traffic light dots, title bar)
+- An SVG rendering of the orb map view - hub orb in center, pod orbs around it with connecting lines and health rings
+- Subtle drop shadow and rounded corners
+- Sits below the CTA buttons where the orbs currently are
 
-- New public route: `/` renders `<LandingPage />` (only for unauthenticated users)
-- In `App.tsx`, add logic: if user is not logged in, `/` shows the landing page. If logged in, `/` redirects to `/pods` (or shows the app as it does now).
-- Simplest approach: add a `<Route index element={<LandingRedirect />} />` outside RequireAuth that checks session - if authenticated, renders `<Navigate to="/pods" />`, otherwise renders `<LandingPage />`.
+### 2. Social proof / testimonials section
 
-### New file: `src/components/landing/LandingPage.tsx`
+Insert between Features and How It Works. Two parts:
 
-Sections (single scrolling page):
+**a) "Trusted by" logo bar** - A horizontal row of names/logos referencing Kinship Ventures:
+- "As used by Moj Mahdara, Gwyneth Paltrow, and Trina Spear at Kinship Ventures"
+- Link to kinshipventures.co
 
-1. **Hero** - "RealDeal" heading in serif, tagline "Feed what feeds you", brief subtitle about relationship management, two CTAs ("Get Started" -> /login?signup=1, "Try the Demo" -> demo mode). Background uses the app's warm `#F5F4F0` with a subtle orb visual element.
+**b) Testimonial cards** - 2-3 quote cards with:
+- Moj Mahdara, Co-Founder & Managing Partner, Kinship Ventures: quote about relationship management and staying connected across 150+ cap tables
+- Gwyneth Paltrow: quote about the power of nurturing your network
+- Trina Spear: quote about high-agency relationship building
 
-2. **Features** - Three cards in a row (responsive to stacked on mobile):
-   - "Visual Network Map" - orb-based visualization
-   - "Social Equity Scoring" - relationship health tracking
-   - "Smart Pods" - organized contact groups with cadence
+Cards styled with `--surface-panel` background, serif quote text, small avatar placeholder circles with initials.
 
-3. **How it works** - Three numbered steps: Import contacts, Organize into pods, Stay connected with smart nudges.
+### 3. Files to modify
 
-4. **CTA footer** - Final call to action with sign-up button.
+- `src/components/landing/LandingPage.tsx` - all changes in this single file:
+  - Replace decorative orbs div (lines 138-158) with SVG app preview mockup
+  - Add `TESTIMONIALS` array constant
+  - Add social proof section between Features and How It Works sections
 
-### Design approach
-- Uses existing CSS custom properties (`--color-brand`, `--font-serif`, `--font-sans`, `--color-bg`, etc.)
-- Inline styles consistent with the rest of the app (no Tailwind classes in this codebase pattern)
-- Responsive: flexbox layout, wraps on mobile
-- Sticky top nav with logo + "Sign in" / "Get Started" buttons
+### Technical details
 
-### Files to modify
-- `src/App.tsx` - restructure index route for public/authenticated split
-- `src/components/landing/LandingPage.tsx` - new file
+- SVG mockup: inline SVG with browser chrome (rect for title bar, three colored circles for traffic lights), then simplified orb map illustration (circles + lines mimicking the real app)
+- Testimonial quotes will be hardcoded strings - these are real people from kinshipventures.co
+- No new dependencies or files needed
 
