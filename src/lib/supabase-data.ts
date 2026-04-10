@@ -272,9 +272,8 @@ let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
 
 async function fetchContacts(): Promise<Contact[]> {
-  const { data, error } = await supabase.from('contacts').select('*')
-  if (error) throw error
-  return enrichContactJunctions(data ?? [])
+  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*'))
+  return enrichContactJunctions(data)
 }
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
