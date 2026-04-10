@@ -214,17 +214,20 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
   const BATCH = 200
   const podRows: { contact_id: string; pod_id: string; is_primary: boolean }[] = []
   const catRows: { contact_id: string; category_id: string }[] = []
+  const companyRows: { contact_id: string; company_id: string; is_primary: boolean }[] = []
 
   for (let i = 0; i < contactIds.length; i += BATCH) {
     const batch = contactIds.slice(i, i + BATCH)
-    const [podRes, catRes] = await Promise.all([
+    const [podRes, catRes, coRes] = await Promise.all([
       supabase.from('contact_pods').select('contact_id, pod_id, is_primary').in('contact_id', batch),
       supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', batch),
+      supabase.from('contact_companies').select('contact_id, company_id, is_primary').in('contact_id', batch),
     ])
     if (podRes.error) throw new Error(`contact_pods query failed: ${podRes.error.message}`)
     if (catRes.error) throw new Error(`contact_categories query failed: ${catRes.error.message}`)
     podRows.push(...(podRes.data ?? []))
     catRows.push(...(catRes.data ?? []))
+    companyRows.push(...(coRes.data ?? []))
   }
 
   const podMap = new Map<string, { pod_ids: string[]; primary: string | null }>()
@@ -240,7 +243,14 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
     if (!arr) { arr = []; catMap.set(jc.contact_id, arr) }
     arr.push(jc.category_id)
   }
-  return contacts.map(r => mapContact(r, podMap.get(r.id), catMap.get(r.id)))
+  const companyMap = new Map<string, { company_ids: string[]; primary: string | null }>()
+  for (const cc of companyRows) {
+    let entry = companyMap.get(cc.contact_id)
+    if (!entry) { entry = { company_ids: [], primary: null }; companyMap.set(cc.contact_id, entry) }
+    entry.company_ids.push(cc.company_id)
+    if (cc.is_primary) entry.primary = cc.company_id
+  }
+  return contacts.map(r => mapContact(r, podMap.get(r.id), catMap.get(r.id), companyMap.get(r.id)))
 }
 
 function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | null }, catIds?: string[]): Contact {
