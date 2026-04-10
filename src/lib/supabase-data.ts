@@ -253,7 +253,7 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
   return contacts.map(r => mapContact(r, podMap.get(r.id), catMap.get(r.id), companyMap.get(r.id)))
 }
 
-function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | null }, catIds?: string[]): Contact {
+function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | null }, catIds?: string[], companyInfo?: { company_ids: string[]; primary: string | null }): Contact {
   return {
     id: r.id, name: r.name, email: r.email ?? null, phone: r.phone ?? null,
     company: r.company ?? null, role: r.role ?? null, location: r.location ?? null,
@@ -270,7 +270,9 @@ function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | nul
     next_follow_up_date: r.next_follow_up_date ?? null, next_action: r.next_action ?? null,
     kv_fund_investor: r.kv_fund_investor ?? null, spv_investor: r.spv_investor ?? null,
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
-    company_record_id: r.company_id ?? null, industry: r.industry ?? null, stage: r.stage ?? null,
+    company_record_id: companyInfo?.primary ?? r.company_id ?? null,
+    company_ids: companyInfo?.company_ids ?? (r.company_id ? [r.company_id] : []),
+    industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
     email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
     custom_fields: r.custom_fields ?? {}, created_at: r.created_at,

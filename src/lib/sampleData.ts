@@ -74,6 +74,7 @@ const contact = (id: string, name: string, opts: {
   type: opts.type ?? 'Contact',
   status: opts.status ?? 'Active',
   company_record_id: opts.company_record_id ?? null,
+  company_ids: opts.company_record_id ? [opts.company_record_id] : [],
   industry: opts.industry ?? null,
   stage: opts.stage ?? null,
   ticker: opts.ticker ?? null,
