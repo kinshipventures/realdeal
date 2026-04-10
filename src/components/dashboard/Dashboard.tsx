@@ -36,7 +36,7 @@ import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
 
-type DashboardTab = 'nurture' | 'campaigns'
+export type DashboardTab = 'nurture' | 'campaigns'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
@@ -520,7 +520,7 @@ export function Dashboard() {
             campaignName={campaign.name}
             campaignType={campaign.type}
             campaignDeadline={campaign.deadline}
-            campaignStatus={campaign.status}
+            campaignStatus={campaign.status as 'active' | 'completed'}
             contacts={contacts}
             pods={pods}
             onClose={() => setSelectedCampaignId(null)}
