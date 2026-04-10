@@ -85,7 +85,8 @@ export interface Contact {
   // v2 relationship fields
   type: RelationshipType
   status: RelationshipStatus
-  company_record_id: string | null
+  company_record_id: string | null  // primary company (first in company_ids)
+  company_ids: string[]              // all linked company IDs
   industry: string | null
   stage: string | null
   ticker: string | null
