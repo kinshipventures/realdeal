@@ -404,14 +404,30 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
       )
     }
   }
+  if (data.company_ids !== undefined || data.company_record_id !== undefined) {
+    const userId = await getUserId()
+    const wsId = getActiveWorkspaceId()
+    await supabase.from('contact_companies').delete().eq('contact_id', id)
+    const newCompanyIds = data.company_ids ?? (data.company_record_id ? [data.company_record_id] : [])
+    if (newCompanyIds.length) {
+      await supabase.from('contact_companies').insert(
+        newCompanyIds.map((company_id, i) => ({
+          user_id: userId, workspace_id: wsId, contact_id: id, company_id,
+          is_primary: data.company_record_id ? company_id === data.company_record_id : i === 0,
+        }))
+      )
+    }
+  }
 
-  const [podJ, catJ] = await Promise.all([
+  const [podJ, catJ, coJ] = await Promise.all([
     supabase.from('contact_pods').select('pod_id, is_primary').eq('contact_id', id),
     supabase.from('contact_categories').select('category_id').eq('contact_id', id),
+    supabase.from('contact_companies').select('company_id, is_primary').eq('contact_id', id),
   ])
   const podInfo = { pod_ids: (podJ.data ?? []).map(j => j.pod_id), primary: (podJ.data ?? []).find(j => j.is_primary)?.pod_id ?? null }
   const catIds = (catJ.data ?? []).map(j => j.category_id)
-  const updated = mapContact(row, podInfo, catIds)
+  const companyInfo = { company_ids: (coJ.data ?? []).map(j => j.company_id), primary: (coJ.data ?? []).find(j => j.is_primary)?.company_id ?? null }
+  const updated = mapContact(row, podInfo, catIds, companyInfo)
   if (_contactsCache) {
     const idx = _contactsCache.findIndex(c => c.id === id)
     if (idx !== -1) _contactsCache[idx] = updated; else _contactsCache = null
