@@ -423,11 +423,12 @@ let _interactionsFetch: Promise<Interaction[]> | null = null
 async function fetchInteractions90d(): Promise<Interaction[]> {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - 90)
-  const { data, error } = await supabase.from('interactions').select('*')
-    .gte('date', cutoff.toISOString().split('T')[0])
-    .order('date', { ascending: false })
-  if (error) throw error
-  return (data ?? []).map(mapInteraction)
+  const data = await fetchAllRows<any>(() =>
+    supabase.from('interactions').select('*')
+      .gte('date', cutoff.toISOString().split('T')[0])
+      .order('date', { ascending: false })
+  )
+  return data.map(mapInteraction)
 }
 
 export function getAllInteractions(): Promise<Interaction[]> {
