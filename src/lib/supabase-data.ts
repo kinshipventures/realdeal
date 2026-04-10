@@ -272,9 +272,8 @@ let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
 
 async function fetchContacts(): Promise<Contact[]> {
-  const { data, error } = await supabase.from('contacts').select('*')
-  if (error) throw error
-  return enrichContactJunctions(data ?? [])
+  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*'))
+  return enrichContactJunctions(data)
 }
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
@@ -424,11 +423,12 @@ let _interactionsFetch: Promise<Interaction[]> | null = null
 async function fetchInteractions90d(): Promise<Interaction[]> {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - 90)
-  const { data, error } = await supabase.from('interactions').select('*')
-    .gte('date', cutoff.toISOString().split('T')[0])
-    .order('date', { ascending: false })
-  if (error) throw error
-  return (data ?? []).map(mapInteraction)
+  const data = await fetchAllRows<any>(() =>
+    supabase.from('interactions').select('*')
+      .gte('date', cutoff.toISOString().split('T')[0])
+      .order('date', { ascending: false })
+  )
+  return data.map(mapInteraction)
 }
 
 export function getAllInteractions(): Promise<Interaction[]> {
