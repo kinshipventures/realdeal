@@ -151,11 +151,16 @@ export function CampaignsPage() {
   })
   const activeCampaign = campaigns.find(c => c.id === activeCampaignId)
 
+  // When filter changes, auto-select first campaign in the new list
   useEffect(() => {
-    if (!loading && !activeCampaignId && filtered.length > 0) {
+    if (loading) return
+    const match = filtered.find(c => c.id === activeCampaignId)
+    if (!match && filtered.length > 0) {
       setActiveCampaignId(filtered[0].id)
+    } else if (filtered.length === 0) {
+      setActiveCampaignId(null)
     }
-  }, [loading, filtered.length])
+  }, [loading, filter, campaigns])
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
   const firstStage = sortedStages[0]
