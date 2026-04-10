@@ -92,7 +92,8 @@ React SPA with Supabase backend, sidebar navigation, and auth.
 | `/contacts` | `RecordsList` | All people list view |
 | `/contact/:id` | `RecordPage` | Individual contact detail |
 | `/companies` | `CompaniesPage` | Companies view |
-| `/pipelines` | `PipelinesPage` | Pipeline management |
+| `/campaigns` | `CampaignsPage` | Campaigns (outreach + pipeline-backed, unified) |
+| `/pipelines` | redirect | Redirects to `/campaigns` |
 | `/projects` | `ProjectsPage` | Projects list |
 | `/reports` | `ReportsPage` | Pod distribution, pipeline velocity, engagement reports |
 | `/projects/:id` | `ProjectDetailPage` | Project detail |
@@ -113,7 +114,9 @@ All routes except `/login` and `/s/:token` are wrapped in `RequireAuth`. Layout 
 - `fetchAllRows()` helper pages through Supabase's 1000-row limit
 - Demo mode: when active, all functions return static data from `src/lib/sampleData.ts` instead of hitting Supabase
 
-Key domain functions: pods (CRUD), categories, contacts, interactions, campaigns, pipelines, pipeline stages, opportunities, projects, share links.
+Key domain functions: pods (CRUD), categories, contacts, interactions, campaigns (unified - outreach + pipeline-backed), projects, share links.
+
+Campaigns merge: "Pipelines" and "Campaigns" are now one feature under the "Campaigns" name. Outreach campaigns (events, outreach) use campaign_contacts table. Pipeline campaigns (deal_flow, fundraise, talent, partnerships) use pipeline/opportunities tables. `getAllCampaigns()` returns both. DB tables unchanged - the merge is app-layer only.
 
 ### Key lib files
 

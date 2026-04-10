@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 
-export interface GmailSyncResult {
+interface GmailSyncResult {
   synced: number
   matched: number
   total_messages: number

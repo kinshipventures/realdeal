@@ -8,7 +8,7 @@ export const ENRICHABLE_FIELDS: (keyof Contact)[] = [
   'company', 'role', 'linkedin', 'website', 'location', 'specialization',
 ]
 
-export interface EnrichmentResult {
+interface EnrichmentResult {
   ok: boolean
   data?: Record<string, string | null>
   error?: string
@@ -17,14 +17,6 @@ export interface EnrichmentResult {
 // Allowed if at least one of the contact's pods has enrichment_opt_in === true
 export function isEnrichmentAllowed(contact: Contact, pods: Pod[]): boolean {
   return contact.list_ids.some(id => pods.find(p => p.id === id)?.enrichment_opt_in === true)
-}
-
-// Get names of opted-in pods (for tooltip)
-export function getOptedInPodNames(contact: Contact, pods: Pod[]): string[] {
-  return contact.list_ids
-    .map(id => pods.find(p => p.id === id))
-    .filter((p): p is Pod => !!p && p.enrichment_opt_in)
-    .map(p => p.name)
 }
 
 // Call the edge function

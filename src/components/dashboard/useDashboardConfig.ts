@@ -36,22 +36,25 @@ export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress'],
 }
 
-// Orderable widgets (equity lives in header band, not the widget flow)
-export const DEFAULT_ORDER: WidgetId[] = [
-  'pending-tray',
+// Orderable widgets (equity lives in header band, wrapped lives above tabs)
+const DEFAULT_ORDER: WidgetId[] = [
+  // Nurture tab
   'todays-focus',
   'coming-up',
   'needs-attention',
   'pod-health',
-  'wrapped',
-  'campaign-progress',
   'recent-activity',
-  'quick-links',
+  'pending-tray',
   'gmail-sync',
   'granola-sync',
+  // Campaigns tab
+  'campaign-progress',
+  'quick-links',
+  // Above tabs
+  'wrapped',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v4'
+const STORAGE_KEY = 'realdeal:dashboard-config:v5'
 
 interface StoredConfig {
   preset: Preset

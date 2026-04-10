@@ -1,7 +1,7 @@
 import { getStraightPath, type EdgeProps, type Edge } from '@xyflow/react'
 
-export type GradientEdgeData = { color: string; healthPercent?: number }
-export type GradientEdgeType = Edge<GradientEdgeData>
+type GradientEdgeData = { color: string; healthPercent?: number }
+type GradientEdgeType = Edge<GradientEdgeData>
 
 export function GradientEdgeComponent({
   id, sourceX, sourceY, targetX, targetY, data,

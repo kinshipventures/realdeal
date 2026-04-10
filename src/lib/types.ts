@@ -3,7 +3,7 @@ export type HexColor = `#${string}`  // hex color string, e.g. "#718096"
 export type ISODate = string          // YYYY-MM-DD date string
 
 export type InteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note' | 'pod_change' | 'field_update' | 'categorization' | 'pipeline_event' | 'project_event' | 'merge_event'
-export type HumanInteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
+type HumanInteractionType = 'call' | 'email' | 'text' | 'meeting' | 'intro' | 'note'
 export type SystemEventType = 'pod_change' | 'field_update' | 'categorization' | 'pipeline_event' | 'project_event' | 'merge_event'
 export const HUMAN_TYPES: HumanInteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 export const SYSTEM_TYPES: SystemEventType[] = ['pod_change', 'field_update', 'categorization', 'pipeline_event', 'project_event', 'merge_event']
@@ -16,6 +16,7 @@ export type InteractionSource = 'Gmail' | 'Granola' | 'Manual'
 
 export type RelationshipType = 'Contact' | 'Company'
 export type RelationshipStatus = 'Active' | 'Pending' | 'Archived'
+// Legacy DB types — pipeline tables still exist, mapped to campaign interfaces in supabase-data.ts
 export type PipelineStatus = 'active' | 'hidden'
 export type OpportunityStatus = 'open' | 'won' | 'lost' | 'archived'
 export type OpportunityPriority = 'high' | 'medium' | 'low'
@@ -136,10 +137,20 @@ export interface FocusItem {
   score: number
 }
 
-// Campaign types
-export type CampaignType = 'event' | 'investment' | 'outreach' | 'other'
+// Campaign types — unified model absorbing former "pipelines"
+// Outreach campaigns (event, outreach) use campaign_contacts table (contacts moving through stages)
+// Pipeline campaigns (deal_flow, fundraise, talent, partnerships) use opportunities table (named deals linked to contacts)
+export type CampaignType = 'event' | 'investment' | 'outreach' | 'deal_flow' | 'fundraise' | 'talent' | 'partnerships' | 'other'
 export type CampaignContactStatus = 'pending' | 'reached' | 'responded' | 'confirmed'
-export type CampaignStatus = 'active' | 'completed'
+export type CampaignStatus = 'active' | 'completed' | 'hidden'
+
+// Which DB backing a campaign uses
+export type CampaignBacking = 'outreach' | 'pipeline'
+export const OUTREACH_TYPES: CampaignType[] = ['event', 'outreach', 'investment']
+export const PIPELINE_TYPES: CampaignType[] = ['deal_flow', 'fundraise', 'talent', 'partnerships']
+export function campaignBacking(type: CampaignType): CampaignBacking {
+  return PIPELINE_TYPES.includes(type) ? 'pipeline' : 'outreach'
+}
 
 export interface Campaign {
   id: string
@@ -148,18 +159,49 @@ export interface Campaign {
   deadline: ISODate | null
   status: CampaignStatus
   contact_ids: string[]      // linked Contact record IDs from junction
+  backing: CampaignBacking   // which DB tables back this campaign
   created_at: string
 }
 
+export interface CampaignStage {
+  id: string
+  campaign_id: string
+  name: string
+  color: HexColor | null
+  order: number
+  created_at: string
+}
+
+// Outreach campaigns: contacts moving through stages
 export interface CampaignContact {
   id: string                 // junction record ID
   campaign_id: string        // linked Campaign record ID
   contact_id: string         // linked Contact record ID
-  status: CampaignContactStatus
+  status: CampaignContactStatus  // legacy -- will migrate to stage_id
+  stage_id: string | null    // FK to campaign_stages
   notes: string | null
+  owner: string | null
+  next_step: string | null
+  next_step_due: ISODate | null
+  moved_at: string | null    // when contact last changed stage
   created_at: string
 }
 
+// Pipeline campaigns: named deals/opportunities linked to contacts
+export interface CampaignOpportunity {
+  id: string
+  campaign_id: string        // mapped from pipeline_id in DB
+  name: string
+  stage_id: string
+  contact_ids: string[]      // mapped from relationship_ids in DB
+  notes: string | null
+  priority: OpportunityPriority | null
+  status: OpportunityStatus
+  moved_at: string | null
+  created_at: string
+}
+
+// Legacy DB types kept for supabase-data.ts mapping layer
 export interface Pipeline {
   id: string
   name: string

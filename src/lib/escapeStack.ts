@@ -7,11 +7,11 @@ import { useEffect } from 'react'
 
 const stack: Array<() => void> = []
 
-export function pushEscape(fn: () => void) {
+function pushEscape(fn: () => void) {
   stack.push(fn)
 }
 
-export function popEscape(fn: () => void) {
+function popEscape(fn: () => void) {
   const i = stack.lastIndexOf(fn)
   if (i !== -1) stack.splice(i, 1)
 }

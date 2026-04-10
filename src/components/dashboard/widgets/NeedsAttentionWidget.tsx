@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import type { Contact } from '../../../lib/types'
+import type { Contact, Campaign, CampaignContact } from '../../../lib/types'
 import { Avatar } from '../../ui'
 import { EmptyState } from '../../empty/EmptyState'
 import { WidgetHeading } from './WidgetHeading'
@@ -182,32 +182,64 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
   )
 }
 
+// ── Campaign stall detection ─────────────────────────────────────────────────
+
+const STALL_THRESHOLD_DAYS = 7
+
+interface CampaignStallSignal {
+  campaign: Campaign
+  stalledCount: number
+}
+
+function computeCampaignStalls(campaigns: Campaign[], campaignContacts: CampaignContact[]): CampaignStallSignal[] {
+  const now = Date.now()
+  const signals: CampaignStallSignal[] = []
+  for (const c of campaigns) {
+    if (c.status !== 'active') continue
+    const contacts = campaignContacts.filter(cc => cc.campaign_id === c.id)
+    const stalled = contacts.filter(cc => {
+      const ts = cc.moved_at ?? cc.created_at
+      if (!ts) return false
+      const age = (now - new Date(ts).getTime()) / (1000 * 60 * 60 * 24)
+      return age >= STALL_THRESHOLD_DAYS
+    })
+    if (stalled.length > 0) signals.push({ campaign: c, stalledCount: stalled.length })
+  }
+  return signals.sort((a, b) => b.stalledCount - a.stalledCount)
+}
+
 interface NeedsAttentionWidgetProps {
   overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
   followUpOverdue: Array<{ contact: Contact; overdueDays: number; podName: string; action: string | null }>
   dormantContacts: Array<{ contact: Contact; days: number | null }>
+  campaigns?: Campaign[]
+  campaignContacts?: CampaignContact[]
   contactsLoading: boolean
   error: string | null
   onContactClick: (contact: Contact) => void
   onSnooze: (id: string) => void
   onRemoveContact: (id: string) => Promise<void>
   onRetry?: () => void
+  onCampaignClick?: (campaignId: string) => void
 }
 
 export function NeedsAttentionWidget({
-  overdueContacts, followUpOverdue, dormantContacts, contactsLoading, error,
-  onContactClick, onSnooze, onRemoveContact, onRetry,
+  overdueContacts, followUpOverdue, dormantContacts,
+  campaigns = [], campaignContacts = [],
+  contactsLoading, error,
+  onContactClick, onSnooze, onRemoveContact, onRetry, onCampaignClick,
 }: NeedsAttentionWidgetProps) {
   const navigate = useNavigate()
   const [dormantExpanded, setDormantExpanded] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const campaignStalls = computeCampaignStalls(campaigns, campaignContacts)
 
   return (
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <WidgetHeading title="needs attention" tooltip="People you haven't reached out to in a while. A quick check-in goes a long way." />
-          {(overdueContacts.length + followUpOverdue.length) > 0 && (
+          {(overdueContacts.length + followUpOverdue.length + campaignStalls.length) > 0 && (
             <span
               aria-live="polite"
               style={{
@@ -219,7 +251,7 @@ export function NeedsAttentionWidget({
               color: 'hsla(20, 80%, 45%, 0.80)',
               letterSpacing: '0.01em',
             }}>
-              {overdueContacts.length + followUpOverdue.length}
+              {overdueContacts.length + followUpOverdue.length + campaignStalls.length}
             </span>
           )}
         </div>
@@ -255,7 +287,7 @@ export function NeedsAttentionWidget({
               </button>
             )}
           </div>
-        ) : overdueContacts.length === 0 && followUpOverdue.length === 0 ? (
+        ) : overdueContacts.length === 0 && followUpOverdue.length === 0 && campaignStalls.length === 0 ? (
           <EmptyState
             icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
             heading="All caught up"
@@ -264,6 +296,39 @@ export function NeedsAttentionWidget({
           />
         ) : (
           <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+            {campaignStalls.map(({ campaign, stalledCount }) => (
+              <button
+                key={`stall-${campaign.id}`}
+                type="button"
+                onClick={() => onCampaignClick?.(campaign.id)}
+                className="interactive-row"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  width: '100%', padding: '12px 24px',
+                  background: 'none', border: 'none',
+                  borderBottom: '1px solid var(--divider)',
+                  cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                {/* Campaign icon */}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsla(260, 50%, 50%, 0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                  <line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+                    {stalledCount} {stalledCount === 1 ? 'person' : 'people'} stalled in {campaign.name}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: 11, fontWeight: 500, flexShrink: 0,
+                  color: 'hsla(260, 50%, 50%, 0.7)',
+                  whiteSpace: 'nowrap', letterSpacing: '0.02em',
+                }}>
+                  {campaign.type}
+                </div>
+              </button>
+            ))}
             {followUpOverdue.map(({ contact, overdueDays, podName, action }) => (
               <FollowUpOverdueRow key={`fu-${contact.id}`} contact={contact} overdueDays={overdueDays} podName={podName} action={action} onClick={() => onContactClick(contact)} />
             ))}
@@ -275,7 +340,7 @@ export function NeedsAttentionWidget({
       </div>
 
       {dormantContacts.length > 0 && (
-        <div style={{ ...PANEL, overflow: 'hidden', opacity: 0.75 }}>
+        <div style={{ ...PANEL, overflow: 'hidden' }}>
           <button
             type="button"
             onClick={() => setDormantExpanded(v => !v)}

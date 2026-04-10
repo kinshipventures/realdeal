@@ -1,6 +1,6 @@
 import type { Contact, Pod } from './types'
 
-export interface BirthdayItem {
+interface BirthdayItem {
   contact: Contact
   pod: Pod | null
   date: string      // formatted display date, e.g. "Mar 28"
@@ -71,7 +71,3 @@ export function getUpcomingBirthdays(
   })
 }
 
-export function formatDaysUntil(days: number): string {
-  if (days === 0) return 'Today'
-  return `${days}d`
-}

@@ -23,7 +23,7 @@ interface InteractionSectionProps {
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
   call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
-  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Pipeline', project_event: 'Project', merge_event: 'Merge',
+  pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Campaign', project_event: 'Project', merge_event: 'Merge',
 }
 
 const TYPE_COLORS: Record<InteractionType, string> = {

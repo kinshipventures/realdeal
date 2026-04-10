@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 
-export type CreateCategoryNodeData = {
+type CreateCategoryNodeData = {
   listColor?: string | null
   animationDelay?: string
   onCreate: (name: string) => Promise<void>
 }
-export type CreateCategoryNodeType = Node<CreateCategoryNodeData>
+type CreateCategoryNodeType = Node<CreateCategoryNodeData>
 
 const SIZE = 64
 

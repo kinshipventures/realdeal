@@ -13,24 +13,52 @@ const PANEL: React.CSSProperties = {
 type UpcomingItem = { type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }
 
 function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => void }) {
-  const dotColor = item.isOverdue ? '#DC2626' : item.type === 'birthday' ? 'hsla(30, 80%, 55%, 0.9)' : 'var(--color-brand)'
+  const isBirthday = item.type === 'birthday'
   const isToday = item.daysUntil === 0
+
+  const rowBg = item.isOverdue
+    ? 'hsla(0, 70%, 50%, 0.04)'
+    : isBirthday
+      ? 'hsla(30, 80%, 55%, 0.05)'
+      : isToday ? 'hsla(150, 60%, 45%, 0.04)' : 'none'
+
+  const timeColor = item.isOverdue
+    ? '#DC2626'
+    : isToday
+      ? isBirthday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-brand)'
+      : 'var(--color-text-tertiary)'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="interactive-row"
+      className={`interactive-row${isBirthday ? ' coming-up-birthday' : ''}`}
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         width: '100%', padding: '12px 24px',
-        background: item.isOverdue ? 'hsla(0, 70%, 50%, 0.04)' : isToday ? 'hsla(30, 80%, 55%, 0.06)' : 'none',
+        background: rowBg,
         border: 'none',
         borderBottom: '1px solid var(--divider)',
         cursor: 'pointer', textAlign: 'left',
       }}
     >
-      <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
+      {/* Icon: cake for birthdays, dot for follow-ups */}
+      {isBirthday ? (
+        <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1 }} aria-hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsla(30, 80%, 50%, 0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>
+            <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/>
+            <path d="M2 21h20"/>
+            <path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/>
+            <path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>
+          </svg>
+        </span>
+      ) : (
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+          background: item.isOverdue ? '#DC2626' : 'var(--color-brand)',
+        }} />
+      )}
       <div style={{
         fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)',
         flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -43,7 +71,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
       </span>
       <span style={{
         fontSize: 11, fontWeight: 500, flexShrink: 0, minWidth: 32, textAlign: 'right',
-        color: item.isOverdue ? '#DC2626' : isToday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-text-tertiary)',
+        color: timeColor,
       }}>
         {item.sublabel}
       </span>

@@ -1,4 +1,4 @@
-import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Pipeline, PipelineStage, Opportunity, Project, PipelineStatus, OpportunityStatus, OpportunityPriority } from './types'
+import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Pipeline, PipelineStage, Opportunity, Project, PipelineStatus, OpportunityStatus, OpportunityPriority, Company } from './types'
 
 const DEMO_KEY = 'realdeal:demo-mode'
 
@@ -247,9 +247,9 @@ const campaign = (id: string, name: string, type: CampaignType, status: 'active'
   created_at: daysAgo(14),
 })
 
-const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus): CampaignContact => ({
+const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus, stageId: string, movedDaysAgo = 3): CampaignContact => ({
   id: `demo-cc-${id}`, campaign_id: `demo-campaign-${campaignId}`, contact_id: `demo-contact-${contactId}`,
-  status, notes: null, created_at: daysAgo(10),
+  status, stage_id: `demo-cs-${stageId}`, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: daysAgo(movedDaysAgo), created_at: daysAgo(10),
 })
 
 export const DEMO_CAMPAIGNS: Campaign[] = [
@@ -258,22 +258,42 @@ export const DEMO_CAMPAIGNS: Campaign[] = [
   campaign('3', 'Q1 LP Check-ins', 'investment', 'completed', ['7', '8', '9', '10']),
 ]
 
+// Campaign 1: Event stages
+// Campaign 2: Outreach stages
+// Campaign 3: Investment stages
+export const DEMO_CAMPAIGN_STAGES: CampaignStage[] = [
+  { id: 'demo-cs-1a', campaign_id: 'demo-campaign-1', name: 'Invited', color: '#718096', order: 0, created_at: daysAgo(14) },
+  { id: 'demo-cs-1b', campaign_id: 'demo-campaign-1', name: "RSVP'd", color: '#4299E1', order: 1, created_at: daysAgo(14) },
+  { id: 'demo-cs-1c', campaign_id: 'demo-campaign-1', name: 'Confirmed', color: '#ECC94B', order: 2, created_at: daysAgo(14) },
+  { id: 'demo-cs-1d', campaign_id: 'demo-campaign-1', name: 'Attended', color: '#48BB78', order: 3, created_at: daysAgo(14) },
+
+  { id: 'demo-cs-2a', campaign_id: 'demo-campaign-2', name: 'Identified', color: '#718096', order: 0, created_at: daysAgo(14) },
+  { id: 'demo-cs-2b', campaign_id: 'demo-campaign-2', name: 'Contacted', color: '#4299E1', order: 1, created_at: daysAgo(14) },
+  { id: 'demo-cs-2c', campaign_id: 'demo-campaign-2', name: 'Responded', color: '#ECC94B', order: 2, created_at: daysAgo(14) },
+  { id: 'demo-cs-2d', campaign_id: 'demo-campaign-2', name: 'Closed', color: '#48BB78', order: 3, created_at: daysAgo(14) },
+
+  { id: 'demo-cs-3a', campaign_id: 'demo-campaign-3', name: 'Researching', color: '#718096', order: 0, created_at: daysAgo(30) },
+  { id: 'demo-cs-3b', campaign_id: 'demo-campaign-3', name: 'Outreach', color: '#4299E1', order: 1, created_at: daysAgo(30) },
+  { id: 'demo-cs-3c', campaign_id: 'demo-campaign-3', name: 'In Diligence', color: '#ECC94B', order: 2, created_at: daysAgo(30) },
+  { id: 'demo-cs-3d', campaign_id: 'demo-campaign-3', name: 'Committed', color: '#48BB78', order: 3, created_at: daysAgo(30) },
+]
+
 export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
-  // Fund III Launch Dinner — mix of statuses
-  cc('1', '1', '1', 'confirmed'),   // Sarah — confirmed
-  cc('2', '1', '4', 'responded'),   // David — responded
-  cc('3', '1', '7', 'confirmed'),   // Emily — confirmed
-  cc('4', '1', '8', 'reached'),     // Robert — reached
-  cc('5', '1', '9', 'pending'),     // Aisha — pending
+  // Fund III Launch Dinner — spread across event stages
+  cc('1', '1', '1', 'confirmed', '1d', 1),   // Sarah — Attended
+  cc('2', '1', '4', 'responded', '1c', 2),   // David — Confirmed
+  cc('3', '1', '7', 'confirmed', '1d', 1),   // Emily — Attended
+  cc('4', '1', '8', 'reached', '1b', 9),     // Robert — RSVP'd (stalled 9 days)
+  cc('5', '1', '9', 'pending', '1a', 3),     // Aisha — Invited
   // Brand Partnership Outreach — early stage
-  cc('6', '2', '11', 'responded'),  // Luna — responded
-  cc('7', '2', '13', 'pending'),    // Camille — pending
-  cc('8', '2', '14', 'reached'),    // Zara — reached
-  // Q1 LP Check-ins — all done
-  cc('9', '3', '7', 'confirmed'),
-  cc('10', '3', '8', 'confirmed'),
-  cc('11', '3', '9', 'confirmed'),
-  cc('12', '3', '10', 'responded'),
+  cc('6', '2', '11', 'responded', '2c', 2),  // Luna — Responded
+  cc('7', '2', '13', 'pending', '2a', 5),    // Camille — Identified
+  cc('8', '2', '14', 'reached', '2b', 10),   // Zara — Contacted (stalled 10 days)
+  // Q1 LP Check-ins — all in final stage
+  cc('9', '3', '7', 'confirmed', '3d', 1),
+  cc('10', '3', '8', 'confirmed', '3d', 1),
+  cc('11', '3', '9', 'confirmed', '3d', 2),
+  cc('12', '3', '10', 'responded', '3c', 8), // stalled
 ]
 
 // ── Pipelines ──
@@ -311,15 +331,13 @@ export const DEMO_PROJECTS: Project[] = [
   { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], opportunity_ids: [], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
 ]
 
-export const DEMO_PROJECT_INTERACTIONS: Interaction[] = [
+// Project interactions in main array
+;[
   ix('proj-1', '1', 'project_event' as InteractionType, 79, '', { event_detail: JSON.stringify({ project_name: 'Fund III Launch', project_id: 'rec_demo_proj_1', action: 'added_to_project' }) }),
   ix('proj-2', '3', 'project_event' as InteractionType, 79, '', { event_detail: JSON.stringify({ project_name: 'Fund III Launch', project_id: 'rec_demo_proj_1', action: 'added_to_project' }) }),
   ix('proj-3', '5', 'project_event' as InteractionType, 43, '', { event_detail: JSON.stringify({ project_name: 'Podcast Outreach S2', project_id: 'rec_demo_proj_2', action: 'added_to_project' }) }),
   ix('proj-4', '6', 'project_event' as InteractionType, 43, '', { event_detail: JSON.stringify({ project_name: 'Podcast Outreach S2', project_id: 'rec_demo_proj_2', action: 'added_to_project' }) }),
-]
-
-// Merge project interactions into the main interactions array
-DEMO_PROJECT_INTERACTIONS.forEach(i => DEMO_INTERACTIONS.push(i))
+].forEach(i => DEMO_INTERACTIONS.push(i))
 
 // ── Field Configs ──
 // Note: FieldConfig type is defined in fieldConfig.ts — using inline type here to avoid circular dep
@@ -334,6 +352,18 @@ interface FieldConfigShape {
   required: boolean
   display_order: number
 }
+
+const now = new Date().toISOString()
+export const DEMO_COMPANIES: Company[] = [
+  { id: 'demo-co-1', name: 'Acme Ventures', website: 'https://acmeventures.com', domain: 'acmeventures.com', ticker: null, location: 'San Francisco', stage: 'Growth', industry: 'Venture Capital', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-2', name: 'Kinship Ventures', website: 'https://kinship.vc', domain: 'kinship.vc', ticker: null, location: 'Palo Alto', stage: 'Growth', industry: 'Venture Capital', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-3', name: 'Goop', website: 'https://goop.com', domain: 'goop.com', ticker: null, location: 'Los Angeles', stage: 'Growth', industry: 'Wellness & Lifestyle', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-4', name: 'First Round', website: 'https://firstround.com', domain: 'firstround.com', ticker: null, location: 'New York', stage: 'Growth', industry: 'Venture Capital', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-5', name: 'Figma', website: 'https://figma.com', domain: 'figma.com', ticker: null, location: 'San Francisco', stage: 'Late', industry: 'Design Tools', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-6', name: 'Instagram', website: 'https://instagram.com', domain: 'instagram.com', ticker: 'META', location: 'Menlo Park', stage: 'Public', industry: 'Social Media', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-7', name: 'Andreessen Horowitz', website: 'https://a16z.com', domain: 'a16z.com', ticker: null, location: 'Menlo Park', stage: 'Growth', industry: 'Venture Capital', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+  { id: 'demo-co-8', name: 'Blackstone', website: 'https://blackstone.com', domain: 'blackstone.com', ticker: 'BX', location: 'New York', stage: 'Public', industry: 'Private Equity', notes: null, custom_fields: {}, created_at: now, updated_at: now },
+]
 
 export const DEMO_FIELD_CONFIGS: FieldConfigShape[] = [
   { id: 'demo-fc-1', name: 'Commit Amount', airtable_field_id: 'fld_demo_1', field_type: 'number', scope_type: 'Both', scope_pod_id: 'demo-pod-lps', required: true, display_order: 1 },

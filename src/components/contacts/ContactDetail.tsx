@@ -12,10 +12,10 @@ function daysUntilBirthday(birthday: string | null): number | null {
   if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-import { updateContact, createContact, deleteContact, getCampaigns, addContactToCampaign } from '../../lib/airtable'
+import { updateContact, createContact, deleteContact, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/airtable'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
-import type { Campaign } from '../../lib/types'
+import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
@@ -112,6 +112,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const saveGenRef = useRef(0)
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [contactCampaignLinks, setContactCampaignLinks] = useState<CampaignContact[]>([])
+  const [campaignStagesMap, setCampaignStagesMap] = useState<Record<string, CampaignStage[]>>({})
   const [showCampaignPicker, setShowCampaignPicker] = useState(false)
   const [addingToCampaign, setAddingToCampaign] = useState(false)
   const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
@@ -133,14 +135,30 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     getCampaigns().then(all => setCampaigns(all.filter(c => c.status === 'active')))
   }, [])
 
+  useEffect(() => {
+    if (!contact) return
+    getCampaignContactsForContact(contact.id).then(async (links) => {
+      setContactCampaignLinks(links)
+      const uniqueCampaignIds = [...new Set(links.map(l => l.campaign_id))]
+      const results = await Promise.all(uniqueCampaignIds.map(id => getCampaignStages(id)))
+      const stagesMap: Record<string, CampaignStage[]> = {}
+      uniqueCampaignIds.forEach((id, i) => { stagesMap[id] = results[i] })
+      setCampaignStagesMap(stagesMap)
+    })
+  }, [contact?.id])
+
   async function handleAddToCampaign(campaignId: string) {
     if (!contact) return
     setAddingToCampaign(true)
     try {
-      await addContactToCampaign(campaignId, contact.id)
+      // Place in first stage so the contact appears on the board
+      const stages = await getCampaignStages(campaignId)
+      const firstStage = stages.sort((a, b) => a.order - b.order)[0]
+      await addContactToCampaign(campaignId, contact.id, firstStage?.id)
       setShowCampaignPicker(false)
       setAddedCampaignId(campaignId)
       setTimeout(() => setAddedCampaignId(null), 2000)
+      getCampaignContactsForContact(contact.id).then(setContactCampaignLinks)
     } finally {
       setAddingToCampaign(false)
     }
@@ -1061,14 +1079,57 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               </div>
             )}
 
-            {/* Add to campaign */}
-            {!isNew && contact && campaigns.length > 0 && (
+            {/* Campaigns */}
+            {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
               <div style={{ marginBottom: 24 }}>
+                <div style={sectionLabel}>campaigns</div>
+                {contactCampaignLinks.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                    {contactCampaignLinks.map(link => {
+                      const camp = campaigns.find(c => c.id === link.campaign_id)
+                      const stages = campaignStagesMap[link.campaign_id] ?? []
+                      const stage = stages.find(s => s.id === link.stage_id)
+                      const name = camp?.name ?? 'Campaign'
+                      return (
+                        <div key={link.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '6px 10px', borderRadius: 8,
+                          background: 'hsla(260, 40%, 55%, 0.06)',
+                          border: '1px solid hsla(260, 40%, 55%, 0.12)',
+                        }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsla(260, 50%, 50%, 0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                            <line x1="4" y1="22" x2="4" y2="15"/>
+                          </svg>
+                          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0 }}>
+                            {name}
+                          </span>
+                          {stage && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 500,
+                              padding: '2px 7px', borderRadius: 100,
+                              background: stage.color ? `${stage.color}18` : 'var(--tint)',
+                              color: stage.color ?? 'var(--color-text-secondary)',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {stage.name}
+                            </span>
+                          )}
+                          {camp && (
+                            <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+                              {camp.type}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
                 {addedCampaignId ? (
                   <div style={{ fontSize: 12, color: 'hsla(150, 60%, 35%, 0.9)', padding: '4px 0' }}>
                     added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
                   </div>
-                ) : (
+                ) : campaigns.length > 0 && (
                   <>
                     <button
                       type="button"
@@ -1090,7 +1151,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         overflow: 'hidden',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                       }}>
-                        {campaigns.map(campaign => (
+                        {campaigns.filter(c => !contactCampaignLinks.some(l => l.campaign_id === c.id)).map(campaign => (
                           <button
                             key={campaign.id}
                             type="button"

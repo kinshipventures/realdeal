@@ -54,11 +54,11 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
           fontWeight: 700,
           color: 'var(--color-text-primary)',
         }}>
-          Pipelines
+          Campaigns
         </span>
         <button
           type="button"
-          aria-label="Add to Pipeline"
+          aria-label="Add to Campaign"
           onClick={() => setShowAddModal(true)}
           style={{
             background: 'none',
@@ -86,7 +86,7 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-brand)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
         >
-          + Add to a pipeline
+          + Add to a campaign
         </button>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -96,7 +96,7 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
             return (
               <div
                 key={opp.id}
-                onClick={() => navigate(`/pipelines?pipeline=${pipeline?.id ?? ''}&opportunity=${opp.id}`)}
+                onClick={() => navigate(`/campaigns?campaign=${pipeline?.id ?? ''}&opportunity=${opp.id}`)}
                 style={{
                   padding: '6px 8px',
                   borderRadius: 6,

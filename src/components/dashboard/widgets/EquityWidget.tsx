@@ -173,7 +173,7 @@ function getGreeting(): string {
   return 'Good evening'
 }
 
-export interface EquityWidgetProps {
+interface EquityWidgetProps {
   overallScore: number
   interactionsLoading: boolean
   dataReady: boolean

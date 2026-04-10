@@ -3,7 +3,7 @@ import { getContacts, createContact } from './airtable'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
+type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
 export type ColumnMapping = { csvHeader: string; airtableField: string | null }[]
 
@@ -27,7 +27,7 @@ export const TARGET_FIELDS = [
   'Introduced By', 'Intel Notes', 'Contact Frequency',
 ] as const
 
-export type TargetField = typeof TARGET_FIELDS[number]
+type TargetField = typeof TARGET_FIELDS[number]
 
 // ── Known field aliases ───────────────────────────────────────────────────────
 // Maps normalized CSV header -> RealDeal target field.

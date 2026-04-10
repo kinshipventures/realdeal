@@ -25,11 +25,11 @@ const COLUMNS: ColumnDef[] = [
   { id: 'name',         label: 'Name',         defaultVisible: true },
   { id: 'company',      label: 'Company',       defaultVisible: true },
   { id: 'pod',          label: 'Pod',           defaultVisible: true },
-  { id: 'equity',       label: 'Equity',        defaultVisible: true },
+  { id: 'equity',       label: 'Health',        defaultVisible: true },
   { id: 'type',         label: 'Type',          defaultVisible: false },
   { id: 'status',       label: 'Status',        defaultVisible: false },
-  { id: 'last_contact', label: 'Last Contact',  defaultVisible: false },
-  { id: 'cadence',      label: 'Cadence',       defaultVisible: false },
+  { id: 'last_contact', label: 'Last Reached Out', defaultVisible: false },
+  { id: 'cadence',      label: 'Rhythm',        defaultVisible: false },
   { id: 'location',     label: 'Location',      defaultVisible: false },
   { id: 'follow_up',    label: 'Follow-up',     defaultVisible: false },
 ]
@@ -272,6 +272,18 @@ export function RecordsList() {
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState(false)
 
+  // Toast / undo
+  const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function showToast(message: string, undo?: () => void) {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ message, undo })
+    toastTimer.current = setTimeout(() => setToast(null), 5000)
+  }
+
+  // Confirm archive modal
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+
   const viewsRef = useRef<HTMLDivElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
   const exportRef = useRef<HTMLDivElement>(null)
@@ -506,6 +518,7 @@ export function RecordsList() {
     setShowPodPicker(false)
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
+    const prevPodState = selected.map(c => ({ id: c.id, list_ids: [...c.list_ids], primary_list_id: c.primary_list_id }))
     const pod = pods.find(p => p.id === podId)
     for (const contact of selected) {
       const newListIds = mode === 'move' ? [podId] : (contact.list_ids.includes(podId) ? contact.list_ids : [...contact.list_ids, podId])
@@ -523,19 +536,30 @@ export function RecordsList() {
     setContacts(fresh)
     setSelectedIds(new Set())
     setBulkOperating(false)
+    showToast(`${mode === 'move' ? 'Moved' : 'Added'} ${selected.length} to ${pod?.name ?? 'pod'}`, async () => {
+      for (const prev of prevPodState) {
+        await updateContact(prev.id, { list_ids: prev.list_ids, primary_list_id: prev.primary_list_id })
+      }
+      invalidateContactsCache()
+      setContacts(await getContacts())
+      showToast('Pod change undone')
+    })
   }
 
   async function handleBulkFieldUpdate() {
     setShowFieldUpdate(false)
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
+    const prevValues = selected.map(c => ({ id: c.id, value: (c as any)[updateField] }))
+    const fieldName = updateField
+    const fieldValue = updateValue
     for (const contact of selected) {
-      await updateContact(contact.id, { [updateField]: updateValue } as Partial<Contact>)
+      await updateContact(contact.id, { [fieldName]: fieldValue } as Partial<Contact>)
       await logSystemEvent({
         contactId: contact.id,
         type: 'field_update',
-        detail: { field: updateField, newValue: updateValue },
-        notes: `Updated ${updateField} to "${updateValue}"`,
+        detail: { field: fieldName, newValue: fieldValue },
+        notes: `Updated ${fieldName} to "${fieldValue}"`,
       })
     }
     invalidateContactsCache()
@@ -545,6 +569,14 @@ export function RecordsList() {
     setUpdateField('')
     setUpdateValue('')
     setBulkOperating(false)
+    showToast(`Updated ${fieldName} for ${selected.length} ${selected.length === 1 ? 'person' : 'people'}`, async () => {
+      for (const prev of prevValues) {
+        await updateContact(prev.id, { [fieldName]: prev.value } as Partial<Contact>)
+      }
+      invalidateContactsCache()
+      setContacts(await getContacts())
+      showToast('Update undone')
+    })
   }
 
   function cellValue(contact: Contact, colId: ColumnId): string {
@@ -693,9 +725,9 @@ export function RecordsList() {
   const hasCustomWidths = Object.keys(columnWidths).length > 0
 
   async function handleBulkArchive() {
-    if (!window.confirm(`Archive ${selectedIds.size} contact(s)? This is reversible.`)) return
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
+    const prevStatuses = selected.map(c => ({ id: c.id, status: c.status }))
     for (const contact of selected) {
       await updateContact(contact.id, { status: 'Archived' })
       await logSystemEvent({
@@ -710,6 +742,15 @@ export function RecordsList() {
     setContacts(fresh)
     setSelectedIds(new Set())
     setBulkOperating(false)
+    setShowArchiveConfirm(false)
+    showToast(`Archived ${selected.length} ${selected.length === 1 ? 'person' : 'people'}`, async () => {
+      for (const prev of prevStatuses) {
+        await updateContact(prev.id, { status: prev.status })
+      }
+      invalidateContactsCache()
+      setContacts(await getContacts())
+      showToast('Archive undone')
+    })
   }
 
   async function handleAddToCampaign() {
@@ -798,24 +839,134 @@ export function RecordsList() {
             Relationships
           </h1>
           {viewToggle}
-          <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', fontWeight: 400 }}>
-            {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
-          </span>
         </div>
 
-        {/* Filter bar - compact horizontal toolbar */}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+        {/* Health pulse */}
+        {contacts.length > 0 && (() => {
+          const dist = { Thriving: 0, Steady: 0, Cooling: 0, Fading: 0 }
+          for (const id in equityMap) {
+            const l = scoreLabel(equityMap[id])
+            if (l in dist) dist[l as keyof typeof dist]++
+          }
+          const needsAttention = dist.Cooling + dist.Fading
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {(['Thriving', 'Steady', 'Cooling', 'Fading'] as const).map(label => (
+                  dist[label] > 0 ? (
+                    <span key={label} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: 12, color: 'var(--color-text-secondary)',
+                    }}>
+                      <span style={{
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: HEALTH_RING_COLOR[label],
+                      }} />
+                      {dist[label]} {label.toLowerCase()}
+                    </span>
+                  ) : null
+                ))}
+              </div>
+              {needsAttention > 0 && (
+                <span style={{
+                  fontSize: 12, color: HEALTH_RING_COLOR.Cooling,
+                  fontWeight: 500,
+                }}>
+                  {needsAttention} {needsAttention === 1 ? 'person needs' : 'people need'} attention
+                </span>
+              )}
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
+              </span>
+            </div>
+          )
+        })()}
 
-          {/* Views dropdown */}
-          <div ref={viewsRef} style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setShowViewsDropdown(v => !v)}
-              style={filterBtnStyle(showViewsDropdown)}
-            >
-              Views
-              <span style={{ marginLeft: 4, opacity: 0.5 }}>▾</span>
+        {/* Filter bar */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+
+          {/* Search - primary, wider */}
+          <input
+            type="search"
+            placeholder="Search people..."
+            value={filters.search}
+            onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+            style={{
+              height: 36,
+              padding: '0 14px',
+              borderRadius: 8,
+              border: '1px solid var(--edge)',
+              background: 'var(--surface-panel)',
+              backdropFilter: 'blur(20px)',
+              fontSize: 13,
+              color: 'var(--color-text-primary)',
+              outline: 'none',
+              fontFamily: 'inherit',
+              minWidth: 220,
+              flex: '0 1 280px',
+              transition: 'border-color 0.15s',
+            }}
+          />
+
+          {/* Primary filters */}
+          <select
+            value={filters.category ? `cat:${filters.category}` : filters.pod ?? ''}
+            onChange={e => {
+              const v = e.target.value
+              if (v.startsWith('cat:')) {
+                setFilters(f => ({ ...f, pod: null, category: v.slice(4) }))
+              } else {
+                setFilters(f => ({ ...f, pod: v || null, category: null }))
+              }
+            }}
+            style={selectStyle}
+          >
+            <option value="">All Pods</option>
+            {pods.map(p => {
+              const podCats = categories.filter(c => c.list_id === p.id)
+              return [
+                <option key={p.id} value={p.id}>{p.name}</option>,
+                ...podCats.map(c => (
+                  <option key={c.id} value={`cat:${c.id}`}>&nbsp;&nbsp;{c.name}</option>
+                )),
+              ]
+            })}
+          </select>
+
+          <select
+            value={filters.recency}
+            onChange={e => setFilters(f => ({ ...f, recency: e.target.value as RecencyFilter }))}
+            style={selectStyle}
+          >
+            <option value="any">Last contacted</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="never">Never contacted</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button type="button" onClick={clearFilters} style={{
+              height: 36, padding: '0 10px', borderRadius: 8, border: 'none',
+              background: 'transparent', color: 'var(--color-text-tertiary)',
+              fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+            }}>
+              Clear
             </button>
+          )}
+
+          {/* Secondary utilities - pushed right */}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
+            {/* Views dropdown */}
+            <div ref={viewsRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowViewsDropdown(v => !v)}
+                style={utilityBtnStyle(showViewsDropdown)}
+                title="Saved views"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </button>
             {showViewsDropdown && (
               <div style={dropdownStyle}>
                 <div
@@ -881,75 +1032,15 @@ export function RecordsList() {
             )}
           </div>
 
-          {/* Search */}
-          <input
-            type="search"
-            placeholder="Search..."
-            value={filters.search}
-            onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-            style={{
-              height: 36,
-              padding: '0 12px',
-              borderRadius: 8,
-              border: '1px solid var(--edge)',
-              background: 'var(--surface-panel)',
-              backdropFilter: 'blur(20px)',
-              fontSize: 13,
-              color: 'var(--color-text-primary)',
-              outline: 'none',
-              fontFamily: 'inherit',
-              minWidth: 180,
-              transition: 'border-color 0.15s',
-            }}
-          />
-
-          {/* Pod filter */}
-          <select
-            value={filters.category ? `cat:${filters.category}` : filters.pod ?? ''}
-            onChange={e => {
-              const v = e.target.value
-              if (v.startsWith('cat:')) {
-                setFilters(f => ({ ...f, pod: null, category: v.slice(4) }))
-              } else {
-                setFilters(f => ({ ...f, pod: v || null, category: null }))
-              }
-            }}
-            style={selectStyle}
-          >
-            <option value="">All Pods</option>
-            {pods.map(p => {
-              const podCats = categories.filter(c => c.list_id === p.id)
-              return [
-                <option key={p.id} value={p.id}>{p.name}</option>,
-                ...podCats.map(c => (
-                  <option key={c.id} value={`cat:${c.id}`}>&nbsp;&nbsp;{c.name}</option>
-                )),
-              ]
-            })}
-          </select>
-
-          {/* Recency filter (LIST-01) */}
-          <select
-            value={filters.recency}
-            onChange={e => setFilters(f => ({ ...f, recency: e.target.value as RecencyFilter }))}
-            style={selectStyle}
-          >
-            <option value="any">Any time</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="never">Never contacted</option>
-          </select>
-
           {/* Columns toggle */}
-          <div ref={columnsRef} style={{ position: 'relative', marginLeft: 'auto' }}>
+          <div ref={columnsRef} style={{ position: 'relative' }}>
             <button
               type="button"
               onClick={() => setShowColumnsDropdown(v => !v)}
-              style={filterBtnStyle(showColumnsDropdown)}
+              style={utilityBtnStyle(showColumnsDropdown)}
+              title="Toggle columns"
             >
-              Columns
-              <span style={{ marginLeft: 4, opacity: 0.5 }}>▾</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             </button>
             {showColumnsDropdown && (
               <div style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
@@ -971,16 +1062,15 @@ export function RecordsList() {
             )}
           </div>
 
-          {/* Toolbar export */}
+          {/* Export */}
           <div ref={exportRef} style={{ position: 'relative' }}>
             <button
               type="button"
               onClick={() => setShowExportDropdown(v => !v)}
-              style={{ ...filterBtnStyle(showExportDropdown), display: 'flex', alignItems: 'center', gap: 5 }}
+              style={utilityBtnStyle(showExportDropdown)}
+              title="Export"
             >
-              <Download size={13} />
-              Export
-              <span style={{ marginLeft: 2, opacity: 0.5 }}>▾</span>
+              <Download size={14} />
             </button>
             {showExportDropdown && (
               <div style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
@@ -1007,6 +1097,7 @@ export function RecordsList() {
               </div>
             )}
           </div>
+          </div>{/* end secondary utilities */}
         </div>
       </div>
 
@@ -1174,7 +1265,7 @@ export function RecordsList() {
             </button>
             <button
               type="button"
-              onClick={handleBulkArchive}
+              onClick={() => setShowArchiveConfirm(true)}
               disabled={bulkOperating}
               style={{ ...bulkBtnStyle, color: '#D93025' }}
             >
@@ -1274,7 +1365,7 @@ export function RecordsList() {
         />
       ) : filtered.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No people match your filters</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No one matches those filters</span>
           {hasActiveFilters && (
             <button
               type="button"
@@ -1308,14 +1399,13 @@ export function RecordsList() {
           >
             <thead style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 1 }}>
               <tr style={{ borderBottom: '1px solid var(--edge)' }}>
-                {/* Checkbox header - 44px touch target */}
-                <th style={{ width: 44, padding: 0, textAlign: 'center', height: 44, position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
+                <th style={{ width: 48, padding: 0, textAlign: 'center', height: 44, position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleSelectAll}
-                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                      style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#25B439' }}
                     />
                   </div>
                 </th>
@@ -1347,6 +1437,7 @@ export function RecordsList() {
                         borderLeft: isDropTarget ? '2px solid #25B439' : undefined,
                         width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined,
                       }}
+                      title={col.id === 'equity' ? 'Relationship health based on interaction frequency. Thriving (85+), Steady (70+), Cooling (40+), Fading (<40)' : undefined}
                     >
                       {col.label}
                       <SortIcon active={sort.col === col.id} dir={sort.dir} />
@@ -1389,18 +1480,25 @@ export function RecordsList() {
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
-                      background: selected ? 'rgba(37,180,57,0.05)' : 'transparent',
-                      animationDelay: `${Math.min(idx, 20) * 25}ms`,
+                      background: selected ? 'rgba(37,180,57,0.06)' : 'transparent',
+                      animationDelay: `${Math.min(idx, 8) * 30}ms`,
                     }}
                   >
-                    {/* Checkbox cell - 44px touch target */}
-                    <td style={{ padding: '0', textAlign: 'center', width: 44, height: 44 }} onClick={e => toggleSelectRow(contact.id, e)}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, cursor: 'pointer' }}>
+                    {/* Pod color + checkbox */}
+                    <td style={{ padding: '0', width: 48, height: 52, position: 'relative' }} onClick={e => toggleSelectRow(contact.id, e)}>
+                      {primaryPod?.color && (
+                        <span style={{
+                          position: 'absolute', left: 0, top: 8, bottom: 8,
+                          width: 3, borderRadius: 2,
+                          background: primaryPod.color, opacity: 0.7,
+                        }} />
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: 'pointer' }}>
                         <input
                           type="checkbox"
                           checked={selected}
                           onChange={() => {}}
-                          style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#25B439' }}
+                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#25B439' }}
                         />
                       </div>
                     </td>
@@ -1426,27 +1524,33 @@ export function RecordsList() {
                             }}>
                               {initials(contact.name)}
                             </span>
-                            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                            <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
                               <span style={{
                                 fontFamily: 'var(--font-serif)',
-                                fontWeight: contact.type === 'Company' ? 800 : 700,
+                                fontWeight: 700,
                                 fontSize: 14,
                                 letterSpacing: '-0.01em',
                                 color: 'var(--color-text-primary)',
+                                lineHeight: 1.3,
                               }}>
                                 {contact.name}
                               </span>
-                              {contact.last_contacted_at && (
-                                <span style={{
-                                  fontSize: 11,
-                                  color: 'var(--color-text-tertiary)',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                }}>
-                                  {formatRelativeTime(contact.last_contacted_at)}
-                                </span>
-                              )}
+                              <span style={{
+                                fontSize: 11,
+                                color: 'var(--color-text-tertiary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: 200,
+                              }}>
+                                {contact.role && contact.company
+                                  ? `${contact.role} at ${contact.company}`
+                                  : contact.role || contact.company || (
+                                    contact.last_contacted_at
+                                      ? formatRelativeTime(contact.last_contacted_at)
+                                      : ''
+                                  )}
+                              </span>
                             </span>
                           </span>
                         )}
@@ -1457,7 +1561,7 @@ export function RecordsList() {
                         )}
                         {col.id === 'pod' && (() => {
                           const contactPods = contact.list_ids.map(id => pods.find(p => p.id === id)).filter(Boolean) as Pod[]
-                          if (contactPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)' }}>--</span>
+                          if (contactPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
                           return (
                             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               {contactPods.map((p, i) => (
@@ -1553,27 +1657,92 @@ export function RecordsList() {
         </div>
       )}
 
+      {/* Archive confirm */}
+      {showArchiveConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)' }} onClick={() => setShowArchiveConfirm(false)} />
+          <div style={{
+            position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(24px)',
+            borderRadius: 14, padding: '24px 28px', maxWidth: 340, width: '100%',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
+          }}>
+            <p style={{ margin: '0 0 4px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+              Archive {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}?
+            </p>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+              They'll move to Archived status. You can undo this right after.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setShowArchiveConfirm(false)} style={{
+                padding: '7px 16px', borderRadius: 8, border: '1px solid var(--edge)',
+                background: 'transparent', fontSize: 13, fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'inherit', color: 'var(--color-text-secondary)',
+              }}>Cancel</button>
+              <button type="button" onClick={handleBulkArchive} style={{
+                padding: '7px 16px', borderRadius: 8, border: 'none',
+                background: '#D93025', color: '#fff', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}>Archive</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10000, display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 16px', borderRadius: 10,
+          background: 'var(--color-text-primary)', color: '#fff',
+          fontSize: 13, fontWeight: 500,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          animation: 'toast-enter 0.25s ease-out',
+        }}>
+          <span>{toast.message}</span>
+          {toast.undo && (
+            <button type="button" onClick={() => { toast.undo?.(); setToast(null) }} style={{
+              background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6,
+              color: '#fff', fontSize: 12, fontWeight: 600, padding: '4px 10px',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>Undo</button>
+          )}
+        </div>
+      )}
+
       {/* HIG row styles */}
       <style>{`
         @media (max-width: 767px) {
           .records-table { font-size: 12px; min-width: 600px; }
+        }
+        @keyframes toast-enter {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         @keyframes row-enter {
           from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .contacts-row {
-          animation: row-enter 0.3s ease-out both;
+          animation: row-enter 0.25s ease-out both;
           transition: background 0.12s ease;
         }
         .contacts-row:hover {
-          background: var(--tint) !important;
+          background: rgba(0,0,0,0.025) !important;
         }
         .contacts-row:active {
-          background: var(--tint) !important;
+          background: rgba(0,0,0,0.04) !important;
         }
         .contacts-row[style*="rgba(37,180,57"]:hover {
-          background: rgba(37,180,57,0.08) !important;
+          background: rgba(37,180,57,0.09) !important;
+        }
+        .col-resize-handle {
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+        th:hover .col-resize-handle {
+          opacity: 1;
+          background: var(--edge);
         }
       `}</style>
     </div>
@@ -1582,23 +1751,21 @@ export function RecordsList() {
 
 // ── Shared micro styles ───────────────────────────────────────────────────────
 
-function filterBtnStyle(active: boolean): React.CSSProperties {
+function utilityBtnStyle(active: boolean): React.CSSProperties {
   return {
+    width: 36,
     height: 36,
-    minHeight: 36,
-    padding: '0 14px',
-    borderRadius: 8,
-    border: `1px solid ${active ? 'var(--edge-strong)' : 'var(--edge)'}`,
-    background: active ? 'var(--tint)' : 'var(--surface-panel)',
-    backdropFilter: 'blur(20px)',
-    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-    fontSize: 12,
-    fontWeight: 500,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
     display: 'flex',
     alignItems: 'center',
-    transition: 'background 0.12s, border-color 0.12s',
+    justifyContent: 'center',
+    borderRadius: 8,
+    border: `1px solid ${active ? 'var(--edge-strong)' : 'var(--edge)'}`,
+    background: active ? 'var(--tint)' : 'transparent',
+    color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+    cursor: 'pointer',
+    transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+    padding: 0,
+    fontFamily: 'inherit',
   }
 }
 

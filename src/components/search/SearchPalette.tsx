@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Contact, Pod, Pipeline, Project } from '../../lib/types'
-import { getContacts, getPods, getPipelines, getProjects } from '../../lib/airtable'
+import type { Contact, Pod, Campaign, Project } from '../../lib/types'
+import { getContacts, getPods, getAllCampaigns, getProjects } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 
 export type SearchResultType = 'contact' | 'company' | 'pod' | 'pipeline' | 'project'
@@ -24,7 +24,7 @@ const TYPE_ICONS: Record<SearchResultType, { icon: string; label: string }> = {
   contact: { icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', label: 'People' },
   company: { icon: 'M3 21h18M3 7v14M21 7v14M6 11h.01M6 15h.01M6 19h.01M10 11h.01M10 15h.01M10 19h.01M14 11h.01M14 15h.01M14 19h.01M18 11h.01M18 15h.01M18 19h.01', label: 'Companies' },
   pod: { icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', label: 'Pods' },
-  pipeline: { icon: 'M22 12h-4l-3 9L9 3l-3 9H2', label: 'Pipelines' },
+  pipeline: { icon: 'M22 12h-4l-3 9L9 3l-3 9H2', label: 'Campaigns' },
   project: { icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', label: 'Projects' },
 }
 
@@ -41,7 +41,7 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
   const [query, setQuery] = useState('')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
-  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [pipelines, setPipelines] = useState<Campaign[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [podMap, setPodMap] = useState<Map<string, Pod>>(new Map())
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -52,7 +52,7 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getContacts(), getPods(), getPipelines(), getProjects()]).then(([cts, pds, pls, pjs]) => {
+    Promise.all([getContacts(), getPods(), getAllCampaigns(), getProjects()]).then(([cts, pds, pls, pjs]) => {
       if (cancelled) return
       setContacts(cts)
       setPods(pds)

@@ -5,7 +5,7 @@ import type { Pod, Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 import { LucideIcon } from '../LucideIcon'
 
-export type ListNodeData = {
+type ListNodeData = {
   list: Pod
   contactCount: number
   overdueCount: number
@@ -25,7 +25,7 @@ export type ListNodeData = {
   onHoverLeave?: () => void
   onDrillIn?: (pod: Pod) => void
 }
-export type ListNodeType = Node<ListNodeData>
+type ListNodeType = Node<ListNodeData>
 
 const SIZE = 96
 

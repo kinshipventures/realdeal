@@ -36,9 +36,12 @@ import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
 
+type DashboardTab = 'nurture' | 'campaigns'
+
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
   const [showSettings, setShowSettings] = useState(false)
+  const [activeTab, setActiveTab] = useState<DashboardTab>('nurture')
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
@@ -420,7 +423,7 @@ export function Dashboard() {
         </div>
 
         {/* Rest of dashboard on light background */}
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 120px' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
@@ -444,8 +447,36 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Order-driven widget rendering */}
-          {renderOrderedWidgets({
+          {/* Wrapped card - weekly pulse, lives above tabs */}
+          {isVisible('wrapped') && (
+            <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+          )}
+
+          {/* Tab bar */}
+          <div className="dashboard-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'nurture'}
+              className="dashboard-tab"
+              onClick={() => setActiveTab('nurture')}
+            >
+              Nurture
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'campaigns'}
+              className="dashboard-tab"
+              onClick={() => setActiveTab('campaigns')}
+            >
+              Campaigns
+            </button>
+          </div>
+
+          {/* Tab content */}
+          {renderTabbedWidgets({
+            activeTab,
             order: config.order,
             isVisible,
             podStats, dataReady, wrappedInsights, interactionsLoading,
@@ -501,11 +532,12 @@ export function Dashboard() {
   )
 }
 
-// ── Order-driven widget rendering ────────────────────────────────────────────
+// ── Tab-driven widget rendering ──────────────────────────────────────────────
 
 type PodStat = { pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean; sparkline: number[] | null }
 
-interface OrderedWidgetProps {
+interface TabbedWidgetProps {
+  activeTab: import('./Dashboard').DashboardTab
   order: WidgetId[]
   isVisible: (id: WidgetId) => boolean
   podStats: PodStat[]
@@ -531,199 +563,132 @@ interface OrderedWidgetProps {
   onReview: () => void
 }
 
-// Section metadata — drives headings and grouping
-const SECTION_MAP: Record<string, { heading: string; tooltip: string; tier: 'primary' | 'secondary' | 'tertiary' }> = {
-  'nurture': {
-    heading: 'nurture',
-    tooltip: 'Relationship upkeep -- who needs attention, upcoming moments, and pod health.',
-    tier: 'primary',
-  },
-  'campaigns': {
-    heading: 'campaigns',
-    tooltip: 'Active campaigns -- events, fundraises, outreach, and their progress.',
-    tier: 'primary',
-  },
-  'activity': {
-    heading: 'activity',
-    tooltip: 'Recent interactions and integrations.',
-    tier: 'tertiary',
-  },
-}
-
-const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
+// Which tab each widget belongs to
+const WIDGET_TAB: Partial<Record<WidgetId, 'nurture' | 'campaigns'>> = {
   'todays-focus': 'nurture',
   'coming-up': 'nurture',
   'needs-attention': 'nurture',
   'pod-health': 'nurture',
-  'wrapped': 'nurture',
+  'recent-activity': 'nurture',
+  'pending-tray': 'nurture',
+  'gmail-sync': 'nurture',
+  'granola-sync': 'nurture',
   'campaign-progress': 'campaigns',
   'quick-links': 'campaigns',
-  'recent-activity': 'activity',
-  'gmail-sync': 'activity',
-  'granola-sync': 'activity',
 }
 
-function renderOrderedWidgets(props: OrderedWidgetProps) {
+function renderTabbedWidgets(props: TabbedWidgetProps) {
   const {
-    order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
+    activeTab, order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
     focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
     contactsLoading, error, recentActivity, campaigns, campaignContacts,
     campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onRetry, onReview,
   } = props
 
-  // Collect sections in order of first appearance
-  const sectionOrder: string[] = []
-  const sectionWidgets: Record<string, WidgetId[]> = {}
-  const standaloneWidgets: WidgetId[] = []
-
-  for (const id of order) {
-    if (!isVisible(id)) continue
-    const section = WIDGET_SECTION[id]
-    if (!section) {
-      standaloneWidgets.push(id)
-    } else {
-      if (!sectionWidgets[section]) {
-        sectionWidgets[section] = []
-        sectionOrder.push(section)
-      }
-      sectionWidgets[section].push(id)
-    }
-  }
-
   const elements: React.ReactNode[] = []
   let stagger = 0
 
-  // Standalone widgets (pending-tray) render before sections
-  for (const id of standaloneWidgets) {
-    if (id === 'pending-tray') {
+  // Filter widgets to active tab
+  const tabWidgets = order.filter(id => {
+    if (!isVisible(id)) return false
+    if (id === 'wrapped' || id === 'equity') return false // handled outside tabs
+    const tab = WIDGET_TAB[id]
+    return tab === activeTab
+  })
+
+  for (const id of tabWidgets) {
+    const delay = stagger++
+    const style = { '--stagger': delay } as React.CSSProperties
+
+    if (id === 'todays-focus') {
       elements.push(
-        <div key={id} className="widget-enter" style={{ '--stagger': stagger++ } as React.CSSProperties}>
-          <PendingTrayWidget pendingContacts={pendingContacts} onReview={onReview} />
+        <div key={id} className="widget-enter" style={style}>
+          <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
+        </div>
+      )
+    } else if (id === 'coming-up') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
+        </div>
+      )
+    } else if (id === 'needs-attention') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <NeedsAttentionWidget
+            overdueContacts={overdueContacts}
+            followUpOverdue={followUpOverdue}
+            dormantContacts={dormantContacts}
+            campaigns={campaigns}
+            campaignContacts={campaignContacts}
+            contactsLoading={contactsLoading}
+            error={error}
+            onContactClick={onContactClick}
+            onSnooze={onSnooze}
+            onRemoveContact={onRemoveContact}
+            onRetry={onRetry}
+            onCampaignClick={(cId) => {
+              window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+            }}
+          />
+        </div>
+      )
+    } else if (id === 'pod-health') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+        </div>
+      )
+    } else if (id === 'recent-activity') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
+        </div>
+      )
+    } else if (id === 'pending-tray') {
+      if (pendingContacts.length > 0) {
+        elements.push(
+          <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+            <PendingTrayWidget pendingContacts={pendingContacts} onReview={onReview} />
+          </div>
+        )
+      }
+    } else if (id === 'gmail-sync') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <GmailSyncWidget />
+        </div>
+      )
+    } else if (id === 'granola-sync') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <GranolaSyncWidget />
+        </div>
+      )
+    } else if (id === 'campaign-progress') {
+      elements.push(
+        <div key={id} className="widget-enter" style={style}>
+          <CampaignProgressWidget
+            campaigns={campaigns}
+            campaignContacts={campaignContacts}
+            loading={campaignsLoading}
+            onCampaignClick={(cId) => {
+              window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+            }}
+          />
+        </div>
+      )
+    } else if (id === 'quick-links') {
+      elements.push(
+        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <QuickLinksWidget
+            campaigns={campaigns}
+            campaignContacts={campaignContacts}
+            campaignsLoading={campaignsLoading}
+          />
         </div>
       )
     }
-  }
-
-  // Sections in config order
-  for (const sectionId of sectionOrder) {
-    const widgets = sectionWidgets[sectionId]
-    if (!widgets?.length) continue
-    const meta = SECTION_MAP[sectionId]
-
-    const isPrimary = meta.tier === 'primary'
-    const isTertiary = meta.tier === 'tertiary'
-
-    elements.push(
-      <div
-        key={sectionId}
-        className={`dashboard-section widget-enter${isPrimary ? ' dashboard-section-primary' : ''}`}
-        style={{ '--stagger': stagger++ } as React.CSSProperties}
-      >
-        <div className={isPrimary ? 'dashboard-heading-primary' : 'dashboard-heading'} role="heading" aria-level={2}>
-          <span className="widget-tooltip-wrap">
-            {meta.heading}
-            <span className="widget-tooltip-icon" aria-label="Info">?</span>
-            <span className="widget-tooltip-bubble">{meta.tooltip}</span>
-          </span>
-        </div>
-        {widgets.map((id, i) => {
-          const spacer = i > 0
-          if (id === 'pod-health') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <PodHealthWidget podStats={podStats} dataReady={dataReady} />
-              </div>
-            )
-          }
-          if (id === 'wrapped') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
-              </div>
-            )
-          }
-          if (id === 'todays-focus') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
-              </div>
-            )
-          }
-          if (id === 'coming-up') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
-              </div>
-            )
-          }
-          if (id === 'needs-attention') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <NeedsAttentionWidget
-                  overdueContacts={overdueContacts}
-                  followUpOverdue={followUpOverdue}
-                  dormantContacts={dormantContacts}
-                  contactsLoading={contactsLoading}
-                  error={error}
-                  onContactClick={onContactClick}
-                  onSnooze={onSnooze}
-                  onRemoveContact={onRemoveContact}
-                  onRetry={onRetry}
-                />
-              </div>
-            )
-          }
-          if (id === 'recent-activity') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
-              </div>
-            )
-          }
-          if (id === 'campaign-progress') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <CampaignProgressWidget
-                  campaigns={campaigns}
-                  campaignContacts={campaignContacts}
-                  loading={campaignsLoading}
-                  onCampaignClick={(cId) => {
-                    // Dispatch to parent to open campaign detail
-                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                  }}
-                />
-              </div>
-            )
-          }
-          if (id === 'quick-links') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <QuickLinksWidget
-                  campaigns={campaigns}
-                  campaignContacts={campaignContacts}
-                  campaignsLoading={campaignsLoading}
-                />
-              </div>
-            )
-          }
-          if (id === 'gmail-sync') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <GmailSyncWidget />
-              </div>
-            )
-          }
-          if (id === 'granola-sync') {
-            return (
-              <div key={id} style={{ marginTop: spacer ? 16 : 0 }}>
-                <GranolaSyncWidget />
-              </div>
-            )
-          }
-          return null
-        })}
-      </div>
-    )
   }
 
   return <>{elements}</>

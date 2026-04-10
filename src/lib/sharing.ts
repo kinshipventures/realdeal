@@ -5,7 +5,7 @@ import { isDemoMode } from './sampleData'
 
 // ── Token + PIN helpers ──────────────────────────────────────────────────────
 
-export function generateToken(): string {
+function generateToken(): string {
   const bytes = new Uint8Array(6)
   crypto.getRandomValues(bytes)
   return Array.from(bytes)
@@ -14,7 +14,7 @@ export function generateToken(): string {
     .slice(0, 8)
 }
 
-export async function hashPin(pin: string): Promise<string> {
+async function hashPin(pin: string): Promise<string> {
   const encoded = new TextEncoder().encode(pin)
   const buffer = await crypto.subtle.digest('SHA-256', encoded)
   return Array.from(new Uint8Array(buffer))

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router'
 import { scoreLabel } from '../../lib/equity'
 import { POD_SHIFT_COLORS } from './SolidOrb'
 
-export type MojNodeData = {
+type MojNodeData = {
   overallHealth?: number
   totalContacts?: number
   userName?: string
@@ -12,7 +12,7 @@ export type MojNodeData = {
   podColor?: string
   podId?: string
 }
-export type MojNodeType = Node<MojNodeData, 'moj'>
+type MojNodeType = Node<MojNodeData, 'moj'>
 
 export const MOJ_ID = 'moj-center'
 export const MOJ_SIZE = 136

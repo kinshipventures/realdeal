@@ -494,8 +494,8 @@ function OpportunitiesTab({ opportunities, onRemove, onAdd, navigate }: {
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => navigate(`/pipelines?opportunity=${opp.id}`)}
-                onKeyDown={e => e.key === 'Enter' && navigate(`/pipelines?opportunity=${opp.id}`)}
+                onClick={() => navigate(`/campaigns?opportunity=${opp.id}`)}
+                onKeyDown={e => e.key === 'Enter' && navigate(`/campaigns?opportunity=${opp.id}`)}
                 style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
               >
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{opp.name}</div>

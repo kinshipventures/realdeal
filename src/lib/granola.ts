@@ -27,7 +27,7 @@ interface GranolaNoteDetail {
   } | null
 }
 
-export interface GranolaSyncResult {
+interface GranolaSyncResult {
   total_notes: number
   matched: number
   interactions_created: number

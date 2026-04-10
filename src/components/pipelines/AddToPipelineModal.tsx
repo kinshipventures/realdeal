@@ -80,12 +80,12 @@ export function AddToPipelineModal({ open, onClose, contactIds, onCreated }: Add
         onClick={e => e.stopPropagation()}
       >
         <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-          Add to Pipeline
+          Add to Campaign
         </h3>
 
         {contactIds.length > 1 && (
           <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)' }}>
-            Adding to pipeline for {contactIds.length} contacts
+            Adding to campaign for {contactIds.length} contacts
           </p>
         )}
 
@@ -129,7 +129,7 @@ export function AddToPipelineModal({ open, onClose, contactIds, onCreated }: Add
               cursor: 'pointer',
             }}
           >
-            <option value="">Select pipeline...</option>
+            <option value="">Select campaign...</option>
             {pipelines.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}

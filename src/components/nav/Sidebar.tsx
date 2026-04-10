@@ -35,7 +35,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
-  const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/pipelines') || location.pathname.startsWith('/projects')
+  const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
   const isChangelog = location.pathname === '/changelog'
 

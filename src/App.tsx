@@ -48,7 +48,7 @@ function AppShell() {
   const navigate = useNavigate()
   const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies'
-  const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/pipelines') || location.pathname.startsWith('/projects')
+  const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isMobile = useIsMobile()
   const { session } = useAuth()

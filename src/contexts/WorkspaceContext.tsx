@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext'
 import { setActiveWorkspaceId, clearActiveWorkspaceId } from '@/lib/workspace'
 import { invalidateAllCaches } from '@/lib/supabase-data'
 
-export interface Workspace {
+interface Workspace {
   id: string
   name: string
   slug: string

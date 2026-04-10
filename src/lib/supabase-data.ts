@@ -1,10 +1,7 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, CampaignBacking, CampaignOpportunity, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
-import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS } from './sampleData'
-
-// Re-export TABLES for backward compat (some imports reference it)
-export const TABLES = {} as Record<string, string>
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 
@@ -443,7 +440,7 @@ export function getAllInteractions(): Promise<Interaction[]> {
   )
 }
 
-export function invalidateInteractionsCache(): void { _interactionsCache = null }
+function invalidateInteractionsCache(): void { _interactionsCache = null }
 export function invalidateContactsCache(): void { _contactsCache = null }
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
@@ -496,14 +493,6 @@ export async function deleteInteraction(id: string): Promise<void> {
   if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
 }
 
-export async function getRecentInteractions(limit: number): Promise<Interaction[]> {
-  if (isDemoMode()) return DEMO_INTERACTIONS.slice(0, limit)
-  const { data, error } = await supabase.from('interactions').select('*')
-    .order('date', { ascending: false }).limit(limit)
-  if (error) throw error
-  return (data ?? []).map(mapInteraction)
-}
-
 // ── Follow-up helpers ────────────────────────────────────────────────────────
 
 const CADENCE_MS: Record<Cadence, number> = {
@@ -521,11 +510,6 @@ export function isInGracePeriod(contact: Contact): boolean {
   return Date.now() - new Date(contact.created_at).getTime() < GRACE_PERIOD_MS
 }
 
-export async function getOverdueContacts(podId: string, cadence: Cadence = 'monthly'): Promise<Contact[]> {
-  const contacts = await getContacts()
-  return contacts.filter(c => c.list_ids.includes(podId) && isOverdue(c, cadence))
-}
-
 export async function logInteraction(contactId: string, data: Omit<Interaction, 'id' | 'created_at' | 'contact_id'>): Promise<Interaction> {
   const interaction = await createInteraction({ ...data, contact_id: contactId })
   if (data.type !== 'note') await updateContact(contactId, { last_contacted_at: data.date })
@@ -535,29 +519,46 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', contact_ids: contactIds, created_at: r.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
+}
+
+// Map pipeline DB rows into Campaign interfaces
+function pipelineToCampaign(p: Pipeline): Campaign {
+  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', contact_ids: [], backing: 'pipeline', created_at: p.created_at }
+}
+
+function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
+  return { id: s.id, campaign_id: s.pipeline_id, name: s.name, color: s.color, order: s.order, created_at: s.created_at }
 }
 
 function mapCampaignContact(r: any): CampaignContact {
-  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', notes: r.notes ?? null, created_at: r.created_at }
+  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, created_at: r.created_at }
+}
+
+function mapCampaignStage(r: any): CampaignStage {
+  return { id: r.id, campaign_id: r.campaign_id, name: r.name, color: r.color ?? null, order: r.order ?? 0, created_at: r.created_at }
 }
 
 let _campaignsCache: Campaign[] | null = null
 let _campaignsCacheTime = 0
 let _campaignsFetch: Promise<Campaign[]> | null = null
 let _campaignContactsCache: CampaignContact[] | null = null
+let _campaignStagesCache: CampaignStage[] | null = null
 
-export function invalidateCampaignsCache(): void { _campaignsCache = null; _campaignContactsCache = null }
+export function invalidateCampaignsCache(): void { _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null }
 
 async function fetchCampaigns(): Promise<Campaign[]> {
-  const [campRes, ccRes] = await Promise.all([
+  const [campRes, ccRes, stagesRes] = await Promise.all([
     supabase.from('campaigns').select('*'),
     supabase.from('campaign_contacts').select('*'),
+    supabase.from('campaign_stages').select('*'),
   ])
   if (campRes.error) throw campRes.error
   if (ccRes.error) throw new Error(`campaign_contacts query failed: ${ccRes.error.message}`)
+  if (stagesRes.error) throw new Error(`campaign_stages query failed: ${stagesRes.error.message}`)
   const ccs = (ccRes.data ?? []).map(mapCampaignContact)
   _campaignContactsCache = ccs
+  _campaignStagesCache = (stagesRes.data ?? []).map(mapCampaignStage)
   return (campRes.data ?? []).map(r => {
     const ids = ccs.filter(cc => cc.campaign_id === r.id).map(cc => cc.contact_id)
     return mapCampaign(r, [...new Set(ids)])
@@ -573,10 +574,45 @@ export function getCampaigns(): Promise<Campaign[]> {
   )
 }
 
+// Unified: all outreach campaigns + all pipeline-backed campaigns in one list
+export async function getAllCampaigns(): Promise<Campaign[]> {
+  const [outreach, pipelines] = await Promise.all([getCampaigns(), getPipelines()])
+  return [...outreach, ...pipelines.map(pipelineToCampaign)]
+}
+
+// Get stages for any campaign, regardless of backing
+export async function getStagesForCampaign(campaignId: string, backing: CampaignBacking): Promise<CampaignStage[]> {
+  if (backing === 'pipeline') {
+    const stages = await getPipelineStages(campaignId)
+    return stages.map(pipelineStageToCampaignStage)
+  }
+  return getCampaignStages(campaignId)
+}
+
+// Get opportunities for a pipeline-backed campaign
+export async function getCampaignOpportunities(campaignId: string): Promise<CampaignOpportunity[]> {
+  const opps = await getOpportunities()
+  const stages = await getPipelineStages(campaignId)
+  const stageIds = new Set(stages.map(s => s.id))
+  return opps
+    .filter(o => stageIds.has(o.stage_id))
+    .map(o => ({
+      id: o.id, campaign_id: campaignId, name: o.name, stage_id: o.stage_id,
+      contact_ids: o.relationship_ids, notes: o.notes, priority: o.priority,
+      status: o.status, moved_at: null, created_at: o.created_at,
+    }))
+}
+
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
   if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.campaign_id === campaignId)
   await getCampaigns()
   return (_campaignContactsCache ?? []).filter(cc => cc.campaign_id === campaignId)
+}
+
+export async function getCampaignContactsForContact(contactId: string): Promise<CampaignContact[]> {
+  if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.contact_id === contactId)
+  await getCampaigns()
+  return (_campaignContactsCache ?? []).filter(cc => cc.contact_id === contactId)
 }
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
@@ -592,16 +628,17 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
   return mapCampaign(row)
 }
 
-export async function addContactToCampaign(campaignId: string, contactId: string): Promise<CampaignContact> {
+export async function addContactToCampaign(campaignId: string, contactId: string, stageId?: string): Promise<CampaignContact> {
+  const now = new Date().toISOString()
   if (isDemoMode()) {
-    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', notes: null, created_at: new Date().toISOString() }
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId ?? null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
     DEMO_CAMPAIGN_CONTACTS.push(cc)
     const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
     return cc
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }).select().single()
+  const { data: row, error } = await supabase.from('campaign_contacts').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId, stage_id: stageId ?? null, moved_at: now }).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaignContact(row)
@@ -637,6 +674,67 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   return mapCampaign(row)
 }
 
+// ── Campaign Stages ──────────────────────────────────────────────────────────
+
+export async function getCampaignStages(campaignId: string): Promise<CampaignStage[]> {
+  if (isDemoMode()) return DEMO_CAMPAIGN_STAGES.filter(s => s.campaign_id === campaignId).sort((a, b) => a.order - b.order)
+  await getCampaigns() // ensures _campaignStagesCache is populated
+  return (_campaignStagesCache ?? []).filter(s => s.campaign_id === campaignId).sort((a, b) => a.order - b.order)
+}
+
+export async function createCampaignStage(campaignId: string, name: string, order: number, color?: string): Promise<CampaignStage> {
+  if (isDemoMode()) {
+    const s: CampaignStage = { id: `demo-cs-${Date.now()}-${order}`, campaign_id: campaignId, name, color: (color ?? null) as HexColor | null, order, created_at: new Date().toISOString() }
+    DEMO_CAMPAIGN_STAGES.push(s)
+    return s
+  }
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, name, color: color ?? null, order }).select().single()
+  if (error) throw error
+  _campaignStagesCache = null
+  return mapCampaignStage(row)
+}
+
+export async function updateCampaignStage(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color' | 'order'>>): Promise<void> {
+  if (isDemoMode()) {
+    const s = DEMO_CAMPAIGN_STAGES.find(s => s.id === id)
+    if (s) Object.assign(s, data)
+    return
+  }
+  const { error } = await supabase.from('campaign_stages').update(data).eq('id', id)
+  if (error) throw error
+  if (_campaignStagesCache) {
+    const idx = _campaignStagesCache.findIndex(s => s.id === id)
+    if (idx !== -1) _campaignStagesCache[idx] = { ..._campaignStagesCache[idx], ...data }
+  }
+}
+
+export async function deleteCampaignStage(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_CAMPAIGN_STAGES.findIndex(s => s.id === id)
+    if (idx !== -1) DEMO_CAMPAIGN_STAGES.splice(idx, 1)
+    return
+  }
+  const { error } = await supabase.from('campaign_stages').delete().eq('id', id)
+  if (error) throw error
+  if (_campaignStagesCache) _campaignStagesCache = _campaignStagesCache.filter(s => s.id !== id)
+}
+
+export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'>>): Promise<CampaignContact> {
+  if (isDemoMode()) {
+    const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
+    if (cc) Object.assign(cc, data)
+    return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, created_at: '' }
+  }
+  const { data: row, error } = await supabase.from('campaign_contacts').update(data).eq('id', id).select().single()
+  if (error) throw error
+  if (_campaignContactsCache) {
+    const idx = _campaignContactsCache.findIndex(cc => cc.id === id)
+    if (idx !== -1) _campaignContactsCache[idx] = mapCampaignContact(row)
+  }
+  return mapCampaignContact(row)
+}
+
 // ── Pipelines ─────────────────────────────────────────────────────────────────
 
 function mapPipeline(r: any): Pipeline {
@@ -647,7 +745,7 @@ let _pipelinesCache: Pipeline[] | null = null
 let _pipelinesCacheTime = 0
 let _pipelinesFetch: Promise<Pipeline[]> | null = null
 
-export function invalidatePipelinesCache(): void { _pipelinesCache = null }
+function invalidatePipelinesCache(): void { _pipelinesCache = null }
 
 async function fetchPipelines(): Promise<Pipeline[]> {
   const { data, error } = await supabase.from('pipelines').select('*')
@@ -664,31 +762,6 @@ export function getPipelines(): Promise<Pipeline[]> {
   )
 }
 
-export async function createPipeline(name: string): Promise<Pipeline> {
-  if (isDemoMode()) {
-    const p: Pipeline = { id: 'demo-pipe-' + Date.now(), name, status: 'active', created_at: new Date().toISOString() }
-    DEMO_PIPELINES.push(p)
-    return p
-  }
-  const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipelines').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name }).select().single()
-  if (error) throw error
-  _pipelinesCache = null
-  return mapPipeline(row)
-}
-
-export async function updatePipeline(id: string, data: Partial<Pick<Pipeline, 'name' | 'status'>>): Promise<Pipeline> {
-  if (isDemoMode()) {
-    const idx = DEMO_PIPELINES.findIndex(p => p.id === id)
-    if (idx >= 0) Object.assign(DEMO_PIPELINES[idx], data)
-    return DEMO_PIPELINES[idx]
-  }
-  const { data: row, error } = await supabase.from('pipelines').update(data).eq('id', id).select().single()
-  if (error) throw error
-  _pipelinesCache = null
-  return mapPipeline(row)
-}
-
 // ── Pipeline Stages ───────────────────────────────────────────────────────────
 
 function mapPipelineStage(r: any): PipelineStage {
@@ -699,7 +772,7 @@ let _pipelineStagesCache: PipelineStage[] | null = null
 let _pipelineStagesCacheTime = 0
 let _pipelineStagesFetch: Promise<PipelineStage[]> | null = null
 
-export function invalidatePipelineStagesCache(): void { _pipelineStagesCache = null; _pipelineStagesFetch = null }
+function invalidatePipelineStagesCache(): void { _pipelineStagesCache = null; _pipelineStagesFetch = null }
 
 async function fetchPipelineStages(): Promise<PipelineStage[]> {
   const { data, error } = await supabase.from('pipeline_stages').select('*')
@@ -715,42 +788,6 @@ export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]>
     fetchPipelineStages,
     pipelineId ? (all => all.filter(s => s.pipeline_id === pipelineId)) : undefined,
   )
-}
-
-export async function createPipelineStage(name: string, pipelineId: string, order: number, color?: string): Promise<PipelineStage> {
-  if (isDemoMode()) {
-    const s: PipelineStage = { id: 'demo-stage-' + Date.now(), pipeline_id: pipelineId, name, color: (color ?? null) as HexColor | null, order, created_at: new Date().toISOString() }
-    DEMO_PIPELINE_STAGES.push(s)
-    return s
-  }
-  const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pipeline_id: pipelineId, order, color: color ?? null }).select().single()
-  if (error) throw error
-  _pipelineStagesCache = null
-  return mapPipelineStage(row)
-}
-
-export async function updatePipelineStage(id: string, data: Partial<Pick<PipelineStage, 'name' | 'color' | 'order'>>): Promise<PipelineStage> {
-  if (isDemoMode()) {
-    const idx = DEMO_PIPELINE_STAGES.findIndex(s => s.id === id)
-    if (idx >= 0) Object.assign(DEMO_PIPELINE_STAGES[idx], data)
-    return DEMO_PIPELINE_STAGES[idx]
-  }
-  const { data: row, error } = await supabase.from('pipeline_stages').update(data).eq('id', id).select().single()
-  if (error) throw error
-  invalidatePipelineStagesCache()
-  return mapPipelineStage(row)
-}
-
-export async function deletePipelineStage(id: string): Promise<void> {
-  if (isDemoMode()) {
-    const idx = DEMO_PIPELINE_STAGES.findIndex(s => s.id === id)
-    if (idx >= 0) DEMO_PIPELINE_STAGES.splice(idx, 1)
-    return
-  }
-  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
-  if (error) throw error
-  invalidatePipelineStagesCache()
 }
 
 // ── Opportunities ─────────────────────────────────────────────────────────────
@@ -813,23 +850,6 @@ export async function createOpportunity(name: string, stageId: string, relations
   return { id: row.id, name: row.name, stage_id: row.stage_id ?? '', relationship_ids: relationshipIds, notes: null, priority: null, status: 'open', created_at: row.created_at }
 }
 
-export async function updateOpportunity(id: string, data: Partial<Pick<Opportunity, 'name' | 'stage_id' | 'notes' | 'priority' | 'status'>>): Promise<Opportunity> {
-  if (isDemoMode()) {
-    const idx = DEMO_OPPORTUNITIES.findIndex(o => o.id === id)
-    if (idx >= 0) Object.assign(DEMO_OPPORTUNITIES[idx], data)
-    return DEMO_OPPORTUNITIES[idx]
-  }
-  const { data: row, error } = await supabase.from('opportunities').update(data).eq('id', id).select().single()
-  if (error) throw error
-  _opportunitiesCache = null
-  const { data: junctions } = await supabase.from('opportunity_contacts').select('contact_id').eq('opportunity_id', id)
-  return {
-    id: row.id, name: row.name, stage_id: row.stage_id ?? '',
-    relationship_ids: (junctions ?? []).map(j => j.contact_id),
-    notes: row.notes ?? null, priority: row.priority ?? null, status: row.status ?? 'open', created_at: row.created_at,
-  }
-}
-
 // ── Projects ──────────────────────────────────────────────────────────────────
 
 async function enrichProjects(rows: any[]): Promise<Project[]> {
@@ -875,19 +895,6 @@ export function getProjects(): Promise<Project[]> {
     (d, f) => { if (d) { _projectsCache = d; _projectsCacheTime = Date.now() } _projectsFetch = f },
     fetchProjects,
   )
-}
-
-export async function createProject(name: string, description?: string): Promise<Project> {
-  if (isDemoMode()) {
-    const p: Project = { id: 'demo-proj-' + Date.now(), name, description: description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: new Date().toISOString() }
-    DEMO_PROJECTS.push(p)
-    return p
-  }
-  const userId = await getUserId()
-  const { data: row, error } = await supabase.from('projects').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, description: description ?? null }).select().single()
-  if (error) throw error
-  _projectsCache = null
-  return { id: row.id, name: row.name, description: row.description ?? null, owner: null, relationship_ids: [], opportunity_ids: [], notes: null, created_at: row.created_at }
 }
 
 export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'owner'>>): Promise<Project> {
@@ -1152,6 +1159,7 @@ export async function getPendingContacts(): Promise<Contact[]> {
 // ── Companies (from companies table) ────────────────────────────────────────
 
 export async function getCompanies(): Promise<import('./types').Company[]> {
+  if (isDemoMode()) return Promise.resolve(DEMO_COMPANIES)
   const wsId = getActiveWorkspaceId()
   if (!wsId) return []
   const { data, error } = await supabase
@@ -1181,7 +1189,7 @@ export function invalidateAllCaches(): void {
   _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null
   _contactsCache = null
   _interactionsCache = null
-  _campaignsCache = null; _campaignContactsCache = null
+  _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null
   _pipelinesCache = null; _pipelinesFetch = null
   _pipelineStagesCache = null; _pipelineStagesFetch = null
   _opportunitiesCache = null; _opportunitiesFetch = null

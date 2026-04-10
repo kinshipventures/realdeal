@@ -3,7 +3,7 @@ import type { Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 import { LucideIcon } from '../LucideIcon'
 
-export type CategoryNodeData = {
+type CategoryNodeData = {
   category: Category
   listColor?: string | null
   contactCount?: number
@@ -12,7 +12,7 @@ export type CategoryNodeData = {
   onClick: () => void
   onIconClick?: (e: React.MouseEvent) => void
 }
-export type CategoryNodeType = Node<CategoryNodeData>
+type CategoryNodeType = Node<CategoryNodeData>
 
 const SIZE = 64
 

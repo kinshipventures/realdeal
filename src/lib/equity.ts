@@ -150,12 +150,6 @@ export function overallEquityScore(
 
 // ── Dormancy ────────────────────────────────────────────────────────────────
 
-export function dormancyLabel(daysSince: number): string {
-  if (daysSince >= 180) return 'Slipping away'
-  if (daysSince >= 120) return 'Going quiet'
-  return 'Cooling off'
-}
-
 const DORMANT_MS = 90 * DAY_MS
 
 export function isDormant(contact: Contact): boolean {
