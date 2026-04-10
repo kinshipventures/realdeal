@@ -1,52 +1,57 @@
 
 
-## Plan: Deduplicate Pods, Contacts, and Companies
+## Plan: Contact & Company Cleanup and Backfill
 
 ### Current state
 
-**Pods - 3 duplicate pairs (case differences):**
-| Survivor (more members) | Duplicate (fewer) | Members |
+| Metric | Contacts (1,822) | Companies (175) |
 |---|---|---|
-| Maps (462) | MAPS (6 + 9 categories) | Merge into Maps |
-| Maps Lite (817) | MAPS Lite (5) | Merge into Maps Lite |
-| SPV (35) | SPV (0) | Delete empty one |
+| Has email | 1,278 (70%) | - |
+| Has first/last name split | 751 / 508 | - |
+| Missing name split (fixable) | **1,071** | - |
+| Has company text, no company_id link | **698** | - |
+| Company text matches existing company | 10 | - |
+| Unique company names with no company record | **615** | - |
+| Has website/domain | 570 / - | 7 / 7 |
+| Has industry | - | 119 (68%) |
+| Has location | - | 109 (62%) |
+| contact_companies junction rows | 23 | - |
+| type='Company' records in contacts table | 18 (should move to companies) | - |
 
-Also: "Services Providers" (typo) vs "Service Providers" - merge into "Service Providers".
+### What this will do
 
-**Contacts - 534 duplicate name groups, ~1500 excess rows** out of 2788 total. Most duplicates are sparse (no email/phone/company). Strategy: keep the earliest-created record as survivor, merge any non-null fields from duplicates, reassign all junction records (contact_pods, contact_categories, interactions, campaign_contacts, opportunity_contacts, project_contacts), then delete losers.
+**Phase 1 - Split first/last names** (1,071 contacts)
+- Parse `name` into `first_name` + `last_name` for all contacts where these are null but name contains a space
+- Simple split: first word = first_name, remainder = last_name
 
-**Companies - 3 duplicate pairs** (anthropic, moonpay, alice). Same merge strategy.
+**Phase 2 - Link contacts to existing companies** (10 contacts)
+- Where `company` text matches an existing company name (case-insensitive), set `company_id` and create `contact_companies` junction row
+
+**Phase 3 - Auto-create companies from contact data** (~615 new companies)
+- For each distinct `company` text value on contacts that has no matching company record, create a new company
+- Backfill company `website` and `domain` from the contact's website when the contact's website domain matches the company context
+- Then link those contacts via `company_id` and `contact_companies`
+
+**Phase 4 - Move 18 Company-type contacts to companies table**
+- The 18 contacts with `type='Company'` (Anthropic, Adler Capital, etc.) are org records misclassified as contacts
+- Move them to the `companies` table, reassign any junction records, delete from contacts
+- Skip "(Formerly Goop)" and "Freelance" as they're not real companies
+
+**Phase 5 - Backfill company domains from websites**
+- For companies with `website` but no `domain`, extract domain from the URL
+- For contacts linked to companies, propagate website/domain to the company if the company lacks them
 
 ### Implementation
 
-A single backend function (edge function) that runs the dedup in three phases:
-
-**Phase 1 - Merge duplicate pods**
-- For each pair: move contact_pods from loser to survivor (skip if already exists), move categories, then delete loser pod
-- Handle "Services Providers" -> "Service Providers" merge
-
-**Phase 2 - Deduplicate contacts**
-- Group by `LOWER(TRIM(name))` within workspace
-- For each group: pick earliest `created_at` as survivor
-- Coalesce non-null fields from duplicates into survivor (first non-null wins for each field)
-- Reassign all junction rows (contact_pods, contact_categories, interactions, campaign_contacts, opportunity_contacts, project_contacts) from loser IDs to survivor ID, skipping duplicates
-- Delete loser contact records
-
-**Phase 3 - Deduplicate companies**
-- Same pattern: group by `LOWER(TRIM(name))`, merge fields, update `contacts.company_id` references, delete losers
-
-### Expected outcome
-- ~1300 duplicate contacts removed (2788 -> ~1288)
-- 4 duplicate pods eliminated
-- 3 duplicate companies merged
-- All junction records preserved on survivor records
+A single edge function `supabase/functions/cleanup-workspace/index.ts` that runs all phases sequentially, returning a log of changes. Each phase is idempotent (safe to re-run).
 
 ### Files
-- `supabase/functions/dedup-workspace/index.ts` - new edge function that runs the dedup SQL
-- No UI changes needed - the data layer already works with the cleaned data
+- `supabase/functions/cleanup-workspace/index.ts` - new edge function
 
-### Safety
-- The function will log counts before/after for each phase
-- Runs within a single workspace scope
-- Junction reassignment uses `ON CONFLICT DO NOTHING` pattern to avoid constraint violations
+### Expected outcome
+- ~1,071 contacts get first/last name populated
+- ~698 contacts linked to companies (10 existing + ~615 newly created + remainder from Company-type migration)
+- ~175 + ~615 = ~790 companies total
+- 18 misclassified Company-type contacts moved to companies table
+- Company domain/website coverage improved from 4% to significantly higher
 
