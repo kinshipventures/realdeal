@@ -5,6 +5,10 @@ const TYPE_COLORS: Record<CampaignType, string> = {
   event: 'hsla(280, 60%, 50%, 0.5)',
   investment: 'hsla(150, 60%, 40%, 0.5)',
   outreach: 'hsla(210, 60%, 50%, 0.5)',
+  deal_flow: 'hsla(30, 60%, 50%, 0.5)',
+  fundraise: 'hsla(120, 60%, 40%, 0.5)',
+  talent: 'hsla(340, 60%, 50%, 0.5)',
+  partnerships: 'hsla(60, 60%, 40%, 0.5)',
   other: 'var(--color-text-tertiary)',
 }
 
