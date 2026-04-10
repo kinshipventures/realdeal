@@ -356,7 +356,7 @@ export async function importContacts(
         contact_frequency: r(row, 'Contact Frequency', 'Contact Frequency') as any || null,
         next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
-        company_record_id: null, custom_fields: cfValues,
+        company_record_id: null, company_ids: [], custom_fields: cfValues,
         primary_list_id: null, cadence_override: null,
         email_2: r(row, 'Email 2', 'Email 2') || null,
         email_3: r(row, 'Email 3', 'Email 3') || null,

@@ -77,6 +77,7 @@ function makeContact(overrides: Partial<Contact> = {}): Contact {
     type: 'Contact',
     status: 'Active',
     company_record_id: null,
+    company_ids: [],
     industry: null,
     stage: null,
     ticker: null,

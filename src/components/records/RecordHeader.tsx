@@ -141,7 +141,7 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
       introduced_by: null, intel_notes: null, relationship_owner: null,
       contact_frequency: null, next_follow_up_date: null,
       next_action: null, kv_fund_investor: null, spv_investor: null,
-      needs_review: false, company_record_id: null,
+      needs_review: false, company_record_id: null, company_ids: [],
       industry: null, stage: null, ticker: null, domain: null,
       email_2: null, email_3: null, communication_preferences: null, custom_fields: {},
     })
