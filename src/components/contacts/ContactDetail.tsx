@@ -378,7 +378,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         contact_frequency: null, next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
         type: 'Contact', status: 'Active',
-        company_record_id: null, industry: null, stage: null,
+        company_record_id: null, company_ids: [], industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
         communication_preferences: null, custom_fields: {},
       })
