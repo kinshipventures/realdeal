@@ -12,13 +12,9 @@ Deno.serve(async (req) => {
   }
 
   const log: string[] = [];
-  const addLog = (msg: string) => {
-    console.log(msg);
-    log.push(msg);
-  };
+  const addLog = (msg: string) => { console.log(msg); log.push(msg); };
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization header");
 
@@ -34,355 +30,237 @@ Deno.serve(async (req) => {
     const userId = user.id;
 
     const db = createClient(supabaseUrl, serviceKey);
-
-    const { workspace_id } = await req.json();
+    const body = await req.json();
+    const { workspace_id, phase } = body;
     if (!workspace_id) throw new Error("workspace_id required");
+    if (!phase) throw new Error("phase required (1-5 or 'all')");
 
-    addLog(`Starting cleanup for workspace ${workspace_id}, user ${userId}`);
+    addLog(`Cleanup workspace=${workspace_id} phase=${phase}`);
+
+    // Helper: fetch all rows paging through 1000-row limit
+    async function fetchAll(table: string, select: string, filters: Record<string, any>) {
+      const rows: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        let q = db.from(table).select(select).range(from, from + pageSize - 1);
+        for (const [k, v] of Object.entries(filters)) {
+          if (v === null) q = q.is(k, null);
+          else q = q.eq(k, v);
+        }
+        const { data } = await q;
+        if (!data || data.length === 0) break;
+        rows.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return rows;
+    }
 
     // ─── Phase 1: Split first/last names ───
-    addLog("--- Phase 1: Split first/last names ---");
-    const { data: nameContacts } = await db
-      .from("contacts")
-      .select("id, name, first_name, last_name")
-      .eq("workspace_id", workspace_id)
-      .is("first_name", null)
-      .is("last_name", null);
+    if (phase === 1 || phase === "all") {
+      addLog("--- Phase 1: Split first/last names ---");
+      // Fetch contacts missing first_name in pages
+      const allContacts = await fetchAll("contacts", "id, name, first_name, last_name", { workspace_id });
+      const toSplit = allContacts.filter((c: any) => !c.first_name && !c.last_name && c.name && c.name.trim().includes(" "));
 
-    let nameSplitCount = 0;
-    if (nameContacts) {
-      const updates = nameContacts
-        .filter((c: any) => c.name && c.name.trim().includes(" "))
-        .map((c: any) => {
-          const trimmed = c.name.trim();
-          const spaceIdx = trimmed.indexOf(" ");
-          return {
-            id: c.id,
-            first_name: trimmed.substring(0, spaceIdx),
-            last_name: trimmed.substring(spaceIdx + 1).trim(),
-          };
-        });
-
-      // Batch update 100 at a time
-      for (let i = 0; i < updates.length; i += 100) {
-        const batch = updates.slice(i, i + 100);
-        for (const u of batch) {
-          await db
-            .from("contacts")
-            .update({ first_name: u.first_name, last_name: u.last_name })
-            .eq("id", u.id);
-        }
-        nameSplitCount += batch.length;
+      let count = 0;
+      for (const c of toSplit) {
+        const trimmed = c.name.trim();
+        const idx = trimmed.indexOf(" ");
+        await db.from("contacts").update({
+          first_name: trimmed.substring(0, idx),
+          last_name: trimmed.substring(idx + 1).trim(),
+        }).eq("id", c.id);
+        count++;
       }
+      addLog(`Phase 1: split ${count} names`);
     }
-    addLog(`Phase 1 complete: split ${nameSplitCount} names`);
 
     // ─── Phase 2: Link contacts to existing companies ───
-    addLog("--- Phase 2: Link contacts to existing companies ---");
-    const { data: companies } = await db
-      .from("companies")
-      .select("id, name")
-      .eq("workspace_id", workspace_id);
+    if (phase === 2 || phase === "all") {
+      addLog("--- Phase 2: Link to existing companies ---");
+      const companies = await fetchAll("companies", "id, name", { workspace_id });
+      const companyByName = new Map<string, string>();
+      for (const co of companies) companyByName.set(co.name.toLowerCase().trim(), co.id);
 
-    const companyByName = new Map<string, string>();
-    for (const co of companies || []) {
-      companyByName.set(co.name.toLowerCase().trim(), co.id);
-    }
+      const unlinked = (await fetchAll("contacts", "id, company, company_id", { workspace_id }))
+        .filter((c: any) => !c.company_id && c.company);
 
-    const { data: unlnkContacts } = await db
-      .from("contacts")
-      .select("id, company, company_id")
-      .eq("workspace_id", workspace_id)
-      .is("company_id", null)
-      .not("company", "is", null);
+      const existingJ = await fetchAll("contact_companies", "contact_id, company_id", { workspace_id });
+      const jSet = new Set(existingJ.map((j: any) => `${j.contact_id}:${j.company_id}`));
 
-    // Get existing junction rows to avoid duplicates
-    const { data: existingJunctions } = await db
-      .from("contact_companies")
-      .select("contact_id, company_id")
-      .eq("workspace_id", workspace_id);
-
-    const junctionSet = new Set(
-      (existingJunctions || []).map((j: any) => `${j.contact_id}:${j.company_id}`)
-    );
-
-    let linkedCount = 0;
-    const junctionsToInsert: any[] = [];
-
-    for (const c of unlnkContacts || []) {
-      if (!c.company) continue;
-      const key = c.company.toLowerCase().trim();
-      const companyId = companyByName.get(key);
-      if (companyId) {
-        await db
-          .from("contacts")
-          .update({ company_id: companyId })
-          .eq("id", c.id);
-        const jKey = `${c.id}:${companyId}`;
-        if (!junctionSet.has(jKey)) {
-          junctionsToInsert.push({
-            contact_id: c.id,
-            company_id: companyId,
-            is_primary: true,
-            user_id: userId,
-            workspace_id,
-          });
-          junctionSet.add(jKey);
+      let linked = 0;
+      const jBatch: any[] = [];
+      for (const c of unlinked) {
+        const cid = companyByName.get(c.company.toLowerCase().trim());
+        if (!cid) continue;
+        await db.from("contacts").update({ company_id: cid }).eq("id", c.id);
+        const jk = `${c.id}:${cid}`;
+        if (!jSet.has(jk)) {
+          jBatch.push({ contact_id: c.id, company_id: cid, is_primary: true, user_id: userId, workspace_id });
+          jSet.add(jk);
         }
-        linkedCount++;
+        linked++;
       }
+      for (let i = 0; i < jBatch.length; i += 100) {
+        await db.from("contact_companies").insert(jBatch.slice(i, i + 100));
+      }
+      addLog(`Phase 2: linked ${linked} contacts`);
     }
 
-    // Insert junctions in batches
-    for (let i = 0; i < junctionsToInsert.length; i += 100) {
-      await db.from("contact_companies").insert(junctionsToInsert.slice(i, i + 100));
-    }
-    addLog(`Phase 2 complete: linked ${linkedCount} contacts to existing companies`);
+    // ─── Phase 3: Auto-create companies ───
+    if (phase === 3 || phase === "all") {
+      addLog("--- Phase 3: Auto-create companies ---");
+      const companies = await fetchAll("companies", "id, name", { workspace_id });
+      const companyByName = new Map<string, string>();
+      for (const co of companies) companyByName.set(co.name.toLowerCase().trim(), co.id);
 
-    // ─── Phase 3: Auto-create companies from contact data ───
-    addLog("--- Phase 3: Auto-create companies ---");
+      const unlinked = (await fetchAll("contacts", "id, company, company_id, website, domain, location, industry, stage", { workspace_id }))
+        .filter((c: any) => !c.company_id && c.company && c.company.trim());
 
-    // Re-fetch unlinked contacts (some may have been linked in phase 2)
-    const { data: stillUnlinked } = await db
-      .from("contacts")
-      .select("id, company, website, domain, location, industry, stage")
-      .eq("workspace_id", workspace_id)
-      .is("company_id", null)
-      .not("company", "is", null);
-
-    // Group by normalized company name
-    const companyGroups = new Map<string, any[]>();
-    for (const c of stillUnlinked || []) {
-      if (!c.company || !c.company.trim()) continue;
-      const key = c.company.toLowerCase().trim();
-      if (companyByName.has(key)) continue; // already exists
-      if (!companyGroups.has(key)) companyGroups.set(key, []);
-      companyGroups.get(key)!.push(c);
-    }
-
-    let createdCompanies = 0;
-    let linkedPhase3 = 0;
-
-    for (const [_key, contacts] of companyGroups) {
-      // Use first contact's company text as canonical name
-      const canonicalName = contacts[0].company.trim();
-
-      // Aggregate metadata from contacts
-      let website: string | null = null;
-      let domain: string | null = null;
-      let location: string | null = null;
-      let industry: string | null = null;
-      let stage: string | null = null;
-
-      for (const c of contacts) {
-        if (!website && c.website) website = c.website;
-        if (!domain && c.domain) domain = c.domain;
-        if (!location && c.location) location = c.location;
-        if (!industry && c.industry) industry = c.industry;
-        if (!stage && c.stage) stage = c.stage;
+      // Group by company name
+      const groups = new Map<string, any[]>();
+      for (const c of unlinked) {
+        const key = c.company.toLowerCase().trim();
+        if (companyByName.has(key)) continue;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(c);
       }
 
-      // Extract domain from website if not set
-      if (!domain && website) {
+      const existingJ = await fetchAll("contact_companies", "contact_id, company_id", { workspace_id });
+      const jSet = new Set(existingJ.map((j: any) => `${j.contact_id}:${j.company_id}`));
+
+      let created = 0, linked = 0;
+      for (const [key, contacts] of groups) {
+        const name = contacts[0].company.trim();
+        let website: string | null = null, domain: string | null = null,
+            location: string | null = null, industry: string | null = null, stage: string | null = null;
+        for (const c of contacts) {
+          if (!website && c.website) website = c.website;
+          if (!domain && c.domain) domain = c.domain;
+          if (!location && c.location) location = c.location;
+          if (!industry && c.industry) industry = c.industry;
+          if (!stage && c.stage) stage = c.stage;
+        }
+        if (!domain && website) {
+          try {
+            const u = website.startsWith("http") ? website : `https://${website}`;
+            domain = new URL(u).hostname.replace(/^www\./, "");
+          } catch { /* skip */ }
+        }
+
+        const { data: newCo, error } = await db.from("companies")
+          .insert({ name, website, domain, location, industry, stage, user_id: userId, workspace_id })
+          .select("id").single();
+        if (error || !newCo) { addLog(`  Failed: "${name}" ${error?.message}`); continue; }
+
+        created++;
+        companyByName.set(key, newCo.id);
+
+        const jBatch: any[] = [];
+        for (const c of contacts) {
+          await db.from("contacts").update({ company_id: newCo.id }).eq("id", c.id);
+          const jk = `${c.id}:${newCo.id}`;
+          if (!jSet.has(jk)) {
+            jBatch.push({ contact_id: c.id, company_id: newCo.id, is_primary: true, user_id: userId, workspace_id });
+            jSet.add(jk);
+          }
+          linked++;
+        }
+        for (let i = 0; i < jBatch.length; i += 100) {
+          await db.from("contact_companies").insert(jBatch.slice(i, i + 100));
+        }
+      }
+      addLog(`Phase 3: created ${created} companies, linked ${linked} contacts`);
+    }
+
+    // ─── Phase 4: Move Company-type contacts ───
+    if (phase === 4 || phase === "all") {
+      addLog("--- Phase 4: Move Company-type contacts ---");
+      const SKIP = ["(formerly goop)", "freelance"];
+      const companyContacts = await fetchAll("contacts", "*", { workspace_id, type: "Company" });
+
+      const companies = await fetchAll("companies", "id, name", { workspace_id });
+      const companyByName = new Map<string, string>();
+      for (const co of companies) companyByName.set(co.name.toLowerCase().trim(), co.id);
+
+      let moved = 0;
+      for (const cc of companyContacts) {
+        if (SKIP.includes(cc.name.toLowerCase().trim())) { addLog(`  Skip "${cc.name}"`); continue; }
+
+        let targetId = companyByName.get(cc.name.toLowerCase().trim());
+        if (!targetId) {
+          const { data: newCo } = await db.from("companies")
+            .insert({ name: cc.name, website: cc.website, domain: cc.domain, location: cc.location,
+              industry: cc.industry, stage: cc.stage, ticker: cc.ticker, notes: cc.notes,
+              custom_fields: cc.custom_fields || {}, user_id: userId, workspace_id })
+            .select("id").single();
+          if (!newCo) { addLog(`  Failed: "${cc.name}"`); continue; }
+          targetId = newCo.id;
+        }
+
+        for (const t of ["contact_pods", "contact_categories", "contact_companies", "campaign_contacts", "opportunity_contacts", "project_contacts"]) {
+          await db.from(t).delete().eq("contact_id", cc.id);
+        }
+        await db.from("interactions").delete().eq("contact_id", cc.id);
+        await db.from("contacts").delete().eq("id", cc.id);
+        moved++;
+        addLog(`  Moved "${cc.name}"`);
+      }
+      addLog(`Phase 4: moved ${moved}`);
+    }
+
+    // ─── Phase 5: Backfill domains ───
+    if (phase === 5 || phase === "all") {
+      addLog("--- Phase 5: Backfill domains ---");
+      const noDomain = (await fetchAll("companies", "id, website, domain", { workspace_id }))
+        .filter((co: any) => !co.domain && co.website);
+
+      let extracted = 0;
+      for (const co of noDomain) {
         try {
-          const url = website.startsWith("http") ? website : `https://${website}`;
-          domain = new URL(url).hostname.replace(/^www\./, "");
+          const u = co.website.startsWith("http") ? co.website : `https://${co.website}`;
+          const d = new URL(u).hostname.replace(/^www\./, "");
+          await db.from("companies").update({ domain: d }).eq("id", co.id);
+          extracted++;
         } catch { /* skip */ }
       }
 
-      const { data: newCo, error: coErr } = await db
-        .from("companies")
-        .insert({
-          name: canonicalName,
-          website,
-          domain,
-          location,
-          industry,
-          stage,
-          user_id: userId,
-          workspace_id,
-        })
-        .select("id")
-        .single();
+      // Propagate from contacts to companies
+      const linked = (await fetchAll("contacts", "id, company_id, website, domain", { workspace_id }))
+        .filter((c: any) => c.company_id && c.website);
 
-      if (coErr || !newCo) {
-        addLog(`  Failed to create company "${canonicalName}": ${coErr?.message}`);
-        continue;
-      }
-
-      createdCompanies++;
-      companyByName.set(_key, newCo.id);
-
-      // Link all contacts in this group
-      const batchJunctions: any[] = [];
-      for (const c of contacts) {
-        await db.from("contacts").update({ company_id: newCo.id }).eq("id", c.id);
-        const jKey = `${c.id}:${newCo.id}`;
-        if (!junctionSet.has(jKey)) {
-          batchJunctions.push({
-            contact_id: c.id,
-            company_id: newCo.id,
-            is_primary: true,
-            user_id: userId,
-            workspace_id,
-          });
-          junctionSet.add(jKey);
+      const seen = new Set<string>();
+      let propagated = 0;
+      for (const c of linked) {
+        if (seen.has(c.company_id)) continue;
+        seen.add(c.company_id);
+        const { data: co } = await db.from("companies").select("id, website, domain").eq("id", c.company_id).single();
+        if (!co) continue;
+        const updates: any = {};
+        if (!co.website && c.website) updates.website = c.website;
+        if (!co.domain) {
+          if (c.domain) updates.domain = c.domain;
+          else if (c.website) {
+            try {
+              const u = c.website.startsWith("http") ? c.website : `https://${c.website}`;
+              updates.domain = new URL(u).hostname.replace(/^www\./, "");
+            } catch { /* skip */ }
+          }
         }
-        linkedPhase3++;
-      }
-      if (batchJunctions.length) {
-        for (let i = 0; i < batchJunctions.length; i += 100) {
-          await db.from("contact_companies").insert(batchJunctions.slice(i, i + 100));
+        if (Object.keys(updates).length) {
+          await db.from("companies").update(updates).eq("id", co.id);
+          propagated++;
         }
       }
-    }
-    addLog(`Phase 3 complete: created ${createdCompanies} companies, linked ${linkedPhase3} contacts`);
-
-    // ─── Phase 4: Move Company-type contacts to companies table ───
-    addLog("--- Phase 4: Move Company-type contacts to companies ---");
-    const SKIP_NAMES = ["(formerly goop)", "freelance"];
-
-    const { data: companyContacts } = await db
-      .from("contacts")
-      .select("*")
-      .eq("workspace_id", workspace_id)
-      .eq("type", "Company");
-
-    let movedCount = 0;
-    for (const cc of companyContacts || []) {
-      if (SKIP_NAMES.includes(cc.name.toLowerCase().trim())) {
-        addLog(`  Skipping "${cc.name}"`);
-        continue;
-      }
-
-      // Check if company already exists
-      const existingKey = cc.name.toLowerCase().trim();
-      let targetCompanyId = companyByName.get(existingKey);
-
-      if (!targetCompanyId) {
-        // Create company from contact fields
-        const { data: newCo } = await db
-          .from("companies")
-          .insert({
-            name: cc.name,
-            website: cc.website,
-            domain: cc.domain,
-            location: cc.location,
-            industry: cc.industry,
-            stage: cc.stage,
-            ticker: cc.ticker,
-            notes: cc.notes,
-            custom_fields: cc.custom_fields || {},
-            user_id: userId,
-            workspace_id,
-          })
-          .select("id")
-          .single();
-
-        if (!newCo) {
-          addLog(`  Failed to create company for "${cc.name}"`);
-          continue;
-        }
-        targetCompanyId = newCo.id;
-        companyByName.set(existingKey, targetCompanyId);
-      }
-
-      // Reassign interactions from this contact to... we can't really reassign
-      // interactions since they need a valid contact_id. Instead, log merge_event
-      // and delete interactions for company-type contacts.
-      // Actually - just delete the contact record. Junction rows will be orphaned
-      // but that's fine since company-type contacts shouldn't have meaningful junctions.
-
-      // Delete junction rows pointing to this contact
-      for (const table of ["contact_pods", "contact_categories", "contact_companies", "campaign_contacts", "opportunity_contacts", "project_contacts"]) {
-        await db.from(table).delete().eq("contact_id", cc.id);
-      }
-
-      // Delete interactions for this contact
-      await db.from("interactions").delete().eq("contact_id", cc.id);
-
-      // Delete the contact
-      await db.from("contacts").delete().eq("id", cc.id);
-
-      movedCount++;
-      addLog(`  Moved "${cc.name}" to companies (${targetCompanyId})`);
-    }
-    addLog(`Phase 4 complete: moved ${movedCount} company-type contacts`);
-
-    // ─── Phase 5: Backfill company domains from websites ───
-    addLog("--- Phase 5: Backfill company domains ---");
-
-    // 5a: Companies with website but no domain
-    const { data: noDomainCos } = await db
-      .from("companies")
-      .select("id, website, domain")
-      .eq("workspace_id", workspace_id)
-      .is("domain", null)
-      .not("website", "is", null);
-
-    let domainBackfillCount = 0;
-    for (const co of noDomainCos || []) {
-      if (!co.website) continue;
-      try {
-        const url = co.website.startsWith("http") ? co.website : `https://${co.website}`;
-        const domain = new URL(url).hostname.replace(/^www\./, "");
-        await db.from("companies").update({ domain }).eq("id", co.id);
-        domainBackfillCount++;
-      } catch { /* skip bad URLs */ }
+      addLog(`Phase 5: ${extracted} domains extracted, ${propagated} propagated`);
     }
 
-    // 5b: Propagate website/domain from contacts to their companies
-    const { data: contactsWithWeb } = await db
-      .from("contacts")
-      .select("id, company_id, website, domain")
-      .eq("workspace_id", workspace_id)
-      .not("company_id", "is", null)
-      .not("website", "is", null);
-
-    let propagatedCount = 0;
-    const companiesUpdated = new Set<string>();
-    for (const c of contactsWithWeb || []) {
-      if (!c.company_id || companiesUpdated.has(c.company_id)) continue;
-
-      // Check if company needs website/domain
-      const { data: co } = await db
-        .from("companies")
-        .select("id, website, domain")
-        .eq("id", c.company_id)
-        .single();
-
-      if (!co) continue;
-
-      const updates: any = {};
-      if (!co.website && c.website) updates.website = c.website;
-      if (!co.domain && c.domain) updates.domain = c.domain;
-      if (!co.domain && !c.domain && c.website) {
-        try {
-          const url = c.website.startsWith("http") ? c.website : `https://${c.website}`;
-          updates.domain = new URL(url).hostname.replace(/^www\./, "");
-        } catch { /* skip */ }
-      }
-
-      if (Object.keys(updates).length) {
-        await db.from("companies").update(updates).eq("id", co.id);
-        propagatedCount++;
-      }
-      companiesUpdated.add(c.company_id);
-    }
-
-    addLog(`Phase 5 complete: ${domainBackfillCount} domains extracted, ${propagatedCount} companies backfilled from contacts`);
-
-    // Summary
-    const { count: finalContacts } = await db
-      .from("contacts")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspace_id);
-    const { count: finalCompanies } = await db
-      .from("companies")
-      .select("*", { count: "exact", head: true })
-      .eq("workspace_id", workspace_id);
-
-    addLog(`Final counts: ${finalContacts} contacts, ${finalCompanies} companies`);
+    // Final counts
+    const { count: fc } = await db.from("contacts").select("*", { count: "exact", head: true }).eq("workspace_id", workspace_id);
+    const { count: fco } = await db.from("companies").select("*", { count: "exact", head: true }).eq("workspace_id", workspace_id);
+    addLog(`Final: ${fc} contacts, ${fco} companies`);
 
     return new Response(JSON.stringify({ success: true, log }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -390,8 +268,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     addLog(`ERROR: ${err.message}`);
     return new Response(JSON.stringify({ success: false, error: err.message, log }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
