@@ -1,40 +1,52 @@
 
 
-## Plan: Social Proof + App Preview for Landing Page
+## Plan: Deduplicate Pods, Contacts, and Companies
 
-### 1. App preview mockup in hero section
+### Current state
 
-Replace the decorative orbs with a faux browser-window mockup containing an SVG illustration of the app's dashboard/orb map. The mockup will have:
-- macOS-style window chrome (traffic light dots, title bar)
-- An SVG rendering of the orb map view - hub orb in center, pod orbs around it with connecting lines and health rings
-- Subtle drop shadow and rounded corners
-- Sits below the CTA buttons where the orbs currently are
+**Pods - 3 duplicate pairs (case differences):**
+| Survivor (more members) | Duplicate (fewer) | Members |
+|---|---|---|
+| Maps (462) | MAPS (6 + 9 categories) | Merge into Maps |
+| Maps Lite (817) | MAPS Lite (5) | Merge into Maps Lite |
+| SPV (35) | SPV (0) | Delete empty one |
 
-### 2. Social proof / testimonials section
+Also: "Services Providers" (typo) vs "Service Providers" - merge into "Service Providers".
 
-Insert between Features and How It Works. Two parts:
+**Contacts - 534 duplicate name groups, ~1500 excess rows** out of 2788 total. Most duplicates are sparse (no email/phone/company). Strategy: keep the earliest-created record as survivor, merge any non-null fields from duplicates, reassign all junction records (contact_pods, contact_categories, interactions, campaign_contacts, opportunity_contacts, project_contacts), then delete losers.
 
-**a) "Trusted by" logo bar** - A horizontal row of names/logos referencing Kinship Ventures:
-- "As used by Moj Mahdara, Gwyneth Paltrow, and Trina Spear at Kinship Ventures"
-- Link to kinshipventures.co
+**Companies - 3 duplicate pairs** (anthropic, moonpay, alice). Same merge strategy.
 
-**b) Testimonial cards** - 2-3 quote cards with:
-- Moj Mahdara, Co-Founder & Managing Partner, Kinship Ventures: quote about relationship management and staying connected across 150+ cap tables
-- Gwyneth Paltrow: quote about the power of nurturing your network
-- Trina Spear: quote about high-agency relationship building
+### Implementation
 
-Cards styled with `--surface-panel` background, serif quote text, small avatar placeholder circles with initials.
+A single backend function (edge function) that runs the dedup in three phases:
 
-### 3. Files to modify
+**Phase 1 - Merge duplicate pods**
+- For each pair: move contact_pods from loser to survivor (skip if already exists), move categories, then delete loser pod
+- Handle "Services Providers" -> "Service Providers" merge
 
-- `src/components/landing/LandingPage.tsx` - all changes in this single file:
-  - Replace decorative orbs div (lines 138-158) with SVG app preview mockup
-  - Add `TESTIMONIALS` array constant
-  - Add social proof section between Features and How It Works sections
+**Phase 2 - Deduplicate contacts**
+- Group by `LOWER(TRIM(name))` within workspace
+- For each group: pick earliest `created_at` as survivor
+- Coalesce non-null fields from duplicates into survivor (first non-null wins for each field)
+- Reassign all junction rows (contact_pods, contact_categories, interactions, campaign_contacts, opportunity_contacts, project_contacts) from loser IDs to survivor ID, skipping duplicates
+- Delete loser contact records
 
-### Technical details
+**Phase 3 - Deduplicate companies**
+- Same pattern: group by `LOWER(TRIM(name))`, merge fields, update `contacts.company_id` references, delete losers
 
-- SVG mockup: inline SVG with browser chrome (rect for title bar, three colored circles for traffic lights), then simplified orb map illustration (circles + lines mimicking the real app)
-- Testimonial quotes will be hardcoded strings - these are real people from kinshipventures.co
-- No new dependencies or files needed
+### Expected outcome
+- ~1300 duplicate contacts removed (2788 -> ~1288)
+- 4 duplicate pods eliminated
+- 3 duplicate companies merged
+- All junction records preserved on survivor records
+
+### Files
+- `supabase/functions/dedup-workspace/index.ts` - new edge function that runs the dedup SQL
+- No UI changes needed - the data layer already works with the cleaned data
+
+### Safety
+- The function will log counts before/after for each phase
+- Runs within a single workspace scope
+- Junction reassignment uses `ON CONFLICT DO NOTHING` pattern to avoid constraint violations
 
