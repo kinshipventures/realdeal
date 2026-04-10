@@ -548,17 +548,15 @@ let _campaignStagesCache: CampaignStage[] | null = null
 export function invalidateCampaignsCache(): void { _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null }
 
 async function fetchCampaigns(): Promise<Campaign[]> {
-  const [campRes, ccRes, stagesRes] = await Promise.all([
+  const [campRes, ccRes] = await Promise.all([
     supabase.from('campaigns').select('*'),
     supabase.from('campaign_contacts').select('*'),
-    supabase.from('campaign_stages').select('*'),
   ])
   if (campRes.error) throw campRes.error
   if (ccRes.error) throw new Error(`campaign_contacts query failed: ${ccRes.error.message}`)
-  if (stagesRes.error) throw new Error(`campaign_stages query failed: ${stagesRes.error.message}`)
   const ccs = (ccRes.data ?? []).map(mapCampaignContact)
   _campaignContactsCache = ccs
-  _campaignStagesCache = (stagesRes.data ?? []).map(mapCampaignStage)
+  _campaignStagesCache = []
   return (campRes.data ?? []).map(r => {
     const ids = ccs.filter(cc => cc.campaign_id === r.id).map(cc => cc.contact_id)
     return mapCampaign(r, [...new Set(ids)])
