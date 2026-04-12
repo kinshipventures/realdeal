@@ -1,60 +1,72 @@
 
 
-## Plan: Enhance Pod Drill-Down Visual Experience
+## Plan: Fix Pod Drill-Down + Enhance Orb Hover/Click Interactions
 
 ### Problem
 
-The pod drill-down view (screenshot: Talent pod) is visually flat - just a center orb with category orbs floating around it. No edges, no contact counts, no health indicators, no visual hierarchy beyond size. It feels disconnected compared to the hub view.
+Two issues:
+
+1. **Drill-down shows nothing for pods without categories.** "Maps Lite" (805 contacts), "Unsorted", "Family & Friends", "General", etc. have 0 categories in the database. When clicked, `buildDrillNodes` generates only the center hub orb with nothing around it - looks broken.
+
+2. **Orb interactions feel flat.** Hover does a basic scale+lift. No press feedback beyond a quick shrink. No visual preview of what's inside a pod before clicking.
+
+### Root cause (drill-down)
+
+`categoriesByPodRef.current[pod.id]` returns `[]` for pods with no categories. `buildDrillNodes` creates only the center node. `buildDrillEdges` returns `[]`. Result: empty drill-down.
+
+Database confirms: 6 of 13 pods have 0 categories. The 4 pods with categories + contacts work fine (Service Providers: 198 cats, Maps: 46, Talent: 14, SPV: 4).
 
 ### Changes
 
-**1. Add contact counts to all category orbs**
+**1. Handle category-less pods gracefully**
 
-`buildDrillNodes()` currently doesn't pass `contactCount` to category nodes. Wire it through so each category orb shows its count beneath the name.
+When a pod has 0 categories, skip the drill-down animation entirely and navigate directly to `/pod/:id` (the pod detail page). This is immediate, expected behavior - there's nothing to "explore" visually.
 
-- Files: `OrbMap.tsx` (buildDrillNodes), fetch category contact counts and pass as data
+In `drillIntoPod`: check `categoriesByPodRef.current[pod.id]?.length`. If 0, call `navigate(/pod/${pod.id})` and return without animating.
 
-**2. Add health rings to category orbs**
+- File: `OrbMap.tsx`
 
-Pass `healthPercent` to category `SolidOrb` based on equity scores for contacts in that category. Shows which categories are thriving vs fading at a glance.
+**2. Enhanced hover: satellite category dots expand into orbiting ring**
 
-- Files: `CategoryNode.tsx` (pass healthPercent to SolidOrb), `OrbMap.tsx` (compute per-category health)
+This already exists in CSS (`.satellite-ring`, `.satellite-expand`, `.satellite-dot`) and is rendered in `ListNode.tsx` lines 104-136. The satellites expand on `.orbit-start:hover`. This should already work - need to verify the CSS is connecting properly and the `categories` data is being passed.
 
-**3. Add spoke edges from center to category orbs**
+- Files: `OrbMap.tsx` (verify categoriesByPod passed), `src/index.css` (verify satellite CSS)
 
-Use the existing `GradientEdge` component to draw health-encoded spokes from the center pod to each category. Gives the drill-down the same connected feel as the hub view.
+**3. Enhanced hover: subtle glow pulse on hover**
 
-- Files: `OrbMap.tsx` (new `buildDrillEdges()` function)
+Add a soft breathing glow animation on hover that makes orbs feel alive. The current hover only changes `boxShadow` via JS - add a CSS keyframe that pulses the glow intensity.
 
-**4. Size category orbs by contact count**
+- File: `src/index.css`
 
-Instead of uniform 64px, scale category orbs between 56-88px based on relative contact count. Larger categories get larger orbs - instant visual weight.
+**4. Enhanced press: haptic-style bounce**
 
-- Files: `CategoryNode.tsx` (accept dynamic size), `OrbMap.tsx` (compute sizes in buildDrillNodes)
+Replace the flat `scale(0.93)` active state with a spring-back animation: press down to 0.92, then on release bounce to 1.04 before settling at 1.0. Uses a CSS transition with overshoot bezier.
 
-**5. Enrich center hub orb in drill-down**
+- File: `src/index.css`
 
-Show more than just the pod name - add contact count, health score, and health label. Make it feel like the hub-view center orb but pod-scoped.
+**5. Add hover tooltip with pod stats**
 
-- Files: `MojNode.tsx` (render health stats when in drill-down mode)
+The tooltip system already exists (`hoveredPod` state, `handlePodHoverEnter/Leave`). Verify it renders and enhance it to show: pod name, contact count, health score label, last interaction date, and category count.
 
-**6. Add subtle orbit ring lines**
+- File: `OrbMap.tsx` (tooltip JSX section)
 
-Render faint circular ring guides behind category orbs (like planetary orbits) to give spatial structure. CSS-only, using pseudo-elements or an SVG layer.
+**6. Drill-down entrance: staggered spring animation for category orbs**
 
-- Files: `src/index.css` or inline in `OrbMap.tsx`
+Category orbs currently use `orb-enter` which is a simple fade. Add a spring-in keyframe where orbs scale from 0 and overshoot to 1.05 before settling, with staggered delays (already passed as `animationDelay`).
 
-### Technical details
-
-- `buildDrillNodes` already receives `equityByPod` - need to also pass per-category contact counts (already available from the categories fetch)
-- Category health can be derived from contacts in that category using existing `contactEquityScore` 
-- `GradientEdge` already supports `healthPercent` for thickness/opacity encoding
-- Dynamic sizing: `const size = Math.max(56, Math.min(88, 56 + (count / maxCount) * 32))`
-- Orbit rings: absolute-positioned SVG circles at each ring radius with `stroke: rgba(255,255,255,0.06)`
+- File: `src/index.css` (new `@keyframes cat-spring-in`)
+- File: `CategoryNode.tsx` (use `cat-spring-in` class)
 
 ### Files modified
-- `src/components/map/OrbMap.tsx` - buildDrillNodes, buildDrillEdges, contact count + health data
-- `src/components/map/CategoryNode.tsx` - dynamic size prop, healthPercent passthrough
-- `src/components/map/MojNode.tsx` - drill-down health stats display
-- `src/index.css` - orbit ring guide styles (if needed)
+
+- `src/components/map/OrbMap.tsx` - category-less pod early exit, tooltip enrichment
+- `src/components/map/CategoryNode.tsx` - spring entrance animation class
+- `src/index.css` - glow pulse hover, spring press, category entrance keyframe
+
+### Expected result
+
+- Pods with categories: click drills into rich visual with sized orbs, health rings, gradient edges, staggered spring entrance
+- Pods without categories: click navigates directly to pod detail page
+- All pod orbs: glow-pulse on hover, satellite dots expand, spring bounce on press
+- Hover tooltip shows rich pod stats
 

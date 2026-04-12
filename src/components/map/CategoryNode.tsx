@@ -7,6 +7,8 @@ type CategoryNodeData = {
   category: Category
   listColor?: string | null
   contactCount?: number
+  healthPercent?: number
+  orbSize?: number
   animationDelay?: string
   fading?: boolean
   onClick: () => void
@@ -14,7 +16,7 @@ type CategoryNodeData = {
 }
 type CategoryNodeType = Node<CategoryNodeData>
 
-const SIZE = 64
+const DEFAULT_SIZE = 64
 
 function fontSize(name: string): number {
   if (name.length <= 5) return 11
@@ -24,13 +26,14 @@ function fontSize(name: string): number {
 }
 
 export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
-  const { category, listColor, contactCount, animationDelay, fading, onClick, onIconClick } = data
+  const { category, listColor, contactCount, healthPercent, orbSize, animationDelay, fading, onClick, onIconClick } = data
+  const SIZE = orbSize ?? DEFAULT_SIZE
   const accentColor = (listColor ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[accentColor] ?? POD_SHIFT_COLORS[accentColor.toUpperCase()]) as HexColor | undefined
   const hasIcon = !!category.icon
 
   return (
-    <div className={fading ? 'orb-fading' : undefined} style={{ opacity: fading ? undefined : 1, transition: 'opacity 0.15s ease-out' }}>
+    <div className={`cat-spring-in${fading ? ' orb-fading' : ''}`} style={{ opacity: fading ? undefined : 1, transition: 'opacity 0.15s ease-out', animationDelay: animationDelay ?? '0s' }}>
       <Handle type="target" position={Position.Left}
         style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
       />
@@ -42,6 +45,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
         size={SIZE}
         color={accentColor}
         shiftColor={shiftColor}
+        healthPercent={healthPercent}
         glowIntensity="low"
         animationDelay={animationDelay}
         onClick={onClick}
@@ -55,7 +59,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
               onClick={onIconClick}
               style={{ cursor: onIconClick ? 'pointer' : 'default', lineHeight: 0 }}
             >
-              <LucideIcon name={category.icon!} size={hasIcon ? 18 : 0} color="rgba(255,255,255,0.92)" strokeWidth={1.75} />
+              <LucideIcon name={category.icon!} size={hasIcon ? Math.min(18, SIZE * 0.28) : 0} color="rgba(255,255,255,0.92)" strokeWidth={1.75} />
             </div>
           )}
           <span style={{
@@ -69,7 +73,7 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
           }}>
             {category.name}
           </span>
-          {!hasIcon && contactCount !== undefined && (
+          {contactCount !== undefined && (
             <span style={{
               fontSize: 8, color: 'rgba(255,255,255,0.50)',
               letterSpacing: '0.01em', userSelect: 'none',

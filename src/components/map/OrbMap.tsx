@@ -16,8 +16,8 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
-import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type ScoreLabel } from '../../lib/equity'
-import type { Category, Pod } from '../../lib/types'
+import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, contactEquityScore, type ScoreLabel } from '../../lib/equity'
+import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import { POD_SHIFT_COLORS } from './SolidOrb'
 import { useAuth } from '../../contexts/AuthContext'
 import { isDemoMode } from '../../lib/sampleData'
@@ -206,7 +206,8 @@ function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edg
 }
 
 const BASE_DRILL_RADIUS = 200
-const CAT_SIZE = 64
+const MIN_CAT_SIZE = 56
+const MAX_CAT_SIZE = 88
 const MAX_PER_RING = 8
 
 function buildDrillNodes(
@@ -215,6 +216,8 @@ function buildDrillNodes(
   equityByPod: Record<string, number>,
   totalContacts: number,
   navigateFn: (path: string) => void,
+  contactCountByCategory?: Record<string, number>,
+  healthByCategory?: Record<string, number>,
 ): { nodes: Node[] } {
   const centerNode: Node = {
     id: MOJ_ID,
@@ -231,17 +234,22 @@ function buildDrillNodes(
     },
   }
 
-  // Multi-ring layout: spread categories across rings to avoid overlap
+  // Compute dynamic sizes based on contact count
+  const counts = categories.map(c => contactCountByCategory?.[c.id] ?? 0)
+  const maxCount = Math.max(1, ...counts)
+
   const ringCount = Math.ceil(categories.length / MAX_PER_RING)
   const catNodes: Node[] = categories.map((cat, i) => {
+    const count = contactCountByCategory?.[cat.id] ?? 0
+    const size = Math.max(MIN_CAT_SIZE, Math.min(MAX_CAT_SIZE, MIN_CAT_SIZE + (count / maxCount) * (MAX_CAT_SIZE - MIN_CAT_SIZE)))
     const ring = Math.floor(i / MAX_PER_RING)
     const indexInRing = i % MAX_PER_RING
     const countInRing = Math.min(MAX_PER_RING, categories.length - ring * MAX_PER_RING)
     const radius = BASE_DRILL_RADIUS + ring * 120
     const angleOffset = ring * (Math.PI / MAX_PER_RING / 2)
     const angle = (indexInRing / countInRing) * 2 * Math.PI - Math.PI / 2 + angleOffset
-    const x = Math.cos(angle) * radius - CAT_SIZE / 2
-    const y = Math.sin(angle) * radius - CAT_SIZE / 2
+    const x = Math.cos(angle) * radius - size / 2
+    const y = Math.sin(angle) * radius - size / 2
     return {
       id: cat.id,
       type: 'category',
@@ -250,6 +258,9 @@ function buildDrillNodes(
       data: {
         category: cat,
         listColor: pod.color,
+        contactCount: count,
+        healthPercent: healthByCategory?.[cat.id],
+        orbSize: Math.round(size),
         onClick: () => navigateFn(`/category/${cat.id}`),
         animationDelay: `${(i + 1) * 0.08}s`,
       },
@@ -257,6 +268,27 @@ function buildDrillNodes(
   })
 
   return { nodes: [centerNode, ...catNodes] }
+}
+
+function buildDrillEdges(
+  pod: Pod,
+  categories: Category[],
+  healthByCategory: Record<string, number>,
+  contactCountByCategory: Record<string, number>,
+): Edge[] {
+  const color = pod.color ?? '#718096'
+  return categories.map(cat => {
+    const health = healthByCategory[cat.id] ?? 0
+    const count = contactCountByCategory[cat.id] ?? 0
+    if (count === 0) return null
+    return {
+      id: `drill-${cat.id}`,
+      source: MOJ_ID,
+      target: cat.id,
+      type: 'gradient',
+      data: { color, healthPercent: health },
+    }
+  }).filter(Boolean) as Edge[]
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
@@ -536,6 +568,8 @@ export function OrbMap() {
   const overallHealthRef = useRef<number | undefined>(undefined)
   const totalContactsRef = useRef<number>(0)
   const lastInteractedByPodRef = useRef<Record<string, string | null>>({})
+  const allContactsRef = useRef<Contact[]>([])
+  const byContactRef = useRef<Map<string, Interaction[]>>(new Map())
 
   // Auto-open create pod modal from sidebar "+" button
   useEffect(() => {
@@ -616,6 +650,14 @@ export function OrbMap() {
 
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
+
+    // Pods without categories: navigate directly to detail page
+    const cats = categoriesByPodRef.current[pod.id] ?? []
+    if (cats.length === 0) {
+      navigate(`/pod/${pod.id}`)
+      return
+    }
+
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
@@ -632,15 +674,30 @@ export function OrbMap() {
     }))
 
     setTimeout(() => {
-      // Step 2: build drill nodes and fit to them
-      const cats = categoriesByPodRef.current[pod.id] ?? []
+      // Step 2: compute per-category contact counts and health
+      const allContacts = allContactsRef.current
+      const byContact = byContactRef.current
+
+      const contactCountByCategory: Record<string, number> = {}
+      const healthByCategory: Record<string, number> = {}
+      for (const cat of cats) {
+        const catContacts = allContacts.filter(c => c.category_ids.includes(cat.id))
+        contactCountByCategory[cat.id] = catContacts.length
+        if (catContacts.length > 0) {
+          const scores = catContacts.map(c => contactEquityScore(byContact.get(c.id) ?? []))
+          healthByCategory[cat.id] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        }
+      }
+
       const { nodes: drillNodes } = buildDrillNodes(
         pod, cats, equityByPodRef.current,
         countsByPodRef.current[pod.id]?.total ?? 0,
         navigate,
+        contactCountByCategory,
+        healthByCategory,
       )
       setNodes(drillNodes)
-      setEdges([])
+      setEdges(buildDrillEdges(pod, cats, healthByCategory, contactCountByCategory))
 
       // Step 3: fitView centers on actual node positions with padding
       requestAnimationFrame(() => {
@@ -735,6 +792,8 @@ export function OrbMap() {
       memberCountByPodRef.current = memberCountByPod
 
       const byContact = indexByContact(allInteractions)
+      allContactsRef.current = allContacts
+      byContactRef.current = byContact
       const equityByPod: Record<string, number> = {}
       for (const pod of allPods) {
         const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
@@ -793,6 +852,8 @@ export function OrbMap() {
         memberCountByPodRef.current = memberCountByPod
 
         const byContact = indexByContact(allInteractions)
+        allContactsRef.current = allContacts
+        byContactRef.current = byContact
         const equityByPod: Record<string, number> = {}
         for (const pod of allPods) {
           const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))

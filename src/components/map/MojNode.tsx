@@ -65,19 +65,50 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
         onClick={isDrillDown && podId ? () => navigate(`/pod/${podId}`) : undefined}
       >
         {isDrillDown ? (
-          <span style={{
-            fontSize: 14,
-            fontWeight: 700,
-            fontFamily: 'var(--font-serif)',
-            color: 'rgba(255,255,255,0.95)',
-            letterSpacing: '-0.01em',
-            userSelect: 'none',
-            lineHeight: 1.2,
-            textAlign: 'center',
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             padding: '0 12px',
           }}>
-            {podName}
-          </span>
+            <span style={{
+              fontSize: 8, fontWeight: 500, color: 'rgba(255,255,255,0.45)',
+              userSelect: 'none', letterSpacing: '0.06em', textTransform: 'uppercase' as const,
+              marginBottom: 2,
+            }}>
+              {podName}
+            </span>
+            {overallHealth !== undefined ? (
+              <>
+                <span style={{
+                  fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-serif)',
+                  color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.02em',
+                  userSelect: 'none', lineHeight: 1,
+                }}>
+                  {overallHealth}
+                </span>
+                <span style={{
+                  fontSize: 10, fontWeight: 600,
+                  color: LABEL_COLORS[scoreLabel(overallHealth)] ?? 'rgba(255,255,255,0.60)',
+                  userSelect: 'none', marginTop: 2,
+                }}>
+                  {scoreLabel(overallHealth)}
+                </span>
+                <span style={{
+                  fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.38)',
+                  userSelect: 'none', marginTop: 3,
+                }}>
+                  {totalContacts ?? 0} people
+                </span>
+              </>
+            ) : (
+              <span style={{
+                fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)',
+                color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.01em',
+                userSelect: 'none', lineHeight: 1.2, textAlign: 'center',
+              }}>
+                {totalContacts ?? 0} people
+              </span>
+            )}
+          </div>
         ) : (
           <>
             {hasData ? (
