@@ -1,92 +1,92 @@
 
 
-## Plan: Full Rebrand to Trolley Design System
+## Audit: Team Accounts, Invites, Email Notifications & Gmail Integration
 
-### Scope
+### Current State
 
-Replace all brand identity - fonts, colors, shape language, and app name - with the Trolley design system. This touches tokens, Google Fonts imports, and ~47 component files that reference `font-serif` or brand colors inline.
+**Team / Workspace system (built)**
+- Workspace CRUD, switching, localStorage persistence
+- Role model: owner / admin / member (stored in `workspace_members`)
+- Invite flow: create invite row with token, copy link to clipboard
+- Accept invite page (`/invite?token=...`) redirects unauthenticated users to login with `return_to`
+- Role management UI for owners (change role, remove member)
+- Leave team for non-owners
 
-### Changes
+**Gmail integration (partially built)**
+- `src/lib/gmail.ts` calls a `sync-gmail` Edge Function - but the Edge Function does not exist (`supabase/functions/` only has `cleanup-workspace` and `dedup-workspace`)
+- `gmail_sync_state` table exists in the database
+- Login requests `gmail.readonly` scope via Google OAuth
+- `GmailSyncWidget` renders on dashboard with sync button
+- Memory note says provider_token from Lovable Cloud OAuth is not usable for Gmail - needs standalone OAuth flow with dedicated Client ID/Secret
 
-**1. Google Fonts swap** (`index.html` + `src/index.css`)
+---
 
-Replace Fraunces + Plus Jakarta Sans with:
-- **IBM Plex Sans** (body/general) - weights 400, 500, 600
-- **Space Mono** (logo/monospaced accents) - weight 400, 700
-- **Roboto Condensed** (compact UI text) - weight 400, 500, 600
+### Missing Areas
 
-Note: Solgan and DISKET MONO are not on Google Fonts. IBM Plex Sans becomes the primary body font. For headings that currently use the serif, we switch to IBM Plex Sans bold or Space Mono for brand-forward moments.
+#### 1. Invite Email Notifications
+**Status:** Not built. Invites only produce a clipboard link.
+- No email service configured
+- No Edge Function or trigger to send invite emails
+- `workspace_invites` has an `email` field but it is only used for display
+- **What to build:**
+  - Set up Lovable email domain + transactional email infrastructure
+  - Create a `send-invite-email` Edge Function (or trigger on `workspace_invites` insert)
+  - Email contains: inviter name, workspace name, accept link
+  - Fall back to link-copy if email delivery is not yet configured
 
-Update `<title>` from "RealDeal" to "Trolley".
+#### 2. Accept-Invite Edge Function
+**Status:** Missing. `AcceptInvitePage` calls `supabase.functions.invoke('accept-invite')` but no such function exists in `supabase/functions/`.
+- **What to build:**
+  - `supabase/functions/accept-invite/index.ts` - validates token, checks email match, inserts `workspace_members` row, marks invite accepted
+  - Use service role key for cross-user operations
 
-**2. CSS token overhaul** (`src/index.css` `:root` + dark mode block)
+#### 3. Password Reset Flow
+**Status:** Missing. Login page has email/password auth but no "Forgot password" link and no `/reset-password` route.
+- **What to build:**
+  - "Forgot password?" link on login page
+  - `/reset-password` route with new password form
+  - Calls `supabase.auth.updateUser({ password })` on recovery token
 
-| Token | Current | New |
-|---|---|---|
-| `--font-serif` | Fraunces | Space Mono (brand accent) |
-| `--font-sans` | Plus Jakarta Sans | IBM Plex Sans |
-| `--color-brand` | #25B439 | #34B15D (Vibrant Green) |
-| `--color-bg` | #F5F4F0 | #F5F5F5 (Off-White) |
-| `--color-surface` | #FFFFFF | #FFFFFF |
-| `--color-text-primary` | rgba(0,0,0,0.82) | #222222 |
-| `--header-band-bg` | #25B439 | #012F6C (Deep Blue) |
-| `--header-band-text` | #ffffff | #ffffff |
+#### 4. Profile Avatar
+**Status:** `profiles` table has `avatar_url` column but no upload UI. Members list shows initials only.
+- **What to build (optional):**
+  - Storage bucket for avatars
+  - Upload UI on account page
+  - Display in member list and elsewhere
 
-New tokens to add:
-- `--color-deep-blue`: #012F6C
-- `--color-soft-purple`: #D2BFFF
-- `--color-bright-lime`: #7ED957
-- `--color-mint`: #AAECE2
-- `--color-deep-indigo`: #312774
+#### 5. Workspace Switcher
+**Status:** `WorkspaceContext` supports multiple workspaces but there is no UI to switch between them or create new ones (only programmatic via `switchWorkspace` / `createWorkspace`).
+- **What to build:**
+  - Dropdown or menu in sidebar to switch workspaces
+  - "Create workspace" option
 
-Dark mode tokens updated to match (deep blue surfaces, green accents).
+#### 6. Gmail Integration - Edge Function
+**Status:** Client code exists, Edge Function does not.
+- **What to build:**
+  - `supabase/functions/sync-gmail/index.ts` that:
+    - Receives Google access token from client
+    - Fetches last 30 days of email threads via Gmail API
+    - Matches participants by email to contacts (including `email_2`, `email_3`)
+    - Creates `interactions` records with `source: 'Gmail'`, `email_link` for dedup
+    - Updates `gmail_sync_state` with `last_history_id` for incremental sync
+  - **Blocker:** Lovable Cloud's managed Google OAuth does not expose `provider_token` reliably. The login page requests `gmail.readonly` scope, but per memory notes this approach has known issues. Two options:
+    - **Option A:** Use the current approach (provider_token from session) - simpler but token may not persist across refreshes
+    - **Option B:** Standalone Google OAuth with dedicated Client ID/Secret stored as secrets - more reliable, requires separate connect flow
 
-**3. Shape language** (`src/index.css`)
+---
 
-- Increase `--panel-radius` from 16px to 20px (rounder, more tactile)
-- Add softer shadow tokens aligned with the "soft shadows" direction
-- Focus ring color switches to `--color-brand` (green) or `--color-deep-blue`
+### Recommended Priority Order
 
-**4. Heading font references** (~47 component files)
+1. **Accept-invite Edge Function** - currently broken (invite accept fails without it)
+2. **Invite email notifications** - set up email domain + transactional email
+3. **Password reset flow** - basic auth completeness
+4. **Gmail sync Edge Function** - core feature request
+5. **Workspace switcher UI** - multi-team usability
+6. **Profile avatars** - polish
 
-All inline `fontFamily: 'var(--font-serif)'` references remain valid since the CSS variable changes. No component edits needed for the font swap itself - it flows through the token.
+### Technical Details
 
-However, the visual character changes: headings move from editorial serif to monospaced/technical. This is intentional per the Trolley system.
-
-**5. Brand name references**
-
-- `index.html` title: "RealDeal" -> "Trolley"
-- `LandingPage.tsx`: update hero copy, brand name references
-- `Sidebar.tsx`: update any "RealDeal" / "Kinship Brain" logo text
-- `MojNode.tsx` / hub orb: update label if it shows brand name
-- `SharedListPage.tsx`: update brand references
-
-**6. Orb color palette** (`SolidOrb.tsx`)
-
-Update `POD_SHIFT_COLORS` to use Trolley palette derivatives (deep blue, soft purple, mint, lime as shift colors instead of current warm greens).
-
-**7. Tailwind config** (`tailwind.config.ts`)
-
-Update `fontFamily.serif` and `fontFamily.sans` to match new fonts.
-
-### Files modified
-
-- `index.html` - fonts, title
-- `src/index.css` - all token values, dark mode, shape tokens
-- `tailwind.config.ts` - font family definitions
-- `src/components/map/SolidOrb.tsx` - POD_SHIFT_COLORS palette
-- `src/components/landing/LandingPage.tsx` - brand copy
-- `src/components/nav/Sidebar.tsx` - brand name
-- `src/components/map/MojNode.tsx` - hub label
-
-### What stays the same
-
-- Component structure, layout, routing - unchanged
-- Interaction patterns (hover, press, drill-down) - unchanged
-- All 47 files using `var(--font-serif)` inline - no edits needed, token swap handles it
-- Spacing grid, motion curves, accessibility patterns - unchanged
-
-### Risk
-
-- Solgan and DISKET MONO are not available on Google Fonts. Plan uses IBM Plex Sans + Space Mono as closest available alternatives. If you have the font files for Solgan/DISKET MONO, we can self-host them instead.
+- Email setup uses Lovable's built-in transactional email system (no third-party service needed)
+- `accept-invite` function needs `SUPABASE_SERVICE_ROLE_KEY` (already in secrets) to insert `workspace_members` for a different user
+- Gmail sync function needs either the provider_token approach or a Google OAuth connector - will need to clarify which path
 
