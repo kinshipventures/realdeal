@@ -57,11 +57,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderRight: '1px solid var(--edge-strong)',
+        scrollbarWidth: 'none' as any,
         display: 'flex',
         flexDirection: 'column',
         zIndex: 100,
         overflowX: 'hidden',
         overflowY: 'auto',
+        scrollbarGutter: 'stable',
       }}
     >
       {/* Collapse toggle - top */}
@@ -383,7 +385,7 @@ function NavItem({
 }
 
 function Divider() {
-  return <div style={{ height: 1, background: 'var(--divider)', margin: '8px 12px' }} />
+  return <div style={{ height: 1, background: 'var(--divider)', margin: '8px 12px', flexShrink: 0 }} />
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────

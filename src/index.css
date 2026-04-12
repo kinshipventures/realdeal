@@ -515,11 +515,13 @@
 
 .interaction-row:hover .interaction-action { opacity: 1 !important; }
 
-/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+/* -- Scrollbar ---------------------------------------------------------------- */
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--edge-strong); border-radius: 2px; }
+
+nav[aria-label="Main navigation"]::-webkit-scrollbar { display: none; }
 
 /* ── Grain overlay ──────────────────────────────────────────────────────────── */
 

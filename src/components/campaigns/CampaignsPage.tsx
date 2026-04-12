@@ -227,14 +227,21 @@ export function CampaignsPage() {
       )}
 
       {filtered.length === 0 && !creating ? (
-        <EmptyState
-          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="6" width="5" height="15" rx="1"/><rect x="17" y="9" width="5" height="12" rx="1"/></svg>}
-          heading={filter === 'active' ? 'No active campaigns' : 'No completed campaigns'}
-          subtext="Campaigns track concrete projects like events, fundraises, and outreach."
-          ctaLabel="+ New Campaign"
-          onCta={() => setCreating(true)}
-          ghosts={2}
-        />
+        <>
+          <StatusToggle active={filter} onChange={setFilter} />
+          <div style={{ marginTop: 20 }}>
+            <EmptyState
+              icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="6" width="5" height="15" rx="1"/><rect x="17" y="9" width="5" height="12" rx="1"/></svg>}
+              heading={filter === 'active' ? 'No active campaigns' : 'No completed campaigns'}
+              subtext={filter === 'active'
+                ? "Campaigns track concrete projects like events, fundraises, and outreach."
+                : "Completed campaigns will appear here."}
+              ctaLabel={filter === 'active' ? "+ New Campaign" : undefined}
+              onCta={filter === 'active' ? () => setCreating(true) : undefined}
+              ghosts={2}
+            />
+          </div>
+        </>
       ) : activeCampaign ? (
         <>
           {/* Campaign context zone - tight grouping */}
