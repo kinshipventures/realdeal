@@ -1,81 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getCampaignOpportunities, getContacts, invalidateCampaignsCache, completeCampaign } from '../../lib/airtable'
 import type { Campaign, CampaignContact, CampaignStage, CampaignOpportunity, CampaignType, Contact } from '../../lib/types'
 import { CampaignCreate } from './CampaignCreate'
 import { CampaignBoard } from './CampaignBoard'
+import { CampaignStatsBar } from './CampaignStatsBar'
+import { CampaignActivityFeed } from './CampaignActivityFeed'
+import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { EmptyState } from '../empty/EmptyState'
-
-const TYPE_LABELS: Record<CampaignType, string> = {
-  event: 'Event',
-  investment: 'Investment',
-  outreach: 'Outreach',
-  deal_flow: 'Deal Flow',
-  fundraise: 'Fundraise',
-  talent: 'Talent',
-  partnerships: 'Partnerships',
-  other: 'Other',
-}
-
-const TYPE_COLORS: Record<CampaignType, string> = {
-  event: '#4299E1',
-  investment: '#48BB78',
-  outreach: '#7E57C2',
-  deal_flow: '#ED8936',
-  fundraise: '#38B2AC',
-  talent: '#D53F8C',
-  partnerships: '#667EEA',
-  other: '#718096',
-}
-
-const STALE_MS = 7 * 24 * 60 * 60 * 1000
-
-function daysUntil(dateStr: string): number {
-  const d = new Date(dateStr + 'T00:00:00')
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-function getCampaignInsight(
-  stages: CampaignStage[],
-  campaignContacts: CampaignContact[],
-  contacts: Contact[],
-): string | null {
-  if (campaignContacts.length === 0) return null
-  const sorted = [...stages].sort((a, b) => a.order - b.order)
-  const lastStage = sorted[sorted.length - 1]
-  const firstStage = sorted[0]
-
-  const stalled = campaignContacts
-    .filter(cc => {
-      if (!cc.moved_at || !cc.stage_id) return false
-      if (firstStage && cc.stage_id === firstStage.id) return false
-      if (lastStage && cc.stage_id === lastStage.id) return false
-      return Date.now() - new Date(cc.moved_at).getTime() > STALE_MS
-    })
-    .sort((a, b) => new Date(a.moved_at!).getTime() - new Date(b.moved_at!).getTime())
-
-  if (stalled.length > 0) {
-    const oldest = stalled[0]
-    const contact = contacts.find(c => c.id === oldest.contact_id)
-    const stage = stages.find(s => s.id === oldest.stage_id)
-    const days = Math.floor((Date.now() - new Date(oldest.moved_at!).getTime()) / (1000 * 60 * 60 * 24))
-    if (contact && stage) return `${contact.name} has been in ${stage.name} for ${days} days`
-  }
-
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  const recentMoves = campaignContacts.filter(cc => cc.moved_at && new Date(cc.moved_at).getTime() > weekAgo)
-  if (recentMoves.length > 0) {
-    return `${recentMoves.length} ${recentMoves.length === 1 ? 'person' : 'people'} moved forward this week`
-  }
-
-  if (lastStage) {
-    const inLast = campaignContacts.filter(cc => cc.stage_id === lastStage.id).length
-    if (inLast > 0) return `${inLast} ${inLast === 1 ? 'person has' : 'people have'} reached ${lastStage.name}`
-  }
-
-  return null
-}
+import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
+import { Download, Filter } from 'lucide-react'
 
 export function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -85,6 +18,7 @@ export function CampaignsPage() {
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'active' | 'completed'>('active')
   const [confirmingComplete, setConfirmingComplete] = useState(false)
+  const [showStalledOnly, setShowStalledOnly] = useState(false)
 
   const [stages, setStages] = useState<CampaignStage[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
@@ -106,6 +40,7 @@ export function CampaignsPage() {
     if (!campaign) return
     setBoardLoading(true)
     setConfirmingComplete(false)
+    setShowStalledOnly(false)
     if (campaign.backing === 'pipeline') {
       Promise.all([
         getStagesForCampaign(activeCampaignId, 'pipeline'),
@@ -144,14 +79,9 @@ export function CampaignsPage() {
     setConfirmingComplete(false)
   }, [activeCampaignId])
 
-  const filtered = campaigns.filter(c => {
-    if (filter === 'active') return c.status === 'active'
-    if (filter === 'completed') return c.status === 'completed'
-    return false
-  })
+  const filtered = campaigns.filter(c => c.status === filter)
   const activeCampaign = campaigns.find(c => c.id === activeCampaignId)
 
-  // When filter changes, auto-select first campaign in the new list
   useEffect(() => {
     if (loading) return
     const match = filtered.find(c => c.id === activeCampaignId)
@@ -162,16 +92,59 @@ export function CampaignsPage() {
     }
   }, [loading, filter, campaigns])
 
-  const sortedStages = [...stages].sort((a, b) => a.order - b.order)
+  const sortedStages = useMemo(() => [...stages].sort((a, b) => a.order - b.order), [stages])
   const firstStage = sortedStages[0]
   const lastStage = sortedStages[sortedStages.length - 1]
+
+  const stalledIds = useMemo(() => {
+    const set = new Set<string>()
+    campaignContacts.forEach(cc => {
+      if (!cc.moved_at || !cc.stage_id) return
+      if (firstStage && cc.stage_id === firstStage.id) return
+      if (lastStage && cc.stage_id === lastStage.id) return
+      if (Date.now() - new Date(cc.moved_at).getTime() > STALE_MS) set.add(cc.id)
+    })
+    return set
+  }, [campaignContacts, firstStage, lastStage])
+
   const inProgressCount = campaignContacts.filter(cc => {
     if (firstStage && cc.stage_id === firstStage.id) return false
     if (lastStage && cc.stage_id === lastStage.id) return false
     return true
   }).length
 
+  // Filter contacts for board if stalled filter active
+  const boardContacts = showStalledOnly
+    ? campaignContacts.filter(cc => stalledIds.has(cc.id))
+    : campaignContacts
+
   const insight = getCampaignInsight(stages, campaignContacts, contacts)
+
+  // Export campaign as CSV
+  function handleExport() {
+    if (!activeCampaign) return
+    const rows: string[] = ['Name,Company,Stage,Status,Added,Last Moved,Next Step']
+    for (const cc of campaignContacts) {
+      const contact = contacts.find(c => c.id === cc.contact_id)
+      const stage = stages.find(s => s.id === cc.stage_id)
+      rows.push([
+        contact?.name ?? '',
+        contact?.company ?? '',
+        stage?.name ?? '',
+        cc.status,
+        cc.created_at ? new Date(cc.created_at).toLocaleDateString() : '',
+        cc.moved_at ? new Date(cc.moved_at).toLocaleDateString() : '',
+        cc.next_step ?? '',
+      ].map(v => `"${(v ?? '').replace(/"/g, '""')}"`).join(','))
+    }
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${activeCampaign.name.replace(/[^a-zA-Z0-9]/g, '_')}_contacts.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   if (loading) return <CampaignSkeleton />
 
@@ -206,22 +179,26 @@ export function CampaignsPage() {
         />
       )}
 
-      {/* Tab bar - status toggle stays fixed, campaign tabs scroll */}
+      {/* Tab bar */}
       {filtered.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 20 }}>
           <StatusToggle active={filter} onChange={setFilter} />
           <div style={{ width: 1, height: 20, background: 'var(--edge)', margin: '0 8px', flexShrink: 0 }} />
           <div style={{ display: 'flex', gap: 4, overflowX: 'auto', flex: 1, minWidth: 0 }}>
-            {filtered.map(c => (
-              <TabButton
-                key={c.id}
-                label={c.name}
-                type={c.type}
-                deadline={c.deadline}
-                active={c.id === activeCampaignId}
-                onClick={() => setActiveCampaignId(c.id)}
-              />
-            ))}
+            {filtered.map(c => {
+              const ccCount = campaignContacts.length
+              return (
+                <TabButton
+                  key={c.id}
+                  label={c.name}
+                  type={c.type}
+                  deadline={c.deadline}
+                  active={c.id === activeCampaignId}
+                  contactCount={c.id === activeCampaignId ? ccCount : undefined}
+                  onClick={() => setActiveCampaignId(c.id)}
+                />
+              )
+            })}
           </div>
         </div>
       )}
@@ -244,8 +221,9 @@ export function CampaignsPage() {
         </>
       ) : activeCampaign ? (
         <>
-          {/* Campaign context zone - tight grouping */}
+          {/* Campaign context zone */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <CampaignTypeIcon type={activeCampaign.type} size={16} />
             <span style={{
               padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 500,
               background: 'var(--tint)', color: 'var(--color-text-secondary)',
@@ -255,22 +233,66 @@ export function CampaignsPage() {
             {activeCampaign.deadline && (
               <DeadlineBadge deadline={activeCampaign.deadline} />
             )}
-            {activeCampaign.status === 'active' && !confirmingComplete && (
-              <button
-                type="button"
-                onClick={() => setConfirmingComplete(true)}
-                style={{
-                  marginLeft: 'auto',
-                  background: 'none', border: '1px solid var(--edge)',
-                  borderRadius: 7, padding: '5px 12px',
-                  fontSize: 11, fontWeight: 500,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Mark complete
-              </button>
-            )}
+
+            {/* Action buttons */}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+              {/* Stalled filter */}
+              {stalledIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowStalledOnly(prev => !prev)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '5px 10px', borderRadius: 7,
+                    border: showStalledOnly ? '1px solid #FF9500' : '1px solid var(--edge)',
+                    background: showStalledOnly ? 'rgba(255,149,0,0.08)' : 'transparent',
+                    fontSize: 11, fontWeight: 500,
+                    color: showStalledOnly ? '#FF9500' : 'var(--color-text-secondary)',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <Filter size={11} />
+                  {stalledIds.size} stalled
+                </button>
+              )}
+
+              {/* Export */}
+              {campaignContacts.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  title="Export as CSV"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '5px 10px', borderRadius: 7,
+                    border: '1px solid var(--edge)', background: 'transparent',
+                    fontSize: 11, fontWeight: 500,
+                    color: 'var(--color-text-secondary)',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <Download size={11} />
+                  Export
+                </button>
+              )}
+
+              {/* Mark complete */}
+              {activeCampaign.status === 'active' && !confirmingComplete && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingComplete(true)}
+                  style={{
+                    background: 'none', border: '1px solid var(--edge)',
+                    borderRadius: 7, padding: '5px 12px',
+                    fontSize: 11, fontWeight: 500,
+                    color: 'var(--color-text-secondary)',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Mark complete
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Confirmation dialog */}
@@ -317,7 +339,16 @@ export function CampaignsPage() {
             </div>
           )}
 
-          {/* Funnel bar + insight - grouped as health snapshot */}
+          {/* Stats bar */}
+          {!boardLoading && campaignContacts.length > 0 && (
+            <CampaignStatsBar
+              stages={stages}
+              campaignContacts={campaignContacts}
+              createdAt={activeCampaign.created_at}
+            />
+          )}
+
+          {/* Funnel bar + insight */}
           {!boardLoading && campaignContacts.length > 0 && (
             <CampaignFunnel stages={stages} campaignContacts={campaignContacts} insight={insight} />
           )}
@@ -329,7 +360,7 @@ export function CampaignsPage() {
             <CampaignBoard
               campaign={activeCampaign}
               stages={stages}
-              campaignContacts={campaignContacts}
+              campaignContacts={boardContacts}
               campaignOpportunities={campaignOpportunities}
               contacts={contacts}
               onStagesChange={setStages}
@@ -337,10 +368,65 @@ export function CampaignsPage() {
               onOpportunitiesChange={setCampaignOpportunities}
             />
           )}
+
+          {/* Activity feed */}
+          {!boardLoading && campaignContacts.length > 0 && (
+            <CampaignActivityFeed
+              campaignId={activeCampaign.id}
+              campaignName={activeCampaign.name}
+              contacts={contacts}
+              stages={stages}
+            />
+          )}
         </>
       ) : null}
     </div>
   )
+}
+
+// -- Helpers --
+
+const STALE_MS_LOCAL = 7 * 24 * 60 * 60 * 1000
+
+function getCampaignInsight(
+  stages: CampaignStage[],
+  campaignContacts: CampaignContact[],
+  contacts: Contact[],
+): string | null {
+  if (campaignContacts.length === 0) return null
+  const sorted = [...stages].sort((a, b) => a.order - b.order)
+  const lastStage = sorted[sorted.length - 1]
+  const firstStage = sorted[0]
+
+  const stalled = campaignContacts
+    .filter(cc => {
+      if (!cc.moved_at || !cc.stage_id) return false
+      if (firstStage && cc.stage_id === firstStage.id) return false
+      if (lastStage && cc.stage_id === lastStage.id) return false
+      return Date.now() - new Date(cc.moved_at).getTime() > STALE_MS_LOCAL
+    })
+    .sort((a, b) => new Date(a.moved_at!).getTime() - new Date(b.moved_at!).getTime())
+
+  if (stalled.length > 0) {
+    const oldest = stalled[0]
+    const contact = contacts.find(c => c.id === oldest.contact_id)
+    const stage = stages.find(s => s.id === oldest.stage_id)
+    const days = Math.floor((Date.now() - new Date(oldest.moved_at!).getTime()) / (1000 * 60 * 60 * 24))
+    if (contact && stage) return `${contact.name} has been in ${stage.name} for ${days} days`
+  }
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recentMoves = campaignContacts.filter(cc => cc.moved_at && new Date(cc.moved_at).getTime() > weekAgo)
+  if (recentMoves.length > 0) {
+    return `${recentMoves.length} ${recentMoves.length === 1 ? 'person' : 'people'} moved forward this week`
+  }
+
+  if (lastStage) {
+    const inLast = campaignContacts.filter(cc => cc.stage_id === lastStage.id).length
+    if (inLast > 0) return `${inLast} ${inLast === 1 ? 'person has' : 'people have'} reached ${lastStage.name}`
+  }
+
+  return null
 }
 
 // -- Sub-components -----------------------------------------------------------
@@ -355,7 +441,6 @@ function CampaignFunnel({ stages, campaignContacts, insight }: {
 
   return (
     <div style={{ marginBottom: 4 }}>
-      {/* Bar */}
       <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', gap: 2 }}>
         {sorted.map(stage => {
           const count = campaignContacts.filter(cc => cc.stage_id === stage.id).length
@@ -376,7 +461,6 @@ function CampaignFunnel({ stages, campaignContacts, insight }: {
         })}
       </div>
 
-      {/* Legend + insight grouped tightly below bar */}
       <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {sorted.map(stage => {
           const count = campaignContacts.filter(cc => cc.stage_id === stage.id).length
@@ -431,11 +515,12 @@ function DeadlineBadge({ deadline }: { deadline: string }) {
   )
 }
 
-function TabButton({ label, type, deadline, active, onClick }: {
+function TabButton({ label, type, deadline, active, contactCount, onClick }: {
   label: string
   type: CampaignType
   deadline?: string | null
   active: boolean
+  contactCount?: number
   onClick: () => void
 }) {
   const isUrgent = deadline ? daysUntil(deadline) <= 3 && daysUntil(deadline) >= 0 : false
@@ -454,18 +539,33 @@ function TabButton({ label, type, deadline, active, onClick }: {
         whiteSpace: 'nowrap',
         transition: 'background 0.12s, color 0.12s',
         flexShrink: 0,
+        position: 'relative',
       }}
     >
-      <span style={{
-        width: 6, height: 6, borderRadius: '50%',
-        background: active ? 'rgba(255,255,255,0.5)' : TYPE_COLORS[type],
-        flexShrink: 0,
-      }} />
+      <CampaignTypeIcon type={type} size={12} colored={!active} />
       {label}
+      {contactCount !== undefined && contactCount > 0 && (
+        <span style={{
+          fontSize: 10, fontWeight: 600,
+          padding: '1px 5px', borderRadius: 100,
+          background: active ? 'rgba(255,255,255,0.25)' : 'var(--tint)',
+          color: active ? '#fff' : 'var(--color-text-tertiary)',
+        }}>
+          {contactCount}
+        </span>
+      )}
       {isUrgent && !active && (
         <span style={{
           width: 5, height: 5, borderRadius: '50%',
           background: '#FF9500', flexShrink: 0,
+        }} />
+      )}
+      {/* Progress indicator line under active tab */}
+      {active && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 4, right: 4,
+          height: 2, borderRadius: 1,
+          background: 'rgba(255,255,255,0.4)',
         }} />
       )}
     </button>
@@ -473,27 +573,29 @@ function TabButton({ label, type, deadline, active, onClick }: {
 }
 
 function StatusToggle({ active, onChange }: { active: 'active' | 'completed'; onChange: (v: 'active' | 'completed') => void }) {
-  const opts: Array<{ value: 'active' | 'completed'; label: string }> = [
-    { value: 'active', label: 'Active' },
-    { value: 'completed', label: 'Completed' },
-  ]
   return (
-    <div style={{ display: 'inline-flex', background: 'var(--tint)', borderRadius: 8, padding: 2, flexShrink: 0 }}>
-      {opts.map(o => (
+    <div style={{
+      display: 'flex', gap: 0,
+      background: 'var(--tint)', borderRadius: 8,
+      padding: 2, flexShrink: 0,
+    }}>
+      {(['active', 'completed'] as const).map(s => (
         <button
-          key={o.value}
+          key={s}
           type="button"
-          onClick={() => onChange(o.value)}
+          onClick={() => onChange(s)}
           style={{
-            padding: '4px 10px', fontSize: 11, fontWeight: 500,
-            border: 'none', borderRadius: 6, cursor: 'pointer',
-            fontFamily: 'inherit', transition: 'background 0.12s, color 0.12s',
-            background: active === o.value ? 'var(--color-bg)' : 'transparent',
-            color: active === o.value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-            boxShadow: active === o.value ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            fontSize: 12, fontWeight: active === s ? 600 : 400,
+            padding: '5px 12px', borderRadius: 6,
+            border: 'none', cursor: 'pointer',
+            fontFamily: 'inherit',
+            background: active === s ? 'var(--surface-panel)' : 'transparent',
+            color: active === s ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+            boxShadow: active === s ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            transition: 'all 0.12s',
           }}
         >
-          {o.label}
+          {s === 'active' ? 'Active' : 'Completed'}
         </button>
       ))}
     </div>
@@ -502,39 +604,23 @@ function StatusToggle({ active, onChange }: { active: 'active' | 'completed'; on
 
 function CampaignSkeleton() {
   return (
-    <div style={{ padding: '28px clamp(16px, 4vw, 32px) 96px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div style={{ height: 28, width: 140, borderRadius: 6, background: 'var(--tint)' }} />
-        <div style={{ height: 36, width: 130, borderRadius: 10, background: 'var(--tint)' }} />
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {[80, 110, 90].map((w, i) => (
-          <div key={i} style={{ height: 30, width: w, borderRadius: 8, background: 'var(--tint)' }} />
+    <div className="skeleton-stagger" style={{ padding: '28px clamp(16px, 4vw, 32px) 96px' }}>
+      <div className="skeleton" style={{ width: 160, height: 28, borderRadius: 8, marginBottom: 24 }} />
+      <div className="skeleton" style={{ width: '100%', height: 40, borderRadius: 8, marginBottom: 16 }} />
+      <div style={{ display: 'flex', gap: 14, overflowX: 'auto' }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton" style={{ width: 260, height: 300, borderRadius: 12, flexShrink: 0 }} />
         ))}
       </div>
-      <div style={{ height: 8, borderRadius: 4, background: 'var(--tint)', marginBottom: 16 }} />
-      <BoardSkeleton />
     </div>
   )
 }
 
 function BoardSkeleton() {
   return (
-    <div style={{ display: 'flex', gap: 14, padding: '12px 0' }}>
+    <div style={{ display: 'flex', gap: 14, overflowX: 'auto', padding: '12px 0 32px' }}>
       {[1, 2, 3, 4].map(i => (
-        <div key={i} style={{
-          width: 260, minWidth: 260, borderRadius: 12,
-          background: 'var(--tint)', padding: 14,
-          display: 'flex', flexDirection: 'column', gap: 8,
-        }}>
-          <div style={{ height: 14, width: 80, borderRadius: 4, background: 'var(--edge)' }} />
-          {Array.from({ length: 4 - i }).map((_, j) => (
-            <div key={j} style={{
-              height: 52, borderRadius: 10,
-              background: 'var(--surface-panel)', border: '1px solid var(--edge)',
-            }} />
-          ))}
-        </div>
+        <div key={i} className="skeleton" style={{ width: 260, height: 200, borderRadius: 12, flexShrink: 0 }} />
       ))}
     </div>
   )

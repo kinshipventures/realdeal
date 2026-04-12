@@ -29,10 +29,12 @@ export function AccountPage() {
   const [wsName, setWsName] = useState('')
   const [editingName, setEditingName] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ type: 'remove' | 'revoke' | 'leave'; target?: WorkspaceMember | WorkspaceInvite } | null>(null)
+  const [domainUsers, setDomainUsers] = useState<{ id: string; display_name: string; email: string }[]>([])
 
   const myRole = activeWorkspace?.role ?? 'member'
   const isOwner = myRole === 'owner'
   const isAdmin = myRole === 'admin'
+  const canManage = isOwner || isAdmin
   const canInvite = isOwner || isAdmin
 
   useEffect(() => {
@@ -47,6 +49,22 @@ export function AccountPage() {
     setWsName(activeWorkspace.name)
     loadWorkspaceData()
   }, [activeWorkspace?.id])
+
+  // Domain-based member discovery
+  useEffect(() => {
+    if (!session?.user?.email || !canInvite) return
+    const domain = session.user.email.split('@')[1]
+    if (!domain || ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'].includes(domain)) return
+    supabase.rpc('find_users_by_email_domain', { _domain: domain })
+      .then(({ data }) => {
+        if (data) {
+          // Filter out users already in this workspace
+          const memberIds = new Set(members.map(m => m.user_id))
+          const invitedEmails = new Set(invites.map(i => i.email.toLowerCase()))
+          setDomainUsers((data as any[]).filter(u => !memberIds.has(u.id) && !invitedEmails.has(u.email?.toLowerCase())))
+        }
+      })
+  }, [session?.user?.email, canInvite, members, invites])
 
   async function loadWorkspaceData() {
     if (!activeWorkspace) return
@@ -194,7 +212,7 @@ export function AccountPage() {
           {/* Team name */}
           <div style={{ marginBottom: 24 }}>
             <span style={labelStyle}>Name</span>
-            {isOwner && editingName ? (
+            {canManage && editingName ? (
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={wsName} onChange={e => setWsName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveWsName(); if (e.key === 'Escape') { setEditingName(false); setWsName(activeWorkspace.name) } }}
@@ -205,7 +223,7 @@ export function AccountPage() {
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 14, color: 'var(--color-text-primary)' }}>{activeWorkspace.name}</span>
-                {isOwner && (
+                {canManage && (
                   <button type="button" onClick={() => setEditingName(true)}
                     style={{ padding: '2px 8px', fontSize: 12, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                     Edit
@@ -240,11 +258,11 @@ export function AccountPage() {
                       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.email}</div>
                     )}
                   </div>
-                  {isOwner ? (
+                  {canManage ? (
                     <select
                       value={member.role}
                       onChange={e => handleRoleChange(member, e.target.value as any)}
-                      disabled={member.user_id === session?.user?.id}
+                      disabled={member.user_id === session?.user?.id || (!isOwner && member.role === 'owner')}
                       title="Owner: full control. Admin: can invite members. Member: can view and edit contacts."
                       style={{
                         fontSize: 12, padding: '4px 6px', borderRadius: 6, fontFamily: 'inherit',
@@ -252,14 +270,14 @@ export function AccountPage() {
                         color: 'var(--color-text-secondary)', cursor: 'pointer',
                       }}
                     >
-                      <option value="owner">Owner</option>
+                      {isOwner && <option value="owner">Owner</option>}
                       <option value="admin">Admin</option>
                       <option value="member">Member</option>
                     </select>
                   ) : (
                     <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textTransform: 'capitalize' }}>{member.role}</span>
                   )}
-                  {isOwner && member.user_id !== session?.user?.id && (
+                  {canManage && member.user_id !== session?.user?.id && member.role !== 'owner' && (
                     <button type="button" onClick={() => setConfirmAction({ type: 'remove', target: member })}
                       style={{ padding: '4px 8px', fontSize: 11, color: 'var(--health-fading)', background: 'none', border: 'none', cursor: 'pointer' }}>
                       Remove
@@ -322,7 +340,7 @@ export function AccountPage() {
                   type="email"
                   style={{ ...inputStyle, flex: 1 }}
                 />
-                {isOwner && (
+                {canManage && (
                   <select value={inviteRole} onChange={e => setInviteRole(e.target.value as any)}
                     style={{ fontSize: 13, padding: '10px 8px', borderRadius: 8, fontFamily: 'inherit', border: '1px solid var(--edge)', background: 'transparent', color: 'var(--color-text-primary)' }}>
                     <option value="member">Member</option>
@@ -335,6 +353,43 @@ export function AccountPage() {
                 </button>
               </div>
               {inviteError && <p style={{ fontSize: 12, color: 'var(--health-fading)', marginTop: 6, marginBottom: 0 }}>{inviteError}</p>}
+
+              {/* Domain-based suggestions */}
+              {domainUsers.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 6 }}>
+                    People in your organization
+                  </span>
+                  <div style={{ borderRadius: 10, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+                    {domainUsers.map(u => (
+                      <div key={u.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px',
+                        borderBottom: '1px solid var(--divider)',
+                      }}>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                          background: 'var(--tint)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, fontWeight: 700, color: 'var(--color-brand)',
+                        }}>
+                          {(u.display_name || u.email || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {u.display_name || u.email}
+                          </div>
+                          {u.display_name && u.email && (
+                            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{u.email}</div>
+                          )}
+                        </div>
+                        <button type="button" onClick={() => setInviteEmail(u.email)}
+                          style={{ padding: '4px 10px', fontSize: 11, color: 'var(--color-brand)', background: 'none', border: '1px solid var(--color-brand)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>
+                          Invite
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

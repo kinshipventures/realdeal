@@ -27,6 +27,7 @@ import { SharedListPage } from './components/sharing/SharedListPage'
 import { LandingRedirect } from './components/landing/LandingRedirect'
 import { LearnPage } from './components/learn/LearnPage'
 import { ChangelogPage } from './components/changelog/ChangelogPage'
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
 import { Sidebar } from './components/nav/Sidebar'
 
 const BG = 'var(--color-bg)'
@@ -298,6 +299,7 @@ export default function App() {
     <ErrorBoundary>
     <Routes>
       <Route path="login" element={<LoginPage />} />
+      <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="s/:token" element={<SharedListPage />} />
       <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route path="invite" element={<AcceptInvitePage />} />

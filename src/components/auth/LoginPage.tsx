@@ -220,21 +220,39 @@ export function LoginPage() {
           </button>
         </form>
 
-        <button
-          onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
-          style={{
-            marginTop: 12,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 13,
-            color: 'var(--color-text-tertiary)',
-            fontFamily: 'var(--font-sans)',
-            padding: '4px 8px',
-          }}
-        >
-          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: 12 }}>
+          <button
+            onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 13, color: 'var(--color-text-tertiary)',
+              fontFamily: 'var(--font-sans)', padding: '4px 8px',
+            }}
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+          {!isSignUp && (
+            <button
+              onClick={async () => {
+                if (!email) { setError('Enter your email first'); return }
+                setLoading(true); setError(null)
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                })
+                setLoading(false)
+                if (error) setError(error.message)
+                else setError('Check your email for a reset link')
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 13, color: 'var(--color-brand)',
+                fontFamily: 'var(--font-sans)', padding: '4px 8px',
+              }}
+            >
+              Forgot password?
+            </button>
+          )}
+        </div>
 
         {error && (
           <p style={{ color: 'var(--health-fading)', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>

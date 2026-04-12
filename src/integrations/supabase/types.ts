@@ -47,7 +47,12 @@ export type Database = {
           contact_id: string
           created_at: string
           id: string
+          moved_at: string | null
+          next_step: string | null
+          next_step_due: string | null
           notes: string | null
+          owner: string | null
+          stage_id: string | null
           status: Database["public"]["Enums"]["campaign_contact_status"]
           updated_at: string
           user_id: string
@@ -58,7 +63,12 @@ export type Database = {
           contact_id: string
           created_at?: string
           id?: string
+          moved_at?: string | null
+          next_step?: string | null
+          next_step_due?: string | null
           notes?: string | null
+          owner?: string | null
+          stage_id?: string | null
           status?: Database["public"]["Enums"]["campaign_contact_status"]
           updated_at?: string
           user_id: string
@@ -69,7 +79,12 @@ export type Database = {
           contact_id?: string
           created_at?: string
           id?: string
+          moved_at?: string | null
+          next_step?: string | null
+          next_step_due?: string | null
           notes?: string | null
+          owner?: string | null
+          stage_id?: string | null
           status?: Database["public"]["Enums"]["campaign_contact_status"]
           updated_at?: string
           user_id?: string
@@ -91,6 +106,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "campaign_contacts_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "campaign_contacts_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
@@ -103,6 +125,7 @@ export type Database = {
         Row: {
           created_at: string
           deadline: string | null
+          description: string | null
           id: string
           name: string
           notes: string | null
@@ -115,6 +138,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deadline?: string | null
+          description?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -127,6 +151,7 @@ export type Database = {
         Update: {
           created_at?: string
           deadline?: string | null
+          description?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -1311,6 +1336,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_users_by_email_domain: {
+        Args: { _domain: string }
+        Returns: {
+          display_name: string
+          email: string
+          id: string
+        }[]
+      }
       get_share_link_by_token: {
         Args: { _token: string }
         Returns: {
