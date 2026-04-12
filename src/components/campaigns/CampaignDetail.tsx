@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact, Pod, CampaignContact, CampaignContactStatus } from '../../lib/types'
-import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign } from '../../lib/airtable'
+import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign, updateCampaignNotes } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton, Spinner } from '../ui'
 
@@ -29,6 +29,7 @@ interface Props {
   campaignType: string
   campaignDeadline: string | null
   campaignStatus: 'active' | 'completed'
+  campaignNotes: string | null
   contacts: Contact[]
   pods: Pod[]
   onClose: () => void
@@ -41,6 +42,7 @@ export function CampaignDetail({
   campaignType,
   campaignDeadline,
   campaignStatus,
+  campaignNotes,
   contacts,
   pods,
   onClose,
@@ -51,6 +53,19 @@ export function CampaignDetail({
   const [completing, setCompleting] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [addingContactId, setAddingContactId] = useState<string | null>(null)
+  const [notes, setNotes] = useState(campaignNotes ?? '')
+  const [notesEditing, setNotesEditing] = useState(false)
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(null)
+
+  // Auto-save notes with debounce
+  function handleNotesChange(value: string) {
+    setNotes(value)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      await updateCampaignNotes(campaignId, value || null)
+      onUpdate()
+    }, 800)
+  }
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -203,6 +218,46 @@ export function CampaignDetail({
             }}
           >
             {completing ? 'Completing...' : 'Mark complete'}
+          </button>
+        )}
+      </div>
+
+      {/* Notes section */}
+      <div style={{ padding: '12px 24px', borderBottom: '1px solid var(--divider)', flexShrink: 0 }}>
+        <div
+          style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, fontWeight: 500, cursor: 'pointer' }}
+          onClick={() => setNotesEditing(true)}
+        >
+          notes
+        </div>
+        {notesEditing || notes ? (
+          <textarea
+            value={notes}
+            onChange={e => handleNotesChange(e.target.value)}
+            onFocus={() => setNotesEditing(true)}
+            onBlur={() => { if (!notes) setNotesEditing(false) }}
+            placeholder="Add notes..."
+            rows={3}
+            style={{
+              width: '100%', background: 'var(--tint)',
+              border: '1px solid var(--edge)', borderRadius: 8,
+              color: 'var(--color-text-primary)', fontSize: 13,
+              padding: '8px 12px', outline: 'none', fontFamily: 'inherit',
+              boxSizing: 'border-box', resize: 'vertical',
+              lineHeight: 1.5,
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setNotesEditing(true)}
+            style={{
+              background: 'none', border: 'none', padding: 0,
+              fontSize: 13, color: 'var(--color-text-tertiary)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Add notes...
           </button>
         )}
       </div>

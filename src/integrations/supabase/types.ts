@@ -105,6 +105,7 @@ export type Database = {
           deadline: string | null
           id: string
           name: string
+          notes: string | null
           status: Database["public"]["Enums"]["campaign_status"]
           type: Database["public"]["Enums"]["campaign_type"]
           updated_at: string
@@ -116,6 +117,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           name: string
+          notes?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           type: Database["public"]["Enums"]["campaign_type"]
           updated_at?: string
@@ -127,6 +129,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           name?: string
+          notes?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           type?: Database["public"]["Enums"]["campaign_type"]
           updated_at?: string

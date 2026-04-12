@@ -521,6 +521,7 @@ export function Dashboard() {
             campaignType={campaign.type}
             campaignDeadline={campaign.deadline}
             campaignStatus={campaign.status as 'active' | 'completed'}
+            campaignNotes={campaign.notes}
             contacts={contacts}
             pods={pods}
             onClose={() => setSelectedCampaignId(null)}

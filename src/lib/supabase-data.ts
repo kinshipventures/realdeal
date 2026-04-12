@@ -560,12 +560,12 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
 }
 
 // Map pipeline DB rows into Campaign interfaces
 function pipelineToCampaign(p: Pipeline): Campaign {
-  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', contact_ids: [], backing: 'pipeline', created_at: p.created_at }
+  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', notes: null, contact_ids: [], backing: 'pipeline', created_at: p.created_at }
 }
 
 function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
@@ -656,7 +656,7 @@ export async function getCampaignContactsForContact(contactId: string): Promise<
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
@@ -704,7 +704,7 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) c.status = 'completed'
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', contact_ids: [], backing: 'outreach', created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, contact_ids: [], backing: 'outreach', created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as any }).eq('id', id).select().single()
   if (error) throw error
@@ -715,7 +715,21 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   return mapCampaign(row)
 }
 
-// ── Campaign Stages ──────────────────────────────────────────────────────────
+export async function updateCampaignNotes(id: string, notes: string | null): Promise<void> {
+  if (isDemoMode()) {
+    const c = DEMO_CAMPAIGNS.find(c => c.id === id)
+    if (c) c.notes = notes
+    return
+  }
+  const { error } = await supabase.from('campaigns').update({ notes } as any).eq('id', id)
+  if (error) throw error
+  if (_campaignsCache) {
+    const idx = _campaignsCache.findIndex(c => c.id === id)
+    if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], notes }
+  }
+}
+
+
 // campaign_stages table does not exist yet - functions work in demo mode only,
 // live mode returns empty / no-ops until the table is created via migration.
 
