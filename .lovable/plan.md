@@ -1,72 +1,92 @@
 
 
-## Plan: Fix Pod Drill-Down + Enhance Orb Hover/Click Interactions
+## Plan: Full Rebrand to Trolley Design System
 
-### Problem
+### Scope
 
-Two issues:
-
-1. **Drill-down shows nothing for pods without categories.** "Maps Lite" (805 contacts), "Unsorted", "Family & Friends", "General", etc. have 0 categories in the database. When clicked, `buildDrillNodes` generates only the center hub orb with nothing around it - looks broken.
-
-2. **Orb interactions feel flat.** Hover does a basic scale+lift. No press feedback beyond a quick shrink. No visual preview of what's inside a pod before clicking.
-
-### Root cause (drill-down)
-
-`categoriesByPodRef.current[pod.id]` returns `[]` for pods with no categories. `buildDrillNodes` creates only the center node. `buildDrillEdges` returns `[]`. Result: empty drill-down.
-
-Database confirms: 6 of 13 pods have 0 categories. The 4 pods with categories + contacts work fine (Service Providers: 198 cats, Maps: 46, Talent: 14, SPV: 4).
+Replace all brand identity - fonts, colors, shape language, and app name - with the Trolley design system. This touches tokens, Google Fonts imports, and ~47 component files that reference `font-serif` or brand colors inline.
 
 ### Changes
 
-**1. Handle category-less pods gracefully**
+**1. Google Fonts swap** (`index.html` + `src/index.css`)
 
-When a pod has 0 categories, skip the drill-down animation entirely and navigate directly to `/pod/:id` (the pod detail page). This is immediate, expected behavior - there's nothing to "explore" visually.
+Replace Fraunces + Plus Jakarta Sans with:
+- **IBM Plex Sans** (body/general) - weights 400, 500, 600
+- **Space Mono** (logo/monospaced accents) - weight 400, 700
+- **Roboto Condensed** (compact UI text) - weight 400, 500, 600
 
-In `drillIntoPod`: check `categoriesByPodRef.current[pod.id]?.length`. If 0, call `navigate(/pod/${pod.id})` and return without animating.
+Note: Solgan and DISKET MONO are not on Google Fonts. IBM Plex Sans becomes the primary body font. For headings that currently use the serif, we switch to IBM Plex Sans bold or Space Mono for brand-forward moments.
 
-- File: `OrbMap.tsx`
+Update `<title>` from "RealDeal" to "Trolley".
 
-**2. Enhanced hover: satellite category dots expand into orbiting ring**
+**2. CSS token overhaul** (`src/index.css` `:root` + dark mode block)
 
-This already exists in CSS (`.satellite-ring`, `.satellite-expand`, `.satellite-dot`) and is rendered in `ListNode.tsx` lines 104-136. The satellites expand on `.orbit-start:hover`. This should already work - need to verify the CSS is connecting properly and the `categories` data is being passed.
+| Token | Current | New |
+|---|---|---|
+| `--font-serif` | Fraunces | Space Mono (brand accent) |
+| `--font-sans` | Plus Jakarta Sans | IBM Plex Sans |
+| `--color-brand` | #25B439 | #34B15D (Vibrant Green) |
+| `--color-bg` | #F5F4F0 | #F5F5F5 (Off-White) |
+| `--color-surface` | #FFFFFF | #FFFFFF |
+| `--color-text-primary` | rgba(0,0,0,0.82) | #222222 |
+| `--header-band-bg` | #25B439 | #012F6C (Deep Blue) |
+| `--header-band-text` | #ffffff | #ffffff |
 
-- Files: `OrbMap.tsx` (verify categoriesByPod passed), `src/index.css` (verify satellite CSS)
+New tokens to add:
+- `--color-deep-blue`: #012F6C
+- `--color-soft-purple`: #D2BFFF
+- `--color-bright-lime`: #7ED957
+- `--color-mint`: #AAECE2
+- `--color-deep-indigo`: #312774
 
-**3. Enhanced hover: subtle glow pulse on hover**
+Dark mode tokens updated to match (deep blue surfaces, green accents).
 
-Add a soft breathing glow animation on hover that makes orbs feel alive. The current hover only changes `boxShadow` via JS - add a CSS keyframe that pulses the glow intensity.
+**3. Shape language** (`src/index.css`)
 
-- File: `src/index.css`
+- Increase `--panel-radius` from 16px to 20px (rounder, more tactile)
+- Add softer shadow tokens aligned with the "soft shadows" direction
+- Focus ring color switches to `--color-brand` (green) or `--color-deep-blue`
 
-**4. Enhanced press: haptic-style bounce**
+**4. Heading font references** (~47 component files)
 
-Replace the flat `scale(0.93)` active state with a spring-back animation: press down to 0.92, then on release bounce to 1.04 before settling at 1.0. Uses a CSS transition with overshoot bezier.
+All inline `fontFamily: 'var(--font-serif)'` references remain valid since the CSS variable changes. No component edits needed for the font swap itself - it flows through the token.
 
-- File: `src/index.css`
+However, the visual character changes: headings move from editorial serif to monospaced/technical. This is intentional per the Trolley system.
 
-**5. Add hover tooltip with pod stats**
+**5. Brand name references**
 
-The tooltip system already exists (`hoveredPod` state, `handlePodHoverEnter/Leave`). Verify it renders and enhance it to show: pod name, contact count, health score label, last interaction date, and category count.
+- `index.html` title: "RealDeal" -> "Trolley"
+- `LandingPage.tsx`: update hero copy, brand name references
+- `Sidebar.tsx`: update any "RealDeal" / "Kinship Brain" logo text
+- `MojNode.tsx` / hub orb: update label if it shows brand name
+- `SharedListPage.tsx`: update brand references
 
-- File: `OrbMap.tsx` (tooltip JSX section)
+**6. Orb color palette** (`SolidOrb.tsx`)
 
-**6. Drill-down entrance: staggered spring animation for category orbs**
+Update `POD_SHIFT_COLORS` to use Trolley palette derivatives (deep blue, soft purple, mint, lime as shift colors instead of current warm greens).
 
-Category orbs currently use `orb-enter` which is a simple fade. Add a spring-in keyframe where orbs scale from 0 and overshoot to 1.05 before settling, with staggered delays (already passed as `animationDelay`).
+**7. Tailwind config** (`tailwind.config.ts`)
 
-- File: `src/index.css` (new `@keyframes cat-spring-in`)
-- File: `CategoryNode.tsx` (use `cat-spring-in` class)
+Update `fontFamily.serif` and `fontFamily.sans` to match new fonts.
 
 ### Files modified
 
-- `src/components/map/OrbMap.tsx` - category-less pod early exit, tooltip enrichment
-- `src/components/map/CategoryNode.tsx` - spring entrance animation class
-- `src/index.css` - glow pulse hover, spring press, category entrance keyframe
+- `index.html` - fonts, title
+- `src/index.css` - all token values, dark mode, shape tokens
+- `tailwind.config.ts` - font family definitions
+- `src/components/map/SolidOrb.tsx` - POD_SHIFT_COLORS palette
+- `src/components/landing/LandingPage.tsx` - brand copy
+- `src/components/nav/Sidebar.tsx` - brand name
+- `src/components/map/MojNode.tsx` - hub label
 
-### Expected result
+### What stays the same
 
-- Pods with categories: click drills into rich visual with sized orbs, health rings, gradient edges, staggered spring entrance
-- Pods without categories: click navigates directly to pod detail page
-- All pod orbs: glow-pulse on hover, satellite dots expand, spring bounce on press
-- Hover tooltip shows rich pod stats
+- Component structure, layout, routing - unchanged
+- Interaction patterns (hover, press, drill-down) - unchanged
+- All 47 files using `var(--font-serif)` inline - no edits needed, token swap handles it
+- Spacing grid, motion curves, accessibility patterns - unchanged
+
+### Risk
+
+- Solgan and DISKET MONO are not available on Google Fonts. Plan uses IBM Plex Sans + Space Mono as closest available alternatives. If you have the font files for Solgan/DISKET MONO, we can self-host them instead.
 

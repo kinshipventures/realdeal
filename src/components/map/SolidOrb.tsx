@@ -4,10 +4,11 @@ import { hexToRgba, hexToRgbValues } from '../../lib/utils'
 import type { HexColor } from '../../lib/types'
 
 export const POD_SHIFT_COLORS: Record<string, string> = {
-  '#E53935': '#FF6B4A',
-  '#FF6B8A': '#FF8FA5',
-  '#7E57C2': '#5C6BC0',
-  '#25B439': '#00BFA5',
+  '#E53935': '#FF8A80',
+  '#FF6B8A': '#FF80AB',
+  '#7E57C2': '#B39DDB',
+  '#25B439': '#81C784',
+  '#34B15D': '#81C784',
   '#F5A623': '#FFD54F',
   '#1C1C1E': '#2C2C30',
 }

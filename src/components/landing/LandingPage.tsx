@@ -232,7 +232,7 @@ export function LandingPage() {
               padding: '14px 32px', borderRadius: 10, border: 'none',
               background: 'var(--color-brand)', color: '#fff', cursor: 'pointer',
               fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 600,
-              boxShadow: '0 4px 16px rgba(37,180,57,0.25)',
+              boxShadow: '0 4px 16px rgba(1,47,108,0.25)',
             }}
           >
             Get Started - Free
