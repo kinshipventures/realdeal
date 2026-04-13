@@ -744,13 +744,13 @@ export function OrbMap() {
       rebuildHomeView()
 
       requestAnimationFrame(() => {
-        fitView({ padding: 0.22, duration: 250 })
+        fitView({ padding: 0.22, duration: 400 })
         setTimeout(() => {
           isAnimating.current = false
           setFitViewEnabled(true)
-        }, 300)
+        }, 450)
       })
-    }, 150)
+    }, 350)
   }, [setNodes, rebuildHomeView, fitView])
 
   drillBackRef.current = drillBackToHub
