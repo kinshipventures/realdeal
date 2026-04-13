@@ -235,6 +235,8 @@ export async function importContacts(
     mapping?: ColumnMapping
     customFieldMap?: Record<string, string>  // csvHeader -> fieldConfig.id
     categoryMap?: Map<string, string>        // normalized category value -> category id
+    batchId?: string
+    importSource?: string
   }
 ): Promise<ImportResult> {
   const recordType: RelationshipType = options?.type ?? 'Contact'
