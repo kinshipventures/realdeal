@@ -29,6 +29,7 @@ import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
+import { MapLegend } from './MapLegend'
 
 const LIST_SIZE = 96
 
@@ -524,7 +525,7 @@ export function OrbMap() {
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
-  const [showOrbHint, setShowOrbHint] = useState(() => !localStorage.getItem('realdeal:orb-hint-dismissed'))
+  const [showOrbHint] = useState(false)
   const [fitViewEnabled, setFitViewEnabled] = useState(true)
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
@@ -661,7 +662,7 @@ export function OrbMap() {
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
-    if (showOrbHint) { setShowOrbHint(false); localStorage.setItem('realdeal:orb-hint-dismissed', '1') }
+    // Legend no longer managed here
 
     // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
     setMapView('pod')
@@ -1057,48 +1058,81 @@ export function OrbMap() {
           pointerEvents: 'none',
           zIndex: 10,
         }}>
-          <div style={{ pointerEvents: 'auto' }}>
-            <EmptyState
-              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
-              heading="Your network starts here"
-              subtext="Create your first pod to start mapping relationships."
-              ctaLabel="Create first pod"
-              onCta={() => setShowCreatePod(true)}
-            />
+          <div style={{ pointerEvents: 'auto', maxWidth: 340, textAlign: 'center' }}>
+            {/* Mini illustration: 3 example orbs */}
+            <div style={{
+              display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 20,
+            }}>
+              {['#7C3AED', '#0EA5E9', '#F59E0B'].map((c, i) => (
+                <div key={c} style={{
+                  width: 36 + i * 6, height: 36 + i * 6, borderRadius: '50%',
+                  background: c, opacity: 0.25 + i * 0.15,
+                  animation: `modal-fade-in 0.4s ease-out ${i * 0.1}s both`,
+                }} />
+              ))}
+            </div>
+            <h3 style={{
+              fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-serif)',
+              color: 'var(--color-text-primary)', margin: '0 0 6px',
+              letterSpacing: '-0.01em',
+            }}>
+              Your network starts here
+            </h3>
+            <p style={{
+              fontSize: 12, color: 'var(--color-text-secondary)', margin: '0 0 16px',
+              lineHeight: 1.5,
+            }}>
+              Pods are groups of people you want to nurture - like Investors, Advisors, or Close Friends.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowCreatePod(true)}
+              style={{
+                padding: '8px 20px', borderRadius: 8,
+                border: 'none', cursor: 'pointer',
+                background: 'var(--color-brand)', color: '#fff',
+                fontSize: 13, fontWeight: 600,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              Create your first pod
+            </button>
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => window.location.href = '/import'}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)',
+                  textDecoration: 'underline',
+                }}
+              >
+                Import contacts instead
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* First-use hint — click an orb to explore */}
-      {showOrbHint && viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
+      {/* Page header - hub view only */}
+      {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
         <div style={{
-          position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 16px', borderRadius: 10,
-          background: 'var(--nav-bg)', backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid var(--edge)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          animation: 'modal-fade-in 0.4s ease-out',
+          position: 'absolute', top: 14, left: 14, zIndex: 20,
+          pointerEvents: 'none',
         }}>
-          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            Click a pod to see who's inside
+          <span style={{
+            fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.06em', textTransform: 'uppercase' as const,
+            userSelect: 'none',
+          }}>
+            Your Network
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setShowOrbHint(false)
-              localStorage.setItem('realdeal:orb-hint-dismissed', '1')
-            }}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--color-text-tertiary)', padding: '0 2px',
-              fontSize: 16, lineHeight: 1,
-            }}
-            aria-label="Dismiss hint"
-          >
-            x
-          </button>
+          <div style={{
+            fontSize: 12, color: 'var(--color-text-secondary)',
+            marginTop: 2, userSelect: 'none',
+          }}>
+            {overallHealthRef.current !== undefined ? scoreLabel(overallHealthRef.current) : ''} - {podsCount} {podsCount === 1 ? 'pod' : 'pods'}, {totalContactsRef.current} relationships
+          </div>
         </div>
       )}
 
@@ -1220,13 +1254,22 @@ export function OrbMap() {
                 </span>
               </span>
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
-                {hoveredPod.overdueCount > 0 && (
-                  <span style={{ color: 'var(--health-cooling)' }}> - {hoveredPod.overdueCount} overdue</span>
-                )}
+                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'relationship' : 'relationships'}
               </span>
+              {hoveredPod.overdueCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)' }}>
+                  {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
+                </span>
+              ) : hoveredPod.contactCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)' }}>
+                  All caught up
+                </span>
+              ) : null}
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
                 Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
+              </span>
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', marginTop: 2, opacity: 0.6 }}>
+                Click to explore
               </span>
             </div>
           )}
@@ -1340,6 +1383,9 @@ export function OrbMap() {
               </svg>
             </button>
           )}
+
+          {/* Map legend - bottom left */}
+          {mapView === 'hub' && podsLoaded && podsCount > 0 && <MapLegend />}
         </>
       )}
 
