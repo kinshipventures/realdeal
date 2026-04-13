@@ -302,6 +302,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         </span>
 
         {/* Progress: labels as segmented bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 4, background: 'var(--tint)' }}>
           {STEP_LABELS.map((label, i) => {
             const visited = i <= maxStep
@@ -327,6 +328,27 @@ export function OnboardingFlow({ onComplete }: Props) {
               </button>
             )
           })}
+        </div>
+
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onComplete}
+          aria-label="Close onboarding"
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: 'none',
+            background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--color-text-tertiary)',
+            transition: 'color 0.15s, background 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+        >
+          <svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+          </svg>
+        </button>
         </div>
       </div>
 

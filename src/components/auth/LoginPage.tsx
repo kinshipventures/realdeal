@@ -36,7 +36,8 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(() => searchParams.get('signup') === '1')
+  const [signUpSuccess, setSignUpSuccess] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -69,9 +70,13 @@ export function LoginPage() {
     setError(null)
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setError(error.message)
+        setLoading(false)
+      } else if (data?.user && !data.session) {
+        // Email confirmation required
+        setSignUpSuccess(true)
         setLoading(false)
       }
     } else {

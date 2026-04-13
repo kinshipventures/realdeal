@@ -238,7 +238,9 @@ export function PreferencesTab() {
           try {
             const keys = Object.keys(localStorage).filter(k => k.startsWith('realdeal:onboarding-complete'))
             keys.forEach(k => localStorage.removeItem(k))
+            localStorage.removeItem('realdeal:onboarding-step')
           } catch { /* silent */ }
+          window.location.reload()
         }}
         onCancel={() => setConfirmReset(false)}
       />
