@@ -495,6 +495,15 @@ export function AccountPage() {
           </div>
         </div>
       )}
+
+      {/* About */}
+      <p style={{
+        marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)',
+        fontSize: 11, color: 'var(--color-text-tertiary)',
+        textAlign: 'center', letterSpacing: '0.02em',
+      }}>
+        Built by Gabriel Murray
+      </p>
     </div>
   )
 }
