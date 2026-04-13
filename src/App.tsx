@@ -62,6 +62,9 @@ function AppShell() {
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
+
+  const CURRENT_VERSION = '0.2'
 
   // Show onboarding for any user who hasn't completed it (scoped per user email)
   useEffect(() => {
@@ -69,6 +72,12 @@ function AppShell() {
     const email = session.user?.email ?? ''
     const key = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
     if (!localStorage.getItem(key)) setShowOnboarding(true)
+
+    // What's New toast - show once per version
+    const seenKey = `realdeal:changelog-seen:${CURRENT_VERSION}`
+    if (localStorage.getItem(key) && !localStorage.getItem(seenKey)) {
+      setShowWhatsNew(true)
+    }
   }, [session])
 
   const completeOnboarding = useCallback(() => {
@@ -110,6 +119,67 @@ function AppShell() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       <a href="#main-content" className="sr-only">Skip to main content</a>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
+
+      {/* What's New toast */}
+      {showWhatsNew && (
+        <div style={{
+          position: 'fixed', bottom: isMobile ? 64 : 24, right: 24, left: isMobile ? 24 : 'auto',
+          zIndex: 900, maxWidth: 320,
+          background: 'var(--color-surface)', borderRadius: 12,
+          border: '1px solid var(--edge)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          animation: 'whats-new-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}>
+          <style>{`
+            @keyframes whats-new-slide-up {
+              from { opacity: 0; transform: translateY(16px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
+              What's new in {CURRENT_VERSION}
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '2px 0 0', lineHeight: 1.3 }}>
+              Map labels, unified campaigns, settings & more.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem(`realdeal:changelog-seen:${CURRENT_VERSION}`, '1')
+              setShowWhatsNew(false)
+              navigate('/changelog')
+            }}
+            style={{
+              fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
+              border: 'none', background: 'var(--color-brand)', color: '#fff',
+              cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+            }}
+          >
+            See changes
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem(`realdeal:changelog-seen:${CURRENT_VERSION}`, '1')
+              setShowWhatsNew(false)
+            }}
+            aria-label="Dismiss"
+            style={{
+              width: 24, height: 24, borderRadius: 6, border: 'none',
+              background: 'transparent', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-text-tertiary)', flexShrink: 0,
+            }}
+          >
+            <svg width={12} height={12} viewBox="0 0 12 12" fill="none">
+              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {!isMobile && (
         <Sidebar
