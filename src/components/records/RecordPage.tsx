@@ -6,7 +6,7 @@ import { getContacts, getPods, getInteractions, updateContact, isOverdue, isInGr
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
-import { Spinner } from '../ui'
+import { Spinner, ConfirmSheet } from '../ui'
 import { EmptyState } from '../empty/EmptyState'
 import { RecordHeader } from './RecordHeader'
 import { RecordTimeline } from './RecordTimeline'
@@ -35,6 +35,7 @@ export function RecordPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isBannerDismissed, setIsBannerDismissed] = useState(false)
+  const [showLetGoConfirm, setShowLetGoConfirm] = useState(false)
 
   useEffect(() => {
     if (!id) { setNotFound(true); setLoading(false); return }
@@ -170,10 +171,10 @@ export function RecordPage() {
               if (timeline) timeline.click()
             }}
             style={{
-              fontSize: 12, fontWeight: 600, padding: '4px 12px',
+              fontSize: 13, fontWeight: 600, padding: '8px 16px',
               background: urgentSignal.color, color: '#fff',
-              border: 'none', borderRadius: 6, cursor: 'pointer',
-              fontFamily: 'inherit', whiteSpace: 'nowrap',
+              border: 'none', borderRadius: 8, cursor: 'pointer',
+              fontFamily: 'inherit', whiteSpace: 'nowrap', minHeight: 44,
             }}
           >
             {urgentSignal.type === 'stale' ? 'Reach out' : 'Log now'}
@@ -181,21 +182,19 @@ export function RecordPage() {
           {urgentSignal.type === 'stale' && (
             <button
               type="button"
-              onClick={() => {
-                handleUpdate({ status: 'Archived' })
-                setIsBannerDismissed(true)
-              }}
+              onClick={() => setShowLetGoConfirm(true)}
               style={{
-                fontSize: 12, fontWeight: 600, padding: '4px 12px',
+                fontSize: 13, fontWeight: 600, padding: '8px 16px',
                 background: 'none', color: 'hsla(20, 80%, 45%, 0.8)',
-                border: '1px solid hsla(20, 80%, 45%, 0.3)', borderRadius: 6, cursor: 'pointer',
-                fontFamily: 'inherit', whiteSpace: 'nowrap',
+                border: '1px solid hsla(20, 80%, 45%, 0.3)', borderRadius: 8, cursor: 'pointer',
+                fontFamily: 'inherit', whiteSpace: 'nowrap', minHeight: 44,
               }}
             >
               Let go
             </button>
           )}
           <button
+            type="button"
             onClick={() => {
               sessionStorage.setItem(`realdeal:signal-dismissed:${contact.id}`, '1')
               setIsBannerDismissed(true)
@@ -206,9 +205,14 @@ export function RecordPage() {
               cursor: 'pointer',
               color: 'var(--color-text-tertiary)',
               fontSize: 16,
-              padding: 4,
+              padding: 12,
               lineHeight: 1,
               flexShrink: 0,
+              minWidth: 44,
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             aria-label="Dismiss signal"
           >x</button>
