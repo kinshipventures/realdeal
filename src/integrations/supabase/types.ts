@@ -452,6 +452,8 @@ export type Database = {
           gender: Database["public"]["Enums"]["gender_type"] | null
           global_region: Database["public"]["Enums"]["global_region"] | null
           id: string
+          import_batch_id: string | null
+          import_source: string | null
           industry: string | null
           intel_notes: string | null
           interests: string | null
@@ -504,6 +506,8 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_type"] | null
           global_region?: Database["public"]["Enums"]["global_region"] | null
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           industry?: string | null
           intel_notes?: string | null
           interests?: string | null
@@ -556,6 +560,8 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_type"] | null
           global_region?: Database["public"]["Enums"]["global_region"] | null
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           industry?: string | null
           intel_notes?: string | null
           interests?: string | null
