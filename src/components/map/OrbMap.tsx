@@ -1271,6 +1271,7 @@ export function OrbMap() {
               <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', marginTop: 2, opacity: 0.6 }}>
                 Click to explore
               </span>
+            </div>
           )}
 
           {/* Orbit rings with subtle glow — hidden during drill-down */}
