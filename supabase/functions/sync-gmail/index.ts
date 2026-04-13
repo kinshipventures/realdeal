@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function upsertSyncState(supabase: ReturnType<typeof createClient>, userId: string, historyId: string | null) {
+async function upsertSyncState(supabase: any, userId: string, historyId: string | null) {
   const now = new Date().toISOString();
   const { data: existing } = await supabase
     .from("gmail_sync_state")

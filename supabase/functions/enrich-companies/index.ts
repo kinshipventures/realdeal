@@ -141,9 +141,10 @@ Only return the JSON array, no other text.`;
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    addLog(`ERROR: ${err.message}`);
-    return new Response(JSON.stringify({ success: false, error: err.message, log }), {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    addLog(`ERROR: ${msg}`);
+    return new Response(JSON.stringify({ success: false, error: msg, log }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
