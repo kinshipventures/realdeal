@@ -1,53 +1,40 @@
 
 
-## Plan: Team Management Completeness, Domain-Based Member Discovery, and Company Data Quality
+# Spotlight-style Search Palette
 
-### Part 1: Team/Account Management Gaps
+## What changes
 
-**Current state:** Invite flow, accept-invite Edge Function, workspace switcher, role management, and leave team are all built. The core functionality is solid.
+Redesign `SearchPalette.tsx` to feel like macOS Spotlight / Apple's liquid glass aesthetic:
 
-**Missing pieces to add:**
+### Visual overhaul
+- **Larger, centered modal** - wider (540px), positioned ~15vh from top instead of 20vh
+- **Liquid glass backdrop** - heavier blur (24px), lighter tint with subtle border glow
+- **Bigger search input** - 20px font, taller padding (20px), with a subtle SF-style search icon
+- **Rounded pill container** - 24px border-radius, frosted glass background with translucent white/gray
+- **Result rows** - taller (48px), with smooth highlight transitions instead of instant background swap
+- **Active row highlight** - soft rounded selection indicator with subtle scale, like Spotlight's blue highlight but using the brand accent
+- **Type section headers** - smaller, more muted, with thin divider lines
+- **Keyboard shortcut hint** - show "ESC" pill in the input area to dismiss
 
-1. **Domain-based team discovery** - Show users on the same email domain (e.g. @kinshipventures.com) as suggested teammates when inviting. Query `profiles.email` for matching domains among users who share at least one workspace, and display them as "People in your organization" on the Account page.
+### Interaction polish
+- **Smoother entrance animation** - scale from 0.95 with a spring-like ease curve (200ms)
+- **Result hover/active transitions** - CSS transitions on background color (120ms)
+- **Empty state** - centered, with a subtle icon and "No results found" in muted text
+- **Initial state** (no query) - show recent/suggested items or a hint like "Search people, pods, campaigns..."
+- **Type icons** - render actual SVG icons next to each result row (person, building, circle, chart, grid)
 
-2. **Invite email notifications** - Currently invite links are clipboard-only. Set up transactional email infrastructure and send an email when an invite is created, containing the inviter's name, workspace name, and join link.
+### Layout
+- Search icon + input + ESC badge in the header
+- Scrollable results area with type-grouped sections
+- Each row: type icon + name (medium weight) + subtitle (muted, right-aligned)
+- Active row gets accent background with white text
 
-3. **Password reset flow** - `ResetPasswordPage.tsx` exists but needs verification that the route and auth flow work end-to-end.
+## Files modified
+- `src/components/search/SearchPalette.tsx` - full visual + interaction rewrite
 
-4. **Admin can also edit workspace name** - Currently only owners can edit. Admins should be able to as well.
-
-### Part 2: Company Dedup, Normalize, and Enrich
-
-**Current state:** 2,086 companies in the database. Data quality is poor:
-- 1,903 (91%) have no domain
-- 113 records are role/title strings, not company names (e.g. "VP, Brand Partnerships - IZO")
-- 20 records are LinkedIn URLs
-- 5 records are "NA"/"N/A"
-- Many case-insensitive duplicates (e.g. "Zendaya" x6, "Greatness Media" x5)
-
-**New Edge Function: `normalize-companies`**
-
-Phases:
-1. **Garbage removal** - Delete or archive company records that are URLs, roles/titles (pattern: contains comma + hyphen + title keywords), or empty values (NA, N/A, none, -)
-2. **Case-insensitive dedup** - Group by `lower(name)`, pick survivor (most data, earliest created), merge `contact_companies` junctions to survivor, delete losers
-3. **Domain extraction** - For companies with a website but no domain, extract domain from website URL
-4. **Domain-based dedup** - After domain backfill, merge companies sharing the same domain
-5. **AI enrichment** - For companies with a name but no website/domain/industry, call Lovable AI (gemini-2.5-flash) with the company name to fill in website, domain, industry, and location
-
-### Part 3: Implementation Steps
-
-1. **Database migration** - Add `company_type` enum or `is_garbage` boolean flag to companies table for classification (optional - could just delete directly)
-2. **Create `normalize-companies` Edge Function** - Phases 1-4 (deterministic cleanup)
-3. **Create `enrich-companies` Edge Function** - Phase 5 (AI-powered, batch processing with rate limiting)
-4. **Update `cleanup-workspace` Edge Function** - Add phase 6 that calls company normalization
-5. **Domain-based member suggestion** - Add RPC function to find users by email domain, surface in AccountPage invite section
-6. **Email infrastructure** - Set up transactional email for invite notifications
-7. **Minor AccountPage fixes** - Let admins edit workspace name
-
-### Technical Details
-
-- Company normalization uses service-role client to batch-process across workspace
-- AI enrichment batches 20 companies per call to minimize latency
-- Domain-based member discovery uses a new `find_users_by_domain` RPC that queries `profiles.email` domain suffix, filtered to users in at least one shared workspace (privacy-safe)
-- Transactional email uses the Lovable email infrastructure toolchain
+## Technical approach
+- All styling stays inline (matching codebase convention)
+- CSS keyframes for entrance animation
+- CSS transitions via inline style objects for hover states
+- No new dependencies
 
