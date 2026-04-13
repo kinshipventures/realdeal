@@ -282,7 +282,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="What's New"
           active={isChangelog}
           collapsed={collapsed}
-          onClick={() => navigate('/changelog')}
+          onClick={() => {
+            localStorage.setItem('realdeal:changelog-seen:0.2', '1')
+            navigate('/changelog')
+          }}
+          badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
         />
         <NavItem
           icon={<SignOutIcon />}
