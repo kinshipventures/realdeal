@@ -1383,6 +1383,9 @@ export function OrbMap() {
               </svg>
             </button>
           )}
+
+          {/* Map legend - bottom left */}
+          {mapView === 'hub' && podsLoaded && podsCount > 0 && <MapLegend />}
         </>
       )}
 
