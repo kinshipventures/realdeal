@@ -323,6 +323,8 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     stage: data.stage, ticker: data.ticker, domain: data.domain,
     cadence_override: data.cadence_override, email_2: data.email_2, email_3: data.email_3,
     custom_fields: data.custom_fields ?? {},
+    import_batch_id: (data as any).import_batch_id ?? null,
+    import_source: (data as any).import_source ?? null,
   }
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
