@@ -513,7 +513,7 @@ function PodListView({
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const { setViewport, fitView } = useReactFlow()
+  const { setViewport, getViewport, fitView, getZoom } = useReactFlow()
   const navigate = useNavigate()
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
@@ -662,20 +662,36 @@ export function OrbMap() {
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
-    // Legend no longer managed here
 
-    // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
+    // Find clicked pod node position to zoom toward it
+    const podNode = nodes.find(n => n.id === pod.id)
+    const podX = podNode ? (podNode.position.x + (SIZE / 2)) : 0
+    const podY = podNode ? (podNode.position.y + (SIZE / 2)) : 0
+
+    // Step 1: zoom viewport toward the clicked pod
+    const vp = getViewport()
+    const containerEl = document.querySelector('.react-flow') as HTMLElement | null
+    const cw = containerEl?.clientWidth ?? window.innerWidth
+    const ch = containerEl?.clientHeight ?? window.innerHeight
+    const zoomTarget = Math.min(vp.zoom * 2.2, 3.5)
+    setViewport({
+      x: cw / 2 - podX * zoomTarget,
+      y: ch / 2 - podY * zoomTarget,
+      zoom: zoomTarget,
+    }, { duration: 400 })
+
+    // Fade sibling pods during zoom
     setMapView('pod')
     mapViewRef.current = 'pod'
     setSelectedPod(pod)
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
-      if (n.id === MOJ_ID) return n
+      if (n.id === MOJ_ID) return { ...n, data: { ...n.data, fading: true } }
       return { ...n, data: { ...n.data, fading: true } }
     }))
 
+    // Step 2: after zoom completes, swap to drill-down nodes
     setTimeout(() => {
-      // Step 2: compute per-category contact counts and health
       const allContacts = allContactsRef.current
       const byContact = byContactRef.current
 
@@ -700,15 +716,15 @@ export function OrbMap() {
       setNodes(drillNodes)
       setEdges(buildDrillEdges(pod, cats, healthByCategory, contactCountByCategory))
 
-      // Step 3: fitView centers on actual node positions with padding
+      // Step 3: fit to drill-down layout
       requestAnimationFrame(() => {
-        fitView({ padding: 0.35, duration: 250 })
+        fitView({ padding: 0.35, duration: 350 })
         setTimeout(() => {
           isAnimating.current = false
-        }, 300)
+        }, 400)
       })
-    }, 150)
-  }, [setNodes, setEdges, fitView, navigate])
+    }, 420)
+  }, [nodes, setNodes, setEdges, fitView, navigate, getViewport, setViewport])
 
   drillInRef.current = drillIntoPod
 
