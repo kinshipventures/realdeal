@@ -34,7 +34,7 @@ import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
-import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
+import { MeetingNotesWidget } from './widgets/MeetingNotesWidget'
 
 export type DashboardTab = 'nurture' | 'campaigns'
 
@@ -663,7 +663,7 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
     } else if (id === 'granola-sync') {
       elements.push(
         <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
-          <GranolaSyncWidget />
+          <MeetingNotesWidget />
         </div>
       )
     } else if (id === 'campaign-progress') {

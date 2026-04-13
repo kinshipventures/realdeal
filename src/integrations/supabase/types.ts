@@ -1395,7 +1395,13 @@ export type Database = {
         | "As Needed"
       gender_type: "Male" | "Female" | "Non-binary" | "Other"
       global_region: "AMER" | "APAC" | "ME" | "LATAM" | "EU"
-      interaction_source: "Gmail" | "Granola" | "Manual"
+      interaction_source:
+        | "Gmail"
+        | "Granola"
+        | "Manual"
+        | "Otter"
+        | "Fireflies"
+        | "Fathom"
       interaction_type:
         | "call"
         | "email"
@@ -1556,7 +1562,14 @@ export const Constants = {
       ],
       gender_type: ["Male", "Female", "Non-binary", "Other"],
       global_region: ["AMER", "APAC", "ME", "LATAM", "EU"],
-      interaction_source: ["Gmail", "Granola", "Manual"],
+      interaction_source: [
+        "Gmail",
+        "Granola",
+        "Manual",
+        "Otter",
+        "Fireflies",
+        "Fathom",
+      ],
       interaction_type: [
         "call",
         "email",

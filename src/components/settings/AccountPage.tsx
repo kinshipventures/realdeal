@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, updateMemberRole,
@@ -402,6 +403,18 @@ export function AccountPage() {
         </section>
       )}
 
+      {/* ── Meeting Notes ─────────────────────────────────────── */}
+      <section style={{
+        marginBottom: 40, paddingTop: 32,
+        borderTop: '1px solid var(--edge)',
+      }}>
+        {sectionHeading('Meeting Notes')}
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Connect AI meeting note apps to automatically log meetings on each person's timeline.
+        </p>
+        <MeetingNotesSettings />
+      </section>
+
       {/* ── Danger zone ───────────────────────────────────────── */}
       <section style={{ paddingTop: 32, borderTop: '1px solid var(--edge)' }}>
         <button type="button" onClick={handleSignOut} style={{
@@ -447,6 +460,82 @@ export function AccountPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function MeetingNotesSettings() {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [keyValue, setKeyValue] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [, forceUpdate] = useState(0)
+
+  function handleSave(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    const trimmed = keyValue.trim()
+    if (trimmed && !provider.validate(trimmed)) {
+      setError(`Key should start with ${provider.keyPrefix}`)
+      return
+    }
+    setProviderKey(provider, trimmed || null)
+    setEditingId(null)
+    setKeyValue('')
+    setError(null)
+    forceUpdate(n => n + 1)
+  }
+
+  function handleDisconnect(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    setProviderKey(provider, null)
+    forceUpdate(n => n + 1)
+  }
+
+  return (
+    <div style={{ borderRadius: 10, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+      {PROVIDERS.map(provider => {
+        const connected = !!getProviderKey(provider)
+        const isEditing = editingId === provider.id
+        return (
+          <div key={provider.id} style={{ padding: '12px 14px', borderBottom: '1px solid var(--divider)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>{provider.name}</span>
+                {connected && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-brand)', background: 'rgba(37,180,57,0.08)', borderRadius: 4, padding: '1px 6px' }}>Connected</span>}
+                {provider.comingSoon && !connected && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>Coming soon</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {!provider.comingSoon && !isEditing && (
+                  <button type="button" onClick={() => { setEditingId(provider.id); setKeyValue(getProviderKey(provider) ?? '') }}
+                    style={{ fontSize: 12, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                    {connected ? 'Change key' : 'Connect'}
+                  </button>
+                )}
+                {connected && !isEditing && (
+                  <button type="button" onClick={() => handleDisconnect(provider.id)}
+                    style={{ fontSize: 12, color: 'var(--health-fading)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            </div>
+            {isEditing && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                <input type="password" value={keyValue} onChange={e => setKeyValue(e.target.value)}
+                  placeholder={`${provider.keyPrefix}...`}
+                  style={{ flex: 1, fontSize: 13, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--edge-strong)', background: 'transparent', fontFamily: 'monospace', color: 'var(--color-text-primary)', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSave(provider.id) }}
+                  autoFocus
+                />
+                <button type="button" onClick={() => handleSave(provider.id)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 6, border: 'none', background: 'var(--color-brand)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+                <button type="button" onClick={() => { setEditingId(null); setError(null) }}
+                  style={{ fontSize: 12, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--edge)', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              </div>
+            )}
+            {isEditing && error && <p style={{ fontSize: 11, color: '#dc2626', margin: '4px 0 0' }}>{error}</p>}
+          </div>
+        )
+      })}
     </div>
   )
 }

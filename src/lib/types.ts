@@ -12,7 +12,7 @@ export type Cadence = 'weekly' | 'biweekly' | 'monthly' | 'quarterly'
 export type GlobalRegion = 'AMER' | 'APAC' | 'ME' | 'LATAM' | 'EU'
 export type ContactFrequency = 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual' | 'As Needed'
 export type Gender = 'Male' | 'Female' | 'Non-binary' | 'Other'
-export type InteractionSource = 'Gmail' | 'Granola' | 'Manual'
+export type InteractionSource = 'Gmail' | 'Granola' | 'Otter' | 'Fireflies' | 'Fathom' | 'Manual'
 
 export type RelationshipType = 'Contact' | 'Company'
 export type RelationshipStatus = 'Active' | 'Pending' | 'Archived'
@@ -123,6 +123,7 @@ export interface Interaction {
   source: InteractionSource | null
   email_link: string | null
   granola_link: string | null
+  meeting_link?: string | null   // generic meeting notes link (alias for granola_link)
   event_detail: string | null    // JSON string for system event metadata
   actor: string | null           // "You" for now, future multi-user
   created_at: string
