@@ -122,8 +122,8 @@ export interface Interaction {
   summary: string | null
   source: InteractionSource | null
   email_link: string | null
-  granola_link: string | null    // deprecated - use meeting_link
-  meeting_link: string | null    // generic meeting notes link
+  granola_link: string | null
+  meeting_link?: string | null   // generic meeting notes link (alias for granola_link)
   event_detail: string | null    // JSON string for system event metadata
   actor: string | null           // "You" for now, future multi-user
   created_at: string
