@@ -1,77 +1,52 @@
 
 
-# Meeting Notes Integration - Multi-Provider Support
+# User Settings Page
+
+## Summary
+Split the current Account page into a proper settings experience with tabbed navigation covering Profile, Preferences, Integrations, and Team - giving users control over app behavior, defaults, and appearance.
 
 ## What changes
 
-Generalize the Granola-only meeting notes sync into a multi-provider system supporting Granola, Otter.ai, Fireflies.ai, and Fathom. Rename the widget, update data types, and add the integration to onboarding/account settings.
+### New route structure
+Keep `/account` but add a tabbed layout at the top:
+- **Profile** - existing name/email (already built)
+- **Preferences** - new app behavior controls
+- **Integrations** - meeting notes providers (moved from current page)
+- **Team** - existing team management (moved from current page)
 
-## Architecture
+### Preferences section (new)
+Controls for app-level settings, all backed by localStorage:
 
-```text
-src/lib/meeting-sync.ts          # Provider-agnostic sync engine + provider registry
-  |-- GranolaProvider             # Existing logic, extracted
-  |-- OtterProvider               # API key based (otter.ai)
-  |-- FirefliesProvider           # API key based (fireflies.ai)
-  |-- FathomProvider              # API key based (fathom.video)
+| Setting | Control | Storage key | Default |
+|---------|---------|-------------|---------|
+| Default pod cadence | Segmented picker (Weekly/Biweekly/Monthly/Quarterly) | `realdeal:default-cadence` | monthly |
+| Pods view mode | Toggle (Map/List) | `realdeal:pods-view-mode` | map |
+| Dashboard preset | Segmented picker (Full/Focus) | `realdeal:dashboard-config:v5` (preset field) | full |
+| Sidebar collapsed | Toggle | `realdeal:sidebar-collapsed` | expanded |
+| Notifications/reminders | Toggle for overdue nudges | new key `realdeal:show-nudges` | on |
+| Reset onboarding | Button to re-trigger onboarding flow | clears `realdeal:onboarding-complete:*` | - |
 
-src/components/dashboard/widgets/MeetingNotesWidget.tsx  # Replaces GranolaSyncWidget
-```
+### Visual design
+- Tab bar at top of page (Profile / Preferences / Integrations / Team) with underline active indicator
+- Same 480px max-width, 48px top padding
+- HIG-aligned: 44px touch targets on tabs, 16px input fonts, consistent spacing
 
 ## Files modified
 
-### 1. `src/lib/meeting-sync.ts` (new, replaces `src/lib/granola.ts`)
-- Define a `MeetingProvider` interface: `{ id, name, icon, keyPrefix, keyPattern, validate, sync }`
-- Register 4 providers: Granola (`grn_`), Otter.ai, Fireflies.ai, Fathom
-- Extract current Granola sync logic into a `GranolaProvider` implementation
-- Other providers: stub sync functions that store/validate API keys but return `{ total_notes: 0, matched: 0, interactions_created: 0, skipped: 0 }` with a "coming soon" flag
-- Shared helpers: `getProviderKey(id)`, `setProviderKey(id, key)`, `getConnectedProviders()`, `syncProvider(id)`
-- Keep localStorage keys backward-compatible (`realdeal:granola-api-key` still works)
+### `src/components/settings/AccountPage.tsx`
+- Add tab state (`profile | preferences | integrations | team`)
+- Render tab bar at top
+- Move Meeting Notes section into "Integrations" tab
+- Move Team section into "Team" tab
+- Add new "Preferences" tab with the settings controls above
+- Each control reads/writes its own localStorage key directly
+- Dashboard preset change calls the same logic as `useDashboardConfig`
 
-### 2. `src/lib/types.ts`
-- Update `InteractionSource` to: `'Gmail' | 'Granola' | 'Otter' | 'Fireflies' | 'Fathom' | 'Manual'`
-- Rename `granola_link` to `meeting_link` on `Interaction` interface (keep `granola_link` as deprecated alias)
+### `src/components/settings/PreferencesTab.tsx` (new)
+- Self-contained component for all preference controls
+- Segmented picker sub-component for cadence/preset/view mode
+- Toggle switch sub-component for boolean settings
+- Reset onboarding button with confirmation
 
-### 3. `src/components/dashboard/widgets/MeetingNotesWidget.tsx` (new, replaces `GranolaSyncWidget.tsx`)
-- Show all providers in a card list with connect/sync per provider
-- Each provider row: icon + name + status badge (Connected/Coming Soon) + Sync/Connect button
-- Connected providers show last sync time and sync button
-- Unconnected providers show API key input on click
-- Sync results shown inline per provider
-- Widget heading: "meeting notes" (unchanged)
-
-### 4. `src/components/dashboard/widgets/GranolaSyncWidget.tsx`
-- Delete (replaced by MeetingNotesWidget)
-
-### 5. `src/components/dashboard/useDashboardConfig.ts`
-- Widget ID stays `'granola-sync'` internally for backward compatibility, label changes to "Meeting Notes"
-
-### 6. `src/components/dashboard/Dashboard.tsx`
-- Import `MeetingNotesWidget` instead of `GranolaSyncWidget`
-- Render `MeetingNotesWidget` where `GranolaSyncWidget` was
-
-### 7. `src/components/onboarding/OnboardingFlow.tsx`
-- Add a "Meeting Notes" connection option in the import step
-- Show provider picker (Granola, Otter, Fireflies, Fathom) with API key input
-- Optional step - can skip
-
-### 8. `src/components/settings/AccountPage.tsx`
-- Add "Meeting Notes" section showing connected providers with manage/disconnect options
-
-### 9. `src/lib/supabase-data.ts`
-- Update `logInteraction` call signature to accept `meeting_link` alongside `granola_link`
-
-## Provider details
-
-| Provider | Key prefix | API base | Status |
-|----------|-----------|----------|--------|
-| Granola | `grn_` | `api.granola.ai/v1` | Full sync |
-| Otter.ai | `otter_` | TBD | Connect only (coming soon) |
-| Fireflies.ai | `ff_` | TBD | Connect only (coming soon) |
-| Fathom | `fathom_` | TBD | Connect only (coming soon) |
-
-## What stays the same
-- Core sync logic for Granola is unchanged
-- Dashboard widget position/ordering backward compatible
-- Existing synced data and localStorage keys preserved
+No database changes needed - all preferences are localStorage-backed.
 
