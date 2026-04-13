@@ -62,6 +62,9 @@ function AppShell() {
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
+
+  const CURRENT_VERSION = '0.2'
 
   // Show onboarding for any user who hasn't completed it (scoped per user email)
   useEffect(() => {
