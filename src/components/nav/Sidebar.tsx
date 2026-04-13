@@ -130,7 +130,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         />
         <NavItem
           icon={<DashboardIcon />}
-          label="Dashboard"
+          label="Pulse"
           active={isDashboard}
           collapsed={collapsed}
           onClick={() => navigate('/pulse')}
@@ -264,7 +264,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-          label="Account"
+          label="Settings"
           active={location.pathname === '/account'}
           collapsed={collapsed}
           onClick={() => navigate('/account')}

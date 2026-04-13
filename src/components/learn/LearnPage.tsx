@@ -189,7 +189,7 @@ function StartSection() {
             color="#E91E63"
           />
           <ConceptRow
-            label="Dashboard"
+            label="Pulse"
             description="Your daily command center. Relationship health metrics, campaign progress, and suggested actions."
             color="#25B439"
           />

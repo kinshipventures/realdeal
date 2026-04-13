@@ -573,7 +573,7 @@ const WIDGET_TAB: Partial<Record<WidgetId, 'nurture' | 'campaigns'>> = {
   'recent-activity': 'nurture',
   'pending-tray': 'nurture',
   'gmail-sync': 'nurture',
-  'granola-sync': 'nurture',
+  'meeting-notes': 'nurture',
   'campaign-progress': 'campaigns',
   'quick-links': 'campaigns',
 }
@@ -660,7 +660,7 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
           <GmailSyncWidget />
         </div>
       )
-    } else if (id === 'granola-sync') {
+    } else if (id === 'meeting-notes') {
       elements.push(
         <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
           <MeetingNotesWidget />
