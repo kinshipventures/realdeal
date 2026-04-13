@@ -798,9 +798,14 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
         <MeetingNotesOnboarding />
       </div>
 
-      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(320) }}>
-        I'll add people one by one
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, ...stagger(320) }}>
+        <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={secondaryBtnStyle}>
+          I'll add people one by one
+        </button>
+        <button type="button" onClick={onComplete} style={{ fontSize: 13, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 12px' }}>
+          Skip for now
+        </button>
+      </div>
     </>
   )
 }

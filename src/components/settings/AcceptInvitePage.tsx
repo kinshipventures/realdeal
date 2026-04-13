@@ -29,7 +29,9 @@ export function AcceptInvitePage() {
         await refreshWorkspaces()
         if (data?.workspace_id) {
           switchWorkspace(data.workspace_id)
-          localStorage.setItem('realdeal:onboarding-complete', '1')
+          const email = session?.user?.email ?? ''
+          const onboardKey = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
+          localStorage.setItem(onboardKey, '1')
         }
         if (data?.workspace_name) setTeamName(data.workspace_name)
 
