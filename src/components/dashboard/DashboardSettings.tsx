@@ -40,7 +40,7 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
     'recent-activity': 'Activity & Links',
     'quick-links': 'Activity & Links',
     'gmail-sync': 'Activity & Links',
-    'granola-sync': 'Activity & Links',
+    'meeting-notes': 'Activity & Links',
   }
 
   function getInsertIndex(clientY: number): number {
