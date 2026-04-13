@@ -1,65 +1,98 @@
 
 
-# Entity & Naming Standardization
+# Reimagine the Pods/Map Page - Clarity and Purpose
 
-## Mismatches Found
+## The Problem
 
-| Location | Current | Should Be | Type |
-|----------|---------|-----------|------|
-| Sidebar nav label | "Dashboard" | "Pulse" | Name mismatch - route is `/pulse`, mobile tab says "Pulse", but desktop sidebar says "Dashboard" |
-| Sidebar nav label | "Account" | "Settings" | Name mismatch - page title says "Settings", tabs say Profile/Preferences/etc, but nav says "Account" |
-| DashboardSettings widget ID | `granola-sync` | `meeting-notes` | Stale ID - widget was generalized to multi-provider "Meeting Notes" but ID still says granola |
-| DashboardSettings section map | `'granola-sync': 'Activity & Links'` | `'meeting-notes': 'Activity & Links'` | Stale reference |
-| Dashboard.tsx render branch | `id === 'granola-sync'` | should render `MeetingNotesWidget` | Old GranolaSyncWidget still referenced alongside new MeetingNotesWidget |
-| GranolaSyncWidget.tsx | File still exists | Delete | Replaced by MeetingNotesWidget but never removed |
-| InteractionSection.tsx | `granola_link` display label "view notes" | Should check `meeting_link` too | Only checks legacy field name |
-| CampaignBoard.tsx, NurturingRow.tsx | `granola_link: null` in interaction objects | Should use `meeting_link` | Stale field name in hardcoded objects |
-| LearnPage.tsx | "Dashboard" concept label | "Pulse" | Stale naming |
-| ChangelogPage.tsx | "Pulse is the dashboard" | "Pulse is your daily view" | Confusing mixed terminology |
-| Mobile tab bar | Missing Settings/Account tab | Add gear icon tab or ensure Account accessible | No way to reach settings on mobile except via URL |
-| Sidebar `isRelationships` | Includes `/category/` paths | Sidebar uses it but App.tsx `isRelationships` does not include `/category/` | Inconsistent active-state detection between Sidebar and App.tsx mobile bar |
+The orb map is visually striking but functionally opaque. A first-time user sees colored circles with small serif text, a dark hub showing "Network Health: 72 / Steady / 48 people", and has no idea what any of it means or what to do. The vision doc says it should be "Montessori-inspired - self-explanatory, no instruction manual needed." Right now it's the opposite.
 
-## Plan
+## Page Purpose (defined)
 
-### Files to modify
+The map is **"the quiet room"** (from vision.md) - where you reflect on your network's structure and health at a glance. Its job:
+1. Show you the shape of your world (who's grouped where)
+2. Surface health at a glance (which pods need love, which are thriving)
+3. Let you drill into any group to act
 
-**`src/components/nav/Sidebar.tsx`**
-- Change `label="Dashboard"` to `label="Pulse"` (line 133)
-- Change `label="Account"` to `label="Settings"` (line 267)
-- Rename `DashboardIcon` to `PulseIcon`
+## What Changes
 
-**`src/App.tsx`**
-- Mobile tab: add `/category/` to `isRelationships` check for consistency with sidebar
-- Mobile tab: add a Settings tab (gear icon) pointing to `/account`
+### 1. Contextual legend overlay (first visit + toggle)
 
-**`src/components/dashboard/useDashboardConfig.ts`**
-- Rename widget ID `'granola-sync'` to `'meeting-notes'` in `WidgetId` type, `ALL_WIDGETS`, `PRESET_CONFIGS`, and `DEFAULT_ORDER`
-- Add migration: if localStorage config contains `granola-sync`, rename it to `meeting-notes`
+A small floating card in the bottom-left that explains the visual language on first visit. Dismissible, re-accessible via a "?" button.
 
-**`src/components/dashboard/DashboardSettings.tsx`**
-- Update `WIDGET_SECTION` key from `'granola-sync'` to `'meeting-notes'`
+Content:
+- "Each orb is a pod - a group of people you care about"
+- "The ring around each orb shows relationship health"
+- "Click any orb to see who's inside"
+- Color-coded health key: green = thriving, blue = steady, amber = cooling, red = fading
 
-**`src/components/dashboard/Dashboard.tsx`**
-- Update render branch from `id === 'granola-sync'` to `id === 'meeting-notes'`
-- Remove any remaining `GranolaSyncWidget` import
+Persisted to `localStorage` (`realdeal:map-legend-dismissed`). After dismiss, a small "?" icon stays in the corner to re-open.
 
-**`src/components/dashboard/widgets/GranolaSyncWidget.tsx`**
-- Delete file
+### 2. Richer orb labels
 
-**`src/components/contacts/InteractionSection.tsx`**
-- Check both `granola_link` and `meeting_link` for the "view notes" link display
+Currently orbs show only the pod name in small serif text. Add a second line showing the contact count and a tiny health indicator word, making each orb self-describing:
 
-**`src/components/campaigns/CampaignBoard.tsx`**
-- Replace `granola_link: null` with `meeting_link: null` in hardcoded interaction objects
+```text
+   --------
+  | Maps   |   <-- pod name (existing)
+  | 12 Steady |  <-- NEW: count + health label
+   --------
+```
 
-**`src/components/nurturing/NurturingRow.tsx`**
-- Same: `granola_link` to `meeting_link`
+The health label uses the same color system (green/blue/amber/red) as the existing `scoreLabel()`. Font size scales down gracefully - the count + label line is ~8px, sits below the name.
 
-**`src/components/learn/LearnPage.tsx`**
-- Rename "Dashboard" concept row label to "Pulse"
+### 3. Hub orb rewrite - warmer, clearer
 
-**`src/components/changelog/ChangelogPage.tsx`**
-- Update "Pulse is the dashboard" text to remove "dashboard" wording
+Replace the clinical "Network Health / 72 / Steady / 48 people" with warmer copy:
 
-No database changes needed. All fixes are UI label and stale reference cleanup.
+```text
+   Your Network
+       72
+     Steady
+   48 relationships
+```
+
+"Your Network" replaces "Network Health" - more personal, less dashboard. "relationships" replaces "people" - matches the product's language.
+
+### 4. Contextual action hint on hover (richer tooltip)
+
+The existing hover tooltip shows pod name, health score, contact count, overdue count, last interacted. Improve it:
+- Add a one-line suggestion: "3 people need attention" or "All caught up" based on overdue count
+- Add a subtle "Click to explore" affordance at the bottom
+
+### 5. Welcome state for new users (zero pods)
+
+The current empty state says "Your network starts here / Create your first pod to start mapping relationships." Improve with:
+- A brief explanation: "Pods are groups of people you want to nurture - like Investors, Advisors, or Close Friends"
+- Two CTAs: "Create a pod" (primary) and "Import contacts" (secondary link)
+- A small illustration hint showing what the map will look like with 3 example orbs (static SVG)
+
+### 6. Page header with context
+
+Add a subtle top-left page title area (only on hub view, not drill-down):
+- Eyebrow: "YOUR NETWORK" (10px uppercase, tertiary text)
+- Below: overall health as a one-liner: "Steady - 5 pods, 48 relationships"
+- Keeps the page grounded without cluttering the canvas
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/components/map/OrbMap.tsx` | Add legend overlay, page header, improved empty state, richer tooltip |
+| `src/components/map/ListNode.tsx` | Add count + health label line below pod name |
+| `src/components/map/MojNode.tsx` | Rewrite hub copy ("Your Network", "relationships") |
+| `src/components/map/MapLegend.tsx` | **New** - legend overlay component with health key |
+
+## What Stays the Same
+
+- All map interaction (drag, zoom, drill-down, satellite dots)
+- Visual system (orb gradients, health rings, parallax)
+- List view toggle
+- React Flow architecture
+
+## Technical Notes
+
+- Legend uses same `localStorage` pattern as existing `realdeal:orb-hint-dismissed`
+- Health label on orbs reuses `scoreLabel()` from `equity.ts`
+- No new data fetching - all info already available in node data props
+- The existing bottom hint ("Click a pod to see who's inside") gets folded into the new legend - removed as standalone
 
