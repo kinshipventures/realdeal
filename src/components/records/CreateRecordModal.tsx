@@ -71,10 +71,10 @@ function newRow(): MultiRow {
   return { id: ++_rowCounter, firstName: '', lastName: '', email: '', companyName: '', industry: '', domain: '' }
 }
 
-export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
+export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: Props) {
   const navigate = useNavigate()
-  const [step, setStep] = useState<Step>('type')
-  const [recordType, setRecordType] = useState<RecordType>('Contact')
+  const [step, setStep] = useState<Step>(initialType ? 'form' : 'type')
+  const [recordType, setRecordType] = useState<RecordType>(initialType ?? 'Contact')
   const [formMode, setFormMode] = useState<FormMode>('single')
   const [pods, setPods] = useState<Pod[]>([])
   const [saving, setSaving] = useState(false)
