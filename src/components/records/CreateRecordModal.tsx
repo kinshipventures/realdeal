@@ -30,17 +30,18 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   background: 'var(--tint)',
   border: '1px solid var(--edge-strong)',
-  borderRadius: 7,
+  borderRadius: 8,
   color: 'var(--color-text-primary)',
-  fontSize: 13,
-  padding: '8px 12px',
+  fontSize: 16,
+  padding: '10px 12px',
   outline: 'none',
   fontFamily: 'inherit',
   boxSizing: 'border-box',
+  minHeight: 44,
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 500,
   color: 'var(--color-text-secondary)',
   marginBottom: 4,
@@ -50,15 +51,16 @@ const labelStyle: React.CSSProperties = {
 const compactInput: React.CSSProperties = {
   background: 'var(--tint)',
   border: '1px solid var(--edge-strong)',
-  borderRadius: 6,
+  borderRadius: 8,
   color: 'var(--color-text-primary)',
-  fontSize: 12,
-  padding: '6px 10px',
+  fontSize: 16,
+  padding: '8px 10px',
   outline: 'none',
   fontFamily: 'inherit',
   boxSizing: 'border-box',
   flex: 1,
   minWidth: 0,
+  minHeight: 44,
 }
 
 const requiredDot = <span style={{ color: '#25B439', marginLeft: 2 }}>*</span>

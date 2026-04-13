@@ -74,7 +74,7 @@ interface CloseButtonProps {
   size?: number
 }
 
-export function CloseButton({ onClick, 'aria-label': ariaLabel = 'Close', size = 26 }: CloseButtonProps) {
+export function CloseButton({ onClick, 'aria-label': ariaLabel = 'Close', size = 32 }: CloseButtonProps) {
   return (
     <button
       type="button"
@@ -82,21 +82,110 @@ export function CloseButton({ onClick, 'aria-label': ariaLabel = 'Close', size =
       aria-label={ariaLabel}
       className="close-trigger"
       style={{
+        width: 44,
+        height: 44,
+        borderRadius: '50%',
+        background: 'transparent',
+        border: 'none',
+        color: 'var(--text-muted)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 15,
+        lineHeight: 1,
+        flexShrink: 0,
+        cursor: 'pointer',
+      }}
+    >
+      <span style={{
         width: size,
         height: size,
         borderRadius: '50%',
         background: 'var(--tint)',
         border: '1px solid var(--edge)',
-        color: 'var(--text-muted)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 13,
-        lineHeight: 1,
-        flexShrink: 0,
-      }}
-    >
-      ×
+      }}>x</span>
     </button>
+  )
+}
+
+// ── ConfirmSheet ──────────────────────────────────────────────────────
+// HIG-standard destructive action confirmation.
+
+interface ConfirmSheetProps {
+  open: boolean
+  title: string
+  message: string
+  confirmLabel?: string
+  cancelLabel?: string
+  destructive?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+export function ConfirmSheet({
+  open,
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  destructive = true,
+  onConfirm,
+  onCancel,
+}: ConfirmSheetProps) {
+  if (!open) return null
+  return (
+    <div className="hig-confirm-backdrop" onClick={onCancel}>
+      <div className="hig-confirm-sheet" onClick={e => e.stopPropagation()}>
+        <h3 style={{
+          margin: '0 0 8px',
+          fontSize: 17,
+          fontWeight: 600,
+          color: 'var(--color-text-primary)',
+        }}>{title}</h3>
+        <p style={{
+          margin: '0 0 24px',
+          fontSize: 15,
+          color: 'var(--color-text-secondary)',
+          lineHeight: 1.45,
+        }}>{message}</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: '1px solid var(--edge-strong)',
+              background: 'var(--tint)',
+              color: 'var(--color-text-primary)',
+              fontSize: 15,
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              minHeight: 44,
+            }}
+          >{cancelLabel}</button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: 'none',
+              background: destructive ? '#FF3B30' : 'var(--color-brand)',
+              color: '#fff',
+              fontSize: 15,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              minHeight: 44,
+            }}
+          >{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
   )
 }

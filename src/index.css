@@ -36,7 +36,7 @@
   --color-bg: #F5F4F0;
   --color-text-primary: rgba(0,0,0,0.82);
   --color-text-secondary: rgba(0,0,0,0.45);
-  --color-text-tertiary: rgba(0,0,0,0.40);
+  --color-text-tertiary: rgba(0,0,0,0.48);
   --header-band-bg: #34B15D;
   --header-band-text: #ffffff;
   --header-band-padding: 28px 32px;
@@ -63,7 +63,7 @@
   --edge-strong: rgba(0,0,0,0.12);
   --tint: rgba(0,0,0,0.04);
   --tint-hover: rgba(0,0,0,0.06);
-  --text-muted: rgba(0,0,0,0.35);
+  --text-muted: rgba(0,0,0,0.45);
   --nav-bg: rgba(255,255,255,0.92);
   --stroke-subtle: rgba(0,0,0,0.06);
 }
@@ -977,4 +977,56 @@ body::after {
 
 .subpod-pill:hover .subpod-delete {
   opacity: 1 !important;
+}
+
+/* ── HIG Motion tiers ──────────────────────────────────────────────── */
+/* micro: 0.15s, element: 0.25s, panel: 0.35s */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── HIG Input zoom prevention ─────────────────────────────────────── */
+@media screen and (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── HIG Destructive confirmation sheet ────────────────────────────── */
+.hig-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: hig-fade-in 0.2s ease-out;
+}
+
+.hig-confirm-sheet {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 24px;
+  width: min(360px, calc(100vw - 48px));
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  animation: hig-sheet-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes hig-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hig-sheet-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

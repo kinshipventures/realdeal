@@ -129,7 +129,7 @@ function AppShell() {
       </div>
 
       {isMobile && (
-        /* Mobile — fixed bottom tab bar */
+        /* Mobile -- fixed bottom tab bar (HIG: 49pt + safe area) */
         <nav
           role="navigation"
           aria-label="Main navigation"
@@ -138,33 +138,34 @@ function AppShell() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 48,
+            height: 49,
             zIndex: 100,
             display: 'flex',
             justifyContent: 'space-around',
-            alignItems: 'center',
+            alignItems: 'flex-start',
+            paddingTop: 6,
             background: 'var(--color-surface)',
-            borderTop: '1px solid var(--edge)',
+            borderTop: '0.5px solid var(--edge)',
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
           <MobileTab active={isPods} label="Pods" onClick={() => navigate('/pods')}>
-            <circle cx="12" cy="12" r="3"/>
+            <circle cx="12" cy="12" r="3" fill={isPods ? 'currentColor' : 'none'}/>
             <line x1="12" y1="3" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="21"/>
             <line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/>
           </MobileTab>
-          <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/pulse')}>
+          <MobileTab active={isDashboard} label="Pulse" onClick={() => navigate('/pulse')}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </MobileTab>
-          <MobileTab active={isRelationships} label="Relationships" onClick={() => navigate('/contacts')}>
+          <MobileTab active={isRelationships} label="People" onClick={() => navigate('/contacts')}>
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </MobileTab>
           <MobileTab active={isCampaigns} label="Campaigns" onClick={() => navigate('/campaigns')}>
-            <rect x="2" y="3" width="5" height="18" rx="1"/>
-            <rect x="9.5" y="6" width="5" height="15" rx="1"/>
-            <rect x="17" y="9" width="5" height="12" rx="1"/>
+            <rect x="2" y="3" width="5" height="18" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
+            <rect x="9.5" y="6" width="5" height="15" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
+            <rect x="17" y="9" width="5" height="12" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
           </MobileTab>
           <MobileTab active={false} label="Search" onClick={() => setShowSearch(true)}>
             <circle cx="11" cy="11" r="8"/>
@@ -279,17 +280,17 @@ function MobileTab({ active, label, onClick, children }: {
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-        background: 'none', border: 'none', padding: '6px 12px', cursor: 'pointer',
+        background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer',
         minWidth: 44, minHeight: 44,
       }}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24"
-        fill={active && label === 'Dashboard' ? color : 'none'}
-        stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      <svg width="22" height="22" viewBox="0 0 24 24"
+        fill={active && label !== 'Search' ? color : 'none'}
+        stroke={color} strokeWidth={active ? '2' : '1.5'} strokeLinecap="round" strokeLinejoin="round"
       >
         {children}
       </svg>
-      <span style={{ fontSize: 9, fontWeight: 500, color }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: active ? 600 : 500, color, letterSpacing: '0.01em' }}>{label}</span>
     </button>
   )
 }
