@@ -8,7 +8,7 @@ import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
 import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
-import { SearchPalette, type SearchResult } from './components/search/SearchPalette'
+import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
 import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
@@ -56,6 +56,7 @@ function AppShell() {
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [createType, setCreateType] = useState<'Contact' | 'Company' | null>(null)
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
@@ -189,6 +190,20 @@ function AppShell() {
             }
             navigate(routes[result.type] || '/')
           }}
+          onQuickAction={(action: QuickActionId) => {
+            setShowSearch(false)
+            if (action === 'create-contact') {
+              setCreateType('Contact')
+              setShowCreate(true)
+            } else if (action === 'create-company') {
+              setCreateType('Company')
+              setShowCreate(true)
+            } else if (action === 'new-campaign') {
+              navigate('/campaigns')
+            } else if (action === 'import') {
+              navigate('/import')
+            }
+          }}
           onSelectContact={(contact) => {
             setShowSearch(false)
             if (isPods && contact.list_ids.length > 0) {
@@ -200,41 +215,11 @@ function AppShell() {
         />
       )}
 
-      {/* FAB — create new record (hidden on map, which has its own) */}
-      {!isPods && (
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          aria-label="New relationship"
-          style={{
-            position: 'fixed',
-            bottom: isMobile ? 72 : 24,
-            right: 24,
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            background: '#25B439',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            zIndex: 99,
-            boxShadow: '0 4px 16px rgba(37,180,57,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-      )}
-
       <CreateRecordModal
         isOpen={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={(_contact: Contact) => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setCreateType(null) }}
+        onCreated={(_contact: Contact) => { setShowCreate(false); setCreateType(null) }}
+        initialType={createType}
       />
 
       {/* Demo data toggle - mobile only (desktop uses sidebar) */}

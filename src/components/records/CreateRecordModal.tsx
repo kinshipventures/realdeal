@@ -24,6 +24,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onCreated: (contact: Contact) => void
+  initialType?: 'Contact' | 'Company' | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -70,10 +71,10 @@ function newRow(): MultiRow {
   return { id: ++_rowCounter, firstName: '', lastName: '', email: '', companyName: '', industry: '', domain: '' }
 }
 
-export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
+export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: Props) {
   const navigate = useNavigate()
-  const [step, setStep] = useState<Step>('type')
-  const [recordType, setRecordType] = useState<RecordType>('Contact')
+  const [step, setStep] = useState<Step>(initialType ? 'form' : 'type')
+  const [recordType, setRecordType] = useState<RecordType>(initialType ?? 'Contact')
   const [formMode, setFormMode] = useState<FormMode>('single')
   const [pods, setPods] = useState<Pod[]>([])
   const [saving, setSaving] = useState(false)
@@ -110,7 +111,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated }: Props) {
   useEffect(() => {
     if (!isOpen) return
     getPods().then(p => setPods(p.filter(pod => pod.name !== 'Unsorted')))
-  }, [isOpen])
+    if (initialType) {
+      setRecordType(initialType)
+      setStep('form')
+    }
+  }, [isOpen, initialType])
 
   // Company typeahead debounce
   useEffect(() => {

@@ -13,9 +13,25 @@ export interface SearchResult {
   color?: string
 }
 
+export type QuickActionId = 'create-contact' | 'create-company' | 'new-campaign' | 'import'
+
+export interface QuickAction {
+  id: QuickActionId
+  label: string
+  description: string
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  { id: 'create-contact', label: 'Create contact', description: 'Add a new person' },
+  { id: 'create-company', label: 'Create company', description: 'Add an organization' },
+  { id: 'new-campaign', label: 'New campaign', description: 'Start a campaign or pipeline' },
+  { id: 'import', label: 'Import CSV', description: 'Bulk import contacts' },
+]
+
 interface SearchPaletteProps {
   onClose: () => void
   onSelect: (result: SearchResult) => void
+  onQuickAction?: (action: QuickActionId) => void
   /** @deprecated Use onSelect instead */
   onSelectContact?: (contact: Contact) => void
 }
@@ -48,7 +64,25 @@ function TypeIcon({ type, size = 16, color = 'currentColor' }: { type: SearchRes
   )
 }
 
-export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPaletteProps) {
+function ActionIcon({ id, size = 16, color = 'currentColor' }: { id: QuickActionId; size?: number; color?: string }) {
+  const s = { width: size, height: size, flexShrink: 0 } as const
+  const p = { fill: 'none', stroke: color, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (id === 'create-contact') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>
+  )
+  if (id === 'create-company') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="14" /><line x1="9" y1="11" x2="15" y2="11" /></svg>
+  )
+  if (id === 'new-campaign') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+  )
+  // import
+  return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+  )
+}
+
+export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContact }: SearchPaletteProps) {
   const [query, setQuery] = useState('')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
@@ -120,6 +154,14 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
     return all.slice(0, 20)
   })() : []
 
+  // Filter quick actions by query too
+  const filteredActions = query
+    ? QUICK_ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q))
+    : QUICK_ACTIONS
+
+  // Total selectable items: quick actions (when no query or matching) + results
+  const totalItems = (query ? results.length + filteredActions.length : filteredActions.length)
+
   useEffect(() => setActiveIndex(-1), [query])
 
   useEffect(() => {
@@ -131,12 +173,28 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setActiveIndex(i => (i + 1) % Math.max(results.length, 1))
+      setActiveIndex(i => (i + 1) % Math.max(totalItems, 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setActiveIndex(i => (i <= 0 ? results.length - 1 : i - 1))
-    } else if (e.key === 'Enter' && activeIndex >= 0 && results[activeIndex]) {
-      const r = results[activeIndex]
+      setActiveIndex(i => (i <= 0 ? totalItems - 1 : i - 1))
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault()
+      selectAtIndex(activeIndex)
+    }
+  }
+
+  function selectAtIndex(idx: number) {
+    // When no query: all items are quick actions
+    // When query: quick actions first, then results
+    const actionCount = filteredActions.length
+    if (idx < actionCount) {
+      onQuickAction?.(filteredActions[idx].id)
+      onClose()
+      return
+    }
+    const resultIdx = idx - actionCount
+    if (query && resultIdx >= 0 && resultIdx < results.length) {
+      const r = results[resultIdx]
       if (onSelectContact && r.type === 'contact') {
         const c = contacts.find(ct => ct.id === r.id)
         if (c) { onSelectContact(c); return }
@@ -153,9 +211,9 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
     onSelect(r)
   }
 
-  // Build grouped display
+  // Build grouped display for search results
   let lastType: SearchResultType | null = null
-  let globalIdx = 0
+  let globalIdx = filteredActions.length // offset by quick actions count
   const rows: { result: SearchResult; idx: number; showHeader: boolean }[] = []
   for (const r of results) {
     const showHeader = r.type !== lastType
@@ -200,7 +258,7 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
         {/* Search input */}
         <div style={{
           display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
-          borderBottom: query ? '1px solid rgba(0,0,0,0.06)' : 'none',
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
         }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -209,7 +267,7 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
             autoFocus type="text" value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search people, pods, campaigns..."
+            placeholder="Search or jump to..."
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
               fontSize: 18, fontWeight: 400, fontFamily: 'inherit',
@@ -226,45 +284,24 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
           }}>ESC</kbd>
         </div>
 
-        {/* Results / empty / hint */}
-        {!query ? (
-          <div style={{ padding: '28px 20px 32px', textAlign: 'center' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px', opacity: 0.5 }}>
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, lineHeight: 1.5 }}>
-              Search across people, pods, campaigns, and projects
-            </p>
-          </div>
-        ) : results.length === 0 ? (
-          <div style={{ padding: '32px 20px 36px', textAlign: 'center' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 10px', opacity: 0.4 }}>
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              <line x1="8" y1="11" x2="14" y2="11" />
-            </svg>
-            <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
-              No results found
-            </p>
-          </div>
-        ) : (
-          <div ref={listRef} style={{ maxHeight: 400, overflowY: 'auto', padding: '4px 0' }}>
-            {rows.map(({ result, idx, showHeader }) => (
-              <div key={`${result.type}-${result.id}`}>
-                {showHeader && (
-                  <div style={{
-                    padding: '10px 20px 4px', fontSize: 10, fontWeight: 600,
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    color: 'var(--color-text-tertiary)',
-                    ...(idx > 0 ? { borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: 4, paddingTop: 12 } : {}),
-                  }}>
-                    {TYPE_META[result.type].label}
-                  </div>
-                )}
+        <div ref={listRef} style={{ maxHeight: 420, overflowY: 'auto', padding: '4px 0' }}>
+          {/* Quick actions */}
+          {filteredActions.length > 0 && (
+            <>
+              <div style={{
+                padding: '10px 20px 4px', fontSize: 10, fontWeight: 600,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                color: 'var(--color-text-tertiary)',
+              }}>
+                Quick Actions
+              </div>
+              {filteredActions.map((action, i) => (
                 <button
+                  key={action.id}
                   type="button"
-                  data-idx={idx}
-                  onClick={() => handleResultClick(result)}
-                  onMouseEnter={() => { setHoveredIndex(idx); setActiveIndex(-1) }}
+                  data-idx={i}
+                  onClick={() => { onQuickAction?.(action.id); onClose() }}
+                  onMouseEnter={() => { setHoveredIndex(i); setActiveIndex(-1) }}
                   onMouseLeave={() => setHoveredIndex(-1)}
                   style={{
                     width: 'calc(100% - 12px)', margin: '0 6px',
@@ -272,43 +309,109 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
                     display: 'flex', alignItems: 'center', gap: 10,
                     border: 'none', borderRadius: 10, cursor: 'pointer',
                     fontFamily: 'inherit', textAlign: 'left',
-                    background: highlightIdx === idx ? 'var(--color-brand, #1B6B4A)' : 'transparent',
-                    transition: 'background 120ms ease, transform 120ms ease',
-                    transform: highlightIdx === idx ? 'scale(1.005)' : 'scale(1)',
+                    background: highlightIdx === i ? 'var(--color-brand, #1B6B4A)' : 'transparent',
+                    transition: 'background 120ms ease',
                   }}
                 >
-                  <TypeIcon
-                    type={result.type}
+                  <ActionIcon
+                    id={action.id}
                     size={16}
-                    color={highlightIdx === idx ? 'rgba(255,255,255,0.85)' : 'var(--color-text-tertiary)'}
+                    color={highlightIdx === i ? 'rgba(255,255,255,0.85)' : 'var(--color-text-tertiary)'}
                   />
-                  {result.color && (
-                    <span style={{
-                      width: 8, height: 8, borderRadius: '50%',
-                      background: result.color, flexShrink: 0,
-                      boxShadow: highlightIdx === idx ? '0 0 0 1px rgba(255,255,255,0.3)' : 'none',
-                    }} />
-                  )}
                   <span style={{
                     fontSize: 14, fontWeight: 500, flex: 1,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    color: highlightIdx === idx ? '#fff' : 'var(--color-text-primary)',
+                    color: highlightIdx === i ? '#fff' : 'var(--color-text-primary)',
                     transition: 'color 120ms ease',
                   }}>
-                    {result.name}
+                    {action.label}
                   </span>
-                  {result.subtitle && (
-                    <span style={{
-                      fontSize: 12, flexShrink: 0,
-                      color: highlightIdx === idx ? 'rgba(255,255,255,0.6)' : 'var(--color-text-tertiary)',
-                      transition: 'color 120ms ease',
-                    }}>{result.subtitle}</span>
-                  )}
+                  <span style={{
+                    fontSize: 12,
+                    color: highlightIdx === i ? 'rgba(255,255,255,0.6)' : 'var(--color-text-tertiary)',
+                    transition: 'color 120ms ease',
+                  }}>{action.description}</span>
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </>
+          )}
+
+          {/* Search results */}
+          {query && results.length === 0 && filteredActions.length === 0 && (
+            <div style={{ padding: '32px 20px 36px', textAlign: 'center' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 10px', opacity: 0.4 }}>
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
+                No results found
+              </p>
+            </div>
+          )}
+
+          {rows.length > 0 && (
+            <>
+              {rows.map(({ result, idx, showHeader }) => (
+                <div key={`${result.type}-${result.id}`}>
+                  {showHeader && (
+                    <div style={{
+                      padding: '10px 20px 4px', fontSize: 10, fontWeight: 600,
+                      textTransform: 'uppercase', letterSpacing: '0.08em',
+                      color: 'var(--color-text-tertiary)',
+                      borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: 4, paddingTop: 12,
+                    }}>
+                      {TYPE_META[result.type].label}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    data-idx={idx}
+                    onClick={() => handleResultClick(result)}
+                    onMouseEnter={() => { setHoveredIndex(idx); setActiveIndex(-1) }}
+                    onMouseLeave={() => setHoveredIndex(-1)}
+                    style={{
+                      width: 'calc(100% - 12px)', margin: '0 6px',
+                      padding: '10px 14px', height: 44,
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      border: 'none', borderRadius: 10, cursor: 'pointer',
+                      fontFamily: 'inherit', textAlign: 'left',
+                      background: highlightIdx === idx ? 'var(--color-brand, #1B6B4A)' : 'transparent',
+                      transition: 'background 120ms ease, transform 120ms ease',
+                      transform: highlightIdx === idx ? 'scale(1.005)' : 'scale(1)',
+                    }}
+                  >
+                    <TypeIcon
+                      type={result.type}
+                      size={16}
+                      color={highlightIdx === idx ? 'rgba(255,255,255,0.85)' : 'var(--color-text-tertiary)'}
+                    />
+                    {result.color && (
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: result.color, flexShrink: 0,
+                        boxShadow: highlightIdx === idx ? '0 0 0 1px rgba(255,255,255,0.3)' : 'none',
+                      }} />
+                    )}
+                    <span style={{
+                      fontSize: 14, fontWeight: 500, flex: 1,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      color: highlightIdx === idx ? '#fff' : 'var(--color-text-primary)',
+                      transition: 'color 120ms ease',
+                    }}>
+                      {result.name}
+                    </span>
+                    {result.subtitle && (
+                      <span style={{
+                        fontSize: 12, flexShrink: 0,
+                        color: highlightIdx === idx ? 'rgba(255,255,255,0.6)' : 'var(--color-text-tertiary)',
+                        transition: 'color 120ms ease',
+                      }}>{result.subtitle}</span>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
