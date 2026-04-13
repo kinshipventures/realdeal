@@ -282,7 +282,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="What's New"
           active={isChangelog}
           collapsed={collapsed}
-          onClick={() => navigate('/changelog')}
+          onClick={() => {
+            localStorage.setItem('realdeal:changelog-seen:0.2', '1')
+            navigate('/changelog')
+          }}
+          badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
         />
         <NavItem
           icon={<SignOutIcon />}
@@ -319,7 +323,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, active, collapsed, onClick, hint, labelStyle,
+  icon, label, active, collapsed, onClick, hint, labelStyle, badge,
 }: {
   icon: React.ReactNode
   label: string
@@ -328,6 +332,7 @@ function NavItem({
   onClick: () => void
   hint?: string
   labelStyle?: React.CSSProperties
+  badge?: boolean
 }) {
   return (
     <button
@@ -353,8 +358,16 @@ function NavItem({
         transition: 'background 0.12s ease',
       }}
     >
-      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
+        {badge && collapsed && (
+          <span style={{
+            position: 'absolute', top: -2, right: -2,
+            width: 7, height: 7, borderRadius: '50%',
+            background: 'var(--color-brand)',
+            border: '1.5px solid var(--color-bg)',
+          }} />
+        )}
       </span>
       {!collapsed && (
         <span style={{
@@ -379,6 +392,12 @@ function NavItem({
         }}>
           {hint}
         </span>
+      )}
+      {badge && !collapsed && (
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%',
+          background: 'var(--color-brand)', flexShrink: 0,
+        }} />
       )}
     </button>
   )
