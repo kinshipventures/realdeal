@@ -402,6 +402,18 @@ export function AccountPage() {
         </section>
       )}
 
+      {/* ── Meeting Notes ─────────────────────────────────────── */}
+      <section style={{
+        marginBottom: 40, paddingTop: 32,
+        borderTop: '1px solid var(--edge)',
+      }}>
+        {sectionHeading('Meeting Notes')}
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Connect AI meeting note apps to automatically log meetings on each person's timeline.
+        </p>
+        <MeetingNotesSettings />
+      </section>
+
       {/* ── Danger zone ───────────────────────────────────────── */}
       <section style={{ paddingTop: 32, borderTop: '1px solid var(--edge)' }}>
         <button type="button" onClick={handleSignOut} style={{

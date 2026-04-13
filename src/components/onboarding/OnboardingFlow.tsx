@@ -792,7 +792,12 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
         />
       </div>
 
-      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(260) }}>
+      {/* Meeting notes providers */}
+      <div style={{ ...stagger(200), width: '100%', maxWidth: 400 }}>
+        <MeetingNotesOnboarding />
+      </div>
+
+      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(320) }}>
         I'll add people one by one
       </button>
     </>
