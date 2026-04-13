@@ -279,6 +279,8 @@ export function LoginPage() {
           <p style={{ color: 'var(--health-fading)', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</p>
         )}
 
+        </>)}
+
         {/* Demo - visually separated */}
         <div style={{
           marginTop: 32,
