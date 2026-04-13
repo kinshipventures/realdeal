@@ -1,52 +1,65 @@
 
 
-# User Settings Page
+# Entity & Naming Standardization
 
-## Summary
-Split the current Account page into a proper settings experience with tabbed navigation covering Profile, Preferences, Integrations, and Team - giving users control over app behavior, defaults, and appearance.
+## Mismatches Found
 
-## What changes
+| Location | Current | Should Be | Type |
+|----------|---------|-----------|------|
+| Sidebar nav label | "Dashboard" | "Pulse" | Name mismatch - route is `/pulse`, mobile tab says "Pulse", but desktop sidebar says "Dashboard" |
+| Sidebar nav label | "Account" | "Settings" | Name mismatch - page title says "Settings", tabs say Profile/Preferences/etc, but nav says "Account" |
+| DashboardSettings widget ID | `granola-sync` | `meeting-notes` | Stale ID - widget was generalized to multi-provider "Meeting Notes" but ID still says granola |
+| DashboardSettings section map | `'granola-sync': 'Activity & Links'` | `'meeting-notes': 'Activity & Links'` | Stale reference |
+| Dashboard.tsx render branch | `id === 'granola-sync'` | should render `MeetingNotesWidget` | Old GranolaSyncWidget still referenced alongside new MeetingNotesWidget |
+| GranolaSyncWidget.tsx | File still exists | Delete | Replaced by MeetingNotesWidget but never removed |
+| InteractionSection.tsx | `granola_link` display label "view notes" | Should check `meeting_link` too | Only checks legacy field name |
+| CampaignBoard.tsx, NurturingRow.tsx | `granola_link: null` in interaction objects | Should use `meeting_link` | Stale field name in hardcoded objects |
+| LearnPage.tsx | "Dashboard" concept label | "Pulse" | Stale naming |
+| ChangelogPage.tsx | "Pulse is the dashboard" | "Pulse is your daily view" | Confusing mixed terminology |
+| Mobile tab bar | Missing Settings/Account tab | Add gear icon tab or ensure Account accessible | No way to reach settings on mobile except via URL |
+| Sidebar `isRelationships` | Includes `/category/` paths | Sidebar uses it but App.tsx `isRelationships` does not include `/category/` | Inconsistent active-state detection between Sidebar and App.tsx mobile bar |
 
-### New route structure
-Keep `/account` but add a tabbed layout at the top:
-- **Profile** - existing name/email (already built)
-- **Preferences** - new app behavior controls
-- **Integrations** - meeting notes providers (moved from current page)
-- **Team** - existing team management (moved from current page)
+## Plan
 
-### Preferences section (new)
-Controls for app-level settings, all backed by localStorage:
+### Files to modify
 
-| Setting | Control | Storage key | Default |
-|---------|---------|-------------|---------|
-| Default pod cadence | Segmented picker (Weekly/Biweekly/Monthly/Quarterly) | `realdeal:default-cadence` | monthly |
-| Pods view mode | Toggle (Map/List) | `realdeal:pods-view-mode` | map |
-| Dashboard preset | Segmented picker (Full/Focus) | `realdeal:dashboard-config:v5` (preset field) | full |
-| Sidebar collapsed | Toggle | `realdeal:sidebar-collapsed` | expanded |
-| Notifications/reminders | Toggle for overdue nudges | new key `realdeal:show-nudges` | on |
-| Reset onboarding | Button to re-trigger onboarding flow | clears `realdeal:onboarding-complete:*` | - |
+**`src/components/nav/Sidebar.tsx`**
+- Change `label="Dashboard"` to `label="Pulse"` (line 133)
+- Change `label="Account"` to `label="Settings"` (line 267)
+- Rename `DashboardIcon` to `PulseIcon`
 
-### Visual design
-- Tab bar at top of page (Profile / Preferences / Integrations / Team) with underline active indicator
-- Same 480px max-width, 48px top padding
-- HIG-aligned: 44px touch targets on tabs, 16px input fonts, consistent spacing
+**`src/App.tsx`**
+- Mobile tab: add `/category/` to `isRelationships` check for consistency with sidebar
+- Mobile tab: add a Settings tab (gear icon) pointing to `/account`
 
-## Files modified
+**`src/components/dashboard/useDashboardConfig.ts`**
+- Rename widget ID `'granola-sync'` to `'meeting-notes'` in `WidgetId` type, `ALL_WIDGETS`, `PRESET_CONFIGS`, and `DEFAULT_ORDER`
+- Add migration: if localStorage config contains `granola-sync`, rename it to `meeting-notes`
 
-### `src/components/settings/AccountPage.tsx`
-- Add tab state (`profile | preferences | integrations | team`)
-- Render tab bar at top
-- Move Meeting Notes section into "Integrations" tab
-- Move Team section into "Team" tab
-- Add new "Preferences" tab with the settings controls above
-- Each control reads/writes its own localStorage key directly
-- Dashboard preset change calls the same logic as `useDashboardConfig`
+**`src/components/dashboard/DashboardSettings.tsx`**
+- Update `WIDGET_SECTION` key from `'granola-sync'` to `'meeting-notes'`
 
-### `src/components/settings/PreferencesTab.tsx` (new)
-- Self-contained component for all preference controls
-- Segmented picker sub-component for cadence/preset/view mode
-- Toggle switch sub-component for boolean settings
-- Reset onboarding button with confirmation
+**`src/components/dashboard/Dashboard.tsx`**
+- Update render branch from `id === 'granola-sync'` to `id === 'meeting-notes'`
+- Remove any remaining `GranolaSyncWidget` import
 
-No database changes needed - all preferences are localStorage-backed.
+**`src/components/dashboard/widgets/GranolaSyncWidget.tsx`**
+- Delete file
+
+**`src/components/contacts/InteractionSection.tsx`**
+- Check both `granola_link` and `meeting_link` for the "view notes" link display
+
+**`src/components/campaigns/CampaignBoard.tsx`**
+- Replace `granola_link: null` with `meeting_link: null` in hardcoded interaction objects
+
+**`src/components/nurturing/NurturingRow.tsx`**
+- Same: `granola_link` to `meeting_link`
+
+**`src/components/learn/LearnPage.tsx`**
+- Rename "Dashboard" concept row label to "Pulse"
+
+**`src/components/changelog/ChangelogPage.tsx`**
+- Update "Pulse is the dashboard" text to remove "dashboard" wording
+
+No database changes needed. All fixes are UI label and stale reference cleanup.
 
