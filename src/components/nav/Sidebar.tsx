@@ -389,6 +389,12 @@ function NavItem({
           {hint}
         </span>
       )}
+      {badge && !collapsed && (
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%',
+          background: 'var(--color-brand)', flexShrink: 0,
+        }} />
+      )}
     </button>
   )
 }
