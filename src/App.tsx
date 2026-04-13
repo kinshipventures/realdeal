@@ -48,7 +48,8 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
-  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies'
+  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
+  const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
   const isMobile = useIsMobile()
@@ -171,6 +172,10 @@ function AppShell() {
           <MobileTab active={false} label="Search" onClick={() => setShowSearch(true)}>
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </MobileTab>
+          <MobileTab active={isSettings} label="Settings" onClick={() => navigate('/account')}>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </MobileTab>
         </nav>
       )}

@@ -70,7 +70,7 @@ const releases: Release[] = [
       },
       {
         title: 'Follow-ups & Focus',
-        description: 'Pin follow-ups to contacts, see overdue items on your dashboard, and let Today\'s Focus tell you exactly who to reach out to based on priority and cadence.',
+        description: 'Pin follow-ups to contacts, see overdue items on Pulse, and let Today\'s Focus tell you exactly who to reach out to based on priority and cadence.',
         icon: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
         gradient: ['#FF9800', '#E65100'],
         area: 'Nurturing',
@@ -102,7 +102,7 @@ const releases: Release[] = [
       },
     ],
     entries: [
-      { type: 'feature', text: 'Collapsible sidebar navigation - map is home, Pulse is the dashboard' },
+      { type: 'feature', text: 'Collapsible sidebar navigation - map is home, Pulse is your daily view' },
       { type: 'feature', text: 'Renamed "Maps" to "Pods" and "Contacts" to "People" across the UI' },
       { type: 'feature', text: 'Contact detail redesigned as centered two-column modal' },
       { type: 'feature', text: 'Contact enrichment engine with per-field confidence dots' },
@@ -111,7 +111,7 @@ const releases: Release[] = [
       { type: 'feature', text: 'Pipeline UI with auto-created stages' },
       { type: 'feature', text: 'Gmail sync integration widget' },
       { type: 'feature', text: 'Column reorder and resize on the people table' },
-      { type: 'feature', text: 'Dashboard widgets with drag-to-reorder settings' },
+      { type: 'feature', text: 'Pulse widgets with drag-to-reorder settings' },
       { type: 'feature', text: 'Configurable equity pod cadences' },
       { type: 'feature', text: 'Global search with Cmd+K' },
       { type: 'feature', text: 'CSV import wizard with step-by-step flow' },
@@ -121,7 +121,7 @@ const releases: Release[] = [
       { type: 'feature', text: 'Onboarding flow with flexible navigation' },
       { type: 'feature', text: 'Error boundary and 404 page' },
 
-      { type: 'fix', text: 'Contact modal no longer renders behind dashboard content' },
+      { type: 'fix', text: 'Contact modal no longer renders behind Pulse content' },
       { type: 'fix', text: 'Dark mode - project cards, replaced hardcoded rgba with CSS vars' },
       { type: 'fix', text: 'Sub-pod member cap enforced correctly' },
       { type: 'fix', text: 'Share popover close behavior and clipboard fallback' },
@@ -135,7 +135,7 @@ const releases: Release[] = [
       { type: 'fix', text: 'Supabase junction query pagination for large datasets' },
 
       { type: 'design', text: 'Touch targets expanded to 44px minimum' },
-      { type: 'design', text: 'Dashboard heading hierarchy corrected' },
+      { type: 'design', text: 'Pulse heading hierarchy corrected' },
       { type: 'design', text: 'Typography - Playfair Display replaced with Fraunces' },
 
       { type: 'infra', text: 'Airtable-to-Supabase migration script' },
@@ -521,7 +521,7 @@ const upNext = [
   },
   {
     title: 'Calendar Sync',
-    description: 'Meetings auto-log to contact timelines. Upcoming meetings surface on your dashboard so you always have context before a call.',
+    description: 'Meetings auto-log to contact timelines. Upcoming meetings surface on Pulse so you always have context before a call.',
     icon: 'M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z',
     color: '#1565C0',
   },
