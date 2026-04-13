@@ -638,7 +638,7 @@ function ComingNext() {
           fontSize: 10, fontWeight: 600, letterSpacing: '0.06em',
           color: 'var(--color-text-tertiary)', textTransform: 'uppercase',
         }}>
-          Alpha 0.2
+          Alpha 0.3
         </span>
       </div>
 
