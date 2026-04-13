@@ -56,6 +56,7 @@ function AppShell() {
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [createType, setCreateType] = useState<'Contact' | 'Company' | null>(null)
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
