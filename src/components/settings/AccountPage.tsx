@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, updateMemberRole,

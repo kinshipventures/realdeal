@@ -7,6 +7,7 @@ import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { ImportSourcePicker } from '../import/ImportSourcePicker'
 import { parseVCard, vcardToRows, isVCard } from '@/lib/vcardParser'
 import { parsePastedData } from '@/lib/pasteParser'
+import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import type { HexColor } from '../../lib/types'
 
 interface Props {
@@ -801,6 +802,71 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
         I'll add people one by one
       </button>
     </>
+  )
+}
+
+/* ---------- Meeting Notes Onboarding ---------- */
+
+function MeetingNotesOnboarding() {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [keyValue, setKeyValue] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  function handleSave(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    const trimmed = keyValue.trim()
+    if (trimmed && !provider.validate(trimmed)) {
+      setError(`Key should start with ${provider.keyPrefix}`)
+      return
+    }
+    setProviderKey(provider, trimmed || null)
+    setEditingId(null)
+    setKeyValue('')
+    setError(null)
+  }
+
+  return (
+    <div style={{ borderRadius: 12, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--edge)', background: 'var(--tint)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>Meeting notes (optional)</span>
+      </div>
+      {PROVIDERS.map(provider => {
+        const connected = !!getProviderKey(provider)
+        const isEditing = editingId === provider.id
+        return (
+          <div key={provider.id} style={{ padding: '10px 14px', borderBottom: '1px solid var(--edge)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{provider.name}</span>
+                {connected && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-brand)', background: 'rgba(37,180,57,0.08)', borderRadius: 4, padding: '1px 6px' }}>Connected</span>}
+                {provider.comingSoon && !connected && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>Coming soon</span>}
+              </div>
+              {!provider.comingSoon && !isEditing && (
+                <button type="button" onClick={() => { setEditingId(provider.id); setKeyValue(getProviderKey(provider) ?? '') }}
+                  style={{ fontSize: 11, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                  {connected ? 'Change key' : 'Connect'}
+                </button>
+              )}
+            </div>
+            {isEditing && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                <input type="password" value={keyValue} onChange={e => setKeyValue(e.target.value)}
+                  placeholder={`${provider.keyPrefix}...`}
+                  style={{ flex: 1, fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--edge-strong)', background: 'var(--tint)', fontFamily: 'monospace', color: 'var(--color-text-primary)', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSave(provider.id) }}
+                  autoFocus
+                />
+                <button type="button" onClick={() => handleSave(provider.id)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--color-brand)', color: '#fff', cursor: 'pointer' }}>Save</button>
+                <button type="button" onClick={() => { setEditingId(null); setError(null) }}
+                  style={{ fontSize: 11, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--edge)', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>Cancel</button>
+              </div>
+            )}
+            {isEditing && error && <p style={{ fontSize: 11, color: '#dc2626', margin: '4px 0 0' }}>{error}</p>}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
