@@ -136,6 +136,22 @@ export function LoginPage() {
           Feed what feeds you
         </p>
 
+        {signUpSuccess ? (
+          <div style={{
+            marginTop: 40, width: '100%', padding: '20px 16px',
+            borderRadius: 10, background: 'var(--tint)',
+            border: '1px solid var(--edge)',
+            textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 6px' }}>
+              Check your email
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.4 }}>
+              We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
+            </p>
+          </div>
+        ) : (<>
+
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
