@@ -111,7 +111,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   useEffect(() => {
     if (!isOpen) return
     getPods().then(p => setPods(p.filter(pod => pod.name !== 'Unsorted')))
-  }, [isOpen])
+    if (initialType) {
+      setRecordType(initialType)
+      setStep('form')
+    }
+  }, [isOpen, initialType])
 
   // Company typeahead debounce
   useEffect(() => {
