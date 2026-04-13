@@ -24,6 +24,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onCreated: (contact: Contact) => void
+  initialType?: 'Contact' | 'Company' | null
 }
 
 const inputStyle: React.CSSProperties = {
