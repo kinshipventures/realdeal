@@ -600,7 +600,7 @@ const upNext = [
   },
   {
     title: 'AI Copilot',
-    description: 'Ask questions about your network in natural language. "Who should I follow up with?" "Brief me on this person." Answers from your real data.',
+    description: 'Ask questions about your network in natural language. "Who should I follow up with?" "Brief me on this person." Answers drawn from your real data.',
     icon: 'M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.38 0 2.5 1.12 2.5 2.5S4.88 15.8 3.5 15.8H2V19c0 1.1.9 2 2 2h3.8v-1.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5V21H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z',
     color: '#7B1FA2',
   },
@@ -611,10 +611,10 @@ const upNext = [
     color: '#1565C0',
   },
   {
-    title: 'Alpha Bug Fixes',
-    description: 'Active testing with real users and real data. Expect rapid fixes as we find edge cases, improve performance, and tighten up the experience.',
-    icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
-    color: '#FF9800',
+    title: 'Sub-Pod Navigation',
+    description: 'Click a sub-pod to drill deeper. The selected orb becomes the new center with its contacts fanning out around it. Visual exploration all the way down.',
+    icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
+    color: '#25B439',
   },
 ]
 
