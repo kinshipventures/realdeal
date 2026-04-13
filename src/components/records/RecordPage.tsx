@@ -248,6 +248,19 @@ export function RecordPage() {
           />
         </div>
       </div>
+
+      <ConfirmSheet
+        open={showLetGoConfirm}
+        title="Let go of this contact?"
+        message={`${contact.name} will be archived. You can restore them later from your archived contacts.`}
+        confirmLabel="Archive"
+        onConfirm={() => {
+          handleUpdate({ status: 'Archived' })
+          setShowLetGoConfirm(false)
+          setIsBannerDismissed(true)
+        }}
+        onCancel={() => setShowLetGoConfirm(false)}
+      />
     </div>
   )
 }
