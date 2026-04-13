@@ -146,6 +146,7 @@ async function syncGranolaProvider(): Promise<MeetingSyncResult> {
         source: 'Granola',
         email_link: null,
         granola_link: `https://app.granola.ai/notes/${detail.id}`,
+        meeting_link: `https://app.granola.ai/notes/${detail.id}`,
         event_detail: null,
         actor: null,
       })
