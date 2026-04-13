@@ -1114,7 +1114,27 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* No old orb hint - replaced by MapLegend */}
+      {/* Page header - hub view only */}
+      {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
+        <div style={{
+          position: 'absolute', top: 14, left: 14, zIndex: 20,
+          pointerEvents: 'none',
+        }}>
+          <span style={{
+            fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)',
+            letterSpacing: '0.06em', textTransform: 'uppercase' as const,
+            userSelect: 'none',
+          }}>
+            Your Network
+          </span>
+          <div style={{
+            fontSize: 12, color: 'var(--color-text-secondary)',
+            marginTop: 2, userSelect: 'none',
+          }}>
+            {overallHealthRef.current !== undefined ? scoreLabel(overallHealthRef.current) : ''} - {podsCount} {podsCount === 1 ? 'pod' : 'pods'}, {totalContactsRef.current} relationships
+          </div>
+        </div>
+      )}
 
       {/* Breadcrumb — visible during map drill-down */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
@@ -1234,15 +1254,23 @@ export function OrbMap() {
                 </span>
               </span>
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
-                {hoveredPod.overdueCount > 0 && (
-                  <span style={{ color: 'var(--health-cooling)' }}> - {hoveredPod.overdueCount} overdue</span>
-                )}
+                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'relationship' : 'relationships'}
               </span>
+              {hoveredPod.overdueCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)' }}>
+                  {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
+                </span>
+              ) : hoveredPod.contactCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)' }}>
+                  All caught up
+                </span>
+              ) : null}
               <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
                 Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
               </span>
-            </div>
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', marginTop: 2, opacity: 0.6 }}>
+                Click to explore
+              </span>
           )}
 
           {/* Orbit rings with subtle glow — hidden during drill-down */}
