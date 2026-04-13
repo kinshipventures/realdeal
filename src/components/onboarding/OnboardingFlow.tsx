@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { useEscape } from '../../lib/escapeStack'
+import { supabase } from '@/integrations/supabase/client'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { HexColor } from '../../lib/types'
 
 interface Props {
