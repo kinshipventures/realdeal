@@ -354,8 +354,16 @@ function NavItem({
         transition: 'background 0.12s ease',
       }}
     >
-      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
+        {badge && collapsed && (
+          <span style={{
+            position: 'absolute', top: -2, right: -2,
+            width: 7, height: 7, borderRadius: '50%',
+            background: 'var(--color-brand)',
+            border: '1.5px solid var(--color-bg)',
+          }} />
+        )}
       </span>
       {!collapsed && (
         <span style={{
