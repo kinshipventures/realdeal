@@ -72,6 +72,12 @@ function AppShell() {
     const email = session.user?.email ?? ''
     const key = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
     if (!localStorage.getItem(key)) setShowOnboarding(true)
+
+    // What's New toast - show once per version
+    const seenKey = `realdeal:changelog-seen:${CURRENT_VERSION}`
+    if (localStorage.getItem(key) && !localStorage.getItem(seenKey)) {
+      setShowWhatsNew(true)
+    }
   }, [session])
 
   const completeOnboarding = useCallback(() => {
