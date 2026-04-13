@@ -244,6 +244,8 @@ export async function importContacts(
   const mapping = options?.mapping
   const customFieldMap = options?.customFieldMap ?? {}
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
+  const batchId = options?.batchId ?? null
+  const importSrc = options?.importSource ?? null
   const existing = await getContacts()
 
   // Build dual dedup index
