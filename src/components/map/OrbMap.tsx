@@ -665,8 +665,8 @@ export function OrbMap() {
 
     // Find clicked pod node position to zoom toward it
     const podNode = nodes.find(n => n.id === pod.id)
-    const podX = podNode ? (podNode.position.x + (SIZE / 2)) : 0
-    const podY = podNode ? (podNode.position.y + (SIZE / 2)) : 0
+    const podX = podNode ? (podNode.position.x + (LIST_SIZE / 2)) : 0
+    const podY = podNode ? (podNode.position.y + (LIST_SIZE / 2)) : 0
 
     // Step 1: zoom viewport toward the clicked pod
     const vp = getViewport()
