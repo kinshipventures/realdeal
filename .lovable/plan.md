@@ -1,98 +1,31 @@
 
 
-# Reimagine the Pods/Map Page - Clarity and Purpose
+# Onboarding & New User Experience - Audit & Fixes
 
-## The Problem
+## Issues Found
 
-The orb map is visually striking but functionally opaque. A first-time user sees colored circles with small serif text, a dark hub showing "Network Health: 72 / Steady / 48 people", and has no idea what any of it means or what to do. The vision doc says it should be "Montessori-inspired - self-explanatory, no instruction manual needed." Right now it's the opposite.
+| # | Issue | Severity | Location |
+|---|-------|----------|----------|
+| 1 | **`?signup=1` param ignored** - Landing page links to `/login?signup=1` but LoginPage never reads this param to auto-toggle sign-up mode. New users clicking "Get Started" see the sign-in form, not sign-up. | High | `LoginPage.tsx` |
+| 2 | **Google OAuth loses `return_to`** - `redirect_uri` is set to `window.location.origin` (root), so after Google auth the user lands at `/` which redirects to `/pods`. The `return_to` param from the login URL is lost. Not critical since onboarding triggers from AppShell anyway, but inconsistent. | Low | `LoginPage.tsx` |
+| 3 | **Onboarding reset doesn't re-trigger** - PreferencesTab removes `realdeal:onboarding-complete:*` keys but doesn't set `showOnboarding` state back to true. User must reload the app for onboarding to re-appear. | Medium | `PreferencesTab.tsx` |
+| 4 | **Onboarding step progress not cleared on reset** - PreferencesTab removes completion keys but doesn't remove `realdeal:onboarding-step`, so re-triggered onboarding resumes at the last visited step instead of step 0. | Medium | `PreferencesTab.tsx` |
+| 5 | **Step labels say 4 steps but memory says 6** - The `STEP_LABELS` array has 4 items (Welcome, Philosophy, Pods, Import). The memory docs mention 6 stages including "Meeting Notes" and "Tour". Meeting notes is embedded inside the Import step rather than being its own step - this is fine but the memory doc is stale. Not a code bug, just doc drift. | Info | Memory |
+| 6 | **No email confirmation feedback** - After email sign-up, if auto-confirm is off, the user gets no visible feedback that they should check their email. The form just stays in loading state until session appears (or never if email confirmation is required). | Medium | `LoginPage.tsx` |
+| 7 | **Onboarding covers entire screen including sidebar** - The `zIndex: 9999` fixed overlay blocks all navigation. The only exit is "Skip" at the bottom (easy to miss) or completing the flow. No close/X button. | Low | `OnboardingFlow.tsx` |
 
-## Page Purpose (defined)
+## Plan
 
-The map is **"the quiet room"** (from vision.md) - where you reflect on your network's structure and health at a glance. Its job:
-1. Show you the shape of your world (who's grouped where)
-2. Surface health at a glance (which pods need love, which are thriving)
-3. Let you drill into any group to act
+### `src/components/auth/LoginPage.tsx`
+- Read `signup` search param on mount: `const [isSignUp, setIsSignUp] = useState(() => searchParams.get('signup') === '1')`
+- After successful `signUp()` call with no error, show a confirmation message ("Check your email to verify your account") instead of leaving the form in loading state. Only applies when auto-confirm is disabled.
 
-## What Changes
+### `src/components/settings/PreferencesTab.tsx`
+- On onboarding reset confirmation, also remove `realdeal:onboarding-step` from localStorage
+- After clearing keys, reload the page so the AppShell re-evaluates `showOnboarding` (simplest approach; avoids threading state up through context)
 
-### 1. Contextual legend overlay (first visit + toggle)
+### `src/components/onboarding/OnboardingFlow.tsx`
+- Add a small close/X button in the top-right corner (next to the progress bar) that calls `onComplete` - gives users a clear, always-visible escape hatch
 
-A small floating card in the bottom-left that explains the visual language on first visit. Dismissible, re-accessible via a "?" button.
-
-Content:
-- "Each orb is a pod - a group of people you care about"
-- "The ring around each orb shows relationship health"
-- "Click any orb to see who's inside"
-- Color-coded health key: green = thriving, blue = steady, amber = cooling, red = fading
-
-Persisted to `localStorage` (`realdeal:map-legend-dismissed`). After dismiss, a small "?" icon stays in the corner to re-open.
-
-### 2. Richer orb labels
-
-Currently orbs show only the pod name in small serif text. Add a second line showing the contact count and a tiny health indicator word, making each orb self-describing:
-
-```text
-   --------
-  | Maps   |   <-- pod name (existing)
-  | 12 Steady |  <-- NEW: count + health label
-   --------
-```
-
-The health label uses the same color system (green/blue/amber/red) as the existing `scoreLabel()`. Font size scales down gracefully - the count + label line is ~8px, sits below the name.
-
-### 3. Hub orb rewrite - warmer, clearer
-
-Replace the clinical "Network Health / 72 / Steady / 48 people" with warmer copy:
-
-```text
-   Your Network
-       72
-     Steady
-   48 relationships
-```
-
-"Your Network" replaces "Network Health" - more personal, less dashboard. "relationships" replaces "people" - matches the product's language.
-
-### 4. Contextual action hint on hover (richer tooltip)
-
-The existing hover tooltip shows pod name, health score, contact count, overdue count, last interacted. Improve it:
-- Add a one-line suggestion: "3 people need attention" or "All caught up" based on overdue count
-- Add a subtle "Click to explore" affordance at the bottom
-
-### 5. Welcome state for new users (zero pods)
-
-The current empty state says "Your network starts here / Create your first pod to start mapping relationships." Improve with:
-- A brief explanation: "Pods are groups of people you want to nurture - like Investors, Advisors, or Close Friends"
-- Two CTAs: "Create a pod" (primary) and "Import contacts" (secondary link)
-- A small illustration hint showing what the map will look like with 3 example orbs (static SVG)
-
-### 6. Page header with context
-
-Add a subtle top-left page title area (only on hub view, not drill-down):
-- Eyebrow: "YOUR NETWORK" (10px uppercase, tertiary text)
-- Below: overall health as a one-liner: "Steady - 5 pods, 48 relationships"
-- Keeps the page grounded without cluttering the canvas
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `src/components/map/OrbMap.tsx` | Add legend overlay, page header, improved empty state, richer tooltip |
-| `src/components/map/ListNode.tsx` | Add count + health label line below pod name |
-| `src/components/map/MojNode.tsx` | Rewrite hub copy ("Your Network", "relationships") |
-| `src/components/map/MapLegend.tsx` | **New** - legend overlay component with health key |
-
-## What Stays the Same
-
-- All map interaction (drag, zoom, drill-down, satellite dots)
-- Visual system (orb gradients, health rings, parallax)
-- List view toggle
-- React Flow architecture
-
-## Technical Notes
-
-- Legend uses same `localStorage` pattern as existing `realdeal:orb-hint-dismissed`
-- Health label on orbs reuses `scoreLabel()` from `equity.ts`
-- No new data fetching - all info already available in node data props
-- The existing bottom hint ("Click a pod to see who's inside") gets folded into the new legend - removed as standalone
+No database changes needed. All fixes are UI-layer.
 
