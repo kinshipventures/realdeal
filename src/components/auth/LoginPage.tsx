@@ -54,7 +54,7 @@ export function LoginPage() {
       extraParams: {
         access_type: 'offline',
         prompt: 'consent',
-        scope: 'https://www.googleapis.com/auth/gmail.readonly',
+        scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/contacts.readonly',
       },
     })
     if (result.error) {

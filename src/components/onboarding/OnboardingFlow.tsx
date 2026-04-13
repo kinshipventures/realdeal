@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { useEscape } from '../../lib/escapeStack'
+import { supabase } from '@/integrations/supabase/client'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { HexColor } from '../../lib/types'
 
 interface Props {
@@ -597,6 +599,47 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
 }
 
 function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; onBack: () => void; navigate: (path: string) => void }) {
+  const { activeWorkspace } = useWorkspace()
+  const [googleState, setGoogleState] = useState<'idle' | 'loading' | 'preview' | 'importing' | 'done' | 'error'>('idle')
+  const [googleContacts, setGoogleContacts] = useState<any[]>([])
+  const [googleResult, setGoogleResult] = useState<{ imported: number; skipped: number } | null>(null)
+  const [googleError, setGoogleError] = useState<string | null>(null)
+
+  const handleGoogleImport = async () => {
+    if (!activeWorkspace) return
+    setGoogleState('loading')
+    setGoogleError(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-contacts', {
+        body: { workspace_id: activeWorkspace.id, dry_run: true },
+      })
+      if (error) throw new Error(error.message || 'Failed to fetch contacts')
+      if (data?.error) throw new Error(data.error)
+      setGoogleContacts(data.contacts || [])
+      setGoogleState('preview')
+    } catch (err: any) {
+      setGoogleError(err.message)
+      setGoogleState('error')
+    }
+  }
+
+  const confirmGoogleImport = async () => {
+    if (!activeWorkspace) return
+    setGoogleState('importing')
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-contacts', {
+        body: { workspace_id: activeWorkspace.id, dry_run: false },
+      })
+      if (error) throw new Error(error.message || 'Import failed')
+      if (data?.error) throw new Error(data.error)
+      setGoogleResult({ imported: data.imported, skipped: data.skipped })
+      setGoogleState('done')
+    } catch (err: any) {
+      setGoogleError(err.message)
+      setGoogleState('error')
+    }
+  }
+
   const nodes = [
     { x: 0, y: 0, size: 16, color: '#25B439', delay: 0 },
     { x: -44, y: -32, size: 11, color: '#6366F1', delay: 100 },
@@ -608,19 +651,120 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
     { x: 0, y: -48, size: 8, color: '#F43F5E', delay: 180 },
     { x: -16, y: -50, size: 6, color: '#0EA5E9', delay: 280 },
   ]
+
+  // Google import done state
+  if (googleState === 'done' && googleResult) {
+    return (
+      <>
+        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #25B439, #1A8A2A)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'onboard-enter 0.4s ease-out' }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 style={{ ...headingStyle, ...stagger(100) }}>{googleResult.imported} contacts imported</h2>
+        <p style={{ ...bodyStyle, ...stagger(160) }}>
+          {googleResult.skipped > 0 ? `${googleResult.skipped} duplicates were skipped. ` : ''}
+          Your network is ready to explore.
+        </p>
+        <div style={stagger(220)}><ActionRow onAction={onComplete} onBack={onBack} label="Let's go" /></div>
+      </>
+    )
+  }
+
+  // Google preview state
+  if (googleState === 'preview') {
+    return (
+      <>
+        <h2 style={{ ...headingStyle, ...stagger(0) }}>
+          {googleContacts.length} contacts found
+        </h2>
+        <p style={{ ...bodyStyle, ...stagger(60) }}>
+          We'll import these into your workspace. Duplicates (by email) will be skipped automatically.
+        </p>
+
+        {/* Preview list */}
+        <div style={{
+          ...stagger(120), width: '100%', maxWidth: 380, maxHeight: 200, overflowY: 'auto',
+          borderRadius: 12, border: '1px solid var(--edge)', background: 'var(--tint)',
+          padding: 4,
+        }}>
+          {googleContacts.slice(0, 20).map((c: any, i: number) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+              borderBottom: i < 19 && i < googleContacts.length - 1 ? '1px solid var(--edge)' : 'none',
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                background: `hsl(${(i * 47) % 360}, 60%, 65%)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 600, color: '#fff',
+              }}>
+                {c.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+                {c.email && <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email}</div>}
+              </div>
+            </div>
+          ))}
+          {googleContacts.length > 20 && (
+            <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+              + {googleContacts.length - 20} more
+            </div>
+          )}
+        </div>
+
+        <div style={stagger(180)}>
+          <ActionRow onAction={confirmGoogleImport} onBack={() => setGoogleState('idle')} label={`Import ${googleContacts.length} contacts`} />
+        </div>
+      </>
+    )
+  }
+
+  // Loading/importing state
+  if (googleState === 'loading' || googleState === 'importing') {
+    return (
+      <>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--edge)', borderTopColor: 'var(--color-brand)', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ ...bodyStyle, marginTop: 8 }}>
+          {googleState === 'loading' ? 'Fetching your Google contacts...' : 'Importing contacts...'}
+        </p>
+      </>
+    )
+  }
+
+  // Error state
+  if (googleState === 'error') {
+    return (
+      <>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <h2 style={{ ...headingStyle, fontSize: 20, ...stagger(0) }}>Couldn't connect</h2>
+        <p style={{ ...bodyStyle, ...stagger(60), maxWidth: 320 }}>{googleError}</p>
+        <div style={{ display: 'flex', gap: 8, ...stagger(120) }}>
+          <button type="button" onClick={() => setGoogleState('idle')} className="onboard-btn-secondary" style={secondaryBtnStyle}>Back</button>
+          <button type="button" onClick={handleGoogleImport} className="onboard-btn-primary" style={{ ...primaryBtnStyle, width: 'auto' }}>Try again</button>
+        </div>
+      </>
+    )
+  }
+
+  // Default idle state
   return (
     <>
       {/* Network constellation visual */}
       <div className="onboard-constellation" style={{ opacity: 0, position: 'relative', width: 200, height: 180, animation: 'onboard-stagger 0.4s ease-out 80ms both, gentle-float 5s ease-in-out 0.5s infinite', flexShrink: 0 }}>
         <svg width="200" height="180" viewBox="-90 -80 180 160">
-          {/* Connection lines - network web */}
           {nodes.slice(1).map((n, i) => (
             <line key={`l${i}`} x1={nodes[0].x} y1={nodes[0].y} x2={n.x} y2={n.y}
               stroke={n.color} strokeWidth="1" strokeOpacity="0.15"
               style={{ opacity: 0, animation: `onboard-enter 0.5s ease-out ${n.delay + 300}ms forwards` }}
             />
           ))}
-          {/* Cross-connections between nearby nodes */}
           {[
             [1, 8], [2, 7], [3, 5], [4, 6], [1, 7],
           ].map(([a, b], i) => (
@@ -629,7 +773,6 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
               style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${600 + i * 80}ms forwards` }}
             />
           ))}
-          {/* Nodes with glow */}
           {nodes.map((n, i) => (
             <g key={`n${i}`} style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${n.delay}ms forwards` }}>
               <circle cx={n.x} cy={n.y} r={n.size * 2} fill={n.color} fillOpacity="0.06" />
@@ -641,12 +784,37 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
 
       <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Your network already exists -- it just needs a home. Import your contacts and watch the picture come together.
+        Your network already exists -- it just needs a home. Pick the fastest way to get started.
       </p>
 
-      <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import a spreadsheet" /></div>
+      {/* Google Contacts - primary CTA */}
+      <div style={stagger(140)}>
+        <button type="button" onClick={handleGoogleImport} className="onboard-btn-primary" style={{
+          ...primaryBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Import from Google
+        </button>
+      </div>
 
-      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(240) }}>
+      {/* Divider */}
+      <div style={{ ...stagger(180), display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 280 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' }}>or</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
+      </div>
+
+      {/* CSV import */}
+      <div style={stagger(220)}>
+        <ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import a spreadsheet" />
+      </div>
+
+      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(260) }}>
         I'll add people one by one
       </button>
     </>
