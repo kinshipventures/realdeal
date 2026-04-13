@@ -122,7 +122,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   textTransform: 'uppercase' as const,
                   marginBottom: 2,
                 }}>
-                  Network Health
+                  Your Network
                 </span>
                 <span style={{
                   fontSize: 28,
@@ -151,7 +151,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   userSelect: 'none',
                   marginTop: 4,
                 }}>
-                  {totalContacts ?? 0} people
+                  {totalContacts ?? 0} relationships
                 </span>
               </>
             ) : (
