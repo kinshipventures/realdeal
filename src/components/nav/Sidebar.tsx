@@ -319,7 +319,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, active, collapsed, onClick, hint, labelStyle,
+  icon, label, active, collapsed, onClick, hint, labelStyle, badge,
 }: {
   icon: React.ReactNode
   label: string
@@ -328,6 +328,7 @@ function NavItem({
   onClick: () => void
   hint?: string
   labelStyle?: React.CSSProperties
+  badge?: boolean
 }) {
   return (
     <button
