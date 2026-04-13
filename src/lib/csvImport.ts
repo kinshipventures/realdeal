@@ -365,7 +365,9 @@ export async function importContacts(
         email_2: r(row, 'Email 2', 'Email 2') || null,
         email_3: r(row, 'Email 3', 'Email 3') || null,
         communication_preferences: null,
-      })
+        import_batch_id: batchId,
+        import_source: importSrc,
+      } as any)
 
       if (email) emailIndex.set(emailLower, contact.id)
       nameIndex.set(nameLower, contact.id)
