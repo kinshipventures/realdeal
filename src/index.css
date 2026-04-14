@@ -226,6 +226,14 @@
 .react-flow__node-moj.selectable { cursor: default !important; }
 
 
+@keyframes pod-overlay-dim {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pod-overlay-slide {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 /* ── Hover interaction classes ──────────────────────────────────────────────── */
 /* Naming follows behavioral taxonomy: what the element does, not what it looks like */
