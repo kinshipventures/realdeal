@@ -15,7 +15,7 @@ import {
   updateCampaignStage,
   createInteraction,
 } from '../../lib/airtable'
-import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact } from '../../lib/types'
+import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
 
@@ -23,11 +23,9 @@ interface Props {
   campaign: Campaign
   stages: CampaignStage[]
   campaignContacts: CampaignContact[]
-  campaignOpportunities: CampaignOpportunity[]
   contacts: Contact[]
   onStagesChange: (stages: CampaignStage[]) => void
   onContactsChange: (contacts: CampaignContact[]) => void
-  onOpportunitiesChange: (opps: CampaignOpportunity[]) => void
 }
 
 interface UndoToast {
@@ -39,11 +37,9 @@ export function CampaignBoard({
   campaign,
   stages,
   campaignContacts,
-  campaignOpportunities,
   contacts,
   onStagesChange,
   onContactsChange,
-  onOpportunitiesChange,
 }: Props) {
   const navigate = useNavigate()
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
