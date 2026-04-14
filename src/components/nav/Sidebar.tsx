@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
@@ -282,7 +282,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="What's New"
           active={isChangelog}
           collapsed={collapsed}
-          onClick={() => navigate('/changelog')}
+          onClick={() => {
+            localStorage.setItem('realdeal:changelog-seen:0.2', '1')
+            navigate('/changelog')
+          }}
+          badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
         />
         <NavItem
           icon={<SignOutIcon />}
@@ -319,7 +323,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, active, collapsed, onClick, hint, labelStyle,
+  icon, label, active, collapsed, onClick, hint, labelStyle, badge,
 }: {
   icon: React.ReactNode
   label: string
@@ -328,6 +332,7 @@ function NavItem({
   onClick: () => void
   hint?: string
   labelStyle?: React.CSSProperties
+  badge?: boolean
 }) {
   return (
     <button
@@ -351,10 +356,18 @@ function NavItem({
         cursor: 'pointer',
         fontFamily: 'inherit',
         transition: 'background 0.12s ease',
+        position: 'relative',
       }}
     >
-      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
+        {badge && collapsed && (
+          <span className="badge-pulse" style={{
+            position: 'absolute', top: -2, right: -2,
+            width: 6, height: 6, borderRadius: '50%',
+            background: 'var(--color-brand)',
+          }} />
+        )}
       </span>
       {!collapsed && (
         <span style={{
@@ -370,6 +383,12 @@ function NavItem({
         }}>
           {label}
         </span>
+      )}
+      {badge && !collapsed && (
+        <span className="badge-pulse" style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'var(--color-brand)', flexShrink: 0,
+        }} />
       )}
       {hint && !collapsed && (
         <span style={{

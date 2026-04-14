@@ -8,6 +8,13 @@
 .col-resize-handle { background: transparent; transition: background 0.15s; }
 .col-resize-handle:hover, .col-resize-handle.active { background: var(--color-text-tertiary); }
 
+/* Badge pulse */
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.badge-pulse { animation: badge-pulse 2s ease-in-out infinite; }
+
 /* Z-index scale
    20   — breadcrumb navigation
    50   — contact panel
