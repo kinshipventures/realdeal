@@ -291,18 +291,12 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     pod_ids: data.list_ids ?? [],
     primary_pod_id: data.primary_list_id ?? (data.list_ids.length ? data.list_ids[0] : null),
     company_ids: data.company_ids?.length ? data.company_ids : (data.company_record_id ? [data.company_record_id] : []),
+    category_ids: data.category_ids ?? [],
   }
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
-
-  if (data.category_ids.length) {
-    const userId = await getUserId()
-    await supabase.from('contact_categories').insert(
-      data.category_ids.map(category_id => ({ user_id: userId, workspace_id: wsId, contact_id: row.id, category_id }))
-    )
-  }
   _contactsCache = null
-  return mapContact(row, data.category_ids)
+  return mapContact(row)
 }
 
 export async function updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
