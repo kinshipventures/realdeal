@@ -471,9 +471,7 @@ function mapCampaign(r: any, contactIds: string[] = []): Campaign {
   return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, created_at: r.created_at }
 }
 
-function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
-  return { id: s.id, campaign_id: s.pipeline_id, name: s.name, color: s.color, order: s.order, created_at: s.created_at }
-}
+// pipelineStageToCampaignStage no longer needed - campaign_stages table uses campaign_id directly
 
 function mapCampaignContact(r: any): CampaignContact {
   return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, created_at: r.created_at }
@@ -521,11 +519,10 @@ export async function getAllCampaigns(): Promise<Campaign[]> {
   return getCampaigns()
 }
 
-// Get stages for a campaign - uses pipeline_stages table
+// Get stages for a campaign - uses campaign_stages table
 export async function getStagesForCampaign(campaignId: string): Promise<CampaignStage[]> {
-  // Check if this campaign has stages in pipeline_stages (legacy pipeline-backed campaigns)
-  const pipelineStages = await getPipelineStages(campaignId)
-  if (pipelineStages.length > 0) return pipelineStages.map(pipelineStageToCampaignStage)
+  const dbStages = await getPipelineStages(campaignId)
+  if (dbStages.length > 0) return dbStages
   return getCampaignStages(campaignId)
 }
 
