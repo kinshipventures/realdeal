@@ -896,7 +896,7 @@ export async function mergeRecords(survivorId: string, loserId: string, fieldOve
     survivor.list_ids = [...new Set([...survivor.list_ids, ...loser.list_ids])]
     survivor.category_ids = [...new Set([...survivor.category_ids, ...loser.category_ids])]
     if (!survivor.primary_list_id && loser.primary_list_id) survivor.primary_list_id = loser.primary_list_id
-    DEMO_OPPORTUNITIES.forEach(opp => { if (opp.relationship_ids.includes(loserId)) { opp.relationship_ids = opp.relationship_ids.filter(id => id !== loserId).concat(opp.relationship_ids.includes(survivorId) ? [] : [survivorId]) } })
+    DEMO_PROJECTS.forEach(proj => { if (proj.relationship_ids.includes(loserId)) { proj.relationship_ids = proj.relationship_ids.filter(id => id !== loserId).concat(proj.relationship_ids.includes(survivorId) ? [] : [survivorId]) } })
     DEMO_PROJECTS.forEach(proj => { if (proj.relationship_ids.includes(loserId)) { proj.relationship_ids = proj.relationship_ids.filter(id => id !== loserId).concat(proj.relationship_ids.includes(survivorId) ? [] : [survivorId]) } })
     DEMO_CAMPAIGN_CONTACTS.forEach(cc => { if (cc.contact_id === loserId) cc.contact_id = survivorId })
     DEMO_CONTACTS.forEach(c => { if (c.company_record_id === loserId) c.company_record_id = survivorId })
@@ -919,7 +919,7 @@ export async function mergeRecords(survivorId: string, loserId: string, fieldOve
   }
 
   try {
-    await supabase.from('opportunity_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
+    await supabase.from('project_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
     await supabase.from('project_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
     await supabase.from('campaign_contacts').update({ contact_id: survivorId }).eq('contact_id', loserId)
     await supabase.from('contacts').update({ company_id: survivorId }).eq('company_id', loserId)
@@ -1095,8 +1095,6 @@ export function invalidateAllCaches(): void {
   _contactsCache = null
   _interactionsCache = null
   _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null
-  _pipelinesCache = null; _pipelinesFetch = null
   _pipelineStagesCache = null; _pipelineStagesFetch = null
-  _opportunitiesCache = null; _opportunitiesFetch = null
   _projectsCache = null; _projectsFetch = null
 }

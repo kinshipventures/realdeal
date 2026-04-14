@@ -116,16 +116,16 @@ export async function getSharedContacts(
 
   const pod_name = podData?.name ?? ''
 
-  // Fetch contact_ids for this pod
-  const { data: cpRows, error: cpError } = await supabase
-    .from('contact_pods')
-    .select('contact_id')
-    .eq('pod_id', shareLink.pod_id)
+  // Fetch contacts in this pod using pod_ids array column
+  const { data: podContacts, error: cpError } = await supabase
+    .from('contacts')
+    .select('id')
+    .contains('pod_ids', [shareLink.pod_id])
 
   if (cpError) throw cpError
-  if (!cpRows || cpRows.length === 0) return []
+  if (!podContacts || podContacts.length === 0) return []
 
-  let contactIds = cpRows.map((r: { contact_id: string }) => r.contact_id)
+  let contactIds = podContacts.map((r: { id: string }) => r.id)
 
   // Exclude excluded contacts client-side
   if (shareLink.excluded_contact_ids.length > 0) {
