@@ -278,6 +278,25 @@ export function CampaignsPage() {
                 </button>
               )}
 
+              {/* Settings */}
+              <button
+                type="button"
+                onClick={() => setShowSettings(prev => !prev)}
+                title="Campaign settings"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '5px 10px', borderRadius: 7,
+                  border: showSettings ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+                  background: showSettings ? 'var(--tint)' : 'transparent',
+                  fontSize: 11, fontWeight: 500,
+                  color: showSettings ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                <Settings size={11} />
+                Settings
+              </button>
+
               {/* Mark complete */}
               {activeCampaign.status === 'active' && !confirmingComplete && (
                 <button
