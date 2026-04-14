@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, CampaignBacking, CampaignOpportunity, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
@@ -562,12 +562,7 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
-}
-
-// Map pipeline DB rows into Campaign interfaces
-function pipelineToCampaign(p: Pipeline): Campaign {
-  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', notes: null, description: null, contact_ids: [], backing: 'pipeline', created_at: p.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, created_at: r.created_at }
 }
 
 function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
@@ -615,33 +610,17 @@ export function getCampaigns(): Promise<Campaign[]> {
   )
 }
 
-// Unified: all outreach campaigns + all pipeline-backed campaigns in one list
+// All campaigns come from campaigns table now (no more pipeline merge)
 export async function getAllCampaigns(): Promise<Campaign[]> {
-  const [outreach, pipelines] = await Promise.all([getCampaigns(), getPipelines()])
-  return [...outreach, ...pipelines.map(pipelineToCampaign)]
+  return getCampaigns()
 }
 
-// Get stages for any campaign, regardless of backing
-export async function getStagesForCampaign(campaignId: string, backing: CampaignBacking): Promise<CampaignStage[]> {
-  if (backing === 'pipeline') {
-    const stages = await getPipelineStages(campaignId)
-    return stages.map(pipelineStageToCampaignStage)
-  }
+// Get stages for a campaign - uses pipeline_stages table
+export async function getStagesForCampaign(campaignId: string): Promise<CampaignStage[]> {
+  // Check if this campaign has stages in pipeline_stages (legacy pipeline-backed campaigns)
+  const pipelineStages = await getPipelineStages(campaignId)
+  if (pipelineStages.length > 0) return pipelineStages.map(pipelineStageToCampaignStage)
   return getCampaignStages(campaignId)
-}
-
-// Get opportunities for a pipeline-backed campaign
-export async function getCampaignOpportunities(campaignId: string): Promise<CampaignOpportunity[]> {
-  const opps = await getOpportunities()
-  const stages = await getPipelineStages(campaignId)
-  const stageIds = new Set(stages.map(s => s.id))
-  return opps
-    .filter(o => stageIds.has(o.stage_id))
-    .map(o => ({
-      id: o.id, campaign_id: campaignId, name: o.name, stage_id: o.stage_id,
-      contact_ids: o.relationship_ids, notes: o.notes, priority: o.priority,
-      status: o.status, moved_at: null, created_at: o.created_at,
-    }))
 }
 
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
