@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, PipelineStage, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
-import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINE_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 
@@ -210,50 +210,30 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
   if (contacts.length === 0) return []
   const contactIds = contacts.map(c => c.id)
 
-  // Batch IDs to avoid URL length limits (Supabase uses GET with query params)
+  // Only need category junctions now - pods and companies are on contacts table
   const BATCH = 200
-  const podRows: { contact_id: string; pod_id: string; is_primary: boolean }[] = []
   const catRows: { contact_id: string; category_id: string }[] = []
-  const companyRows: { contact_id: string; company_id: string; is_primary: boolean }[] = []
 
   for (let i = 0; i < contactIds.length; i += BATCH) {
     const batch = contactIds.slice(i, i + BATCH)
-    const [podRes, catRes, coRes] = await Promise.all([
-      supabase.from('contact_pods').select('contact_id, pod_id, is_primary').in('contact_id', batch),
-      supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', batch),
-      supabase.from('contact_companies').select('contact_id, company_id, is_primary').in('contact_id', batch),
-    ])
-    if (podRes.error) throw new Error(`contact_pods query failed: ${podRes.error.message}`)
+    const catRes = await supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', batch)
     if (catRes.error) throw new Error(`contact_categories query failed: ${catRes.error.message}`)
-    podRows.push(...(podRes.data ?? []))
     catRows.push(...(catRes.data ?? []))
-    companyRows.push(...(coRes.data ?? []))
   }
 
-  const podMap = new Map<string, { pod_ids: string[]; primary: string | null }>()
-  for (const jp of podRows) {
-    let entry = podMap.get(jp.contact_id)
-    if (!entry) { entry = { pod_ids: [], primary: null }; podMap.set(jp.contact_id, entry) }
-    entry.pod_ids.push(jp.pod_id)
-    if (jp.is_primary) entry.primary = jp.pod_id
-  }
   const catMap = new Map<string, string[]>()
   for (const jc of catRows) {
     let arr = catMap.get(jc.contact_id)
     if (!arr) { arr = []; catMap.set(jc.contact_id, arr) }
     arr.push(jc.category_id)
   }
-  const companyMap = new Map<string, { company_ids: string[]; primary: string | null }>()
-  for (const cc of companyRows) {
-    let entry = companyMap.get(cc.contact_id)
-    if (!entry) { entry = { company_ids: [], primary: null }; companyMap.set(cc.contact_id, entry) }
-    entry.company_ids.push(cc.company_id)
-    if (cc.is_primary) entry.primary = cc.company_id
-  }
-  return contacts.map(r => mapContact(r, podMap.get(r.id), catMap.get(r.id), companyMap.get(r.id)))
+  return contacts.map(r => mapContact(r, catMap.get(r.id)))
 }
 
-function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | null }, catIds?: string[], companyInfo?: { company_ids: string[]; primary: string | null }): Contact {
+function mapContact(r: any, catIds?: string[]): Contact {
+  const podIds = r.pod_ids ?? []
+  const primaryPodId = r.primary_pod_id ?? (podIds.length > 0 ? podIds[0] : null)
+  const companyIds = r.company_ids ?? (r.company_id ? [r.company_id] : [])
   return {
     id: r.id, name: r.name, email: r.email ?? null, phone: r.phone ?? null,
     company: r.company ?? null, role: r.role ?? null, location: r.location ?? null,
@@ -261,8 +241,8 @@ function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | nul
     specialization: r.specialization ?? null, past_clients: r.past_clients ?? null,
     birthday: r.birthday ?? null, milestones: r.milestones ?? null, interests: r.interests ?? null,
     relationship_context: r.relationship_context ?? null, last_contacted_at: r.last_contacted_at ?? null,
-    list_ids: podInfo?.pod_ids ?? [], category_ids: catIds ?? [],
-    primary_list_id: podInfo?.primary ?? null, cadence_override: r.cadence_override ?? null,
+    list_ids: podIds, category_ids: catIds ?? [],
+    primary_list_id: primaryPodId, cadence_override: r.cadence_override ?? null,
     first_name: r.first_name ?? null, last_name: r.last_name ?? null, linkedin: r.linkedin ?? null,
     country: r.country ?? null, global_region: r.global_region ?? null, gender: r.gender ?? null,
     introduced_by: r.introduced_by ?? null, intel_notes: r.intel_notes ?? null,
@@ -270,8 +250,8 @@ function mapContact(r: any, podInfo?: { pod_ids: string[]; primary: string | nul
     next_follow_up_date: r.next_follow_up_date ?? null, next_action: r.next_action ?? null,
     kv_fund_investor: r.kv_fund_investor ?? null, spv_investor: r.spv_investor ?? null,
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
-    company_record_id: companyInfo?.primary ?? r.company_id ?? null,
-    company_ids: companyInfo?.company_ids ?? (r.company_id ? [r.company_id] : []),
+    company_record_id: r.company_id ?? null,
+    company_ids: companyIds,
     industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
     email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
