@@ -1,4 +1,4 @@
-import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, PipelineStage, Project, PipelineStatus, Company } from './types'
+import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Project, Company } from './types'
 
 const DEMO_KEY = 'realdeal:demo-mode'
 

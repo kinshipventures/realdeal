@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, PipelineStage, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Project, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
