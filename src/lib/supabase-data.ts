@@ -666,8 +666,8 @@ export async function createCampaignStage(campaignId: string, name: string, orde
   const userId = await getUserId()
   const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, name, order, color: color ?? null }).select().single()
   if (error) throw error
-  invalidatePipelineStagesCache()
-  return pipelineStageToCampaignStage(mapPipelineStage(row))
+  invalidateCampaignStagesDBCache()
+  return mapCampaignStageRow(row)
 }
 
 export async function updateCampaignStage(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color' | 'order'>>): Promise<void> {
@@ -678,7 +678,7 @@ export async function updateCampaignStage(id: string, data: Partial<Pick<Campaig
   }
   const { error } = await supabase.from('campaign_stages').update(data).eq('id', id)
   if (error) throw error
-  invalidatePipelineStagesCache()
+  invalidateCampaignStagesDBCache()
 }
 
 export async function deleteCampaignStage(id: string): Promise<void> {
@@ -689,7 +689,7 @@ export async function deleteCampaignStage(id: string): Promise<void> {
   }
   const { error } = await supabase.from('campaign_stages').delete().eq('id', id)
   if (error) throw error
-  invalidatePipelineStagesCache()
+  invalidateCampaignStagesDBCache()
 }
 
 export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'>>): Promise<CampaignContact> {
@@ -971,6 +971,5 @@ export function invalidateAllCaches(): void {
   _contactsCache = null
   _interactionsCache = null
   _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null
-  _pipelineStagesCache = null; _pipelineStagesFetch = null
-  _projectsCache = null; _projectsFetch = null
+  _campaignStagesDBCache = null; _campaignStagesDBFetch = null
 }
