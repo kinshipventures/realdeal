@@ -674,9 +674,9 @@ export function OrbMap() {
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
 
-    // Pods without categories: navigate directly to detail page
+    // Pods without categories or with too many: navigate directly to detail page
     const cats = categoriesByPodRef.current[pod.id] ?? []
-    if (cats.length === 0) {
+    if (cats.length === 0 || cats.length > 20) {
       navigate(`/pod/${pod.id}`)
       return
     }
