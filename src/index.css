@@ -1049,7 +1049,27 @@ body::after {
   .skeleton-stagger > .skeleton { animation: none; opacity: 1; }
   .content-enter { animation: none; opacity: 1; }
 }
+  .drill-backdrop { transition: none; }
 
+
+/* ── Pods mobile responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .hub-stats-bar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .hub-stats-bar .stat-item { font-size: 10px; }
+  .drill-breadcrumb {
+    top: 8px;
+    left: 8px;
+    padding: 6px 10px;
+  }
+}
 /* Icon picker */
 .icon-picker {
   width: 264px;
