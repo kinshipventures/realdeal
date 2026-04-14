@@ -449,9 +449,9 @@ function RelationshipsIcon() {
 function CampaignsIcon() {
   return (
     <svg {...iconProps}>
-      <rect x="2" y="3" width="5" height="18" rx="1"/>
-      <rect x="9.5" y="6" width="5" height="15" rx="1"/>
-      <rect x="17" y="9" width="5" height="12" rx="1"/>
+      <path d="M3 11l18-5v12L3 13v-2z"/>
+      <line x1="11.6" y1="16.8" x2="10.4" y2="21.2"/>
+      <line x1="7.6" y1="15.6" x2="6.4" y2="20"/>
     </svg>
   )
 }
