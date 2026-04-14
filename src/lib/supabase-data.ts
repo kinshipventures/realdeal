@@ -208,26 +208,8 @@ export async function deleteCategory(id: string): Promise<void> {
 
 async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
   if (contacts.length === 0) return []
-  const contactIds = contacts.map(c => c.id)
-
-  // Only need category junctions now - pods and companies are on contacts table
-  const BATCH = 200
-  const catRows: { contact_id: string; category_id: string }[] = []
-
-  for (let i = 0; i < contactIds.length; i += BATCH) {
-    const batch = contactIds.slice(i, i + BATCH)
-    const catRes = await supabase.from('contact_categories').select('contact_id, category_id').in('contact_id', batch)
-    if (catRes.error) throw new Error(`contact_categories query failed: ${catRes.error.message}`)
-    catRows.push(...(catRes.data ?? []))
-  }
-
-  const catMap = new Map<string, string[]>()
-  for (const jc of catRows) {
-    let arr = catMap.get(jc.contact_id)
-    if (!arr) { arr = []; catMap.set(jc.contact_id, arr) }
-    arr.push(jc.category_id)
-  }
-  return contacts.map(r => mapContact(r, catMap.get(r.id)))
+  // category_ids now stored directly on contacts table
+  return contacts.map(r => mapContact(r))
 }
 
 function mapContact(r: any, catIds?: string[]): Contact {
