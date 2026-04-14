@@ -11,15 +11,17 @@ interface Props {
   isDragOverlay?: boolean
   selected?: boolean
   onToggleSelect?: (id: string) => void
+  visibleFields?: Set<string>
 }
 
 const STALE_MS = 7 * 24 * 60 * 60 * 1000
 
-export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selected, onToggleSelect }: Props) {
+export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selected, onToggleSelect, visibleFields }: Props) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id })
 
   const isStale = cc.moved_at && Date.now() - new Date(cc.moved_at).getTime() > STALE_MS
+  const show = (f: string) => !visibleFields || visibleFields.has(f)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -31,6 +33,14 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
     e.stopPropagation()
     navigate(`/contact/${contact.id}`)
   }
+
+  // Extra fields to show below the name row
+  const extras: Array<{ label: string; value: string }> = []
+  if (show('email') && contact.email) extras.push({ label: 'Email', value: contact.email })
+  if (show('role') && contact.role) extras.push({ label: 'Role', value: contact.role })
+  if (show('owner') && cc.owner) extras.push({ label: 'Owner', value: cc.owner })
+  if (show('next_step_due') && cc.next_step_due) extras.push({ label: 'Due', value: new Date(cc.next_step_due + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) })
+  if (show('notes') && cc.notes) extras.push({ label: 'Notes', value: cc.notes })
 
   return (
     <div
@@ -52,7 +62,6 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
       className="cc-card"
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Selection checkbox */}
         {onToggleSelect && (
           <div
             className="cc-select"
@@ -80,23 +89,15 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: 'var(--color-text-primary)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {contact.name}
           </div>
-          {contact.company && (
+          {show('company') && contact.company && (
             <div style={{
-              fontSize: 11,
-              color: 'var(--color-text-tertiary)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              marginTop: 1,
+              fontSize: 11, color: 'var(--color-text-tertiary)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1,
             }}>
               {contact.company}
             </div>
@@ -106,28 +107,32 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
           <div
             title="Stalled 7d+"
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#FF9500',
-              boxShadow: '0 0 0 3px rgba(255,149,0,0.15)',
-              flexShrink: 0,
+              width: 8, height: 8, borderRadius: '50%', background: '#FF9500',
+              boxShadow: '0 0 0 3px rgba(255,149,0,0.15)', flexShrink: 0,
             }}
           />
         )}
       </div>
 
-      {cc.next_step && (
+      {/* Configurable extra fields */}
+      {extras.length > 0 && (
+        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {extras.map(({ label, value }) => (
+            <div key={label} style={{
+              fontSize: 11, color: 'var(--color-text-secondary)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              <span style={{ color: 'var(--color-text-tertiary)' }}>{label}: </span>{value}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {show('next_step') && cc.next_step && (
         <div style={{
-          marginTop: 6,
-          fontSize: 11,
-          color: 'var(--color-text-secondary)',
-          background: 'var(--tint)',
-          borderRadius: 5,
-          padding: '3px 7px',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          marginTop: 6, fontSize: 11, color: 'var(--color-text-secondary)',
+          background: 'var(--tint)', borderRadius: 5, padding: '3px 7px',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
           {cc.next_step}
         </div>

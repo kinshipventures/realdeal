@@ -6,7 +6,6 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useNavigate } from 'react-router'
 import {
   addContactToCampaign,
   createCampaignStage,
@@ -26,6 +25,10 @@ interface Props {
   contacts: Contact[]
   onStagesChange: (stages: CampaignStage[]) => void
   onContactsChange: (contacts: CampaignContact[]) => void
+  onCardClick: (cc: CampaignContact) => void
+  sortKey: string
+  sortAsc: boolean
+  visibleCardFields: Set<string>
 }
 
 interface UndoToast {
@@ -40,8 +43,11 @@ export function CampaignBoard({
   contacts,
   onStagesChange,
   onContactsChange,
+  onCardClick,
+  sortKey,
+  sortAsc,
+  visibleCardFields,
 }: Props) {
-  const navigate = useNavigate()
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
   const [toastVisible, setToastVisible] = useState(false)
@@ -55,12 +61,29 @@ export function CampaignBoard({
     else setToastVisible(false)
   }, [undoToast])
 
-  // Clear selection when campaign changes
   useEffect(() => { setSelectedIds(new Set()) }, [campaign.id])
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
   const activeDragCc = activeDragId ? campaignContacts.find(cc => cc.id === activeDragId) : null
   const activeDragContact = activeDragCc ? contacts.find(c => c.id === activeDragCc.contact_id) : null
+
+  // Sort contacts within stages
+  function getSortedContacts(): CampaignContact[] {
+    if (!sortKey || sortKey === 'default') return campaignContacts
+    return [...campaignContacts].sort((a, b) => {
+      const ca = contacts.find(c => c.id === a.contact_id)
+      const cb = contacts.find(c => c.id === b.contact_id)
+      let av = '', bv = ''
+      if (sortKey === 'name') { av = ca?.name ?? ''; bv = cb?.name ?? '' }
+      else if (sortKey === 'company') { av = ca?.company ?? ''; bv = cb?.company ?? '' }
+      else if (sortKey === 'moved_at') { av = a.moved_at ?? ''; bv = b.moved_at ?? '' }
+      else if (sortKey === 'next_step_due') { av = a.next_step_due ?? ''; bv = b.next_step_due ?? '' }
+      const cmp = av.localeCompare(bv)
+      return sortAsc ? cmp : -cmp
+    })
+  }
+
+  const sortedContacts = getSortedContacts()
 
   function showUndoToastMsg(message: string, onUndo: () => void) {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -114,11 +137,7 @@ export function CampaignBoard({
           contact_id: draggedCc.contact_id,
           type: 'pipeline_event',
           date: now.slice(0, 10),
-          notes: null,
-          summary: null,
-          source: null,
-          email_link: null,
-          granola_link: null,
+          notes: null, summary: null, source: null, email_link: null, granola_link: null,
           event_detail: JSON.stringify({
             campaign: campaign.name,
             from_stage: stages.find(s => s.id === prevStageId)?.name,
@@ -158,12 +177,6 @@ export function CampaignBoard({
     await deleteCampaignStage(id)
     onStagesChange(stages.filter(s => s.id !== id))
   }
-
-  function handleCardClick(cc: CampaignContact) {
-    navigate(`/contact/${cc.contact_id}`)
-  }
-
-  // -- Multi-select --
 
   function handleToggleSelect(id: string) {
     setSelectedIds(prev => {
@@ -225,17 +238,18 @@ export function CampaignBoard({
             <CampaignStageColumn
               key={stage.id}
               stage={stage}
-              campaignContacts={campaignContacts}
+              campaignContacts={sortedContacts}
               contacts={contacts}
               onStageUpdate={handleStageUpdate}
               onDeleteStage={handleDeleteStage}
               onAddContact={handleAddContact}
-              onCardClick={handleCardClick}
+              onCardClick={onCardClick}
               selectedIds={selectedIds}
               onToggleSelect={handleToggleSelect}
               onSelectAllInStage={handleSelectAllInStage}
               isFirst={i === 0}
               isLast={i === sortedStages.length - 1}
+              visibleCardFields={visibleCardFields}
             />
           ))}
 
@@ -298,7 +312,6 @@ export function CampaignBoard({
           </div>
         </div>
 
-        {/* Drag overlay */}
         <DragOverlay>
           {activeDragCc && activeDragContact ? (
             <CampaignContactCard
@@ -306,11 +319,11 @@ export function CampaignBoard({
               contact={activeDragContact}
               onClick={() => {}}
               isDragOverlay
+              visibleFields={visibleCardFields}
             />
           ) : null}
         </DragOverlay>
 
-        {/* Undo toast */}
         {undoToast && (
           <div
             role="status"
@@ -339,7 +352,6 @@ export function CampaignBoard({
         )}
       </DndContext>
 
-      {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
