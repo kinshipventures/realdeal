@@ -1,5 +1,10 @@
 import { useNavigate } from 'react-router'
 import { setDemoMode } from '@/lib/sampleData'
+import goopLogo from '@/assets/logos/goop.png'
+import figsLogo from '@/assets/logos/figs.png'
+import moonpayLogo from '@/assets/logos/moonpay.png'
+import forerunnerLogo from '@/assets/logos/forerunner.png'
+import wonderLogo from '@/assets/logos/wonder.png'
 
 const FEATURES = [
   {
@@ -96,7 +101,13 @@ const PARTNERS = [
   { name: 'Trina Spear', role: 'Partner', initials: 'TS' },
 ]
 
-const PORTFOLIO_BRANDS = ['goop', 'FIGS', 'MoonPay', 'Forerunner', 'Wonder']
+const PORTFOLIO_BRANDS = [
+  { name: 'goop', logo: goopLogo },
+  { name: 'FIGS', logo: figsLogo },
+  { name: 'MoonPay', logo: moonpayLogo },
+  { name: 'Forerunner', logo: forerunnerLogo },
+  { name: 'Wonder', logo: wonderLogo },
+]
 
 function AppPreviewMockup() {
   return (
@@ -384,16 +395,18 @@ export function LandingPage() {
           gap: 40, flexWrap: 'wrap', opacity: 0.45,
         }}>
           {PORTFOLIO_BRANDS.map((brand) => (
-            <span
-              key={brand}
+            <img
+              key={brand.name}
+              src={brand.logo}
+              alt={brand.name}
+              loading="lazy"
               style={{
-                fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
-                color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
+                height: 28,
+                width: 'auto',
+                objectFit: 'contain',
                 userSelect: 'none',
               }}
-            >
-              {brand}
-            </span>
+            />
           ))}
         </div>
       </section>
