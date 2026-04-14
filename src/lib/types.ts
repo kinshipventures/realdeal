@@ -161,6 +161,7 @@ export interface Campaign {
   deadline: ISODate | null
   status: CampaignStatus
   notes: string | null
+  description: string | null
   contact_ids: string[]      // linked Contact record IDs from junction
   backing: CampaignBacking   // which DB tables back this campaign
   created_at: string
