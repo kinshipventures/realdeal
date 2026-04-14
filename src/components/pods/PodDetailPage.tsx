@@ -433,9 +433,10 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }).length
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', paddingBottom: 96 }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 32px' }}>
+    <div style={{ background: isOverlay ? 'transparent' : 'var(--color-bg)', minHeight: isOverlay ? undefined : '100vh', paddingBottom: isOverlay ? 32 : 96 }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: isOverlay ? '0' : '32px 32px' }}>
         {/* Breadcrumb */}
+        {!isOverlay && (
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
           <button
             type="button"
@@ -448,6 +449,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{pod.name}</span>
           {saving && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>Saving...</span>}
         </nav>
+        )}
 
         {/* ── Health Hero ── */}
         <div style={{
