@@ -6,9 +6,10 @@ import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'
 import { CampaignActivityFeed } from './CampaignActivityFeed'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
+import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { EmptyState } from '../empty/EmptyState'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
-import { Download, Filter } from 'lucide-react'
+import { Download, Filter, Settings } from 'lucide-react'
 
 export function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
