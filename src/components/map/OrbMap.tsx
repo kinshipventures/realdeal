@@ -219,10 +219,16 @@ function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edg
   return []
 }
 
-const BASE_DRILL_RADIUS = 200
-const MIN_CAT_SIZE = 56
-const MAX_CAT_SIZE = 88
-const MAX_PER_RING = 8
+const MIN_CAT_SIZE = 52
+const MAX_CAT_SIZE = 84
+const MAX_PER_RING = 10
+
+function drillRadius(catCount: number): number {
+  if (catCount <= 6) return 200
+  if (catCount <= 12) return 240
+  if (catCount <= 20) return 280
+  return 320
+}
 
 function buildDrillNodes(
   pod: Pod,
@@ -248,18 +254,17 @@ function buildDrillNodes(
     },
   }
 
-  // Compute dynamic sizes based on contact count
   const counts = categories.map(c => contactCountByCategory?.[c.id] ?? 0)
   const maxCount = Math.max(1, ...counts)
+  const baseRadius = drillRadius(categories.length)
 
-  const ringCount = Math.ceil(categories.length / MAX_PER_RING)
   const catNodes: Node[] = categories.map((cat, i) => {
     const count = contactCountByCategory?.[cat.id] ?? 0
     const size = Math.max(MIN_CAT_SIZE, Math.min(MAX_CAT_SIZE, MIN_CAT_SIZE + (count / maxCount) * (MAX_CAT_SIZE - MIN_CAT_SIZE)))
     const ring = Math.floor(i / MAX_PER_RING)
     const indexInRing = i % MAX_PER_RING
     const countInRing = Math.min(MAX_PER_RING, categories.length - ring * MAX_PER_RING)
-    const radius = BASE_DRILL_RADIUS + ring * 120
+    const radius = baseRadius + ring * 140
     const angleOffset = ring * (Math.PI / MAX_PER_RING / 2)
     const angle = (indexInRing / countInRing) * 2 * Math.PI - Math.PI / 2 + angleOffset
     const x = Math.cos(angle) * radius - size / 2
@@ -276,7 +281,7 @@ function buildDrillNodes(
         healthPercent: healthByCategory?.[cat.id],
         orbSize: Math.round(size),
         onClick: () => navigateFn(`/category/${cat.id}`),
-        animationDelay: `${(i + 1) * 0.08}s`,
+        animationDelay: `${(i + 1) * 0.06}s`,
       },
     }
   })
@@ -290,6 +295,8 @@ function buildDrillEdges(
   healthByCategory: Record<string, number>,
   contactCountByCategory: Record<string, number>,
 ): Edge[] {
+  // Hide edges when many categories to reduce visual clutter
+  if (categories.length > 12) return []
   const color = pod.color ?? '#718096'
   return categories.map(cat => {
     const health = healthByCategory[cat.id] ?? 0
@@ -667,9 +674,9 @@ export function OrbMap() {
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
 
-    // Pods without categories: navigate directly to detail page
+    // Pods without categories or with too many: navigate directly to detail page
     const cats = categoriesByPodRef.current[pod.id] ?? []
-    if (cats.length === 0) {
+    if (cats.length === 0 || cats.length > 20) {
       navigate(`/pod/${pod.id}`)
       return
     }
