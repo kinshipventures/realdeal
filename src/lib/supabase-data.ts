@@ -213,6 +213,7 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
 }
 
 function mapContact(r: any, catIds?: string[]): Contact {
+  const categoryIds = catIds ?? r.category_ids ?? []
   const podIds = r.pod_ids ?? []
   const primaryPodId = r.primary_pod_id ?? (podIds.length > 0 ? podIds[0] : null)
   const companyIds = r.company_ids ?? (r.company_id ? [r.company_id] : [])
