@@ -1,31 +1,133 @@
 
 
-# Onboarding & New User Experience - Audit & Fixes
+# Campaigns Redesign - Complete Plan
 
-## Issues Found
+## Summary
 
-| # | Issue | Severity | Location |
-|---|-------|----------|----------|
-| 1 | **`?signup=1` param ignored** - Landing page links to `/login?signup=1` but LoginPage never reads this param to auto-toggle sign-up mode. New users clicking "Get Started" see the sign-in form, not sign-up. | High | `LoginPage.tsx` |
-| 2 | **Google OAuth loses `return_to`** - `redirect_uri` is set to `window.location.origin` (root), so after Google auth the user lands at `/` which redirects to `/pods`. The `return_to` param from the login URL is lost. Not critical since onboarding triggers from AppShell anyway, but inconsistent. | Low | `LoginPage.tsx` |
-| 3 | **Onboarding reset doesn't re-trigger** - PreferencesTab removes `realdeal:onboarding-complete:*` keys but doesn't set `showOnboarding` state back to true. User must reload the app for onboarding to re-appear. | Medium | `PreferencesTab.tsx` |
-| 4 | **Onboarding step progress not cleared on reset** - PreferencesTab removes completion keys but doesn't remove `realdeal:onboarding-step`, so re-triggered onboarding resumes at the last visited step instead of step 0. | Medium | `PreferencesTab.tsx` |
-| 5 | **Step labels say 4 steps but memory says 6** - The `STEP_LABELS` array has 4 items (Welcome, Philosophy, Pods, Import). The memory docs mention 6 stages including "Meeting Notes" and "Tour". Meeting notes is embedded inside the Import step rather than being its own step - this is fine but the memory doc is stale. Not a code bug, just doc drift. | Info | Memory |
-| 6 | **No email confirmation feedback** - After email sign-up, if auto-confirm is off, the user gets no visible feedback that they should check their email. The form just stays in loading state until session appears (or never if email confirmation is required). | Medium | `LoginPage.tsx` |
-| 7 | **Onboarding covers entire screen including sidebar** - The `zIndex: 9999` fixed overlay blocks all navigation. The only exit is "Skip" at the bottom (easy to miss) or completing the flow. No close/X button. | Low | `OnboardingFlow.tsx` |
+Rebuild the campaigns interface from a tab-based board view into a full management system: campaign overview landing page (card grid + table list toggle), route-based drill-down with Board + Table dual views, 16-color stage picker, inline-editable table with field visibility, and full migration from opportunities to contact-centric model.
 
-## Plan
+## Major Architectural Change: Kill Opportunities
 
-### `src/components/auth/LoginPage.tsx`
-- Read `signup` search param on mount: `const [isSignUp, setIsSignUp] = useState(() => searchParams.get('signup') === '1')`
-- After successful `signUp()` call with no error, show a confirmation message ("Check your email to verify your account") instead of leaving the form in loading state. Only applies when auto-confirm is disabled.
+65 opportunities in "KV Pipeline" need to become campaign_contacts. Each opportunity maps to one or more contacts via opportunity_contacts junction. The migration:
 
-### `src/components/settings/PreferencesTab.tsx`
-- On onboarding reset confirmation, also remove `realdeal:onboarding-step` from localStorage
-- After clearing keys, reload the page so the AppShell re-evaluates `showOnboarding` (simplest approach; avoids threading state up through context)
+1. DB migration script: for each opportunity, create a campaign_contact row per linked contact (or one row using the opportunity name if no contact linked), mapping stage_id, notes, and status
+2. Map pipeline_stages to campaign_stages for the KV Pipeline campaign
+3. Remove all `CampaignOpportunity` references from types, data layer, and UI
+4. Remove the `backing` concept - all campaigns are now contact-based with stages
 
-### `src/components/onboarding/OnboardingFlow.tsx`
-- Add a small close/X button in the top-right corner (next to the progress bar) that calls `onComplete` - gives users a clear, always-visible escape hatch
+This is a breaking change for existing pipeline campaigns but simplifies everything downstream.
 
-No database changes needed. All fixes are UI-layer.
+## Routing
+
+```text
+/campaigns          -> CampaignOverview (card grid or table list)
+/campaigns/:id      -> CampaignDetail (board or table view)
+/campaigns/:id?view=table  -> table view
+```
+
+Browser back from detail returns to overview. View preference (board/table) stored in localStorage per campaign.
+
+## Plan Steps
+
+### Step 1: DB Migration - Opportunities to Campaign Contacts
+
+- SQL migration to:
+  - Create campaign_stages rows from pipeline_stages (mapping pipeline_id to campaign_id via the campaigns table)
+  - Create campaign_contact rows from opportunities + opportunity_contacts
+  - Preserve stage_id, notes, moved_at from opportunities
+- No schema changes needed - campaign_contacts and campaign_stages tables already exist with the right columns
+
+### Step 2: Remove Opportunity Model from Code
+
+- Remove `CampaignOpportunity` interface and `CampaignBacking` type from types.ts
+- Remove `OUTREACH_TYPES`, `PIPELINE_TYPES`, `campaignBacking()` from types.ts
+- Remove `getCampaignOpportunities`, opportunity-related functions from supabase-data.ts
+- Remove all `backing` branches in CampaignsPage, CampaignBoard
+- All campaigns now use campaign_contacts + campaign_stages uniformly
+
+### Step 3: Campaign Overview Page
+
+New component `CampaignOverview.tsx` as the default `/campaigns` landing:
+
+- **Card Grid view**: campaign cards showing name, type icon+color, progress bar, contact count, deadline, last activity, first 3-5 contact avatars, owner
+- **Table List view**: fixed columns - Name, Type, Status, Contacts, Progress, Deadline, Last Activity
+- Toggle between grid/list stored in localStorage
+- Active/Completed filter
+- Full empty state with Create Campaign CTA when zero campaigns
+- Grouped or flat toggle (user choice)
+- Click card/row navigates to `/campaigns/:id`
+
+### Step 4: Route Restructure
+
+- `/campaigns` renders `CampaignOverview`
+- `/campaigns/:id` renders `CampaignDetail` (new wrapper component)
+- Back button in detail header navigates to `/campaigns`
+- `CampaignDetail` loads campaign data, stages, contacts on mount
+- Board | Table toggle in the action bar
+
+### Step 5: 16-Color Stage Palette
+
+Expand `COLOR_SWATCHES` in `CampaignStageColumn.tsx` from 8 to 16 colors:
+gray, blue, green, yellow, orange, red, pink, purple, teal, indigo, lime, amber, cyan, brown, slate, rose
+
+### Step 6: Campaign Table View
+
+New component `CampaignTableView.tsx`:
+
+- Rows = campaign_contacts joined with contact data
+- Default columns: Name, Company, Email, Role, Stage (colored dropdown), Owner, Next Step, Next Step Due, Notes, Last Moved
+- **Single-click** cell editing - click cell becomes input, blur/Enter saves
+- Stage column: colored dropdown, pick any stage freely
+- Single-column sort via header click (asc/desc toggle)
+- Checkbox column for multi-select + bulk action bar (move stage, remove, export)
+- Search bar + column-level filter dropdowns (stackable)
+- Right-click context menu on rows (Remove from campaign, Move to stage, Open contact)
+- Column visibility per campaign via localStorage key `realdeal:campaign-fields:{campaignId}`
+- `FieldVisibilityMenu` component - eye icon button opens checklist popover
+
+### Step 7: Contact Detail Overlay from Table
+
+Clicking a contact name in the table opens the existing ContactDetail slide-out panel overlaid on the campaign table.
+
+### Step 8: New Contacts Default to First Stage
+
+When adding a contact to a campaign (search-add), they are assigned to the first stage (lowest `order`) automatically.
+
+### Step 9: Update Settings Panel
+
+Move stage color editing into the existing `CampaignSettingsPanel` or keep it inline on stage headers. Settings panel already handles name, type, deadline, description, notes.
+
+## Files to Create
+
+| File | Purpose |
+|---|---|
+| `src/components/campaigns/CampaignOverview.tsx` | Overview grid/list landing page |
+| `src/components/campaigns/CampaignOverviewCard.tsx` | Card for overview grid |
+| `src/components/campaigns/CampaignTableView.tsx` | Airtable-style editable table |
+| `src/components/campaigns/FieldVisibilityMenu.tsx` | Column toggle popover |
+| `src/components/campaigns/CampaignDetailRoute.tsx` | Route wrapper for /campaigns/:id |
+
+## Files to Modify
+
+| File | Changes |
+|---|---|
+| `src/lib/types.ts` | Remove CampaignOpportunity, CampaignBacking, backing field, OUTREACH/PIPELINE_TYPES |
+| `src/lib/supabase-data.ts` | Remove opportunity functions, simplify campaign data loading |
+| `src/lib/sampleData.ts` | Remove opportunity sample data, update demo mode |
+| `src/components/campaigns/CampaignsPage.tsx` | Restructure as router (overview vs detail) |
+| `src/components/campaigns/CampaignBoard.tsx` | Remove opportunity branches, simplify props |
+| `src/components/campaigns/CampaignStageColumn.tsx` | 16-color palette |
+| `src/components/campaigns/CampaignContactCard.tsx` | Minor - ensure works without opportunity model |
+| `src/App.tsx` | Add /campaigns/:id route |
+
+## DB Migration
+
+One migration to convert opportunities to campaign_contacts. No new tables or columns needed.
+
+## Data Integrity
+
+- All 65 KV Pipeline opportunities migrated to campaign_contacts
+- Stage mappings preserved (pipeline_stages -> campaign_stages already exist or get created)
+- Contact linkage preserved via opportunity_contacts junction
+- Opportunities with no linked contacts get a campaign_contact row with contact_id from best-match contact lookup (or skipped with a note)
 
