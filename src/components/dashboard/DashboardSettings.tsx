@@ -35,8 +35,8 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
     'todays-focus': 'Your Day',
     'coming-up': 'Your Day',
     'needs-attention': 'Your Day',
-    'pod-health': 'Network Pulse',
-    'wrapped': 'Network Pulse',
+    'pod-health': 'Network Health',
+    'wrapped': 'Network Health',
     'recent-activity': 'Activity & Links',
     'quick-links': 'Activity & Links',
     'gmail-sync': 'Activity & Links',
@@ -121,7 +121,7 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
         {/* Header */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--divider)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-            Pulse
+            Dashboard
           </span>
           <button
             type="button"
