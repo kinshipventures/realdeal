@@ -664,7 +664,7 @@ export async function createCampaignStage(campaignId: string, name: string, orde
     return s
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), pipeline_id: campaignId, name, order, color: color ?? null }).select().single()
+  const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), pipeline_id: campaignId, name, order, color: color ?? null }).select().single()
   if (error) throw error
   invalidatePipelineStagesCache()
   return pipelineStageToCampaignStage(mapPipelineStage(row))
@@ -676,7 +676,7 @@ export async function updateCampaignStage(id: string, data: Partial<Pick<Campaig
     if (s) Object.assign(s, data)
     return
   }
-  const { error } = await supabase.from('pipeline_stages').update(data).eq('id', id)
+  const { error } = await supabase.from('campaign_stages').update(data).eq('id', id)
   if (error) throw error
   invalidatePipelineStagesCache()
 }
@@ -687,7 +687,7 @@ export async function deleteCampaignStage(id: string): Promise<void> {
     if (idx !== -1) DEMO_CAMPAIGN_STAGES.splice(idx, 1)
     return
   }
-  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
+  const { error } = await supabase.from('campaign_stages').delete().eq('id', id)
   if (error) throw error
   invalidatePipelineStagesCache()
 }
@@ -727,7 +727,7 @@ let _pipelineStagesFetch: Promise<PipelineStage[]> | null = null
 function invalidatePipelineStagesCache(): void { _pipelineStagesCache = null; _pipelineStagesFetch = null }
 
 async function fetchPipelineStages(): Promise<PipelineStage[]> {
-  const { data, error } = await supabase.from('pipeline_stages').select('*')
+  const { data, error } = await supabase.from('campaign_stages').select('*')
   if (error) throw error
   return (data ?? []).map(mapPipelineStage)
 }
