@@ -224,7 +224,7 @@ function mapContact(r: any, catIds?: string[]): Contact {
     specialization: r.specialization ?? null, past_clients: r.past_clients ?? null,
     birthday: r.birthday ?? null, milestones: r.milestones ?? null, interests: r.interests ?? null,
     relationship_context: r.relationship_context ?? null, last_contacted_at: r.last_contacted_at ?? null,
-    list_ids: podIds, category_ids: catIds ?? [],
+    list_ids: podIds, category_ids: categoryIds,
     primary_list_id: primaryPodId, cadence_override: r.cadence_override ?? null,
     first_name: r.first_name ?? null, last_name: r.last_name ?? null, linkedin: r.linkedin ?? null,
     country: r.country ?? null, global_region: r.global_region ?? null, gender: r.gender ?? null,
