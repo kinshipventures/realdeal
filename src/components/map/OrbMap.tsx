@@ -715,26 +715,23 @@ export function OrbMap() {
     if (isAnimating.current) return
     isAnimating.current = true
 
-    // Fade out category nodes
-    setNodes(prev => prev.map(n =>
-      n.id === MOJ_ID ? n : { ...n, data: { ...n.data, fading: true } }
-    ))
+    setMapView('hub')
+    mapViewRef.current = 'hub'
+    setSelectedPod(null)
 
-    setTimeout(() => {
-      setMapView('hub')
-      mapViewRef.current = 'hub'
-      setSelectedPod(null)
-      rebuildHomeView()
+    // Un-fade all nodes
+    setNodes(prev => prev.map(n => ({
+      ...n, data: { ...n.data, fading: false },
+    })))
 
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.22, duration: 400 })
-        setTimeout(() => {
-          isAnimating.current = false
-          setFitViewEnabled(true)
-        }, 450)
-      })
-    }, 350)
-  }, [setNodes, rebuildHomeView, fitView])
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.22, duration: 400 })
+      setTimeout(() => {
+        isAnimating.current = false
+        setFitViewEnabled(true)
+      }, 450)
+    })
+  }, [setNodes, fitView])
 
   drillBackRef.current = drillBackToHub
 
