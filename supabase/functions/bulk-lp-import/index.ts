@@ -18,116 +18,93 @@ const STAGE_MAP: Record<string, string> = {
 };
 
 Deno.serve(async (req) => {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
-  const { contacts } = await req.json();
-  
-  // Get existing contacts for dedup
-  const { data: existing } = await supabase
-    .from('contacts')
-    .select('id, name')
-    .eq('workspace_id', WORKSPACE_ID);
-  
-  const nameMap = new Map<string, string>();
-  for (const c of existing || []) {
-    nameMap.set(c.name.trim().toLowerCase(), c.id);
-  }
+    const { contacts } = await req.json();
+    
+    const { data: existing } = await supabase
+      .from('contacts').select('id, name, email, company, role, linkedin, location, country, global_region, gender, first_name, last_name, phone, recommended_by')
+      .eq('workspace_id', WORKSPACE_ID);
+    
+    const nameMap = new Map<string, any>();
+    for (const c of existing || []) {
+      nameMap.set(c.name.trim().toLowerCase(), c);
+    }
 
-  // Get existing campaign_contacts
-  const { data: existingCC } = await supabase
-    .from('campaign_contacts')
-    .select('contact_id')
-    .eq('campaign_id', CAMPAIGN_ID);
-  const ccSet = new Set((existingCC || []).map((c: any) => c.contact_id));
+    const { data: existingCC } = await supabase
+      .from('campaign_contacts').select('contact_id').eq('campaign_id', CAMPAIGN_ID);
+    const ccSet = new Set((existingCC || []).map((c: any) => c.contact_id));
 
-  let created = 0, updated = 0, linked = 0, errors: string[] = [];
+    let created = 0, updated = 0, linked = 0;
+    const errors: string[] = [];
 
-  for (const c of contacts) {
-    const key = c.name.trim().toLowerCase();
-    let contactId = nameMap.get(key);
+    for (const c of contacts) {
+      const key = c.name.trim().toLowerCase();
+      const ex = nameMap.get(key);
 
-    if (!contactId) {
-      // Create new contact
-      const { data: newC, error } = await supabase.from('contacts').insert({
-        name: c.name,
-        first_name: c.first_name || null,
-        last_name: c.last_name || null,
-        email: c.email || null,
-        phone: c.phone || null,
-        company: c.company || null,
-        role: c.role || null,
-        linkedin: c.linkedin || null,
-        location: c.location || null,
-        country: c.country || null,
-        global_region: c.global_region || null,
-        gender: c.gender || null,
-        recommended_by: c.recommended_by || null,
-        custom_fields: c.custom_fields || {},
-        user_id: USER_ID,
-        workspace_id: WORKSPACE_ID,
-        type: 'Contact',
-        status: 'Active',
-        import_source: 'clickup-lp-internal',
-        needs_review: false,
-      }).select('id').single();
-      
-      if (error) { errors.push(`Create ${c.name}: ${error.message}`); continue; }
-      contactId = newC.id;
-      nameMap.set(key, contactId);
-      created++;
-    } else {
-      // Update existing with COALESCE-like logic
-      const updates: Record<string, any> = {};
-      if (c.first_name) updates.first_name = c.first_name;
-      if (c.last_name) updates.last_name = c.last_name;
-      if (c.email) updates.email = c.email;
-      if (c.phone) updates.phone = c.phone;
-      if (c.company) updates.company = c.company;
-      if (c.role) updates.role = c.role;
-      if (c.linkedin) updates.linkedin = c.linkedin;
-      if (c.location) updates.location = c.location;
-      if (c.country) updates.country = c.country;
-      if (c.global_region) updates.global_region = c.global_region;
-      if (c.gender) updates.gender = c.gender;
-      if (c.recommended_by) updates.recommended_by = c.recommended_by;
-
-      // Only update null fields - use raw SQL via rpc or just set (simpler)
-      // For simplicity, just do the update - COALESCE is handled at SQL level
-      if (Object.keys(updates).length > 0) {
-        // Build COALESCE update
-        const setClauses = Object.entries(updates).map(([k, v]) => 
-          `${k} = COALESCE(${k}, '${String(v).replace(/'/g, "''")}'${k === 'global_region' ? '::global_region' : k === 'gender' ? '::gender_type' : ''})`
-        ).join(', ');
+      if (!ex) {
+        const { data: newC, error } = await supabase.from('contacts').insert({
+          name: c.name, first_name: c.first_name || null, last_name: c.last_name || null,
+          email: c.email || null, phone: c.phone || null, company: c.company || null,
+          role: c.role || null, linkedin: c.linkedin || null, location: c.location || null,
+          country: c.country || null, global_region: c.global_region || null,
+          gender: c.gender || null, recommended_by: c.recommended_by || null,
+          custom_fields: c.custom_fields || {}, user_id: USER_ID, workspace_id: WORKSPACE_ID,
+          type: 'Contact', status: 'Active', import_source: 'clickup-lp-internal', needs_review: false,
+        }).select('id').single();
         
-        await supabase.rpc('exec_sql' as any, { sql: `UPDATE contacts SET ${setClauses} WHERE id = '${contactId}'` }).catch(() => {
-          // Fallback: just update directly (may overwrite)
-        });
+        if (error) { errors.push(`Create ${c.name}: ${error.message}`); continue; }
+        const contactId = newC!.id;
+        nameMap.set(key, { id: contactId, name: c.name });
+        created++;
+
+        if (!ccSet.has(contactId)) {
+          const stageId = STAGE_MAP[c.status_key || 'for connecting'] || STAGE_MAP['for connecting'];
+          await supabase.from('campaign_contacts').insert({
+            campaign_id: CAMPAIGN_ID, contact_id: contactId, stage_id: stageId,
+            user_id: USER_ID, workspace_id: WORKSPACE_ID,
+            custom_fields: c.cc_custom || { lp_type: 'Internal' },
+            notes: c.cc_notes || null, status: 'pending',
+          });
+          linked++;
+          ccSet.add(contactId);
+        }
+      } else {
+        // Update existing with COALESCE
+        const updates: Record<string, any> = {};
+        const fields = ['first_name','last_name','email','phone','company','role','linkedin','location','country','global_region','gender','recommended_by'];
+        for (const f of fields) {
+          if (c[f] && !ex[f]) updates[f] = c[f];
+        }
+        if (Object.keys(updates).length > 0) {
+          await supabase.from('contacts').update(updates).eq('id', ex.id);
+        }
+        updated++;
+
+        if (!ccSet.has(ex.id)) {
+          const stageId = STAGE_MAP[c.status_key || 'for connecting'] || STAGE_MAP['for connecting'];
+          await supabase.from('campaign_contacts').insert({
+            campaign_id: CAMPAIGN_ID, contact_id: ex.id, stage_id: stageId,
+            user_id: USER_ID, workspace_id: WORKSPACE_ID,
+            custom_fields: c.cc_custom || { lp_type: 'Internal' },
+            notes: c.cc_notes || null, status: 'pending',
+          });
+          linked++;
+          ccSet.add(ex.id);
+        }
       }
-      updated++;
     }
 
-    // Create campaign_contact if not exists
-    if (contactId && !ccSet.has(contactId)) {
-      const stageId = STAGE_MAP[c.status_key || 'for connecting'] || STAGE_MAP['for connecting'];
-      const { error: ccErr } = await supabase.from('campaign_contacts').insert({
-        campaign_id: CAMPAIGN_ID,
-        contact_id: contactId,
-        stage_id: stageId,
-        user_id: USER_ID,
-        workspace_id: WORKSPACE_ID,
-        custom_fields: c.cc_custom || { lp_type: 'Internal' },
-        notes: c.cc_notes || null,
-        status: 'pending',
-      });
-      if (ccErr) { errors.push(`CC ${c.name}: ${ccErr.message}`); }
-      else { linked++; ccSet.add(contactId); }
-    }
+    return new Response(JSON.stringify({ created, updated, linked, errors: errors.slice(0, 20), total: contacts.length }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message, stack: e.stack }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
   }
-
-  return new Response(JSON.stringify({ created, updated, linked, errors: errors.slice(0, 20), total: contacts.length }), {
-    headers: { "Content-Type": "application/json" },
-  });
 });
