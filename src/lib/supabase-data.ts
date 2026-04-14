@@ -746,33 +746,6 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
   return mapCampaignContact(row)
 }
 
-// ── Pipelines ─────────────────────────────────────────────────────────────────
-
-function mapPipeline(r: any): Pipeline {
-  return { id: r.id, name: r.name, status: r.status ?? 'active', created_at: r.created_at }
-}
-
-let _pipelinesCache: Pipeline[] | null = null
-let _pipelinesCacheTime = 0
-let _pipelinesFetch: Promise<Pipeline[]> | null = null
-
-function invalidatePipelinesCache(): void { _pipelinesCache = null }
-
-async function fetchPipelines(): Promise<Pipeline[]> {
-  const { data, error } = await supabase.from('pipelines').select('*')
-  if (error) throw error
-  return (data ?? []).map(mapPipeline)
-}
-
-export function getPipelines(): Promise<Pipeline[]> {
-  if (isDemoMode()) return Promise.resolve(DEMO_PIPELINES)
-  return cachedFetch(
-    () => ({ data: _pipelinesCache, time: _pipelinesCacheTime, fetch: _pipelinesFetch }),
-    (d, f) => { if (d) { _pipelinesCache = d; _pipelinesCacheTime = Date.now() } _pipelinesFetch = f },
-    fetchPipelines,
-  )
-}
-
 // ── Pipeline Stages ───────────────────────────────────────────────────────────
 
 function mapPipelineStage(r: any): PipelineStage {
@@ -801,88 +774,28 @@ export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]>
   )
 }
 
-// ── Opportunities ─────────────────────────────────────────────────────────────
-
-async function enrichOpportunities(rows: any[]): Promise<Opportunity[]> {
-  if (rows.length === 0) return []
-  const oppIds = rows.map(r => r.id)
-  const { data: junctions, error } = await supabase.from('opportunity_contacts').select('opportunity_id, contact_id').in('opportunity_id', oppIds)
-  if (error) throw new Error(`opportunity_contacts query failed: ${error.message}`)
-  const relMap = new Map<string, string[]>()
-  for (const j of junctions ?? []) {
-    let arr = relMap.get(j.opportunity_id)
-    if (!arr) { arr = []; relMap.set(j.opportunity_id, arr) }
-    arr.push(j.contact_id)
-  }
-  return rows.map(r => ({
-    id: r.id, name: r.name, stage_id: r.stage_id ?? '',
-    relationship_ids: relMap.get(r.id) ?? [], notes: r.notes ?? null,
-    priority: r.priority ?? null, status: r.status ?? 'open', created_at: r.created_at,
-  }))
-}
-
-let _opportunitiesCache: Opportunity[] | null = null
-let _opportunitiesCacheTime = 0
-let _opportunitiesFetch: Promise<Opportunity[]> | null = null
-
-export function invalidateOpportunitiesCache(): void { _opportunitiesCache = null }
-
-async function fetchOpportunities(): Promise<Opportunity[]> {
-  const { data, error } = await supabase.from('opportunities').select('*')
-  if (error) throw error
-  return enrichOpportunities(data ?? [])
-}
-
-export function getOpportunities(): Promise<Opportunity[]> {
-  if (isDemoMode()) return Promise.resolve(DEMO_OPPORTUNITIES)
-  return cachedFetch(
-    () => ({ data: _opportunitiesCache, time: _opportunitiesCacheTime, fetch: _opportunitiesFetch }),
-    (d, f) => { if (d) { _opportunitiesCache = d; _opportunitiesCacheTime = Date.now() } _opportunitiesFetch = f },
-    fetchOpportunities,
-  )
-}
-
-export async function createOpportunity(name: string, stageId: string, relationshipIds: string[]): Promise<Opportunity> {
-  if (isDemoMode()) {
-    const o: Opportunity = { id: 'demo-opp-' + Date.now(), name, stage_id: stageId, relationship_ids: relationshipIds, notes: null, priority: null, status: 'open', created_at: new Date().toISOString() }
-    DEMO_OPPORTUNITIES.push(o)
-    return o
-  }
-  const userId = await getUserId()
-  const wsId = getActiveWorkspaceId()
-  const { data: row, error } = await supabase.from('opportunities').insert({ user_id: userId, workspace_id: wsId, name, stage_id: stageId }).select().single()
-  if (error) throw error
-  if (relationshipIds.length) {
-    await supabase.from('opportunity_contacts').insert(
-      relationshipIds.map(contact_id => ({ user_id: userId, workspace_id: wsId, opportunity_id: row.id, contact_id }))
-    )
-  }
-  _opportunitiesCache = null
-  return { id: row.id, name: row.name, stage_id: row.stage_id ?? '', relationship_ids: relationshipIds, notes: null, priority: null, status: 'open', created_at: row.created_at }
-}
+// Legacy stubs for compatibility
+export function getPipelines(): Promise<any[]> { return Promise.resolve([]) }
+export function getOpportunities(): Promise<any[]> { return Promise.resolve([]) }
+export function createOpportunity(): Promise<any> { throw new Error('Opportunities removed') }
+export function invalidateOpportunitiesCache(): void {}
+export function addOpportunityToProject(): Promise<any> { throw new Error('Opportunities removed') }
+export function removeOpportunityFromProject(): Promise<any> { throw new Error('Opportunities removed') }
 
 // ── Projects ──────────────────────────────────────────────────────────────────
 
 async function enrichProjects(rows: any[]): Promise<Project[]> {
   if (rows.length === 0) return []
   const projIds = rows.map(r => r.id)
-  const [pcRes, poRes] = await Promise.all([
-    supabase.from('project_contacts').select('project_id, contact_id').in('project_id', projIds),
-    supabase.from('project_opportunities').select('project_id, opportunity_id').in('project_id', projIds),
-  ])
+  const pcRes = await supabase.from('project_contacts').select('project_id, contact_id').in('project_id', projIds)
   if (pcRes.error) throw new Error(`project_contacts query failed: ${pcRes.error.message}`)
-  if (poRes.error) throw new Error(`project_opportunities query failed: ${poRes.error.message}`)
   const relMap = new Map<string, string[]>()
   for (const j of pcRes.data ?? []) {
     let arr = relMap.get(j.project_id); if (!arr) { arr = []; relMap.set(j.project_id, arr) }; arr.push(j.contact_id)
   }
-  const oppMap = new Map<string, string[]>()
-  for (const j of poRes.data ?? []) {
-    let arr = oppMap.get(j.project_id); if (!arr) { arr = []; oppMap.set(j.project_id, arr) }; arr.push(j.opportunity_id)
-  }
   return rows.map(r => ({
     id: r.id, name: r.name, description: r.description ?? null, owner: r.owner ?? null,
-    relationship_ids: relMap.get(r.id) ?? [], opportunity_ids: oppMap.get(r.id) ?? [],
+    relationship_ids: relMap.get(r.id) ?? [],
     notes: r.notes ?? null, created_at: r.created_at,
   }))
 }
