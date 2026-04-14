@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import {
   ReactFlow,
@@ -30,6 +30,19 @@ import { GradientEdgeComponent } from './GradientEdge'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
 import { MapLegend } from './MapLegend'
+import { useEscape } from '../../lib/escapeStack'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
 
 const LIST_SIZE = 96
 
@@ -518,10 +531,12 @@ export function OrbMap() {
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
+  const isMobile = useIsMobile()
 
-  const [viewMode, setViewMode] = useState<'map' | 'list'>(() =>
-    (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
-  )
+  const [viewMode, setViewMode] = useState<'map' | 'list'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return 'list'
+    return (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
+  })
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
@@ -754,6 +769,37 @@ export function OrbMap() {
   }, [setNodes, rebuildHomeView, fitView])
 
   drillBackRef.current = drillBackToHub
+
+  // Escape key to drill back when in pod view
+  const escapeHandler = useCallback(() => {
+    if (mapViewRef.current === 'pod') {
+      drillBackRef.current?.()
+    }
+  }, [])
+  useEscape(escapeHandler)
+
+  // Auto-switch mobile to list view when viewport changes
+  useEffect(() => {
+    if (isMobile && viewMode === 'map') {
+      setViewMode('list')
+    }
+  }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Compute aggregate stats for hub stats bar
+  const hubStats = useMemo(() => {
+    const pods = podsRef.current
+    const counts = countsByPodRef.current
+    let totalOverdue = 0
+    for (const podId in counts) {
+      totalOverdue += counts[podId]?.overdue ?? 0
+    }
+    return {
+      podCount: pods.length,
+      contactCount: totalContactsRef.current,
+      overallHealth: overallHealthRef.current,
+      overdueCount: totalOverdue,
+    }
+  }, [podsLoaded, podsCount]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for search highlight events from SearchPalette (via App.tsx)
   useEffect(() => {
@@ -1130,49 +1176,88 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Page header - hub view only */}
+      {/* Hub stats bar - glass card with quick-glance metrics */}
       {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
-        <div style={{
-          position: 'absolute', top: 14, left: 14, zIndex: 20,
-          pointerEvents: 'none',
-        }}>
-          <span style={{
-            fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.06em', textTransform: 'uppercase' as const,
-            userSelect: 'none',
-          }}>
-            Your Network
-          </span>
-          <div style={{
-            fontSize: 12, color: 'var(--color-text-secondary)',
-            marginTop: 2, userSelect: 'none',
-          }}>
-            {overallHealthRef.current !== undefined ? scoreLabel(overallHealthRef.current) : ''} - {podsCount} {podsCount === 1 ? 'pod' : 'pods'}, {totalContactsRef.current} relationships
+        <div className="hub-stats-bar">
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.podCount}</span>
+            <span>{hubStats.podCount === 1 ? 'pod' : 'pods'}</span>
           </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.contactCount}</span>
+            <span>relationships</span>
+          </div>
+          {hubStats.overallHealth !== undefined && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <span style={{
+                  padding: '1px 8px',
+                  borderRadius: 100,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.bg,
+                  color: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.color,
+                }}>
+                  {scoreLabel(hubStats.overallHealth)} {hubStats.overallHealth}
+                </span>
+              </div>
+            </>
+          )}
+          {hubStats.overdueCount > 0 && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item" style={{ color: 'var(--health-cooling)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span style={{ fontWeight: 600 }}>{hubStats.overdueCount}</span>
+                <span>need attention</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Breadcrumb — visible during map drill-down */}
+      {/* Breadcrumb - visible during map drill-down */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
-        <div style={{
-          position: 'absolute', top: 12, left: 12, zIndex: 20,
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '6px 12px', borderRadius: 8,
-          background: 'var(--nav-bg)', backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--edge)',
-        }}>
+        <div className="drill-breadcrumb">
           <button onClick={drillBackToHub} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
             color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+            minWidth: 44, minHeight: 44, justifyContent: 'center',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
           <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
           <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>{selectedPod.name}</span>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+            background: selectedPod.color ?? '#718096',
+          }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>
+            {selectedPod.name}
+          </span>
+          {equityByPodRef.current[selectedPod.id] !== undefined && (
+            <span style={{
+              padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 600,
+              background: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.bg,
+              color: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.color,
+            }}>
+              {scoreLabel(equityByPodRef.current[selectedPod.id])} {equityByPodRef.current[selectedPod.id]}
+            </span>
+          )}
+          {!isMobile && (
+            <span style={{
+              fontSize: 9, color: 'var(--color-text-tertiary)', marginLeft: 4,
+              opacity: 0.6, userSelect: 'none',
+            }}>
+              Esc to go back
+            </span>
+          )}
         </div>
       )}
 
@@ -1232,34 +1317,23 @@ export function OrbMap() {
           {hoveredPod && (
             <div
               ref={tooltipRef}
+              className="pod-tooltip"
               style={{
-                position: 'fixed',
                 left: cursorRef.current.x + 16,
                 top: cursorRef.current.y + 16,
-                zIndex: 30,
-                background: 'var(--nav-bg)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid var(--edge)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                pointerEvents: 'none',
-                minWidth: 140,
-                opacity: 0,
-                animation: 'tooltip-fade-in 0.15s ease forwards',
               }}
             >
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {hoveredPod.pod.name}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+              <div className="tooltip-header">
+                <span className="tooltip-dot" style={{ background: hoveredPod.pod.color ?? '#718096' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
+                  {hoveredPod.pod.name}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                 <span style={{
                   display: 'inline-block',
-                  padding: '1px 6px',
+                  padding: '2px 8px',
                   borderRadius: 100,
                   fontSize: 10,
                   fontWeight: 600,
@@ -1268,23 +1342,46 @@ export function OrbMap() {
                 }}>
                   {scoreLabel(hoveredPod.health)} {hoveredPod.health}
                 </span>
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'relationship' : 'relationships'}
-              </span>
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                  {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
+                </span>
+              </div>
+
+              {hoveredPod.pod.cadence && (
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {hoveredPod.pod.cadence} check-in
+                </span>
+              )}
+
+              <div style={{ height: 1, background: 'var(--edge)', margin: '2px 0' }} />
+
               {hoveredPod.overdueCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)' }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
                   {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
                 </span>
               ) : hoveredPod.contactCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)' }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   All caught up
                 </span>
               ) : null}
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
                 Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
               </span>
-              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', marginTop: 2, opacity: 0.6 }}>
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', opacity: 0.5, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
                 Click to explore
               </span>
             </div>
