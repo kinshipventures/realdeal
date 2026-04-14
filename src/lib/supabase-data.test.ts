@@ -166,7 +166,7 @@ describe('demo data referential integrity', () => {
   it('campaign stages reference valid campaigns', () => {
     const campaignIds = new Set(DEMO_CAMPAIGNS.map(c => c.id))
     for (const stage of DEMO_CAMPAIGN_STAGES) {
-      expect(campaignIds.has(stage.pipeline_id)).toBe(true)
+      expect(campaignIds.has(stage.campaign_id)).toBe(true)
     }
   })
 })

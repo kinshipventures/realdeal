@@ -765,7 +765,10 @@ async function fetchPipelineStages(): Promise<PipelineStage[]> {
 }
 
 export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]> {
-  if (isDemoMode()) return Promise.resolve(DEMO_CAMPAIGN_STAGES.filter(s => !pipelineId || s.pipeline_id === pipelineId))
+  if (isDemoMode()) {
+    const mapped: PipelineStage[] = DEMO_CAMPAIGN_STAGES.map(s => ({ ...s, pipeline_id: s.campaign_id }))
+    return Promise.resolve(pipelineId ? mapped.filter(s => s.pipeline_id === pipelineId) : mapped)
+  }
   return cachedFetch(
     () => ({ data: _pipelineStagesCache, time: _pipelineStagesCacheTime, fetch: _pipelineStagesFetch }),
     (d, f) => { if (d) { _pipelineStagesCache = d; _pipelineStagesCacheTime = Date.now() } _pipelineStagesFetch = f },
