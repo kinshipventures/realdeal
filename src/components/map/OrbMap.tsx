@@ -1176,25 +1176,47 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Page header - hub view only */}
+      {/* Hub stats bar - glass card with quick-glance metrics */}
       {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
-        <div style={{
-          position: 'absolute', top: 14, left: 14, zIndex: 20,
-          pointerEvents: 'none',
-        }}>
-          <span style={{
-            fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.06em', textTransform: 'uppercase' as const,
-            userSelect: 'none',
-          }}>
-            Your Network
-          </span>
-          <div style={{
-            fontSize: 12, color: 'var(--color-text-secondary)',
-            marginTop: 2, userSelect: 'none',
-          }}>
-            {overallHealthRef.current !== undefined ? scoreLabel(overallHealthRef.current) : ''} - {podsCount} {podsCount === 1 ? 'pod' : 'pods'}, {totalContactsRef.current} relationships
+        <div className="hub-stats-bar">
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.podCount}</span>
+            <span>{hubStats.podCount === 1 ? 'pod' : 'pods'}</span>
           </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.contactCount}</span>
+            <span>relationships</span>
+          </div>
+          {hubStats.overallHealth !== undefined && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <span style={{
+                  padding: '1px 8px',
+                  borderRadius: 100,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.bg,
+                  color: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.color,
+                }}>
+                  {scoreLabel(hubStats.overallHealth)} {hubStats.overallHealth}
+                </span>
+              </div>
+            </>
+          )}
+          {hubStats.overdueCount > 0 && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item" style={{ color: 'var(--health-cooling)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span style={{ fontWeight: 600 }}>{hubStats.overdueCount}</span>
+                <span>need attention</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
