@@ -1,25 +1,49 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router'
+import { Star } from 'lucide-react'
 import type { CampaignContact, Contact } from '../../lib/types'
+import type { ScoreLabel } from '../../lib/equity'
 import { Avatar } from '../ui'
 
 interface Props {
   cc: CampaignContact
   contact: Contact
+  equityScore: number
+  equityLabel: ScoreLabel
   onClick: () => void
+  onTogglePriority: (ccId: string) => void
   isDragOverlay?: boolean
   selected?: boolean
   onToggleSelect?: (id: string) => void
 }
 
-const STALE_MS = 7 * 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
 
-export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selected, onToggleSelect }: Props) {
+const LABEL_COLORS: Record<ScoreLabel, string> = {
+  Thriving: 'var(--health-thriving)',
+  Steady: 'var(--health-steady)',
+  Cooling: 'var(--health-cooling)',
+  Fading: 'var(--health-fading)',
+}
+
+function daysInStage(movedAt: string | null): number {
+  if (!movedAt) return 0
+  return Math.floor((Date.now() - new Date(movedAt).getTime()) / DAY_MS)
+}
+
+function stageTimeLabel(days: number): string {
+  if (days < 1) return 'Just moved'
+  return `${days}d in stage`
+}
+
+export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect }: Props) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id })
 
-  const isStale = cc.moved_at && Date.now() - new Date(cc.moved_at).getTime() > STALE_MS
+  const days = daysInStage(cc.moved_at)
+  const isStale = days >= 7
+  const dotColor = LABEL_COLORS[equityLabel]
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -30,6 +54,12 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
   function handleAvatarClick(e: React.MouseEvent) {
     e.stopPropagation()
     navigate(`/contact/${contact.id}`)
+  }
+
+  function handleStarClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    e.preventDefault()
+    onTogglePriority(cc.id)
   }
 
   return (
@@ -102,19 +132,49 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
             </div>
           )}
         </div>
-        {isStale && (
-          <div
-            title="Stalled 7d+"
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#FF9500',
-              boxShadow: '0 0 0 3px rgba(255,149,0,0.15)',
-              flexShrink: 0,
-            }}
+        {/* Priority star */}
+        <div
+          className="cc-star"
+          onClick={handleStarClick}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            flexShrink: 0,
+            cursor: 'pointer',
+            opacity: cc.is_priority ? 1 : 0,
+            transition: 'opacity 120ms',
+          }}
+        >
+          <Star
+            size={14}
+            fill={cc.is_priority ? '#F5A623' : 'none'}
+            stroke={cc.is_priority ? '#F5A623' : 'var(--color-text-tertiary)'}
+            strokeWidth={1.5}
           />
-        )}
+        </div>
+      </div>
+
+      {/* Metadata row: equity dot + time in stage */}
+      <div style={{
+        marginTop: 6,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        fontSize: 10,
+        fontWeight: 500,
+        color: 'var(--color-text-tertiary)',
+        letterSpacing: '0.02em',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: '50%',
+            background: dotColor,
+            flexShrink: 0,
+          }} />
+          {equityLabel}
+        </span>
+        <span style={{ color: isStale ? '#FF9500' : 'var(--color-text-tertiary)' }}>
+          {stageTimeLabel(days)}
+        </span>
       </div>
 
       {cc.next_step && (
@@ -136,6 +196,7 @@ export function CampaignContactCard({ cc, contact, onClick, isDragOverlay, selec
       <style>{`
         .cc-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
         .cc-card:hover .cc-select { opacity: 1 !important; }
+        .cc-card:hover .cc-star { opacity: 1 !important; }
       `}</style>
     </div>
   )

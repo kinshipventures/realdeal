@@ -250,7 +250,7 @@ const campaign = (id: string, name: string, type: CampaignType, status: 'active'
 
 const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus, stageId: string, movedDaysAgo = 3): CampaignContact => ({
   id: `demo-cc-${id}`, campaign_id: `demo-campaign-${campaignId}`, contact_id: `demo-contact-${contactId}`,
-  status, stage_id: `demo-cs-${stageId}`, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: daysAgo(movedDaysAgo), created_at: daysAgo(10),
+  status, stage_id: `demo-cs-${stageId}`, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: daysAgo(movedDaysAgo), is_priority: false, created_at: daysAgo(10),
 })
 
 export const DEMO_CAMPAIGNS: Campaign[] = [

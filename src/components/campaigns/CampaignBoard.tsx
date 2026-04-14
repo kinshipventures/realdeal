@@ -15,7 +15,7 @@ import {
   updateCampaignStage,
   createInteraction,
 } from '../../lib/airtable'
-import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
+import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact, Interaction } from '../../lib/types'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
 
@@ -24,6 +24,7 @@ interface Props {
   stages: CampaignStage[]
   campaignContacts: CampaignContact[]
   contacts: Contact[]
+  interactionsMap: Map<string, Interaction[]>
   onStagesChange: (stages: CampaignStage[]) => void
   onContactsChange: (contacts: CampaignContact[]) => void
 }
@@ -38,6 +39,7 @@ export function CampaignBoard({
   stages,
   campaignContacts,
   contacts,
+  interactionsMap,
   onStagesChange,
   onContactsChange,
 }: Props) {
@@ -185,6 +187,16 @@ export function CampaignBoard({
     })
   }
 
+  function handleTogglePriority(ccId: string) {
+    const cc = campaignContacts.find(c => c.id === ccId)
+    if (!cc) return
+    const next = !cc.is_priority
+    onContactsChange(campaignContacts.map(c => c.id === ccId ? { ...c, is_priority: next } : c))
+    updateCampaignContact(ccId, { is_priority: next }).catch(() => {
+      onContactsChange(campaignContacts)
+    })
+  }
+
   async function handleBulkMove(targetStageId: string) {
     const ids = Array.from(selectedIds)
     const now = new Date().toISOString()
@@ -227,10 +239,12 @@ export function CampaignBoard({
               stage={stage}
               campaignContacts={campaignContacts}
               contacts={contacts}
+              interactionsMap={interactionsMap}
               onStageUpdate={handleStageUpdate}
               onDeleteStage={handleDeleteStage}
               onAddContact={handleAddContact}
               onCardClick={handleCardClick}
+              onTogglePriority={handleTogglePriority}
               selectedIds={selectedIds}
               onToggleSelect={handleToggleSelect}
               onSelectAllInStage={handleSelectAllInStage}
@@ -304,7 +318,10 @@ export function CampaignBoard({
             <CampaignContactCard
               cc={activeDragCc}
               contact={activeDragContact}
+              equityScore={0}
+              equityLabel="Fading"
               onClick={() => {}}
+              onTogglePriority={() => {}}
               isDragOverlay
             />
           ) : null}

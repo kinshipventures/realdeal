@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from 'react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { Check, Trash2 } from 'lucide-react'
-import type { CampaignContact, CampaignStage, Contact, HexColor } from '../../lib/types'
+import type { CampaignContact, CampaignStage, Contact, HexColor, Interaction } from '../../lib/types'
+import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { CampaignContactCard } from './CampaignContactCard'
 import { Avatar } from '../ui'
 
@@ -12,10 +13,12 @@ interface Props {
   stage: CampaignStage
   campaignContacts: CampaignContact[]
   contacts: Contact[]
+  interactionsMap: Map<string, Interaction[]>
   onStageUpdate: (id: string, data: Partial<Pick<CampaignStage, 'name' | 'color'>>) => void
   onDeleteStage: (id: string) => void
   onAddContact: (contactId: string, stageId: string) => void
   onCardClick: (cc: CampaignContact) => void
+  onTogglePriority: (ccId: string) => void
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAllInStage: (stageId: string) => void
@@ -27,10 +30,12 @@ export function CampaignStageColumn({
   stage,
   campaignContacts,
   contacts,
+  interactionsMap,
   onStageUpdate,
   onDeleteStage,
   onAddContact,
   onCardClick,
+  onTogglePriority,
   selectedIds,
   onToggleSelect,
   onSelectAllInStage,
@@ -88,10 +93,15 @@ export function CampaignStageColumn({
   }
 
   const stageContacts = campaignContacts.filter(cc => cc.stage_id === stage.id)
-  const enriched = stageContacts.map(cc => ({
-    cc,
-    contact: contacts.find(c => c.id === cc.contact_id),
-  })).filter(r => r.contact) as Array<{ cc: CampaignContact; contact: Contact }>
+  const enriched = stageContacts.map(cc => {
+    const contact = contacts.find(c => c.id === cc.contact_id)
+    const ix = interactionsMap.get(cc.contact_id) ?? []
+    const score = contactEquityScore(ix)
+    return { cc, contact, score, label: scoreLabel(score) }
+  }).filter(r => r.contact).sort((a, b) => {
+    if (a.cc.is_priority !== b.cc.is_priority) return a.cc.is_priority ? -1 : 1
+    return 0
+  }) as Array<{ cc: CampaignContact; contact: Contact; score: number; label: ReturnType<typeof scoreLabel> }>
 
   const searchResults = searchQuery.length > 1
     ? contacts
@@ -250,12 +260,15 @@ export function CampaignStageColumn({
               </p>
             </div>
           ) : (
-            enriched.map(({ cc, contact }) => (
+            enriched.map(({ cc, contact, score, label }) => (
               <CampaignContactCard
                 key={cc.id}
                 cc={cc}
                 contact={contact}
+                equityScore={score}
+                equityLabel={label}
                 onClick={() => onCardClick(cc)}
+                onTogglePriority={onTogglePriority}
                 selected={selectedIds.has(cc.id)}
                 onToggleSelect={onToggleSelect}
               />

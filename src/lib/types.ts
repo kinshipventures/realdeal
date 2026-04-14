@@ -177,6 +177,7 @@ export interface CampaignContact {
   next_step: string | null
   next_step_due: ISODate | null
   moved_at: string | null    // when contact last changed stage
+  is_priority: boolean
   created_at: string
 }
 

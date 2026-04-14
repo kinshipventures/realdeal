@@ -570,7 +570,7 @@ function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
 }
 
 function mapCampaignContact(r: any): CampaignContact {
-  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, created_at: r.created_at }
+  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, is_priority: r.is_priority ?? false, created_at: r.created_at }
 }
 
 function mapCampaignStage(r: any): CampaignStage {
@@ -660,7 +660,7 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     }
   }
   if (isDemoMode()) {
-    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, is_priority: false, created_at: now }
     DEMO_CAMPAIGN_CONTACTS.push(cc)
     const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
@@ -679,7 +679,7 @@ export async function updateCampaignContactStatus(id: string, status: CampaignCo
   if (isDemoMode()) {
     const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
     if (cc) cc.status = status
-    return cc ?? { id, campaign_id: '', contact_id: '', status, stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, created_at: '' }
+    return cc ?? { id, campaign_id: '', contact_id: '', status, stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaign_contacts').update({ status }).eq('id', id).select().single()
   if (error) throw error
@@ -786,11 +786,11 @@ export async function deleteCampaignStage(id: string): Promise<void> {
   invalidatePipelineStagesCache()
 }
 
-export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'>>): Promise<CampaignContact> {
+export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at' | 'is_priority'>>): Promise<CampaignContact> {
   if (isDemoMode()) {
     const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
     if (cc) Object.assign(cc, data)
-    return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, created_at: '' }
+    return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, created_at: '' }
   }
   const dbData: any = {}
   if (data.stage_id !== undefined) dbData.stage_id = data.stage_id
@@ -799,6 +799,7 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
   if (data.next_step !== undefined) dbData.next_step = data.next_step
   if (data.next_step_due !== undefined) dbData.next_step_due = data.next_step_due
   if (data.moved_at !== undefined) dbData.moved_at = data.moved_at
+  if (data.is_priority !== undefined) dbData.is_priority = data.is_priority
   const { data: row, error } = await supabase.from('campaign_contacts').update(dbData).eq('id', id).select().single()
   if (error) throw error
   if (_campaignContactsCache) {

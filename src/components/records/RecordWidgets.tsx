@@ -8,6 +8,45 @@ import { PodFieldsWidget } from './PodFieldsWidget'
 import { RelationshipWidget } from './RelationshipWidget'
 import { PipelinesWidget } from './PipelinesWidget'
 import { ProjectsWidget } from './ProjectsWidget'
+import { WIDGET_STYLE } from './shared'
+
+function FundTagsWidget({ contact }: { contact: Contact }) {
+  return (
+    <div style={WIDGET_STYLE}>
+      <div style={{
+        fontFamily: 'var(--font-serif)',
+        fontSize: 16,
+        fontWeight: 700,
+        color: 'var(--color-text-primary)',
+        marginBottom: 14,
+      }}>
+        Fund Activity
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {contact.kv_fund_investor?.map(tag => (
+          <span key={tag} style={{
+            fontSize: 11, fontWeight: 500,
+            padding: '3px 10px', borderRadius: 100,
+            background: 'hsla(150, 60%, 40%, 0.08)',
+            color: 'hsla(150, 60%, 30%, 0.80)',
+          }}>
+            KV: {tag}
+          </span>
+        ))}
+        {contact.spv_investor?.map(tag => (
+          <span key={tag} style={{
+            fontSize: 11, fontWeight: 500,
+            padding: '3px 10px', borderRadius: 100,
+            background: 'hsla(210, 60%, 50%, 0.08)',
+            color: 'hsla(210, 60%, 40%, 0.80)',
+          }}>
+            SPV: {tag}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface RecordWidgetsProps {
   contact: Contact
@@ -48,6 +87,9 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
           onFieldConfigsRefresh={onFieldConfigsRefresh}
         />
       ))}
+      {(contact.kv_fund_investor?.length || contact.spv_investor?.length) ? (
+        <FundTagsWidget contact={contact} />
+      ) : null}
       {contact.type === 'Company' && (
         <AssociatedPeopleWidget contact={contact} />
       )}
