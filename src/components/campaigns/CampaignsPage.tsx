@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getCampaignOpportunities, getContacts, invalidateCampaignsCache, completeCampaign } from '../../lib/airtable'
-import type { Campaign, CampaignContact, CampaignStage, CampaignOpportunity, CampaignType, Contact } from '../../lib/types'
+import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, invalidateCampaignsCache, completeCampaign } from '../../lib/airtable'
+import type { Campaign, CampaignContact, CampaignStage, CampaignType, Contact } from '../../lib/types'
 import { CampaignCreate } from './CampaignCreate'
 import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'
@@ -24,7 +24,6 @@ export function CampaignsPage() {
 
   const [stages, setStages] = useState<CampaignStage[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
-  const [campaignOpportunities, setCampaignOpportunities] = useState<CampaignOpportunity[]>([])
   const [boardLoading, setBoardLoading] = useState(false)
 
   const load = useCallback(async () => {
@@ -37,32 +36,20 @@ export function CampaignsPage() {
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
-    if (!activeCampaignId) { setStages([]); setCampaignContacts([]); setCampaignOpportunities([]); return }
+    if (!activeCampaignId) { setStages([]); setCampaignContacts([]); return }
     const campaign = campaigns.find(c => c.id === activeCampaignId)
     if (!campaign) return
     setBoardLoading(true)
     setConfirmingComplete(false)
     setShowStalledOnly(false)
     setShowSettings(false)
-    if (campaign.backing === 'pipeline') {
-      Promise.all([
-        getStagesForCampaign(activeCampaignId, 'pipeline'),
-        getCampaignOpportunities(activeCampaignId),
-      ]).then(([s, opps]) => {
-        setStages(s)
-        setCampaignOpportunities(opps)
-        setCampaignContacts([])
-      }).finally(() => setBoardLoading(false))
-    } else {
-      Promise.all([
-        getStagesForCampaign(activeCampaignId, 'outreach'),
-        getCampaignContacts(activeCampaignId),
-      ]).then(([s, cc]) => {
-        setStages(s)
-        setCampaignContacts(cc)
-        setCampaignOpportunities([])
-      }).finally(() => setBoardLoading(false))
-    }
+    Promise.all([
+      getStagesForCampaign(activeCampaignId),
+      getCampaignContacts(activeCampaignId),
+    ]).then(([s, cc]) => {
+      setStages(s)
+      setCampaignContacts(cc)
+    }).finally(() => setBoardLoading(false))
   }, [activeCampaignId, campaigns])
 
   const handleCreated = useCallback((campaign: Campaign, newStages: CampaignStage[]) => {
@@ -394,11 +381,9 @@ export function CampaignsPage() {
               campaign={activeCampaign}
               stages={stages}
               campaignContacts={boardContacts}
-              campaignOpportunities={campaignOpportunities}
               contacts={contacts}
               onStagesChange={setStages}
               onContactsChange={setCampaignContacts}
-              onOpportunitiesChange={setCampaignOpportunities}
             />
           )}
 
