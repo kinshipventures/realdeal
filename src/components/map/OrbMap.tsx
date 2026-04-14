@@ -1185,45 +1185,93 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Breadcrumb - visible during map drill-down */}
+      {/* Pod detail overlay - glass panel on dimmed map */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
-        <div className="drill-breadcrumb">
-          <button onClick={drillBackToHub} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-            color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
-            minWidth: 44, minHeight: 44, justifyContent: 'center',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background: selectedPod.color ?? '#718096',
-          }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>
-            {selectedPod.name}
-          </span>
-          {equityByPodRef.current[selectedPod.id] !== undefined && (
-            <span style={{
-              padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 600,
-              background: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.bg,
-              color: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.color,
+        <>
+          {/* Dim backdrop */}
+          <div
+            onClick={drillBackToHub}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 30,
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+              animation: 'pod-overlay-dim 0.35s ease-out both',
+            }}
+          />
+          {/* Glass panel */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 16, right: 16, bottom: 16,
+              width: 'min(520px, calc(100% - 32px))',
+              zIndex: 31,
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
+              borderRadius: 16,
+              boxShadow: '0 16px 64px rgba(0,0,0,0.25)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+              animation: 'pod-overlay-slide 0.4s cubic-bezier(0.22,1,0.36,1) both',
+            }}
+          >
+            {/* Header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--edge)',
+              flexShrink: 0,
             }}>
-              {scoreLabel(equityByPodRef.current[selectedPod.id])} {equityByPodRef.current[selectedPod.id]}
-            </span>
-          )}
-          {!isMobile && (
-            <span style={{
-              fontSize: 9, color: 'var(--color-text-tertiary)', marginLeft: 4,
-              opacity: 0.6, userSelect: 'none',
-            }}>
-              Esc to go back
-            </span>
-          )}
-        </div>
+              <button
+                onClick={drillBackToHub}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: selectedPod.color ?? '#718096',
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                {selectedPod.name}
+              </span>
+              <button
+                onClick={() => navigate(`/pod/${selectedPod.id}`)}
+                style={{
+                  marginLeft: 'auto',
+                  background: 'none', border: '1px solid var(--edge)',
+                  borderRadius: 6, padding: '4px 10px',
+                  fontSize: 11, color: 'var(--color-text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Open full page
+              </button>
+              {!isMobile && (
+                <span style={{
+                  fontSize: 9, color: 'var(--color-text-tertiary)',
+                  opacity: 0.5,
+                }}>
+                  Esc
+                </span>
+              )}
+            </div>
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <PodDetailPage podIdProp={selectedPod.id} onClose={drillBackToHub} />
+            </div>
+          </div>
+        </>
       )}
 
       {/* Top-right controls: view toggle + reset layout */}
