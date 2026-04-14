@@ -642,9 +642,7 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
     return c
   }
   const userId = await getUserId()
-  // DB enum only has event/investment/outreach/other - map extended types to 'other'
-  const dbType = (['event', 'investment', 'outreach', 'other'] as const).includes(data.type as any) ? data.type : 'other'
-  const { data: row, error } = await supabase.from('campaigns').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: dbType as any, deadline: data.deadline ?? null }]).select().single()
+  const { data: row, error } = await supabase.from('campaigns').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: data.type as any, deadline: data.deadline ?? null }]).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaign(row)
