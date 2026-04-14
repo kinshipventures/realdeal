@@ -732,6 +732,32 @@ export async function updateCampaignNotes(id: string, notes: string | null): Pro
 }
 
 
+export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'name' | 'type' | 'deadline' | 'description' | 'notes'>>): Promise<Campaign> {
+  if (isDemoMode()) {
+    const c = DEMO_CAMPAIGNS.find(c => c.id === id)
+    if (c) Object.assign(c, data)
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: '' }
+  }
+  const dbData: any = {}
+  if (data.name !== undefined) dbData.name = data.name
+  if (data.deadline !== undefined) dbData.deadline = data.deadline
+  if (data.description !== undefined) dbData.description = data.description
+  if (data.notes !== undefined) dbData.notes = data.notes
+  if (data.type !== undefined) {
+    const dbType = (['event', 'investment', 'outreach', 'other'] as const).includes(data.type as any) ? data.type : 'other'
+    dbData.type = dbType
+  }
+  const { data: row, error } = await supabase.from('campaigns').update(dbData).eq('id', id).select().single()
+  if (error) throw error
+  const updated = mapCampaign(row)
+  if (_campaignsCache) {
+    const idx = _campaignsCache.findIndex(c => c.id === id)
+    if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], ...updated }
+  }
+  return updated
+}
+
+
 // campaign_stages table does not exist yet - functions work in demo mode only,
 // live mode returns empty / no-ops until the table is created via migration.
 
