@@ -1,5 +1,10 @@
 import { useNavigate } from 'react-router'
 import { setDemoMode } from '@/lib/sampleData'
+import goopLogo from '@/assets/logos/goop.png'
+import figsLogo from '@/assets/logos/figs.png'
+import moonpayLogo from '@/assets/logos/moonpay.png'
+import forerunnerLogo from '@/assets/logos/forerunner.png'
+import wonderLogo from '@/assets/logos/wonder.png'
 
 const FEATURES = [
   {
