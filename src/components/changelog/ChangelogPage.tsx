@@ -93,7 +93,7 @@ const releases: Release[] = [
       },
       {
         title: 'Naming Standardized',
-        description: 'Dashboard is now "Pulse" everywhere. Account is now "Settings." Meeting Notes replaced the old Granola widget. Mobile has a Settings tab. No more mixed terminology.',
+        description: 'Consistent naming across the app. Account is now "Settings." Meeting Notes replaced the old Granola widget. Mobile has a Settings tab. No more mixed terminology.',
         icon: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
         gradient: ['#7B1FA2', '#4A148C'],
         area: 'Platform',
@@ -115,7 +115,7 @@ const releases: Release[] = [
       { type: 'feature', text: 'Campaign notes with auto-save' },
       { type: 'feature', text: 'Mobile Settings tab in bottom navigation' },
 
-      { type: 'fix', text: 'Sidebar label "Dashboard" renamed to "Pulse" to match route' },
+      { type: 'fix', text: 'Sidebar navigation labels unified with page titles' },
       { type: 'fix', text: 'Sidebar label "Account" renamed to "Settings" to match page title' },
       { type: 'fix', text: 'Widget ID "granola-sync" migrated to "meeting-notes" with localStorage migration' },
       { type: 'fix', text: 'Interaction notes check both meeting_link and legacy granola_link' },
@@ -155,11 +155,11 @@ const releases: Release[] = [
       },
       {
         title: 'Follow-ups & Focus',
-        description: 'Pin follow-ups to contacts, see overdue items on Pulse, and let Today\'s Focus tell you exactly who to reach out to based on priority and cadence.',
+        description: 'Pin follow-ups to contacts, see overdue items on your Dashboard, and let Today\'s Focus tell you exactly who to reach out to based on priority and cadence.',
         icon: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
         gradient: ['#FF9800', '#E65100'],
         area: 'Nurturing',
-        link: '/pulse/nurturing',
+        link: '/dashboard/nurturing',
       },
       {
         title: 'Pod Sharing',

@@ -33,7 +33,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   }
 
   const isPods = location.pathname === '/' || location.pathname === '/pods'
-  const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
@@ -130,10 +130,10 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         />
         <NavItem
           icon={<DashboardIcon />}
-          label="Pulse"
+          label="Dashboard"
           active={isDashboard}
           collapsed={collapsed}
-          onClick={() => navigate('/pulse')}
+          onClick={() => navigate('/dashboard')}
         />
         <NavItem
           icon={<RelationshipsIcon />}

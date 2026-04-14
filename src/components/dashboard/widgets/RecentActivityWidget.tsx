@@ -71,7 +71,7 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
         <WidgetHeading title="recent activity" tooltip="What you've been up to lately -- your most recent check-ins and conversations." />
         <button
           type="button"
-          onClick={() => navigate('/pulse/nurturing?filter=activity')}
+          onClick={() => navigate('/dashboard/nurturing?filter=activity')}
           className="see-all-link"
         >
           See all
