@@ -6,9 +6,10 @@ import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'
 import { CampaignActivityFeed } from './CampaignActivityFeed'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
+import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { EmptyState } from '../empty/EmptyState'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
-import { Download, Filter } from 'lucide-react'
+import { Download, Filter, Settings } from 'lucide-react'
 
 export function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -19,6 +20,7 @@ export function CampaignsPage() {
   const [filter, setFilter] = useState<'active' | 'completed'>('active')
   const [confirmingComplete, setConfirmingComplete] = useState(false)
   const [showStalledOnly, setShowStalledOnly] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const [stages, setStages] = useState<CampaignStage[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
@@ -41,6 +43,7 @@ export function CampaignsPage() {
     setBoardLoading(true)
     setConfirmingComplete(false)
     setShowStalledOnly(false)
+    setShowSettings(false)
     if (campaign.backing === 'pipeline') {
       Promise.all([
         getStagesForCampaign(activeCampaignId, 'pipeline'),
@@ -276,6 +279,25 @@ export function CampaignsPage() {
                 </button>
               )}
 
+              {/* Settings */}
+              <button
+                type="button"
+                onClick={() => setShowSettings(prev => !prev)}
+                title="Campaign settings"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '5px 10px', borderRadius: 7,
+                  border: showSettings ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+                  background: showSettings ? 'var(--tint)' : 'transparent',
+                  fontSize: 11, fontWeight: 500,
+                  color: showSettings ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                <Settings size={11} />
+                Settings
+              </button>
+
               {/* Mark complete */}
               {activeCampaign.status === 'active' && !confirmingComplete && (
                 <button
@@ -337,6 +359,17 @@ export function CampaignsPage() {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Settings panel */}
+          {showSettings && (
+            <CampaignSettingsPanel
+              campaign={activeCampaign}
+              onUpdate={(updated) => {
+                setCampaigns(prev => prev.map(c => c.id === updated.id ? updated : c))
+              }}
+              onClose={() => setShowSettings(false)}
+            />
           )}
 
           {/* Stats bar */}

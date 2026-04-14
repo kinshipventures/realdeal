@@ -562,12 +562,12 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
 }
 
 // Map pipeline DB rows into Campaign interfaces
 function pipelineToCampaign(p: Pipeline): Campaign {
-  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', notes: null, contact_ids: [], backing: 'pipeline', created_at: p.created_at }
+  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', notes: null, description: null, contact_ids: [], backing: 'pipeline', created_at: p.created_at }
 }
 
 function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
@@ -658,7 +658,7 @@ export async function getCampaignContactsForContact(contactId: string): Promise<
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
@@ -706,7 +706,7 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) c.status = 'completed'
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, contact_ids: [], backing: 'outreach', created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as any }).eq('id', id).select().single()
   if (error) throw error
@@ -729,6 +729,32 @@ export async function updateCampaignNotes(id: string, notes: string | null): Pro
     const idx = _campaignsCache.findIndex(c => c.id === id)
     if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], notes }
   }
+}
+
+
+export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'name' | 'type' | 'deadline' | 'description' | 'notes'>>): Promise<Campaign> {
+  if (isDemoMode()) {
+    const c = DEMO_CAMPAIGNS.find(c => c.id === id)
+    if (c) Object.assign(c, data)
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: '' }
+  }
+  const dbData: any = {}
+  if (data.name !== undefined) dbData.name = data.name
+  if (data.deadline !== undefined) dbData.deadline = data.deadline
+  if (data.description !== undefined) dbData.description = data.description
+  if (data.notes !== undefined) dbData.notes = data.notes
+  if (data.type !== undefined) {
+    const dbType = (['event', 'investment', 'outreach', 'other'] as const).includes(data.type as any) ? data.type : 'other'
+    dbData.type = dbType
+  }
+  const { data: row, error } = await supabase.from('campaigns').update(dbData).eq('id', id).select().single()
+  if (error) throw error
+  const updated = mapCampaign(row)
+  if (_campaignsCache) {
+    const idx = _campaignsCache.findIndex(c => c.id === id)
+    if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], ...updated }
+  }
+  return updated
 }
 
 
