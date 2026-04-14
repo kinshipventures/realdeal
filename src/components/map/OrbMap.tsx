@@ -29,6 +29,7 @@ import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
+import { PodDetailPage } from '../pods/PodDetailPage'
 import { MapLegend } from './MapLegend'
 import { useEscape } from '../../lib/escapeStack'
 
@@ -674,13 +675,6 @@ export function OrbMap() {
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
 
-    // Pods without categories or with too many: navigate directly to detail page
-    const cats = categoriesByPodRef.current[pod.id] ?? []
-    if (cats.length === 0 || cats.length > 20) {
-      navigate(`/pod/${pod.id}`)
-      return
-    }
-
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
@@ -690,17 +684,17 @@ export function OrbMap() {
     const podX = podNode ? (podNode.position.x + (LIST_SIZE / 2)) : 0
     const podY = podNode ? (podNode.position.y + (LIST_SIZE / 2)) : 0
 
-    // Step 1: zoom viewport toward the clicked pod
-    const vp = getViewport()
+    // Zoom viewport toward the clicked pod (top-left quadrant)
     const containerEl = document.querySelector('.react-flow') as HTMLElement | null
     const cw = containerEl?.clientWidth ?? window.innerWidth
     const ch = containerEl?.clientHeight ?? window.innerHeight
-    const zoomTarget = Math.min(vp.zoom * 2.2, 3.5)
+    const zoomTarget = Math.min(getZoom() * 1.8, 2.5)
+    // Position the pod in the top-left area of the viewport
     setViewport({
-      x: cw / 2 - podX * zoomTarget,
-      y: ch / 2 - podY * zoomTarget,
+      x: cw * 0.15 - podX * zoomTarget,
+      y: ch * 0.15 - podY * zoomTarget,
       zoom: zoomTarget,
-    }, { duration: 400 })
+    }, { duration: 450 })
 
     // Fade sibling pods during zoom
     setMapView('pod')
@@ -708,45 +702,13 @@ export function OrbMap() {
     setSelectedPod(pod)
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
-      if (n.id === MOJ_ID) return { ...n, data: { ...n.data, fading: true } }
       return { ...n, data: { ...n.data, fading: true } }
     }))
 
-    // Step 2: after zoom completes, swap to drill-down nodes
     setTimeout(() => {
-      const allContacts = allContactsRef.current
-      const byContact = byContactRef.current
-
-      const contactCountByCategory: Record<string, number> = {}
-      const healthByCategory: Record<string, number> = {}
-      for (const cat of cats) {
-        const catContacts = allContacts.filter(c => c.category_ids.includes(cat.id))
-        contactCountByCategory[cat.id] = catContacts.length
-        if (catContacts.length > 0) {
-          const scores = catContacts.map(c => contactEquityScore(byContact.get(c.id) ?? []))
-          healthByCategory[cat.id] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        }
-      }
-
-      const { nodes: drillNodes } = buildDrillNodes(
-        pod, cats, equityByPodRef.current,
-        countsByPodRef.current[pod.id]?.total ?? 0,
-        navigate,
-        contactCountByCategory,
-        healthByCategory,
-      )
-      setNodes(drillNodes)
-      setEdges(buildDrillEdges(pod, cats, healthByCategory, contactCountByCategory))
-
-      // Step 3: fit to drill-down layout
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.35, duration: 350 })
-        setTimeout(() => {
-          isAnimating.current = false
-        }, 400)
-      })
-    }, 420)
-  }, [nodes, setNodes, setEdges, fitView, navigate, getViewport, setViewport])
+      isAnimating.current = false
+    }, 500)
+  }, [nodes, setNodes, setViewport, getZoom])
 
   drillInRef.current = drillIntoPod
 
@@ -754,26 +716,23 @@ export function OrbMap() {
     if (isAnimating.current) return
     isAnimating.current = true
 
-    // Fade out category nodes
-    setNodes(prev => prev.map(n =>
-      n.id === MOJ_ID ? n : { ...n, data: { ...n.data, fading: true } }
-    ))
+    setMapView('hub')
+    mapViewRef.current = 'hub'
+    setSelectedPod(null)
 
-    setTimeout(() => {
-      setMapView('hub')
-      mapViewRef.current = 'hub'
-      setSelectedPod(null)
-      rebuildHomeView()
+    // Un-fade all nodes
+    setNodes(prev => prev.map(n => ({
+      ...n, data: { ...n.data, fading: false },
+    })))
 
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.22, duration: 400 })
-        setTimeout(() => {
-          isAnimating.current = false
-          setFitViewEnabled(true)
-        }, 450)
-      })
-    }, 350)
-  }, [setNodes, rebuildHomeView, fitView])
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.22, duration: 400 })
+      setTimeout(() => {
+        isAnimating.current = false
+        setFitViewEnabled(true)
+      }, 450)
+    })
+  }, [setNodes, fitView])
 
   drillBackRef.current = drillBackToHub
 
@@ -1227,45 +1186,93 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Breadcrumb - visible during map drill-down */}
+      {/* Pod detail overlay - glass panel on dimmed map */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
-        <div className="drill-breadcrumb">
-          <button onClick={drillBackToHub} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-            color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
-            minWidth: 44, minHeight: 44, justifyContent: 'center',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background: selectedPod.color ?? '#718096',
-          }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>
-            {selectedPod.name}
-          </span>
-          {equityByPodRef.current[selectedPod.id] !== undefined && (
-            <span style={{
-              padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 600,
-              background: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.bg,
-              color: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.color,
+        <>
+          {/* Dim backdrop */}
+          <div
+            onClick={drillBackToHub}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 30,
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+              animation: 'pod-overlay-dim 0.35s ease-out both',
+            }}
+          />
+          {/* Glass panel */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 16, right: 16, bottom: 16,
+              width: 'min(520px, calc(100% - 32px))',
+              zIndex: 31,
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
+              borderRadius: 16,
+              boxShadow: '0 16px 64px rgba(0,0,0,0.25)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+              animation: 'pod-overlay-slide 0.4s cubic-bezier(0.22,1,0.36,1) both',
+            }}
+          >
+            {/* Header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--edge)',
+              flexShrink: 0,
             }}>
-              {scoreLabel(equityByPodRef.current[selectedPod.id])} {equityByPodRef.current[selectedPod.id]}
-            </span>
-          )}
-          {!isMobile && (
-            <span style={{
-              fontSize: 9, color: 'var(--color-text-tertiary)', marginLeft: 4,
-              opacity: 0.6, userSelect: 'none',
-            }}>
-              Esc to go back
-            </span>
-          )}
-        </div>
+              <button
+                onClick={drillBackToHub}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: selectedPod.color ?? '#718096',
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                {selectedPod.name}
+              </span>
+              <button
+                onClick={() => navigate(`/pod/${selectedPod.id}`)}
+                style={{
+                  marginLeft: 'auto',
+                  background: 'none', border: '1px solid var(--edge)',
+                  borderRadius: 6, padding: '4px 10px',
+                  fontSize: 11, color: 'var(--color-text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Open full page
+              </button>
+              {!isMobile && (
+                <span style={{
+                  fontSize: 9, color: 'var(--color-text-tertiary)',
+                  opacity: 0.5,
+                }}>
+                  Esc
+                </span>
+              )}
+            </div>
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <PodDetailPage podIdProp={selectedPod.id} onClose={drillBackToHub} />
+            </div>
+          </div>
+        </>
       )}
 
       {/* Top-right controls: view toggle + reset layout */}
