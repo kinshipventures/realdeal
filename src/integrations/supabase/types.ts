@@ -1385,8 +1385,16 @@ export type Database = {
     Enums: {
       cadence: "weekly" | "biweekly" | "monthly" | "quarterly"
       campaign_contact_status: "pending" | "reached" | "responded" | "confirmed"
-      campaign_status: "active" | "completed"
-      campaign_type: "event" | "investment" | "outreach" | "other"
+      campaign_status: "active" | "completed" | "hidden"
+      campaign_type:
+        | "event"
+        | "investment"
+        | "outreach"
+        | "other"
+        | "deal_flow"
+        | "fundraise"
+        | "talent"
+        | "partnerships"
       contact_frequency:
         | "Weekly"
         | "Monthly"
@@ -1551,8 +1559,17 @@ export const Constants = {
     Enums: {
       cadence: ["weekly", "biweekly", "monthly", "quarterly"],
       campaign_contact_status: ["pending", "reached", "responded", "confirmed"],
-      campaign_status: ["active", "completed"],
-      campaign_type: ["event", "investment", "outreach", "other"],
+      campaign_status: ["active", "completed", "hidden"],
+      campaign_type: [
+        "event",
+        "investment",
+        "outreach",
+        "other",
+        "deal_flow",
+        "fundraise",
+        "talent",
+        "partnerships",
+      ],
       contact_frequency: [
         "Weekly",
         "Monthly",

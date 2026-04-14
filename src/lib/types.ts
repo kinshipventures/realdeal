@@ -139,20 +139,10 @@ export interface FocusItem {
   score: number
 }
 
-// Campaign types — unified model absorbing former "pipelines"
-// Outreach campaigns (event, outreach) use campaign_contacts table (contacts moving through stages)
-// Pipeline campaigns (deal_flow, fundraise, talent, partnerships) use opportunities table (named deals linked to contacts)
+// Campaign types - all campaigns are contact-centric with stages
 export type CampaignType = 'event' | 'investment' | 'outreach' | 'deal_flow' | 'fundraise' | 'talent' | 'partnerships' | 'other'
 export type CampaignContactStatus = 'pending' | 'reached' | 'responded' | 'confirmed'
 export type CampaignStatus = 'active' | 'completed' | 'hidden'
-
-// Which DB backing a campaign uses
-export type CampaignBacking = 'outreach' | 'pipeline'
-export const OUTREACH_TYPES: CampaignType[] = ['event', 'outreach', 'investment']
-export const PIPELINE_TYPES: CampaignType[] = ['deal_flow', 'fundraise', 'talent', 'partnerships']
-export function campaignBacking(type: CampaignType): CampaignBacking {
-  return PIPELINE_TYPES.includes(type) ? 'pipeline' : 'outreach'
-}
 
 export interface Campaign {
   id: string
@@ -163,7 +153,6 @@ export interface Campaign {
   notes: string | null
   description: string | null
   contact_ids: string[]      // linked Contact record IDs from junction
-  backing: CampaignBacking   // which DB tables back this campaign
   created_at: string
 }
 
@@ -191,19 +180,6 @@ export interface CampaignContact {
   created_at: string
 }
 
-// Pipeline campaigns: named deals/opportunities linked to contacts
-export interface CampaignOpportunity {
-  id: string
-  campaign_id: string        // mapped from pipeline_id in DB
-  name: string
-  stage_id: string
-  contact_ids: string[]      // mapped from relationship_ids in DB
-  notes: string | null
-  priority: OpportunityPriority | null
-  status: OpportunityStatus
-  moved_at: string | null
-  created_at: string
-}
 
 // Legacy DB types kept for supabase-data.ts mapping layer
 export interface Pipeline {
