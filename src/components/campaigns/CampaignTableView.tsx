@@ -11,6 +11,7 @@ interface Props {
   campaignContacts: CampaignContact[]
   contacts: Contact[]
   onContactsChange: (contacts: CampaignContact[]) => void
+  onCardClick: (cc: CampaignContact) => void
 }
 
 type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'

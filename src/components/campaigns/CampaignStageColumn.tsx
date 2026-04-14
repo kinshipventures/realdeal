@@ -8,6 +8,14 @@ import { Avatar } from '../ui'
 
 const COLOR_SWATCHES = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#E53935', '#FF6B8A', '#7E57C2', '#F5A623', '#38B2AC', '#667EEA', '#84CC16', '#F59E0B', '#06B6D4', '#A1887F', '#64748B', '#FB7185']
 
+// Convert hex to rgba for tinting
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
 interface Props {
   stage: CampaignStage
   campaignContacts: CampaignContact[]
@@ -21,6 +29,7 @@ interface Props {
   onSelectAllInStage: (stageId: string) => void
   isFirst: boolean
   isLast: boolean
+  visibleCardFields?: Set<string>
 }
 
 export function CampaignStageColumn({
@@ -36,6 +45,7 @@ export function CampaignStageColumn({
   onSelectAllInStage,
   isFirst,
   isLast,
+  visibleCardFields,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -101,12 +111,10 @@ export function CampaignStageColumn({
 
   const canDelete = stageContacts.length === 0
 
-  // Select-all state for this stage
   const stageIds = stageContacts.map(cc => cc.id)
   const allSelected = stageIds.length > 0 && stageIds.every(id => selectedIds.has(id))
   const someSelected = stageIds.some(id => selectedIds.has(id))
 
-  // Contextual empty state text
   let emptyText = 'Drag contacts here'
   if (isFirst) emptyText = 'Add people to kick things off'
   else if (isLast) emptyText = 'The finish line'
@@ -117,9 +125,10 @@ export function CampaignStageColumn({
       style={{
         minWidth: 260,
         width: 260,
-        background: isOver ? 'rgba(37,180,57,0.04)' : 'var(--surface-panel)',
+        background: isOver ? hexToRgba(stageColor, 0.1) : hexToRgba(stageColor, 0.05),
         borderRadius: 12,
-        border: `1px solid ${isOver ? 'rgba(37,180,57,0.25)' : 'var(--edge)'}`,
+        border: `1px solid ${isOver ? hexToRgba(stageColor, 0.3) : 'var(--edge)'}`,
+        borderTop: `3px solid ${stageColor}`,
         display: 'flex',
         flexDirection: 'column',
         transition: 'background 150ms, border-color 150ms',
@@ -128,7 +137,6 @@ export function CampaignStageColumn({
     >
       {/* Header */}
       <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-        {/* Select-all checkbox */}
         {stageContacts.length > 0 && (
           <button
             onClick={() => onSelectAllInStage(stage.id)}
@@ -154,9 +162,10 @@ export function CampaignStageColumn({
           onClick={() => setShowColorPicker(prev => !prev)}
           aria-label="Change stage color"
           style={{
-            width: 3, height: 22, borderRadius: 2,
-            background: stageColor, border: 'none',
+            width: 10, height: 10, borderRadius: '50%',
+            background: stageColor, border: '2px solid rgba(255,255,255,0.6)',
             cursor: 'pointer', padding: 0, flexShrink: 0,
+            boxShadow: `0 0 0 1px ${hexToRgba(stageColor, 0.3)}`,
           }}
         />
 
@@ -258,6 +267,7 @@ export function CampaignStageColumn({
                 onClick={() => onCardClick(cc)}
                 selected={selectedIds.has(cc.id)}
                 onToggleSelect={onToggleSelect}
+                visibleFields={visibleCardFields}
               />
             ))
           )}
