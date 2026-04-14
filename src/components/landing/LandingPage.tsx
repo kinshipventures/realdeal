@@ -395,16 +395,18 @@ export function LandingPage() {
           gap: 40, flexWrap: 'wrap', opacity: 0.45,
         }}>
           {PORTFOLIO_BRANDS.map((brand) => (
-            <span
-              key={brand}
+            <img
+              key={brand.name}
+              src={brand.logo}
+              alt={brand.name}
+              loading="lazy"
               style={{
-                fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
-                color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
+                height: 28,
+                width: 'auto',
+                objectFit: 'contain',
                 userSelect: 'none',
               }}
-            >
-              {brand}
-            </span>
+            />
           ))}
         </div>
       </section>
