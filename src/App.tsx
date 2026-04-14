@@ -51,7 +51,7 @@ function AppShell() {
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
   const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
-  const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
   const isMobile = useIsMobile()
   const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
@@ -156,7 +156,7 @@ function AppShell() {
             <line x1="12" y1="3" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="21"/>
             <line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/>
           </MobileTab>
-          <MobileTab active={isDashboard} label="Pulse" onClick={() => navigate('/pulse')}>
+          <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/dashboard')}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </MobileTab>
           <MobileTab active={isRelationships} label="People" onClick={() => navigate('/contacts')}>
@@ -298,15 +298,17 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="pods" element={<OrbMap />} />
-          <Route path="pulse" element={<Dashboard />} />
-          <Route path="pulse/nurturing" element={<NurturingHub />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard/nurturing" element={<NurturingHub />} />
+          <Route path="pulse" element={<Navigate to="/dashboard" replace />} />
+          <Route path="pulse/nurturing" element={<Navigate to="/dashboard/nurturing" replace />} />
           <Route path="contacts" element={<RecordsList />} />
           <Route path="companies" element={<Navigate to="/contacts?view=companies" replace />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="reports" element={<Navigate to="/pulse" replace />} />
+          <Route path="reports" element={<Navigate to="/dashboard" replace />} />
           <Route path="learn" element={<LearnPage />} />
           <Route path="changelog" element={<ChangelogPage />} />
           <Route path="category/:id" element={<CategoryTable />} />

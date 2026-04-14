@@ -106,7 +106,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
         <WidgetHeading title="coming up" tooltip="Birthdays and follow-ups in the next two weeks. Don't miss a chance to show up." />
         <button
           type="button"
-          onClick={() => navigate('/pulse/nurturing?filter=dates')}
+          onClick={() => navigate('/dashboard/nurturing?filter=dates')}
           className="see-all-link"
         >
           See all
