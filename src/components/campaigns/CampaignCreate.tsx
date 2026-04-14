@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { Campaign, CampaignStage, CampaignType } from '../../lib/types'
 import { createCampaign, createCampaignStage } from '../../lib/airtable'
 
-const TYPES: CampaignType[] = ['event', 'investment', 'outreach', 'other']
+const TYPES: CampaignType[] = ['event', 'investment', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'other']
 
 const STAGE_TEMPLATES: Record<string, { label: string; stages: string[] }> = {
   event:      { label: 'Event',      stages: ['Invited', "RSVP'd", 'Confirmed', 'Attended'] },

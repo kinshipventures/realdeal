@@ -746,9 +746,11 @@ export async function createCampaignStage(campaignId: string, name: string, orde
     DEMO_CAMPAIGN_STAGES.push(s)
     return s
   }
-  // No DB table yet - return a local-only stage
-  const s: CampaignStage = { id: crypto.randomUUID(), campaign_id: campaignId, name, color: (color ?? null) as HexColor | null, order, created_at: new Date().toISOString() }
-  return s
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), pipeline_id: campaignId, name, order, color: color ?? null }).select().single()
+  if (error) throw error
+  invalidatePipelineStagesCache()
+  return pipelineStageToCampaignStage(mapPipelineStage(row))
 }
 
 export async function updateCampaignStage(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color' | 'order'>>): Promise<void> {
@@ -757,10 +759,9 @@ export async function updateCampaignStage(id: string, data: Partial<Pick<Campaig
     if (s) Object.assign(s, data)
     return
   }
-  if (_campaignStagesCache) {
-    const idx = _campaignStagesCache.findIndex(s => s.id === id)
-    if (idx !== -1) _campaignStagesCache[idx] = { ..._campaignStagesCache[idx], ...data }
-  }
+  const { error } = await supabase.from('pipeline_stages').update(data).eq('id', id)
+  if (error) throw error
+  invalidatePipelineStagesCache()
 }
 
 export async function deleteCampaignStage(id: string): Promise<void> {
@@ -769,7 +770,9 @@ export async function deleteCampaignStage(id: string): Promise<void> {
     if (idx !== -1) DEMO_CAMPAIGN_STAGES.splice(idx, 1)
     return
   }
-  if (_campaignStagesCache) _campaignStagesCache = _campaignStagesCache.filter(s => s.id !== id)
+  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
+  if (error) throw error
+  invalidatePipelineStagesCache()
 }
 
 export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'>>): Promise<CampaignContact> {
@@ -778,9 +781,13 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
     if (cc) Object.assign(cc, data)
     return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, created_at: '' }
   }
-  // Only update fields that exist in the DB schema
   const dbData: any = {}
+  if (data.stage_id !== undefined) dbData.stage_id = data.stage_id
   if (data.notes !== undefined) dbData.notes = data.notes
+  if (data.owner !== undefined) dbData.owner = data.owner
+  if (data.next_step !== undefined) dbData.next_step = data.next_step
+  if (data.next_step_due !== undefined) dbData.next_step_due = data.next_step_due
+  if (data.moved_at !== undefined) dbData.moved_at = data.moved_at
   const { data: row, error } = await supabase.from('campaign_contacts').update(dbData).eq('id', id).select().single()
   if (error) throw error
   if (_campaignContactsCache) {
