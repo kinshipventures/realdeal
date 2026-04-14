@@ -360,6 +360,17 @@ export function CampaignsPage() {
             </div>
           )}
 
+          {/* Settings panel */}
+          {showSettings && (
+            <CampaignSettingsPanel
+              campaign={activeCampaign}
+              onUpdate={(updated) => {
+                setCampaigns(prev => prev.map(c => c.id === updated.id ? updated : c))
+              }}
+              onClose={() => setShowSettings(false)}
+            />
+          )}
+
           {/* Stats bar */}
           {!boardLoading && campaignContacts.length > 0 && (
             <CampaignStatsBar
