@@ -531,10 +531,12 @@ export function OrbMap() {
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
+  const isMobile = useIsMobile()
 
-  const [viewMode, setViewMode] = useState<'map' | 'list'>(() =>
-    (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
-  )
+  const [viewMode, setViewMode] = useState<'map' | 'list'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return 'list'
+    return (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
+  })
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
