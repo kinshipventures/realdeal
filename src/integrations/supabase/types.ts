@@ -19,6 +19,7 @@ export type Database = {
           campaign_id: string
           contact_id: string
           created_at: string
+          custom_fields: Json | null
           id: string
           moved_at: string | null
           next_step: string | null
@@ -35,6 +36,7 @@ export type Database = {
           campaign_id: string
           contact_id: string
           created_at?: string
+          custom_fields?: Json | null
           id?: string
           moved_at?: string | null
           next_step?: string | null
@@ -51,6 +53,7 @@ export type Database = {
           campaign_id?: string
           contact_id?: string
           created_at?: string
+          custom_fields?: Json | null
           id?: string
           moved_at?: string | null
           next_step?: string | null
@@ -141,6 +144,7 @@ export type Database = {
       campaigns: {
         Row: {
           created_at: string
+          custom_fields: Json | null
           deadline: string | null
           description: string | null
           id: string
@@ -154,6 +158,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_fields?: Json | null
           deadline?: string | null
           description?: string | null
           id?: string
@@ -167,6 +172,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_fields?: Json | null
           deadline?: string | null
           description?: string | null
           id?: string
