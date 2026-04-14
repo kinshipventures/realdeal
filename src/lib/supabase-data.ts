@@ -650,15 +650,26 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
 
 export async function addContactToCampaign(campaignId: string, contactId: string, _stageId?: string): Promise<CampaignContact> {
   const now = new Date().toISOString()
+  // If no stage provided, use first stage
+  let stageId = _stageId ?? null
+  if (!stageId) {
+    const stages = await getStagesForCampaign(campaignId)
+    if (stages.length > 0) {
+      const sorted = [...stages].sort((a, b) => a.order - b.order)
+      stageId = sorted[0].id
+    }
+  }
   if (isDemoMode()) {
-    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: _stageId ?? null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
     DEMO_CAMPAIGN_CONTACTS.push(cc)
     const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
     return cc
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_contacts').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }]).select().single()
+  const insertData: any = { user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }
+  if (stageId) insertData.stage_id = stageId
+  const { data: row, error } = await supabase.from('campaign_contacts').insert([insertData]).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaignContact(row)
