@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, PipelineStage, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
-import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINE_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
+import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 
@@ -765,7 +765,7 @@ async function fetchPipelineStages(): Promise<PipelineStage[]> {
 }
 
 export function getPipelineStages(pipelineId?: string): Promise<PipelineStage[]> {
-  if (isDemoMode()) return Promise.resolve(pipelineId ? DEMO_PIPELINE_STAGES.filter(s => s.pipeline_id === pipelineId) : DEMO_PIPELINE_STAGES)
+  if (isDemoMode()) return Promise.resolve(DEMO_CAMPAIGN_STAGES.filter(s => !pipelineId || s.pipeline_id === pipelineId))
   return cachedFetch(
     () => ({ data: _pipelineStagesCache, time: _pipelineStagesCacheTime, fetch: _pipelineStagesFetch }),
     (d, f) => { if (d) { _pipelineStagesCache = d; _pipelineStagesCacheTime = Date.now() } _pipelineStagesFetch = f },

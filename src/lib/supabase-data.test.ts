@@ -7,9 +7,7 @@ import {
   DEMO_CONTACTS,
   DEMO_INTERACTIONS,
   DEMO_CAMPAIGNS,
-  DEMO_PIPELINES,
-  DEMO_PIPELINE_STAGES,
-  DEMO_OPPORTUNITIES,
+  DEMO_CAMPAIGN_STAGES,
   DEMO_PROJECTS,
 } from './sampleData'
 
@@ -165,19 +163,10 @@ describe('demo data referential integrity', () => {
     expect(withPods.length / DEMO_CONTACTS.length).toBeGreaterThan(0.5)
   })
 
-  it('pipeline stages reference valid pipelines', () => {
-    const pipelineIds = new Set(DEMO_PIPELINES.map(p => p.id))
-    for (const stage of DEMO_PIPELINE_STAGES) {
-      expect(pipelineIds.has(stage.pipeline_id)).toBe(true)
-    }
-  })
-
-  it('opportunities reference valid pipeline stages', () => {
-    const stageIds = new Set(DEMO_PIPELINE_STAGES.map(s => s.id))
-    for (const opp of DEMO_OPPORTUNITIES) {
-      if (opp.stage_id) {
-        expect(stageIds.has(opp.stage_id)).toBe(true)
-      }
+  it('campaign stages reference valid campaigns', () => {
+    const campaignIds = new Set(DEMO_CAMPAIGNS.map(c => c.id))
+    for (const stage of DEMO_CAMPAIGN_STAGES) {
+      expect(campaignIds.has(stage.pipeline_id)).toBe(true)
     }
   })
 })
