@@ -328,23 +328,14 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.company_ids !== undefined) {
     update.company_ids = data.company_ids
   }
+  if (data.category_ids !== undefined) {
+    update.category_ids = data.category_ids
+  }
 
   const { data: row, error } = await supabase.from('contacts').update(update as any).eq('id', id).select().single()
   if (error) throw error
 
-  if (data.category_ids !== undefined) {
-    const userId = await getUserId()
-    await supabase.from('contact_categories').delete().eq('contact_id', id)
-    if (data.category_ids.length) {
-      await supabase.from('contact_categories').insert(
-        data.category_ids.map(category_id => ({ user_id: userId, workspace_id: getActiveWorkspaceId(), contact_id: id, category_id }))
-      )
-    }
-  }
-
-  const catJ = await supabase.from('contact_categories').select('category_id').eq('contact_id', id)
-  const catIds = (catJ.data ?? []).map(j => j.category_id)
-  const updated = mapContact(row, catIds)
+  const updated = mapContact(row)
   if (_contactsCache) {
     const idx = _contactsCache.findIndex(c => c.id === id)
     if (idx !== -1) _contactsCache[idx] = updated; else _contactsCache = null
