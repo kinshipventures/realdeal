@@ -1220,27 +1220,44 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Breadcrumb — visible during map drill-down */}
+      {/* Breadcrumb - visible during map drill-down */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
-        <div style={{
-          position: 'absolute', top: 12, left: 12, zIndex: 20,
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '6px 12px', borderRadius: 8,
-          background: 'var(--nav-bg)', backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--edge)',
-        }}>
+        <div className="drill-breadcrumb">
           <button onClick={drillBackToHub} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
             color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+            minWidth: 44, minHeight: 44, justifyContent: 'center',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
           <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
           <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>{selectedPod.name}</span>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+            background: selectedPod.color ?? '#718096',
+          }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>
+            {selectedPod.name}
+          </span>
+          {equityByPodRef.current[selectedPod.id] !== undefined && (
+            <span style={{
+              padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 600,
+              background: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.bg,
+              color: HEALTH_COLORS[scoreLabel(equityByPodRef.current[selectedPod.id])]?.color,
+            }}>
+              {scoreLabel(equityByPodRef.current[selectedPod.id])} {equityByPodRef.current[selectedPod.id]}
+            </span>
+          )}
+          {!isMobile && (
+            <span style={{
+              fontSize: 9, color: 'var(--color-text-tertiary)', marginLeft: 4,
+              opacity: 0.6, userSelect: 'none',
+            }}>
+              Esc to go back
+            </span>
+          )}
         </div>
       )}
 
