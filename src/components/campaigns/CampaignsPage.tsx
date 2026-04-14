@@ -20,6 +20,7 @@ export function CampaignsPage() {
   const [filter, setFilter] = useState<'active' | 'completed'>('active')
   const [confirmingComplete, setConfirmingComplete] = useState(false)
   const [showStalledOnly, setShowStalledOnly] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const [stages, setStages] = useState<CampaignStage[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
