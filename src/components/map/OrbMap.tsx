@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import {
   ReactFlow,
@@ -29,6 +29,21 @@ import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
+import { PodDetailPage } from '../pods/PodDetailPage'
+import { MapLegend } from './MapLegend'
+import { useEscape } from '../../lib/escapeStack'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
 
 const LIST_SIZE = 96
 
@@ -205,10 +220,16 @@ function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edg
   return []
 }
 
-const BASE_DRILL_RADIUS = 200
-const MIN_CAT_SIZE = 56
-const MAX_CAT_SIZE = 88
-const MAX_PER_RING = 8
+const MIN_CAT_SIZE = 52
+const MAX_CAT_SIZE = 84
+const MAX_PER_RING = 10
+
+function drillRadius(catCount: number): number {
+  if (catCount <= 6) return 200
+  if (catCount <= 12) return 240
+  if (catCount <= 20) return 280
+  return 320
+}
 
 function buildDrillNodes(
   pod: Pod,
@@ -234,18 +255,17 @@ function buildDrillNodes(
     },
   }
 
-  // Compute dynamic sizes based on contact count
   const counts = categories.map(c => contactCountByCategory?.[c.id] ?? 0)
   const maxCount = Math.max(1, ...counts)
+  const baseRadius = drillRadius(categories.length)
 
-  const ringCount = Math.ceil(categories.length / MAX_PER_RING)
   const catNodes: Node[] = categories.map((cat, i) => {
     const count = contactCountByCategory?.[cat.id] ?? 0
     const size = Math.max(MIN_CAT_SIZE, Math.min(MAX_CAT_SIZE, MIN_CAT_SIZE + (count / maxCount) * (MAX_CAT_SIZE - MIN_CAT_SIZE)))
     const ring = Math.floor(i / MAX_PER_RING)
     const indexInRing = i % MAX_PER_RING
     const countInRing = Math.min(MAX_PER_RING, categories.length - ring * MAX_PER_RING)
-    const radius = BASE_DRILL_RADIUS + ring * 120
+    const radius = baseRadius + ring * 140
     const angleOffset = ring * (Math.PI / MAX_PER_RING / 2)
     const angle = (indexInRing / countInRing) * 2 * Math.PI - Math.PI / 2 + angleOffset
     const x = Math.cos(angle) * radius - size / 2
@@ -262,7 +282,7 @@ function buildDrillNodes(
         healthPercent: healthByCategory?.[cat.id],
         orbSize: Math.round(size),
         onClick: () => navigateFn(`/category/${cat.id}`),
-        animationDelay: `${(i + 1) * 0.08}s`,
+        animationDelay: `${(i + 1) * 0.06}s`,
       },
     }
   })
@@ -276,6 +296,8 @@ function buildDrillEdges(
   healthByCategory: Record<string, number>,
   contactCountByCategory: Record<string, number>,
 ): Edge[] {
+  // Hide edges when many categories to reduce visual clutter
+  if (categories.length > 12) return []
   const color = pod.color ?? '#718096'
   return categories.map(cat => {
     const health = healthByCategory[cat.id] ?? 0
@@ -512,19 +534,21 @@ function PodListView({
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const { setViewport, fitView } = useReactFlow()
+  const { setViewport, getViewport, fitView, getZoom } = useReactFlow()
   const navigate = useNavigate()
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
+  const isMobile = useIsMobile()
 
-  const [viewMode, setViewMode] = useState<'map' | 'list'>(() =>
-    (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
-  )
+  const [viewMode, setViewMode] = useState<'map' | 'list'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return 'list'
+    return (localStorage.getItem('realdeal:pods-view-mode') as 'map' | 'list') || 'map'
+  })
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
-  const [showOrbHint, setShowOrbHint] = useState(() => !localStorage.getItem('realdeal:orb-hint-dismissed'))
+  const [showOrbHint] = useState(false)
   const [fitViewEnabled, setFitViewEnabled] = useState(true)
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
@@ -651,63 +675,42 @@ export function OrbMap() {
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
 
-    // Pods without categories: navigate directly to detail page
-    const cats = categoriesByPodRef.current[pod.id] ?? []
-    if (cats.length === 0) {
-      navigate(`/pod/${pod.id}`)
-      return
-    }
-
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
-    if (showOrbHint) { setShowOrbHint(false); localStorage.setItem('realdeal:orb-hint-dismissed', '1') }
 
-    // Step 1: fade non-selected pods, switch view state immediately to hide orbit rings
+    // Find clicked pod node position to zoom toward it
+    const podNode = nodes.find(n => n.id === pod.id)
+    const podX = podNode ? (podNode.position.x + (LIST_SIZE / 2)) : 0
+    const podY = podNode ? (podNode.position.y + (LIST_SIZE / 2)) : 0
+
+    // Zoom viewport toward the clicked pod, centering it in the left area (panel takes ~520px on right)
+    const containerEl = document.querySelector('.react-flow') as HTMLElement | null
+    const cw = containerEl?.clientWidth ?? window.innerWidth
+    const ch = containerEl?.clientHeight ?? window.innerHeight
+    const panelWidth = Math.min(520, cw - 32)
+    const availableWidth = cw - panelWidth - 32 // space left of the overlay
+    const zoomTarget = Math.min(getZoom() * 1.6, 2.2)
+    // Center the pod orb in the available left area, vertically centered
+    setViewport({
+      x: (availableWidth / 2) - podX * zoomTarget,
+      y: (ch / 2) - podY * zoomTarget,
+      zoom: zoomTarget,
+    }, { duration: 450 })
+
+    // Fade sibling pods during zoom
     setMapView('pod')
     mapViewRef.current = 'pod'
     setSelectedPod(pod)
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
-      if (n.id === MOJ_ID) return n
       return { ...n, data: { ...n.data, fading: true } }
     }))
 
     setTimeout(() => {
-      // Step 2: compute per-category contact counts and health
-      const allContacts = allContactsRef.current
-      const byContact = byContactRef.current
-
-      const contactCountByCategory: Record<string, number> = {}
-      const healthByCategory: Record<string, number> = {}
-      for (const cat of cats) {
-        const catContacts = allContacts.filter(c => c.category_ids.includes(cat.id))
-        contactCountByCategory[cat.id] = catContacts.length
-        if (catContacts.length > 0) {
-          const scores = catContacts.map(c => contactEquityScore(byContact.get(c.id) ?? []))
-          healthByCategory[cat.id] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        }
-      }
-
-      const { nodes: drillNodes } = buildDrillNodes(
-        pod, cats, equityByPodRef.current,
-        countsByPodRef.current[pod.id]?.total ?? 0,
-        navigate,
-        contactCountByCategory,
-        healthByCategory,
-      )
-      setNodes(drillNodes)
-      setEdges(buildDrillEdges(pod, cats, healthByCategory, contactCountByCategory))
-
-      // Step 3: fitView centers on actual node positions with padding
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.35, duration: 250 })
-        setTimeout(() => {
-          isAnimating.current = false
-        }, 300)
-      })
-    }, 150)
-  }, [setNodes, setEdges, fitView, navigate])
+      isAnimating.current = false
+    }, 500)
+  }, [nodes, setNodes, setViewport, getZoom])
 
   drillInRef.current = drillIntoPod
 
@@ -715,28 +718,56 @@ export function OrbMap() {
     if (isAnimating.current) return
     isAnimating.current = true
 
-    // Fade out category nodes
-    setNodes(prev => prev.map(n =>
-      n.id === MOJ_ID ? n : { ...n, data: { ...n.data, fading: true } }
-    ))
+    setMapView('hub')
+    mapViewRef.current = 'hub'
+    setSelectedPod(null)
 
-    setTimeout(() => {
-      setMapView('hub')
-      mapViewRef.current = 'hub'
-      setSelectedPod(null)
-      rebuildHomeView()
+    // Un-fade all nodes
+    setNodes(prev => prev.map(n => ({
+      ...n, data: { ...n.data, fading: false },
+    })))
 
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.22, duration: 250 })
-        setTimeout(() => {
-          isAnimating.current = false
-          setFitViewEnabled(true)
-        }, 300)
-      })
-    }, 150)
-  }, [setNodes, rebuildHomeView, fitView])
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.22, duration: 400 })
+      setTimeout(() => {
+        isAnimating.current = false
+        setFitViewEnabled(true)
+      }, 450)
+    })
+  }, [setNodes, fitView])
 
   drillBackRef.current = drillBackToHub
+
+  // Escape key to drill back when in pod view
+  const escapeHandler = useCallback(() => {
+    if (mapViewRef.current === 'pod') {
+      drillBackRef.current?.()
+    }
+  }, [])
+  useEscape(escapeHandler)
+
+  // Auto-switch mobile to list view when viewport changes
+  useEffect(() => {
+    if (isMobile && viewMode === 'map') {
+      setViewMode('list')
+    }
+  }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Compute aggregate stats for hub stats bar
+  const hubStats = useMemo(() => {
+    const pods = podsRef.current
+    const counts = countsByPodRef.current
+    let totalOverdue = 0
+    for (const podId in counts) {
+      totalOverdue += counts[podId]?.overdue ?? 0
+    }
+    return {
+      podCount: pods.length,
+      contactCount: totalContactsRef.current,
+      overallHealth: overallHealthRef.current,
+      overdueCount: totalOverdue,
+    }
+  }, [podsLoaded, podsCount]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for search highlight events from SearchPalette (via App.tsx)
   useEffect(() => {
@@ -1057,73 +1088,193 @@ export function OrbMap() {
           pointerEvents: 'none',
           zIndex: 10,
         }}>
-          <div style={{ pointerEvents: 'auto' }}>
-            <EmptyState
-              icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>}
-              heading="Your network starts here"
-              subtext="Create your first pod to start mapping relationships."
-              ctaLabel="Create first pod"
-              onCta={() => setShowCreatePod(true)}
-            />
+          <div style={{ pointerEvents: 'auto', maxWidth: 340, textAlign: 'center' }}>
+            {/* Mini illustration: 3 example orbs */}
+            <div style={{
+              display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 20,
+            }}>
+              {['#7C3AED', '#0EA5E9', '#F59E0B'].map((c, i) => (
+                <div key={c} style={{
+                  width: 36 + i * 6, height: 36 + i * 6, borderRadius: '50%',
+                  background: c, opacity: 0.25 + i * 0.15,
+                  animation: `modal-fade-in 0.4s ease-out ${i * 0.1}s both`,
+                }} />
+              ))}
+            </div>
+            <h3 style={{
+              fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-serif)',
+              color: 'var(--color-text-primary)', margin: '0 0 6px',
+              letterSpacing: '-0.01em',
+            }}>
+              Your network starts here
+            </h3>
+            <p style={{
+              fontSize: 12, color: 'var(--color-text-secondary)', margin: '0 0 16px',
+              lineHeight: 1.5,
+            }}>
+              Pods are groups of people you want to nurture - like Investors, Advisors, or Close Friends.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowCreatePod(true)}
+              style={{
+                padding: '8px 20px', borderRadius: 8,
+                border: 'none', cursor: 'pointer',
+                background: 'var(--color-brand)', color: '#fff',
+                fontSize: 13, fontWeight: 600,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              Create your first pod
+            </button>
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => window.location.href = '/import'}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, color: 'var(--color-text-tertiary)',
+                  textDecoration: 'underline',
+                }}
+              >
+                Import contacts instead
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* First-use hint — click an orb to explore */}
-      {showOrbHint && viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
-        <div style={{
-          position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 16px', borderRadius: 10,
-          background: 'var(--nav-bg)', backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid var(--edge)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          animation: 'modal-fade-in 0.4s ease-out',
-        }}>
-          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            Click a pod to see who's inside
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setShowOrbHint(false)
-              localStorage.setItem('realdeal:orb-hint-dismissed', '1')
-            }}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--color-text-tertiary)', padding: '0 2px',
-              fontSize: 16, lineHeight: 1,
-            }}
-            aria-label="Dismiss hint"
-          >
-            x
-          </button>
+      {/* Hub stats bar - glass card with quick-glance metrics */}
+      {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
+        <div className="hub-stats-bar">
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.podCount}</span>
+            <span>{hubStats.podCount === 1 ? 'pod' : 'pods'}</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{hubStats.contactCount}</span>
+            <span>relationships</span>
+          </div>
+          {hubStats.overallHealth !== undefined && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <span style={{
+                  padding: '1px 8px',
+                  borderRadius: 100,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.bg,
+                  color: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.color,
+                }}>
+                  {scoreLabel(hubStats.overallHealth)} {hubStats.overallHealth}
+                </span>
+              </div>
+            </>
+          )}
+          {hubStats.overdueCount > 0 && (
+            <>
+              <div className="stat-divider" />
+              <div className="stat-item" style={{ color: 'var(--health-cooling)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span style={{ fontWeight: 600 }}>{hubStats.overdueCount}</span>
+                <span>need attention</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Breadcrumb — visible during map drill-down */}
+      {/* Pod detail overlay - glass panel on dimmed map */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
-        <div style={{
-          position: 'absolute', top: 12, left: 12, zIndex: 20,
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '6px 12px', borderRadius: 8,
-          background: 'var(--nav-bg)', backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid var(--edge)',
-        }}>
-          <button onClick={drillBackToHub} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>Hub</span>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', userSelect: 'none' }}>/</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)', userSelect: 'none' }}>{selectedPod.name}</span>
-        </div>
+        <>
+          {/* Dim backdrop */}
+          <div
+            onClick={drillBackToHub}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 30,
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+              animation: 'pod-overlay-dim 0.35s ease-out both',
+            }}
+          />
+          {/* Glass panel */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 16, right: 16, bottom: 16,
+              width: 'min(520px, calc(100% - 32px))',
+              zIndex: 31,
+              background: 'var(--surface-panel)',
+              border: '1px solid var(--edge)',
+              borderRadius: 16,
+              boxShadow: '0 16px 64px rgba(0,0,0,0.25)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+              animation: 'pod-overlay-slide 0.4s cubic-bezier(0.22,1,0.36,1) both',
+            }}
+          >
+            {/* Header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--edge)',
+              flexShrink: 0,
+            }}>
+              <button
+                onClick={drillBackToHub}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: selectedPod.color ?? '#718096',
+              }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                {selectedPod.name}
+              </span>
+              <button
+                onClick={() => navigate(`/pod/${selectedPod.id}`)}
+                style={{
+                  marginLeft: 'auto',
+                  background: 'none', border: '1px solid var(--edge)',
+                  borderRadius: 6, padding: '4px 10px',
+                  fontSize: 11, color: 'var(--color-text-secondary)',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Open full page
+              </button>
+              {!isMobile && (
+                <span style={{
+                  fontSize: 9, color: 'var(--color-text-tertiary)',
+                  opacity: 0.5,
+                }}>
+                  Esc
+                </span>
+              )}
+            </div>
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <PodDetailPage podIdProp={selectedPod.id} onClose={drillBackToHub} />
+            </div>
+          </div>
+        </>
       )}
 
       {/* Top-right controls: view toggle + reset layout */}
@@ -1182,34 +1333,23 @@ export function OrbMap() {
           {hoveredPod && (
             <div
               ref={tooltipRef}
+              className="pod-tooltip"
               style={{
-                position: 'fixed',
                 left: cursorRef.current.x + 16,
                 top: cursorRef.current.y + 16,
-                zIndex: 30,
-                background: 'var(--nav-bg)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid var(--edge)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                pointerEvents: 'none',
-                minWidth: 140,
-                opacity: 0,
-                animation: 'tooltip-fade-in 0.15s ease forwards',
               }}
             >
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {hoveredPod.pod.name}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+              <div className="tooltip-header">
+                <span className="tooltip-dot" style={{ background: hoveredPod.pod.color ?? '#718096' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
+                  {hoveredPod.pod.name}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                 <span style={{
                   display: 'inline-block',
-                  padding: '1px 6px',
+                  padding: '2px 8px',
                   borderRadius: 100,
                   fontSize: 10,
                   fontWeight: 600,
@@ -1218,15 +1358,47 @@ export function OrbMap() {
                 }}>
                   {scoreLabel(hoveredPod.health)} {hoveredPod.health}
                 </span>
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
-                {hoveredPod.overdueCount > 0 && (
-                  <span style={{ color: 'var(--health-cooling)' }}> - {hoveredPod.overdueCount} overdue</span>
-                )}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                  {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
+                </span>
+              </div>
+
+              {hoveredPod.pod.cadence && (
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {hoveredPod.pod.cadence} check-in
+                </span>
+              )}
+
+              <div style={{ height: 1, background: 'var(--edge)', margin: '2px 0' }} />
+
+              {hoveredPod.overdueCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
+                </span>
+              ) : hoveredPod.contactCount > 0 ? (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  All caught up
+                </span>
+              ) : null}
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
                 Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
+              </span>
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', opacity: 0.5, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                Click to explore
               </span>
             </div>
           )}
@@ -1340,6 +1512,9 @@ export function OrbMap() {
               </svg>
             </button>
           )}
+
+          {/* Map legend - bottom left */}
+          {mapView === 'hub' && podsLoaded && podsCount > 0 && <MapLegend />}
         </>
       )}
 

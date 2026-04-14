@@ -8,12 +8,13 @@ import { Dashboard } from './components/dashboard/Dashboard'
 import { ImportPanel } from './components/import/ImportPanel'
 import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
-import { SearchPalette, type SearchResult } from './components/search/SearchPalette'
+import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
 import { RecordPage } from './components/records/RecordPage'
 import { RecordsList } from './components/records/RecordsList'
 import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
 import { CampaignsPage } from './components/campaigns/CampaignsPage'
+import { CampaignDetailRoute } from './components/campaigns/CampaignDetailRoute'
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
 import { NurturingHub } from './components/nurturing/NurturingHub'
 import { AccountPage } from './components/settings/AccountPage'
@@ -48,14 +49,16 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
-  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies'
+  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
+  const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
-  const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
   const isMobile = useIsMobile()
   const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [createType, setCreateType] = useState<'Contact' | 'Company' | null>(null)
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
@@ -129,7 +132,7 @@ function AppShell() {
       </div>
 
       {isMobile && (
-        /* Mobile — fixed bottom tab bar */
+        /* Mobile -- fixed bottom tab bar (HIG: 49pt + safe area) */
         <nav
           role="navigation"
           aria-label="Main navigation"
@@ -138,37 +141,42 @@ function AppShell() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 48,
+            height: 49,
             zIndex: 100,
             display: 'flex',
             justifyContent: 'space-around',
-            alignItems: 'center',
+            alignItems: 'flex-start',
+            paddingTop: 6,
             background: 'var(--color-surface)',
-            borderTop: '1px solid var(--edge)',
+            borderTop: '0.5px solid var(--edge)',
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
           <MobileTab active={isPods} label="Pods" onClick={() => navigate('/pods')}>
-            <circle cx="12" cy="12" r="3"/>
+            <circle cx="12" cy="12" r="3" fill={isPods ? 'currentColor' : 'none'}/>
             <line x1="12" y1="3" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="21"/>
             <line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/>
           </MobileTab>
-          <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/pulse')}>
+          <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/dashboard')}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </MobileTab>
-          <MobileTab active={isRelationships} label="Relationships" onClick={() => navigate('/contacts')}>
+          <MobileTab active={isRelationships} label="People" onClick={() => navigate('/contacts')}>
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </MobileTab>
           <MobileTab active={isCampaigns} label="Campaigns" onClick={() => navigate('/campaigns')}>
-            <rect x="2" y="3" width="5" height="18" rx="1"/>
-            <rect x="9.5" y="6" width="5" height="15" rx="1"/>
-            <rect x="17" y="9" width="5" height="12" rx="1"/>
+            <rect x="2" y="3" width="5" height="18" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
+            <rect x="9.5" y="6" width="5" height="15" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
+            <rect x="17" y="9" width="5" height="12" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
           </MobileTab>
           <MobileTab active={false} label="Search" onClick={() => setShowSearch(true)}>
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </MobileTab>
+          <MobileTab active={isSettings} label="Settings" onClick={() => navigate('/account')}>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </MobileTab>
         </nav>
       )}
@@ -188,6 +196,20 @@ function AppShell() {
             }
             navigate(routes[result.type] || '/')
           }}
+          onQuickAction={(action: QuickActionId) => {
+            setShowSearch(false)
+            if (action === 'create-contact') {
+              setCreateType('Contact')
+              setShowCreate(true)
+            } else if (action === 'create-company') {
+              setCreateType('Company')
+              setShowCreate(true)
+            } else if (action === 'new-campaign') {
+              navigate('/campaigns')
+            } else if (action === 'import') {
+              navigate('/import')
+            }
+          }}
           onSelectContact={(contact) => {
             setShowSearch(false)
             if (isPods && contact.list_ids.length > 0) {
@@ -199,41 +221,11 @@ function AppShell() {
         />
       )}
 
-      {/* FAB — create new record (hidden on map, which has its own) */}
-      {!isPods && (
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          aria-label="New relationship"
-          style={{
-            position: 'fixed',
-            bottom: isMobile ? 72 : 24,
-            right: 24,
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            background: '#25B439',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            zIndex: 99,
-            boxShadow: '0 4px 16px rgba(37,180,57,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-      )}
-
       <CreateRecordModal
         isOpen={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={(_contact: Contact) => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setCreateType(null) }}
+        onCreated={(_contact: Contact) => { setShowCreate(false); setCreateType(null) }}
+        initialType={createType}
       />
 
       {/* Demo data toggle - mobile only (desktop uses sidebar) */}
@@ -279,17 +271,17 @@ function MobileTab({ active, label, onClick, children }: {
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-        background: 'none', border: 'none', padding: '6px 12px', cursor: 'pointer',
+        background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer',
         minWidth: 44, minHeight: 44,
       }}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24"
-        fill={active && label === 'Dashboard' ? color : 'none'}
-        stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      <svg width="22" height="22" viewBox="0 0 24 24"
+        fill={active && label !== 'Search' ? color : 'none'}
+        stroke={color} strokeWidth={active ? '2' : '1.5'} strokeLinecap="round" strokeLinejoin="round"
       >
         {children}
       </svg>
-      <span style={{ fontSize: 9, fontWeight: 500, color }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: active ? 600 : 500, color, letterSpacing: '0.01em' }}>{label}</span>
     </button>
   )
 }
@@ -307,15 +299,18 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="pods" element={<OrbMap />} />
-          <Route path="pulse" element={<Dashboard />} />
-          <Route path="pulse/nurturing" element={<NurturingHub />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard/nurturing" element={<NurturingHub />} />
+          <Route path="pulse" element={<Navigate to="/dashboard" replace />} />
+          <Route path="pulse/nurturing" element={<Navigate to="/dashboard/nurturing" replace />} />
           <Route path="contacts" element={<RecordsList />} />
           <Route path="companies" element={<Navigate to="/contacts?view=companies" replace />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="reports" element={<Navigate to="/pulse" replace />} />
+          <Route path="reports" element={<Navigate to="/dashboard" replace />} />
           <Route path="learn" element={<LearnPage />} />
           <Route path="changelog" element={<ChangelogPage />} />
           <Route path="category/:id" element={<CategoryTable />} />

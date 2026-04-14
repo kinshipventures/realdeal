@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, CampaignBacking, CampaignOpportunity, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Pipeline, PipelineStage, Opportunity, OpportunityStatus, OpportunityPriority, Project, PipelineStatus, HexColor, RelationshipType, RelationshipStatus } from './types'
 import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PIPELINES, DEMO_PIPELINE_STAGES, DEMO_OPPORTUNITIES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
@@ -323,6 +323,8 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     stage: data.stage, ticker: data.ticker, domain: data.domain,
     cadence_override: data.cadence_override, email_2: data.email_2, email_3: data.email_3,
     custom_fields: data.custom_fields ?? {},
+    import_batch_id: (data as any).import_batch_id ?? null,
+    import_source: (data as any).import_source ?? null,
   }
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
@@ -502,7 +504,7 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
   const wsId = getActiveWorkspaceId()
   const { data: row, error } = await supabase.from('interactions').insert({
     user_id: userId, workspace_id: wsId, contact_id: data.contact_id, type: data.type, date: data.date,
-    notes: data.notes, summary: data.summary, source: data.source,
+    notes: data.notes, summary: data.summary, source: data.source as any,
     email_link: data.email_link, granola_link: data.granola_link,
     event_detail: data.event_detail, actor: data.actor,
   }).select().single()
@@ -560,12 +562,7 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, contact_ids: contactIds, backing: 'outreach', created_at: r.created_at }
-}
-
-// Map pipeline DB rows into Campaign interfaces
-function pipelineToCampaign(p: Pipeline): Campaign {
-  return { id: p.id, name: p.name, type: 'deal_flow', deadline: null, status: p.status === 'hidden' ? 'hidden' : 'active', notes: null, contact_ids: [], backing: 'pipeline', created_at: p.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, created_at: r.created_at }
 }
 
 function pipelineStageToCampaignStage(s: PipelineStage): CampaignStage {
@@ -613,33 +610,17 @@ export function getCampaigns(): Promise<Campaign[]> {
   )
 }
 
-// Unified: all outreach campaigns + all pipeline-backed campaigns in one list
+// All campaigns come from campaigns table now (no more pipeline merge)
 export async function getAllCampaigns(): Promise<Campaign[]> {
-  const [outreach, pipelines] = await Promise.all([getCampaigns(), getPipelines()])
-  return [...outreach, ...pipelines.map(pipelineToCampaign)]
+  return getCampaigns()
 }
 
-// Get stages for any campaign, regardless of backing
-export async function getStagesForCampaign(campaignId: string, backing: CampaignBacking): Promise<CampaignStage[]> {
-  if (backing === 'pipeline') {
-    const stages = await getPipelineStages(campaignId)
-    return stages.map(pipelineStageToCampaignStage)
-  }
+// Get stages for a campaign - uses pipeline_stages table
+export async function getStagesForCampaign(campaignId: string): Promise<CampaignStage[]> {
+  // Check if this campaign has stages in pipeline_stages (legacy pipeline-backed campaigns)
+  const pipelineStages = await getPipelineStages(campaignId)
+  if (pipelineStages.length > 0) return pipelineStages.map(pipelineStageToCampaignStage)
   return getCampaignStages(campaignId)
-}
-
-// Get opportunities for a pipeline-backed campaign
-export async function getCampaignOpportunities(campaignId: string): Promise<CampaignOpportunity[]> {
-  const opps = await getOpportunities()
-  const stages = await getPipelineStages(campaignId)
-  const stageIds = new Set(stages.map(s => s.id))
-  return opps
-    .filter(o => stageIds.has(o.stage_id))
-    .map(o => ({
-      id: o.id, campaign_id: campaignId, name: o.name, stage_id: o.stage_id,
-      contact_ids: o.relationship_ids, notes: o.notes, priority: o.priority,
-      status: o.status, moved_at: null, created_at: o.created_at,
-    }))
 }
 
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
@@ -656,14 +637,12 @@ export async function getCampaignContactsForContact(contactId: string): Promise<
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, contact_ids: [], created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
   const userId = await getUserId()
-  // DB enum only has event/investment/outreach/other - map extended types to 'other'
-  const dbType = (['event', 'investment', 'outreach', 'other'] as const).includes(data.type as any) ? data.type : 'other'
-  const { data: row, error } = await supabase.from('campaigns').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: dbType as any, deadline: data.deadline ?? null }]).select().single()
+  const { data: row, error } = await supabase.from('campaigns').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: data.type as any, deadline: data.deadline ?? null }]).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaign(row)
@@ -671,15 +650,26 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
 
 export async function addContactToCampaign(campaignId: string, contactId: string, _stageId?: string): Promise<CampaignContact> {
   const now = new Date().toISOString()
+  // If no stage provided, use first stage
+  let stageId = _stageId ?? null
+  if (!stageId) {
+    const stages = await getStagesForCampaign(campaignId)
+    if (stages.length > 0) {
+      const sorted = [...stages].sort((a, b) => a.order - b.order)
+      stageId = sorted[0].id
+    }
+  }
   if (isDemoMode()) {
-    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: _stageId ?? null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, created_at: now }
     DEMO_CAMPAIGN_CONTACTS.push(cc)
     const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
     return cc
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_contacts').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }]).select().single()
+  const insertData: any = { user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }
+  if (stageId) insertData.stage_id = stageId
+  const { data: row, error } = await supabase.from('campaign_contacts').insert([insertData]).select().single()
   if (error) throw error
   _campaignsCache = null
   return mapCampaignContact(row)
@@ -704,7 +694,7 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) c.status = 'completed'
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, contact_ids: [], backing: 'outreach', created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, contact_ids: [], created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as any }).eq('id', id).select().single()
   if (error) throw error
@@ -730,6 +720,29 @@ export async function updateCampaignNotes(id: string, notes: string | null): Pro
 }
 
 
+export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'name' | 'type' | 'deadline' | 'description' | 'notes'>>): Promise<Campaign> {
+  if (isDemoMode()) {
+    const c = DEMO_CAMPAIGNS.find(c => c.id === id)
+    if (c) Object.assign(c, data)
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], created_at: '' }
+  }
+  const dbData: any = {}
+  if (data.name !== undefined) dbData.name = data.name
+  if (data.deadline !== undefined) dbData.deadline = data.deadline
+  if (data.description !== undefined) dbData.description = data.description
+  if (data.notes !== undefined) dbData.notes = data.notes
+  if (data.type !== undefined) dbData.type = data.type
+  const { data: row, error } = await supabase.from('campaigns').update(dbData).eq('id', id).select().single()
+  if (error) throw error
+  const updated = mapCampaign(row)
+  if (_campaignsCache) {
+    const idx = _campaignsCache.findIndex(c => c.id === id)
+    if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], ...updated }
+  }
+  return updated
+}
+
+
 // campaign_stages table does not exist yet - functions work in demo mode only,
 // live mode returns empty / no-ops until the table is created via migration.
 
@@ -744,9 +757,11 @@ export async function createCampaignStage(campaignId: string, name: string, orde
     DEMO_CAMPAIGN_STAGES.push(s)
     return s
   }
-  // No DB table yet - return a local-only stage
-  const s: CampaignStage = { id: crypto.randomUUID(), campaign_id: campaignId, name, color: (color ?? null) as HexColor | null, order, created_at: new Date().toISOString() }
-  return s
+  const userId = await getUserId()
+  const { data: row, error } = await supabase.from('pipeline_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), pipeline_id: campaignId, name, order, color: color ?? null }).select().single()
+  if (error) throw error
+  invalidatePipelineStagesCache()
+  return pipelineStageToCampaignStage(mapPipelineStage(row))
 }
 
 export async function updateCampaignStage(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color' | 'order'>>): Promise<void> {
@@ -755,10 +770,9 @@ export async function updateCampaignStage(id: string, data: Partial<Pick<Campaig
     if (s) Object.assign(s, data)
     return
   }
-  if (_campaignStagesCache) {
-    const idx = _campaignStagesCache.findIndex(s => s.id === id)
-    if (idx !== -1) _campaignStagesCache[idx] = { ..._campaignStagesCache[idx], ...data }
-  }
+  const { error } = await supabase.from('pipeline_stages').update(data).eq('id', id)
+  if (error) throw error
+  invalidatePipelineStagesCache()
 }
 
 export async function deleteCampaignStage(id: string): Promise<void> {
@@ -767,7 +781,9 @@ export async function deleteCampaignStage(id: string): Promise<void> {
     if (idx !== -1) DEMO_CAMPAIGN_STAGES.splice(idx, 1)
     return
   }
-  if (_campaignStagesCache) _campaignStagesCache = _campaignStagesCache.filter(s => s.id !== id)
+  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
+  if (error) throw error
+  invalidatePipelineStagesCache()
 }
 
 export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'>>): Promise<CampaignContact> {
@@ -776,9 +792,13 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
     if (cc) Object.assign(cc, data)
     return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, created_at: '' }
   }
-  // Only update fields that exist in the DB schema
   const dbData: any = {}
+  if (data.stage_id !== undefined) dbData.stage_id = data.stage_id
   if (data.notes !== undefined) dbData.notes = data.notes
+  if (data.owner !== undefined) dbData.owner = data.owner
+  if (data.next_step !== undefined) dbData.next_step = data.next_step
+  if (data.next_step_due !== undefined) dbData.next_step_due = data.next_step_due
+  if (data.moved_at !== undefined) dbData.moved_at = data.moved_at
   const { data: row, error } = await supabase.from('campaign_contacts').update(dbData).eq('id', id).select().single()
   if (error) throw error
   if (_campaignContactsCache) {

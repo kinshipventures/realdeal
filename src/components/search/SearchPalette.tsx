@@ -13,31 +13,76 @@ export interface SearchResult {
   color?: string
 }
 
+export type QuickActionId = 'create-contact' | 'create-company' | 'new-campaign' | 'import'
+
+export interface QuickAction {
+  id: QuickActionId
+  label: string
+  description: string
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  { id: 'create-contact', label: 'Create contact', description: 'Add a new person' },
+  { id: 'create-company', label: 'Create company', description: 'Add an organization' },
+  { id: 'new-campaign', label: 'New campaign', description: 'Start a campaign or pipeline' },
+  { id: 'import', label: 'Import CSV', description: 'Bulk import contacts' },
+]
+
 interface SearchPaletteProps {
   onClose: () => void
   onSelect: (result: SearchResult) => void
+  onQuickAction?: (action: QuickActionId) => void
   /** @deprecated Use onSelect instead */
   onSelectContact?: (contact: Contact) => void
 }
 
-const TYPE_ICONS: Record<SearchResultType, { icon: string; label: string }> = {
-  contact: { icon: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', label: 'People' },
-  company: { icon: 'M3 21h18M3 7v14M21 7v14M6 11h.01M6 15h.01M6 19h.01M10 11h.01M10 15h.01M10 19h.01M14 11h.01M14 15h.01M14 19h.01M18 11h.01M18 15h.01M18 19h.01', label: 'Companies' },
-  pod: { icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', label: 'Pods' },
-  pipeline: { icon: 'M22 12h-4l-3 9L9 3l-3 9H2', label: 'Campaigns' },
-  project: { icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', label: 'Projects' },
+const TYPE_META: Record<SearchResultType, { label: string }> = {
+  contact: { label: 'People' },
+  company: { label: 'Companies' },
+  pod: { label: 'Pods' },
+  pipeline: { label: 'Campaigns' },
+  project: { label: 'Projects' },
 }
 
-function relativeTime(lastContactedAt: string | null): string {
-  if (!lastContactedAt) return 'Never'
-  const days = Math.floor((Date.now() - new Date(lastContactedAt).getTime()) / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'Today'
-  if (days < 7) return `${days}d`
-  if (days < 30) return `${Math.floor(days / 7)}w`
-  return `${Math.floor(days / 30)}mo`
+function TypeIcon({ type, size = 16, color = 'currentColor' }: { type: SearchResultType; size?: number; color?: string }) {
+  const s = { width: size, height: size, flexShrink: 0 } as const
+  const p = { fill: 'none', stroke: color, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (type === 'contact') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 1 0-16 0" /></svg>
+  )
+  if (type === 'company') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1" /></svg>
+  )
+  if (type === 'pod') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="1" fill={color} stroke="none" /></svg>
+  )
+  if (type === 'pipeline') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+  )
+  return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+  )
 }
 
-export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPaletteProps) {
+function ActionIcon({ id, size = 16, color = 'currentColor' }: { id: QuickActionId; size?: number; color?: string }) {
+  const s = { width: size, height: size, flexShrink: 0 } as const
+  const p = { fill: 'none', stroke: color, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (id === 'create-contact') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>
+  )
+  if (id === 'create-company') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="14" /><line x1="9" y1="11" x2="15" y2="11" /></svg>
+  )
+  if (id === 'new-campaign') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+  )
+  // import
+  return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+  )
+}
+
+export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContact }: SearchPaletteProps) {
   const [query, setQuery] = useState('')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
@@ -45,6 +90,7 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
   const [projects, setProjects] = useState<Project[]>([])
   const [podMap, setPodMap] = useState<Map<string, Pod>>(new Map())
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [hoveredIndex, setHoveredIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
 
   const handleClose = useCallback(() => onClose(), [onClose])
@@ -65,11 +111,9 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
 
   const q = query.toLowerCase()
 
-  // Build ranked results grouped by type
   const results: SearchResult[] = query ? (() => {
     const all: (SearchResult & { rank: number })[] = []
 
-    // Contacts (type !== 'Company')
     for (const c of contacts) {
       if (c.type === 'Company') continue
       const name = c.name.toLowerCase()
@@ -81,59 +125,76 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
       }
     }
 
-    // Companies (contacts with type === 'Company')
     for (const c of contacts) {
       if (c.type !== 'Company') continue
       const name = c.name.toLowerCase()
       const prefix = name.startsWith(q)
-      const match = prefix || name.includes(q)
-      if (match) all.push({ id: c.id, name: c.name, type: 'company', rank: prefix ? 0 : 1 })
+      if (prefix || name.includes(q)) all.push({ id: c.id, name: c.name, type: 'company', rank: prefix ? 0 : 1 })
     }
 
-    // Pods
     for (const p of pods) {
       const name = p.name.toLowerCase()
       const prefix = name.startsWith(q)
       if (prefix || name.includes(q)) all.push({ id: p.id, name: p.name, type: 'pod', color: p.color, rank: prefix ? 0 : 1 })
     }
 
-    // Pipelines
     for (const p of pipelines) {
       const name = p.name.toLowerCase()
       const prefix = name.startsWith(q)
       if (prefix || name.includes(q)) all.push({ id: p.id, name: p.name, type: 'pipeline', rank: prefix ? 0 : 1 })
     }
 
-    // Projects
     for (const p of projects) {
       const name = p.name.toLowerCase()
       const prefix = name.startsWith(q)
       if (prefix || name.includes(q)) all.push({ id: p.id, name: p.name, type: 'project', rank: prefix ? 0 : 1 })
     }
 
-    // Sort: prefix matches first, then alphabetical, grouped by type
     all.sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
     return all.slice(0, 20)
   })() : []
+
+  // Filter quick actions by query too
+  const filteredActions = query
+    ? QUICK_ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q))
+    : QUICK_ACTIONS
+
+  // Total selectable items: quick actions (when no query or matching) + results
+  const totalItems = (query ? results.length + filteredActions.length : filteredActions.length)
 
   useEffect(() => setActiveIndex(-1), [query])
 
   useEffect(() => {
     if (activeIndex < 0 || !listRef.current) return
-    const row = listRef.current.children[activeIndex] as HTMLElement | undefined
+    const row = listRef.current.querySelector(`[data-idx="${activeIndex}"]`) as HTMLElement | undefined
     row?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setActiveIndex(i => (i + 1) % Math.max(results.length, 1))
+      setActiveIndex(i => (i + 1) % Math.max(totalItems, 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setActiveIndex(i => (i <= 0 ? results.length - 1 : i - 1))
-    } else if (e.key === 'Enter' && activeIndex >= 0 && results[activeIndex]) {
-      const r = results[activeIndex]
-      // Support legacy callback
+      setActiveIndex(i => (i <= 0 ? totalItems - 1 : i - 1))
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault()
+      selectAtIndex(activeIndex)
+    }
+  }
+
+  function selectAtIndex(idx: number) {
+    // When no query: all items are quick actions
+    // When query: quick actions first, then results
+    const actionCount = filteredActions.length
+    if (idx < actionCount) {
+      onQuickAction?.(filteredActions[idx].id)
+      onClose()
+      return
+    }
+    const resultIdx = idx - actionCount
+    if (query && resultIdx >= 0 && resultIdx < results.length) {
+      const r = results[resultIdx]
       if (onSelectContact && r.type === 'contact') {
         const c = contacts.find(ct => ct.id === r.id)
         if (c) { onSelectContact(c); return }
@@ -150,103 +211,207 @@ export function SearchPalette({ onClose, onSelect, onSelectContact }: SearchPale
     onSelect(r)
   }
 
-  // Group results by type for section headers
-  const grouped: { type: SearchResultType; items: SearchResult[] }[] = []
+  // Build grouped display for search results
   let lastType: SearchResultType | null = null
-  let globalIdx = 0
-  const resultWithIndex: { result: SearchResult; idx: number; showHeader: boolean }[] = []
+  let globalIdx = filteredActions.length // offset by quick actions count
+  const rows: { result: SearchResult; idx: number; showHeader: boolean }[] = []
   for (const r of results) {
     const showHeader = r.type !== lastType
-    resultWithIndex.push({ result: r, idx: globalIdx, showHeader })
-    if (showHeader) {
-      grouped.push({ type: r.type, items: [] })
-      lastType = r.type
-    }
-    grouped[grouped.length - 1].items.push(r)
+    rows.push({ result: r, idx: globalIdx, showHeader })
+    lastType = r.type
     globalIdx++
   }
+
+  const highlightIdx = activeIndex >= 0 ? activeIndex : hoveredIndex
 
   return (
     <div
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '20vh',
+        background: 'rgba(0,0,0,0.18)',
+        backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
+        paddingTop: '15vh',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 'calc(100% - 32px)', maxWidth: 480,
-          borderRadius: 'var(--panel-radius, 16px)',
-          background: 'var(--surface-panel)', border: 'var(--surface-panel-border)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.12)', overflow: 'hidden',
-          animation: 'palette-in 150ms ease-out both',
+          width: 'calc(100% - 32px)', maxWidth: 540,
+          borderRadius: 24,
+          background: 'rgba(255,255,255,0.82)',
+          border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5)',
+          overflow: 'hidden',
+          animation: 'spotlight-in 200ms cubic-bezier(0.175, 0.885, 0.32, 1.1) both',
+          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
         }}
       >
         <style>{`
-          @keyframes palette-in {
-            from { opacity: 0; transform: scale(0.97); }
-            to { opacity: 1; transform: scale(1); }
+          @keyframes spotlight-in {
+            from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
           }
         `}</style>
 
         {/* Search input */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px', borderBottom: '1px solid var(--divider)' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: 10 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             autoFocus type="text" value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search everything..."
+            placeholder="Search or jump to..."
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
-              fontSize: 16, fontWeight: 400, fontFamily: 'inherit',
-              color: 'var(--color-text-primary)', padding: '16px 0',
+              fontSize: 18, fontWeight: 400, fontFamily: 'inherit',
+              color: 'var(--color-text-primary)', padding: '20px 0',
+              letterSpacing: '-0.01em',
             }}
           />
+          <kbd style={{
+            fontSize: 10, fontWeight: 600, fontFamily: 'inherit',
+            padding: '3px 6px', borderRadius: 5,
+            background: 'rgba(0,0,0,0.06)', color: 'var(--color-text-tertiary)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            lineHeight: 1, flexShrink: 0,
+          }}>ESC</kbd>
         </div>
 
-        {/* Results */}
-        {query && (
-          <div ref={listRef} style={{ maxHeight: 360, overflowY: 'auto' }}>
-            {results.length === 0 ? (
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)', padding: '32px 20px', margin: 0 }}>
-                No results
-              </p>
-            ) : resultWithIndex.map(({ result, idx, showHeader }) => (
-              <div key={`${result.type}-${result.id}`}>
-                {showHeader && (
-                  <div style={{ padding: '8px 20px 4px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-tertiary)' }}>
-                    {TYPE_ICONS[result.type].label}
-                  </div>
-                )}
+        <div ref={listRef} style={{ maxHeight: 420, overflowY: 'auto', padding: '4px 0' }}>
+          {/* Quick actions */}
+          {filteredActions.length > 0 && (
+            <>
+              <div style={{
+                padding: '10px 20px 4px', fontSize: 10, fontWeight: 600,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                color: 'var(--color-text-tertiary)',
+              }}>
+                Quick Actions
+              </div>
+              {filteredActions.map((action, i) => (
                 <button
+                  key={action.id}
                   type="button"
-                  onClick={() => handleResultClick(result)}
+                  data-idx={i}
+                  onClick={() => { onQuickAction?.(action.id); onClose() }}
+                  onMouseEnter={() => { setHoveredIndex(i); setActiveIndex(-1) }}
+                  onMouseLeave={() => setHoveredIndex(-1)}
                   style={{
-                    width: '100%', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 10,
-                    border: 'none', background: idx === activeIndex ? 'var(--tint)' : 'transparent',
-                    cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                    width: 'calc(100% - 12px)', margin: '0 6px',
+                    padding: '10px 14px', height: 44,
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    border: 'none', borderRadius: 10, cursor: 'pointer',
+                    fontFamily: 'inherit', textAlign: 'left',
+                    background: highlightIdx === i ? 'var(--color-brand, #1B6B4A)' : 'transparent',
+                    transition: 'background 120ms ease',
                   }}
                 >
-                  {result.color && (
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: result.color, flexShrink: 0 }} />
-                  )}
-                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {result.name}
+                  <ActionIcon
+                    id={action.id}
+                    size={16}
+                    color={highlightIdx === i ? 'rgba(255,255,255,0.85)' : 'var(--color-text-tertiary)'}
+                  />
+                  <span style={{
+                    fontSize: 14, fontWeight: 500, flex: 1,
+                    color: highlightIdx === i ? '#fff' : 'var(--color-text-primary)',
+                    transition: 'color 120ms ease',
+                  }}>
+                    {action.label}
                   </span>
-                  {result.subtitle && (
-                    <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>{result.subtitle}</span>
-                  )}
+                  <span style={{
+                    fontSize: 12,
+                    color: highlightIdx === i ? 'rgba(255,255,255,0.6)' : 'var(--color-text-tertiary)',
+                    transition: 'color 120ms ease',
+                  }}>{action.description}</span>
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </>
+          )}
+
+          {/* Search results */}
+          {query && results.length === 0 && filteredActions.length === 0 && (
+            <div style={{ padding: '32px 20px 36px', textAlign: 'center' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 10px', opacity: 0.4 }}>
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0 }}>
+                No results found
+              </p>
+            </div>
+          )}
+
+          {rows.length > 0 && (
+            <>
+              {rows.map(({ result, idx, showHeader }) => (
+                <div key={`${result.type}-${result.id}`}>
+                  {showHeader && (
+                    <div style={{
+                      padding: '10px 20px 4px', fontSize: 10, fontWeight: 600,
+                      textTransform: 'uppercase', letterSpacing: '0.08em',
+                      color: 'var(--color-text-tertiary)',
+                      borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: 4, paddingTop: 12,
+                    }}>
+                      {TYPE_META[result.type].label}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    data-idx={idx}
+                    onClick={() => handleResultClick(result)}
+                    onMouseEnter={() => { setHoveredIndex(idx); setActiveIndex(-1) }}
+                    onMouseLeave={() => setHoveredIndex(-1)}
+                    style={{
+                      width: 'calc(100% - 12px)', margin: '0 6px',
+                      padding: '10px 14px', height: 44,
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      border: 'none', borderRadius: 10, cursor: 'pointer',
+                      fontFamily: 'inherit', textAlign: 'left',
+                      background: highlightIdx === idx ? 'var(--color-brand, #1B6B4A)' : 'transparent',
+                      transition: 'background 120ms ease, transform 120ms ease',
+                      transform: highlightIdx === idx ? 'scale(1.005)' : 'scale(1)',
+                    }}
+                  >
+                    <TypeIcon
+                      type={result.type}
+                      size={16}
+                      color={highlightIdx === idx ? 'rgba(255,255,255,0.85)' : 'var(--color-text-tertiary)'}
+                    />
+                    {result.color && (
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: result.color, flexShrink: 0,
+                        boxShadow: highlightIdx === idx ? '0 0 0 1px rgba(255,255,255,0.3)' : 'none',
+                      }} />
+                    )}
+                    <span style={{
+                      fontSize: 14, fontWeight: 500, flex: 1,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      color: highlightIdx === idx ? '#fff' : 'var(--color-text-primary)',
+                      transition: 'color 120ms ease',
+                    }}>
+                      {result.name}
+                    </span>
+                    {result.subtitle && (
+                      <span style={{
+                        fontSize: 12, flexShrink: 0,
+                        color: highlightIdx === idx ? 'rgba(255,255,255,0.6)' : 'var(--color-text-tertiary)',
+                        transition: 'color 120ms ease',
+                      }}>{result.subtitle}</span>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

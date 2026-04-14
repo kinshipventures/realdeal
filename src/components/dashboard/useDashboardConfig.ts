@@ -12,7 +12,7 @@ export type WidgetId =
   | 'campaign-progress'
   | 'pending-tray'
   | 'gmail-sync'
-  | 'granola-sync'
+  | 'meeting-notes'
 
 export type Preset = 'full' | 'focus'
 
@@ -28,11 +28,11 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
   { id: 'campaign-progress', label: 'Campaign Progress' },
   { id: 'pending-tray', label: 'Pending Tray' },
   { id: 'gmail-sync', label: 'Email Sync' },
-  { id: 'granola-sync', label: 'Meeting Notes' },
+  { id: 'meeting-notes', label: 'Meeting Notes' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync', 'granola-sync'],
+  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync', 'meeting-notes'],
   focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress'],
 }
 
@@ -46,7 +46,7 @@ const DEFAULT_ORDER: WidgetId[] = [
   'recent-activity',
   'pending-tray',
   'gmail-sync',
-  'granola-sync',
+  'meeting-notes',
   // Campaigns tab
   'campaign-progress',
   'quick-links',
@@ -76,6 +76,11 @@ function loadConfig(): DashboardConfig {
     if (!raw) return { preset: 'full', visible: new Set(PRESET_CONFIGS.full), order: DEFAULT_ORDER, equityPodIds: null }
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
+
+    // Migrate stale widget ID
+    const migrate = (ids: WidgetId[]) => ids.map(id => id === ('granola-sync' as any) ? 'meeting-notes' as WidgetId : id)
+    if (parsed.visible) parsed.visible = migrate(parsed.visible)
+    if (parsed.order) parsed.order = migrate(parsed.order)
 
     // Version-drift protection: fill any missing widget IDs from current preset defaults
     const storedSet = new Set(parsed.visible ?? []) as Set<WidgetId>

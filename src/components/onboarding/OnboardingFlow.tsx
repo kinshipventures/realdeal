@@ -2,6 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SolidOrb, POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { useEscape } from '../../lib/escapeStack'
+import { supabase } from '@/integrations/supabase/client'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { ImportSourcePicker } from '../import/ImportSourcePicker'
+import { parseVCard, vcardToRows, isVCard } from '@/lib/vcardParser'
+import { parsePastedData } from '@/lib/pasteParser'
+import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import type { HexColor } from '../../lib/types'
 
 interface Props {
@@ -296,6 +302,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         </span>
 
         {/* Progress: labels as segmented bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', gap: 4, borderRadius: 10, padding: 4, background: 'var(--tint)' }}>
           {STEP_LABELS.map((label, i) => {
             const visited = i <= maxStep
@@ -321,6 +328,27 @@ export function OnboardingFlow({ onComplete }: Props) {
               </button>
             )
           })}
+        </div>
+
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onComplete}
+          aria-label="Close onboarding"
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: 'none',
+            background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--color-text-tertiary)',
+            transition: 'color 0.15s, background 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
+        >
+          <svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+          </svg>
+        </button>
         </div>
       </div>
 
@@ -597,6 +625,47 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
 }
 
 function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; onBack: () => void; navigate: (path: string) => void }) {
+  const { activeWorkspace } = useWorkspace()
+  const [googleState, setGoogleState] = useState<'idle' | 'loading' | 'preview' | 'importing' | 'done' | 'error'>('idle')
+  const [googleContacts, setGoogleContacts] = useState<any[]>([])
+  const [googleResult, setGoogleResult] = useState<{ imported: number; skipped: number } | null>(null)
+  const [googleError, setGoogleError] = useState<string | null>(null)
+
+  const handleGoogleImport = async () => {
+    if (!activeWorkspace) return
+    setGoogleState('loading')
+    setGoogleError(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-contacts', {
+        body: { workspace_id: activeWorkspace.id, dry_run: true },
+      })
+      if (error) throw new Error(error.message || 'Failed to fetch contacts')
+      if (data?.error) throw new Error(data.error)
+      setGoogleContacts(data.contacts || [])
+      setGoogleState('preview')
+    } catch (err: any) {
+      setGoogleError(err.message)
+      setGoogleState('error')
+    }
+  }
+
+  const confirmGoogleImport = async () => {
+    if (!activeWorkspace) return
+    setGoogleState('importing')
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-contacts', {
+        body: { workspace_id: activeWorkspace.id, dry_run: false },
+      })
+      if (error) throw new Error(error.message || 'Import failed')
+      if (data?.error) throw new Error(data.error)
+      setGoogleResult({ imported: data.imported, skipped: data.skipped })
+      setGoogleState('done')
+    } catch (err: any) {
+      setGoogleError(err.message)
+      setGoogleState('error')
+    }
+  }
+
   const nodes = [
     { x: 0, y: 0, size: 16, color: '#25B439', delay: 0 },
     { x: -44, y: -32, size: 11, color: '#6366F1', delay: 100 },
@@ -608,48 +677,223 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
     { x: 0, y: -48, size: 8, color: '#F43F5E', delay: 180 },
     { x: -16, y: -50, size: 6, color: '#0EA5E9', delay: 280 },
   ]
+
+  // Google import done state
+  if (googleState === 'done' && googleResult) {
+    return (
+      <>
+        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #25B439, #1A8A2A)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'onboard-enter 0.4s ease-out' }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 style={{ ...headingStyle, ...stagger(100) }}>{googleResult.imported} contacts imported</h2>
+        <p style={{ ...bodyStyle, ...stagger(160) }}>
+          {googleResult.skipped > 0 ? `${googleResult.skipped} duplicates were skipped. ` : ''}
+          Your network is ready to explore.
+        </p>
+        <div style={stagger(220)}><ActionRow onAction={onComplete} onBack={onBack} label="Let's go" /></div>
+      </>
+    )
+  }
+
+  // Google preview state
+  if (googleState === 'preview') {
+    return (
+      <>
+        <h2 style={{ ...headingStyle, ...stagger(0) }}>
+          {googleContacts.length} contacts found
+        </h2>
+        <p style={{ ...bodyStyle, ...stagger(60) }}>
+          We'll import these into your workspace. Duplicates (by email) will be skipped automatically.
+        </p>
+
+        {/* Preview list */}
+        <div style={{
+          ...stagger(120), width: '100%', maxWidth: 380, maxHeight: 200, overflowY: 'auto',
+          borderRadius: 12, border: '1px solid var(--edge)', background: 'var(--tint)',
+          padding: 4,
+        }}>
+          {googleContacts.slice(0, 20).map((c: any, i: number) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+              borderBottom: i < 19 && i < googleContacts.length - 1 ? '1px solid var(--edge)' : 'none',
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                background: `hsl(${(i * 47) % 360}, 60%, 65%)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 600, color: '#fff',
+              }}>
+                {c.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+                {c.email && <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email}</div>}
+              </div>
+            </div>
+          ))}
+          {googleContacts.length > 20 && (
+            <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+              + {googleContacts.length - 20} more
+            </div>
+          )}
+        </div>
+
+        <div style={stagger(180)}>
+          <ActionRow onAction={confirmGoogleImport} onBack={() => setGoogleState('idle')} label={`Import ${googleContacts.length} contacts`} />
+        </div>
+      </>
+    )
+  }
+
+  // Loading/importing state
+  if (googleState === 'loading' || googleState === 'importing') {
+    return (
+      <>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--edge)', borderTopColor: 'var(--color-brand)', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ ...bodyStyle, marginTop: 8 }}>
+          {googleState === 'loading' ? 'Fetching your Google contacts...' : 'Importing contacts...'}
+        </p>
+      </>
+    )
+  }
+
+  // Error state
+  if (googleState === 'error') {
+    return (
+      <>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <h2 style={{ ...headingStyle, fontSize: 20, ...stagger(0) }}>Couldn't connect</h2>
+        <p style={{ ...bodyStyle, ...stagger(60), maxWidth: 320 }}>{googleError}</p>
+        <div style={{ display: 'flex', gap: 8, ...stagger(120) }}>
+          <button type="button" onClick={() => setGoogleState('idle')} className="onboard-btn-secondary" style={secondaryBtnStyle}>Back</button>
+          <button type="button" onClick={handleGoogleImport} className="onboard-btn-primary" style={{ ...primaryBtnStyle, width: 'auto' }}>Try again</button>
+        </div>
+      </>
+    )
+  }
+
+  // Default idle state - use universal ImportSourcePicker
   return (
     <>
-      {/* Network constellation visual */}
-      <div className="onboard-constellation" style={{ opacity: 0, position: 'relative', width: 200, height: 180, animation: 'onboard-stagger 0.4s ease-out 80ms both, gentle-float 5s ease-in-out 0.5s infinite', flexShrink: 0 }}>
-        <svg width="200" height="180" viewBox="-90 -80 180 160">
-          {/* Connection lines - network web */}
-          {nodes.slice(1).map((n, i) => (
-            <line key={`l${i}`} x1={nodes[0].x} y1={nodes[0].y} x2={n.x} y2={n.y}
-              stroke={n.color} strokeWidth="1" strokeOpacity="0.15"
-              style={{ opacity: 0, animation: `onboard-enter 0.5s ease-out ${n.delay + 300}ms forwards` }}
-            />
-          ))}
-          {/* Cross-connections between nearby nodes */}
-          {[
-            [1, 8], [2, 7], [3, 5], [4, 6], [1, 7],
-          ].map(([a, b], i) => (
-            <line key={`c${i}`} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y}
-              stroke="var(--color-text-tertiary)" strokeWidth="0.5" strokeOpacity="0.2"
-              style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${600 + i * 80}ms forwards` }}
-            />
-          ))}
-          {/* Nodes with glow */}
-          {nodes.map((n, i) => (
-            <g key={`n${i}`} style={{ opacity: 0, animation: `onboard-enter 0.4s ease-out ${n.delay}ms forwards` }}>
-              <circle cx={n.x} cy={n.y} r={n.size * 2} fill={n.color} fillOpacity="0.06" />
-              <circle cx={n.x} cy={n.y} r={n.size} fill={n.color} fillOpacity={i === 0 ? 1 : 0.85} />
-            </g>
-          ))}
-        </svg>
-      </div>
-
       <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Your network already exists -- it just needs a home. Import your contacts and watch the picture come together.
+        Your network already exists -- it just needs a home. Pick the fastest way to get started.
       </p>
 
-      <div style={stagger(180)}><ActionRow onAction={() => { onComplete(); navigate('/import') }} onBack={onBack} label="Import a spreadsheet" /></div>
+      <div style={{ ...stagger(120), width: '100%', maxWidth: 400 }}>
+        <ImportSourcePicker
+          onFileSelected={(file) => {
+            // Read file and detect format
+            const reader = new FileReader()
+            reader.onload = () => {
+              const text = reader.result as string
+              if (isVCard(text)) {
+                const contacts = parseVCard(text)
+                if (contacts.length > 0) {
+                  const { rows } = vcardToRows(contacts)
+                  // Store parsed data and navigate to import
+                  sessionStorage.setItem('realdeal:import-data', JSON.stringify({ rows, source: 'vcard' }))
+                }
+              } else {
+                sessionStorage.setItem('realdeal:import-file', file.name)
+              }
+              onComplete()
+              navigate('/import')
+            }
+            reader.readAsText(file)
+          }}
+          onPasteSelected={() => { onComplete(); navigate('/import?source=paste') }}
+          onGoogleSelected={handleGoogleImport}
+          onOutlookSelected={() => { onComplete(); navigate('/import?source=outlook') }}
+        />
+      </div>
 
-      <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={{ ...secondaryBtnStyle, ...stagger(240) }}>
-        I'll add people one by one
-      </button>
+      {/* Meeting notes providers */}
+      <div style={{ ...stagger(200), width: '100%', maxWidth: 400 }}>
+        <MeetingNotesOnboarding />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, ...stagger(320) }}>
+        <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={secondaryBtnStyle}>
+          I'll add people one by one
+        </button>
+        <button type="button" onClick={onComplete} style={{ fontSize: 13, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 12px' }}>
+          Skip for now
+        </button>
+      </div>
     </>
+  )
+}
+
+/* ---------- Meeting Notes Onboarding ---------- */
+
+function MeetingNotesOnboarding() {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [keyValue, setKeyValue] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  function handleSave(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    const trimmed = keyValue.trim()
+    if (trimmed && !provider.validate(trimmed)) {
+      setError(`Key should start with ${provider.keyPrefix}`)
+      return
+    }
+    setProviderKey(provider, trimmed || null)
+    setEditingId(null)
+    setKeyValue('')
+    setError(null)
+  }
+
+  return (
+    <div style={{ borderRadius: 12, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--edge)', background: 'var(--tint)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>Meeting notes (optional)</span>
+      </div>
+      {PROVIDERS.map(provider => {
+        const connected = !!getProviderKey(provider)
+        const isEditing = editingId === provider.id
+        return (
+          <div key={provider.id} style={{ padding: '10px 14px', borderBottom: '1px solid var(--edge)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>{provider.name}</span>
+                {connected && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-brand)', background: 'rgba(37,180,57,0.08)', borderRadius: 4, padding: '1px 6px' }}>Connected</span>}
+                {provider.comingSoon && !connected && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>Coming soon</span>}
+              </div>
+              {!provider.comingSoon && !isEditing && (
+                <button type="button" onClick={() => { setEditingId(provider.id); setKeyValue(getProviderKey(provider) ?? '') }}
+                  style={{ fontSize: 11, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                  {connected ? 'Change key' : 'Connect'}
+                </button>
+              )}
+            </div>
+            {isEditing && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                <input type="password" value={keyValue} onChange={e => setKeyValue(e.target.value)}
+                  placeholder={`${provider.keyPrefix}...`}
+                  style={{ flex: 1, fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--edge-strong)', background: 'var(--tint)', fontFamily: 'monospace', color: 'var(--color-text-primary)', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSave(provider.id) }}
+                  autoFocus
+                />
+                <button type="button" onClick={() => handleSave(provider.id)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--color-brand)', color: '#fff', cursor: 'pointer' }}>Save</button>
+                <button type="button" onClick={() => { setEditingId(null); setError(null) }}
+                  style={{ fontSize: 11, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--edge)', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>Cancel</button>
+              </div>
+            )}
+            {isEditing && error && <p style={{ fontSize: 11, color: '#dc2626', margin: '4px 0 0' }}>{error}</p>}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

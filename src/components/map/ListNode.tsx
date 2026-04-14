@@ -4,6 +4,7 @@ import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 import { LucideIcon } from '../LucideIcon'
+import { scoreLabel } from '../../lib/equity'
 
 type ListNodeData = {
   list: Pod
@@ -97,6 +98,19 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
             }}>
               {list.name}
             </span>
+            {contactCount > 0 && healthPercent !== undefined && (
+              <span style={{
+                fontSize: 8,
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.55)',
+                textAlign: 'center',
+                userSelect: 'none',
+                marginTop: 1,
+                letterSpacing: '0.02em',
+              }}>
+                {contactCount} {scoreLabel(healthPercent)}
+              </span>
+            )}
           </div>
         )}
       </SolidOrb>

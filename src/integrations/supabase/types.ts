@@ -452,6 +452,8 @@ export type Database = {
           gender: Database["public"]["Enums"]["gender_type"] | null
           global_region: Database["public"]["Enums"]["global_region"] | null
           id: string
+          import_batch_id: string | null
+          import_source: string | null
           industry: string | null
           intel_notes: string | null
           interests: string | null
@@ -504,6 +506,8 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_type"] | null
           global_region?: Database["public"]["Enums"]["global_region"] | null
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           industry?: string | null
           intel_notes?: string | null
           interests?: string | null
@@ -556,6 +560,8 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_type"] | null
           global_region?: Database["public"]["Enums"]["global_region"] | null
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           industry?: string | null
           intel_notes?: string | null
           interests?: string | null
@@ -1379,8 +1385,16 @@ export type Database = {
     Enums: {
       cadence: "weekly" | "biweekly" | "monthly" | "quarterly"
       campaign_contact_status: "pending" | "reached" | "responded" | "confirmed"
-      campaign_status: "active" | "completed"
-      campaign_type: "event" | "investment" | "outreach" | "other"
+      campaign_status: "active" | "completed" | "hidden"
+      campaign_type:
+        | "event"
+        | "investment"
+        | "outreach"
+        | "other"
+        | "deal_flow"
+        | "fundraise"
+        | "talent"
+        | "partnerships"
       contact_frequency:
         | "Weekly"
         | "Monthly"
@@ -1389,7 +1403,13 @@ export type Database = {
         | "As Needed"
       gender_type: "Male" | "Female" | "Non-binary" | "Other"
       global_region: "AMER" | "APAC" | "ME" | "LATAM" | "EU"
-      interaction_source: "Gmail" | "Granola" | "Manual"
+      interaction_source:
+        | "Gmail"
+        | "Granola"
+        | "Manual"
+        | "Otter"
+        | "Fireflies"
+        | "Fathom"
       interaction_type:
         | "call"
         | "email"
@@ -1539,8 +1559,17 @@ export const Constants = {
     Enums: {
       cadence: ["weekly", "biweekly", "monthly", "quarterly"],
       campaign_contact_status: ["pending", "reached", "responded", "confirmed"],
-      campaign_status: ["active", "completed"],
-      campaign_type: ["event", "investment", "outreach", "other"],
+      campaign_status: ["active", "completed", "hidden"],
+      campaign_type: [
+        "event",
+        "investment",
+        "outreach",
+        "other",
+        "deal_flow",
+        "fundraise",
+        "talent",
+        "partnerships",
+      ],
       contact_frequency: [
         "Weekly",
         "Monthly",
@@ -1550,7 +1579,14 @@ export const Constants = {
       ],
       gender_type: ["Male", "Female", "Non-binary", "Other"],
       global_region: ["AMER", "APAC", "ME", "LATAM", "EU"],
-      interaction_source: ["Gmail", "Granola", "Manual"],
+      interaction_source: [
+        "Gmail",
+        "Granola",
+        "Manual",
+        "Otter",
+        "Fireflies",
+        "Fathom",
+      ],
       interaction_type: [
         "call",
         "email",

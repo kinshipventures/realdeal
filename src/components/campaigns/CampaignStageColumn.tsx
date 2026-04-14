@@ -6,7 +6,7 @@ import type { CampaignContact, CampaignStage, Contact, HexColor } from '../../li
 import { CampaignContactCard } from './CampaignContactCard'
 import { Avatar } from '../ui'
 
-const COLOR_SWATCHES = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#E53935', '#FF6B8A', '#7E57C2', '#F5A623']
+const COLOR_SWATCHES = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#E53935', '#FF6B8A', '#7E57C2', '#F5A623', '#38B2AC', '#667EEA', '#84CC16', '#F59E0B', '#06B6D4', '#A1887F', '#64748B', '#FB7185']
 
 interface Props {
   stage: CampaignStage

@@ -235,6 +235,8 @@ export async function importContacts(
     mapping?: ColumnMapping
     customFieldMap?: Record<string, string>  // csvHeader -> fieldConfig.id
     categoryMap?: Map<string, string>        // normalized category value -> category id
+    batchId?: string
+    importSource?: string
   }
 ): Promise<ImportResult> {
   const recordType: RelationshipType = options?.type ?? 'Contact'
@@ -242,6 +244,8 @@ export async function importContacts(
   const mapping = options?.mapping
   const customFieldMap = options?.customFieldMap ?? {}
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
+  const batchId = options?.batchId ?? null
+  const importSrc = options?.importSource ?? null
   const existing = await getContacts()
 
   // Build dual dedup index
@@ -361,7 +365,9 @@ export async function importContacts(
         email_2: r(row, 'Email 2', 'Email 2') || null,
         email_3: r(row, 'Email 3', 'Email 3') || null,
         communication_preferences: null,
-      })
+        import_batch_id: batchId,
+        import_source: importSrc,
+      } as any)
 
       if (email) emailIndex.set(emailLower, contact.id)
       nameIndex.set(nameLower, contact.id)

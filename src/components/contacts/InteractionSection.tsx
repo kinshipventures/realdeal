@@ -613,7 +613,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                   {interaction.notes}
                 </div>
               )}
-              {(interaction.email_link || interaction.granola_link) && (
+              {(interaction.email_link || interaction.granola_link || interaction.meeting_link) && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   {interaction.email_link && (
                     <a href={interaction.email_link} target="_blank" rel="noopener noreferrer"
@@ -621,8 +621,8 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       view email
                     </a>
                   )}
-                  {interaction.granola_link && (
-                    <a href={interaction.granola_link} target="_blank" rel="noopener noreferrer"
+                  {(interaction.meeting_link || interaction.granola_link) && (
+                    <a href={(interaction.meeting_link || interaction.granola_link)!} target="_blank" rel="noopener noreferrer"
                       style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textDecoration: 'none' }}>
                       view notes
                     </a>

@@ -1,53 +1,133 @@
 
 
-## Plan: Team Management Completeness, Domain-Based Member Discovery, and Company Data Quality
+# Campaigns Redesign - Complete Plan
 
-### Part 1: Team/Account Management Gaps
+## Summary
 
-**Current state:** Invite flow, accept-invite Edge Function, workspace switcher, role management, and leave team are all built. The core functionality is solid.
+Rebuild the campaigns interface from a tab-based board view into a full management system: campaign overview landing page (card grid + table list toggle), route-based drill-down with Board + Table dual views, 16-color stage picker, inline-editable table with field visibility, and full migration from opportunities to contact-centric model.
 
-**Missing pieces to add:**
+## Major Architectural Change: Kill Opportunities
 
-1. **Domain-based team discovery** - Show users on the same email domain (e.g. @kinshipventures.com) as suggested teammates when inviting. Query `profiles.email` for matching domains among users who share at least one workspace, and display them as "People in your organization" on the Account page.
+65 opportunities in "KV Pipeline" need to become campaign_contacts. Each opportunity maps to one or more contacts via opportunity_contacts junction. The migration:
 
-2. **Invite email notifications** - Currently invite links are clipboard-only. Set up transactional email infrastructure and send an email when an invite is created, containing the inviter's name, workspace name, and join link.
+1. DB migration script: for each opportunity, create a campaign_contact row per linked contact (or one row using the opportunity name if no contact linked), mapping stage_id, notes, and status
+2. Map pipeline_stages to campaign_stages for the KV Pipeline campaign
+3. Remove all `CampaignOpportunity` references from types, data layer, and UI
+4. Remove the `backing` concept - all campaigns are now contact-based with stages
 
-3. **Password reset flow** - `ResetPasswordPage.tsx` exists but needs verification that the route and auth flow work end-to-end.
+This is a breaking change for existing pipeline campaigns but simplifies everything downstream.
 
-4. **Admin can also edit workspace name** - Currently only owners can edit. Admins should be able to as well.
+## Routing
 
-### Part 2: Company Dedup, Normalize, and Enrich
+```text
+/campaigns          -> CampaignOverview (card grid or table list)
+/campaigns/:id      -> CampaignDetail (board or table view)
+/campaigns/:id?view=table  -> table view
+```
 
-**Current state:** 2,086 companies in the database. Data quality is poor:
-- 1,903 (91%) have no domain
-- 113 records are role/title strings, not company names (e.g. "VP, Brand Partnerships - IZO")
-- 20 records are LinkedIn URLs
-- 5 records are "NA"/"N/A"
-- Many case-insensitive duplicates (e.g. "Zendaya" x6, "Greatness Media" x5)
+Browser back from detail returns to overview. View preference (board/table) stored in localStorage per campaign.
 
-**New Edge Function: `normalize-companies`**
+## Plan Steps
 
-Phases:
-1. **Garbage removal** - Delete or archive company records that are URLs, roles/titles (pattern: contains comma + hyphen + title keywords), or empty values (NA, N/A, none, -)
-2. **Case-insensitive dedup** - Group by `lower(name)`, pick survivor (most data, earliest created), merge `contact_companies` junctions to survivor, delete losers
-3. **Domain extraction** - For companies with a website but no domain, extract domain from website URL
-4. **Domain-based dedup** - After domain backfill, merge companies sharing the same domain
-5. **AI enrichment** - For companies with a name but no website/domain/industry, call Lovable AI (gemini-2.5-flash) with the company name to fill in website, domain, industry, and location
+### Step 1: DB Migration - Opportunities to Campaign Contacts
 
-### Part 3: Implementation Steps
+- SQL migration to:
+  - Create campaign_stages rows from pipeline_stages (mapping pipeline_id to campaign_id via the campaigns table)
+  - Create campaign_contact rows from opportunities + opportunity_contacts
+  - Preserve stage_id, notes, moved_at from opportunities
+- No schema changes needed - campaign_contacts and campaign_stages tables already exist with the right columns
 
-1. **Database migration** - Add `company_type` enum or `is_garbage` boolean flag to companies table for classification (optional - could just delete directly)
-2. **Create `normalize-companies` Edge Function** - Phases 1-4 (deterministic cleanup)
-3. **Create `enrich-companies` Edge Function** - Phase 5 (AI-powered, batch processing with rate limiting)
-4. **Update `cleanup-workspace` Edge Function** - Add phase 6 that calls company normalization
-5. **Domain-based member suggestion** - Add RPC function to find users by email domain, surface in AccountPage invite section
-6. **Email infrastructure** - Set up transactional email for invite notifications
-7. **Minor AccountPage fixes** - Let admins edit workspace name
+### Step 2: Remove Opportunity Model from Code
 
-### Technical Details
+- Remove `CampaignOpportunity` interface and `CampaignBacking` type from types.ts
+- Remove `OUTREACH_TYPES`, `PIPELINE_TYPES`, `campaignBacking()` from types.ts
+- Remove `getCampaignOpportunities`, opportunity-related functions from supabase-data.ts
+- Remove all `backing` branches in CampaignsPage, CampaignBoard
+- All campaigns now use campaign_contacts + campaign_stages uniformly
 
-- Company normalization uses service-role client to batch-process across workspace
-- AI enrichment batches 20 companies per call to minimize latency
-- Domain-based member discovery uses a new `find_users_by_domain` RPC that queries `profiles.email` domain suffix, filtered to users in at least one shared workspace (privacy-safe)
-- Transactional email uses the Lovable email infrastructure toolchain
+### Step 3: Campaign Overview Page
+
+New component `CampaignOverview.tsx` as the default `/campaigns` landing:
+
+- **Card Grid view**: campaign cards showing name, type icon+color, progress bar, contact count, deadline, last activity, first 3-5 contact avatars, owner
+- **Table List view**: fixed columns - Name, Type, Status, Contacts, Progress, Deadline, Last Activity
+- Toggle between grid/list stored in localStorage
+- Active/Completed filter
+- Full empty state with Create Campaign CTA when zero campaigns
+- Grouped or flat toggle (user choice)
+- Click card/row navigates to `/campaigns/:id`
+
+### Step 4: Route Restructure
+
+- `/campaigns` renders `CampaignOverview`
+- `/campaigns/:id` renders `CampaignDetail` (new wrapper component)
+- Back button in detail header navigates to `/campaigns`
+- `CampaignDetail` loads campaign data, stages, contacts on mount
+- Board | Table toggle in the action bar
+
+### Step 5: 16-Color Stage Palette
+
+Expand `COLOR_SWATCHES` in `CampaignStageColumn.tsx` from 8 to 16 colors:
+gray, blue, green, yellow, orange, red, pink, purple, teal, indigo, lime, amber, cyan, brown, slate, rose
+
+### Step 6: Campaign Table View
+
+New component `CampaignTableView.tsx`:
+
+- Rows = campaign_contacts joined with contact data
+- Default columns: Name, Company, Email, Role, Stage (colored dropdown), Owner, Next Step, Next Step Due, Notes, Last Moved
+- **Single-click** cell editing - click cell becomes input, blur/Enter saves
+- Stage column: colored dropdown, pick any stage freely
+- Single-column sort via header click (asc/desc toggle)
+- Checkbox column for multi-select + bulk action bar (move stage, remove, export)
+- Search bar + column-level filter dropdowns (stackable)
+- Right-click context menu on rows (Remove from campaign, Move to stage, Open contact)
+- Column visibility per campaign via localStorage key `realdeal:campaign-fields:{campaignId}`
+- `FieldVisibilityMenu` component - eye icon button opens checklist popover
+
+### Step 7: Contact Detail Overlay from Table
+
+Clicking a contact name in the table opens the existing ContactDetail slide-out panel overlaid on the campaign table.
+
+### Step 8: New Contacts Default to First Stage
+
+When adding a contact to a campaign (search-add), they are assigned to the first stage (lowest `order`) automatically.
+
+### Step 9: Update Settings Panel
+
+Move stage color editing into the existing `CampaignSettingsPanel` or keep it inline on stage headers. Settings panel already handles name, type, deadline, description, notes.
+
+## Files to Create
+
+| File | Purpose |
+|---|---|
+| `src/components/campaigns/CampaignOverview.tsx` | Overview grid/list landing page |
+| `src/components/campaigns/CampaignOverviewCard.tsx` | Card for overview grid |
+| `src/components/campaigns/CampaignTableView.tsx` | Airtable-style editable table |
+| `src/components/campaigns/FieldVisibilityMenu.tsx` | Column toggle popover |
+| `src/components/campaigns/CampaignDetailRoute.tsx` | Route wrapper for /campaigns/:id |
+
+## Files to Modify
+
+| File | Changes |
+|---|---|
+| `src/lib/types.ts` | Remove CampaignOpportunity, CampaignBacking, backing field, OUTREACH/PIPELINE_TYPES |
+| `src/lib/supabase-data.ts` | Remove opportunity functions, simplify campaign data loading |
+| `src/lib/sampleData.ts` | Remove opportunity sample data, update demo mode |
+| `src/components/campaigns/CampaignsPage.tsx` | Restructure as router (overview vs detail) |
+| `src/components/campaigns/CampaignBoard.tsx` | Remove opportunity branches, simplify props |
+| `src/components/campaigns/CampaignStageColumn.tsx` | 16-color palette |
+| `src/components/campaigns/CampaignContactCard.tsx` | Minor - ensure works without opportunity model |
+| `src/App.tsx` | Add /campaigns/:id route |
+
+## DB Migration
+
+One migration to convert opportunities to campaign_contacts. No new tables or columns needed.
+
+## Data Integrity
+
+- All 65 KV Pipeline opportunities migrated to campaign_contacts
+- Stage mappings preserved (pipeline_stages -> campaign_stages already exist or get created)
+- Contact linkage preserved via opportunity_contacts junction
+- Opportunities with no linked contacts get a campaign_contact row with contact_id from best-match contact lookup (or skipped with a note)
 

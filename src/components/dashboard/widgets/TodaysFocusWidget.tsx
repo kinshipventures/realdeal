@@ -68,7 +68,7 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
         <WidgetHeading title="today's focus" tooltip="Who you should reach out to today -- the people who'd most appreciate hearing from you." />
         <button
           type="button"
-          onClick={() => navigate('/pulse/nurturing?filter=focus')}
+          onClick={() => navigate('/dashboard/nurturing?filter=focus')}
           className="see-all-link"
         >
           See all

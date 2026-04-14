@@ -257,7 +257,7 @@ export function NeedsAttentionWidget({
         </div>
         <button
           type="button"
-          onClick={() => navigate('/pulse/nurturing?filter=overdue')}
+          onClick={() => navigate('/dashboard/nurturing?filter=overdue')}
           className="see-all-link"
         >
           See all

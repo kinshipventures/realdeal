@@ -3,16 +3,27 @@ import { useNavigate } from 'react-router'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
+import { PreferencesTab } from './PreferencesTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, updateMemberRole,
   type WorkspaceMember, type WorkspaceInvite,
 } from '@/lib/supabase-data'
 
+type SettingsTab = 'profile' | 'preferences' | 'integrations' | 'team'
+const TABS: { id: SettingsTab; label: string }[] = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'preferences', label: 'Preferences' },
+  { id: 'integrations', label: 'Integrations' },
+  { id: 'team', label: 'Team' },
+]
+
 export function AccountPage() {
   const { session } = useAuth()
   const { activeWorkspace, refreshWorkspaces } = useWorkspace()
   const navigate = useNavigate()
+  const [tab, setTab] = useState<SettingsTab>('profile')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
@@ -50,7 +61,6 @@ export function AccountPage() {
     loadWorkspaceData()
   }, [activeWorkspace?.id])
 
-  // Domain-based member discovery
   useEffect(() => {
     if (!session?.user?.email || !canInvite) return
     const domain = session.user.email.split('@')[1]
@@ -58,7 +68,6 @@ export function AccountPage() {
     supabase.rpc('find_users_by_email_domain', { _domain: domain })
       .then(({ data }) => {
         if (data) {
-          // Filter out users already in this workspace
           const memberIds = new Set(members.map(m => m.user_id))
           const invitedEmails = new Set(invites.map(i => i.email.toLowerCase()))
           setDomainUsers((data as any[]).filter(u => !memberIds.has(u.id) && !invitedEmails.has(u.email?.toLowerCase())))
@@ -181,34 +190,84 @@ export function AccountPage() {
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px 80px' }}>
       <h1 style={{
-        fontSize: 24, fontWeight: 800, marginBottom: 40,
+        fontSize: 24, fontWeight: 800, marginBottom: 24,
         fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em',
-      }}>Account</h1>
+      }}>Settings</h1>
 
-      {/* ── Profile ───────────────────────────────────────────── */}
-      <section style={{ marginBottom: 40 }}>
-        {sectionHeading('Profile')}
-        <label style={{ display: 'block', marginBottom: 20 }}>
-          <span style={labelStyle}>Email</span>
-          <input value={email} disabled style={{ ...inputStyle, background: 'var(--tint)', color: 'var(--color-text-tertiary)' }} />
-        </label>
-        <label style={{ display: 'block', marginBottom: 20 }}>
-          <span style={labelStyle}>Display name</span>
-          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" style={inputStyle} />
-        </label>
-        <button type="button" onClick={handleSave} disabled={saving} style={{ ...btnStyle('primary'), opacity: saving ? 0.6 : 1 }}>
-          {saved ? 'Saved!' : saving ? 'Saving...' : 'Save'}
-        </button>
-      </section>
+      {/* ── Tab bar ───────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', gap: 0, marginBottom: 32,
+        borderBottom: '1px solid var(--edge)',
+      }}>
+        {TABS.map(t => {
+          const active = t.id === tab
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              style={{
+                padding: '10px 16px', fontSize: 13, fontWeight: active ? 600 : 400,
+                fontFamily: 'inherit', cursor: 'pointer', minHeight: 44,
+                border: 'none', background: 'transparent',
+                color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                borderBottom: active ? '2px solid var(--color-brand)' : '2px solid transparent',
+                transition: 'color 0.15s, border-color 0.15s',
+                marginBottom: -1,
+              }}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
 
-      {/* ── Team ──────────────────────────────────────────────── */}
-      {activeWorkspace && (
-        <section style={{
-          marginBottom: 40, paddingTop: 32,
-          borderTop: '1px solid var(--edge)',
-        }}>
-          {sectionHeading('Team')}
+      {/* ── Profile tab ───────────────────────────────────────── */}
+      {tab === 'profile' && (
+        <>
+          <section style={{ marginBottom: 40 }}>
+            <label style={{ display: 'block', marginBottom: 20 }}>
+              <span style={labelStyle}>Email</span>
+              <input value={email} disabled style={{ ...inputStyle, background: 'var(--tint)', color: 'var(--color-text-tertiary)' }} />
+            </label>
+            <label style={{ display: 'block', marginBottom: 20 }}>
+              <span style={labelStyle}>Display name</span>
+              <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" style={inputStyle} />
+            </label>
+            <button type="button" onClick={handleSave} disabled={saving} style={{ ...btnStyle('primary'), opacity: saving ? 0.6 : 1 }}>
+              {saved ? 'Saved!' : saving ? 'Saving...' : 'Save'}
+            </button>
+          </section>
 
+          <section style={{ paddingTop: 32, borderTop: '1px solid var(--edge)' }}>
+            <button type="button" onClick={handleSignOut} style={{
+              padding: '8px 16px', fontSize: 13, fontWeight: 500,
+              border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+              background: 'transparent', color: 'var(--color-text-tertiary)',
+            }}>
+              Sign out
+            </button>
+          </section>
+        </>
+      )}
+
+      {/* ── Preferences tab ───────────────────────────────────── */}
+      {tab === 'preferences' && <PreferencesTab />}
+
+      {/* ── Integrations tab ──────────────────────────────────── */}
+      {tab === 'integrations' && (
+        <section>
+          {sectionHeading('Meeting Notes')}
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+            Connect AI meeting note apps to automatically log meetings on each person's timeline.
+          </p>
+          <MeetingNotesSettings />
+        </section>
+      )}
+
+      {/* ── Team tab ──────────────────────────────────────────── */}
+      {tab === 'team' && activeWorkspace && (
+        <section>
           {/* Team name */}
           <div style={{ marginBottom: 24 }}>
             <span style={labelStyle}>Name</span>
@@ -307,7 +366,7 @@ export function AccountPage() {
                     ) : (
                       <button type="button" onClick={async () => {
                         const link = `${window.location.origin}/invite?token=${invite.token}`
-                        try { await navigator.clipboard.writeText(link) } catch { /* fallback below */ }
+                        try { await navigator.clipboard.writeText(link) } catch { /* fallback */ }
                         setCopiedLink(invite.id)
                         setTimeout(() => setCopiedLink(null), 3000)
                       }}
@@ -402,17 +461,6 @@ export function AccountPage() {
         </section>
       )}
 
-      {/* ── Danger zone ───────────────────────────────────────── */}
-      <section style={{ paddingTop: 32, borderTop: '1px solid var(--edge)' }}>
-        <button type="button" onClick={handleSignOut} style={{
-          padding: '8px 16px', fontSize: 13, fontWeight: 500,
-          border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
-          background: 'transparent', color: 'var(--color-text-tertiary)',
-        }}>
-          Sign out
-        </button>
-      </section>
-
       {/* ── Confirmation dialog ────────────────────────────────── */}
       {confirmAction && (
         <div style={{
@@ -447,6 +495,91 @@ export function AccountPage() {
           </div>
         </div>
       )}
+
+      {/* About */}
+      <p style={{
+        marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--edge)',
+        fontSize: 11, color: 'var(--color-text-tertiary)',
+        textAlign: 'center', letterSpacing: '0.02em',
+      }}>
+        Built by Gabriel Murray
+      </p>
+    </div>
+  )
+}
+
+function MeetingNotesSettings() {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [keyValue, setKeyValue] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [, forceUpdate] = useState(0)
+
+  function handleSave(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    const trimmed = keyValue.trim()
+    if (trimmed && !provider.validate(trimmed)) {
+      setError(`Key should start with ${provider.keyPrefix}`)
+      return
+    }
+    setProviderKey(provider, trimmed || null)
+    setEditingId(null)
+    setKeyValue('')
+    setError(null)
+    forceUpdate(n => n + 1)
+  }
+
+  function handleDisconnect(providerId: string) {
+    const provider = PROVIDERS.find(p => p.id === providerId)!
+    setProviderKey(provider, null)
+    forceUpdate(n => n + 1)
+  }
+
+  return (
+    <div style={{ borderRadius: 10, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+      {PROVIDERS.map(provider => {
+        const connected = !!getProviderKey(provider)
+        const isEditing = editingId === provider.id
+        return (
+          <div key={provider.id} style={{ padding: '12px 14px', borderBottom: '1px solid var(--divider)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>{provider.name}</span>
+                {connected && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-brand)', background: 'rgba(37,180,57,0.08)', borderRadius: 4, padding: '1px 6px' }}>Connected</span>}
+                {provider.comingSoon && !connected && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>Coming soon</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {!provider.comingSoon && !isEditing && (
+                  <button type="button" onClick={() => { setEditingId(provider.id); setKeyValue(getProviderKey(provider) ?? '') }}
+                    style={{ fontSize: 12, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                    {connected ? 'Change key' : 'Connect'}
+                  </button>
+                )}
+                {connected && !isEditing && (
+                  <button type="button" onClick={() => handleDisconnect(provider.id)}
+                    style={{ fontSize: 12, color: 'var(--health-fading)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            </div>
+            {isEditing && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                <input type="password" value={keyValue} onChange={e => setKeyValue(e.target.value)}
+                  placeholder={`${provider.keyPrefix}...`}
+                  style={{ flex: 1, fontSize: 13, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--edge-strong)', background: 'transparent', fontFamily: 'monospace', color: 'var(--color-text-primary)', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSave(provider.id) }}
+                  autoFocus
+                />
+                <button type="button" onClick={() => handleSave(provider.id)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 6, border: 'none', background: 'var(--color-brand)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+                <button type="button" onClick={() => { setEditingId(null); setError(null) }}
+                  style={{ fontSize: 12, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--edge)', background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              </div>
+            )}
+            {isEditing && error && <p style={{ fontSize: 11, color: '#dc2626', margin: '4px 0 0' }}>{error}</p>}
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -42,7 +42,7 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
           fontSize: 12, opacity: 0.70, marginTop: 8,
           position: 'relative', zIndex: 1,
         }}>
-          Log an interaction to start your weekly pulse.
+          Log an interaction to start your weekly dashboard.
         </div>
       </div>
     )

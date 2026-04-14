@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
@@ -33,7 +33,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   }
 
   const isPods = location.pathname === '/' || location.pathname === '/pods'
-  const isDashboard = location.pathname === '/pulse' || location.pathname.startsWith('/pulse/')
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
@@ -133,7 +133,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="Dashboard"
           active={isDashboard}
           collapsed={collapsed}
-          onClick={() => navigate('/pulse')}
+          onClick={() => navigate('/dashboard')}
         />
         <NavItem
           icon={<RelationshipsIcon />}
@@ -264,7 +264,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-          label="Account"
+          label="Settings"
           active={location.pathname === '/account'}
           collapsed={collapsed}
           onClick={() => navigate('/account')}
@@ -282,7 +282,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="What's New"
           active={isChangelog}
           collapsed={collapsed}
-          onClick={() => navigate('/changelog')}
+          onClick={() => {
+            localStorage.setItem('realdeal:changelog-seen:0.2', '1')
+            navigate('/changelog')
+          }}
+          badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
         />
         <NavItem
           icon={<SignOutIcon />}
@@ -319,7 +323,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, active, collapsed, onClick, hint, labelStyle,
+  icon, label, active, collapsed, onClick, hint, labelStyle, badge,
 }: {
   icon: React.ReactNode
   label: string
@@ -328,6 +332,7 @@ function NavItem({
   onClick: () => void
   hint?: string
   labelStyle?: React.CSSProperties
+  badge?: boolean
 }) {
   return (
     <button
@@ -351,10 +356,18 @@ function NavItem({
         cursor: 'pointer',
         fontFamily: 'inherit',
         transition: 'background 0.12s ease',
+        position: 'relative',
       }}
     >
-      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+      <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
+        {badge && collapsed && (
+          <span className="badge-pulse" style={{
+            position: 'absolute', top: -2, right: -2,
+            width: 6, height: 6, borderRadius: '50%',
+            background: 'var(--color-brand)',
+          }} />
+        )}
       </span>
       {!collapsed && (
         <span style={{
@@ -370,6 +383,12 @@ function NavItem({
         }}>
           {label}
         </span>
+      )}
+      {badge && !collapsed && (
+        <span className="badge-pulse" style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'var(--color-brand)', flexShrink: 0,
+        }} />
       )}
       {hint && !collapsed && (
         <span style={{

@@ -8,6 +8,13 @@
 .col-resize-handle { background: transparent; transition: background 0.15s; }
 .col-resize-handle:hover, .col-resize-handle.active { background: var(--color-text-tertiary); }
 
+/* Badge pulse */
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.badge-pulse { animation: badge-pulse 2s ease-in-out infinite; }
+
 /* Z-index scale
    20   — breadcrumb navigation
    50   — contact panel
@@ -36,7 +43,7 @@
   --color-bg: #F5F4F0;
   --color-text-primary: rgba(0,0,0,0.82);
   --color-text-secondary: rgba(0,0,0,0.45);
-  --color-text-tertiary: rgba(0,0,0,0.40);
+  --color-text-tertiary: rgba(0,0,0,0.48);
   --header-band-bg: #34B15D;
   --header-band-text: #ffffff;
   --header-band-padding: 28px 32px;
@@ -63,7 +70,7 @@
   --edge-strong: rgba(0,0,0,0.12);
   --tint: rgba(0,0,0,0.04);
   --tint-hover: rgba(0,0,0,0.06);
-  --text-muted: rgba(0,0,0,0.35);
+  --text-muted: rgba(0,0,0,0.45);
   --nav-bg: rgba(255,255,255,0.92);
   --stroke-subtle: rgba(0,0,0,0.06);
 }
@@ -219,6 +226,14 @@
 .react-flow__node-moj.selectable { cursor: default !important; }
 
 
+@keyframes pod-overlay-dim {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pod-overlay-slide {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 /* ── Hover interaction classes ──────────────────────────────────────────────── */
 /* Naming follows behavioral taxonomy: what the element does, not what it looks like */
@@ -300,15 +315,15 @@
 
 /* Category orb spring entrance for drill-down */
 .cat-spring-in {
-  animation: cat-spring 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: cat-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   opacity: 0;
   transform: scale(0);
 }
 
 @keyframes cat-spring {
-  0% { opacity: 0; transform: scale(0); }
-  60% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; transform: scale(0) translateY(8px); }
+  50% { opacity: 1; transform: scale(1.08) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .health-ring-enter {
@@ -318,7 +333,144 @@
 /* Drill-down transition helpers */
 .orb-fading {
   opacity: 0;
-  transition: opacity 0.15s ease-out;
+  transform: scale(0.85);
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+}
+
+/* Drill-down backdrop - radial glow behind center orb */
+.drill-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.drill-backdrop.active {
+  opacity: 1;
+}
+
+/* Edge energy pulse - light traveling from hub to categories */
+@keyframes edge-energy-pulse {
+  0% { stroke-dashoffset: 100%; opacity: 0; }
+  20% { opacity: 1; }
+  100% { stroke-dashoffset: 0%; opacity: 0.6; }
+}
+
+.edge-enter.drill-edge path {
+  animation: line-draw 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+             edge-energy-pulse 1.2s ease-out 0.4s;
+  animation-delay: var(--edge-delay, 0.2s);
+}
+
+/* Hub stats bar */
+.hub-stats-bar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--edge);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  animation: tooltip-fade-in 0.3s ease-out;
+}
+
+.hub-stats-bar .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.hub-stats-bar .stat-value {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+.hub-stats-bar .stat-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--edge);
+  flex-shrink: 0;
+}
+
+/* Drill breadcrumb improvements */
+.drill-breadcrumb {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--edge);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+/* Enhanced tooltip */
+.pod-tooltip {
+  position: fixed;
+  z-index: 30;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  min-width: 180px;
+  max-width: 240px;
+  opacity: 0;
+  animation: tooltip-fade-in 0.15s ease forwards;
+}
+
+.pod-tooltip .tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pod-tooltip .tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pod-tooltip .tooltip-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.pod-tooltip .spark-bar {
+  width: 4px;
+  border-radius: 1px;
+  background: var(--color-brand);
+  opacity: 0.6;
+  min-height: 2px;
 }
 
 .orbit-start-skip {
@@ -726,8 +878,6 @@ body::after {
   transform: translateY(0);
   pointer-events: auto;
 }
-
-
 /* "See all" link with hover + chevron */
 .see-all-link {
   font-size: 12px;
@@ -907,7 +1057,27 @@ body::after {
   .skeleton-stagger > .skeleton { animation: none; opacity: 1; }
   .content-enter { animation: none; opacity: 1; }
 }
+  .drill-backdrop { transition: none; }
 
+
+/* ── Pods mobile responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .hub-stats-bar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .hub-stats-bar .stat-item { font-size: 10px; }
+  .drill-breadcrumb {
+    top: 8px;
+    left: 8px;
+    padding: 6px 10px;
+  }
+}
 /* Icon picker */
 .icon-picker {
   width: 264px;
@@ -977,4 +1147,56 @@ body::after {
 
 .subpod-pill:hover .subpod-delete {
   opacity: 1 !important;
+}
+
+/* ── HIG Motion tiers ──────────────────────────────────────────────── */
+/* micro: 0.15s, element: 0.25s, panel: 0.35s */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── HIG Input zoom prevention ─────────────────────────────────────── */
+@media screen and (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── HIG Destructive confirmation sheet ────────────────────────────── */
+.hig-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: hig-fade-in 0.2s ease-out;
+}
+
+.hig-confirm-sheet {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 24px;
+  width: min(360px, calc(100vw - 48px));
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  animation: hig-sheet-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes hig-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hig-sheet-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

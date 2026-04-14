@@ -96,7 +96,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   fontSize: 9, fontWeight: 400, color: 'rgba(255,255,255,0.38)',
                   userSelect: 'none', marginTop: 3,
                 }}>
-                  {totalContacts ?? 0} people
+                  {totalContacts ?? 0} relationships
                 </span>
               </>
             ) : (
@@ -105,7 +105,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                 color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.01em',
                 userSelect: 'none', lineHeight: 1.2, textAlign: 'center',
               }}>
-                {totalContacts ?? 0} people
+                {totalContacts ?? 0} relationships
               </span>
             )}
           </div>
@@ -122,7 +122,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   textTransform: 'uppercase' as const,
                   marginBottom: 2,
                 }}>
-                  Network Health
+                  Your Network
                 </span>
                 <span style={{
                   fontSize: 28,
@@ -151,7 +151,7 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
                   userSelect: 'none',
                   marginTop: 4,
                 }}>
-                  {totalContacts ?? 0} people
+                  {totalContacts ?? 0} relationships
                 </span>
               </>
             ) : (

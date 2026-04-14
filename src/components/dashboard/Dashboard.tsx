@@ -34,7 +34,7 @@ import { RecentActivityWidget } from './widgets/RecentActivityWidget'
 import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { GmailSyncWidget } from './widgets/GmailSyncWidget'
-import { GranolaSyncWidget } from './widgets/GranolaSyncWidget'
+import { MeetingNotesWidget } from './widgets/MeetingNotesWidget'
 
 export type DashboardTab = 'nurture' | 'campaigns'
 
@@ -573,7 +573,7 @@ const WIDGET_TAB: Partial<Record<WidgetId, 'nurture' | 'campaigns'>> = {
   'recent-activity': 'nurture',
   'pending-tray': 'nurture',
   'gmail-sync': 'nurture',
-  'granola-sync': 'nurture',
+  'meeting-notes': 'nurture',
   'campaign-progress': 'campaigns',
   'quick-links': 'campaigns',
 }
@@ -660,10 +660,10 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
           <GmailSyncWidget />
         </div>
       )
-    } else if (id === 'granola-sync') {
+    } else if (id === 'meeting-notes') {
       elements.push(
         <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
-          <GranolaSyncWidget />
+          <MeetingNotesWidget />
         </div>
       )
     } else if (id === 'campaign-progress') {
@@ -712,7 +712,7 @@ function DashboardSkeleton() {
         </div>
       </div>
       <div className="skeleton-stagger" style={{ maxWidth: 960, margin: '0 auto', padding: '16px 24px 120px' }}>
-        {/* Network Pulse section skeleton */}
+        {/* Network Health section skeleton */}
         <div className="skeleton" style={{ width: 140, height: 18, borderRadius: 8, marginBottom: 16 }} />
         <div className="skeleton" style={{ width: '100%', height: 100, borderRadius: 12, marginBottom: 16 }} />
         <div className="skeleton" style={{ width: '100%', height: 80, borderRadius: 12, marginBottom: 32 }} />
