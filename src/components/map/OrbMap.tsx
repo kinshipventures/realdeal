@@ -29,6 +29,7 @@ import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
+import { PodDetailPage } from '../pods/PodDetailPage'
 import { MapLegend } from './MapLegend'
 import { useEscape } from '../../lib/escapeStack'
 
