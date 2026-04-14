@@ -16,10 +16,7 @@ export type InteractionSource = 'Gmail' | 'Granola' | 'Otter' | 'Fireflies' | 'F
 
 export type RelationshipType = 'Contact' | 'Company'
 export type RelationshipStatus = 'Active' | 'Pending' | 'Archived'
-// Legacy DB types — pipeline tables still exist, mapped to campaign interfaces in supabase-data.ts
 export type PipelineStatus = 'active' | 'hidden'
-export type OpportunityStatus = 'open' | 'won' | 'lost' | 'archived'
-export type OpportunityPriority = 'high' | 'medium' | 'low'
 
 export interface Pod {
   id: string           // Airtable record ID
@@ -181,14 +178,6 @@ export interface CampaignContact {
 }
 
 
-// Legacy DB types kept for supabase-data.ts mapping layer
-export interface Pipeline {
-  id: string
-  name: string
-  status: PipelineStatus
-  created_at: string
-}
-
 export interface PipelineStage {
   id: string
   pipeline_id: string
@@ -198,24 +187,12 @@ export interface PipelineStage {
   created_at: string
 }
 
-export interface Opportunity {
-  id: string
-  name: string
-  stage_id: string
-  relationship_ids: string[]
-  notes: string | null
-  priority: OpportunityPriority | null
-  status: OpportunityStatus
-  created_at: string
-}
-
 export interface Project {
   id: string
   name: string
   description: string | null
   owner: string | null
   relationship_ids: string[]
-  opportunity_ids: string[]
   notes: string | null
   created_at: string
 }
