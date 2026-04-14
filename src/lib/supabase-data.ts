@@ -664,7 +664,7 @@ export async function createCampaignStage(campaignId: string, name: string, orde
     return s
   }
   const userId = await getUserId()
-  const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), pipeline_id: campaignId, name, order, color: color ?? null }).select().single()
+  const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, name, order, color: color ?? null }).select().single()
   if (error) throw error
   invalidatePipelineStagesCache()
   return pipelineStageToCampaignStage(mapPipelineStage(row))
@@ -717,7 +717,7 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
 // ── Pipeline Stages ───────────────────────────────────────────────────────────
 
 function mapPipelineStage(r: any): PipelineStage {
-  return { id: r.id, pipeline_id: r.pipeline_id, campaign_id: r.pipeline_id, name: r.name, color: (r.color ?? null) as HexColor | null, order: r.order ?? 0, created_at: r.created_at }
+  return { id: r.id, campaign_id: r.campaign_id, campaign_id: r.pipeline_id, name: r.name, color: (r.color ?? null) as HexColor | null, order: r.order ?? 0, created_at: r.created_at }
 }
 
 let _pipelineStagesCache: PipelineStage[] | null = null
