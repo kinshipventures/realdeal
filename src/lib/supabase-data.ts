@@ -866,27 +866,8 @@ export async function removeRecordFromProject(projectId: string, recordId: strin
   return { ...project, relationship_ids: project.relationship_ids.filter(id => id !== recordId) }
 }
 
-export async function addOpportunityToProject(projectId: string, opportunityId: string): Promise<Project> {
-  const projects = await getProjects()
-  const project = projects.find(p => p.id === projectId)
-  if (!project) throw new Error('Project not found')
-  if (project.opportunity_ids.includes(opportunityId)) return project
-  if (isDemoMode()) { project.opportunity_ids.push(opportunityId); return project }
-  const userId = await getUserId()
-  await supabase.from('project_opportunities').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), project_id: projectId, opportunity_id: opportunityId })
-  _projectsCache = null
-  return { ...project, opportunity_ids: [...project.opportunity_ids, opportunityId] }
-}
 
-export async function removeOpportunityFromProject(projectId: string, opportunityId: string): Promise<Project> {
-  const projects = await getProjects()
-  const project = projects.find(p => p.id === projectId)
-  if (!project) throw new Error('Project not found')
-  if (isDemoMode()) { project.opportunity_ids = project.opportunity_ids.filter(id => id !== opportunityId); return project }
-  await supabase.from('project_opportunities').delete().eq('project_id', projectId).eq('opportunity_id', opportunityId)
-  _projectsCache = null
-  return { ...project, opportunity_ids: project.opportunity_ids.filter(id => id !== opportunityId) }
-}
+
 
 export async function addProjectNote(projectId: string, note: string): Promise<void> {
   const projects = await getProjects()
