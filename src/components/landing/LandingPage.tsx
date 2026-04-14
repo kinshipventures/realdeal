@@ -1,10 +1,27 @@
 import { useNavigate } from 'react-router'
+import { useRef, useEffect, useState, type RefObject } from 'react'
 import { setDemoMode } from '@/lib/sampleData'
 import goopLogo from '@/assets/logos/goop.png'
 import figsLogo from '@/assets/logos/figs.png'
 import moonpayLogo from '@/assets/logos/moonpay.png'
 import forerunnerLogo from '@/assets/logos/forerunner.png'
 import wonderLogo from '@/assets/logos/wonder.png'
+
+function useInView(threshold = 0.15): [RefObject<HTMLElement | null>, boolean] {
+  const ref = useRef<HTMLElement | null>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      { threshold },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [threshold])
+  return [ref, visible]
+}
 
 const FEATURES = [
   {
@@ -116,7 +133,6 @@ function AppPreviewMockup() {
       boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)',
       overflow: 'hidden', background: '#F5F4F0',
     }}>
-      {/* Title bar */}
       <div style={{
         height: 36, background: '#E8E7E3', display: 'flex', alignItems: 'center',
         padding: '0 12px', gap: 8,
@@ -131,43 +147,33 @@ function AppPreviewMockup() {
           RealDeal - Network Map
         </span>
       </div>
-      {/* App content */}
       <svg viewBox="0 0 720 380" fill="none" style={{ display: 'block', width: '100%' }}>
         <rect width="720" height="380" fill="#F5F4F0" />
-        {/* Connection lines */}
         <line x1="360" y1="190" x2="200" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
         <line x1="360" y1="190" x2="520" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
         <line x1="360" y1="190" x2="180" y2="280" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
         <line x1="360" y1="190" x2="540" y2="280" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
         <line x1="360" y1="190" x2="140" y2="190" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
         <line x1="360" y1="190" x2="580" y2="190" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        {/* Hub orb */}
         <circle cx="360" cy="190" r="48" fill="url(#hubGrad)" />
         <circle cx="360" cy="190" r="52" stroke="#25B439" strokeWidth="3" opacity="0.3" fill="none" />
         <text x="360" y="185" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="var(--font-serif)">RealDeal</text>
         <text x="360" y="200" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Score: 78</text>
-        {/* Pod orbs */}
         <circle cx="200" cy="100" r="32" fill="url(#pod1Grad)" />
         <circle cx="200" cy="100" r="36" stroke="#25B439" strokeWidth="2" strokeDasharray="180 226" strokeLinecap="round" fill="none" opacity="0.5" />
         <text x="200" y="104" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">LPs</text>
-
         <circle cx="520" cy="100" r="28" fill="url(#pod2Grad)" />
         <circle cx="520" cy="100" r="32" stroke="#D97706" strokeWidth="2" strokeDasharray="140 201" strokeLinecap="round" fill="none" opacity="0.5" />
         <text x="520" y="104" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Talent</text>
-
         <circle cx="180" cy="280" r="26" fill="url(#pod3Grad)" />
         <text x="180" y="284" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">Advisors</text>
-
         <circle cx="540" cy="280" r="30" fill="url(#pod4Grad)" />
         <circle cx="540" cy="280" r="34" stroke="#7C3AED" strokeWidth="2" strokeDasharray="170 214" strokeLinecap="round" fill="none" opacity="0.5" />
         <text x="540" y="284" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Founders</text>
-
         <circle cx="140" cy="190" r="24" fill="url(#pod5Grad)" />
         <text x="140" y="194" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">Media</text>
-
         <circle cx="580" cy="190" r="22" fill="url(#pod6Grad)" />
         <text x="580" y="194" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">VCs</text>
-
         <defs>
           <linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#25B439" />
@@ -205,6 +211,17 @@ function AppPreviewMockup() {
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const [heroRef, heroVisible] = useInView(0.1)
+  const [featRef, featVisible] = useInView()
+  const [proofRef, proofVisible] = useInView()
+  const [stepsRef, stepsVisible] = useInView(0.1)
+  const [ctaRef, ctaVisible] = useInView()
+
+  const reveal = (visible: boolean, delay = 0) => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(24px)',
+    transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
+  })
 
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh', fontFamily: 'var(--font-sans)' }}>
@@ -246,25 +263,33 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section style={{
-        maxWidth: 1120, margin: '0 auto', padding: '80px 24px 64px',
-        textAlign: 'center',
-      }}>
+      <section
+        ref={heroRef as RefObject<HTMLElement>}
+        style={{
+          maxWidth: 1120, margin: '0 auto', padding: '80px 24px 64px',
+          textAlign: 'center',
+        }}
+      >
         <h1 style={{
           fontFamily: 'var(--font-serif)', fontSize: 'clamp(36px, 6vw, 64px)',
           fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1,
           color: 'var(--color-text-primary)', margin: '0 0 20px',
+          ...reveal(heroVisible),
         }}>
           Feed what feeds you
         </h1>
         <p style={{
           fontSize: 'clamp(16px, 2.5vw, 20px)', lineHeight: 1.6,
           color: 'var(--color-text-secondary)', maxWidth: 560, margin: '0 auto 40px',
+          ...reveal(heroVisible, 0.1),
         }}>
           The relationship OS for people who build through connection.
           Track, nurture, and deepen every relationship that matters.
         </p>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
+        <div style={{
+          display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48,
+          ...reveal(heroVisible, 0.2),
+        }}>
           <button
             onClick={() => navigate('/login?signup=1')}
             style={{
@@ -289,17 +314,21 @@ export function LandingPage() {
           </button>
         </div>
 
-        <AppPreviewMockup />
+        <div style={reveal(heroVisible, 0.3)}>
+          <AppPreviewMockup />
+        </div>
       </section>
 
       {/* Features */}
-      <section style={{
-        maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px',
-      }}>
+      <section
+        ref={featRef as RefObject<HTMLElement>}
+        style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px' }}
+      >
         <h2 style={{
           fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
           textAlign: 'center', color: 'var(--color-text-primary)',
           letterSpacing: '-0.02em', marginBottom: 48,
+          ...reveal(featVisible),
         }}>
           Everything you need to stay connected
         </h2>
@@ -308,13 +337,14 @@ export function LandingPage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: 24,
         }}>
-          {FEATURES.map((f) => (
+          {FEATURES.map((f, i) => (
             <div
               key={f.title}
               style={{
                 background: 'var(--surface-panel)',
                 border: 'var(--surface-panel-border)',
                 borderRadius: 16, padding: '32px 28px',
+                ...reveal(featVisible, 0.1 + i * 0.1),
               }}
             >
               <div style={{ marginBottom: 16 }}>{f.icon}</div>
@@ -335,12 +365,14 @@ export function LandingPage() {
       </section>
 
       {/* Social proof */}
-      <section style={{
-        maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px',
-      }}>
+      <section
+        ref={proofRef as RefObject<HTMLElement>}
+        style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px' }}
+      >
         <p style={{
           textAlign: 'center', fontSize: 14, color: 'var(--color-text-secondary)',
           marginBottom: 32, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500,
+          ...reveal(proofVisible),
         }}>
           Built for{' '}
           <a
@@ -353,12 +385,11 @@ export function LandingPage() {
           </a>
         </p>
 
-        {/* Partner cards */}
         <div style={{
           display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap',
           marginBottom: 48,
         }}>
-          {PARTNERS.map((p) => (
+          {PARTNERS.map((p, i) => (
             <div
               key={p.name}
               style={{
@@ -367,6 +398,7 @@ export function LandingPage() {
                 border: 'var(--surface-panel-border)',
                 borderRadius: 12, padding: '16px 20px',
                 minWidth: 200,
+                ...reveal(proofVisible, 0.1 + i * 0.08),
               }}
             >
               <div style={{
@@ -392,7 +424,9 @@ export function LandingPage() {
         {/* Portfolio logo strip */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 40, flexWrap: 'wrap', opacity: 0.45,
+          gap: 40, flexWrap: 'wrap', opacity: proofVisible ? 0.45 : 0,
+          transform: proofVisible ? 'translateY(0)' : 'translateY(16px)',
+          transition: 'opacity 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s',
         }}>
           {PORTFOLIO_BRANDS.map((brand) => (
             <img
@@ -412,19 +446,24 @@ export function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section style={{
-        background: 'var(--color-brand)', padding: '80px 24px', borderRadius: '20px 20px 0 0',
-      }}>
+      <section
+        ref={stepsRef as RefObject<HTMLElement>}
+        style={{
+          background: 'var(--color-brand)', padding: '80px 24px', borderRadius: '20px 20px 0 0',
+        }}
+      >
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <h2 style={{
             fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 700,
             textAlign: 'center', color: '#fff', letterSpacing: '-0.02em', marginBottom: 16,
+            ...reveal(stepsVisible),
           }}>
             How it works
           </h2>
           <p style={{
             textAlign: 'center', fontSize: 16, color: 'rgba(255,255,255,0.6)',
             marginBottom: 56, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto',
+            ...reveal(stepsVisible, 0.1),
           }}>
             From scattered contacts to a living relationship system in four steps.
           </p>
@@ -440,10 +479,9 @@ export function LandingPage() {
                 borderRadius: 16,
                 padding: '32px 20px 28px',
                 position: 'relative',
+                ...reveal(stepsVisible, 0.15 + i * 0.1),
               }}>
-                {/* Step icon */}
                 <div style={{ marginBottom: 12 }}>{s.icon}</div>
-                {/* Number badge */}
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%',
                   background: 'rgba(255,255,255,0.15)', color: '#fff',
@@ -461,12 +499,11 @@ export function LandingPage() {
                 <p style={{ fontSize: 13, lineHeight: 1.65, color: 'rgba(255,255,255,0.65)', margin: 0 }}>
                   {s.desc}
                 </p>
-                {/* Connector arrow (not on last) */}
                 {i < STEPS.length - 1 && (
                   <div style={{
                     position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)',
                     color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300,
-                    display: 'none', // hidden on mobile, visible on wider screens via media query
+                    display: 'none',
                   }} className="step-connector">
                     &rarr;
                   </div>
@@ -478,30 +515,39 @@ export function LandingPage() {
       </section>
 
       {/* CTA footer */}
-      <section style={{
-        background: 'var(--color-brand)', padding: '0 24px 80px', textAlign: 'center',
-      }}>
+      <section
+        ref={ctaRef as RefObject<HTMLElement>}
+        style={{
+          background: 'var(--color-brand)', padding: '0 24px 80px', textAlign: 'center',
+        }}
+      >
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{
             fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 800,
             color: '#fff', letterSpacing: '-0.02em', marginBottom: 16,
+            ...reveal(ctaVisible),
           }}>
             Ready to invest in your relationships?
           </h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.70)', marginBottom: 32 }}>
+          <p style={{
+            fontSize: 16, color: 'rgba(255,255,255,0.70)', marginBottom: 32,
+            ...reveal(ctaVisible, 0.1),
+          }}>
             Join RealDeal and start building deeper connections today.
           </p>
-          <button
-            onClick={() => navigate('/login?signup=1')}
-            style={{
-              padding: '14px 40px', borderRadius: 10, border: 'none',
-              background: '#fff', color: 'var(--color-brand)', cursor: 'pointer',
-              fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 700,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            }}
-          >
-            Get Started - Free
-          </button>
+          <div style={reveal(ctaVisible, 0.2)}>
+            <button
+              onClick={() => navigate('/login?signup=1')}
+              style={{
+                padding: '14px 40px', borderRadius: 10, border: 'none',
+                background: '#fff', color: 'var(--color-brand)', cursor: 'pointer',
+                fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 700,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              }}
+            >
+              Get Started - Free
+            </button>
+          </div>
         </div>
       </section>
     </div>
