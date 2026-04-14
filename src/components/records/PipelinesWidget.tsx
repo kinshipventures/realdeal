@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Plus } from 'lucide-react'
-import { getCampaigns, getCampaignContacts } from '../../lib/airtable'
-import type { Contact, Campaign, CampaignContact } from '../../lib/types'
+import { getCampaigns, getCampaignContactsForContact } from '../../lib/airtable'
+import type { Contact, Campaign } from '../../lib/types'
 import { WIDGET_STYLE } from './shared'
 
 interface PipelinesWidgetProps {
@@ -15,11 +15,10 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
   const [linkedCampaignIds, setLinkedCampaignIds] = useState<string[]>([])
 
   const load = useCallback(async () => {
-    const [allCampaigns, allCc] = await Promise.all([
+    const [allCampaigns, myLinks] = await Promise.all([
       getCampaigns(),
-      getCampaignContacts(),
+      getCampaignContactsForContact(contact.id),
     ])
-    const myLinks = allCc.filter(cc => cc.contact_id === contact.id)
     const ids = myLinks.map(cc => cc.campaign_id)
     setLinkedCampaignIds(ids)
     setCampaigns(allCampaigns.filter(c => ids.includes(c.id) && c.status !== 'hidden'))
