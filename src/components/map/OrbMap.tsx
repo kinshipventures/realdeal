@@ -1317,34 +1317,23 @@ export function OrbMap() {
           {hoveredPod && (
             <div
               ref={tooltipRef}
+              className="pod-tooltip"
               style={{
-                position: 'fixed',
                 left: cursorRef.current.x + 16,
                 top: cursorRef.current.y + 16,
-                zIndex: 30,
-                background: 'var(--nav-bg)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid var(--edge)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                pointerEvents: 'none',
-                minWidth: 140,
-                opacity: 0,
-                animation: 'tooltip-fade-in 0.15s ease forwards',
               }}
             >
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                {hoveredPod.pod.name}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+              <div className="tooltip-header">
+                <span className="tooltip-dot" style={{ background: hoveredPod.pod.color ?? '#718096' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
+                  {hoveredPod.pod.name}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                 <span style={{
                   display: 'inline-block',
-                  padding: '1px 6px',
+                  padding: '2px 8px',
                   borderRadius: 100,
                   fontSize: 10,
                   fontWeight: 600,
@@ -1353,23 +1342,46 @@ export function OrbMap() {
                 }}>
                   {scoreLabel(hoveredPod.health)} {hoveredPod.health}
                 </span>
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'relationship' : 'relationships'}
-              </span>
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                  {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
+                </span>
+              </div>
+
+              {hoveredPod.pod.cadence && (
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {hoveredPod.pod.cadence} check-in
+                </span>
+              )}
+
+              <div style={{ height: 1, background: 'var(--edge)', margin: '2px 0' }} />
+
               {hoveredPod.overdueCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)' }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
                   {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
                 </span>
               ) : hoveredPod.contactCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)' }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   All caught up
                 </span>
               ) : null}
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
                 Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
               </span>
-              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', marginTop: 2, opacity: 0.6 }}>
+
+              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', opacity: 0.5, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
                 Click to explore
               </span>
             </div>
