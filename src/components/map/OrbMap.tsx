@@ -674,13 +674,6 @@ export function OrbMap() {
   const drillIntoPod = useCallback((pod: Pod) => {
     if (isAnimating.current) return
 
-    // Pods without categories or with too many: navigate directly to detail page
-    const cats = categoriesByPodRef.current[pod.id] ?? []
-    if (cats.length === 0 || cats.length > 20) {
-      navigate(`/pod/${pod.id}`)
-      return
-    }
-
     isAnimating.current = true
     setFitViewEnabled(false)
     setHoveredPod(null)
@@ -690,17 +683,17 @@ export function OrbMap() {
     const podX = podNode ? (podNode.position.x + (LIST_SIZE / 2)) : 0
     const podY = podNode ? (podNode.position.y + (LIST_SIZE / 2)) : 0
 
-    // Step 1: zoom viewport toward the clicked pod
-    const vp = getViewport()
+    // Zoom viewport toward the clicked pod (top-left quadrant)
     const containerEl = document.querySelector('.react-flow') as HTMLElement | null
     const cw = containerEl?.clientWidth ?? window.innerWidth
     const ch = containerEl?.clientHeight ?? window.innerHeight
-    const zoomTarget = Math.min(vp.zoom * 2.2, 3.5)
+    const zoomTarget = Math.min(getZoom() * 1.8, 2.5)
+    // Position the pod in the top-left area of the viewport
     setViewport({
-      x: cw / 2 - podX * zoomTarget,
-      y: ch / 2 - podY * zoomTarget,
+      x: cw * 0.15 - podX * zoomTarget,
+      y: ch * 0.15 - podY * zoomTarget,
       zoom: zoomTarget,
-    }, { duration: 400 })
+    }, { duration: 450 })
 
     // Fade sibling pods during zoom
     setMapView('pod')
@@ -708,45 +701,13 @@ export function OrbMap() {
     setSelectedPod(pod)
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
-      if (n.id === MOJ_ID) return { ...n, data: { ...n.data, fading: true } }
       return { ...n, data: { ...n.data, fading: true } }
     }))
 
-    // Step 2: after zoom completes, swap to drill-down nodes
     setTimeout(() => {
-      const allContacts = allContactsRef.current
-      const byContact = byContactRef.current
-
-      const contactCountByCategory: Record<string, number> = {}
-      const healthByCategory: Record<string, number> = {}
-      for (const cat of cats) {
-        const catContacts = allContacts.filter(c => c.category_ids.includes(cat.id))
-        contactCountByCategory[cat.id] = catContacts.length
-        if (catContacts.length > 0) {
-          const scores = catContacts.map(c => contactEquityScore(byContact.get(c.id) ?? []))
-          healthByCategory[cat.id] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        }
-      }
-
-      const { nodes: drillNodes } = buildDrillNodes(
-        pod, cats, equityByPodRef.current,
-        countsByPodRef.current[pod.id]?.total ?? 0,
-        navigate,
-        contactCountByCategory,
-        healthByCategory,
-      )
-      setNodes(drillNodes)
-      setEdges(buildDrillEdges(pod, cats, healthByCategory, contactCountByCategory))
-
-      // Step 3: fit to drill-down layout
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.35, duration: 350 })
-        setTimeout(() => {
-          isAnimating.current = false
-        }, 400)
-      })
-    }, 420)
-  }, [nodes, setNodes, setEdges, fitView, navigate, getViewport, setViewport])
+      isAnimating.current = false
+    }, 500)
+  }, [nodes, setNodes, setViewport, getZoom])
 
   drillInRef.current = drillIntoPod
 
