@@ -770,6 +770,37 @@ export function OrbMap() {
 
   drillBackRef.current = drillBackToHub
 
+  // Escape key to drill back when in pod view
+  const escapeHandler = useCallback(() => {
+    if (mapViewRef.current === 'pod') {
+      drillBackRef.current?.()
+    }
+  }, [])
+  useEscape(escapeHandler)
+
+  // Auto-switch mobile to list view when viewport changes
+  useEffect(() => {
+    if (isMobile && viewMode === 'map') {
+      setViewMode('list')
+    }
+  }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Compute aggregate stats for hub stats bar
+  const hubStats = useMemo(() => {
+    const pods = podsRef.current
+    const counts = countsByPodRef.current
+    let totalOverdue = 0
+    for (const podId in counts) {
+      totalOverdue += counts[podId]?.overdue ?? 0
+    }
+    return {
+      podCount: pods.length,
+      contactCount: totalContactsRef.current,
+      overallHealth: overallHealthRef.current,
+      overdueCount: totalOverdue,
+    }
+  }, [podsLoaded, podsCount]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Listen for search highlight events from SearchPalette (via App.tsx)
   useEffect(() => {
     let clearTimer: ReturnType<typeof setTimeout>
