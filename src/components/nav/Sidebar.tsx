@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
@@ -356,16 +356,16 @@ function NavItem({
         cursor: 'pointer',
         fontFamily: 'inherit',
         transition: 'background 0.12s ease',
+        position: 'relative',
       }}
     >
       <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
         {badge && collapsed && (
-          <span style={{
+          <span className="badge-pulse" style={{
             position: 'absolute', top: -2, right: -2,
-            width: 7, height: 7, borderRadius: '50%',
+            width: 6, height: 6, borderRadius: '50%',
             background: 'var(--color-brand)',
-            border: '1.5px solid var(--color-bg)',
           }} />
         )}
       </span>
@@ -384,6 +384,12 @@ function NavItem({
           {label}
         </span>
       )}
+      {badge && !collapsed && (
+        <span className="badge-pulse" style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'var(--color-brand)', flexShrink: 0,
+        }} />
+      )}
       {hint && !collapsed && (
         <span style={{
           fontSize: 11,
@@ -392,12 +398,6 @@ function NavItem({
         }}>
           {hint}
         </span>
-      )}
-      {badge && !collapsed && (
-        <span style={{
-          width: 7, height: 7, borderRadius: '50%',
-          background: 'var(--color-brand)', flexShrink: 0,
-        }} />
       )}
     </button>
   )

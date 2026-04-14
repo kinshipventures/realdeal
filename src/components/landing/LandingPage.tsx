@@ -44,31 +44,59 @@ const FEATURES = [
 ]
 
 const STEPS = [
-  { num: '1', title: 'Import', desc: 'Bring your contacts from CSV or add them manually.' },
-  { num: '2', title: 'Organize', desc: 'Group into pods and categories that match how you think.' },
-  { num: '3', title: 'Connect', desc: 'Get smart nudges and track every interaction effortlessly.' },
+  {
+    num: '1', title: 'Import',
+    desc: 'Bring your existing network in seconds. Upload a CSV, connect your contacts, or add people one by one.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M16 4v16M10 14l6 6 6-6" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 22v4a2 2 0 002 2h20a2 2 0 002-2v-4" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    num: '2', title: 'Organize',
+    desc: 'Group contacts into pods and categories that mirror how you actually think. Set cadences so nothing slips through the cracks.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="4" y="6" width="10" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+        <rect x="18" y="4" width="10" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+        <rect x="10" y="20" width="12" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+        <line x1="16" y1="14" x2="16" y2="20" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+  {
+    num: '3', title: 'Engage',
+    desc: 'Log calls, emails, meetings, and intros. RealDeal auto-tracks recency so you always know where each relationship stands.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M8 28c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="16" cy="12" r="5" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+        <path d="M24 14l2 2 4-4" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    num: '4', title: 'Insights',
+    desc: 'Watch your Social Equity scores rise. Get smart nudges when relationships need attention and celebrate the ones that are thriving.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
+        <path d="M16 4a12 12 0 0 1 10.4 6" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"/>
+        <text x="16" y="20" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontWeight="700">85</text>
+      </svg>
+    ),
+  },
 ]
 
-const TESTIMONIALS = [
-  {
-    quote: 'RealDeal transformed how I manage relationships across our 150+ portfolio companies. I finally have a system that matches how I actually think about my network.',
-    name: 'Moj Mahdara',
-    role: 'Co-Founder & Managing Partner, Kinship Ventures',
-    initials: 'MM',
-  },
-  {
-    quote: 'The best relationships are the ones you invest in consistently. RealDeal makes that effortless - it is like having a relationship coach in your pocket.',
-    name: 'Gwyneth Paltrow',
-    role: 'Founder, goop & Partner, Kinship Ventures',
-    initials: 'GP',
-  },
-  {
-    quote: 'High-agency relationship building requires real tools, not just good intentions. RealDeal gives our team the structure to stay deeply connected.',
-    name: 'Trina Spear',
-    role: 'CEO, FIGS & Partner, Kinship Ventures',
-    initials: 'TS',
-  },
+const PARTNERS = [
+  { name: 'Moj Mahdara', role: 'Co-Founder & Managing Partner', initials: 'MM' },
+  { name: 'Gwyneth Paltrow', role: 'Partner', initials: 'GP' },
+  { name: 'Trina Spear', role: 'Partner', initials: 'TS' },
 ]
+
+const PORTFOLIO_BRANDS = ['goop', 'FIGS', 'MoonPay', 'Forerunner', 'Wonder']
 
 function AppPreviewMockup() {
   return (
@@ -301,9 +329,9 @@ export function LandingPage() {
       }}>
         <p style={{
           textAlign: 'center', fontSize: 14, color: 'var(--color-text-secondary)',
-          marginBottom: 40, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500,
+          marginBottom: 32, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500,
         }}>
-          As used by{' '}
+          Built for{' '}
           <a
             href="https://kinshipventures.co"
             target="_blank"
@@ -313,89 +341,123 @@ export function LandingPage() {
             Kinship Ventures
           </a>
         </p>
+
+        {/* Partner cards */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 24,
+          display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap',
+          marginBottom: 48,
         }}>
-          {TESTIMONIALS.map((t) => (
+          {PARTNERS.map((p) => (
             <div
-              key={t.name}
+              key={p.name}
               style={{
+                display: 'flex', alignItems: 'center', gap: 12,
                 background: 'var(--surface-panel)',
                 border: 'var(--surface-panel-border)',
-                borderRadius: 16, padding: '28px 24px',
+                borderRadius: 12, padding: '16px 20px',
+                minWidth: 200,
               }}
             >
-              <p style={{
-                fontFamily: 'var(--font-serif)', fontSize: 15, lineHeight: 1.7,
-                color: 'var(--color-text-primary)', margin: '0 0 20px',
-                fontStyle: 'italic',
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'var(--color-brand)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700, flexShrink: 0,
               }}>
-                "{t.quote}"
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%',
-                  background: 'var(--color-brand)', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 700,
-                }}>
-                  {t.initials}
+                {p.initials}
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                  {p.name}
                 </div>
-                <div>
-                  <div style={{
-                    fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)',
-                  }}>
-                    {t.name}
-                  </div>
-                  <div style={{
-                    fontSize: 12, color: 'var(--color-text-secondary)',
-                  }}>
-                    {t.role}
-                  </div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                  {p.role}
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Portfolio logo strip */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 40, flexWrap: 'wrap', opacity: 0.45,
+        }}>
+          {PORTFOLIO_BRANDS.map((brand) => (
+            <span
+              key={brand}
+              style={{
+                fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
+                color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
+                userSelect: 'none',
+              }}
+            >
+              {brand}
+            </span>
           ))}
         </div>
       </section>
 
       {/* How it works */}
       <section style={{
-        background: 'var(--color-brand)', padding: '64px 24px', borderRadius: '20px 20px 0 0',
+        background: 'var(--color-brand)', padding: '80px 24px', borderRadius: '20px 20px 0 0',
       }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <h2 style={{
-            fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
-            textAlign: 'center', color: '#fff', letterSpacing: '-0.02em', marginBottom: 48,
+            fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 700,
+            textAlign: 'center', color: '#fff', letterSpacing: '-0.02em', marginBottom: 16,
           }}>
             How it works
           </h2>
+          <p style={{
+            textAlign: 'center', fontSize: 16, color: 'rgba(255,255,255,0.6)',
+            marginBottom: 56, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto',
+          }}>
+            From scattered contacts to a living relationship system in four steps.
+          </p>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 32,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 24,
           }}>
-            {STEPS.map((s) => (
-              <div key={s.num} style={{ textAlign: 'center' }}>
+            {STEPS.map((s, i) => (
+              <div key={s.num} style={{
+                textAlign: 'center',
+                background: 'rgba(255,255,255,0.08)',
+                borderRadius: 16,
+                padding: '32px 20px 28px',
+                position: 'relative',
+              }}>
+                {/* Step icon */}
+                <div style={{ marginBottom: 12 }}>{s.icon}</div>
+                {/* Number badge */}
                 <div style={{
-                  width: 48, height: 48, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.20)', color: '#fff',
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.15)', color: '#fff',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, fontWeight: 700, marginBottom: 16,
+                  fontSize: 13, fontWeight: 700, marginBottom: 12,
                 }}>
                   {s.num}
                 </div>
                 <h3 style={{
                   fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
-                  color: '#fff', marginBottom: 8,
+                  color: '#fff', marginBottom: 10,
                 }}>
                   {s.title}
                 </h3>
-                <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.70)', margin: 0 }}>
+                <p style={{ fontSize: 13, lineHeight: 1.65, color: 'rgba(255,255,255,0.65)', margin: 0 }}>
                   {s.desc}
                 </p>
+                {/* Connector arrow (not on last) */}
+                {i < STEPS.length - 1 && (
+                  <div style={{
+                    position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)',
+                    color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300,
+                    display: 'none', // hidden on mobile, visible on wider screens via media query
+                  }} className="step-connector">
+                    &rarr;
+                  </div>
+                )}
               </div>
             ))}
           </div>
