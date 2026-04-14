@@ -305,38 +305,21 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     custom_fields: data.custom_fields ?? {},
     import_batch_id: (data as any).import_batch_id ?? null,
     import_source: (data as any).import_source ?? null,
+    pod_ids: data.list_ids ?? [],
+    primary_pod_id: data.primary_list_id ?? (data.list_ids.length ? data.list_ids[0] : null),
+    company_ids: data.company_ids?.length ? data.company_ids : (data.company_record_id ? [data.company_record_id] : []),
   }
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
 
-  if (data.list_ids.length) {
-    await supabase.from('contact_pods').insert(
-      data.list_ids.map((pod_id, i) => ({
-        user_id: userId, workspace_id: wsId, contact_id: row.id, pod_id,
-        is_primary: data.primary_list_id ? pod_id === data.primary_list_id : i === 0,
-      }))
-    )
-  }
   if (data.category_ids.length) {
+    const userId = await getUserId()
     await supabase.from('contact_categories').insert(
       data.category_ids.map(category_id => ({ user_id: userId, workspace_id: wsId, contact_id: row.id, category_id }))
     )
   }
-  if (data.company_ids?.length) {
-    await supabase.from('contact_companies').insert(
-      data.company_ids.map((company_id, i) => ({
-        user_id: userId, workspace_id: wsId, contact_id: row.id, company_id,
-        is_primary: data.company_record_id ? company_id === data.company_record_id : i === 0,
-      }))
-    )
-  } else if (data.company_record_id) {
-    await supabase.from('contact_companies').insert({
-      user_id: userId, workspace_id: wsId, contact_id: row.id, company_id: data.company_record_id, is_primary: true,
-    })
-  }
   _contactsCache = null
-  const companyIds = data.company_ids?.length ? data.company_ids : (data.company_record_id ? [data.company_record_id] : [])
-  return mapContact(row, { pod_ids: data.list_ids, primary: data.primary_list_id }, data.category_ids, { company_ids: companyIds, primary: data.company_record_id })
+  return mapContact(row, data.category_ids)
 }
 
 export async function updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
