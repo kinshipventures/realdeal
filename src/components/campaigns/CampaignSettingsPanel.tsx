@@ -25,7 +25,8 @@ export function CampaignSettingsPanel({ campaign, onUpdate, onClose }: Props) {
   const nameRef = useRef<HTMLInputElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  useEscape(useCallback(() => onClose(), [onClose]))
+  const handleClose = useCallback(() => onClose(), [onClose])
+  useEscape(handleClose)
 
   // Sync when campaign changes
   useEffect(() => {
