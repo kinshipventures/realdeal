@@ -749,7 +749,7 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
 // ── Pipeline Stages ───────────────────────────────────────────────────────────
 
 function mapPipelineStage(r: any): PipelineStage {
-  return { id: r.id, pipeline_id: r.pipeline_id, name: r.name, color: (r.color ?? null) as HexColor | null, order: r.order ?? 0, created_at: r.created_at }
+  return { id: r.id, pipeline_id: r.pipeline_id, campaign_id: r.pipeline_id, name: r.name, color: (r.color ?? null) as HexColor | null, order: r.order ?? 0, created_at: r.created_at }
 }
 
 let _pipelineStagesCache: PipelineStage[] | null = null

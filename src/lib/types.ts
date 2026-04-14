@@ -178,14 +178,7 @@ export interface CampaignContact {
 }
 
 
-export interface PipelineStage {
-  id: string
-  pipeline_id: string
-  name: string
-  color: HexColor | null
-  order: number
-  created_at: string
-}
+export type PipelineStage = CampaignStage & { pipeline_id: string }
 
 export interface Project {
   id: string
