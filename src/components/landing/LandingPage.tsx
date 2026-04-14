@@ -101,7 +101,13 @@ const PARTNERS = [
   { name: 'Trina Spear', role: 'Partner', initials: 'TS' },
 ]
 
-const PORTFOLIO_BRANDS = ['goop', 'FIGS', 'MoonPay', 'Forerunner', 'Wonder']
+const PORTFOLIO_BRANDS = [
+  { name: 'goop', logo: goopLogo },
+  { name: 'FIGS', logo: figsLogo },
+  { name: 'MoonPay', logo: moonpayLogo },
+  { name: 'Forerunner', logo: forerunnerLogo },
+  { name: 'Wonder', logo: wonderLogo },
+]
 
 function AppPreviewMockup() {
   return (
