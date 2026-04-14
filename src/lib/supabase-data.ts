@@ -637,7 +637,7 @@ export async function getCampaignContactsForContact(contactId: string): Promise<
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, contact_ids: [], created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
@@ -685,7 +685,7 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) c.status = 'completed'
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, contact_ids: [], created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as any }).eq('id', id).select().single()
   if (error) throw error
@@ -715,7 +715,7 @@ export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'n
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) Object.assign(c, data)
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], backing: 'outreach', created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], created_at: '' }
   }
   const dbData: any = {}
   if (data.name !== undefined) dbData.name = data.name

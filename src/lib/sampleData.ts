@@ -242,7 +242,7 @@ export const DEMO_INTERACTIONS: Interaction[] = [
 // ── Campaigns ──
 
 const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], deadline?: number): Campaign => ({
-  id: `demo-campaign-${id}`, name, type, status, backing: 'outreach', notes: null, description: null,
+  id: `demo-campaign-${id}`, name, type, status, notes: null, description: null,
   deadline: deadline !== undefined ? futureDate(deadline) : null,
   contact_ids: contactIds.map(c => `demo-contact-${c}`),
   created_at: daysAgo(14),
