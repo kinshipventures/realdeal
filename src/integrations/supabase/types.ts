@@ -14,38 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
-      _migration_id_map: {
-        Row: {
-          airtable_id: string
-          created_at: string
-          id: string
-          supabase_uuid: string
-          table_name: string
-          user_id: string
-        }
-        Insert: {
-          airtable_id: string
-          created_at?: string
-          id?: string
-          supabase_uuid: string
-          table_name: string
-          user_id: string
-        }
-        Update: {
-          airtable_id?: string
-          created_at?: string
-          id?: string
-          supabase_uuid?: string
-          table_name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       campaign_contacts: {
         Row: {
           campaign_id: string
           contact_id: string
           created_at: string
+          custom_fields: Json | null
           id: string
           moved_at: string | null
           next_step: string | null
@@ -62,6 +36,7 @@ export type Database = {
           campaign_id: string
           contact_id: string
           created_at?: string
+          custom_fields?: Json | null
           id?: string
           moved_at?: string | null
           next_step?: string | null
@@ -78,6 +53,7 @@ export type Database = {
           campaign_id?: string
           contact_id?: string
           created_at?: string
+          custom_fields?: Json | null
           id?: string
           moved_at?: string | null
           next_step?: string | null
@@ -109,7 +85,7 @@ export type Database = {
             foreignKeyName: "campaign_contacts_stage_id_fkey"
             columns: ["stage_id"]
             isOneToOne: false
-            referencedRelation: "pipeline_stages"
+            referencedRelation: "campaign_stages"
             referencedColumns: ["id"]
           },
           {
@@ -121,9 +97,54 @@ export type Database = {
           },
         ]
       }
+      campaign_stages: {
+        Row: {
+          campaign_id: string
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          order: number
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          order: number
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          order?: number
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_stages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           created_at: string
+          custom_fields: Json | null
           deadline: string | null
           description: string | null
           id: string
@@ -137,6 +158,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_fields?: Json | null
           deadline?: string | null
           description?: string | null
           id?: string
@@ -150,6 +172,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_fields?: Json | null
           deadline?: string | null
           description?: string | null
           id?: string
@@ -278,166 +301,15 @@ export type Database = {
           },
         ]
       }
-      contact_categories: {
-        Row: {
-          category_id: string
-          contact_id: string
-          created_at: string
-          id: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          category_id: string
-          contact_id: string
-          created_at?: string
-          id?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          category_id?: string
-          contact_id?: string
-          created_at?: string
-          id?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_categories_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_categories_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_categories_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contact_companies: {
-        Row: {
-          company_id: string
-          contact_id: string
-          created_at: string
-          id: string
-          is_primary: boolean
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          company_id: string
-          contact_id: string
-          created_at?: string
-          id?: string
-          is_primary?: boolean
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          company_id?: string
-          contact_id?: string
-          created_at?: string
-          id?: string
-          is_primary?: boolean
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_companies_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_companies_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_companies_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contact_pods: {
-        Row: {
-          contact_id: string
-          created_at: string
-          id: string
-          is_primary: boolean
-          pod_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          id?: string
-          is_primary?: boolean
-          pod_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          id?: string
-          is_primary?: boolean
-          pod_id?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_pods_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_pods_pod_id_fkey"
-            columns: ["pod_id"]
-            isOneToOne: false
-            referencedRelation: "pods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_pods_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contacts: {
         Row: {
           birthday: string | null
           cadence_override: Database["public"]["Enums"]["cadence"] | null
+          category_ids: string[] | null
           communication_preferences: string | null
           company: string | null
           company_id: string | null
+          company_ids: string[] | null
           contact_frequency:
             | Database["public"]["Enums"]["contact_frequency"]
             | null
@@ -471,6 +343,8 @@ export type Database = {
           notes: string | null
           past_clients: string | null
           phone: string | null
+          pod_ids: string[] | null
+          primary_pod_id: string | null
           recommended_by: string | null
           relationship_context: string | null
           relationship_owner: string | null
@@ -489,9 +363,11 @@ export type Database = {
         Insert: {
           birthday?: string | null
           cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          category_ids?: string[] | null
           communication_preferences?: string | null
           company?: string | null
           company_id?: string | null
+          company_ids?: string[] | null
           contact_frequency?:
             | Database["public"]["Enums"]["contact_frequency"]
             | null
@@ -525,6 +401,8 @@ export type Database = {
           notes?: string | null
           past_clients?: string | null
           phone?: string | null
+          pod_ids?: string[] | null
+          primary_pod_id?: string | null
           recommended_by?: string | null
           relationship_context?: string | null
           relationship_owner?: string | null
@@ -543,9 +421,11 @@ export type Database = {
         Update: {
           birthday?: string | null
           cadence_override?: Database["public"]["Enums"]["cadence"] | null
+          category_ids?: string[] | null
           communication_preferences?: string | null
           company?: string | null
           company_id?: string | null
+          company_ids?: string[] | null
           contact_frequency?:
             | Database["public"]["Enums"]["contact_frequency"]
             | null
@@ -579,6 +459,8 @@ export type Database = {
           notes?: string | null
           past_clients?: string | null
           phone?: string | null
+          pod_ids?: string[] | null
+          primary_pod_id?: string | null
           recommended_by?: string | null
           relationship_context?: string | null
           relationship_owner?: string | null
@@ -767,198 +649,6 @@ export type Database = {
           },
         ]
       }
-      opportunities: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          notes: string | null
-          priority: Database["public"]["Enums"]["opportunity_priority"] | null
-          stage_id: string | null
-          status: Database["public"]["Enums"]["opportunity_status"]
-          updated_at: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          notes?: string | null
-          priority?: Database["public"]["Enums"]["opportunity_priority"] | null
-          stage_id?: string | null
-          status?: Database["public"]["Enums"]["opportunity_status"]
-          updated_at?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          notes?: string | null
-          priority?: Database["public"]["Enums"]["opportunity_priority"] | null
-          stage_id?: string | null
-          status?: Database["public"]["Enums"]["opportunity_status"]
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunities_stage_id_fkey"
-            columns: ["stage_id"]
-            isOneToOne: false
-            referencedRelation: "pipeline_stages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      opportunity_contacts: {
-        Row: {
-          contact_id: string
-          created_at: string
-          id: string
-          opportunity_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          id?: string
-          opportunity_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          id?: string
-          opportunity_id?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunity_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pipeline_stages: {
-        Row: {
-          color: string | null
-          created_at: string
-          id: string
-          name: string
-          order: number
-          pipeline_id: string
-          updated_at: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          order: number
-          pipeline_id: string
-          updated_at?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          order?: number
-          pipeline_id?: string
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipeline_stages_pipeline_id_fkey"
-            columns: ["pipeline_id"]
-            isOneToOne: false
-            referencedRelation: "pipelines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pipeline_stages_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pipelines: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          status: Database["public"]["Enums"]["pipeline_status"]
-          updated_at: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          status?: Database["public"]["Enums"]["pipeline_status"]
-          updated_at?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          status?: Database["public"]["Enums"]["pipeline_status"]
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipelines_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pods: {
         Row: {
           cadence: Database["public"]["Enums"]["cadence"] | null
@@ -1041,148 +731,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      project_contacts: {
-        Row: {
-          contact_id: string
-          created_at: string
-          id: string
-          project_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          id?: string
-          project_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          id?: string
-          project_id?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_contacts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_contacts_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_opportunities: {
-        Row: {
-          created_at: string
-          id: string
-          opportunity_id: string
-          project_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          opportunity_id: string
-          project_id: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          opportunity_id?: string
-          project_id?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_opportunities_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_opportunities_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_opportunities_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          notes: string | null
-          owner: string | null
-          updated_at: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          notes?: string | null
-          owner?: string | null
-          updated_at?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          notes?: string | null
-          owner?: string | null
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       share_links: {
         Row: {

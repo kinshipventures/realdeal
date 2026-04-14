@@ -1,4 +1,4 @@
-import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Pipeline, PipelineStage, Opportunity, Project, PipelineStatus, OpportunityStatus, OpportunityPriority, Company } from './types'
+import type { Pod, Category, Contact, Interaction, InteractionType, HexColor, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, GlobalRegion, Gender, ContactFrequency, InteractionSource, Project, Company } from './types'
 
 const DEMO_KEY = 'realdeal:demo-mode'
 
@@ -297,39 +297,11 @@ export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
   cc('12', '3', '10', 'responded', '3c', 8), // stalled
 ]
 
-// ── Pipelines ──
-
-export const DEMO_PIPELINES: Pipeline[] = [
-  { id: 'rec_demo_pipe_1', name: 'LP Fundraising', status: 'active' as PipelineStatus, created_at: '2026-01-15T00:00:00.000Z' },
-  { id: 'rec_demo_pipe_2', name: 'Deal Flow', status: 'active' as PipelineStatus, created_at: '2026-02-01T00:00:00.000Z' },
-  { id: 'rec_demo_pipe_3', name: 'Talent Pipeline', status: 'hidden' as PipelineStatus, created_at: '2026-02-15T00:00:00.000Z' },
-]
-
-// ── Pipeline Stages ──
-
-export const DEMO_PIPELINE_STAGES: PipelineStage[] = [
-  { id: 'rec_demo_stage_1', pipeline_id: 'rec_demo_pipe_1', name: 'Identified', color: '#718096', order: 1, created_at: '2026-01-15T00:00:00.000Z' },
-  { id: 'rec_demo_stage_2', pipeline_id: 'rec_demo_pipe_1', name: 'Outreach', color: '#4299E1', order: 2, created_at: '2026-01-15T00:00:00.000Z' },
-  { id: 'rec_demo_stage_3', pipeline_id: 'rec_demo_pipe_1', name: 'In Diligence', color: '#ECC94B', order: 3, created_at: '2026-01-15T00:00:00.000Z' },
-  { id: 'rec_demo_stage_4', pipeline_id: 'rec_demo_pipe_1', name: 'Committed', color: '#48BB78', order: 4, created_at: '2026-01-15T00:00:00.000Z' },
-  { id: 'rec_demo_stage_5', pipeline_id: 'rec_demo_pipe_2', name: 'Sourced', color: '#718096', order: 1, created_at: '2026-02-01T00:00:00.000Z' },
-  { id: 'rec_demo_stage_6', pipeline_id: 'rec_demo_pipe_2', name: 'Reviewing', color: '#ECC94B', order: 2, created_at: '2026-02-01T00:00:00.000Z' },
-]
-
-// ── Opportunities ──
-
-export const DEMO_OPPORTUNITIES: Opportunity[] = [
-  { id: 'rec_demo_opp_1', name: 'Series A - Fund III', stage_id: 'rec_demo_stage_3', relationship_ids: ['demo-contact-1'], notes: 'Strong interest, awaiting IC review', priority: 'high' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-02-10T00:00:00.000Z' },
-  { id: 'rec_demo_opp_2', name: 'Co-invest Opportunity', stage_id: 'rec_demo_stage_2', relationship_ids: ['demo-contact-2'], notes: null, priority: 'medium' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-02-20T00:00:00.000Z' },
-  { id: 'rec_demo_opp_3', name: 'LP Commit - $500K', stage_id: 'rec_demo_stage_4', relationship_ids: ['demo-contact-3'], notes: 'Verbal commit received', priority: 'high' as OpportunityPriority, status: 'won' as OpportunityStatus, created_at: '2026-01-20T00:00:00.000Z' },
-  { id: 'rec_demo_opp_4', name: 'Seed Deal Review', stage_id: 'rec_demo_stage_6', relationship_ids: ['demo-contact-4', 'demo-contact-company_1'], notes: 'Intro from a16z partner', priority: 'low' as OpportunityPriority, status: 'open' as OpportunityStatus, created_at: '2026-03-01T00:00:00.000Z' },
-]
-
 // ── Projects ──
 
 export const DEMO_PROJECTS: Project[] = [
-  { id: 'rec_demo_proj_1', name: 'Fund III Launch', description: 'Fundraising campaign for Fund III', owner: 'moj_mahdara', relationship_ids: ['demo-contact-1', 'demo-contact-3'], opportunity_ids: ['rec_demo_opp_1', 'rec_demo_opp_3'], notes: null, created_at: '2026-01-10T00:00:00.000Z' },
-  { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], opportunity_ids: [], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
+  { id: 'rec_demo_proj_1', name: 'Fund III Launch', description: 'Fundraising campaign for Fund III', owner: 'moj_mahdara', relationship_ids: ['demo-contact-1', 'demo-contact-3'], notes: null, created_at: '2026-01-10T00:00:00.000Z' },
+  { id: 'rec_demo_proj_2', name: 'Podcast Outreach S2', description: 'Season 2 guest pipeline', owner: 'moj_mahdara', relationship_ids: ['demo-contact-5', 'demo-contact-6'], notes: 'Targeting 12 episodes', created_at: '2026-02-15T00:00:00.000Z' },
 ]
 
 // Project interactions in main array

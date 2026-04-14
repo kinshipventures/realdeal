@@ -8,10 +8,47 @@ import { CampaignActivityFeed } from './CampaignActivityFeed'
 import { CampaignTableView } from './CampaignTableView'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
+import { CampaignContactPanel } from './CampaignContactPanel'
 import { TYPE_LABELS, STALE_MS, daysUntil } from './campaignUtils'
-import { ArrowLeft, Download, Filter, Settings, LayoutGrid, Table } from 'lucide-react'
+import { ArrowLeft, Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye } from 'lucide-react'
 
 const VIEW_KEY_PREFIX = 'realdeal:campaign-view:'
+const SORT_KEY_PREFIX = 'realdeal:campaign-sort:'
+const CARD_FIELDS_KEY_PREFIX = 'realdeal:campaign-card-fields:'
+
+const SORT_OPTIONS = [
+  { key: 'default', label: 'Default' },
+  { key: 'name', label: 'Name (A-Z)' },
+  { key: 'company', label: 'Company' },
+  { key: 'moved_at', label: 'Date added' },
+  { key: 'next_step_due', label: 'Next step due' },
+]
+
+const CARD_FIELD_OPTIONS = [
+  { key: 'company', label: 'Company' },
+  { key: 'email', label: 'Email' },
+  { key: 'role', label: 'Role' },
+  { key: 'owner', label: 'Owner' },
+  { key: 'next_step', label: 'Next Step' },
+  { key: 'next_step_due', label: 'Due Date' },
+  { key: 'notes', label: 'Notes' },
+]
+
+function loadCardFields(id: string): Set<string> {
+  try {
+    const saved = localStorage.getItem(CARD_FIELDS_KEY_PREFIX + id)
+    if (saved) return new Set(JSON.parse(saved))
+  } catch {}
+  return new Set(['company', 'next_step'])
+}
+
+function loadSort(id: string): { key: string; asc: boolean } {
+  try {
+    const saved = localStorage.getItem(SORT_KEY_PREFIX + id)
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return { key: 'default', asc: true }
+}
 
 export function CampaignDetailRoute() {
   const { id } = useParams<{ id: string }>()
@@ -28,6 +65,18 @@ export function CampaignDetailRoute() {
   const [showStalledOnly, setShowStalledOnly] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
+  // Panel state
+  const [panelCcId, setPanelCcId] = useState<string | null>(null)
+
+  // Sort state
+  const [sortKey, setSortKey] = useState(() => id ? loadSort(id).key : 'default')
+  const [sortAsc, setSortAsc] = useState(() => id ? loadSort(id).asc : true)
+  const [showSortMenu, setShowSortMenu] = useState(false)
+
+  // Card fields state
+  const [cardFields, setCardFields] = useState<Set<string>>(() => id ? loadCardFields(id) : new Set(['company', 'next_step']))
+  const [showCardFieldsMenu, setShowCardFieldsMenu] = useState(false)
+
   const [view, setView] = useState<'board' | 'table'>(() => {
     const param = searchParams.get('view')
     if (param === 'table') return 'table'
@@ -42,6 +91,28 @@ export function CampaignDetailRoute() {
     setView(v)
     if (id) localStorage.setItem(VIEW_KEY_PREFIX + id, v)
     setSearchParams(v === 'table' ? { view: 'table' } : {}, { replace: true })
+  }
+
+  function handleSortChange(key: string) {
+    if (key === sortKey) {
+      setSortAsc(!sortAsc)
+      if (id) localStorage.setItem(SORT_KEY_PREFIX + id, JSON.stringify({ key, asc: !sortAsc }))
+    } else {
+      setSortKey(key)
+      setSortAsc(true)
+      if (id) localStorage.setItem(SORT_KEY_PREFIX + id, JSON.stringify({ key, asc: true }))
+    }
+    setShowSortMenu(false)
+  }
+
+  function toggleCardField(key: string) {
+    setCardFields(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      if (id) localStorage.setItem(CARD_FIELDS_KEY_PREFIX + id, JSON.stringify([...next]))
+      return next
+    })
   }
 
   const loadData = useCallback(async () => {
@@ -122,6 +193,17 @@ export function CampaignDetailRoute() {
     URL.revokeObjectURL(url)
   }
 
+  function handleCardClick(cc: CampaignContact) {
+    setPanelCcId(cc.id)
+  }
+
+  function handlePanelUpdate(updated: CampaignContact) {
+    setCampaignContacts(prev => prev.map(cc => cc.id === updated.id ? updated : cc))
+  }
+
+  const panelCc = panelCcId ? campaignContacts.find(cc => cc.id === panelCcId) : null
+  const panelContact = panelCc ? contacts.find(c => c.id === panelCc.contact_id) : null
+
   if (loading) return <DetailSkeleton />
   if (!campaign) return <div style={{ padding: 32, color: 'var(--color-text-secondary)' }}>Campaign not found</div>
 
@@ -146,25 +228,35 @@ export function CampaignDetailRoute() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 800,
-          margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
-        }}>
-          {campaign.name}
-        </h1>
-        <CampaignTypeIcon type={campaign.type} size={16} colored />
-        <span style={{
-          padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 500,
-          background: 'var(--tint)', color: 'var(--color-text-secondary)',
-        }}>
-          {TYPE_LABELS[campaign.type]}
-        </span>
-        {campaign.deadline && <DeadlineBadge deadline={campaign.deadline} />}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1 style={{
+            fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 800,
+            margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
+          }}>
+            {campaign.name}
+          </h1>
+          <CampaignTypeIcon type={campaign.type} size={16} colored />
+          <span style={{
+            padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 500,
+            background: 'var(--tint)', color: 'var(--color-text-secondary)',
+          }}>
+            {TYPE_LABELS[campaign.type]}
+          </span>
+          {campaign.deadline && <DeadlineBadge deadline={campaign.deadline} />}
+        </div>
+        {campaign.description && (
+          <p style={{
+            margin: '6px 0 0', fontSize: 13, color: 'var(--color-text-secondary)',
+            lineHeight: 1.5, maxWidth: 600,
+          }}>
+            {campaign.description}
+          </p>
+        )}
       </div>
 
       {/* Action bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
         {/* Board / Table toggle */}
         <div style={{ display: 'flex', gap: 2, background: 'var(--tint)', borderRadius: 8, padding: 2 }}>
           <button
@@ -198,6 +290,104 @@ export function CampaignDetailRoute() {
             Table
           </button>
         </div>
+
+        {/* Sort (board only) */}
+        {view === 'board' && (
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 7,
+                border: sortKey !== 'default' ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+                background: sortKey !== 'default' ? 'var(--tint)' : 'transparent',
+                fontSize: 11, fontWeight: 500,
+                color: sortKey !== 'default' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <ArrowUpDown size={11} />
+              Sort
+            </button>
+            {showSortMenu && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowSortMenu(false)} />
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, marginTop: 4,
+                  background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+                  borderRadius: 10, padding: 4, zIndex: 100, minWidth: 160,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                }}>
+                  {SORT_OPTIONS.map(o => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => handleSortChange(o.key)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                        textAlign: 'left', padding: '6px 10px', borderRadius: 6,
+                        border: 'none', background: sortKey === o.key ? 'var(--tint)' : 'none',
+                        fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+                        color: 'var(--color-text-primary)', fontWeight: sortKey === o.key ? 600 : 400,
+                      }}
+                    >
+                      {o.label}
+                      {sortKey === o.key && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>{sortAsc ? '^' : 'v'}</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Card fields (board only) */}
+        {view === 'board' && (
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowCardFieldsMenu(!showCardFieldsMenu)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 7,
+                border: '1px solid var(--edge)', background: 'transparent',
+                fontSize: 11, fontWeight: 500,
+                color: 'var(--color-text-secondary)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <Eye size={11} />
+              Card fields
+            </button>
+            {showCardFieldsMenu && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowCardFieldsMenu(false)} />
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, marginTop: 4,
+                  background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+                  borderRadius: 10, padding: 8, zIndex: 100, minWidth: 160,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                }}>
+                  {CARD_FIELD_OPTIONS.map(o => (
+                    <label key={o.key} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
+                      fontSize: 12, color: 'var(--color-text-primary)',
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={cardFields.has(o.key)}
+                        onChange={() => toggleCardField(o.key)}
+                      />
+                      {o.label}
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div style={{ flex: 1 }} />
 
@@ -345,6 +535,10 @@ export function CampaignDetailRoute() {
           contacts={contacts}
           onStagesChange={setStages}
           onContactsChange={setCampaignContacts}
+          onCardClick={handleCardClick}
+          sortKey={sortKey}
+          sortAsc={sortAsc}
+          visibleCardFields={cardFields}
         />
       ) : (
         <CampaignTableView
@@ -353,6 +547,7 @@ export function CampaignDetailRoute() {
           campaignContacts={boardContacts}
           contacts={contacts}
           onContactsChange={setCampaignContacts}
+          onCardClick={handleCardClick}
         />
       )}
 
@@ -363,6 +558,18 @@ export function CampaignDetailRoute() {
           campaignName={campaign.name}
           contacts={contacts}
           stages={stages}
+        />
+      )}
+
+      {/* Contact panel */}
+      {panelCc && panelContact && (
+        <CampaignContactPanel
+          cc={panelCc}
+          contact={panelContact}
+          stages={stages}
+          campaign={campaign}
+          onUpdate={handlePanelUpdate}
+          onClose={() => setPanelCcId(null)}
         />
       )}
     </div>

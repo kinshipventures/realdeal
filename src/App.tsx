@@ -15,7 +15,7 @@ import { CreateRecordModal } from './components/records/CreateRecordModal'
 import { PodDetailPage } from './components/pods/PodDetailPage'
 import { CampaignsPage } from './components/campaigns/CampaignsPage'
 import { CampaignDetailRoute } from './components/campaigns/CampaignDetailRoute'
-import { ProjectDetailPage } from './components/projects/ProjectDetailPage'
+
 import { NurturingHub } from './components/nurturing/NurturingHub'
 import { AccountPage } from './components/settings/AccountPage'
 import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
@@ -309,7 +309,7 @@ export default function App() {
           <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects" element={<Navigate to="/campaigns" replace />} />
-          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="projects/:id" element={<Navigate to="/campaigns" replace />} />
           <Route path="reports" element={<Navigate to="/dashboard" replace />} />
           <Route path="learn" element={<LearnPage />} />
           <Route path="changelog" element={<ChangelogPage />} />

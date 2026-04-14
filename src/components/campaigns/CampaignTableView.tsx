@@ -11,6 +11,7 @@ interface Props {
   campaignContacts: CampaignContact[]
   contacts: Contact[]
   onContactsChange: (contacts: CampaignContact[]) => void
+  onCardClick: (cc: CampaignContact) => void
 }
 
 type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
@@ -38,7 +39,7 @@ function getVisibleColumns(campaignId: string): Set<ColumnKey> {
   return new Set(ALL_COLUMNS.map(c => c.key))
 }
 
-export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange }: Props) {
+export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange, onCardClick }: Props) {
   const navigate = useNavigate()
   const [visibleCols, setVisibleCols] = useState(() => getVisibleColumns(campaign.id))
   const [showColMenu, setShowColMenu] = useState(false)
@@ -283,7 +284,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                   <td
                     key={c.key}
                     onClick={() => {
-                      if (c.key === 'name') navigate(`/contact/${cc.contact_id}`)
+                      if (c.key === 'name') { onCardClick(cc); }
                       else startEdit(cc.id, c.key)
                     }}
                     style={{

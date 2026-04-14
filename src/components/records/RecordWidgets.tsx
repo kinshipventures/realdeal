@@ -7,7 +7,6 @@ import { AssociatedPeopleWidget } from './AssociatedPeopleWidget'
 import { PodFieldsWidget } from './PodFieldsWidget'
 import { RelationshipWidget } from './RelationshipWidget'
 import { PipelinesWidget } from './PipelinesWidget'
-import { ProjectsWidget } from './ProjectsWidget'
 import { WIDGET_STYLE } from './shared'
 
 function FundTagsWidget({ contact }: { contact: Contact }) {
@@ -94,7 +93,7 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
         <AssociatedPeopleWidget contact={contact} />
       )}
       <PipelinesWidget contact={contact} />
-      <ProjectsWidget contact={contact} />
+      
     </div>
   )
 }
