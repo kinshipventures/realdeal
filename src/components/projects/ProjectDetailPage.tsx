@@ -87,7 +87,7 @@ export function ProjectDetailPage() {
     if (!project || !noteText.trim()) return
     setSubmittingNote(true)
     try {
-      await addProjectNote(project.id, project.name, noteText.trim())
+      await addProjectNote(project.id, noteText.trim())
       setNoteText('')
       invalidateProjectsCache()
       await load()
