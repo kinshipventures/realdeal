@@ -720,10 +720,7 @@ export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'n
   if (data.deadline !== undefined) dbData.deadline = data.deadline
   if (data.description !== undefined) dbData.description = data.description
   if (data.notes !== undefined) dbData.notes = data.notes
-  if (data.type !== undefined) {
-    const dbType = (['event', 'investment', 'outreach', 'other'] as const).includes(data.type as any) ? data.type : 'other'
-    dbData.type = dbType
-  }
+  if (data.type !== undefined) dbData.type = data.type
   const { data: row, error } = await supabase.from('campaigns').update(dbData).eq('id', id).select().single()
   if (error) throw error
   const updated = mapCampaign(row)
