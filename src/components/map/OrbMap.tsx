@@ -684,15 +684,17 @@ export function OrbMap() {
     const podX = podNode ? (podNode.position.x + (LIST_SIZE / 2)) : 0
     const podY = podNode ? (podNode.position.y + (LIST_SIZE / 2)) : 0
 
-    // Zoom viewport toward the clicked pod (top-left quadrant)
+    // Zoom viewport toward the clicked pod, centering it in the left area (panel takes ~520px on right)
     const containerEl = document.querySelector('.react-flow') as HTMLElement | null
     const cw = containerEl?.clientWidth ?? window.innerWidth
     const ch = containerEl?.clientHeight ?? window.innerHeight
-    const zoomTarget = Math.min(getZoom() * 1.8, 2.5)
-    // Position the pod in the top-left area of the viewport
+    const panelWidth = Math.min(520, cw - 32)
+    const availableWidth = cw - panelWidth - 32 // space left of the overlay
+    const zoomTarget = Math.min(getZoom() * 1.6, 2.2)
+    // Center the pod orb in the available left area, vertically centered
     setViewport({
-      x: cw * 0.15 - podX * zoomTarget,
-      y: ch * 0.15 - podY * zoomTarget,
+      x: (availableWidth / 2) - podX * zoomTarget,
+      y: (ch / 2) - podY * zoomTarget,
       zoom: zoomTarget,
     }, { duration: 450 })
 
