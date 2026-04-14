@@ -118,7 +118,7 @@ export function CampaignOverview() {
             : "Completed campaigns will appear here."}
           ctaLabel={filter === 'active' ? "+ New Campaign" : undefined}
           onCta={filter === 'active' ? () => setCreating(true) : undefined}
-          shadows={2}
+          ghosts={2}
         />
       ) : view === 'grid' ? (
         <div style={{
