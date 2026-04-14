@@ -43,6 +43,7 @@ export function CampaignsPage() {
     setBoardLoading(true)
     setConfirmingComplete(false)
     setShowStalledOnly(false)
+    setShowSettings(false)
     if (campaign.backing === 'pipeline') {
       Promise.all([
         getStagesForCampaign(activeCampaignId, 'pipeline'),
