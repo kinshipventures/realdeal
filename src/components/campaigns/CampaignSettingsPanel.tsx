@@ -23,7 +23,7 @@ export function CampaignSettingsPanel({ campaign, onUpdate, onClose }: Props) {
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>()
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
