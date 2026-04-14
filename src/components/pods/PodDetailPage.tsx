@@ -185,9 +185,11 @@ function PodDropTarget({ pod, isOver }: { pod: Pod; isOver?: boolean }) {
   )
 }
 
-export function PodDetailPage() {
-  const { id: podId } = useParams<{ id: string }>()
+export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onClose?: () => void } = {}) {
+  const { id: paramId } = useParams<{ id: string }>()
+  const podId = podIdProp ?? paramId
   const navigate = useNavigate()
+  const isOverlay = !!onClose
 
   const [pod, setPod] = useState<Pod | null>(null)
   const [allPods, setAllPods] = useState<Pod[]>([])
