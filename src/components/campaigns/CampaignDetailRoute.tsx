@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router'
-import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/airtable'
-import type { Campaign, CampaignContact, CampaignStage, Contact, Interaction } from '../../lib/types'
+import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, getPods, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/airtable'
+import type { Campaign, CampaignContact, CampaignStage, Contact, Interaction, Pod } from '../../lib/types'
 import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'
 import { CampaignNotesSidebar } from './CampaignNotesSidebar'
 import { CampaignTableView } from './CampaignTableView'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
-import { CampaignContactPanel } from './CampaignContactPanel'
+import { ContactDetail } from '../contacts/ContactDetail'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check } from 'lucide-react'
 
@@ -81,6 +81,7 @@ export function CampaignDetailRoute() {
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [pods, setPods] = useState<Pod[]>([])
   const [stages, setStages] = useState<CampaignStage[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
   const [interactionsMap, setInteractionsMap] = useState<Map<string, Interaction[]>>(new Map())
@@ -90,7 +91,7 @@ export function CampaignDetailRoute() {
   const [showSettings, setShowSettings] = useState(false)
 
   // Panel state
-  const [panelCcId, setPanelCcId] = useState<string | null>(null)
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
 
   // Sort state
   const [sortKey, setSortKey] = useState(() => id ? loadSort(id).key : 'default')
@@ -153,9 +154,10 @@ export function CampaignDetailRoute() {
 
   const loadData = useCallback(async () => {
     if (!id) return
-    const [allCampaigns, ct] = await Promise.all([getAllCampaigns(), getContacts()])
+    const [allCampaigns, ct, allPods] = await Promise.all([getAllCampaigns(), getContacts(), getPods()])
     setCampaigns(allCampaigns)
     setContacts(ct)
+    setPods(allPods)
     const camp = allCampaigns.find(c => c.id === id)
     setCampaign(camp ?? null)
     if (camp) {
@@ -234,15 +236,22 @@ export function CampaignDetailRoute() {
   }
 
   function handleCardClick(cc: CampaignContact) {
-    setPanelCcId(cc.id)
+    setSelectedContactId(cc.contact_id)
   }
 
-  function handlePanelUpdate(updated: CampaignContact) {
-    setCampaignContacts(prev => prev.map(cc => cc.id === updated.id ? updated : cc))
+  function handleContactSaved(updated: Contact) {
+    setContacts(prev => prev.map(contact => contact.id === updated.id ? updated : contact))
   }
 
-  const panelCc = panelCcId ? campaignContacts.find(cc => cc.id === panelCcId) : null
-  const panelContact = panelCc ? contacts.find(c => c.id === panelCc.contact_id) : null
+  function handleContactDeleted() {
+    if (!selectedContactId) return
+    const deletedId = selectedContactId
+    setContacts(prev => prev.filter(contact => contact.id !== deletedId))
+    setCampaignContacts(prev => prev.filter(cc => cc.contact_id !== deletedId))
+    setSelectedContactId(null)
+  }
+
+  const selectedContact = selectedContactId ? contacts.find(contact => contact.id === selectedContactId) : null
 
   if (loading) return <DetailSkeleton />
   if (!campaign) return <div style={{ padding: 32, color: 'var(--color-text-secondary)' }}>Campaign not found</div>
@@ -617,16 +626,15 @@ export function CampaignDetailRoute() {
         />
       </div>
 
-      {/* Contact panel */}
-      {panelCc && panelContact && (
-        <CampaignContactPanel
-          cc={panelCc}
-          contact={panelContact}
-          stages={stages}
-          campaign={campaign}
-          interactions={interactionsMap.get(panelContact.id) ?? []}
-          onUpdate={handlePanelUpdate}
-          onClose={() => setPanelCcId(null)}
+      {/* Contact lightbox */}
+      {selectedContact && (
+        <ContactDetail
+          contact={selectedContact}
+          categoryId={selectedContact.category_ids[0]}
+          onClose={() => setSelectedContactId(null)}
+          onSaved={handleContactSaved}
+          onDeleted={handleContactDeleted}
+          pods={pods}
         />
       )}
     </div>

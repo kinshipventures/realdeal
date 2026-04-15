@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
 import { getInteractions } from '../../lib/airtable'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
@@ -91,6 +92,13 @@ interface Props {
 
 type SaveError = { field: keyof Contact; value: string | null } | null
 
+type ShellBounds = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [] }: Props) {
   const isNew = contact === null
 
@@ -125,6 +133,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [enrichError, setEnrichError] = useState<string | null>(null)
   const [suggestedUpdates, setSuggestedUpdates] = useState<Record<string, { current: string; suggested: string }>>({})
   const [acceptingField, setAcceptingField] = useState<string | null>(null)
+  const [shellBounds, setShellBounds] = useState<ShellBounds | null>(null)
 
   useEffect(() => {
     if (!contact) return
@@ -170,6 +179,39 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
 
+  useEffect(() => {
+    const root = document.getElementById('main-content')
+
+    function measureShell() {
+      if (!root) {
+        setShellBounds({
+          left: 0,
+          top: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        })
+        return
+      }
+
+      const rect = root.getBoundingClientRect()
+      setShellBounds({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      })
+    }
+
+    measureShell()
+    window.addEventListener('resize', measureShell)
+    const resizeObserver = root ? new ResizeObserver(() => measureShell()) : null
+    resizeObserver?.observe(root)
+    return () => {
+      window.removeEventListener('resize', measureShell)
+      resizeObserver?.disconnect()
+    }
+  }, [])
+
   // Auto-save on blur for existing contacts — generation counter prevents stale responses from overwriting
   function handleBlur(key: keyof Contact, value: string) {
     const v = value.trim() || null
@@ -211,8 +253,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       border: '1px solid var(--edge-strong)',
       borderRadius: 6,
       color: 'var(--color-text-primary)',
-      fontSize: 13,
-      padding: '6px 10px',
+      fontSize: 14,
+      lineHeight: 1.45,
+      padding: '7px 10px',
       outline: 'none',
       fontFamily: 'inherit',
     }
@@ -236,14 +279,16 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
 
     return (
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-          <div style={{
-            fontSize: 10, fontWeight: 500,
-            color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-          }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: multi || editing ? 'start' : 'center',
+        padding: '13px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>
             {label}
           </div>
           {isEnriched && (
@@ -262,87 +307,89 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               type="button"
               onClick={handleRetrySave}
               style={{
-                fontSize: 10, fontWeight: 400,
+                fontSize: 11, fontWeight: 400,
                 color: '#D93025',
                 letterSpacing: '0.01em',
                 background: 'none', border: 'none',
                 cursor: 'pointer', padding: 0,
               }}
             >
-              failed to save — retry
+              Could not save. Try again.
             </button>
           )}
         </div>
-        {editing ? (
-          multi ? (
-            <textarea
-              autoFocus
-              defaultValue={val ?? ''}
-              onBlur={e => handleBlur(key, e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={3}
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+        <div style={{ minWidth: 0 }}>
+          {editing ? (
+            multi ? (
+              <textarea
+                autoFocus
+                defaultValue={val ?? ''}
+                onBlur={e => handleBlur(key, e.target.value)}
+                onKeyDown={onKeyDown}
+                rows={4}
+                style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                autoFocus
+                type="text"
+                defaultValue={val ?? ''}
+                onBlur={e => handleBlur(key, e.target.value)}
+                onKeyDown={onKeyDown}
+                style={inputStyle}
+              />
+            )
           ) : (
-            <input
-              autoFocus
-              type="text"
-              defaultValue={val ?? ''}
-              onBlur={e => handleBlur(key, e.target.value)}
-              onKeyDown={onKeyDown}
-              style={inputStyle}
-            />
-          )
-        ) : (
-          <div
-            onClick={() => setEditingField(key)}
-            style={{
-              fontSize: 13,
-              color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'text',
-              padding: '2px 0',
-              minHeight: 20,
-              whiteSpace: multi ? 'pre-wrap' : 'nowrap',
-              overflow: 'hidden',
-              textOverflow: multi ? undefined : 'ellipsis',
-              lineHeight: 1.5,
-            }}
-          >
-            {val ?? `add ${label.toLowerCase()}`}
-          </div>
-        )}
-        {suggestedUpdates[fieldKey] && (
-          <div style={{ marginTop: 4, padding: '6px 8px', background: 'rgba(99,102,241,0.06)', borderRadius: 6, fontSize: 13 }}>
-            <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
-              Suggested: <strong>{suggestedUpdates[fieldKey].suggested}</strong>
+            <div
+              onClick={() => setEditingField(key)}
+              style={{
+                fontSize: 14,
+                color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'text',
+                minHeight: 22,
+                whiteSpace: multi ? 'pre-wrap' : 'nowrap',
+                overflow: 'hidden',
+                textOverflow: multi ? undefined : 'ellipsis',
+                lineHeight: multi ? 1.6 : 1.45,
+                padding: multi ? '2px 0' : '0',
+              }}
+            >
+              {val ?? `add ${label.toLowerCase()}`}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <button
-                type="button"
-                disabled={acceptingField === fieldKey}
-                onClick={async () => {
-                  setAcceptingField(fieldKey)
-                  const original = { [fieldKey]: suggestedUpdates[fieldKey].current }
-                  const updated = await applyEnrichment(contact!.id, { [fieldKey]: suggestedUpdates[fieldKey].suggested }, original)
-                  onSaved(updated)
-                  setEnrichedFields(prev => new Set([...prev, key]))
-                  setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })
-                  setAcceptingField(null)
-                }}
-                style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === fieldKey ? 0.5 : 1 }}
-              >
-                {acceptingField === fieldKey ? 'Accepting...' : 'Accept'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })}
-                style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-              >
-                Keep current
-              </button>
+          )}
+          {suggestedUpdates[fieldKey] && (
+            <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(99,102,241,0.06)', borderRadius: 8, fontSize: 13 }}>
+              <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
+                Suggested: <strong>{suggestedUpdates[fieldKey].suggested}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  type="button"
+                  disabled={acceptingField === fieldKey}
+                  onClick={async () => {
+                    setAcceptingField(fieldKey)
+                    const original = { [fieldKey]: suggestedUpdates[fieldKey].current }
+                    const updated = await applyEnrichment(contact!.id, { [fieldKey]: suggestedUpdates[fieldKey].suggested }, original)
+                    onSaved(updated)
+                    setEnrichedFields(prev => new Set([...prev, key]))
+                    setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })
+                    setAcceptingField(null)
+                  }}
+                  style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === fieldKey ? 0.5 : 1 }}
+                >
+                  {acceptingField === fieldKey ? 'Accepting...' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next[fieldKey]; return next })}
+                  style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                >
+                  Keep current
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     )
   }
@@ -452,23 +499,56 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const nameInitials = initials(draft.name ?? '')
 
   const smallInputStyle: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 1.4,
     color: 'var(--color-text-secondary)',
     background: 'var(--tint)',
     border: '1px solid var(--edge-strong)',
-    borderRadius: 4,
-    padding: '2px 6px',
+    borderRadius: 6,
+    padding: '6px 8px',
     outline: 'none',
     fontFamily: 'inherit',
   }
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: 'var(--font-serif)',
     fontWeight: 600,
-    color: 'var(--color-text-tertiary)',
-    marginBottom: 14,
+    color: 'color-mix(in srgb, var(--color-text-secondary) 90%, var(--color-brand) 10%)',
+    marginBottom: 0,
     letterSpacing: '0.01em',
+    lineHeight: 1.2,
+  }
+
+  const sectionShell: React.CSSProperties = {
+    border: '1px solid color-mix(in srgb, var(--divider) 82%, transparent)',
+    borderRadius: 14,
+    background: 'color-mix(in srgb, var(--surface-panel) 94%, var(--color-bg) 6%)',
+    boxShadow: '0 10px 22px rgba(0,0,0,0.04)',
+    overflow: 'hidden',
+  }
+
+  const sectionHeader: React.CSSProperties = {
+    padding: '13px 18px 12px',
+    borderBottom: '1px solid var(--divider)',
+    background: 'color-mix(in srgb, var(--surface-panel) 82%, transparent)',
+  }
+
+  const rowLabelWrap: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
+    minWidth: 0,
+  }
+
+  const rowLabel: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: 'var(--color-text-tertiary)',
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+    lineHeight: 1.2,
   }
 
   function linkedinField() {
@@ -478,14 +558,16 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const isEnriched = enrichedFields.has('linkedin')
 
     return (
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-          <div style={{
-            fontSize: 10, fontWeight: 500,
-            color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-          }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: 'center',
+        padding: '12px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>
             LinkedIn
           </div>
           {isEnriched && (
@@ -511,96 +593,99 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 cursor: 'pointer', padding: 0,
               }}
             >
-              failed to save — retry
+              Could not save. Try again.
             </button>
           )}
         </div>
-        {editing ? (
-          <input
-            autoFocus
-            type="text"
-            defaultValue={val ?? ''}
-            placeholder="https://linkedin.com/in/..."
-            onBlur={e => handleBlur('linkedin', e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') e.currentTarget.blur()
-              if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
-            }}
-            style={{
-              width: '100%',
-              background: 'var(--tint)',
-              border: '1px solid var(--edge-strong)',
-              borderRadius: 6,
-              color: 'var(--color-text-primary)',
-              fontSize: 13,
-              padding: '6px 10px',
-              outline: 'none',
-              fontFamily: 'inherit',
-            }}
-          />
-        ) : val && val.startsWith('http') ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0', minHeight: 20 }}>
-            <a
-              href={val}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 13, color: '#1565C0', textDecoration: 'none' }}
-            >
-              {val.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '') || val}
-            </a>
-            <span
+        <div style={{ minWidth: 0 }}>
+          {editing ? (
+            <input
+              autoFocus
+              type="text"
+              defaultValue={val ?? ''}
+              placeholder="https://linkedin.com/in/..."
+              onBlur={e => handleBlur('linkedin', e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+                if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
+              }}
+              style={{
+                width: '100%',
+                background: 'var(--tint)',
+                border: '1px solid var(--edge-strong)',
+                borderRadius: 6,
+                color: 'var(--color-text-primary)',
+                fontSize: 14,
+                lineHeight: 1.45,
+                padding: '7px 10px',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          ) : val && val.startsWith('http') ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 20 }}>
+              <a
+                href={val}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 14, color: '#1565C0', textDecoration: 'none', lineHeight: 1.45 }}
+              >
+                {val.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '') || val}
+              </a>
+              <span
+                onClick={() => setEditingField('linkedin')}
+                style={{ fontSize: 11, color: 'var(--color-text-tertiary)', cursor: 'pointer', letterSpacing: '0.01em' }}
+              >
+                edit
+              </span>
+            </div>
+          ) : (
+            <div
               onClick={() => setEditingField('linkedin')}
-              style={{ fontSize: 10, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}
+              style={{
+                fontSize: 14,
+                color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'text',
+                minHeight: 20,
+                lineHeight: 1.45,
+              }}
             >
-              edit
-            </span>
-          </div>
-        ) : (
-          <div
-            onClick={() => setEditingField('linkedin')}
-            style={{
-              fontSize: 13,
-              color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'text',
-              padding: '2px 0',
-              minHeight: 20,
-            }}
-          >
-            {val ?? 'add linkedin'}
-          </div>
-        )}
-        {suggestedUpdates['linkedin'] && (
-          <div style={{ marginTop: 4, padding: '6px 8px', background: 'rgba(99,102,241,0.06)', borderRadius: 6, fontSize: 13 }}>
-            <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
-              Suggested: <strong>{suggestedUpdates['linkedin'].suggested}</strong>
+              {val ?? 'add linkedin'}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <button
-                type="button"
-                disabled={acceptingField === 'linkedin'}
-                onClick={async () => {
-                  setAcceptingField('linkedin')
-                  const original = { linkedin: suggestedUpdates['linkedin'].current }
-                  const updated = await applyEnrichment(contact!.id, { linkedin: suggestedUpdates['linkedin'].suggested }, original)
-                  onSaved(updated)
-                  setEnrichedFields(prev => new Set([...prev, 'linkedin' as keyof Contact]))
-                  setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })
-                  setAcceptingField(null)
-                }}
-                style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === 'linkedin' ? 0.5 : 1 }}
-              >
-                {acceptingField === 'linkedin' ? 'Accepting...' : 'Accept'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })}
-                style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-              >
-                Keep current
-              </button>
+          )}
+          {suggestedUpdates['linkedin'] && (
+            <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(99,102,241,0.06)', borderRadius: 8, fontSize: 13 }}>
+              <div style={{ color: 'var(--color-text-secondary)', marginBottom: 2 }}>
+                Suggested: <strong>{suggestedUpdates['linkedin'].suggested}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  type="button"
+                  disabled={acceptingField === 'linkedin'}
+                  onClick={async () => {
+                    setAcceptingField('linkedin')
+                    const original = { linkedin: suggestedUpdates['linkedin'].current }
+                    const updated = await applyEnrichment(contact!.id, { linkedin: suggestedUpdates['linkedin'].suggested }, original)
+                    onSaved(updated)
+                    setEnrichedFields(prev => new Set([...prev, 'linkedin' as keyof Contact]))
+                    setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })
+                    setAcceptingField(null)
+                  }}
+                  style={{ fontSize: 12, color: '#6366F1', cursor: 'pointer', background: 'none', border: 'none', padding: 0, opacity: acceptingField === 'linkedin' ? 0.5 : 1 }}
+                >
+                  {acceptingField === 'linkedin' ? 'Accepting...' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuggestedUpdates(prev => { const next = { ...prev }; delete next['linkedin']; return next })}
+                  style={{ fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                >
+                  Keep current
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     )
   }
@@ -611,59 +696,85 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const countdown = daysUntilBirthday(val)
 
     return (
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>
-          Birthday
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: 'center',
+        padding: '12px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>Birthday</div>
         </div>
-        {editing ? (
-          <input
-            autoFocus
-            type="date"
-            defaultValue={val ?? ''}
-            onBlur={e => handleBlur('birthday', e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
-            }}
-            style={{
-              width: '100%',
-              background: 'var(--tint)',
-              border: '1px solid var(--edge-strong)',
-              borderRadius: 6,
-              color: 'var(--color-text-primary)',
-              fontSize: 13,
-              padding: '6px 10px',
-              outline: 'none',
-              fontFamily: 'inherit',
-            }}
-          />
-        ) : (
-          <div
-            onClick={() => setEditingField('birthday')}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'text', padding: '2px 0', minHeight: 20 }}
-          >
-            <span style={{ fontSize: 13, color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
-              {val ?? 'add birthday'}
-            </span>
-            {countdown !== null && countdown <= 30 && (
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                {countdown === 0 ? 'today' : `in ${countdown} day${countdown === 1 ? '' : 's'}`}
+        <div style={{ minWidth: 0 }}>
+          {editing ? (
+            <input
+              autoFocus
+              type="date"
+              defaultValue={val ?? ''}
+              onBlur={e => handleBlur('birthday', e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
+              }}
+              style={{
+                width: '100%',
+                background: 'var(--tint)',
+                border: '1px solid var(--edge-strong)',
+                borderRadius: 6,
+                color: 'var(--color-text-primary)',
+                fontSize: 14,
+                lineHeight: 1.45,
+                padding: '7px 10px',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          ) : (
+            <div
+              onClick={() => setEditingField('birthday')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'text', minHeight: 20, flexWrap: 'wrap' }}
+            >
+              <span style={{ fontSize: 14, color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
+                {val ?? 'add birthday'}
               </span>
-            )}
-          </div>
-        )}
+              {countdown !== null && countdown <= 30 && (
+                <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
+                  {countdown === 0 ? 'today' : `in ${countdown} day${countdown === 1 ? '' : 's'}`}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     )
   }
 
   const hasFundTags = (draft.kv_fund_investor && draft.kv_fund_investor.length > 0) || (draft.spv_investor && draft.spv_investor.length > 0)
 
-  return (
+  const bounds = shellBounds ?? {
+    left: 0,
+    top: 0,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  }
+  const shellInset = bounds.width < 768 ? 10 : 24
+  const lightboxWidth = Math.min(1120, Math.max(320, bounds.width - shellInset * 2))
+  const lightboxHeight = Math.max(320, bounds.height - shellInset * 2)
+  const sidebarWidth = lightboxWidth >= 1080 ? 340 : lightboxWidth >= 960 ? 316 : 292
+  const stackedLayout = lightboxWidth < 900
+
+  const modal = (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0,
+          position: 'fixed',
+          left: bounds.left,
+          top: bounds.top,
+          width: bounds.width,
+          height: bounds.height,
           background: 'rgba(0,0,0,0.5)',
           zIndex: 199,
         }}
@@ -671,24 +782,34 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
       {/* Centered modal */}
       <div
-        className="modal-enter"
+        className="modal-enter contact-lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label={isNew ? 'Create contact' : `Contact details for ${draft.name ?? 'contact'}`}
         style={{
           position: 'fixed',
-          top: '50%', left: '50%',
+          top: bounds.top + bounds.height / 2,
+          left: bounds.left + bounds.width / 2,
           transform: 'translate(-50%, -50%)',
-          width: 'min(880px, calc(100vw - 48px))',
-          maxHeight: 'calc(100vh - 80px)',
+          width: lightboxWidth,
+          maxHeight: lightboxHeight,
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--color-surface)',
-          borderRadius: 16,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.06)',
+          background: 'color-mix(in srgb, var(--color-surface) 96%, var(--color-bg) 4%)',
+          borderRadius: 22,
+          border: '1px solid var(--divider)',
+          boxShadow: '0 32px 120px rgba(0,0,0,0.32), 0 4px 16px rgba(0,0,0,0.16)',
           zIndex: 200,
           overflow: 'hidden',
         }}
       >
         {/* Header */}
-        <div style={{ padding: '24px 32px 20px', borderBottom: '1px solid var(--divider)' }}>
+        <div style={{
+          position: 'relative',
+          padding: '26px 28px 22px',
+          borderBottom: '1px solid var(--divider)',
+          background: 'color-mix(in srgb, var(--surface-panel) 74%, transparent)',
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             {!isNew ? (
               confirmDelete ? (
@@ -739,7 +860,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <button
                     type="button"
                     disabled={enriching || !isEnrichmentAllowed(contact, pods)}
-                    title={!isEnrichmentAllowed(contact, pods) ? 'Enable enrichment on at least one pod to use this feature' : 'Auto-fill contact fields'}
+                    title={!isEnrichmentAllowed(contact, pods) ? 'Turn on enrichment for at least one pod to use this.' : 'Fill in missing details for this contact.'}
                     onClick={async () => {
                       setEnriching(true)
                       setEnrichError(null)
@@ -790,7 +911,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 3l1.9 5.8L19 10.5l-5.1 3.7 1.9 5.8L12 16.5l-4.8 3.5 1.9-5.8L4 10.5l5.1-1.7z"/>
                         </svg>
-                        Enrich
+                        Fill details
                       </>
                     )}
                   </button>
@@ -803,18 +924,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, position: 'relative' }}>
             {/* Avatar */}
             <div style={{
-              width: 48, height: 48,
+              width: 64, height: 64,
               borderRadius: '50%',
-              background: `hsla(${hue}, 40%, 88%, 0.9)`,
-              border: `1px solid hsla(${hue}, 30%, 78%, 0.5)`,
+              background: `radial-gradient(circle at 30% 28%, hsla(${hue}, 72%, 92%, 0.96), hsla(${hue}, 28%, 78%, 0.92) 56%, hsla(${hue}, 22%, 70%, 0.88))`,
+              border: `1px solid hsla(${hue}, 24%, 58%, 0.32)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 600,
-              color: `hsla(${hue}, 40%, 30%, 0.85)`,
+              fontSize: 17, fontWeight: 700,
+              color: `hsla(${hue}, 46%, 28%, 0.9)`,
               flexShrink: 0,
               letterSpacing: '0.03em',
+              boxShadow: `0 10px 22px hsla(${hue}, 24%, 32%, 0.12)`,
             }}>
               {nameInitials || '?'}
             </div>
@@ -833,34 +955,36 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   }}
                   style={{
                     width: '100%',
-                    fontSize: 18, fontWeight: 600,
+                    fontSize: 36, fontWeight: 700,
                     letterSpacing: '-0.02em',
+                    lineHeight: 1.02,
                     background: 'var(--tint)',
                     border: '1px solid var(--edge-strong)',
-                    borderRadius: 6,
+                    borderRadius: 10,
                     color: 'var(--color-text-primary)',
-                    padding: '3px 8px',
+                    padding: '6px 12px',
                     outline: 'none',
-                    fontFamily: 'inherit',
+                    fontFamily: 'var(--font-serif)',
                   }}
                 />
               ) : (
                 <div
                   onClick={() => setEditingField('name')}
                   style={{
-                    fontSize: 18, fontWeight: 600,
+                    fontSize: 36, fontWeight: 700,
                     fontFamily: 'var(--font-serif)',
-                    letterSpacing: '-0.02em',
+                    lineHeight: 1.02,
+                    letterSpacing: '-0.04em',
                     color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                     cursor: 'text',
-                    padding: '2px 0',
+                    padding: '0 0 6px',
                   }}
                 >
                   {draft.name || 'Name'}
                 </div>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
                 {editingField === 'role' ? (
                   <input
                     autoFocus
@@ -872,12 +996,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 ) : (
                   <span
                     onClick={() => setEditingField('role')}
-                    style={{ fontSize: 12, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
+                    style={{ fontSize: 14, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text', lineHeight: 1.45 }}
                   >
-                    {draft.role ?? 'Role'}
+                    {draft.role ?? 'Title or role'}
                   </span>
                 )}
-                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>at</span>
+                <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>at</span>
                 {editingField === 'company' ? (
                   <input
                     autoFocus
@@ -889,9 +1013,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 ) : (
                   <span
                     onClick={() => setEditingField('company')}
-                    style={{ fontSize: 12, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text' }}
+                    style={{ fontSize: 14, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text', lineHeight: 1.45 }}
                   >
-                    {draft.company ?? 'Company'}
+                    {draft.company ?? 'Company or org'}
                   </span>
                 )}
               </div>
@@ -899,266 +1023,299 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
             {/* Equity score in header — existing contacts only */}
             {!isNew && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} size={56} />
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                flexShrink: 0,
+                padding: '14px 16px',
+                borderRadius: 18,
+                border: '1px solid var(--edge)',
+                background: 'color-mix(in srgb, var(--surface-panel) 92%, transparent)',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.06)',
+              }}>
+                <SegmentedEquityRing breakdown={equityBreakdown} score={equityScore} size={64} />
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.03em' }}>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.05em', lineHeight: 0.95, fontVariantNumeric: 'tabular-nums' }}>
                     {equityScore}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', letterSpacing: '0.01em' }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', letterSpacing: '0.06em', marginTop: 5, textTransform: 'uppercase' }}>
                     {scoreLabel(equityScore)}
                   </div>
                 </div>
               </div>
             )}
           </div>
-
-          {!isNew && equityBreakdown.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginTop: 12 }}>
-              {equityBreakdown.map(b => (
-                <div key={b.type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: RING_COLORS[b.type] }} />
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
-                    {b.type}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Two-column body */}
-        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-
-          {/* Left column — Timeline & Interactions */}
-          <div style={{
-            flex: 1, minWidth: 0,
-            overflowY: 'auto',
-            padding: '24px 32px',
-            borderRight: '1px solid var(--divider)',
-          }}>
-            {!isNew && contact ? (
-              <InteractionSection
-                contact={contact}
-                onContactUpdated={onSaved}
-              />
-            ) : (
-              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 13 }}>
-                Save this contact to start logging interactions.
+        <div
+          className="contact-lightbox-body"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            gridTemplateColumns: stackedLayout ? 'minmax(0, 1fr)' : `minmax(0, 1fr) ${sidebarWidth}px`,
+          }}
+        >
+          <div className="contact-lightbox-main" style={{ overflowY: 'auto', padding: '24px 28px 28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={sectionShell}>
+                <div style={sectionHeader}>
+                  <div style={sectionLabel}>ways to reach them</div>
+                </div>
+                {field('email', 'Email')}
+                {field('phone', 'Phone')}
+                {linkedinField()}
+                {field('website', 'Website')}
+                {field('location', 'Location')}
+                {field('country', 'City / country')}
+                {birthdayField()}
+                {draft.global_region && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
+                    <div style={rowLabelWrap}><div style={rowLabel}>Region</div></div>
+                    <div style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.45 }}>{draft.global_region}</div>
+                  </div>
+                )}
+                {draft.gender && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px' }}>
+                    <div style={rowLabelWrap}><div style={rowLabel}>Gender</div></div>
+                    <div style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.45 }}>{draft.gender}</div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Right column — Details */}
-          <div style={{
-            width: 320, flexShrink: 0,
-            overflowY: 'auto',
-            padding: '24px 32px',
-          }}>
-            <div style={{ marginBottom: 24 }}>
-              <div style={sectionLabel}>contact info</div>
-              {field('email', 'Email')}
-              {field('phone', 'Phone')}
-              {linkedinField()}
-              {field('website', 'Website')}
-              {field('location', 'Location')}
-              {field('country', 'City / Country')}
-              {birthdayField()}
-              {draft.global_region && (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Region</div>
-                  <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.global_region}</div>
-                </div>
-              )}
-              {draft.gender && (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Gender</div>
-                  <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{draft.gender}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Pods */}
-            {pods.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={sectionLabel}>pods</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {pods.map(pod => {
-                    const isIn = (draft.list_ids ?? []).includes(pod.id)
-                    const isPrimary = draft.primary_list_id === pod.id
-                    return (
-                      <button
-                        key={pod.id}
-                        type="button"
-                        onClick={() => {
-                          const currentIds = draft.list_ids ?? []
-                          let nextIds: string[]
-                          let nextPrimary = draft.primary_list_id
-                          if (isIn) {
-                            nextIds = currentIds.filter(id => id !== pod.id)
-                            if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
-                          } else {
-                            nextIds = [...currentIds, pod.id]
-                            if (!nextPrimary) nextPrimary = pod.id
-                          }
-                          setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary }))
-                          if (!isNew && contact) {
-                            persistPodAssignment(nextIds, nextPrimary)
-                          }
-                        }}
-                        style={{
-                          padding: '4px 12px',
-                          borderRadius: 100,
-                          fontSize: 11,
-                          fontWeight: isIn ? 600 : 400,
-                          border: '1px solid',
-                          borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
-                          background: isIn ? `${pod.color ?? 'var(--edge)'}18` : 'transparent',
-                          color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                          transition: 'all 0.12s',
-                        }}
-                      >
-                        {pod.name}{isPrimary ? ' *' : ''}
-                      </button>
-                    )
-                  })}
-                </div>
-                {(draft.list_ids ?? []).length > 1 && (
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginBottom: 4 }}>primary pod</div>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {(draft.list_ids ?? []).map(podId => {
-                        const pod = pods.find(p => p.id === podId)
-                        if (!pod) return null
-                        const isPrimary = draft.primary_list_id === podId
+              {pods.length > 0 && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>circles</div>
+                  </div>
+                  <div style={{ padding: '16px 18px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {pods.map(pod => {
+                        const isIn = (draft.list_ids ?? []).includes(pod.id)
+                        const isPrimary = draft.primary_list_id === pod.id
                         return (
                           <button
-                            key={podId}
+                            key={pod.id}
                             type="button"
                             onClick={() => {
-                              setDraft(prev => ({ ...prev, primary_list_id: podId }))
+                              const currentIds = draft.list_ids ?? []
+                              let nextIds: string[]
+                              let nextPrimary = draft.primary_list_id
+                              if (isIn) {
+                                nextIds = currentIds.filter(id => id !== pod.id)
+                                if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
+                              } else {
+                                nextIds = [...currentIds, pod.id]
+                                if (!nextPrimary) nextPrimary = pod.id
+                              }
+                              setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary }))
                               if (!isNew && contact) {
-                                persistPodAssignment(draft.list_ids ?? [], podId)
+                                persistPodAssignment(nextIds, nextPrimary)
                               }
                             }}
                             style={{
-                              padding: '3px 10px',
-                              borderRadius: 100,
-                              fontSize: 10,
-                              fontWeight: isPrimary ? 600 : 400,
-                              border: 'none',
-                              background: isPrimary ? (pod.color ?? 'var(--edge)') : 'var(--tint)',
-                              color: isPrimary ? '#fff' : 'var(--color-text-secondary)',
+                              padding: '6px 12px',
+                              borderRadius: 999,
+                              fontSize: 12,
+                              fontWeight: isIn ? 600 : 400,
+                              border: '1px solid',
+                              borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
+                              background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
+                              color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                               cursor: 'pointer',
                               fontFamily: 'inherit',
+                              transition: 'all 0.12s',
                             }}
                           >
-                            {pod.name}
+                            {pod.name}{isPrimary ? ' *' : ''}
                           </button>
                         )
                       })}
                     </div>
+                    {(draft.list_ids ?? []).length > 1 && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>main circle</div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {(draft.list_ids ?? []).map(podId => {
+                            const pod = pods.find(p => p.id === podId)
+                            if (!pod) return null
+                            const isPrimary = draft.primary_list_id === podId
+                            return (
+                              <button
+                                key={podId}
+                                type="button"
+                                onClick={() => {
+                                  setDraft(prev => ({ ...prev, primary_list_id: podId }))
+                                  if (!isNew && contact) {
+                                    persistPodAssignment(draft.list_ids ?? [], podId)
+                                  }
+                                }}
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: 999,
+                                  fontSize: 11,
+                                  fontWeight: isPrimary ? 600 : 400,
+                                  border: 'none',
+                                  background: isPrimary ? `linear-gradient(180deg, ${pod.color ?? 'var(--edge)'}, color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 80%, #000 20%))` : 'var(--tint)',
+                                  color: isPrimary ? '#fff' : 'var(--color-text-secondary)',
+                                  cursor: 'pointer',
+                                  fontFamily: 'inherit',
+                                }}
+                              >
+                                {pod.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-
-            <div style={{ marginBottom: 24 }}>
-              <div style={sectionLabel}>relationship</div>
-              {field('introduced_by', 'Introduced By')}
-              {field('relationship_owner', 'Relationship Owner')}
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Rings</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {RELATIONSHIP_RINGS.map(ring => {
-                    const isSelected = (draft.ring_ids ?? []).includes(ring)
-                    return (
-                      <button
-                        key={ring}
-                        type="button"
-                        onClick={() => {
-                          const nextRings = isSelected
-                            ? (draft.ring_ids ?? []).filter(id => id !== ring)
-                            : [...(draft.ring_ids ?? []), ring]
-                          void persistRingSelection(nextRings)
-                        }}
-                        style={{
-                          padding: '4px 12px',
-                          borderRadius: 100,
-                          fontSize: 11,
-                          fontWeight: isSelected ? 600 : 400,
-                          border: '1px solid',
-                          borderColor: isSelected ? 'var(--color-brand)' : 'var(--edge)',
-                          background: isSelected ? 'rgba(37,180,57,0.12)' : 'transparent',
-                          color: isSelected ? 'var(--color-brand)' : 'var(--color-text-secondary)',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        {RELATIONSHIP_RING_LABELS[ring]}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              {draft.contact_frequency && (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Contact Frequency</div>
-                  <span style={{
-                    fontSize: 12, fontWeight: 500,
-                    padding: '3px 10px', borderRadius: 100,
-                    background: 'rgba(37,180,57,0.08)',
-                    color: 'var(--color-brand)',
-                  }}>
-                    {draft.contact_frequency}
-                  </span>
                 </div>
               )}
-              {field('intel_notes', 'Intel / Notes', true)}
-            </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={sectionLabel}>context</div>
-              {field('specialization', 'Focus')}
-              {field('interests', 'Interests', true)}
-              {field('relationship_context', 'Context', true)}
-              {field('notes', 'Notes', true)}
-            </div>
-
-            {hasFundTags && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={sectionLabel}>fund tags</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {draft.kv_fund_investor?.map(tag => (
-                    <span key={tag} style={{
-                      fontSize: 11, fontWeight: 500,
-                      padding: '3px 10px', borderRadius: 100,
-                      background: 'hsla(150, 60%, 40%, 0.08)',
-                      color: 'hsla(150, 60%, 30%, 0.80)',
-                    }}>
-                      KV: {tag}
-                    </span>
-                  ))}
-                  {draft.spv_investor?.map(tag => (
-                    <span key={tag} style={{
-                      fontSize: 11, fontWeight: 500,
-                      padding: '3px 10px', borderRadius: 100,
-                      background: 'hsla(210, 60%, 50%, 0.08)',
-                      color: 'hsla(210, 60%, 40%, 0.80)',
-                    }}>
-                      SPV: {tag}
-                    </span>
-                  ))}
+              <div style={sectionShell}>
+                <div style={sectionHeader}>
+                  <div style={sectionLabel}>relationship</div>
                 </div>
+                {field('introduced_by', 'Met through')}
+                {field('relationship_owner', 'Relationship Owner')}
+                <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'start', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
+                  <div style={rowLabelWrap}><div style={rowLabel}>Rings</div></div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {RELATIONSHIP_RINGS.map(ring => {
+                      const isSelected = (draft.ring_ids ?? []).includes(ring)
+                      return (
+                        <button
+                          key={ring}
+                          type="button"
+                          onClick={() => {
+                            const nextRings = isSelected
+                              ? (draft.ring_ids ?? []).filter(id => id !== ring)
+                              : [...(draft.ring_ids ?? []), ring]
+                            void persistRingSelection(nextRings)
+                          }}
+                          style={{
+                            padding: '4px 12px',
+                            borderRadius: 100,
+                            fontSize: 12,
+                            fontWeight: isSelected ? 600 : 400,
+                            border: '1px solid',
+                            borderColor: isSelected ? 'var(--color-brand)' : 'var(--edge)',
+                            background: isSelected ? 'rgba(37,180,57,0.12)' : 'transparent',
+                            color: isSelected ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          {RELATIONSHIP_RING_LABELS[ring]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                {draft.contact_frequency && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
+                    <div style={rowLabelWrap}><div style={rowLabel}>Contact Frequency</div></div>
+                    <div>
+                      <span style={{
+                        fontSize: 13, fontWeight: 500,
+                        padding: '4px 10px', borderRadius: 100,
+                        background: 'rgba(37,180,57,0.08)',
+                        color: 'var(--color-brand)',
+                      }}>
+                        {draft.contact_frequency}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {field('intel_notes', 'Notes', true)}
               </div>
-            )}
 
-            {/* Campaigns */}
-            {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={sectionLabel}>campaigns</div>
+              <div style={sectionShell}>
+                <div style={sectionHeader}>
+                  <div style={sectionLabel}>context</div>
+                </div>
+                {field('specialization', 'Focus area')}
+                {field('interests', 'Interests', true)}
+                {field('relationship_context', 'Context', true)}
+              </div>
+
+              {hasFundTags && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>fund connections</div>
+                  </div>
+                  <div style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {draft.kv_fund_investor?.map(tag => (
+                      <span key={tag} style={{
+                        fontSize: 12, fontWeight: 500,
+                        padding: '4px 10px', borderRadius: 100,
+                        background: 'hsla(150, 60%, 40%, 0.08)',
+                        color: 'hsla(150, 60%, 30%, 0.80)',
+                      }}>
+                        KV: {tag}
+                      </span>
+                    ))}
+                    {draft.spv_investor?.map(tag => (
+                      <span key={tag} style={{
+                        fontSize: 12, fontWeight: 500,
+                        padding: '4px 10px', borderRadius: 100,
+                        background: 'hsla(210, 60%, 50%, 0.08)',
+                        color: 'hsla(210, 60%, 40%, 0.80)',
+                      }}>
+                        SPV: {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            className="contact-lightbox-sidebar"
+            style={{
+              width: stackedLayout ? 'auto' : sidebarWidth,
+              flexShrink: 0,
+              overflowY: 'auto',
+              borderLeft: stackedLayout ? 'none' : '1px solid var(--divider)',
+              borderTop: stackedLayout ? '1px solid var(--divider)' : 'none',
+              background: 'color-mix(in srgb, var(--surface-panel) 88%, var(--color-bg) 12%)',
+              padding: stackedLayout ? '20px 20px 24px' : '22px 20px 26px',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {!isNew && contact ? (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>recent activity</div>
+                  </div>
+                  <div style={{ padding: '0 16px 16px' }}>
+                    <InteractionSection
+                      contact={contact}
+                      onContactUpdated={onSaved}
+                      embedded
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>recent activity</div>
+                  </div>
+                  <div style={{ padding: '18px', color: 'var(--color-text-tertiary)', fontSize: 14, lineHeight: 1.55 }}>
+                    Save this person first, then you can log touchpoints.
+                  </div>
+                </div>
+              )}
+
+              {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>active campaigns</div>
+                  </div>
+                  <div style={{ padding: '16px 18px' }}>
                 {contactCampaignLinks.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
                     {contactCampaignLinks.map(link => {
@@ -1169,20 +1326,21 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       return (
                         <div key={link.id} style={{
                           display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '6px 10px', borderRadius: 8,
-                          background: 'hsla(260, 40%, 55%, 0.06)',
-                          border: '1px solid hsla(260, 40%, 55%, 0.12)',
+                          padding: '7px 10px', borderRadius: 10,
+                          background: 'color-mix(in srgb, var(--surface-panel) 90%, hsla(260, 44%, 62%, 0.10))',
+                          border: '1px solid color-mix(in srgb, hsla(260, 40%, 55%, 0.22) 45%, var(--edge) 55%)',
+                          boxShadow: 'none',
                         }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsla(260, 50%, 50%, 0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
                             <line x1="4" y1="22" x2="4" y2="15"/>
                           </svg>
-                          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
                             {name}
                           </span>
                           {stage && (
                             <span style={{
-                              fontSize: 10, fontWeight: 500,
+                              fontSize: 11, fontWeight: 500,
                               padding: '2px 7px', borderRadius: 100,
                               background: stage.color ? `${stage.color}18` : 'var(--tint)',
                               color: stage.color ?? 'var(--color-text-secondary)',
@@ -1192,7 +1350,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             </span>
                           )}
                           {camp && (
-                            <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
                               {camp.type}
                             </span>
                           )}
@@ -1202,8 +1360,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </div>
                 )}
                 {addedCampaignId ? (
-                  <div style={{ fontSize: 12, color: 'hsla(150, 60%, 35%, 0.9)', padding: '4px 0' }}>
-                    added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
+                  <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
+                    Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
                   </div>
                 ) : campaigns.length > 0 && (
                   <>
@@ -1211,12 +1369,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       type="button"
                       onClick={() => setShowCampaignPicker(v => !v)}
                       style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: 13, color: 'var(--color-text-secondary)',
-                        padding: '6px 0', fontFamily: 'inherit',
+                        background: 'color-mix(in srgb, var(--surface-panel) 90%, transparent)', border: '1px solid var(--edge)', cursor: 'pointer',
+                      fontSize: 13, color: 'var(--color-text-primary)',
+                        padding: '7px 12px', fontFamily: 'inherit', borderRadius: 999,
+                        fontWeight: 500,
                       }}
                     >
-                      + add to campaign
+                      Add to a campaign
                     </button>
                     {showCampaignPicker && (
                       <div style={{
@@ -1243,10 +1402,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                               opacity: addingToCampaign ? 0.5 : 1,
                             }}
                           >
-                            <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
+                            <span style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.4 }}>
                               {campaign.name}
                             </span>
-                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                            <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                               {campaign.type}
                             </span>
                           </button>
@@ -1255,23 +1414,25 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     )}
                   </>
                 )}
-              </div>
-            )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Next Follow-Up bar — pinned at bottom */}
         {!isNew && contact && (
           <div style={{
-            padding: '12px 32px',
+            padding: '14px 28px 15px',
             borderTop: '1px solid var(--divider)',
-            background: 'rgba(37,180,57,0.03)',
+            background: 'color-mix(in srgb, var(--surface-panel) 88%, transparent)',
           }}>
             {editingField === 'next_follow_up_date' ? (
               /* Edit mode */
               <div>
-                <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
-                  Next Follow-Up
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+                  Next touchpoint
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <input
@@ -1281,10 +1442,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     style={{
                       background: 'var(--tint)',
                       border: '1px solid var(--edge-strong)',
-                      borderRadius: 6,
+                      borderRadius: 8,
                       color: 'var(--color-text-primary)',
-                      fontSize: 13,
-                      padding: '4px 8px',
+                      fontSize: 14,
+                      lineHeight: 1.4,
+                      padding: '7px 10px',
                       outline: 'none',
                       fontFamily: 'inherit',
                     }}
@@ -1293,16 +1455,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     type="text"
                     value={editFollowUpAction}
                     onChange={e => setEditFollowUpAction(e.target.value)}
-                    placeholder="Next action..."
+                    placeholder="What should happen next?"
                     style={{
                       flex: 1,
                       minWidth: 120,
                       background: 'var(--tint)',
                       border: '1px solid var(--edge-strong)',
-                      borderRadius: 6,
+                      borderRadius: 8,
                       color: 'var(--color-text-primary)',
-                      fontSize: 13,
-                      padding: '4px 8px',
+                      fontSize: 14,
+                      lineHeight: 1.4,
+                      padding: '7px 10px',
                       outline: 'none',
                       fontFamily: 'inherit',
                     }}
@@ -1318,12 +1481,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       setEditingField(null)
                     }}
                     style={{
-                      padding: '4px 12px',
+                      padding: '6px 12px',
                       background: 'var(--color-brand)',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: 8,
                       color: '#fff',
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: 500,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
@@ -1335,12 +1498,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     type="button"
                     onClick={() => setEditingField(null)}
                     style={{
-                      padding: '4px 10px',
+                      padding: '6px 10px',
                       background: 'none',
                       border: '1px solid var(--edge)',
-                      borderRadius: 6,
+                      borderRadius: 8,
                       color: 'var(--color-text-secondary)',
-                      fontSize: 12,
+                      fontSize: 13,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                     }}
@@ -1351,7 +1514,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               </div>
             ) : contact.next_follow_up_date ? (
               /* Read mode — follow-up exists */
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <div
                   style={{ cursor: 'pointer' }}
                   onClick={() => {
@@ -1360,20 +1523,22 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     setEditingField('next_follow_up_date')
                   }}
                 >
-                  <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-                    Next Follow-Up
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                    Next touchpoint
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                    {contact.next_action ?? 'Follow up'}
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.35 }}>
+                    {contact.next_action ?? 'Reach out'}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div
                     style={{
-                      fontSize: 12, fontWeight: 500, color: 'var(--color-brand)',
+                      fontSize: 12, fontWeight: 600, color: 'var(--color-brand)',
                       background: 'rgba(37,180,57,0.08)',
-                      padding: '4px 12px', borderRadius: 8,
+                      padding: '6px 11px', borderRadius: 999,
                       cursor: 'pointer',
+                      letterSpacing: '0.01em',
+                      fontVariantNumeric: 'tabular-nums',
                     }}
                     onClick={() => {
                       setEditFollowUpDate(contact.next_follow_up_date ?? '')
@@ -1385,7 +1550,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </div>
                   <button
                     type="button"
-                    title="Complete follow-up"
+                    title="Mark touchpoint complete"
                     disabled={completingFollowUp}
                     onClick={async () => {
                       setCompletingFollowUp(true)
@@ -1398,7 +1563,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             action: contact.next_action,
                             date: contact.next_follow_up_date,
                           },
-                          notes: `Follow-up completed: ${contact.next_action ?? 'Follow up'}`,
+                          notes: `Touchpoint completed: ${contact.next_action ?? 'Reach out'}`,
                         })
                         const updated = await updateContact(contact.id, {
                           next_follow_up_date: null,
@@ -1414,7 +1579,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       border: 'none',
                       cursor: completingFollowUp ? 'default' : 'pointer',
                       padding: 4,
-                      borderRadius: 6,
+                      borderRadius: 8,
                       color: 'var(--color-text-tertiary)',
                       display: 'flex',
                       alignItems: 'center',
@@ -1448,7 +1613,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   cursor: 'pointer',
                   padding: 0,
                   color: 'var(--color-text-tertiary)',
-                  fontSize: 13,
+                  fontSize: 14,
                   fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)' }}
@@ -1460,7 +1625,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <line x1="8" y1="2" x2="8" y2="6"/>
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                Set follow-up
+                Plan next touchpoint
               </button>
             )}
           </div>
@@ -1477,7 +1642,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             gap: 6,
           }}>
             {createError && (
-              <p style={{ fontSize: 11, color: '#D93025', margin: 0 }}>failed to create — try again</p>
+              <p style={{ fontSize: 12, color: '#D93025', margin: 0 }}>Could not add this person. Try again.</p>
             )}
             <button
               type="button"
@@ -1489,7 +1654,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 border: '1px solid var(--edge-strong)',
                 borderRadius: 7,
                 color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                fontSize: 13, fontWeight: 500,
+                fontSize: 14, fontWeight: 500,
                 cursor: draft.name ? 'pointer' : 'default',
                 transition: 'all 0.15s',
                 letterSpacing: '0.01em',
@@ -1503,4 +1668,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       </div>
     </>
   )
+
+  if (typeof document === 'undefined') return null
+  return createPortal(modal, document.body)
 }

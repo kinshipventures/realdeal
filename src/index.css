@@ -121,12 +121,36 @@
     background: var(--color-bg);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    font-variant-numeric: proportional-nums;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, .heading {
     font-family: var(--font-serif);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p, li, dd, dt, blockquote, figcaption {
+    line-height: 1.55;
+  }
+
+  button, input, textarea, select {
+    font: inherit;
+    line-height: 1.4;
+    letter-spacing: inherit;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 1;
   }
 }
 
@@ -630,6 +654,11 @@
   animation: modal-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.contact-lightbox-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
 @keyframes modal-fade-in {
   from { transform: translate(-50%, -50%) scale(0.97); opacity: 0; }
   to   { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
@@ -653,6 +682,23 @@
 @keyframes import-stagger {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 960px) {
+  .contact-lightbox {
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+  }
+
+  .contact-lightbox-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .contact-lightbox-sidebar {
+    width: auto !important;
+    border-left: none !important;
+    border-top: 1px solid var(--divider);
+  }
 }
 
 @keyframes panel-slide-up {

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
+import { ContactDetail } from '../contacts/ContactDetail'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
@@ -241,6 +242,7 @@ export function RecordsList() {
   const [showSaveInput, setShowSaveInput] = useState(false)
 
   const [copyFeedback, setCopyFeedback] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
   // Toast / undo
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null)
@@ -661,6 +663,23 @@ export function RecordsList() {
   }
 
   const visibleCols = COLUMNS.filter(col => visibleColumns.has(col.id))
+
+  function handleContactSaved(updated: Contact) {
+    setContacts(prev => prev.map(contact => contact.id === updated.id ? updated : contact))
+    setSelectedContact(updated)
+  }
+
+  function handleContactDeleted() {
+    if (!selectedContact) return
+    const deletedId = selectedContact.id
+    setContacts(prev => prev.filter(contact => contact.id !== deletedId))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.delete(deletedId)
+      return next
+    })
+    setSelectedContact(null)
+  }
 
   if (loading) {
     return (
@@ -1327,7 +1346,7 @@ export function RecordsList() {
                   <tr
                     key={contact.id}
                     className="contacts-row"
-                    onClick={() => navigate(`/contact/${contact.id}`)}
+                    onClick={() => setSelectedContact(contact)}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
@@ -1538,6 +1557,17 @@ export function RecordsList() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedContact && (
+        <ContactDetail
+          contact={selectedContact}
+          categoryId={selectedContact.category_ids[0]}
+          onClose={() => setSelectedContact(null)}
+          onSaved={handleContactSaved}
+          onDeleted={handleContactDeleted}
+          pods={pods}
+        />
       )}
 
       {/* Toast */}

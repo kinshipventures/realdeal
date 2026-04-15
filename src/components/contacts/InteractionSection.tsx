@@ -18,11 +18,12 @@ interface InteractionSectionProps {
   showSystemEvents?: boolean                     // system events toggle
   interactions?: Interaction[]                   // externally managed interactions
   onInteractionsChange?: (interactions: Interaction[]) => void
+  embedded?: boolean
 }
 
 const TYPES: InteractionType[] = ['call', 'email', 'text', 'meeting', 'intro', 'note']
 const TYPE_LABELS: Record<InteractionType, string> = {
-  call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Intro', note: 'Note',
+  call: 'Call', email: 'Email', text: 'Text', meeting: 'Meeting', intro: 'Introduction', note: 'Note',
   pod_change: 'Pod change', field_update: 'Field update', categorization: 'Categorized', pipeline_event: 'Campaign', project_event: 'Project', merge_event: 'Merge',
 }
 
@@ -44,11 +45,12 @@ const TYPE_COLORS: Record<InteractionType, string> = {
 function typePill(type: InteractionType): React.CSSProperties {
   return {
     fontSize: 11,
-    fontWeight: 500,
-    padding: '2px 8px',
+    fontWeight: 600,
+    padding: '3px 8px',
     borderRadius: 100,
     background: `${TYPE_COLORS[type]}12`,
     color: TYPE_COLORS[type],
+    letterSpacing: '0.01em',
   }
 }
 
@@ -62,8 +64,8 @@ export const TYPE_ICONS: Record<string, React.ReactElement> = {
 }
 
 // Shared timeline styles — module-level to avoid re-creating across rows
-const rowStyle: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--divider)' }
-const timestampStyle: React.CSSProperties = { fontSize: 10, color: 'var(--color-text-tertiary)', letterSpacing: '0.02em' }
+const rowStyle: React.CSSProperties = { padding: '12px 0', borderBottom: '1px solid var(--divider)' }
+const timestampStyle: React.CSSProperties = { fontSize: 11, color: 'var(--color-text-tertiary)', letterSpacing: '0.03em', textTransform: 'uppercase', fontVariantNumeric: 'tabular-nums' }
 
 function latestContactDate(interactions: Interaction[]): ISODate | null {
   const dates = interactions
@@ -80,7 +82,7 @@ type EditingInteraction = {
   notes: string | null
 } | null
 
-export function InteractionSection({ contact, onContactUpdated, activeFilters, showSystemEvents = false, interactions: externalInteractions, onInteractionsChange }: InteractionSectionProps) {
+export function InteractionSection({ contact, onContactUpdated, activeFilters, showSystemEvents = false, interactions: externalInteractions, onInteractionsChange, embedded = false }: InteractionSectionProps) {
   const [localInteractions, setLocalInteractions] = useState<Interaction[]>([])
   const [interactionsError, setInteractionsError] = useState(false)
   const interactions = externalInteractions ?? localInteractions
@@ -160,7 +162,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
         onContactUpdated({ ...contact, last_contacted_at: logDate })
       }
     } catch {
-      setActionError('failed to log — try again')
+      setActionError('Could not save that touchpoint. Try again.')
     } finally {
       setOpState('idle')
     }
@@ -183,7 +185,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       await updateContact(contact.id, { last_contacted_at: newDate })
       onContactUpdated({ ...contact, last_contacted_at: newDate })
     } catch {
-      setActionError('failed to update — try again')
+      setActionError('Could not save your edit. Try again.')
     } finally {
       setOpState('idle')
     }
@@ -202,7 +204,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       await updateContact(contact.id, { last_contacted_at: newDate })
       onContactUpdated({ ...contact, last_contacted_at: newDate })
     } catch {
-      setActionError('failed to delete — try again')
+      setActionError('Could not delete that entry. Try again.')
     } finally {
       setDeletingId(null)
       setOpState('idle')
@@ -210,14 +212,16 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   }
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 12,
     color: 'var(--color-text-tertiary)',
-    marginBottom: 14,
+    marginBottom: embedded ? 0 : 14,
     letterSpacing: '0.01em',
+    lineHeight: 1.25,
   }
 
   const smallInputStyle: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 1.4,
     color: 'var(--color-text-primary)',
     background: 'var(--surface-panel)',
     border: '1px solid var(--edge)',
@@ -229,43 +233,45 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
 
   return (
     <div>
-      {/* Summary bar - clickable cells to quick-log */}
-      <div style={{ padding: '12px 0', borderTop: '1px solid var(--divider)', marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-          {(['call', 'email', 'text', 'meeting'] as const).map(t => {
-            const date = typeRecency[t]
-            const never = !date
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => { setLogType(t); setShowLogForm(true) }}
-                title={`Log a ${t}`}
-                style={{
-                  textAlign: 'center', background: 'none', border: '1px solid transparent',
-                  borderRadius: 8, padding: '6px 4px', cursor: 'pointer',
-                  fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.background = 'var(--tint)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent' }}
-              >
-                <div style={{ color: never ? 'var(--color-text-tertiary)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  {TYPE_ICONS[t]}
-                  <span style={{ fontSize: 10 }}>{TYPE_LABELS[t]}</span>
-                </div>
-                <div style={{ fontSize: 11, color: never ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', marginTop: 2 }}>
-                  {date ? formatRelativeTime(date) : 'Never'}
-                </div>
-              </button>
-            )
-          })}
+      {!embedded && (
+        <div style={{ padding: '12px 0', borderTop: '1px solid var(--divider)', marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            {(['call', 'email', 'text', 'meeting'] as const).map(t => {
+              const date = typeRecency[t]
+              const never = !date
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setLogType(t); setShowLogForm(true) }}
+                  title={`Log a ${t}`}
+                  style={{
+                    textAlign: 'center', background: 'color-mix(in srgb, var(--surface-panel) 90%, transparent)', border: '1px solid var(--edge)',
+                    borderRadius: 12, padding: '8px 4px', cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s',
+                    boxShadow: 'none',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--color-brand) 18%, var(--edge))'; e.currentTarget.style.background = 'color-mix(in srgb, var(--surface-panel) 86%, var(--color-brand) 4%)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.background = 'color-mix(in srgb, var(--surface-panel) 90%, transparent)' }}
+                >
+                  <div style={{ color: never ? 'var(--color-text-tertiary)' : TYPE_COLORS[t], display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    {TYPE_ICONS[t]}
+                    <span style={{ fontSize: 11, fontWeight: 500 }}>{TYPE_LABELS[t]}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: never ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
+                    {date ? formatRelativeTime(date) : 'Never'}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Log interaction button - prominent when form is closed */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={sectionLabel}>interactions</div>
+          {!embedded && <div style={sectionLabel}>touchpoints</div>}
           {logSuccess && (
             <span style={{
               fontSize: 11, fontWeight: 600, color: 'var(--color-brand)',
@@ -280,28 +286,29 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
           data-log-trigger
           onClick={() => setShowLogForm(v => !v)}
           style={showLogForm ? {
-            fontSize: 11, fontWeight: 500, padding: '2px 0',
+            fontSize: 12, fontWeight: 500, padding: '2px 0',
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--color-text-tertiary)', fontFamily: 'inherit',
           } : {
-            fontSize: 12, fontWeight: 600, padding: '5px 14px',
-            background: 'var(--color-brand)', color: '#fff',
-            border: 'none', borderRadius: 6, cursor: 'pointer',
+            fontSize: 13, fontWeight: 600, padding: embedded ? '5px 11px' : '6px 14px',
+            background: embedded ? 'color-mix(in srgb, var(--surface-panel) 92%, transparent)' : 'var(--color-brand)', color: embedded ? 'var(--color-text-primary)' : '#fff',
+            border: embedded ? '1px solid var(--edge)' : 'none', borderRadius: 999, cursor: 'pointer',
             fontFamily: 'inherit',
+            boxShadow: embedded ? 'none' : '0 8px 16px rgba(52,177,93,0.16)',
           }}
         >
-          {showLogForm ? 'Cancel' : '+ Log'}
+          {showLogForm ? 'Cancel' : 'Log touchpoint'}
         </button>
       </div>
 
       {interactionsError && (
-        <div style={{ fontSize: 12, color: '#D93025', padding: '4px 0', marginBottom: 12 }}>
-          could not load interactions — check connection
+        <div style={{ fontSize: 13, color: '#D93025', padding: '4px 0', marginBottom: 12 }}>
+          Could not load recent activity. Check your connection and try again.
         </div>
       )}
 
       {actionError && (
-        <div style={{ fontSize: 11, color: '#D93025', padding: '4px 0', marginBottom: 8 }}>
+        <div style={{ fontSize: 12, color: '#D93025', padding: '4px 0', marginBottom: 8 }}>
           {actionError}
         </div>
       )}
@@ -309,11 +316,12 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       {/* Log form */}
       {showLogForm && (
         <div style={{
-          background: 'var(--tint)',
+          background: embedded ? 'transparent' : 'color-mix(in srgb, var(--surface-panel) 96%, transparent)',
           border: '1px solid var(--edge)',
-          borderRadius: 8,
+          borderRadius: 10,
           padding: '12px 14px',
           marginBottom: 16,
+          boxShadow: 'none',
         }}>
           {/* Type pills */}
           <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -322,7 +330,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 key={t}
                 onClick={() => setLogType(t)}
                 style={{
-                  fontSize: 11, fontWeight: 500,
+                  fontSize: 12, fontWeight: 500,
                   padding: '3px 10px',
                   borderRadius: 100,
                   background: logType === t ? `${TYPE_COLORS[t]}12` : 'var(--tint)',
@@ -344,8 +352,9 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
             onChange={e => setLogDate(e.target.value)}
             style={{
               width: '100%',
-              fontSize: 12,
-              padding: '6px 8px',
+              fontSize: 14,
+              lineHeight: 1.4,
+              padding: '7px 8px',
               background: 'var(--surface-panel)',
               border: '1px solid var(--edge)',
               borderRadius: 6,
@@ -364,8 +373,9 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
             rows={2}
             style={{
               width: '100%',
-              fontSize: 12,
-              padding: '6px 8px',
+              fontSize: 14,
+              lineHeight: 1.5,
+              padding: '7px 8px',
               background: 'var(--surface-panel)',
               border: '1px solid var(--edge)',
               borderRadius: 6,
@@ -382,7 +392,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
             onClick={handleLog}
             disabled={opState === 'logging'}
             style={{
-              fontSize: 12, fontWeight: 500,
+              fontSize: 13, fontWeight: 500,
               padding: '6px 16px',
               background: 'var(--edge)',
               border: '1px solid var(--edge-strong)',
@@ -392,7 +402,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
               transition: 'background 0.15s',
             }}
           >
-            {opState === 'logging' ? 'Saving...' : `Log ${TYPE_LABELS[logType]}`}
+            {opState === 'logging' ? 'Saving...' : `Save ${TYPE_LABELS[logType]}`}
           </button>
         </div>
       )}
@@ -401,8 +411,8 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       {interactions.length === 0 && !showLogForm && !interactionsError && (
         <EmptyState
           icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
-          heading="No history yet"
-          ctaLabel="Log first interaction"
+          heading="No touchpoints yet"
+          ctaLabel="Log first touchpoint"
           onCta={() => setShowLogForm(true)}
           ghosts={2}
         />
@@ -423,7 +433,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 width: 6, height: 6, borderRadius: '50%',
                 background: 'var(--color-text-tertiary)', flexShrink: 0,
               }} />
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flex: 1 }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', flex: 1, lineHeight: 1.45 }}>
                 {(() => {
                   if (interaction.type === 'project_event' && interaction.event_detail) {
                     try {
@@ -436,7 +446,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                   return interaction.notes ?? TYPE_LABELS[interaction.type]
                 })()}
               </span>
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0, display: 'flex', gap: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0, display: 'flex', gap: 4, fontVariantNumeric: 'tabular-nums' }}>
                 {interaction.actor && <span>{interaction.actor}</span>}
                 <span>{formatRelativeTime(interaction.date)}</span>
               </span>
@@ -469,7 +479,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                     key={t}
                     onClick={() => setEditingInteraction(prev => prev ? { ...prev, type: t } : null)}
                     style={{
-                      fontSize: 10, fontWeight: 500,
+                      fontSize: 11, fontWeight: 500,
                       padding: '2px 8px', borderRadius: 100,
                       background: editingInteraction.type === t ? `${TYPE_COLORS[t]}12` : 'var(--tint)',
                       border: '1px solid',
@@ -499,7 +509,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 <button
                   onClick={() => handleUpdateInteraction(interaction.id)}
                   style={{
-                    fontSize: 11, fontWeight: 500, padding: '4px 12px',
+                    fontSize: 12, fontWeight: 500, padding: '4px 12px',
                     background: 'var(--edge)', border: '1px solid var(--edge-strong)',
                     borderRadius: 5, color: 'var(--color-text-primary)', cursor: 'pointer',
                     fontFamily: 'inherit',
@@ -510,7 +520,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 <button
                   onClick={() => setEditingInteraction(null)}
                   style={{
-                    fontSize: 11, color: 'var(--text-muted)',
+                    fontSize: 12, color: 'var(--text-muted)',
                     background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
@@ -521,13 +531,13 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
           ) : (
             /* Read mode */
             <div className="interaction-row" style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (interaction.notes || interaction.summary) ? 4 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (interaction.notes || interaction.summary) ? 6 : 0, gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={typePill(interaction.type)}>{TYPE_LABELS[interaction.type]}</span>
                   {interaction.source && (
                     <span style={{
-                      fontSize: 10, fontWeight: 500,
-                      padding: '2px 6px', borderRadius: 4,
+                      fontSize: 11, fontWeight: 500,
+                      padding: '3px 6px', borderRadius: 6,
                       background: interaction.source === 'Gmail' ? 'hsla(0, 70%, 50%, 0.08)'
                         : interaction.source === 'Granola' ? 'hsla(30, 70%, 50%, 0.08)'
                         : 'var(--tint)',
@@ -539,7 +549,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                     </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <button
                     onClick={() => setEditingInteraction({
                       id: interaction.id,
@@ -549,7 +559,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                     })}
                     className="interaction-action"
                     style={{
-                      fontSize: 10, color: 'var(--color-text-tertiary)',
+                      fontSize: 11, color: 'var(--color-text-tertiary)',
                       background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                       opacity: 0, transition: 'opacity 0.15s',
                     }}
@@ -561,7 +571,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       <button
                         onClick={() => { setConfirmDeleteId(null); handleDeleteInteraction(interaction.id) }}
                         style={{
-                          fontSize: 10, fontWeight: 600, color: 'var(--health-fading)',
+                          fontSize: 11, fontWeight: 600, color: 'var(--health-fading)',
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                           fontFamily: 'inherit',
                         }}
@@ -571,7 +581,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       <button
                         onClick={() => setConfirmDeleteId(null)}
                         style={{
-                          fontSize: 10, color: 'var(--color-text-tertiary)',
+                          fontSize: 11, color: 'var(--color-text-tertiary)',
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                           fontFamily: 'inherit',
                         }}
@@ -584,7 +594,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       onClick={() => setConfirmDeleteId(interaction.id)}
                       className="interaction-action"
                       style={{
-                        fontSize: 10, color: 'var(--color-text-tertiary)',
+                        fontSize: 11, color: 'var(--color-text-tertiary)',
                         background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                         opacity: 0, transition: 'opacity 0.15s',
                         fontFamily: 'inherit',
@@ -592,11 +602,11 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
                     >
-                      del
+                      delete
                     </button>
                   )}
                   {interaction.actor && (
-                    <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginRight: 4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginRight: 4 }}>
                       {interaction.actor}
                     </span>
                   )}
@@ -604,26 +614,26 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                 </div>
               </div>
               {interaction.summary && (
-                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.55, marginTop: 4 }}>
+                <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.6, marginTop: 4 }}>
                   {interaction.summary}
                 </div>
               )}
               {interaction.notes && interaction.notes !== interaction.summary && (
-                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.55, marginTop: 2, fontStyle: 'italic' }}>
+                <div style={{ fontSize: 13, color: 'var(--color-text-tertiary)', lineHeight: 1.6, marginTop: 4, fontStyle: 'italic' }}>
                   {interaction.notes}
                 </div>
               )}
               {(interaction.email_link || interaction.granola_link || interaction.meeting_link) && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
                   {interaction.email_link && (
                     <a href={interaction.email_link} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textDecoration: 'none' }}>
+                      style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textDecoration: 'none', letterSpacing: '0.02em' }}>
                       view email
                     </a>
                   )}
                   {(interaction.meeting_link || interaction.granola_link) && (
                     <a href={(interaction.meeting_link || interaction.granola_link)!} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 10, color: 'var(--color-text-tertiary)', textDecoration: 'none' }}>
+                      style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textDecoration: 'none', letterSpacing: '0.02em' }}>
                       view notes
                     </a>
                   )}
