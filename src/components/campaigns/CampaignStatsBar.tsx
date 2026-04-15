@@ -24,13 +24,6 @@ export function CampaignStatsBar({ stages, campaignContacts, createdAt, campaign
     return Date.now() - new Date(cc.moved_at).getTime() > STALE_MS
   }).length
 
-  const avgDays = (() => {
-    const withMoved = campaignContacts.filter(cc => cc.moved_at && cc.stage_id)
-    if (withMoved.length === 0) return null
-    const totalDays = withMoved.reduce((sum, cc) => sum + daysSince(cc.created_at), 0)
-    return Math.round(totalDays / withMoved.length)
-  })()
-
   const age = daysSince(createdAt)
 
   if (total === 0) return null
@@ -48,8 +41,7 @@ export function CampaignStatsBar({ stages, campaignContacts, createdAt, campaign
       <Stat label="Contacts" value={String(total)} />
       <Stat label="Converted" value={`${conversionRate}%`} accent={conversionRate > 50} />
       {stalledCount > 0 && <Stat label="Stalled" value={String(stalledCount)} warn />}
-      {avgDays !== null && <Stat label="Avg. time" value={`${avgDays}d`} />}
-      <Stat label="Age" value={`${age}d`} muted />
+<Stat label="Age" value={`${age}d`} muted />
     </div>
   )
 }

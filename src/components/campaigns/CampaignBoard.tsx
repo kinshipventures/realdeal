@@ -305,7 +305,7 @@ export function CampaignBoard({
           ))}
 
           {/* Add Stage */}
-          <div ref={setNewStageRef} style={{ minWidth: 200, flexShrink: 0, paddingTop: 8 }}>
+          <div ref={setNewStageRef} style={{ minWidth: 200, flexShrink: 0, paddingTop: 8, alignSelf: 'stretch', display: 'flex', flexDirection: 'column' }}>
             {showAddStage ? (
               <form
                 onSubmit={handleAddStageSubmit}
@@ -367,9 +367,9 @@ export function CampaignBoard({
                   background: isOverNewStage ? 'rgba(37,180,57,0.06)' : 'transparent',
                   border: isOverNewStage ? '1.5px dashed var(--color-brand)' : '1px dashed var(--edge)',
                   borderRadius: 12, cursor: 'pointer',
-                  padding: isOverNewStage ? '24px 20px' : '10px 20px',
-                  width: '100%',
-                  transition: 'border-color 150ms, color 150ms, background 150ms, padding 200ms ease-out',
+                  padding: '10px 20px',
+                  width: '100%', flex: 1, minHeight: 80,
+                  transition: 'border-color 150ms, color 150ms, background 150ms',
                 }}
                 onMouseEnter={e => { if (!isOverNewStage) { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' } }}
                 onMouseLeave={e => { if (!isOverNewStage) { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.color = 'var(--color-text-secondary)' } }}
