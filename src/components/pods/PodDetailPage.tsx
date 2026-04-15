@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { DndContext, DragOverlay, closestCorners, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCorners,
+  type DragEndEvent,
+  type DragStartEvent,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { Pod, Category, Contact, Cadence, Owner, Interaction, ShareLink, InteractionType } from '../../lib/types'
 import { HUMAN_TYPES } from '../../lib/types'
@@ -239,6 +248,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const [showSharePopover, setShowSharePopover] = useState(false)
   const [revokingId, setRevokingId] = useState<string | null>(null)
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   useEffect(() => {
     if (!podId) { setNotFound(true); setLoading(false); return }
@@ -639,7 +649,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
         </div>
 
         {/* ── Members (primary content) ── */}
-        <DndContext collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <section style={{ marginBottom: 32 }}>
           <div style={{ ...sectionHeadStyle, justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -694,7 +704,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12,
                         padding: '10px 12px', background: 'transparent',
-                        border: 'none', borderRadius: 8, cursor: 'grab',
+                        border: 'none', borderRadius: 8, cursor: 'pointer',
                         textAlign: 'left', fontFamily: 'inherit',
                         transition: 'background 0.12s', width: '100%',
                       }}

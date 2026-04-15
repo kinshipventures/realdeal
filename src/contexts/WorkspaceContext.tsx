@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext'
 import { setActiveWorkspaceId, clearActiveWorkspaceId } from '@/lib/workspace'
 import { invalidateAllCaches } from '@/lib/supabase-data'
 
-interface Workspace {
+export interface Workspace {
   id: string
   name: string
   slug: string
@@ -32,6 +32,50 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
 
 const STORAGE_KEY = 'realdeal:active-workspace'
 
+export function resolveActiveWorkspace(workspaces: Workspace[], storedId: string | null): Workspace | null {
+  if (storedId) {
+    const storedMatch = workspaces.find(w => w.id === storedId)
+    if (storedMatch) return storedMatch
+  }
+  return workspaces[0] ?? null
+}
+
+export function deriveWorkspaceName(email?: string | null): string {
+  const local = (email ?? '').split('@')[0]?.trim() ?? ''
+  if (!local) return 'My Team'
+
+  const cleaned = local
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!cleaned) return 'My Team'
+
+  const titled = cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+
+  return `${titled}'s Team`
+}
+
+export async function bootstrapWorkspaceForUser(userId: string, email?: string | null, preferredName?: string): Promise<Workspace> {
+  const name = preferredName?.trim() || deriveWorkspaceName(email)
+  const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Date.now().toString(36)}`
+  const { data: ws, error: wsErr } = await supabase.from('workspaces').insert({ name, slug }).select().single()
+  if (wsErr) throw wsErr
+
+  const { error: memErr } = await supabase.from('workspace_members').insert({
+    workspace_id: ws.id,
+    user_id: userId,
+    role: 'owner',
+  })
+  if (memErr) throw memErr
+
+  return { id: ws.id, name: ws.name, slug: ws.slug, role: 'owner', created_at: ws.created_at }
+}
+
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth()
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
@@ -55,17 +99,20 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       created_at: row.workspaces.created_at,
     }))
 
-    setWorkspaces(mapped)
+    const hydrated = mapped.length > 0
+      ? mapped
+      : [await bootstrapWorkspaceForUser(session.user.id, session.user.email)]
+
+    setWorkspaces(hydrated)
 
     const stored = localStorage.getItem(STORAGE_KEY)
-    const match = mapped.find(w => w.id === stored)
-    const active = match ?? mapped[0] ?? null
+    const active = resolveActiveWorkspace(hydrated, stored)
     if (active) {
       setActiveWorkspace(active)
       setActiveWorkspaceId(active.id)
     }
     setLoading(false)
-  }, [session?.user?.id])
+  }, [session?.user?.email, session?.user?.id])
 
   useEffect(() => { loadWorkspaces() }, [loadWorkspaces])
 
@@ -80,18 +127,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const createWorkspace = useCallback(async (name: string): Promise<Workspace> => {
     if (!session?.user?.id) throw new Error('Not authenticated')
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
-    const { data: ws, error: wsErr } = await supabase.from('workspaces').insert({ name, slug }).select().single()
-    if (wsErr) throw wsErr
-    const { error: memErr } = await supabase.from('workspace_members').insert({
-      workspace_id: ws.id, user_id: session.user.id, role: 'owner',
-    })
-    if (memErr) throw memErr
-    const workspace: Workspace = { id: ws.id, name: ws.name, slug: ws.slug, role: 'owner', created_at: ws.created_at }
+    const workspace = await bootstrapWorkspaceForUser(session.user.id, session.user.email, name)
     setWorkspaces(prev => [...prev, workspace])
-    switchWorkspace(ws.id)
+    switchWorkspace(workspace.id)
     return workspace
-  }, [session?.user?.id, switchWorkspace])
+  }, [session?.user?.email, session?.user?.id, switchWorkspace])
 
   useEffect(() => {
     if (!session) {
