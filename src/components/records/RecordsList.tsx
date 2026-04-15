@@ -1422,9 +1422,10 @@ export function RecordsList() {
                       style={{
                         textAlign: 'left',
                         padding: '10px 12px',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        letterSpacing: '0.01em',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase' as const,
                         color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                         cursor: canDrag ? 'grab' : 'pointer',
                         userSelect: 'none',
