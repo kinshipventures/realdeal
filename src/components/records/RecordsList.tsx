@@ -1366,7 +1366,7 @@ export function RecordsList() {
         />
       ) : filtered.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No one matches those filters</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>No matches for this filter combination</span>
           {hasActiveFilters && (
             <button
               type="button"
