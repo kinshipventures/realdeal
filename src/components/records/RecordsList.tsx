@@ -850,8 +850,12 @@ export function RecordsList() {
           }
           const needsAttention = dist.Cooling + dist.Fading
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14,
+              padding: '8px 12px', borderRadius: 10,
+              background: 'var(--tint)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {(['Thriving', 'Steady', 'Cooling', 'Fading'] as const).map(label => (
                   dist[label] > 0 ? (
                     <span key={label} style={{
@@ -875,7 +879,7 @@ export function RecordsList() {
                   {needsAttention} {needsAttention === 1 ? 'person needs' : 'people need'} attention
                 </span>
               )}
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                 {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
               </span>
             </div>
