@@ -1487,14 +1487,7 @@ export function RecordsList() {
                     }}
                   >
                     {/* Pod color + checkbox */}
-                    <td style={{ padding: '0', width: 48, height: 52, position: 'relative' }} onClick={e => toggleSelectRow(contact.id, e)}>
-                      {primaryPod?.color && (
-                        <span style={{
-                          position: 'absolute', left: 0, top: 8, bottom: 8,
-                          width: 3, borderRadius: 2,
-                          background: primaryPod.color, opacity: 0.7,
-                        }} />
-                      )}
+                    <td style={{ padding: '0', width: 48, height: 52 }} onClick={e => toggleSelectRow(contact.id, e)}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: 'pointer' }}>
                         <input
                           type="checkbox"
