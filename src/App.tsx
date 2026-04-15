@@ -48,7 +48,7 @@ function useIsMobile() {
 function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
-  const isPods = location.pathname === '/' || location.pathname === '/pods' || location.pathname === '/map'
+  const isPods = location.pathname === '/' || location.pathname === '/map' || location.pathname === '/pods' || location.pathname.startsWith('/pods/')
   const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
   const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
@@ -299,6 +299,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="pods" element={<OrbMap />} />
+          <Route path="pods/:podName" element={<OrbMap />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/nurturing" element={<NurturingHub />} />
           <Route path="pulse" element={<Navigate to="/dashboard" replace />} />

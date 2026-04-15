@@ -16,18 +16,21 @@ When the user asks "anything new in clickup" or similar, run this full sequence:
 
 ```bash
 # 1. @mentions (inbox)
-clickup inbox
+cup inbox --days 7
 
-# 2. Recently updated tasks
-clickup task recent
+# 2. Recently updated tasks assigned to Gabriel
+cup inbox --days 7
 
-# 3. Recent chat in key channels
+# 3. Current assigned tasks
+cup tasks
+
+# 4. Recent chat in key channels
 for ch in "8cqbk2w-71137" "8cqbk2w-71937"; do
   curl -s -H "Authorization: $CLICKUP_API_KEY" \
     "https://api.clickup.com/api/v3/workspaces/9017085020/chat/channels/$ch/messages?limit=5"
 done
 
-# 4. Gabe's deliverables list - tasks updated in last 24h
+# 5. Gabe's deliverables list - tasks updated in last 24h
 curl -s -H "Authorization: $CLICKUP_API_KEY" \
   "https://api.clickup.com/api/v2/list/901711757325/task?date_updated_gt=$(python3 -c 'import time; print(int((time.time()-86400)*1000))')&assignees[]=95389616"
 ```
@@ -45,6 +48,24 @@ Summarize: new mentions, task changes by others, chat messages worth noting. Ski
 - **Workspace ID:** `9017085020` (Moj Mahdara / Trolley HQ)
 - **Gabe's user ID:** `95389616`
 - **Auth:** `$CLICKUP_API_KEY` env var. v2 uses raw token in `Authorization` header (no Bearer). v3 same.
+
+## Preferred Interface: `cup` CLI for tasks, raw API for chat
+
+Use the `cup` CLI for tasks, lists, spaces, docs, members, and comments. Use raw `curl` for chat channels and chat threads because that surface is not exposed cleanly in the CLI.
+
+### Install and setup
+
+```bash
+npm install -g @krodak/clickup-cli
+cup init --token "$CLICKUP_API_KEY" --team 9017085020
+cup auth
+```
+
+Notes:
+- Binary name is `cup`, not `clickup`
+- Team/workspace ID for this repo is `9017085020`
+- The CLI config lives at `~/.config/cup/config.json`
+- For one-off API calls, continue to use the raw `CLICKUP_API_KEY` header
 
 ## User ID Map
 
@@ -114,26 +135,30 @@ Refresh archive: run the python script pattern from the session that created the
 
 ---
 
-## Preferred Interface: CLI (v2 tasks)
+## Preferred Interface: CLI (tasks, docs, members)
 
-Use the `clickup` CLI (Homebrew: `triptechtravel/tap/clickup`) for task operations. Already authenticated as Gabriel Murray.
+Use the `cup` CLI for task operations. It is already configured for Gabriel Murray on this machine.
 
 ### Quick Commands
 ```bash
-clickup task recent                           # Recently updated tasks
-clickup task list --list-id ID                # Tasks in a list
-clickup task list --list-id ID --assignee me  # My tasks in a list
-clickup task search "query"                   # Search across workspace
-clickup space list                            # List all spaces
-clickup inbox                                 # Recent @mentions
-clickup task view TASK_ID                     # Single task details
+cup auth                                      # Verify current profile/token
+cup tasks                                     # Tasks assigned to me
+cup tasks --list ID                           # My tasks in a list
+cup tasks --list ID --assignee me             # Explicit assignee filter
+cup search "query"                            # Search tasks by name
+cup spaces                                    # List all spaces
+cup inbox --days 7                            # Recently updated tasks
+cup task TASK_ID                              # Single task details
+cup docs                                      # List docs
+cup doc DOC_ID                                # View one doc
+cup members                                   # List workspace members
 ```
 
-Add `--json` to any command for machine-readable output. Add `--jq "expression"` for filtering.
+Add `--json` to `cup` commands for machine-readable output.
 
-### Fallback: Raw API
-Only use raw curl if the CLI can't do something specific. API key is available as the environment variable
-`CLICKUP_API_KEY`. Base URL: `https://api.clickup.com/api/v2`.
+### Raw API fallback
+Use raw `curl` when the CLI cannot do something specific, especially chat. API key is available as the environment variable
+`CLICKUP_API_KEY`. Task/list/space APIs use `https://api.clickup.com/api/v2`. Chat/docs APIs in this workflow use `https://api.clickup.com/api/v3/workspaces/9017085020`.
 
 ## Authentication
 

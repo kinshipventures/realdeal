@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import {
   ReactFlow,
   Background,
@@ -206,6 +206,10 @@ function buildHomeNodes({
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
+
+function podSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
 
 function loadViewport(): Viewport | null {
   try {
@@ -428,6 +432,7 @@ export function OrbMap() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const { setViewport, fitView, getZoom } = useReactFlow()
   const navigate = useNavigate()
+  const { podName } = useParams<{ podName?: string }>()
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
@@ -614,6 +619,9 @@ export function OrbMap() {
     setMapView('pod')
     mapViewRef.current = 'pod'
     setSelectedPod(pod)
+    if (podName !== podSlug(pod.name)) {
+      navigate(`/pods/${podSlug(pod.name)}`)
+    }
     setNodes(prev => prev.map(n => {
       if (n.id === pod.id) return n
       return { ...n, data: { ...n.data, fading: true } }
@@ -622,7 +630,7 @@ export function OrbMap() {
     setTimeout(() => {
       isAnimating.current = false
     }, 500)
-  }, [nodes, setNodes, setViewport, getZoom])
+  }, [nodes, setNodes, setViewport, getZoom, navigate, podName])
 
   drillInRef.current = drillIntoPod
 
@@ -633,6 +641,7 @@ export function OrbMap() {
     setMapView('hub')
     mapViewRef.current = 'hub'
     setSelectedPod(null)
+    if (podName) navigate('/pods')
 
     // Un-fade all nodes
     setNodes(prev => prev.map(n => ({
@@ -646,7 +655,7 @@ export function OrbMap() {
         setFitViewEnabled(true)
       }, 450)
     })
-  }, [setNodes, fitView])
+  }, [setNodes, fitView, navigate, podName])
 
   drillBackRef.current = drillBackToHub
 
@@ -805,6 +814,31 @@ export function OrbMap() {
     return () => { stale = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!podsLoaded) return
+
+    if (!podName) {
+      if (selectedPod) {
+        setMapView('hub')
+        mapViewRef.current = 'hub'
+        setSelectedPod(null)
+      }
+      return
+    }
+
+    const matchedPod = podsRef.current.find(p => podSlug(p.name) === podName || p.id === podName)
+    if (!matchedPod) {
+      navigate('/pods', { replace: true })
+      return
+    }
+
+    if (selectedPod?.id === matchedPod.id && mapViewRef.current === 'pod') return
+
+    setMapView('pod')
+    mapViewRef.current = 'pod'
+    setSelectedPod(matchedPod)
+  }, [podName, podsLoaded, selectedPod, navigate])
+
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (mapView !== 'hub') return
     if (node.id === MOJ_ID) return
@@ -855,13 +889,15 @@ export function OrbMap() {
     setMapView('pod')
     mapViewRef.current = 'pod'
     setSelectedPod(pod)
-  }, [])
+    navigate(`/pods/${podSlug(pod.name)}`)
+  }, [navigate])
 
   const handleListBack = useCallback(() => {
     setMapView('hub')
     mapViewRef.current = 'hub'
     setSelectedPod(null)
-  }, [])
+    navigate('/pods')
+  }, [navigate])
 
   const handleListCategoryClick = useCallback((categoryId: string) => {
     navigate(`/category/${categoryId}`)
