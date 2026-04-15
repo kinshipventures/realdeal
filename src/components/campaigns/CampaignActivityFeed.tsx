@@ -53,59 +53,69 @@ export function CampaignActivityFeed({ campaignId, campaignName, contacts, stage
     })
   }, [campaignId, campaignName, contacts])
 
-  if (loading || items.length === 0) return null
+  if (loading) return null
 
   const shown = expanded ? items : items.slice(0, 5)
 
   return (
-    <div style={{ marginTop: 16 }}>
+    <div style={{
+      background: 'var(--surface-panel)',
+      border: '1px solid var(--edge)',
+      borderRadius: 12,
+      padding: 16,
+    }}>
       <div style={{
         fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
         textTransform: 'uppercase' as const, color: 'var(--color-text-tertiary)',
-        marginBottom: 8,
+        marginBottom: 10,
       }}>
         Recent Activity
       </div>
-      <div style={{
-        background: 'var(--surface-panel)', border: '1px solid var(--edge)',
-        borderRadius: 12, overflow: 'hidden',
-      }}>
-        {shown.map((item, i) => (
-          <div
-            key={item.id}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px',
-              borderBottom: i < shown.length - 1 ? '1px solid var(--divider)' : 'none',
-              fontSize: 13, color: 'var(--color-text-primary)',
-            }}
-          >
-            <Avatar name={item.contactName} size={22} variant="subtle" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontWeight: 500 }}>{item.contactName}</span>
-              <span style={{ color: 'var(--color-text-tertiary)' }}> moved from </span>
-              <span style={{ fontWeight: 500 }}>{item.fromStage}</span>
-              <span style={{ color: 'var(--color-text-tertiary)' }}> to </span>
-              <span style={{ fontWeight: 500 }}>{item.toStage}</span>
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
-              {formatRelativeTime(item.date)}
-            </span>
+      {items.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0, fontStyle: 'italic' }}>
+          Activity will appear here as contacts move through stages.
+        </p>
+      ) : (
+        <>
+          <div style={{ margin: '0 -16px', overflow: 'hidden' }}>
+            {shown.map((item, i) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 16px',
+                  borderBottom: i < shown.length - 1 ? '1px solid var(--divider)' : 'none',
+                  fontSize: 13, color: 'var(--color-text-primary)',
+                }}
+              >
+                <Avatar name={item.contactName} size={22} variant="subtle" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontWeight: 500 }}>{item.contactName}</span>
+                  <span style={{ color: 'var(--color-text-tertiary)' }}> moved from </span>
+                  <span style={{ fontWeight: 500 }}>{item.fromStage}</span>
+                  <span style={{ color: 'var(--color-text-tertiary)' }}> to </span>
+                  <span style={{ fontWeight: 500 }}>{item.toStage}</span>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
+                  {formatRelativeTime(item.date)}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      {items.length > 5 && (
-        <button
-          type="button"
-          onClick={() => setExpanded(prev => !prev)}
-          style={{
-            fontSize: 12, color: 'var(--color-text-tertiary)', fontWeight: 500,
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: '8px 0', fontFamily: 'inherit',
-          }}
-        >
-          {expanded ? 'Show less' : `Show ${items.length - 5} more`}
-        </button>
+          {items.length > 5 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(prev => !prev)}
+              style={{
+                fontSize: 12, color: 'var(--color-text-tertiary)', fontWeight: 500,
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '8px 0 0', fontFamily: 'inherit',
+              }}
+            >
+              {expanded ? 'Show less' : `Show ${items.length - 5} more`}
+            </button>
+          )}
+        </>
       )}
     </div>
   )

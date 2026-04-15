@@ -241,60 +241,112 @@ export const DEMO_INTERACTIONS: Interaction[] = [
 
 // ── Campaigns ──
 
-const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], deadline?: number): Campaign => ({
-  id: `demo-campaign-${id}`, name, type, status, notes: null, description: null,
-  deadline: deadline !== undefined ? futureDate(deadline) : null,
+const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], extra?: { deadline?: number; description?: string }): Campaign => ({
+  id: `demo-campaign-${id}`, name, type, status, notes: null,
+  description: extra?.description ?? null,
+  deadline: extra?.deadline !== undefined ? futureDate(extra.deadline) : null,
   contact_ids: contactIds.map(c => `demo-contact-${c}`),
   created_at: daysAgo(14),
 })
 
-const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus, stageId: string, movedDaysAgo = 3): CampaignContact => ({
+const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus, stageId: string, extra?: {
+  moved?: number; owner?: string; next_step?: string; next_step_due?: number; priority?: boolean; notes?: string
+}): CampaignContact => ({
   id: `demo-cc-${id}`, campaign_id: `demo-campaign-${campaignId}`, contact_id: `demo-contact-${contactId}`,
-  status, stage_id: `demo-cs-${stageId}`, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: daysAgo(movedDaysAgo), is_priority: false, created_at: daysAgo(10),
+  status, stage_id: `demo-cs-${stageId}`,
+  notes: extra?.notes ?? null,
+  owner: extra?.owner ?? null,
+  next_step: extra?.next_step ?? null,
+  next_step_due: extra?.next_step_due !== undefined ? futureDate(extra.next_step_due) : null,
+  moved_at: daysAgo(extra?.moved ?? 3),
+  is_priority: extra?.priority ?? false,
+  created_at: daysAgo(10),
 })
 
 export const DEMO_CAMPAIGNS: Campaign[] = [
-  campaign('1', 'Fund III Launch Dinner', 'event', 'active', ['1', '4', '7', '8', '9'], 18),
-  campaign('2', 'Brand Partnership Outreach', 'outreach', 'active', ['11', '13', '14'], 30),
-  campaign('3', 'Q1 LP Check-ins', 'investment', 'completed', ['7', '8', '9', '10']),
+  campaign('1', 'Fund III Launch Dinner', 'event', 'active', ['1', '4', '7', '8', '9'], { deadline: 18, description: 'Intimate dinner for prospective and existing LPs at Nobu Malibu' }),
+  campaign('2', 'Brand Partnership Outreach', 'outreach', 'active', ['11', '13', '14', '12'], { deadline: 30, description: 'Q2 brand collab pipeline for portfolio companies' }),
+  campaign('3', 'Fund III Fundraise', 'fundraise', 'active', ['7', '8', '9', '10'], { deadline: 60, description: 'Target $50M close by end of Q2' }),
+  campaign('4', 'Consumer Social Deal Flow', 'deal_flow', 'active', ['1', '3', '5', '6'], { description: 'Tracking Series A/B consumer social opportunities' }),
+  campaign('5', 'Creator Economy Talent', 'talent', 'active', ['14', '15', '19'], { description: 'Building creator partnerships for portfolio brands' }),
+  campaign('6', 'Q1 LP Check-ins', 'investment', 'completed', ['7', '8', '9', '10']),
 ]
 
-// Campaign 1: Event stages
-// Campaign 2: Outreach stages
-// Campaign 3: Investment stages
+// Campaign 1: Event — dinner stages
 export const DEMO_CAMPAIGN_STAGES: CampaignStage[] = [
   { id: 'demo-cs-1a', campaign_id: 'demo-campaign-1', name: 'Invited', color: '#718096', order: 0, created_at: daysAgo(14) },
   { id: 'demo-cs-1b', campaign_id: 'demo-campaign-1', name: "RSVP'd", color: '#4299E1', order: 1, created_at: daysAgo(14) },
   { id: 'demo-cs-1c', campaign_id: 'demo-campaign-1', name: 'Confirmed', color: '#ECC94B', order: 2, created_at: daysAgo(14) },
   { id: 'demo-cs-1d', campaign_id: 'demo-campaign-1', name: 'Attended', color: '#48BB78', order: 3, created_at: daysAgo(14) },
 
+  // Campaign 2: Outreach — partnership stages
   { id: 'demo-cs-2a', campaign_id: 'demo-campaign-2', name: 'Identified', color: '#718096', order: 0, created_at: daysAgo(14) },
   { id: 'demo-cs-2b', campaign_id: 'demo-campaign-2', name: 'Contacted', color: '#4299E1', order: 1, created_at: daysAgo(14) },
   { id: 'demo-cs-2c', campaign_id: 'demo-campaign-2', name: 'Responded', color: '#ECC94B', order: 2, created_at: daysAgo(14) },
   { id: 'demo-cs-2d', campaign_id: 'demo-campaign-2', name: 'Closed', color: '#48BB78', order: 3, created_at: daysAgo(14) },
 
-  { id: 'demo-cs-3a', campaign_id: 'demo-campaign-3', name: 'Researching', color: '#718096', order: 0, created_at: daysAgo(30) },
-  { id: 'demo-cs-3b', campaign_id: 'demo-campaign-3', name: 'Outreach', color: '#4299E1', order: 1, created_at: daysAgo(30) },
+  // Campaign 3: Fundraise — LP pipeline stages
+  { id: 'demo-cs-3a', campaign_id: 'demo-campaign-3', name: 'Prospect', color: '#718096', order: 0, created_at: daysAgo(30) },
+  { id: 'demo-cs-3b', campaign_id: 'demo-campaign-3', name: 'Deck Sent', color: '#4299E1', order: 1, created_at: daysAgo(30) },
   { id: 'demo-cs-3c', campaign_id: 'demo-campaign-3', name: 'In Diligence', color: '#ECC94B', order: 2, created_at: daysAgo(30) },
   { id: 'demo-cs-3d', campaign_id: 'demo-campaign-3', name: 'Committed', color: '#48BB78', order: 3, created_at: daysAgo(30) },
+
+  // Campaign 4: Deal flow — sourcing stages
+  { id: 'demo-cs-4a', campaign_id: 'demo-campaign-4', name: 'Sourced', color: '#718096', order: 0, created_at: daysAgo(21) },
+  { id: 'demo-cs-4b', campaign_id: 'demo-campaign-4', name: 'First Meeting', color: '#ED8936', order: 1, created_at: daysAgo(21) },
+  { id: 'demo-cs-4c', campaign_id: 'demo-campaign-4', name: 'Deep Dive', color: '#ECC94B', order: 2, created_at: daysAgo(21) },
+  { id: 'demo-cs-4d', campaign_id: 'demo-campaign-4', name: 'Term Sheet', color: '#48BB78', order: 3, created_at: daysAgo(21) },
+  { id: 'demo-cs-4e', campaign_id: 'demo-campaign-4', name: 'Pass', color: '#E53E3E', order: 4, created_at: daysAgo(21) },
+
+  // Campaign 5: Talent — creator pipeline
+  { id: 'demo-cs-5a', campaign_id: 'demo-campaign-5', name: 'Scouting', color: '#718096', order: 0, created_at: daysAgo(10) },
+  { id: 'demo-cs-5b', campaign_id: 'demo-campaign-5', name: 'Intro Call', color: '#D53F8C', order: 1, created_at: daysAgo(10) },
+  { id: 'demo-cs-5c', campaign_id: 'demo-campaign-5', name: 'Collab Proposed', color: '#ECC94B', order: 2, created_at: daysAgo(10) },
+  { id: 'demo-cs-5d', campaign_id: 'demo-campaign-5', name: 'Active Partner', color: '#48BB78', order: 3, created_at: daysAgo(10) },
+
+  // Campaign 6: Completed investment check-ins
+  { id: 'demo-cs-6a', campaign_id: 'demo-campaign-6', name: 'Scheduled', color: '#718096', order: 0, created_at: daysAgo(60) },
+  { id: 'demo-cs-6b', campaign_id: 'demo-campaign-6', name: 'Met', color: '#4299E1', order: 1, created_at: daysAgo(60) },
+  { id: 'demo-cs-6c', campaign_id: 'demo-campaign-6', name: 'Follow-up Sent', color: '#ECC94B', order: 2, created_at: daysAgo(60) },
+  { id: 'demo-cs-6d', campaign_id: 'demo-campaign-6', name: 'Complete', color: '#48BB78', order: 3, created_at: daysAgo(60) },
 ]
 
 export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
-  // Fund III Launch Dinner — spread across event stages
-  cc('1', '1', '1', 'confirmed', '1d', 1),   // Sarah — Attended
-  cc('2', '1', '4', 'responded', '1c', 2),   // David — Confirmed
-  cc('3', '1', '7', 'confirmed', '1d', 1),   // Emily — Attended
-  cc('4', '1', '8', 'reached', '1b', 9),     // Robert — RSVP'd (stalled 9 days)
-  cc('5', '1', '9', 'pending', '1a', 3),     // Aisha — Invited
-  // Brand Partnership Outreach — early stage
-  cc('6', '2', '11', 'responded', '2c', 2),  // Luna — Responded
-  cc('7', '2', '13', 'pending', '2a', 5),    // Camille — Identified
-  cc('8', '2', '14', 'reached', '2b', 10),   // Zara — Contacted (stalled 10 days)
-  // Q1 LP Check-ins — all in final stage
-  cc('9', '3', '7', 'confirmed', '3d', 1),
-  cc('10', '3', '8', 'confirmed', '3d', 1),
-  cc('11', '3', '9', 'confirmed', '3d', 2),
-  cc('12', '3', '10', 'responded', '3c', 8), // stalled
+  // Campaign 1: Fund III Launch Dinner
+  cc('1', '1', '1', 'confirmed', '1d', { moved: 1, priority: true, owner: 'Moj', next_step: 'Seat next to James W.', notes: 'Bringing +1' }),
+  cc('2', '1', '4', 'responded', '1c', { moved: 2, owner: 'Moj', next_step: 'Confirm dietary restrictions', next_step_due: 3 }),
+  cc('3', '1', '7', 'confirmed', '1d', { moved: 1, priority: true, owner: 'Moj', notes: 'Wants to discuss Fund III terms at dinner' }),
+  cc('4', '1', '8', 'reached', '1b', { moved: 9, owner: 'Briell', next_step: 'Follow up on RSVP', next_step_due: 1, notes: 'No response to 2nd invite' }),
+  cc('5', '1', '9', 'pending', '1a', { moved: 3, owner: 'Briell', next_step: 'Send invite via email' }),
+
+  // Campaign 2: Brand Partnership Outreach
+  cc('6', '2', '11', 'responded', '2c', { moved: 2, priority: true, owner: 'Moj', next_step: 'Schedule co-brand strategy call', next_step_due: 5, notes: 'Very interested in Glossier collab' }),
+  cc('7', '2', '13', 'pending', '2a', { moved: 5, owner: 'Moj', next_step: 'Send beauty tech deck', next_step_due: 7 }),
+  cc('8', '2', '14', 'reached', '2b', { moved: 10, owner: 'Briell', next_step: 'Follow up on intro email', notes: 'No response yet' }),
+  cc('9', '2', '12', 'reached', '2b', { moved: 4, owner: 'Moj', next_step: 'Pitch design tool partnership', next_step_due: 10 }),
+
+  // Campaign 3: Fund III Fundraise
+  cc('10', '3', '7', 'confirmed', '3d', { moved: 5, priority: true, owner: 'Moj', notes: 'Committed $2M - verbal' }),
+  cc('11', '3', '9', 'responded', '3c', { moved: 3, priority: true, owner: 'Moj', next_step: 'Send data room access', next_step_due: 2 }),
+  cc('12', '3', '8', 'reached', '3b', { moved: 12, owner: 'Moj', next_step: 'Schedule diligence call', next_step_due: 4, notes: 'Slow mover - needs patience' }),
+  cc('13', '3', '10', 'pending', '3a', { moved: 8, owner: 'Briell', next_step: 'Initial outreach email', next_step_due: 3 }),
+
+  // Campaign 4: Consumer Social Deal Flow
+  cc('14', '4', '1', 'responded', '4b', { moved: 6, owner: 'Moj', next_step: 'Review deck she sent - social fitness app', next_step_due: 3, notes: 'Sarah sourced this one' }),
+  cc('15', '4', '3', 'responded', '4c', { moved: 2, priority: true, owner: 'Moj', next_step: 'Deep dive call with founders', next_step_due: 5, notes: 'Techstars batch company - strong traction' }),
+  cc('16', '4', '5', 'reached', '4b', { moved: 4, owner: 'Moj', next_step: 'Get Nina\'s take on climate social', next_step_due: 7 }),
+  cc('17', '4', '6', 'pending', '4e', { moved: 14, notes: 'Passed - not aligned with thesis' }),
+
+  // Campaign 5: Creator Economy Talent
+  cc('18', '5', '14', 'responded', '5b', { moved: 3, priority: true, owner: 'Moj', next_step: 'Share creator brief for Glossier collab', next_step_due: 4 }),
+  cc('19', '5', '15', 'pending', '5a', { moved: 6, owner: 'Briell', next_step: 'Send intro email re: APAC creators', next_step_due: 5 }),
+  cc('20', '5', '19', 'responded', '5c', { moved: 1, priority: true, owner: 'Moj', next_step: 'Finalize Goop x creator partnership terms', next_step_due: 10, notes: 'GP wants this as a flagship collab' }),
+
+  // Campaign 6: Q1 LP Check-ins (completed)
+  cc('21', '6', '7', 'confirmed', '6d', { moved: 20 }),
+  cc('22', '6', '8', 'confirmed', '6d', { moved: 18 }),
+  cc('23', '6', '9', 'confirmed', '6d', { moved: 22 }),
+  cc('24', '6', '10', 'responded', '6c', { moved: 15, notes: 'Never responded to follow-up' }),
 ]
 
 // ── Projects ──

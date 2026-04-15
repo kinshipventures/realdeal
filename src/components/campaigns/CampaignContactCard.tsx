@@ -91,28 +91,6 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
       className="cc-card"
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {onToggleSelect && (
-          <div
-            className="cc-select"
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(cc.id) }}
-            onPointerDown={(e) => e.stopPropagation()}
-            style={{
-              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: selected ? 'none' : '1.5px solid var(--edge-strong)',
-              background: selected ? 'var(--color-brand)' : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              opacity: selected ? 1 : 0,
-              transition: 'opacity 120ms, background 120ms',
-            }}
-          >
-            {selected && (
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5L4 7L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </div>
-        )}
         <div onClick={handleAvatarClick} style={{ cursor: 'pointer', flexShrink: 0 }}>
           <Avatar name={contact.name} size={28} />
         </div>

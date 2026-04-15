@@ -4,7 +4,7 @@ import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../li
 import { updateCampaignContact } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton } from '../ui'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, ChevronDown } from 'lucide-react'
 
 interface Props {
   cc: CampaignContact
@@ -24,6 +24,7 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, onUpdate, 
   const [nextStep, setNextStep] = useState(cc.next_step ?? '')
   const [nextStepDue, setNextStepDue] = useState(cc.next_step_due ?? '')
   const [notes, setNotes] = useState(cc.notes ?? '')
+  const [stageOpen, setStageOpen] = useState(false)
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
 
@@ -57,7 +58,7 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, onUpdate, 
         borderLeft: '1px solid var(--edge)',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.08)',
         display: 'flex', flexDirection: 'column',
-        animation: 'panelSlideIn 200ms ease-out',
+        animation: 'panelSlideIn 350ms cubic-bezier(0.87, 0, 0.13, 1)',
         overflow: 'hidden',
       }}>
         {/* Header */}
@@ -85,20 +86,72 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, onUpdate, 
 
             {/* Stage */}
             <FieldRow label="Stage">
-              <select
-                value={cc.stage_id ?? ''}
-                onChange={e => handleStageChange(e.target.value)}
-                style={{
-                  fontSize: 12, border: '1px solid var(--edge)', borderRadius: 6,
-                  padding: '4px 8px', background: 'var(--tint)',
-                  color: currentStage?.color ?? 'var(--color-text-primary)',
-                  fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
-                }}
-              >
-                {sortedStages.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setStageOpen(!stageOpen)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                    fontSize: 12, border: '1px solid var(--edge)', borderRadius: 6,
+                    padding: '5px 8px', background: 'var(--tint)',
+                    color: currentStage?.color ?? 'var(--color-text-primary)',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {currentStage?.color && (
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: currentStage.color, flexShrink: 0,
+                    }} />
+                  )}
+                  <span style={{ flex: 1, textAlign: 'left' }}>{currentStage?.name ?? 'Select stage'}</span>
+                  <ChevronDown size={12} style={{
+                    color: 'var(--color-text-tertiary)',
+                    transition: 'transform 150ms',
+                    transform: stageOpen ? 'rotate(180deg)' : 'none',
+                  }} />
+                </button>
+                {stageOpen && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setStageOpen(false)} />
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+                      background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+                      borderRadius: 10, padding: 4, zIndex: 11,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    }}>
+                      {sortedStages.map(s => {
+                        const isActive = s.id === cc.stage_id
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => { handleStageChange(s.id); setStageOpen(false) }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                              textAlign: 'left', padding: '7px 10px', borderRadius: 6,
+                              border: 'none', background: isActive ? 'var(--tint)' : 'transparent',
+                              fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+                              color: s.color ?? 'var(--color-text-primary)',
+                              fontWeight: isActive ? 600 : 400,
+                              transition: 'background 100ms',
+                            }}
+                            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--tint)' }}
+                            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                          >
+                            <span style={{
+                              width: 8, height: 8, borderRadius: '50%',
+                              background: s.color ?? 'var(--color-text-tertiary)', flexShrink: 0,
+                            }} />
+                            {s.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </FieldRow>
 
             {/* Owner */}

@@ -125,6 +125,12 @@ export function CampaignStageColumn({
   const allSelected = stageIds.length > 0 && stageIds.every(id => selectedIds.has(id))
   const someSelected = stageIds.some(id => selectedIds.has(id))
 
+  const [expanded, setExpanded] = useState(false)
+  const VISIBLE_LIMIT = 8
+  const hasMore = enriched.length > VISIBLE_LIMIT
+  const visibleCards = expanded ? enriched : enriched.slice(0, VISIBLE_LIMIT)
+  const hiddenCount = enriched.length - VISIBLE_LIMIT
+
   let emptyText = 'Drag contacts here'
   if (isFirst) emptyText = 'Add people to kick things off'
   else if (isLast) emptyText = 'The finish line'
@@ -138,7 +144,6 @@ export function CampaignStageColumn({
         background: isOver ? hexToRgba(stageColor, 0.1) : hexToRgba(stageColor, 0.05),
         borderRadius: 12,
         border: `1px solid ${isOver ? hexToRgba(stageColor, 0.3) : 'var(--edge)'}`,
-        borderTop: `3px solid ${stageColor}`,
         display: 'flex',
         flexDirection: 'column',
         transition: 'background 150ms, border-color 150ms',
@@ -147,27 +152,6 @@ export function CampaignStageColumn({
     >
       {/* Header */}
       <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-        {stageContacts.length > 0 && (
-          <button
-            onClick={() => onSelectAllInStage(stage.id)}
-            aria-label={allSelected ? 'Deselect all in stage' : 'Select all in stage'}
-            style={{
-              width: 14, height: 14, borderRadius: 3, flexShrink: 0,
-              border: allSelected || someSelected ? 'none' : '1.5px solid var(--edge-strong)',
-              background: allSelected ? 'var(--color-brand)' : someSelected ? 'rgba(37,180,57,0.3)' : 'transparent',
-              cursor: 'pointer', padding: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 120ms, border-color 120ms',
-            }}
-          >
-            {(allSelected || someSelected) && (
-              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5L4 7L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </button>
-        )}
-
         <button
           onClick={() => setShowColorPicker(prev => !prev)}
           aria-label="Change stage color"
@@ -269,20 +253,52 @@ export function CampaignStageColumn({
               </p>
             </div>
           ) : (
-            enriched.map(({ cc, contact, score, label }) => (
-              <CampaignContactCard
-                key={cc.id}
-                cc={cc}
-                contact={contact}
-                equityScore={score}
-                equityLabel={label}
-                onClick={() => onCardClick(cc)}
-                onTogglePriority={onTogglePriority}
-                selected={selectedIds.has(cc.id)}
-                onToggleSelect={onToggleSelect}
-                visibleFields={visibleCardFields}
-              />
-            ))
+            <>
+              {visibleCards.map(({ cc, contact, score, label }) => (
+                <CampaignContactCard
+                  key={cc.id}
+                  cc={cc}
+                  contact={contact}
+                  equityScore={score}
+                  equityLabel={label}
+                  onClick={() => onCardClick(cc)}
+                  onTogglePriority={onTogglePriority}
+                  selected={selectedIds.has(cc.id)}
+                  onToggleSelect={onToggleSelect}
+                  visibleFields={visibleCardFields}
+                />
+              ))}
+              {hasMore && !expanded && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(true)}
+                  style={{
+                    fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)',
+                    background: 'var(--tint)', border: '1px dashed var(--edge)',
+                    borderRadius: 8, padding: '8px 0', cursor: 'pointer',
+                    fontFamily: 'inherit', width: '100%', textAlign: 'center',
+                    transition: 'color 120ms, border-color 120ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)'; e.currentTarget.style.borderColor = 'var(--edge-strong)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-secondary)'; e.currentTarget.style.borderColor = 'var(--edge)' }}
+                >
+                  Show {hiddenCount} more
+                </button>
+              )}
+              {hasMore && expanded && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  style={{
+                    fontSize: 11, color: 'var(--color-text-tertiary)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '6px 0', fontFamily: 'inherit', width: '100%', textAlign: 'center',
+                  }}
+                >
+                  Show less
+                </button>
+              )}
+            </>
           )}
         </SortableContext>
       </div>

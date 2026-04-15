@@ -1,13 +1,14 @@
-import type { CampaignContact, CampaignStage } from '../../lib/types'
-import { STALE_MS, daysSince } from './campaignUtils'
+import type { CampaignContact, CampaignStage, CampaignType } from '../../lib/types'
+import { STALE_MS, daysSince, TYPE_COLORS } from './campaignUtils'
 
 interface Props {
   stages: CampaignStage[]
   campaignContacts: CampaignContact[]
   createdAt: string
+  campaignType?: CampaignType
 }
 
-export function CampaignStatsBar({ stages, campaignContacts, createdAt }: Props) {
+export function CampaignStatsBar({ stages, campaignContacts, createdAt, campaignType }: Props) {
   const sorted = [...stages].sort((a, b) => a.order - b.order)
   const total = campaignContacts.length
   const lastStage = sorted[sorted.length - 1]
@@ -34,10 +35,15 @@ export function CampaignStatsBar({ stages, campaignContacts, createdAt }: Props)
 
   if (total === 0) return null
 
+  const accentColor = campaignType ? TYPE_COLORS[campaignType] : 'var(--color-brand)'
+
   return (
     <div style={{
-      display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 8,
-      padding: '10px 0',
+      display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12,
+      padding: '14px 18px',
+      background: 'var(--surface-panel)',
+      border: '1px solid var(--edge)',
+      borderRadius: 12,
     }}>
       <Stat label="Contacts" value={String(total)} />
       <Stat label="Converted" value={`${conversionRate}%`} accent={conversionRate > 50} />

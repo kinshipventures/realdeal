@@ -43,13 +43,21 @@ export function CampaignOverview() {
   return (
     <div className="content-enter" style={{ padding: '28px clamp(16px, 4vw, 32px) 96px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
-          margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
-        }}>
-          Campaigns
-        </h1>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <h1 style={{
+            fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
+            margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
+          }}>
+            Campaigns
+          </h1>
+          <p style={{
+            margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-tertiary)',
+            lineHeight: 1.4,
+          }}>
+            Track events, fundraises, outreach, and deals from start to finish.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setCreating(true)}
@@ -58,6 +66,7 @@ export function CampaignOverview() {
             borderRadius: 10, border: 'none',
             background: 'var(--color-brand)', color: '#ffffff',
             cursor: 'pointer', fontFamily: 'inherit',
+            flexShrink: 0, marginTop: 4,
           }}
         >
           + New Campaign
@@ -150,24 +159,30 @@ function CampaignCard({ campaign, contacts, onClick }: {
   onClick: () => void
 }) {
   const campContacts = contacts.filter(c => campaign.contact_ids.includes(c.id))
-  const progress = campaign.contact_ids.length > 0 ? Math.round((campContacts.length / Math.max(campaign.contact_ids.length, 1)) * 100) : 0
+  const typeColor = TYPE_COLORS[campaign.type]
+  const deadlineDays = campaign.deadline ? daysUntil(campaign.deadline) : null
+  const isUrgent = deadlineDays !== null && deadlineDays >= 0 && deadlineDays <= 7
+  const isOverdue = deadlineDays !== null && deadlineDays < 0
 
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        background: 'var(--surface-panel)', border: '1px solid var(--edge)',
+        background: 'var(--surface-panel)',
+        border: '1px solid var(--edge)',
         borderRadius: 14, padding: 18, textAlign: 'left',
         cursor: 'pointer', fontFamily: 'inherit',
         transition: 'border-color 150ms, box-shadow 150ms',
         display: 'flex', flexDirection: 'column', gap: 12,
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'var(--edge-strong)'
-        e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'
+        e.currentTarget.style.background = `${typeColor}08`
+        e.currentTarget.style.borderColor = `${typeColor}30`
+        e.currentTarget.style.boxShadow = `0 2px 12px ${typeColor}10`
       }}
       onMouseLeave={e => {
+        e.currentTarget.style.background = 'var(--surface-panel)'
         e.currentTarget.style.borderColor = 'var(--edge)'
         e.currentTarget.style.boxShadow = 'none'
       }}
@@ -177,17 +192,17 @@ function CampaignCard({ campaign, contacts, onClick }: {
         <CampaignTypeIcon type={campaign.type} size={16} colored />
         <span style={{
           fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 100,
-          background: `${TYPE_COLORS[campaign.type]}15`,
-          color: TYPE_COLORS[campaign.type],
+          background: `${typeColor}15`,
+          color: typeColor,
         }}>
           {TYPE_LABELS[campaign.type]}
         </span>
         {campaign.deadline && (
           <span style={{
-            fontSize: 11, color: daysUntil(campaign.deadline) <= 7
-              ? (daysUntil(campaign.deadline) < 0 ? '#D93025' : '#FF9500')
-              : 'var(--color-text-tertiary)',
+            fontSize: 11, fontWeight: isUrgent || isOverdue ? 600 : 400,
+            color: isOverdue ? '#D93025' : isUrgent ? '#FF9500' : 'var(--color-text-tertiary)',
             marginLeft: 'auto',
+            ...(isOverdue ? { background: 'rgba(217,48,37,0.08)', padding: '1px 6px', borderRadius: 4 } : {}),
           }}>
             {formatDeadline(campaign.deadline)}
           </span>
@@ -197,32 +212,33 @@ function CampaignCard({ campaign, contacts, onClick }: {
       {/* Name */}
       <div style={{
         fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)',
-        letterSpacing: '-0.01em',
+        fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em',
       }}>
         {campaign.name}
       </div>
 
-      {/* Contact avatars */}
-      {campContacts.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: -4 }}>
-          {campContacts.slice(0, 5).map((c, i) => (
-            <div key={c.id} style={{ marginLeft: i > 0 ? -6 : 0, zIndex: 5 - i }}>
-              <Avatar name={c.name} size={24} />
-            </div>
-          ))}
-          {campContacts.length > 5 && (
-            <span style={{
-              fontSize: 11, color: 'var(--color-text-tertiary)',
-              marginLeft: 4,
-            }}>
-              +{campContacts.length - 5}
-            </span>
-          )}
+      {/* Description preview */}
+      {campaign.description && (
+        <div style={{
+          fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.4,
+          overflow: 'hidden', textOverflow: 'ellipsis',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+        }}>
+          {campaign.description}
         </div>
       )}
 
-      {/* Footer: count */}
+      {/* Footer: avatars + count */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {campContacts.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {campContacts.slice(0, 5).map((c, i) => (
+              <div key={c.id} style={{ marginLeft: i > 0 ? -6 : 0, zIndex: 5 - i }}>
+                <Avatar name={c.name} size={22} />
+              </div>
+            ))}
+          </div>
+        )}
         <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
           {campaign.contact_ids.length} {campaign.contact_ids.length === 1 ? 'contact' : 'contacts'}
         </span>

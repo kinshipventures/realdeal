@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
 import { updateCampaignContact, addContactToCampaign } from '../../lib/airtable'
 import { Avatar } from '../ui'
-import { Eye, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 interface Props {
   campaign: Campaign
@@ -12,6 +12,10 @@ interface Props {
   contacts: Contact[]
   onContactsChange: (contacts: CampaignContact[]) => void
   onCardClick: (cc: CampaignContact) => void
+  sortKey: string
+  sortAsc: boolean
+  onSortChange: (key: string) => void
+  visibleColumns?: Set<string>
 }
 
 type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
@@ -39,12 +43,10 @@ function getVisibleColumns(campaignId: string): Set<ColumnKey> {
   return new Set(ALL_COLUMNS.map(c => c.key))
 }
 
-export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange, onCardClick }: Props) {
+export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange, onCardClick, sortKey, sortAsc, onSortChange, visibleColumns }: Props) {
   const navigate = useNavigate()
-  const [visibleCols, setVisibleCols] = useState(() => getVisibleColumns(campaign.id))
-  const [showColMenu, setShowColMenu] = useState(false)
-  const [sortCol, setSortCol] = useState<ColumnKey | null>(null)
-  const [sortAsc, setSortAsc] = useState(true)
+  const [internalCols, setInternalCols] = useState(() => getVisibleColumns(campaign.id))
+  const visibleCols = visibleColumns ?? internalCols
   const [editingCell, setEditingCell] = useState<{ rowId: string; col: ColumnKey } | null>(null)
   const [editValue, setEditValue] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -54,8 +56,8 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
 
   function toggleCol(key: ColumnKey) {
-    if (key === 'name') return // always visible
-    setVisibleCols(prev => {
+    if (key === 'name') return
+    setInternalCols(prev => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -65,8 +67,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   }
 
   function handleSort(col: ColumnKey) {
-    if (sortCol === col) setSortAsc(!sortAsc)
-    else { setSortCol(col); setSortAsc(true) }
+    onSortChange(col)
   }
 
   function getCellValue(cc: CampaignContact, contact: Contact | undefined, col: ColumnKey): string {
@@ -95,10 +96,11 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
     rows = rows.filter(r => r.contact?.name?.toLowerCase().includes(q) || r.contact?.company?.toLowerCase().includes(q))
   }
 
-  if (sortCol) {
+  if (sortKey && sortKey !== 'default' && ALL_COLUMNS.some(c => c.key === sortKey)) {
+    const col = sortKey as ColumnKey
     rows.sort((a, b) => {
-      const av = getCellValue(a.cc, a.contact, sortCol)
-      const bv = getCellValue(b.cc, b.contact, sortCol)
+      const av = getCellValue(a.cc, a.contact, col)
+      const bv = getCellValue(b.cc, b.contact, col)
       const cmp = av.localeCompare(bv)
       return sortAsc ? cmp : -cmp
     })
@@ -196,47 +198,6 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
             }}
           />
         </div>
-        <div style={{ position: 'relative' }}>
-          <button
-            type="button"
-            onClick={() => setShowColMenu(!showColMenu)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '5px 10px', borderRadius: 7,
-              border: '1px solid var(--edge)', background: 'transparent',
-              fontSize: 11, fontWeight: 500,
-              color: 'var(--color-text-secondary)',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <Eye size={11} />
-            Fields
-          </button>
-          {showColMenu && (
-            <div style={{
-              position: 'absolute', top: '100%', right: 0, marginTop: 4,
-              background: 'var(--surface-panel)', border: '1px solid var(--edge)',
-              borderRadius: 10, padding: 8, zIndex: 100, minWidth: 160,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            }}>
-              {ALL_COLUMNS.map(c => (
-                <label key={c.key} style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
-                  fontSize: 12, color: 'var(--color-text-primary)',
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={visibleCols.has(c.key)}
-                    disabled={c.key === 'name'}
-                    onChange={() => toggleCol(c.key)}
-                  />
-                  {c.label}
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Table */}
@@ -259,7 +220,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                   }}
                 >
                   {c.label}
-                  {sortCol === c.key && (sortAsc ? ' ^' : ' v')}
+                  {sortKey === c.key && (sortAsc ? ' ^' : ' v')}
                 </th>
               ))}
             </tr>

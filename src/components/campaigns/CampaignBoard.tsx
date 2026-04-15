@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
   closestCorners,
+  useDroppable,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
@@ -57,6 +61,9 @@ export function CampaignBoard({
   const [showAddStage, setShowAddStage] = useState(false)
   const [newStageName, setNewStageName] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [pendingDragCardId, setPendingDragCardId] = useState<string | null>(null)
+
+  const { setNodeRef: setNewStageRef, isOver: isOverNewStage } = useDroppable({ id: '__new_stage__' })
 
   useEffect(() => {
     if (undoToast) requestAnimationFrame(() => setToastVisible(true))
@@ -64,6 +71,8 @@ export function CampaignBoard({
   }, [undoToast])
 
   useEffect(() => { setSelectedIds(new Set()) }, [campaign.id])
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
   const activeDragCc = activeDragId ? campaignContacts.find(cc => cc.id === activeDragId) : null
@@ -78,8 +87,18 @@ export function CampaignBoard({
       let av = '', bv = ''
       if (sortKey === 'name') { av = ca?.name ?? ''; bv = cb?.name ?? '' }
       else if (sortKey === 'company') { av = ca?.company ?? ''; bv = cb?.company ?? '' }
+      else if (sortKey === 'email') { av = ca?.email ?? ''; bv = cb?.email ?? '' }
+      else if (sortKey === 'role') { av = ca?.role ?? ''; bv = cb?.role ?? '' }
+      else if (sortKey === 'stage') {
+        const sa = stages.find(s => s.id === a.stage_id)
+        const sb = stages.find(s => s.id === b.stage_id)
+        av = String(sa?.order ?? 0); bv = String(sb?.order ?? 0)
+      }
+      else if (sortKey === 'owner') { av = a.owner ?? ''; bv = b.owner ?? '' }
+      else if (sortKey === 'next_step') { av = a.next_step ?? ''; bv = b.next_step ?? '' }
       else if (sortKey === 'moved_at') { av = a.moved_at ?? ''; bv = b.moved_at ?? '' }
       else if (sortKey === 'next_step_due') { av = a.next_step_due ?? ''; bv = b.next_step_due ?? '' }
+      else if (sortKey === 'notes') { av = a.notes ?? ''; bv = b.notes ?? '' }
       const cmp = av.localeCompare(bv)
       return sortAsc ? cmp : -cmp
     })
@@ -107,6 +126,13 @@ export function CampaignBoard({
 
     const draggedCc = campaignContacts.find(cc => cc.id === activeId)
     if (!draggedCc) return
+
+    if (overId === '__new_stage__') {
+      setPendingDragCardId(activeId)
+      setShowAddStage(true)
+      setNewStageName('')
+      return
+    }
 
     const isOverStage = stages.some(s => s.id === overId)
     const newStageId = isOverStage
@@ -169,6 +195,16 @@ export function CampaignBoard({
     const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.order)) + 1 : 0
     const newStage = await createCampaignStage(campaign.id, trimmed, maxOrder)
     onStagesChange([...stages, newStage])
+
+    if (pendingDragCardId) {
+      const now = new Date().toISOString()
+      onContactsChange(campaignContacts.map(cc =>
+        cc.id === pendingDragCardId ? { ...cc, stage_id: newStage.id, moved_at: now } : cc
+      ))
+      updateCampaignContact(pendingDragCardId, { stage_id: newStage.id, moved_at: now }).catch(() => {})
+      setPendingDragCardId(null)
+    }
+
     setNewStageName('')
     setShowAddStage(false)
   }
@@ -237,6 +273,7 @@ export function CampaignBoard({
   return (
     <>
       <DndContext
+        sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
@@ -268,7 +305,7 @@ export function CampaignBoard({
           ))}
 
           {/* Add Stage */}
-          <div style={{ minWidth: 200, flexShrink: 0, paddingTop: 8 }}>
+          <div ref={setNewStageRef} style={{ minWidth: 200, flexShrink: 0, paddingTop: 8 }}>
             {showAddStage ? (
               <form
                 onSubmit={handleAddStageSubmit}
@@ -278,12 +315,25 @@ export function CampaignBoard({
                   padding: 14, display: 'flex', flexDirection: 'column', gap: 8,
                 }}
               >
+                {pendingDragCardId && (() => {
+                  const cc = campaignContacts.find(c => c.id === pendingDragCardId)
+                  const contact = cc ? contacts.find(c => c.id === cc.contact_id) : null
+                  return contact ? (
+                    <div style={{
+                      fontSize: 12, color: 'var(--color-text-secondary)',
+                      padding: '6px 8px', background: 'rgba(37,180,57,0.06)',
+                      borderRadius: 6, border: '1px solid rgba(37,180,57,0.15)',
+                    }}>
+                      Moving <strong style={{ color: 'var(--color-text-primary)' }}>{contact.name}</strong> here
+                    </div>
+                  ) : null
+                })()}
                 <input
                   autoFocus
                   type="text"
                   value={newStageName}
                   onChange={e => setNewStageName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Escape') { setNewStageName(''); setShowAddStage(false) } }}
+                  onKeyDown={e => { if (e.key === 'Escape') { setNewStageName(''); setShowAddStage(false); setPendingDragCardId(null) } }}
                   placeholder="Stage name"
                   style={{
                     fontSize: 13, padding: '6px 10px', borderRadius: 8,
@@ -299,7 +349,7 @@ export function CampaignBoard({
                   }}>Add</button>
                   <button
                     type="button"
-                    onClick={() => { setNewStageName(''); setShowAddStage(false) }}
+                    onClick={() => { setNewStageName(''); setShowAddStage(false); setPendingDragCardId(null) }}
                     style={{
                       fontSize: 12, padding: '4px 10px', borderRadius: 6,
                       border: '1px solid var(--edge)', background: 'transparent',
@@ -312,15 +362,19 @@ export function CampaignBoard({
               <button
                 onClick={() => setShowAddStage(true)}
                 style={{
-                  fontSize: 12, color: 'var(--color-text-secondary)',
-                  background: 'transparent', border: '1px dashed var(--edge)',
-                  borderRadius: 12, cursor: 'pointer', padding: '10px 20px',
-                  width: '100%', transition: 'border-color 150ms, color 150ms',
+                  fontSize: 12,
+                  color: isOverNewStage ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                  background: isOverNewStage ? 'rgba(37,180,57,0.06)' : 'transparent',
+                  border: isOverNewStage ? '1.5px dashed var(--color-brand)' : '1px dashed var(--edge)',
+                  borderRadius: 12, cursor: 'pointer',
+                  padding: isOverNewStage ? '24px 20px' : '10px 20px',
+                  width: '100%',
+                  transition: 'border-color 150ms, color 150ms, background 150ms, padding 200ms ease-out',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+                onMouseEnter={e => { if (!isOverNewStage) { e.currentTarget.style.borderColor = 'var(--color-brand)'; e.currentTarget.style.color = 'var(--color-brand)' } }}
+                onMouseLeave={e => { if (!isOverNewStage) { e.currentTarget.style.borderColor = 'var(--edge)'; e.currentTarget.style.color = 'var(--color-text-secondary)' } }}
               >
-                + Add Stage
+                + {isOverNewStage ? 'Drop to create new stage' : 'Add Stage'}
               </button>
             )}
           </div>

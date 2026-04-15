@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getPods } from '@/lib/supabase-data'
 import type { Pod } from '@/lib/types'
@@ -334,12 +334,26 @@ function NavItem({
   labelStyle?: React.CSSProperties
   badge?: boolean
 }) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  function handleEnter() {
+    if (!collapsed) return
+    timerRef.current = setTimeout(() => setShowTooltip(true), 500)
+  }
+
+  function handleLeave() {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setShowTooltip(false)
+  }
+
   return (
     <button
       type="button"
       aria-current={active ? 'page' : undefined}
-      title={collapsed ? label : undefined}
       onClick={onClick}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -397,6 +411,28 @@ function NavItem({
           flexShrink: 0,
         }}>
           {hint}
+        </span>
+      )}
+      {collapsed && showTooltip && (
+        <span style={{
+          position: 'absolute',
+          left: '100%',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          marginLeft: 8,
+          padding: '5px 10px',
+          borderRadius: 7,
+          background: 'var(--color-text-primary)',
+          color: 'var(--bg)',
+          fontSize: 12,
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          zIndex: 200,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          animation: 'tooltipFadeIn 120ms ease-out',
+        }}>
+          {label}
         </span>
       )}
     </button>

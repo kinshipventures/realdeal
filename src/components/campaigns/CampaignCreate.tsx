@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Campaign, CampaignStage, CampaignType } from '../../lib/types'
 import { createCampaign, createCampaignStage } from '../../lib/airtable'
+import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
+import { CampaignTypeIcon } from './CampaignTypeIcon'
 
-const TYPES: CampaignType[] = ['event', 'investment', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'other']
+const TYPES: CampaignType[] = ['event', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'investment', 'other']
 
 const STAGE_TEMPLATES: Record<string, { label: string; stages: string[] }> = {
-  event:      { label: 'Event',      stages: ['Invited', "RSVP'd", 'Confirmed', 'Attended'] },
-  investment: { label: 'Investment', stages: ['Researching', 'Outreach', 'In Diligence', 'Committed'] },
-  outreach:   { label: 'Outreach',   stages: ['Identified', 'Contacted', 'Responded', 'Closed'] },
-  custom:     { label: 'Custom',     stages: ['Stage 1', 'Stage 2', 'Stage 3'] },
+  event:        { label: 'Event',        stages: ['Invited', "RSVP'd", 'Confirmed', 'Attended'] },
+  outreach:     { label: 'Outreach',     stages: ['Identified', 'Contacted', 'Responded', 'Closed'] },
+  deal_flow:    { label: 'Deal Flow',    stages: ['Sourced', 'First Meeting', 'Deep Dive', 'Term Sheet', 'Pass'] },
+  fundraise:    { label: 'Fundraise',    stages: ['Prospect', 'Deck Sent', 'In Diligence', 'Committed'] },
+  talent:       { label: 'Talent',       stages: ['Scouting', 'Intro Call', 'Collab Proposed', 'Active Partner'] },
+  partnerships: { label: 'Partnerships', stages: ['Identified', 'Intro Sent', 'Negotiating', 'Signed'] },
+  investment:   { label: 'Investment',   stages: ['Researching', 'Outreach', 'In Diligence', 'Committed'] },
+  custom:       { label: 'Custom',       stages: ['Stage 1', 'Stage 2', 'Stage 3'] },
 }
 
 const STAGE_COLORS = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#7E57C2', '#F5A623']
@@ -94,22 +100,24 @@ export function CampaignCreate({ onCreated, onCancel }: Props) {
       />
 
       {/* Type selector */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
         {TYPES.map(t => (
           <button
             key={t}
             type="button"
             onClick={() => setType(t)}
             style={{
-              flex: 1, padding: '5px 0', borderRadius: 6,
-              border: '1px solid', borderColor: type === t ? 'var(--edge-strong)' : 'transparent',
-              background: type === t ? 'var(--tint)' : 'transparent',
-              color: type === t ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              fontSize: 11, fontWeight: type === t ? 500 : 400,
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '5px 10px', borderRadius: 6,
+              border: '1px solid', borderColor: type === t ? TYPE_COLORS[t] : 'transparent',
+              background: type === t ? `${TYPE_COLORS[t]}12` : 'transparent',
+              color: type === t ? TYPE_COLORS[t] : 'var(--color-text-tertiary)',
+              fontSize: 11, fontWeight: type === t ? 600 : 400,
               cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.12s',
             }}
           >
-            {t}
+            <CampaignTypeIcon type={t} size={11} colored={type === t} />
+            {TYPE_LABELS[t]}
           </button>
         ))}
       </div>
@@ -198,10 +206,10 @@ export function CampaignCreate({ onCreated, onCancel }: Props) {
           disabled={!name.trim() || creating}
           style={{
             padding: '7px 18px',
-            background: name.trim() ? 'var(--edge)' : 'var(--tint)',
-            border: '1px solid var(--edge-strong)', borderRadius: 7,
-            color: name.trim() ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-            fontSize: 13, fontWeight: 500,
+            background: name.trim() ? 'var(--color-brand)' : 'var(--tint)',
+            border: 'none', borderRadius: 7,
+            color: name.trim() ? '#ffffff' : 'var(--color-text-tertiary)',
+            fontSize: 13, fontWeight: 600,
             cursor: name.trim() && !creating ? 'pointer' : 'default',
             fontFamily: 'inherit', transition: 'all 0.15s',
           }}
