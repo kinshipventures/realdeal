@@ -280,13 +280,14 @@ export function CampaignBoard({
       >
         <div style={{
           display: 'flex', gap: 14,
-          overflowX: 'auto', padding: '12px 0 32px',
+          overflowX: 'auto', padding: '4px 0 32px',
           alignItems: 'flex-start',
         }}>
           {sortedStages.map((stage, i) => (
             <CampaignStageColumn
               key={stage.id}
               stage={stage}
+              stagger={i}
               campaignContacts={sortedContacts}
               contacts={contacts}
               interactionsMap={interactionsMap}

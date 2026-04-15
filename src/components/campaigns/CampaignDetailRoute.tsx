@@ -248,11 +248,11 @@ export function CampaignDetailRoute() {
   if (!campaign) return <div style={{ padding: 32, color: 'var(--color-text-secondary)' }}>Campaign not found</div>
 
   return (
-    <div className="content-enter" style={{ padding: '16px clamp(16px, 4vw, 32px) 96px' }}>
-      {/* Header: title + type + deadline + stats inline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+    <div className="content-enter" style={{ padding: '24px clamp(16px, 4vw, 32px) 96px' }}>
+      {/* Header: title + type + deadline */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 800,
+          fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 800,
           margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
         }}>
           {campaign.name}
@@ -278,20 +278,22 @@ export function CampaignDetailRoute() {
         }}
       />
 
-      {/* Stats bar */}
+      {/* Stats bar - separate zone */}
       {campaignContacts.length > 0 && (
-        <CampaignStatsBar
-          stages={stages}
-          campaignContacts={campaignContacts}
-          createdAt={campaign.created_at}
-          campaignType={campaign.type}
-        />
+        <div style={{ marginTop: 8 }}>
+          <CampaignStatsBar
+            stages={stages}
+            campaignContacts={campaignContacts}
+            createdAt={campaign.created_at}
+            campaignType={campaign.type}
+          />
+        </div>
       )}
 
       {/* Action bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {/* Primary: View + board controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', gap: 2, background: 'var(--tint)', borderRadius: 8, padding: 2 }}>
             <button
               type="button"
@@ -622,6 +624,7 @@ export function CampaignDetailRoute() {
           contact={panelContact}
           stages={stages}
           campaign={campaign}
+          interactions={interactionsMap.get(panelContact.id) ?? []}
           onUpdate={handlePanelUpdate}
           onClose={() => setPanelCcId(null)}
         />

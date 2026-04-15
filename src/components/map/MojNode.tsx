@@ -1,8 +1,10 @@
+import { memo } from 'react'
 import type React from 'react'
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
+import { Position, type NodeProps, type Node } from '@xyflow/react'
 import { useNavigate } from 'react-router'
 import { scoreLabel } from '../../lib/equity'
 import { POD_SHIFT_COLORS } from './SolidOrb'
+import { FlowCenterHandle } from './MapPrimitives'
 
 type MojNodeData = {
   overallHealth?: number
@@ -27,7 +29,7 @@ const LABEL_COLORS: Record<string, string> = {
   Fading:   'rgba(248,113,113,0.85)',
 }
 
-export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
+export const MojNodeComponent = memo(function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
   const { overallHealth, totalContacts, userName, podName, podColor, podId } = data
   const navigate = useNavigate()
   const hasData = overallHealth !== undefined
@@ -39,12 +41,8 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
 
   return (
     <>
-      <Handle type="source" position={Position.Right}
-        style={{ opacity: 0, width: 1, height: 1, top: MOJ_SIZE / 2, right: 'auto', left: MOJ_SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
-      <Handle type="target" position={Position.Left}
-        style={{ opacity: 0, width: 1, height: 1, top: MOJ_SIZE / 2, left: MOJ_SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
+      <FlowCenterHandle type="source" position={Position.Right} size={MOJ_SIZE} />
+      <FlowCenterHandle type="target" position={Position.Left} size={MOJ_SIZE} />
 
       <div
         className="orb-enter"
@@ -174,4 +172,4 @@ export function MojNodeComponent({ data }: NodeProps<MojNodeType>) {
       </div>
     </>
   )
-}
+})

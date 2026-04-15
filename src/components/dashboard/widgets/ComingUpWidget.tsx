@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router'
 import type { Contact, Pod } from '../../../lib/types'
 import { WidgetHeading } from './WidgetHeading'
 
@@ -90,7 +89,6 @@ interface ComingUpWidgetProps {
 }
 
 export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
-  const navigate = useNavigate()
   if (items.length === 0) return null
 
   // Sort overdue items to top, then by daysUntil ascending
@@ -102,15 +100,8 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <WidgetHeading title="coming up" tooltip="Birthdays and follow-ups in the next two weeks. Don't miss a chance to show up." />
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/nurturing?filter=dates')}
-          className="see-all-link"
-        >
-          See all
-        </button>
+      <div style={{ marginBottom: 12 }}>
+        <WidgetHeading title="coming up" />
       </div>
       <div style={{ ...PANEL, overflow: 'hidden' }}>
         {sorted.map((item, i) => (

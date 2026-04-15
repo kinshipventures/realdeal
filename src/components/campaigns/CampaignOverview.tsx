@@ -52,7 +52,7 @@ export function CampaignOverview() {
             Campaigns
           </h1>
           <p style={{
-            margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-tertiary)',
+            margin: '6px 0 0', fontSize: 13, color: 'var(--color-text-tertiary)',
             lineHeight: 1.4,
           }}>
             Track events, fundraises, outreach, and deals from start to finish.
@@ -133,14 +133,15 @@ export function CampaignOverview() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 14,
+          gap: 16,
         }}>
-          {filtered.map(c => (
+          {filtered.map((c, i) => (
             <CampaignCard
               key={c.id}
               campaign={c}
               contacts={contacts}
               onClick={() => navigate(`/campaigns/${c.id}`)}
+              stagger={i}
             />
           ))}
         </div>
@@ -153,10 +154,11 @@ export function CampaignOverview() {
 
 // -- Card --
 
-function CampaignCard({ campaign, contacts, onClick }: {
+function CampaignCard({ campaign, contacts, onClick, stagger = 0 }: {
   campaign: Campaign
   contacts: Contact[]
   onClick: () => void
+  stagger?: number
 }) {
   const campContacts = contacts.filter(c => campaign.contact_ids.includes(c.id))
   const typeColor = TYPE_COLORS[campaign.type]
@@ -168,14 +170,15 @@ function CampaignCard({ campaign, contacts, onClick }: {
     <button
       type="button"
       onClick={onClick}
+      className="campaign-card-enter campaign-overview-card"
       style={{
+        '--stagger': stagger,
         background: 'var(--surface-panel)',
         border: '1px solid var(--edge)',
-        borderRadius: 14, padding: 18, textAlign: 'left',
+        borderRadius: 14, padding: '18px 20px', textAlign: 'left',
         cursor: 'pointer', fontFamily: 'inherit',
-        transition: 'border-color 150ms, box-shadow 150ms',
-        display: 'flex', flexDirection: 'column', gap: 12,
-      }}
+        display: 'flex', flexDirection: 'column', gap: 14,
+      } as React.CSSProperties}
       onMouseEnter={e => {
         e.currentTarget.style.background = `${typeColor}08`
         e.currentTarget.style.borderColor = `${typeColor}30`
@@ -271,11 +274,12 @@ function CampaignListTable({ campaigns, contacts, onRowClick }: {
           </tr>
         </thead>
         <tbody>
-          {campaigns.map(c => (
+          {campaigns.map((c, i) => (
             <tr
               key={c.id}
               onClick={() => onRowClick(c.id)}
-              style={{ borderBottom: '1px solid var(--edge)', cursor: 'pointer' }}
+              className="campaign-card-enter"
+              style={{ '--stagger': i, borderBottom: '1px solid var(--edge)', cursor: 'pointer' } as React.CSSProperties}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--tint)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
@@ -361,7 +365,7 @@ function OverviewSkeleton() {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: 14,
+        gap: 16,
       }}>
         {[1, 2, 3].map(i => (
           <div key={i} className="skeleton" style={{ height: 160, borderRadius: 14 }} />

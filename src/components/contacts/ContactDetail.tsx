@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import type { Contact, Interaction, Pod } from '../../lib/types'
+import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
 import { getInteractions } from '../../lib/airtable'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 
@@ -100,7 +100,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       location: null, website: null, notes: null, recommended_by: null,
       specialization: null, past_clients: null,
       birthday: null, milestones: null, interests: null, relationship_context: null,
-      category_ids: categoryId ? [categoryId] : [], list_ids: [],
+      category_ids: categoryId ? [categoryId] : [], list_ids: [], ring_ids: [],
     }
   )
   const [editingField, setEditingField] = useState<keyof Contact | null>(isNew ? 'name' : null)
@@ -347,6 +347,49 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
+  async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null) {
+    if (isNew || !contact) return
+    const previousListIds = contact.list_ids
+    const previousPrimaryId = contact.primary_list_id
+    const updated = await updateContact(contact.id, {
+      list_ids: nextListIds,
+      primary_list_id: nextPrimaryId,
+    } as Partial<Contact>)
+    onSaved(updated)
+
+    const changedPods =
+      previousPrimaryId !== nextPrimaryId ||
+      previousListIds.length !== nextListIds.length ||
+      previousListIds.some(id => !nextListIds.includes(id))
+
+    if (changedPods) {
+      await logSystemEvent({
+        contactId: contact.id,
+        type: 'pod_change',
+        detail: {
+          previousPods: previousListIds,
+          nextPods: nextListIds,
+          previousPrimaryPod: previousPrimaryId,
+          nextPrimaryPod: nextPrimaryId,
+        },
+        notes: 'Updated pod ownership and context.',
+      })
+    }
+  }
+
+  async function persistRingSelection(nextRingIds: RelationshipRing[]) {
+    setDraft(prev => ({ ...prev, ring_ids: nextRingIds }))
+    if (isNew || !contact) return
+    const updated = await updateContact(contact.id, { ring_ids: nextRingIds } as Partial<Contact>)
+    onSaved(updated)
+    await logSystemEvent({
+      contactId: contact.id,
+      type: 'field_update',
+      detail: { field: 'ring_ids', rings: nextRingIds },
+      notes: `Updated rings: ${nextRingIds.map(ring => RELATIONSHIP_RING_LABELS[ring]).join(', ') || 'none'}.`,
+    })
+  }
+
   async function handleCreate() {
     if (!draft.name) return
     setCreating(true)
@@ -372,12 +415,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         list_ids: [],
         category_ids: categoryId ? [categoryId] : [],
         primary_list_id: null, cadence_override: null,
+        ring_ids: draft.ring_ids ?? [],
         first_name: null, last_name: null, linkedin: null,
         country: null, global_region: null, gender: null,
         introduced_by: null, intel_notes: null, relationship_owner: null,
         contact_frequency: null, next_follow_up_date: null, next_action: null,
         kv_fund_investor: null, spv_investor: null, needs_review: false,
-        type: 'Contact', status: 'Active',
+        type: 'Contact', status: 'Pending',
         company_record_id: null, company_ids: [], industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
         communication_preferences: null, custom_fields: {},
@@ -959,8 +1003,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                           }
                           setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary }))
                           if (!isNew && contact) {
-                            updateContact(contact.id, { list_ids: nextIds, primary_list_id: nextPrimary } as Partial<Contact>)
-                              .then(onSaved)
+                            persistPodAssignment(nextIds, nextPrimary)
                           }
                         }}
                         style={{
@@ -997,8 +1040,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             onClick={() => {
                               setDraft(prev => ({ ...prev, primary_list_id: podId }))
                               if (!isNew && contact) {
-                                updateContact(contact.id, { primary_list_id: podId } as Partial<Contact>)
-                                  .then(onSaved)
+                                persistPodAssignment(draft.list_ids ?? [], podId)
                               }
                             }}
                             style={{
@@ -1027,6 +1069,40 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               <div style={sectionLabel}>relationship</div>
               {field('introduced_by', 'Introduced By')}
               {field('relationship_owner', 'Relationship Owner')}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Rings</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {RELATIONSHIP_RINGS.map(ring => {
+                    const isSelected = (draft.ring_ids ?? []).includes(ring)
+                    return (
+                      <button
+                        key={ring}
+                        type="button"
+                        onClick={() => {
+                          const nextRings = isSelected
+                            ? (draft.ring_ids ?? []).filter(id => id !== ring)
+                            : [...(draft.ring_ids ?? []), ring]
+                          void persistRingSelection(nextRings)
+                        }}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 100,
+                          fontSize: 11,
+                          fontWeight: isSelected ? 600 : 400,
+                          border: '1px solid',
+                          borderColor: isSelected ? 'var(--color-brand)' : 'var(--edge)',
+                          background: isSelected ? 'rgba(37,180,57,0.12)' : 'transparent',
+                          color: isSelected ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {RELATIONSHIP_RING_LABELS[ring]}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               {draft.contact_frequency && (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>Contact Frequency</div>

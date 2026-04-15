@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { scoreLabel, type ScoreLabel } from '../../../lib/equity'
+import { scoreGrade, scoreLabel, type ScoreGrade, type ScoreLabel } from '../../../lib/equity'
 
 function EquityRing({ score, size }: { score: number; size: number }) {
   const safeScore = Number.isFinite(score) ? score : 0
@@ -36,34 +36,7 @@ function EquityRing({ score, size }: { score: number; size: number }) {
   )
 }
 
-function AnimatedNumber({ value, duration = 1200 }: { value: number; duration?: number }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const prevValue = useRef(0)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const start = prevValue.current
-    const end = Number.isFinite(value) ? value : 0
-    if (start === end) { el.textContent = String(end); return }
-    const startTime = performance.now()
-
-    function tick(now: number) {
-      const elapsed = now - startTime
-      const t = Math.min(elapsed / duration, 1)
-      const ease = 1 - Math.pow(1 - t, 3)
-      const current = Math.round(start + (end - start) * ease)
-      if (el) el.textContent = String(current)
-      if (t < 1) requestAnimationFrame(tick)
-      else prevValue.current = end
-    }
-    requestAnimationFrame(tick)
-  }, [value, duration])
-
-  return <span ref={ref}>{Number.isFinite(value) ? value : 0}</span>
-}
-
-function ScorePulse({ value }: { value: number }) {
+function ScorePulse({ value }: { value: ScoreGrade }) {
   const ref = useRef<HTMLDivElement>(null)
   const prev = useRef(value)
 
@@ -94,7 +67,7 @@ function ScorePulse({ value }: { value: number }) {
         display: 'inline-flex', alignItems: 'baseline', gap: 8,
       }}
     >
-      <AnimatedNumber value={value} />
+      <span>{value}</span>
     </div>
   )
 }
@@ -183,6 +156,7 @@ interface EquityWidgetProps {
 
 export function EquityWidget({ overallScore, interactionsLoading, dataReady, scoreTrend, onQuickAction }: EquityWidgetProps) {
   const label = scoreLabel(overallScore)
+  const grade = scoreGrade(overallScore)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -242,9 +216,12 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
               <EquityRing score={overallScore} size={120} />
               <div style={{
                 position: 'absolute', inset: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
               }}>
-                <ScorePulse value={Number.isFinite(overallScore) ? overallScore : 0} />
+                <ScorePulse value={grade} />
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
+                  grade
+                </div>
               </div>
             </div>
             {/* Label + nudge */}
@@ -262,6 +239,9 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
                 lineHeight: 1.4, letterSpacing: '0.01em',
               }}>
                 {getNudge(label)}
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.52)', letterSpacing: '0.02em' }}>
+                {overallScore} / 100 relationship health
               </div>
             </div>
           </>

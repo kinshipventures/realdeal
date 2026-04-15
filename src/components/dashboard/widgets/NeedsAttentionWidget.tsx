@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import type { Contact, Campaign, CampaignContact } from '../../../lib/types'
 import { Avatar } from '../../ui'
 import { EmptyState } from '../../empty/EmptyState'
@@ -229,7 +228,6 @@ export function NeedsAttentionWidget({
   contactsLoading, error,
   onContactClick, onSnooze, onRemoveContact, onRetry, onCampaignClick,
 }: NeedsAttentionWidgetProps) {
-  const navigate = useNavigate()
   const [dormantExpanded, setDormantExpanded] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const campaignStalls = computeCampaignStalls(campaigns, campaignContacts)
@@ -238,7 +236,7 @@ export function NeedsAttentionWidget({
     <div style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <WidgetHeading title="needs attention" tooltip="People you haven't reached out to in a while. A quick check-in goes a long way." />
+          <WidgetHeading title="needs attention" />
           {(overdueContacts.length + followUpOverdue.length + campaignStalls.length) > 0 && (
             <span
               aria-live="polite"
@@ -255,13 +253,6 @@ export function NeedsAttentionWidget({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/nurturing?filter=overdue')}
-          className="see-all-link"
-        >
-          See all
-        </button>
       </div>
 
       <div style={{ ...PANEL, overflow: 'hidden', marginBottom: dormantContacts.length > 0 ? 12 : 0 }}>

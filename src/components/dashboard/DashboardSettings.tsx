@@ -29,20 +29,6 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
 
   const equityWidget = ALL_WIDGETS.find(w => w.id === 'equity')!
 
-  // Section labels so toggle names map to dashboard headings
-  const WIDGET_SECTION: Partial<Record<WidgetId, string>> = {
-    'pending-tray': 'standalone',
-    'todays-focus': 'Your Day',
-    'coming-up': 'Your Day',
-    'needs-attention': 'Your Day',
-    'pod-health': 'Network Health',
-    'wrapped': 'Network Health',
-    'recent-activity': 'Activity & Links',
-    'quick-links': 'Activity & Links',
-    'gmail-sync': 'Activity & Links',
-    'meeting-notes': 'Activity & Links',
-  }
-
   function getInsertIndex(clientY: number): number {
     for (let i = 0; i < rowRefs.current.length; i++) {
       const row = rowRefs.current[i]
@@ -106,7 +92,7 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
       <div style={{
         position: 'fixed', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 320,
+        width: 336,
         maxHeight: 'calc(100vh - 80px)',
         background: 'var(--surface-panel)',
         backdropFilter: 'var(--panel-blur)',
@@ -162,8 +148,8 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
           </div>
           <div style={{ marginTop: 8, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
             {config.preset === 'focus'
-              ? `${PRESET_CONFIGS.focus.length} widgets - essentials only`
-              : `${PRESET_CONFIGS.full.length} widgets - everything`}
+              ? `${PRESET_CONFIGS.focus.length} essentials`
+              : `${PRESET_CONFIGS.full.length} sections on`}
           </div>
         </div>
 
@@ -237,10 +223,8 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
         {/* Widget list */}
         <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
           <div style={{ padding: '12px 20px 8px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Widgets
+            Header
           </div>
-
-          {/* Equity - non-orderable, always in header */}
           <WidgetRow
             widget={equityWidget}
             visible={config.visible.has(equityWidget.id)}
@@ -248,20 +232,18 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
             draggable={false}
           />
 
-          {/* Orderable widgets with section headers */}
+          <div style={{ padding: '16px 20px 6px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Dashboard flow
+          </div>
+          <div style={{ padding: '0 20px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+            Drag to reorder. Toggle what shows.
+          </div>
+
           {orderedWidgets.map((widget, index) => {
             const isDragging = dragIndex === index
             const indicator = showIndicator(index)
-            const section = WIDGET_SECTION[widget.id]
-            const prevSection = index > 0 ? WIDGET_SECTION[orderedWidgets[index - 1].id] : null
-            const showSectionHeader = section && section !== 'standalone' && section !== prevSection
             return (
               <div key={widget.id}>
-                {showSectionHeader && (
-                  <div style={{ padding: '14px 20px 4px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {section}
-                  </div>
-                )}
                 <div
                   ref={el => { rowRefs.current[index] = el }}
                   style={{
@@ -334,7 +316,7 @@ function WidgetRow({
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '11px 20px',
+        padding: '12px 20px',
         borderBottom: '1px solid var(--divider)',
         userSelect: 'none',
       }}

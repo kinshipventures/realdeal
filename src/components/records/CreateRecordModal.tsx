@@ -191,12 +191,13 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   }
 
   const baseContact: Omit<Contact, 'id' | 'created_at'> = {
-    name: '', type: 'Contact', status: 'Active', list_ids: [], category_ids: [],
+    name: '', type: 'Contact', status: 'Pending', list_ids: [], category_ids: [],
     email: null, phone: null, company: null, role: null, location: null,
     website: null, notes: null, recommended_by: null, specialization: null,
     past_clients: null, birthday: null, milestones: null, interests: null,
     relationship_context: null, last_contacted_at: null,
     primary_list_id: null, cadence_override: null,
+    ring_ids: [],
     first_name: null, last_name: null, linkedin: null, country: null,
     global_region: null, gender: null, introduced_by: null,
     intel_notes: null, relationship_owner: null, contact_frequency: null,
@@ -208,7 +209,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   }
 
   async function createCompanyInline(name: string): Promise<Contact> {
-    return createContact({ ...baseContact, name, type: 'Company' })
+    return createContact({ ...baseContact, name, type: 'Company', status: 'Active' })
   }
 
   async function handleSubmit() {
@@ -251,6 +252,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
           ...baseContact,
           name: companyName.trim(),
           type: 'Company',
+          status: 'Active',
           list_ids: selectedPodIds,
           industry: industry.trim() || null,
           domain: domain.trim() || null,
@@ -303,6 +305,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             ...baseContact,
             name: row.companyName.trim(),
             type: 'Company',
+            status: 'Active',
             list_ids: multiPodIds,
             industry: row.industry.trim() || null,
             domain: row.domain.trim() || null,

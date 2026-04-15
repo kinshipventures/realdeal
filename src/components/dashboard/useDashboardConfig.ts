@@ -32,29 +32,23 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'wrapped', 'pod-health', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'recent-activity', 'quick-links', 'pending-tray', 'gmail-sync', 'meeting-notes'],
-  focus: ['pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress'],
+  full: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'pod-health', 'recent-activity'],
+  focus: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up'],
 }
 
-// Orderable widgets (equity lives in header band, wrapped lives above tabs)
+// Orderable widgets (equity lives in header band, wrapped lives above the main flow)
 const DEFAULT_ORDER: WidgetId[] = [
-  // Nurture tab
+  'pending-tray',
   'todays-focus',
-  'coming-up',
   'needs-attention',
+  'coming-up',
+  'campaign-progress',
   'pod-health',
   'recent-activity',
-  'pending-tray',
-  'gmail-sync',
-  'meeting-notes',
-  // Campaigns tab
-  'campaign-progress',
-  'quick-links',
-  // Above tabs
   'wrapped',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v5'
+const STORAGE_KEY = 'realdeal:dashboard-config:v7'
 
 interface StoredConfig {
   preset: Preset
@@ -77,8 +71,9 @@ function loadConfig(): DashboardConfig {
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
 
-    // Migrate stale widget ID
-    const migrate = (ids: WidgetId[]) => ids.map(id => id === ('granola-sync' as any) ? 'meeting-notes' as WidgetId : id)
+    // Migrate stale widget ID from older configs.
+    const migrate = (ids: WidgetId[]) =>
+      ids.map(id => id === 'granola-sync' ? 'meeting-notes' : id)
     if (parsed.visible) parsed.visible = migrate(parsed.visible)
     if (parsed.order) parsed.order = migrate(parsed.order)
 

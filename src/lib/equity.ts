@@ -44,12 +44,25 @@ const DAY_MS = 24 * 60 * 60 * 1000
 // ── Score thresholds ────────────────────────────────────────────────────────
 
 export type ScoreLabel = 'Thriving' | 'Steady' | 'Cooling' | 'Fading'
+export type ScoreGrade = 'A' | 'B' | 'C' | 'F'
 
 export function scoreLabel(score: number): ScoreLabel {
   if (score >= 85) return 'Thriving'
   if (score >= 70) return 'Steady'
   if (score >= 40) return 'Cooling'
   return 'Fading'
+}
+
+export function scoreGrade(score: number): ScoreGrade {
+  if (score >= 85) return 'A'
+  if (score >= 70) return 'B'
+  if (score >= 40) return 'C'
+  return 'F'
+}
+
+export function getPrimaryPod(contact: Contact, pods: Pod[]): Pod | null {
+  if (!contact.primary_list_id) return null
+  return pods.find(pod => pod.id === contact.primary_list_id) ?? null
 }
 
 // ── Recency multiplier ─────────────────────────────────────────────────────
@@ -141,7 +154,7 @@ export function overallEquityScore(
   if (priorityPods.length === 0) return 0
   let sum = 0
   for (const pod of priorityPods) {
-    const podContacts = contacts.filter(c => c.list_ids.includes(pod.id))
+    const podContacts = contacts.filter(c => c.primary_list_id === pod.id)
     sum += podEquityScore(podContacts, byContact)
   }
   const result = Math.round(sum / priorityPods.length)
@@ -178,10 +191,11 @@ export function todaysFocus(
   const candidates: FocusItem[] = []
 
   for (const contact of contacts) {
-    const inPriorityPod = contact.list_ids.some(id => priorityPodIds.has(id))
+    const primaryPod = contact.primary_list_id ? (podById.get(contact.primary_list_id) ?? null) : null
+    const inPriorityPod = !!primaryPod?.is_priority && priorityPodIds.has(primaryPod.id)
     if (!inPriorityPod) continue
 
-    const pod = contact.list_ids.map(id => podById.get(id)).find(p => p?.is_priority) ?? null
+    const pod = primaryPod
     const thresholdDays = contactCadenceDays(contact, pod?.cadence ?? null)
     const thresholdMs = thresholdDays * DAY_MS
 
@@ -212,7 +226,8 @@ export function todaysFocus(
   const picked = new Set(candidates.map(c => c.contact.id))
   const serendipityCandidates = contacts.filter(c =>
     !picked.has(c.id) &&
-    c.list_ids.some(id => priorityPodIds.has(id)) &&
+    !!c.primary_list_id &&
+    priorityPodIds.has(c.primary_list_id) &&
     c.last_contacted_at != null
   )
 
@@ -226,7 +241,7 @@ export function todaysFocus(
 
   for (const contact of shuffled) {
     if (candidates.length >= limit) break
-    const pod = contact.list_ids.map(id => podById.get(id)).find(p => p?.is_priority) ?? null
+    const pod = contact.primary_list_id ? (podById.get(contact.primary_list_id) ?? null) : null
     candidates.push({ contact, pod, reason: 'serendipity', score: 0 })
   }
 

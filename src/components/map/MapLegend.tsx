@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MapChromeButton } from './MapPrimitives'
 
 const LEGEND_KEY = 'realdeal:map-legend-dismissed'
 
@@ -21,28 +22,18 @@ export function MapLegend() {
 
   if (!open) {
     return (
-      <button
-        type="button"
+      <MapChromeButton
         onClick={() => setOpen(true)}
         title="Show map guide"
+        shape="circle"
+        tone="tertiary"
         style={{
           position: 'absolute', bottom: 24, left: 24, zIndex: 20,
-          width: 32, height: 32, borderRadius: '50%',
-          border: '1px solid var(--edge)',
-          background: 'var(--nav-bg)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--color-text-tertiary)',
           fontSize: 14, fontWeight: 600,
-          transition: 'color 0.15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
-        onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)' }}
       >
         ?
-      </button>
+      </MapChromeButton>
     )
   }
 

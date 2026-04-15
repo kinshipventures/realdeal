@@ -33,6 +33,7 @@ interface Props {
   isFirst: boolean
   isLast: boolean
   visibleCardFields?: Set<string>
+  stagger?: number
 }
 
 export function CampaignStageColumn({
@@ -51,6 +52,7 @@ export function CampaignStageColumn({
   isFirst,
   isLast,
   visibleCardFields,
+  stagger = 0,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -138,9 +140,11 @@ export function CampaignStageColumn({
 
   return (
     <div
+      className="campaign-col-enter"
       style={{
-        minWidth: 260,
-        width: 260,
+        '--stagger': stagger,
+        minWidth: 280,
+        width: 280,
         background: isOver ? hexToRgba(stageColor, 0.1) : hexToRgba(stageColor, 0.05),
         borderRadius: 12,
         border: `1px solid ${isOver ? hexToRgba(stageColor, 0.3) : 'var(--edge)'}`,
@@ -148,10 +152,10 @@ export function CampaignStageColumn({
         flexDirection: 'column',
         transition: 'background 150ms, border-color 150ms',
         flexShrink: 0,
-      }}
+      } as React.CSSProperties}
     >
       {/* Header */}
-      <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+      <div style={{ padding: '14px 14px 10px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
         <button
           onClick={() => setShowColorPicker(prev => !prev)}
           aria-label="Change stage color"
@@ -164,7 +168,7 @@ export function CampaignStageColumn({
         />
 
         {showColorPicker && (
-          <div ref={colorPickerRef} style={{
+          <div ref={colorPickerRef} className="popover-enter" style={{
             position: 'absolute', top: 40, left: 8,
             background: 'var(--surface-panel)', border: '1px solid var(--edge)',
             borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
@@ -240,7 +244,7 @@ export function CampaignStageColumn({
       <div
         ref={setNodeRef}
         style={{
-          padding: '0 10px 10px',
+          padding: '0 12px 14px',
           display: 'flex', flexDirection: 'column', gap: 8,
           minHeight: 60, flex: 1,
         }}
@@ -254,7 +258,7 @@ export function CampaignStageColumn({
             </div>
           ) : (
             <>
-              {visibleCards.map(({ cc, contact, score, label }) => (
+              {visibleCards.map(({ cc, contact, score, label }, i) => (
                 <CampaignContactCard
                   key={cc.id}
                   cc={cc}
@@ -266,6 +270,7 @@ export function CampaignStageColumn({
                   selected={selectedIds.has(cc.id)}
                   onToggleSelect={onToggleSelect}
                   visibleFields={visibleCardFields}
+                  stagger={i}
                 />
               ))}
               {hasMore && !expanded && (
@@ -304,7 +309,7 @@ export function CampaignStageColumn({
       </div>
 
       {/* Add contact */}
-      <div style={{ padding: '0 10px 12px' }}>
+      <div style={{ padding: '0 12px 14px' }}>
         {showSearch ? (
           <div>
             <input
@@ -322,7 +327,7 @@ export function CampaignStageColumn({
               }}
             />
             {searchResults.length > 0 && (
-              <div style={{
+              <div className="popover-enter" style={{
                 marginTop: 4, background: 'var(--surface-panel)',
                 border: '1px solid var(--edge)', borderRadius: 8,
                 overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',

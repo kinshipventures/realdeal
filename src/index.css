@@ -818,6 +818,42 @@ body::after {
   line-height: 1.2;
 }
 
+.dashboard-hero-stack {
+  margin-bottom: clamp(28px, 4vw, 40px);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(20px, 2.4vw, 32px);
+  align-items: start;
+}
+
+.dashboard-grid-item {
+  min-width: 0;
+}
+
+.dashboard-pod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 980px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .dashboard-grid-item {
+    grid-column: 1 / -1 !important;
+  }
+
+  .dashboard-pod-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
 /* Widget tooltip trigger */
 .widget-tooltip-wrap {
   position: relative;
@@ -921,6 +957,19 @@ body::after {
 .widget-card:active {
   transform: scale(0.98) !important;
   transition-duration: 0.08s !important;
+}
+
+.campaign-progress-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.campaign-progress-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* Widget entrance animation */
@@ -1037,6 +1086,9 @@ body::after {
     left: 0;
     background: var(--color-bg);
     z-index: 2;
+  }
+  .campaign-progress-layout {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1199,4 +1251,87 @@ body::after {
 @keyframes hig-sheet-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Campaign animations ─────────────────────────────────────────────────── */
+
+/* Stagger entrance for campaign grid cards and board columns */
+@keyframes campaign-card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.campaign-card-enter {
+  animation: campaign-card-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 50ms);
+}
+
+/* Stage column entrance - slightly slower, stagger left-to-right */
+.campaign-col-enter {
+  animation: campaign-card-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 80ms);
+}
+
+/* Contact card entrance within a column */
+@keyframes cc-card-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cc-card-enter {
+  animation: cc-card-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 40ms);
+}
+
+/* Card hover lift */
+.cc-card {
+  transition: box-shadow 150ms, border-color 120ms, background 120ms, transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cc-card:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+.cc-card:active {
+  transform: translateY(0) scale(0.99);
+  transition-duration: 80ms;
+}
+
+/* Highlight flash for newly added cards */
+@keyframes cc-card-added {
+  0% { box-shadow: 0 0 0 0 rgba(37,180,57,0.3); }
+  50% { box-shadow: 0 0 0 3px rgba(37,180,57,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(37,180,57,0); }
+}
+.cc-card-added {
+  animation: cc-card-added 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Popover entrance (color picker, search dropdown) */
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.popover-enter {
+  animation: popover-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Campaign overview card hover */
+.campaign-overview-card {
+  transition: border-color 150ms, box-shadow 150ms, background 150ms, transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.campaign-overview-card:hover {
+  transform: translateY(-2px);
+}
+.campaign-overview-card:active {
+  transform: translateY(0) scale(0.99);
+  transition-duration: 80ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campaign-card-enter,
+  .campaign-col-enter,
+  .cc-card-enter,
+  .cc-card-added { animation: none; opacity: 1; }
+  .cc-card,
+  .campaign-overview-card { transition: none; }
 }

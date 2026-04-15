@@ -41,7 +41,7 @@ export function PendingTrayWidget({ pendingContacts, onReview }: PendingTrayWidg
             textTransform: 'lowercase',
             letterSpacing: '0.01em',
           }}>
-            pending categorization
+            intake tray
           </div>
           {previewNames.length > 0 && (
             <div style={{
@@ -76,7 +76,7 @@ export function PendingTrayWidget({ pendingContacts, onReview }: PendingTrayWidg
               alignSelf: 'center',
             }}
           >
-            Review
+            Review intake
           </button>
         )}
       </div>

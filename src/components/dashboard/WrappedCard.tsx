@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 export interface WrappedInsight {
   type: 'people-reached' | 'top-pod' | 'most-connected'
   stat: string
@@ -10,8 +8,6 @@ export interface WrappedInsight {
 }
 
 export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
-  const [activeIndex, setActiveIndex] = useState(0)
-
   // Empty state — no interactions in the 7-day window
   if (insights.length === 0) {
     return (
@@ -48,11 +44,10 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
     )
   }
 
-  const current = insights[activeIndex] ?? insights[0]
+  const current = insights[0]
 
   return (
     <div
-      onClick={() => setActiveIndex(i => (i + 1) % insights.length)}
       style={{
         borderRadius: 16,
         padding: '24px 20px',
@@ -60,8 +55,6 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
         color: 'white',
         position: 'relative',
         overflow: 'hidden',
-        cursor: 'pointer',
-        userSelect: 'none',
         marginBottom: 24,
         background: `linear-gradient(135deg, ${current.color} 0%, ${current.shiftColor} 100%)`,
       }}
@@ -97,23 +90,6 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
         position: 'relative', zIndex: 1,
       }}>
         {current.sub}
-      </div>
-
-      {/* Dot indicators */}
-      <div style={{
-        display: 'flex', gap: 6, justifyContent: 'center', marginTop: 16,
-        position: 'relative', zIndex: 1,
-      }}>
-        {insights.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              width: 5, height: 5, borderRadius: '50%', background: 'white',
-              opacity: i === activeIndex ? 1 : 0.35,
-              transition: 'opacity 0.2s',
-            }}
-          />
-        ))}
       </div>
     </div>
   )

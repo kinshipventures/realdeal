@@ -10,6 +10,7 @@ import {
   daysSinceContact,
   todaysFocus,
   contactCadenceDays,
+  getPrimaryPod,
 } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
@@ -31,17 +32,11 @@ import { TodaysFocusWidget } from './widgets/TodaysFocusWidget'
 import { NeedsAttentionWidget } from './widgets/NeedsAttentionWidget'
 import { ComingUpWidget } from './widgets/ComingUpWidget'
 import { RecentActivityWidget } from './widgets/RecentActivityWidget'
-import { QuickLinksWidget } from './widgets/QuickLinksWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
-import { GmailSyncWidget } from './widgets/GmailSyncWidget'
-import { MeetingNotesWidget } from './widgets/MeetingNotesWidget'
-
-export type DashboardTab = 'nurture' | 'campaigns'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
   const [showSettings, setShowSettings] = useState(false)
-  const [activeTab, setActiveTab] = useState<DashboardTab>('nurture')
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
@@ -58,6 +53,7 @@ export function Dashboard() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [pendingContacts, setPendingContacts] = useState<Contact[]>([])
   const [showQueue, setShowQueue] = useState(false)
+  const [dashboardNow] = useState(() => Date.now())
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -101,13 +97,12 @@ export function Dashboard() {
 
   // Pod stats
   const podStats = useMemo(() => {
-    const now = Date.now()
     const WINDOW_MS = 30 * 24 * 60 * 60 * 1000
     const BUCKETS = 7
     const BUCKET_MS = WINDOW_MS / BUCKETS
 
     return pods.map(pod => {
-      const podContacts = contacts.filter(c => c.list_ids.includes(pod.id))
+      const podContacts = contacts.filter(c => c.primary_list_id === pod.id)
       const cadence = pod.cadence ?? 'monthly'
       const overdueCount = podContacts.filter(c => isOverdue(c, cadence)).length
       const score = podEquityScore(podContacts, byContact)
@@ -119,7 +114,7 @@ export function Dashboard() {
         const interactions = byContact.get(c.id) ?? []
         for (const ix of interactions) {
           if (!podContactIds.has(ix.contact_id)) continue
-          const age = now - new Date(ix.date).getTime()
+          const age = dashboardNow - new Date(ix.date).getTime()
           if (age < 0 || age >= WINDOW_MS) continue
           const bucketIdx = Math.floor(age / BUCKET_MS)
           const idx = BUCKETS - 1 - Math.min(bucketIdx, BUCKETS - 1)
@@ -134,18 +129,18 @@ export function Dashboard() {
       if (a.pod.is_priority !== b.pod.is_priority) return a.pod.is_priority ? -1 : 1
       return a.pod.name.localeCompare(b.pod.name)
     })
-  }, [pods, contacts, byContact, interactionsLoading])
+  }, [pods, contacts, byContact, interactionsLoading, dashboardNow])
 
   // Wrapped insights — weekly stats for the insight card
   const wrappedInsights = useMemo((): WrappedInsight[] => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const sevenDaysAgo = dashboardNow - 7 * 24 * 60 * 60 * 1000
     const recentInteractions = allInteractions.filter(ix => new Date(ix.date).getTime() >= sevenDaysAgo)
     const recentContactIds = new Set(recentInteractions.map(ix => ix.contact_id))
     const peopleReached = recentContactIds.size
 
     const podScores = pods.map(p => ({
       pod: p,
-      score: podEquityScore(contacts.filter(c => c.list_ids.includes(p.id)), byContact),
+      score: podEquityScore(contacts.filter(c => c.primary_list_id === p.id), byContact),
     }))
     const topPodEntry = podScores.sort((a, b) => b.score - a.score)[0] ?? null
 
@@ -178,7 +173,7 @@ export function Dashboard() {
       })
     }
     return insights
-  }, [allInteractions, contacts, pods, byContact])
+  }, [allInteractions, contacts, pods, byContact, dashboardNow])
 
   // Recent activity — 5 most recent interactions with contact names
   const recentActivity = useMemo(() => {
@@ -195,18 +190,15 @@ export function Dashboard() {
     const result: { contact: Contact; days: number | null; podName: string; overdueDays: number }[] = []
     for (const contact of contacts) {
       if (isInGracePeriod(contact)) continue
-      for (const podId of contact.list_ids) {
-        const pod = pods.find(p => p.id === podId)
-        const cadenceDays = contactCadenceDays(contact, pod?.cadence ?? null)
-        const elapsed = daysOverdue(contact)
-        if (elapsed === null) {
-          result.push({ contact, days: null, podName: pod?.name ?? '', overdueDays: 999 })
-          break
-        }
-        if (elapsed > cadenceDays) {
-          result.push({ contact, days: elapsed, podName: pod?.name ?? '', overdueDays: elapsed - cadenceDays })
-          break
-        }
+      const pod = getPrimaryPod(contact, pods)
+      const cadenceDays = contactCadenceDays(contact, pod?.cadence ?? null)
+      const elapsed = daysOverdue(contact)
+      if (elapsed === null) {
+        result.push({ contact, days: null, podName: pod?.name ?? '', overdueDays: 999 })
+        continue
+      }
+      if (elapsed > cadenceDays) {
+        result.push({ contact, days: elapsed, podName: pod?.name ?? '', overdueDays: elapsed - cadenceDays })
       }
     }
     return result.sort((a, b) => b.overdueDays - a.overdueDays)
@@ -227,12 +219,12 @@ export function Dashboard() {
     return contacts
       .filter(c => c.next_follow_up_date && c.next_follow_up_date < today)
       .map(c => {
-        const overdueDays = Math.floor((Date.now() - new Date(c.next_follow_up_date + 'T00:00:00').getTime()) / 86400000)
-        const pod = pods.find(p => p.id === c.primary_list_id || c.list_ids.includes(p.id))
+        const overdueDays = Math.floor((dashboardNow - new Date(c.next_follow_up_date + 'T00:00:00').getTime()) / 86400000)
+        const pod = getPrimaryPod(c, pods)
         return { contact: c, overdueDays, podName: pod?.name ?? '', action: c.next_action }
       })
       .sort((a, b) => b.overdueDays - a.overdueDays)
-  }, [contacts, pods])
+  }, [contacts, pods, dashboardNow])
 
   // Follow-ups due this week (and overdue)
   const followUpItems = useMemo(() => {
@@ -250,7 +242,7 @@ export function Dashboard() {
       .map(c => {
         const d = new Date(c.next_follow_up_date + 'T00:00:00')
         const daysUntil = Math.round((d.getTime() - today.getTime()) / 86400000)
-        const pod = c.list_ids[0] ? (podMap.get(c.list_ids[0]) ?? null) : null
+        const pod = c.primary_list_id ? (podMap.get(c.primary_list_id) ?? null) : null
         return { contact: c, daysUntil, pod, type: 'follow-up' as const }
       })
       .sort((a, b) => a.daysUntil - b.daysUntil)
@@ -289,17 +281,16 @@ export function Dashboard() {
   // Score trend — compare this week's interactions to last week's
   const scoreTrend = useMemo((): 'up' | 'down' | 'flat' => {
     if (interactionsLoading || allInteractions.length === 0) return 'flat'
-    const now = Date.now()
     const oneWeek = 7 * 24 * 60 * 60 * 1000
-    const thisWeek = allInteractions.filter(ix => now - new Date(ix.date).getTime() < oneWeek).length
+    const thisWeek = allInteractions.filter(ix => dashboardNow - new Date(ix.date).getTime() < oneWeek).length
     const lastWeek = allInteractions.filter(ix => {
-      const age = now - new Date(ix.date).getTime()
+      const age = dashboardNow - new Date(ix.date).getTime()
       return age >= oneWeek && age < oneWeek * 2
     }).length
     if (thisWeek > lastWeek) return 'up'
     if (thisWeek < lastWeek) return 'down'
     return 'flat'
-  }, [allInteractions, interactionsLoading])
+  }, [allInteractions, interactionsLoading, dashboardNow])
 
   function handleContactSaved(updated: Contact) {
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
@@ -423,14 +414,14 @@ export function Dashboard() {
         </div>
 
         {/* Rest of dashboard on light background */}
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px 96px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
             <div style={{
               background: 'var(--surface-panel)', backdropFilter: 'var(--panel-blur)',
               WebkitBackdropFilter: 'var(--panel-blur)', border: 'var(--surface-panel-border)',
-              borderRadius: 'var(--panel-radius)', marginBottom: 24,
+              borderRadius: 'var(--panel-radius)', marginBottom: 32,
             }}>
               <EmptyState
                 icon={<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
@@ -447,39 +438,17 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Wrapped card - weekly pulse, lives above tabs */}
+          {/* Wrapped card - weekly pulse */}
           {isVisible('wrapped') && (
-            <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+            <div className="widget-enter dashboard-hero-stack" style={{ '--stagger': 0 } as React.CSSProperties}>
+              <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
+            </div>
           )}
 
-          {/* Tab bar */}
-          <div className="dashboard-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'nurture'}
-              className="dashboard-tab"
-              onClick={() => setActiveTab('nurture')}
-            >
-              Nurture
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'campaigns'}
-              className="dashboard-tab"
-              onClick={() => setActiveTab('campaigns')}
-            >
-              Campaigns
-            </button>
-          </div>
-
-          {/* Tab content */}
-          {renderTabbedWidgets({
-            activeTab,
+          {renderDashboardSections({
             order: config.order,
             isVisible,
-            podStats, dataReady, wrappedInsights, interactionsLoading,
+            podStats, dataReady,
             focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
             contactsLoading, error, recentActivity, campaigns, campaignContacts,
             campaignsLoading, pendingContacts,
@@ -533,18 +502,15 @@ export function Dashboard() {
   )
 }
 
-// ── Tab-driven widget rendering ──────────────────────────────────────────────
+// ── Dashboard sections ───────────────────────────────────────────────────────
 
 type PodStat = { pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean; sparkline: number[] | null }
 
-interface TabbedWidgetProps {
-  activeTab: import('./Dashboard').DashboardTab
+interface DashboardSectionProps {
   order: WidgetId[]
   isVisible: (id: WidgetId) => boolean
   podStats: PodStat[]
   dataReady: boolean
-  wrappedInsights: import('./WrappedCard').WrappedInsight[]
-  interactionsLoading: boolean
   focusItems: ReturnType<typeof todaysFocus>
   upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }>
   overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
@@ -564,23 +530,9 @@ interface TabbedWidgetProps {
   onReview: () => void
 }
 
-// Which tab each widget belongs to
-const WIDGET_TAB: Partial<Record<WidgetId, 'nurture' | 'campaigns'>> = {
-  'todays-focus': 'nurture',
-  'coming-up': 'nurture',
-  'needs-attention': 'nurture',
-  'pod-health': 'nurture',
-  'recent-activity': 'nurture',
-  'pending-tray': 'nurture',
-  'gmail-sync': 'nurture',
-  'meeting-notes': 'nurture',
-  'campaign-progress': 'campaigns',
-  'quick-links': 'campaigns',
-}
-
-function renderTabbedWidgets(props: TabbedWidgetProps) {
+function renderDashboardSections(props: DashboardSectionProps) {
   const {
-    activeTab, order, isVisible, podStats, dataReady, wrappedInsights, interactionsLoading,
+    order, isVisible, podStats, dataReady,
     focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
     contactsLoading, error, recentActivity, campaigns, campaignContacts,
     campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onRetry, onReview,
@@ -589,33 +541,43 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
   const elements: React.ReactNode[] = []
   let stagger = 0
 
-  // Filter widgets to active tab
-  const tabWidgets = order.filter(id => {
-    if (!isVisible(id)) return false
-    if (id === 'wrapped' || id === 'equity') return false // handled outside tabs
-    const tab = WIDGET_TAB[id]
-    return tab === activeTab
-  })
+  const sectionOrder = order.filter(id => isVisible(id) && id !== 'wrapped' && id !== 'equity')
+  const layoutByWidget: Partial<Record<WidgetId, 'wide' | 'narrow' | 'full'>> = {
+    'todays-focus': 'full',
+    'needs-attention': 'wide',
+    'coming-up': 'narrow',
+    'campaign-progress': 'full',
+    'pod-health': 'full',
+    'recent-activity': 'full',
+    'pending-tray': 'full',
+  }
 
-  for (const id of tabWidgets) {
+  for (const id of sectionOrder) {
     const delay = stagger++
-    const style = { '--stagger': delay } as React.CSSProperties
+    const style = {
+      '--stagger': delay,
+      gridColumn: layoutByWidget[id] === 'wide'
+        ? 'span 7'
+        : layoutByWidget[id] === 'narrow'
+          ? 'span 5'
+          : '1 / -1',
+    } as React.CSSProperties
 
     if (id === 'todays-focus') {
       elements.push(
-        <div key={id} className="widget-enter" style={style}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
         </div>
       )
     } else if (id === 'coming-up') {
       elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
         </div>
       )
     } else if (id === 'needs-attention') {
       elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <NeedsAttentionWidget
             overdueContacts={overdueContacts}
             followUpOverdue={followUpOverdue}
@@ -636,39 +598,27 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
       )
     } else if (id === 'pod-health') {
       elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <PodHealthWidget podStats={podStats} dataReady={dataReady} />
         </div>
       )
     } else if (id === 'recent-activity') {
       elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
         </div>
       )
     } else if (id === 'pending-tray') {
       if (pendingContacts.length > 0) {
         elements.push(
-          <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
+          <div key={id} className="widget-enter dashboard-grid-item" style={style}>
             <PendingTrayWidget pendingContacts={pendingContacts} onReview={onReview} />
           </div>
         )
       }
-    } else if (id === 'gmail-sync') {
-      elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
-          <GmailSyncWidget />
-        </div>
-      )
-    } else if (id === 'meeting-notes') {
-      elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
-          <MeetingNotesWidget />
-        </div>
-      )
     } else if (id === 'campaign-progress') {
       elements.push(
-        <div key={id} className="widget-enter" style={style}>
+        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
           <CampaignProgressWidget
             campaigns={campaigns}
             campaignContacts={campaignContacts}
@@ -679,20 +629,10 @@ function renderTabbedWidgets(props: TabbedWidgetProps) {
           />
         </div>
       )
-    } else if (id === 'quick-links') {
-      elements.push(
-        <div key={id} className="widget-enter" style={{ ...style, marginTop: 20 }}>
-          <QuickLinksWidget
-            campaigns={campaigns}
-            campaignContacts={campaignContacts}
-            campaignsLoading={campaignsLoading}
-          />
-        </div>
-      )
     }
   }
 
-  return <>{elements}</>
+  return <div className="dashboard-grid">{elements}</div>
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────

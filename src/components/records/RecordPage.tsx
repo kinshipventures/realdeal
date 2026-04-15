@@ -221,21 +221,12 @@ export function RecordPage() {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'minmax(400px, 3fr) minmax(280px, 2fr)',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(280px, 2fr) minmax(400px, 3fr)',
         gap: 24,
         padding: '24px 32px',
         alignItems: 'start',
       }}>
-        <div style={{ order: isMobile ? 2 : 1 }}>
-          <RecordTimeline
-            contact={contact}
-            onContactUpdated={handleContactUpdated}
-            interactions={interactions}
-            onInteractionsChange={handleInteractionsChange}
-          />
-        </div>
-
-        <div style={{ order: isMobile ? 1 : 2 }}>
+        <div>
           <RecordWidgets
             contact={contact}
             pods={pods}
@@ -245,6 +236,15 @@ export function RecordPage() {
             onFieldConfigsRefresh={setFieldConfigs}
             upcomingBirthday={upcomingBirthday}
             missingFieldCount={missingFieldCount}
+          />
+        </div>
+
+        <div>
+          <RecordTimeline
+            contact={contact}
+            onContactUpdated={handleContactUpdated}
+            interactions={interactions}
+            onInteractionsChange={handleInteractionsChange}
           />
         </div>
       </div>

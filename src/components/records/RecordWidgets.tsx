@@ -70,10 +70,10 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
 
   return (
     <div>
-      {/* Health first - the answer to "how's this relationship?" */}
-      <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
-      {contact.type === 'Contact' && (
-        <RelationshipWidget contact={contact} onUpdate={onUpdate} />
+      {contact.type === 'Contact' ? (
+        <RelationshipWidget contact={contact} interactions={interactions} pods={pods} onUpdate={onUpdate} />
+      ) : (
+        <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
       )}
       <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
       {assignedPods.map(pod => (

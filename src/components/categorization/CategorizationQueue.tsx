@@ -250,7 +250,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
             All caught up
           </div>
           <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 24 }}>
-            No more contacts to categorize.
+            No more contacts waiting in intake.
           </div>
           <button
             type="button"
@@ -305,7 +305,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           fontSize: 13, color: 'rgba(255,255,255,0.7)',
           fontWeight: 500,
         }}>
-          {queue.length} pending
+          {queue.length} in intake
         </div>
 
         {/* Card stack */}

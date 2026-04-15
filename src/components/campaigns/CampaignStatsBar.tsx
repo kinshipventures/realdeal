@@ -32,27 +32,27 @@ export function CampaignStatsBar({ stages, campaignContacts, createdAt, campaign
 
   return (
     <div style={{
-      display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12,
-      padding: '14px 18px',
+      display: 'flex', alignItems: 'baseline', gap: 32, flexWrap: 'wrap', marginBottom: 24,
+      padding: '16px 20px',
       background: 'var(--surface-panel)',
       border: '1px solid var(--edge)',
       borderRadius: 12,
     }}>
-      <Stat label="Contacts" value={String(total)} />
+      <Stat label="Contacts" value={String(total)} primary />
       <Stat label="Converted" value={`${conversionRate}%`} accent={conversionRate > 50} />
       {stalledCount > 0 && <Stat label="Stalled" value={String(stalledCount)} warn />}
-<Stat label="Age" value={`${age}d`} muted />
+      <Stat label="Age" value={`${age}d`} muted />
     </div>
   )
 }
 
-function Stat({ label, value, accent, warn, muted }: {
-  label: string; value: string; accent?: boolean; warn?: boolean; muted?: boolean
+function Stat({ label, value, accent, warn, muted, primary }: {
+  label: string; value: string; accent?: boolean; warn?: boolean; muted?: boolean; primary?: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <span style={{
-        fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)',
+        fontSize: primary ? 24 : 18, fontWeight: 700, fontFamily: 'var(--font-serif)',
         letterSpacing: '-0.02em',
         color: warn ? '#FF9500' : accent ? 'hsla(150, 60%, 35%, 1)' : muted ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)',
       }}>

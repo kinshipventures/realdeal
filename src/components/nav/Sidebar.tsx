@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { getPods } from '@/lib/supabase-data'
-import type { Pod } from '@/lib/types'
 import { supabase } from '@/integrations/supabase/client'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
@@ -16,21 +14,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [pods, setPods] = useState<Pod[]>([])
-  const [podsOpen, setPodsOpen] = useState(() =>
-    localStorage.getItem('realdeal:sidebar-pods-open') !== '0'
-  )
   const width = collapsed ? 56 : 220
-
-  useEffect(() => {
-    getPods().then(setPods)
-  }, [])
-
-  const togglePods = () => {
-    const next = !podsOpen
-    setPodsOpen(next)
-    localStorage.setItem('realdeal:sidebar-pods-open', next ? '1' : '0')
-  }
 
   const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
@@ -38,9 +22,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
   const isChangelog = location.pathname === '/changelog'
-
-  const isPod = location.pathname.startsWith('/pod/')
-  const activePodId = isPod ? location.pathname.split('/pod/')[1] : null
 
   return (
     <nav
@@ -152,110 +133,6 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       </div>
 
       <Divider />
-
-      {/* Pods sub-nav */}
-      {!collapsed && pods.length > 0 && (
-        <div style={{ padding: '4px 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={togglePods}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                flex: 1,
-                minHeight: 44,
-                padding: '6px 8px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--color-text-tertiary)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase' as const,
-                fontFamily: 'inherit',
-              }}
-            >
-              <svg
-                width="10" height="10" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round"
-                style={{
-                  transform: podsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.15s ease',
-                }}
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-              Pods
-            </button>
-            <button
-              type="button"
-              title="Create pod"
-              onClick={() => navigate('/pods?create=1')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 28, height: 28, borderRadius: 6,
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--color-text-tertiary)',
-                transition: 'color 0.12s ease, background 0.12s ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-secondary)'; e.currentTarget.style.background = 'var(--tint)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.background = 'none' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
-          </div>
-          {podsOpen && (
-            <div style={{ overflowY: 'auto', maxHeight: 260 }}>
-              {pods.map(pod => (
-                <button
-                  key={pod.id}
-                  type="button"
-                  aria-current={activePodId === pod.id ? 'page' : undefined}
-                  onClick={() => navigate(`/pod/${pod.id}`)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    width: '100%',
-                    minHeight: 44,
-                    padding: '6px 8px 6px 16px',
-                    background: activePodId === pod.id ? 'var(--tint-hover)' : 'transparent',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.12s ease',
-                  }}
-                >
-                  <div style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: pod.color || 'var(--color-text-tertiary)',
-                    flexShrink: 0,
-                  }} />
-                  <span style={{
-                    fontSize: 13,
-                    fontWeight: activePodId === pod.id ? 600 : 400,
-                    color: activePodId === pod.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}>
-                    {pod.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />

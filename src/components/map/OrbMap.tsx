@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   ReactFlow,
@@ -16,21 +16,20 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
-import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, contactEquityScore, type ScoreLabel } from '../../lib/equity'
+import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type ScoreLabel } from '../../lib/equity'
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import { POD_SHIFT_COLORS } from './SolidOrb'
 import { useAuth } from '../../contexts/AuthContext'
 import { isDemoMode } from '../../lib/sampleData'
-import { EmptyState } from '../empty/EmptyState'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
 import { MojNodeComponent, MOJ_ID, MOJ_SIZE } from './MojNode'
 import { CreateCategoryNodeComponent } from './CreateCategoryNode'
 import { GradientEdgeComponent } from './GradientEdge'
+import { MapChromeButton } from './MapPrimitives'
 import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
 import { PodDetailPage } from '../pods/PodDetailPage'
-import { MapLegend } from './MapLegend'
 import { useEscape } from '../../lib/escapeStack'
 
 function useIsMobile() {
@@ -59,16 +58,6 @@ const edgeTypes = {
 }
 
 const CREATE_POD_ID = '__create-pod__'
-
-function formatLastInteracted(dateStr: string | null): string {
-  if (!dateStr) return 'Never'
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000))
-  if (diffDays < 1) return 'Today'
-  if (diffDays < 30) return `${diffDays}d ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 // Radii for orbital rings — scale down on small screens so orbs stay visible
 const BASE_RADII = [210, 330, 460]
@@ -214,103 +203,6 @@ function buildHomeNodes({
   })
 
   return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
-}
-
-function buildHomeEdges(_pods: Pod[], _equityByPod: Record<string, number>): Edge[] {
-  return []
-}
-
-const MIN_CAT_SIZE = 52
-const MAX_CAT_SIZE = 84
-const MAX_PER_RING = 10
-
-function drillRadius(catCount: number): number {
-  if (catCount <= 6) return 200
-  if (catCount <= 12) return 240
-  if (catCount <= 20) return 280
-  return 320
-}
-
-function buildDrillNodes(
-  pod: Pod,
-  categories: Category[],
-  equityByPod: Record<string, number>,
-  totalContacts: number,
-  navigateFn: (path: string) => void,
-  contactCountByCategory?: Record<string, number>,
-  healthByCategory?: Record<string, number>,
-): { nodes: Node[] } {
-  const centerNode: Node = {
-    id: MOJ_ID,
-    type: 'moj',
-    position: { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 },
-    draggable: false,
-    style: { overflow: 'visible' },
-    data: {
-      overallHealth: equityByPod[pod.id],
-      totalContacts,
-      podName: pod.name,
-      podColor: pod.color ?? undefined,
-      podId: pod.id,
-    },
-  }
-
-  const counts = categories.map(c => contactCountByCategory?.[c.id] ?? 0)
-  const maxCount = Math.max(1, ...counts)
-  const baseRadius = drillRadius(categories.length)
-
-  const catNodes: Node[] = categories.map((cat, i) => {
-    const count = contactCountByCategory?.[cat.id] ?? 0
-    const size = Math.max(MIN_CAT_SIZE, Math.min(MAX_CAT_SIZE, MIN_CAT_SIZE + (count / maxCount) * (MAX_CAT_SIZE - MIN_CAT_SIZE)))
-    const ring = Math.floor(i / MAX_PER_RING)
-    const indexInRing = i % MAX_PER_RING
-    const countInRing = Math.min(MAX_PER_RING, categories.length - ring * MAX_PER_RING)
-    const radius = baseRadius + ring * 140
-    const angleOffset = ring * (Math.PI / MAX_PER_RING / 2)
-    const angle = (indexInRing / countInRing) * 2 * Math.PI - Math.PI / 2 + angleOffset
-    const x = Math.cos(angle) * radius - size / 2
-    const y = Math.sin(angle) * radius - size / 2
-    return {
-      id: cat.id,
-      type: 'category',
-      position: { x, y },
-      style: { overflow: 'visible' },
-      data: {
-        category: cat,
-        listColor: pod.color,
-        contactCount: count,
-        healthPercent: healthByCategory?.[cat.id],
-        orbSize: Math.round(size),
-        onClick: () => navigateFn(`/category/${cat.id}`),
-        animationDelay: `${(i + 1) * 0.06}s`,
-      },
-    }
-  })
-
-  return { nodes: [centerNode, ...catNodes] }
-}
-
-function buildDrillEdges(
-  pod: Pod,
-  categories: Category[],
-  healthByCategory: Record<string, number>,
-  contactCountByCategory: Record<string, number>,
-): Edge[] {
-  // Hide edges when many categories to reduce visual clutter
-  if (categories.length > 12) return []
-  const color = pod.color ?? '#718096'
-  return categories.map(cat => {
-    const health = healthByCategory[cat.id] ?? 0
-    const count = contactCountByCategory[cat.id] ?? 0
-    if (count === 0) return null
-    return {
-      id: `drill-${cat.id}`,
-      source: MOJ_ID,
-      target: cat.id,
-      type: 'gradient',
-      data: { color, healthPercent: health },
-    }
-  }).filter(Boolean) as Edge[]
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
@@ -534,7 +426,7 @@ function PodListView({
 export function OrbMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const { setViewport, getViewport, fitView, getZoom } = useReactFlow()
+  const { setViewport, fitView, getZoom } = useReactFlow()
   const navigate = useNavigate()
   const { session } = useAuth()
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
@@ -548,18 +440,29 @@ export function OrbMap() {
 
   const [mapView, setMapView] = useState<'hub' | 'pod'>('hub')
   const [selectedPod, setSelectedPod] = useState<Pod | null>(null)
-  const [showOrbHint] = useState(false)
   const [fitViewEnabled, setFitViewEnabled] = useState(true)
   const isAnimating = useRef(false)
   const drillInRef = useRef<((pod: Pod) => void) | null>(null)
   const drillBackRef = useRef<(() => void) | null>(null)
   const mapViewRef = useRef<'hub' | 'pod'>('hub')
 
-  // Persist viewport to localStorage on pan/zoom; track for orbit rings overlay + parallax
+  const ringGroupRef = useRef<SVGGElement>(null)
+  const viewportRef = useRef<Viewport>({ x: 0, y: 0, zoom: 1 })
+  const updateViewportVisuals = useCallback((vp: Viewport) => {
+    viewportRef.current = vp
+    if (ringGroupRef.current) {
+      ringGroupRef.current.setAttribute('transform', `translate(${vp.x}, ${vp.y}) scale(${vp.zoom})`)
+    }
+    if (containerRef.current) {
+      containerRef.current.style.setProperty('--ring-stroke-width', `${1.5 / vp.zoom}`)
+    }
+  }, [])
+
+  // Persist viewport to localStorage on pan/zoom; update overlay visuals without re-rendering
   useOnViewportChange({
     onChange: (vp: Viewport) => {
       if (isAnimating.current) return
-      setViewportState(vp)
+      updateViewportVisuals(vp)
       cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => {
         panRef.current.x += vp.x - prevVpRef.current.x
@@ -573,6 +476,7 @@ export function OrbMap() {
     },
     onEnd: (vp: Viewport) => {
       if (isAnimating.current) return
+      updateViewportVisuals(vp)
       localStorage.setItem(VIEWPORT_KEY, JSON.stringify(vp))
     },
   })
@@ -580,7 +484,6 @@ export function OrbMap() {
   const [initError, setInitError] = useState(false)
   const [podsLoaded, setPodsLoaded] = useState(false)
   const [podsCount, setPodsCount] = useState(0)
-  const [viewport, setViewportState] = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
   const [showCreatePod, setShowCreatePod] = useState(false)
 
   const podsRef = useRef<Pod[]>([])
@@ -591,7 +494,6 @@ export function OrbMap() {
   const ringByPodRef = useRef<Map<string, number>>(new Map())
   const overallHealthRef = useRef<number | undefined>(undefined)
   const totalContactsRef = useRef<number>(0)
-  const lastInteractedByPodRef = useRef<Record<string, string | null>>({})
   const allContactsRef = useRef<Contact[]>([])
   const byContactRef = useRef<Map<string, Interaction[]>>(new Map())
 
@@ -605,7 +507,7 @@ export function OrbMap() {
   }, [])
 
   const [hoveredPod, setHoveredPod] = useState<{
-    pod: Pod; health: number; contactCount: number; overdueCount: number; lastInteracted: string | null
+    pod: Pod; health: number; contactCount: number; overdueCount: number
   } | null>(null)
   const cursorRef = useRef({ x: 0, y: 0 })
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -630,6 +532,17 @@ export function OrbMap() {
   const rafRef = useRef<number>(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    const initialViewport = loadViewport()
+    if (!initialViewport) return
+    prevVpRef.current = initialViewport
+    updateViewportVisuals(initialViewport)
+  }, [updateViewportVisuals])
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
   const handlePodHoverEnter = useCallback((podId: string, clientX: number, clientY: number) => {
     const pod = podsRef.current.find(p => p.id === podId)
     if (!pod) return
@@ -640,7 +553,6 @@ export function OrbMap() {
       health: equityByPodRef.current[podId] ?? 0,
       contactCount: counts.total,
       overdueCount: counts.overdue,
-      lastInteracted: lastInteractedByPodRef.current[podId] ?? null,
     })
   }, [])
 
@@ -666,7 +578,7 @@ export function OrbMap() {
     setNodes(homeNodes)
     setActiveRings(rings)
     ringByPodRef.current = ringMap
-    setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
+    setEdges([])
   }, [setNodes, setEdges, handlePodHoverEnter, handlePodHoverLeave])
 
   // Keep drillInRef in sync so rebuildHomeView can reference drillIntoPod without a circular dep
@@ -753,22 +665,6 @@ export function OrbMap() {
     }
   }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Compute aggregate stats for hub stats bar
-  const hubStats = useMemo(() => {
-    const pods = podsRef.current
-    const counts = countsByPodRef.current
-    let totalOverdue = 0
-    for (const podId in counts) {
-      totalOverdue += counts[podId]?.overdue ?? 0
-    }
-    return {
-      podCount: pods.length,
-      contactCount: totalContactsRef.current,
-      overallHealth: overallHealthRef.current,
-      overdueCount: totalOverdue,
-    }
-  }, [podsLoaded, podsCount]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Listen for search highlight events from SearchPalette (via App.tsx)
   useEffect(() => {
     let clearTimer: ReturnType<typeof setTimeout>
@@ -800,60 +696,65 @@ export function OrbMap() {
     })))
   }, [activeHighlights, setNodes])
 
+  async function loadPodData() {
+    const [allPods, allContacts, allInteractions, allCategoriesRaw] = await Promise.all([
+      getPods(), getContacts(), getAllInteractions(), getCategories(),
+    ])
+
+    const countsByPod: Record<string, PodCounts> = {}
+    const memberCountByPod: Record<string, number> = {}
+    for (const contact of allContacts) {
+      const primaryPodId = contact.primary_list_id
+      if (!primaryPodId) continue
+      if (!countsByPod[primaryPodId]) countsByPod[primaryPodId] = { total: 0, overdue: 0 }
+      countsByPod[primaryPodId].total++
+      const primaryPod = allPods.find(p => p.id === primaryPodId)
+      if (isOverdue(contact, primaryPod?.cadence ?? 'monthly')) countsByPod[primaryPodId].overdue++
+      memberCountByPod[primaryPodId] = (memberCountByPod[primaryPodId] ?? 0) + 1
+    }
+
+    const byContact = indexByContact(allInteractions)
+    const equityByPod: Record<string, number> = {}
+    for (const pod of allPods) {
+      const podContacts = allContacts.filter(c => c.primary_list_id === pod.id)
+      if (podContacts.length > 0) {
+        equityByPod[pod.id] = podEquityScore(podContacts, byContact)
+      }
+    }
+
+    const priorityPods = allPods.filter(p => p.is_priority)
+    const overallHealth = overallEquityScore(
+      priorityPods.length > 0 ? priorityPods : allPods, allContacts, byContact
+    )
+
+    const catsByPod: Record<string, Category[]> = {}
+    for (const cat of allCategoriesRaw) {
+      if (!catsByPod[cat.list_id]) catsByPod[cat.list_id] = []
+      catsByPod[cat.list_id].push(cat)
+    }
+
+    return {
+      allPods, allContacts, countsByPod, memberCountByPod,
+      equityByPod, overallHealth, catsByPod, byContact,
+    }
+  }
+
   const handlePodCreated = useCallback(async (newPod: Pod) => {
     setShowCreatePod(false)
-    // Re-fetch pods to include the new one
     try {
-      const [allPods, allContacts, allInteractions] = await Promise.all([
-        getPods(), getContacts(), getAllInteractions(),
-      ])
-      podsRef.current = allPods
-
-      const countsByPod: Record<string, PodCounts> = {}
-      const memberCountByPod: Record<string, number> = {}
-      for (const contact of allContacts) {
-        for (const podId of contact.list_ids) {
-          if (!countsByPod[podId]) countsByPod[podId] = { total: 0, overdue: 0 }
-          countsByPod[podId].total++
-          if (isOverdue(contact)) countsByPod[podId].overdue++
-          memberCountByPod[podId] = (memberCountByPod[podId] ?? 0) + 1
-        }
-      }
-      countsByPodRef.current = countsByPod
-      memberCountByPodRef.current = memberCountByPod
-
-      const byContact = indexByContact(allInteractions)
-      allContactsRef.current = allContacts
-      byContactRef.current = byContact
-      const equityByPod: Record<string, number> = {}
-      for (const pod of allPods) {
-        const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
-        if (podContacts.length > 0) {
-          equityByPod[pod.id] = podEquityScore(podContacts, byContact)
-        }
-      }
-      equityByPodRef.current = equityByPod
-
-      const priorityPods = allPods.filter(p => p.is_priority)
-      overallHealthRef.current = overallEquityScore(priorityPods.length > 0 ? priorityPods : allPods, allContacts, byContact)
-      totalContactsRef.current = allContacts.length
-
-      const lastInteractedByPod: Record<string, string | null> = {}
-      for (const pod of allPods) {
-        const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
-        let maxDate: string | null = null
-        for (const contact of podContacts) {
-          const interactions = byContact.get(contact.id) ?? []
-          for (const interaction of interactions) {
-            if (!maxDate || interaction.date > maxDate) maxDate = interaction.date
-          }
-        }
-        lastInteractedByPod[pod.id] = maxDate
-      }
-      lastInteractedByPodRef.current = lastInteractedByPod
+      const data = await loadPodData()
+      podsRef.current = data.allPods
+      countsByPodRef.current = data.countsByPod
+      memberCountByPodRef.current = data.memberCountByPod
+      allContactsRef.current = data.allContacts
+      byContactRef.current = data.byContact
+      equityByPodRef.current = data.equityByPod
+      overallHealthRef.current = data.overallHealth
+      totalContactsRef.current = data.allContacts.length
+      categoriesByPodRef.current = data.catsByPod
 
       rebuildHomeView()
-      setPodsCount(allPods.length)
+      setPodsCount(data.allPods.length)
     } catch (err) {
       console.error('Failed to refresh pods after creation:', err)
     }
@@ -863,73 +764,27 @@ export function OrbMap() {
     let stale = false
     async function init() {
       try {
-        const [allPods, allContacts, allInteractions, allCategoriesRaw] = await Promise.all([
-          getPods(), getContacts(), getAllInteractions(), getCategories(),
-        ])
+        const data = await loadPodData()
         if (stale) return
-        podsRef.current = allPods
 
-        const countsByPod: Record<string, PodCounts> = {}
-        const memberCountByPod: Record<string, number> = {}
-        for (const contact of allContacts) {
-          for (const podId of contact.list_ids) {
-            if (!countsByPod[podId]) countsByPod[podId] = { total: 0, overdue: 0 }
-            countsByPod[podId].total++
-            if (isOverdue(contact)) countsByPod[podId].overdue++
-            memberCountByPod[podId] = (memberCountByPod[podId] ?? 0) + 1
-          }
-        }
-        countsByPodRef.current = countsByPod
-        memberCountByPodRef.current = memberCountByPod
-
-        const byContact = indexByContact(allInteractions)
-        allContactsRef.current = allContacts
-        byContactRef.current = byContact
-        const equityByPod: Record<string, number> = {}
-        for (const pod of allPods) {
-          const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
-          if (podContacts.length > 0) {
-            equityByPod[pod.id] = podEquityScore(podContacts, byContact)
-          }
-        }
-        equityByPodRef.current = equityByPod
-
-        const priorityPods = allPods.filter(p => p.is_priority)
-        const overallHealth = overallEquityScore(priorityPods.length > 0 ? priorityPods : allPods, allContacts, byContact)
-        overallHealthRef.current = overallHealth
-        totalContactsRef.current = allContacts.length
-
-        // Compute last interaction date per pod
-        const lastInteractedByPod: Record<string, string | null> = {}
-        for (const pod of allPods) {
-          const podContacts = allContacts.filter(c => c.list_ids.includes(pod.id))
-          let maxDate: string | null = null
-          for (const contact of podContacts) {
-            const interactions = byContact.get(contact.id) ?? []
-            for (const interaction of interactions) {
-              if (!maxDate || interaction.date > maxDate) maxDate = interaction.date
-            }
-          }
-          lastInteractedByPod[pod.id] = maxDate
-        }
-        lastInteractedByPodRef.current = lastInteractedByPod
-
-        const catsByPod: Record<string, Category[]> = {}
-        for (const cat of allCategoriesRaw) {
-          if (!catsByPod[cat.list_id]) catsByPod[cat.list_id] = []
-          catsByPod[cat.list_id].push(cat)
-        }
-        categoriesByPodRef.current = catsByPod
+        podsRef.current = data.allPods
+        countsByPodRef.current = data.countsByPod
+        memberCountByPodRef.current = data.memberCountByPod
+        allContactsRef.current = data.allContacts
+        byContactRef.current = data.byContact
+        equityByPodRef.current = data.equityByPod
+        overallHealthRef.current = data.overallHealth
+        totalContactsRef.current = data.allContacts.length
+        categoriesByPodRef.current = data.catsByPod
 
         const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
-          pods: allPods,
-          countsByPod,
-          equityByPod,
-          categoriesByPod: catsByPod,
-
-          memberCountByPod,
-          overallHealth,
-          totalContacts: allContacts.length,
+          pods: data.allPods,
+          countsByPod: data.countsByPod,
+          equityByPod: data.equityByPod,
+          categoriesByPod: data.catsByPod,
+          memberCountByPod: data.memberCountByPod,
+          overallHealth: data.overallHealth,
+          totalContacts: data.allContacts.length,
           userName,
           onCreatePod: () => setShowCreatePod(true),
           onPodHoverEnter: handlePodHoverEnter,
@@ -939,8 +794,8 @@ export function OrbMap() {
         setNodes(homeNodes)
         setActiveRings(rings)
         ringByPodRef.current = ringMap
-        setEdges(buildHomeEdges(allPods, equityByPod))
-        if (!stale) { setPodsLoaded(true); setPodsCount(allPods.length) }
+        setEdges([])
+        if (!stale) { setPodsLoaded(true); setPodsCount(data.allPods.length) }
       } catch (err) {
         console.error('Couldn\'t load your network:', err)
         if (!stale) { setInitError(true); setPodsLoaded(true) }
@@ -949,10 +804,6 @@ export function OrbMap() {
     init()
     return () => { stale = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleNodeDragStart: OnNodeDrag = useCallback(() => {}, [])
-
-  const handleNodeDrag: OnNodeDrag = useCallback(() => {}, [])
 
   const handleNodeDragStop: OnNodeDrag = useCallback((_, node) => {
     if (mapView !== 'hub') return
@@ -1037,7 +888,7 @@ export function OrbMap() {
     setNodes(homeNodes)
     setActiveRings(rings)
     ringByPodRef.current = ringMap
-    setEdges(buildHomeEdges(podsRef.current, equityByPodRef.current))
+    setEdges([])
     requestAnimationFrame(() => {
       fitView({ padding: 0.22, duration: 250 })
     })
@@ -1144,50 +995,6 @@ export function OrbMap() {
         </div>
       )}
 
-      {/* Hub stats bar - glass card with quick-glance metrics */}
-      {viewMode === 'map' && mapView === 'hub' && podsLoaded && podsCount > 0 && (
-        <div className="hub-stats-bar">
-          <div className="stat-item">
-            <span className="stat-value">{hubStats.podCount}</span>
-            <span>{hubStats.podCount === 1 ? 'pod' : 'pods'}</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">{hubStats.contactCount}</span>
-            <span>relationships</span>
-          </div>
-          {hubStats.overallHealth !== undefined && (
-            <>
-              <div className="stat-divider" />
-              <div className="stat-item">
-                <span style={{
-                  padding: '1px 8px',
-                  borderRadius: 100,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  background: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.bg,
-                  color: HEALTH_COLORS[scoreLabel(hubStats.overallHealth)]?.color,
-                }}>
-                  {scoreLabel(hubStats.overallHealth)} {hubStats.overallHealth}
-                </span>
-              </div>
-            </>
-          )}
-          {hubStats.overdueCount > 0 && (
-            <>
-              <div className="stat-divider" />
-              <div className="stat-item" style={{ color: 'var(--health-cooling)' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <span style={{ fontWeight: 600 }}>{hubStats.overdueCount}</span>
-                <span>need attention</span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
       {/* Pod detail overlay - glass panel on dimmed map */}
       {viewMode === 'map' && mapView === 'pod' && selectedPod && (
         <>
@@ -1284,29 +1091,15 @@ export function OrbMap() {
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           {viewMode === 'map' && mapView === 'hub' && (
-            <button
-              type="button"
+            <MapChromeButton
               onClick={handleResetLayout}
               title="Reset orb positions"
-              style={{
-                width: 32, height: 32, borderRadius: 8,
-                border: '1px solid var(--edge)',
-                background: 'var(--nav-bg)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-text-secondary)',
-                transition: 'background 0.15s, color 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text-primary)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 4v6h6" />
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
               </svg>
-            </button>
+            </MapChromeButton>
           )}
           <ViewToggle mode={viewMode} onChange={handleViewModeChange} />
         </div>
@@ -1345,7 +1138,6 @@ export function OrbMap() {
                   {hoveredPod.pod.name}
                 </span>
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                 <span style={{
                   display: 'inline-block',
@@ -1362,44 +1154,11 @@ export function OrbMap() {
                   {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
                 </span>
               </div>
-
-              {hoveredPod.pod.cadence && (
-                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  {hoveredPod.pod.cadence} check-in
+              {hoveredPod.overdueCount > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', marginTop: 2 }}>
+                  {hoveredPod.overdueCount} need attention
                 </span>
               )}
-
-              <div style={{ height: 1, background: 'var(--edge)', margin: '2px 0' }} />
-
-              {hoveredPod.overdueCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  {hoveredPod.overdueCount} {hoveredPod.overdueCount === 1 ? 'person needs' : 'people need'} attention
-                </span>
-              ) : hoveredPod.contactCount > 0 ? (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-thriving)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  All caught up
-                </span>
-              ) : null}
-
-              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
-                Last reached out {formatLastInteracted(hoveredPod.lastInteracted)}
-              </span>
-
-              <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)', opacity: 0.5, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-                Click to explore
-              </span>
             </div>
           )}
 
@@ -1425,18 +1184,20 @@ export function OrbMap() {
                 </feMerge>
               </filter>
             </defs>
-            <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
+            <g ref={ringGroupRef}>
               {activeRings.map((r, ri) => (
                 <circle
                   key={r}
                   className="ring-enter"
-                  style={{ '--ring-delay': `${ri * 0.15}s` } as React.CSSProperties}
+                  style={{
+                    '--ring-delay': `${ri * 0.15}s`,
+                    strokeWidth: 'var(--ring-stroke-width, 1.5px)',
+                  } as React.CSSProperties}
                   cx={0}
                   cy={0}
                   r={r}
                   fill="none"
                   stroke="var(--stroke-subtle)"
-                  strokeWidth={1.5 / viewport.zoom}
                   strokeOpacity={0.5 - ri * 0.1}
                   filter="url(#ring-glow)"
                 />
@@ -1451,8 +1212,6 @@ export function OrbMap() {
             onEdgesChange={onEdgesChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            onNodeDragStart={handleNodeDragStart}
-            onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
             fitView={fitViewEnabled}
             fitViewOptions={{ padding: 0.22 }}
@@ -1513,8 +1272,6 @@ export function OrbMap() {
             </button>
           )}
 
-          {/* Map legend - bottom left */}
-          {mapView === 'hub' && podsLoaded && podsCount > 0 && <MapLegend />}
         </>
       )}
 

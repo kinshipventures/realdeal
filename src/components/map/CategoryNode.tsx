@@ -1,7 +1,9 @@
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
+import { memo } from 'react'
+import { Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 import { LucideIcon } from '../LucideIcon'
+import { FlowCenterHandle } from './MapPrimitives'
 
 type CategoryNodeData = {
   category: Category
@@ -25,7 +27,7 @@ function fontSize(name: string): number {
   return 8
 }
 
-export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
+export const CategoryNodeComponent = memo(function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
   const { category, listColor, contactCount, healthPercent, orbSize, animationDelay, fading, onClick, onIconClick } = data
   const SIZE = orbSize ?? DEFAULT_SIZE
   const accentColor = (listColor ?? '#718096') as HexColor
@@ -34,12 +36,8 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
 
   return (
     <div className={`cat-spring-in${fading ? ' orb-fading' : ''}`} style={{ opacity: fading ? undefined : 1, transition: 'opacity 0.15s ease-out', animationDelay: animationDelay ?? '0s' }}>
-      <Handle type="target" position={Position.Left}
-        style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
-      <Handle type="source" position={Position.Right}
-        style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
+      <FlowCenterHandle type="target" position={Position.Left} size={SIZE} />
+      <FlowCenterHandle type="source" position={Position.Right} size={SIZE} />
 
       <SolidOrb
         size={SIZE}
@@ -85,4 +83,4 @@ export function CategoryNodeComponent({ data }: NodeProps<CategoryNodeType>) {
       </SolidOrb>
     </div>
   )
-}
+})

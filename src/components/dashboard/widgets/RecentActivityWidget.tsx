@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router'
 import type { Contact, Interaction } from '../../../lib/types'
 import { TYPE_ICONS } from '../../contacts/InteractionSection'
 import { formatRelativeTime } from '../../../lib/utils'
@@ -62,20 +61,12 @@ interface RecentActivityWidgetProps {
 }
 
 export function RecentActivityWidget({ items, onContactClick }: RecentActivityWidgetProps) {
-  const navigate = useNavigate()
   if (items.length === 0) return null
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <WidgetHeading title="recent activity" tooltip="What you've been up to lately -- your most recent check-ins and conversations." />
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/nurturing?filter=activity')}
-          className="see-all-link"
-        >
-          See all
-        </button>
+      <div style={{ marginBottom: 12 }}>
+        <WidgetHeading title="recent activity" />
       </div>
       <div style={{ ...PANEL, overflow: 'hidden' }}>
         {items.map(({ interaction, contact }) => (

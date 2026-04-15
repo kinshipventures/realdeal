@@ -17,6 +17,13 @@ export type InteractionSource = 'Gmail' | 'Granola' | 'Otter' | 'Fireflies' | 'F
 export type RelationshipType = 'Contact' | 'Company'
 export type RelationshipStatus = 'Active' | 'Pending' | 'Archived'
 export type PipelineStatus = 'active' | 'hidden'
+export type RelationshipRing = 'kinship' | 'trolley' | 'global_freedoms'
+export const RELATIONSHIP_RINGS: RelationshipRing[] = ['kinship', 'trolley', 'global_freedoms']
+export const RELATIONSHIP_RING_LABELS: Record<RelationshipRing, string> = {
+  kinship: 'Kinship Ventures',
+  trolley: 'Trolley AI',
+  global_freedoms: 'Global Freedoms',
+}
 
 export interface Pod {
   id: string           // Airtable record ID
@@ -82,6 +89,7 @@ export interface Contact {
   // v2 relationship fields
   type: RelationshipType
   status: RelationshipStatus
+  ring_ids?: RelationshipRing[]
   company_record_id: string | null  // primary company (first in company_ids)
   company_ids: string[]              // all linked company IDs
   industry: string | null
@@ -90,6 +98,7 @@ export interface Contact {
   domain: string | null
   email_2: string | null
   email_3: string | null
+  photo_url: string | null
   custom_fields: Record<string, unknown>
   created_at: string
 }

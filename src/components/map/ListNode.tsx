@@ -1,10 +1,12 @@
+import { memo } from 'react'
 import type React from 'react'
 import { useNavigate } from 'react-router'
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
+import { Position, type NodeProps, type Node } from '@xyflow/react'
 import type { Pod, Category, HexColor } from '../../lib/types'
 import { SolidOrb, POD_SHIFT_COLORS } from './SolidOrb'
 import { LucideIcon } from '../LucideIcon'
 import { scoreLabel } from '../../lib/equity'
+import { FlowCenterHandle } from './MapPrimitives'
 
 type ListNodeData = {
   list: Pod
@@ -37,7 +39,7 @@ function fontSize(name: string): number {
   return 9
 }
 
-export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
+export const ListNodeComponent = memo(function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
   const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, fading, highlighted, onHoverEnter, onHoverLeave, onDrillIn } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
@@ -54,12 +56,8 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
       onMouseEnter={(e) => onHoverEnter?.(list.id, e.clientX, e.clientY)}
       onMouseLeave={() => onHoverLeave?.()}
     >
-      <Handle type="source" position={Position.Right}
-        style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, right: 'auto', left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
-      <Handle type="target" position={Position.Left}
-        style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
+      <FlowCenterHandle type="source" position={Position.Right} size={SIZE} />
+      <FlowCenterHandle type="target" position={Position.Left} size={SIZE} />
 
       <SolidOrb
         size={SIZE}
@@ -150,4 +148,4 @@ export function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
       )}
     </div>
   )
-}
+})

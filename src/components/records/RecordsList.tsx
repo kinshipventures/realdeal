@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { Download } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
@@ -63,16 +62,12 @@ type SortDir = 'asc' | 'desc'
 // ── Saved views ──────────────────────────────────────────────────────────────
 
 const VIEWS_KEY = 'realdeal:contacts-views'
-const COL_ORDER_KEY = 'realdeal:contacts-column-order'
-const COL_WIDTHS_KEY = 'realdeal:contacts-column-widths'
 
 interface SavedView {
   name: string
   filters: FilterState
   visibleColumns: ColumnId[]
   sort: { col: ColumnId; dir: SortDir }
-  columnOrder?: ColumnId[]
-  columnWidths?: Record<ColumnId, number>
 }
 
 function loadViews(): SavedView[] {
@@ -135,11 +130,21 @@ function matchesRecency(contact: Contact, recency: RecencyFilter): boolean {
   return new Date(contact.last_contacted_at).getTime() >= cutoff
 }
 
+function pulseCopy(count: number, atRisk: number, hasFilters: boolean): string {
+  if (count === 0) return 'No matches yet.'
+  if (hasFilters) return count === 1 ? 'One relationship in focus.' : `${count} relationships in focus.`
+  if (atRisk === 0) return 'Your circle is humming.'
+  if (atRisk === 1) return 'One relationship could use a nudge.'
+  if (atRisk <= 3) return `${atRisk} relationships could use a nudge.`
+  return `${atRisk} relationships are ready for a little love.`
+}
+
 // ── View toggle ─────────────────────────────────────────────────────────────
 
 function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onChange: (v: 'people' | 'companies') => void }) {
   const base: React.CSSProperties = {
-    padding: '5px 14px',
+    minHeight: 44,
+    padding: '8px 14px',
     fontSize: 12,
     fontWeight: 500,
     border: 'none',
@@ -155,13 +160,13 @@ function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onCh
       borderRadius: 8,
       padding: 2,
     }}>
-      <button type="button" onClick={() => onChange('people')} style={{
+      <button type="button" aria-pressed={active === 'people'} onClick={() => onChange('people')} style={{
         ...base,
         background: active === 'people' ? 'var(--color-bg)' : 'transparent',
         color: active === 'people' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
         boxShadow: active === 'people' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
       }}>People</button>
-      <button type="button" onClick={() => onChange('companies')} style={{
+      <button type="button" aria-pressed={active === 'companies'} onClick={() => onChange('companies')} style={{
         ...base,
         background: active === 'companies' ? 'var(--color-bg)' : 'transparent',
         color: active === 'companies' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
@@ -208,43 +213,6 @@ export function RecordsList() {
     () => new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id))
   )
 
-  // Column order (drag-reorder)
-  const [columnOrder, setColumnOrder] = useState<ColumnId[]>(() => {
-    try {
-      const raw = localStorage.getItem(COL_ORDER_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as ColumnId[]
-        // Ensure all known columns are present (handles new columns added after save)
-        const allIds = COLUMNS.map(c => c.id)
-        const merged = [...parsed.filter(id => allIds.includes(id))]
-        for (const id of allIds) {
-          if (!merged.includes(id)) merged.push(id)
-        }
-        return merged
-      }
-    } catch { /* ignore */ }
-    return COLUMNS.map(c => c.id)
-  })
-
-  // Column widths (resize)
-  const [columnWidths, setColumnWidths] = useState<Partial<Record<ColumnId, number>>>(() => {
-    try {
-      const raw = localStorage.getItem(COL_WIDTHS_KEY)
-      return raw ? JSON.parse(raw) : {}
-    } catch { return {} }
-  })
-
-  // Drag-reorder refs (avoid re-renders during drag)
-  const dragCol = useRef<ColumnId | null>(null)
-  const overCol = useRef<ColumnId | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dropTargetCol, setDropTargetCol] = useState<ColumnId | null>(null)
-
-  // Resize refs
-  const resizingCol = useRef<ColumnId | null>(null)
-  const resizeStartX = useRef(0)
-  const resizeStartWidth = useRef(0)
-
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -258,18 +226,20 @@ export function RecordsList() {
   const [showAddToCampaign, setShowAddToCampaign] = useState(false)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [companyFilteredCount, setCompanyFilteredCount] = useState(0)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
+  const addToCampaignDialogRef = useRef<HTMLDivElement>(null)
+  const archiveDialogRef = useRef<HTMLDivElement>(null)
+  const lastFocusedElementRef = useRef<HTMLElement | null>(null)
 
   // Saved views
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadViews)
-  const [showViewsDropdown, setShowViewsDropdown] = useState(false)
-  const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false)
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
-  const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState(false)
 
   // Toast / undo
@@ -284,9 +254,7 @@ export function RecordsList() {
   // Confirm archive modal
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
 
-  const viewsRef = useRef<HTMLDivElement>(null)
-  const columnsRef = useRef<HTMLDivElement>(null)
-  const exportRef = useRef<HTMLDivElement>(null)
+  const moreRef = useRef<HTMLDivElement>(null)
 
   // Load data
   useEffect(() => {
@@ -306,9 +274,15 @@ export function RecordsList() {
       setContacts(allContacts)
       setCampaigns(allCampaigns)
 
+      const interactionsByContact: Record<string, Interaction[]> = {}
+      for (const interaction of allInteractions) {
+        if (!interactionsByContact[interaction.contact_id]) interactionsByContact[interaction.contact_id] = []
+        interactionsByContact[interaction.contact_id].push(interaction)
+      }
+
       const eqMap: Record<string, number> = {}
       for (const contact of allContacts) {
-        const interactions: Interaction[] = allInteractions.filter(i => i.contact_id === contact.id)
+        const interactions = interactionsByContact[contact.id] ?? []
         eqMap[contact.id] = contactEquityScore(interactions)
       }
       setEquityMap(eqMap)
@@ -324,14 +298,8 @@ export function RecordsList() {
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (viewsRef.current && !viewsRef.current.contains(e.target as Node)) {
-        setShowViewsDropdown(false)
-      }
-      if (columnsRef.current && !columnsRef.current.contains(e.target as Node)) {
-        setShowColumnsDropdown(false)
-      }
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
-        setShowExportDropdown(false)
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setShowMoreDropdown(false)
       }
       if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
         setShowPodPicker(false)
@@ -343,6 +311,27 @@ export function RecordsList() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  useEffect(() => {
+    if (!showAddToCampaign && !showArchiveConfirm) return
+    lastFocusedElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  }, [showAddToCampaign, showArchiveConfirm])
+
+  useEffect(() => {
+    if (!showAddToCampaign) {
+      if (!showArchiveConfirm) lastFocusedElementRef.current?.focus()
+      return
+    }
+    addToCampaignDialogRef.current?.focus()
+  }, [showAddToCampaign, showArchiveConfirm])
+
+  useEffect(() => {
+    if (!showArchiveConfirm) {
+      if (!showAddToCampaign) lastFocusedElementRef.current?.focus()
+      return
+    }
+    archiveDialogRef.current?.focus()
+  }, [showArchiveConfirm, showAddToCampaign])
 
   // Pod map for lookups
   const podMap = useMemo<Record<string, Pod>>(() => {
@@ -429,11 +418,6 @@ export function RecordsList() {
         next.delete(id)
       } else {
         next.add(id)
-        // Ensure newly visible column is in columnOrder
-        setColumnOrder(order => {
-          if (order.includes(id)) return order
-          return [...order, id]
-        })
       }
       return next
     })
@@ -467,15 +451,13 @@ export function RecordsList() {
       filters,
       visibleColumns: Array.from(visibleColumns),
       sort,
-      columnOrder,
-      columnWidths: columnWidths as Record<ColumnId, number>,
     }
     const updated = [...savedViews.filter(v => v.name !== view.name), view]
     setSavedViews(updated)
     saveViews(updated)
     setSavingViewName('')
     setShowSaveInput(false)
-  }, [savingViewName, filters, visibleColumns, sort, columnOrder, columnWidths, savedViews])
+  }, [savingViewName, filters, visibleColumns, sort, savedViews])
 
   // Apply a saved view
   const applyView = useCallback((view: SavedView | null) => {
@@ -483,18 +465,12 @@ export function RecordsList() {
       setFilters(DEFAULT_FILTERS)
       setVisibleColumns(new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id)))
       setSort({ col: 'equity', dir: 'desc' })
-      setColumnOrder(COLUMNS.map(c => c.id))
-      setColumnWidths({})
-      localStorage.removeItem(COL_ORDER_KEY)
-      localStorage.removeItem(COL_WIDTHS_KEY)
     } else {
       setFilters(view.filters)
       setVisibleColumns(new Set(view.visibleColumns))
       setSort(view.sort)
-      if (view.columnOrder) setColumnOrder(view.columnOrder)
-      if (view.columnWidths) setColumnWidths(view.columnWidths)
     }
-    setShowViewsDropdown(false)
+    setShowMoreDropdown(false)
   }, [])
 
   // Delete saved view
@@ -511,6 +487,14 @@ export function RecordsList() {
   }, [])
 
   const hasActiveFilters = filters.search || filters.pod || filters.recency !== 'any'
+  const atRiskCount = useMemo(
+    () => filtered.reduce((count, contact) => count + ((equityMap[contact.id] ?? 0) < 70 ? 1 : 0), 0),
+    [filtered, equityMap]
+  )
+  const headerPulse = useMemo(
+    () => pulseCopy(filtered.length, atRiskCount, Boolean(hasActiveFilters)),
+    [filtered.length, atRiskCount, hasActiveFilters]
+  )
 
   // ── Bulk action handlers ──────────────────────────────────────────────────
 
@@ -636,94 +620,6 @@ export function RecordsList() {
     setTimeout(() => setCopyFeedback(false), 2000)
   }
 
-  // ── Column drag-reorder handlers ──────────────────────────────────────────
-
-  function handleColDragStart(e: React.DragEvent, colId: ColumnId) {
-    dragCol.current = colId
-    setIsDragging(true)
-    e.dataTransfer.effectAllowed = 'move'
-    // Use a transparent 1x1 drag image to avoid browser ghost
-    const img = document.createElement('div')
-    img.style.position = 'absolute'
-    img.style.top = '-9999px'
-    document.body.appendChild(img)
-    e.dataTransfer.setDragImage(img, 0, 0)
-    requestAnimationFrame(() => document.body.removeChild(img))
-  }
-
-  function handleColDragOver(e: React.DragEvent, colId: ColumnId) {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    if (overCol.current !== colId) {
-      overCol.current = colId
-      setDropTargetCol(colId)
-    }
-  }
-
-  function handleColDragLeave() {
-    overCol.current = null
-    setDropTargetCol(null)
-  }
-
-  function handleColDragEnd() {
-    const from = dragCol.current
-    const to = overCol.current
-    if (from && to && from !== to) {
-      setColumnOrder(prev => {
-        const next = prev.filter(id => id !== from)
-        const toIdx = next.indexOf(to)
-        next.splice(toIdx, 0, from)
-        localStorage.setItem(COL_ORDER_KEY, JSON.stringify(next))
-        return next
-      })
-    }
-    dragCol.current = null
-    overCol.current = null
-    setIsDragging(false)
-    setDropTargetCol(null)
-  }
-
-  // ── Column resize handlers ────────────────────────────────────────────────
-
-  function handleResizePointerDown(e: React.PointerEvent, colId: ColumnId) {
-    e.stopPropagation()
-    e.preventDefault()
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-    resizingCol.current = colId
-    resizeStartX.current = e.clientX
-    // Get current width from state or measure the th
-    const th = (e.target as HTMLElement).parentElement as HTMLTableCellElement
-    resizeStartWidth.current = columnWidths[colId] ?? th.offsetWidth
-  }
-
-  function handleResizePointerMove(e: React.PointerEvent, colId: ColumnId) {
-    if (resizingCol.current !== colId) return
-    const delta = e.clientX - resizeStartX.current
-    const newWidth = Math.max(60, resizeStartWidth.current + delta)
-    setColumnWidths(prev => ({ ...prev, [colId]: newWidth }))
-  }
-
-  function handleResizePointerUp(e: React.PointerEvent) {
-    if (!resizingCol.current) return
-    ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
-    setColumnWidths(prev => {
-      localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(prev))
-      return prev
-    })
-    resizingCol.current = null
-  }
-
-  function handleResizeDoubleClick(colId: ColumnId) {
-    setColumnWidths(prev => {
-      const next = { ...prev }
-      delete next[colId]
-      localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(next))
-      return next
-    })
-  }
-
-  const hasCustomWidths = Object.keys(columnWidths).length > 0
-
   async function handleBulkArchive() {
     setBulkOperating(true)
     const selected = contacts.filter(c => selectedIds.has(c.id))
@@ -764,11 +660,7 @@ export function RecordsList() {
     setSelectedCampaignId(null)
   }
 
-  // Ordered visible columns -- respects custom column order
-  const visibleCols = columnOrder
-    .filter(id => visibleColumns.has(id))
-    .map(id => COLUMNS.find(c => c.id === id)!)
-    .filter(Boolean)
+  const visibleCols = COLUMNS.filter(col => visibleColumns.has(col.id))
 
   if (loading) {
     return (
@@ -803,7 +695,37 @@ export function RecordsList() {
     return (
       <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
         <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <h1 style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 28,
+                fontWeight: 800,
+                margin: 0,
+                color: 'var(--color-text-primary)',
+                letterSpacing: '-0.03em',
+              }}>
+                Relationships
+              </h1>
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                {companyFilteredCount} {companyFilteredCount === 1 ? 'company' : 'companies'}
+              </span>
+            </div>
+            {viewToggle}
+          </div>
+        </div>
+        <CompaniesPage embedded hideInlineCount onFilteredCountChange={setCompanyFilteredCount} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
+
+      {/* Header */}
+      <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <h1 style={{
               fontFamily: 'var(--font-serif)',
               fontSize: 28,
@@ -814,85 +736,46 @@ export function RecordsList() {
             }}>
               Relationships
             </h1>
-            {viewToggle}
+            <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
+            </span>
           </div>
-        </div>
-        <CompaniesPage embedded />
-      </div>
-    )
-  }
-
-  return (
-    <div className="content-enter" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
-
-      {/* Header */}
-      <div style={{ padding: '32px clamp(16px, 4vw, 32px) 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-          <h1 style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 28,
-            fontWeight: 800,
-            margin: 0,
-            color: 'var(--color-text-primary)',
-            letterSpacing: '-0.03em',
-          }}>
-            Relationships
-          </h1>
           {viewToggle}
         </div>
 
-        {/* Health pulse */}
-        {contacts.length > 0 && (() => {
-          const dist = { Thriving: 0, Steady: 0, Cooling: 0, Fading: 0 }
-          for (const id in equityMap) {
-            const l = scoreLabel(equityMap[id])
-            if (l in dist) dist[l as keyof typeof dist]++
-          }
-          const needsAttention = dist.Cooling + dist.Fading
-          return (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14,
-              padding: '8px 12px', borderRadius: 10,
-              background: 'var(--tint)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {(['Thriving', 'Steady', 'Cooling', 'Fading'] as const).map(label => (
-                  dist[label] > 0 ? (
-                    <span key={label} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      fontSize: 12, color: 'var(--color-text-secondary)',
-                    }}>
-                      <span style={{
-                        width: 7, height: 7, borderRadius: '50%',
-                        background: HEALTH_RING_COLOR[label],
-                      }} />
-                      {dist[label]} {label.toLowerCase()}
-                    </span>
-                  ) : null
-                ))}
-              </div>
-              {needsAttention > 0 && (
-                <span style={{
-                  fontSize: 12, color: HEALTH_RING_COLOR.Cooling,
-                  fontWeight: 500,
-                }}>
-                  {needsAttention} {needsAttention === 1 ? 'person needs' : 'people need'} attention
-                </span>
-              )}
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                {filtered.length} {filtered.length === 1 ? 'person' : 'people'}
-              </span>
-            </div>
-          )
-        })()}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 16,
+          color: 'var(--color-text-secondary)',
+        }}>
+          <span style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: atRiskCount > 0 ? 'var(--health-cooling)' : 'var(--color-brand)',
+            boxShadow: `0 0 0 6px ${atRiskCount > 0 ? 'rgba(240,173,78,0.12)' : 'rgba(37,180,57,0.12)'}`,
+            flexShrink: 0,
+          }} />
+          <p style={{
+            margin: 0,
+            fontSize: 13,
+            lineHeight: 1.4,
+            color: 'var(--color-text-secondary)',
+          }}>
+            {headerPulse}
+          </p>
+        </div>
 
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
 
           {/* Search - primary, wider */}
           <input
+            className="records-search"
             type="search"
-            placeholder="Search people..."
+            placeholder="Search people"
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
             style={{
@@ -922,6 +805,7 @@ export function RecordsList() {
                 setFilters(f => ({ ...f, pod: v || null, category: null }))
               }
             }}
+            className="records-toolbar-select"
             style={selectStyle}
           >
             <option value="">All Pods</option>
@@ -939,6 +823,7 @@ export function RecordsList() {
           <select
             value={filters.recency}
             onChange={e => setFilters(f => ({ ...f, recency: e.target.value as RecencyFilter }))}
+            className="records-toolbar-select"
             style={selectStyle}
           >
             <option value="any">Last contacted</option>
@@ -949,7 +834,7 @@ export function RecordsList() {
           </select>
 
           {hasActiveFilters && (
-            <button type="button" onClick={clearFilters} style={{
+            <button type="button" className="records-toolbar-button" onClick={clearFilters} style={{
               height: 36, padding: '0 10px', borderRadius: 8, border: 'none',
               background: 'transparent', color: 'var(--color-text-tertiary)',
               fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
@@ -958,33 +843,29 @@ export function RecordsList() {
             </button>
           )}
 
-          {/* Secondary utilities - pushed right */}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
-            {/* Views dropdown */}
-            <div ref={viewsRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setShowViewsDropdown(v => !v)}
-                style={utilityBtnStyle(showViewsDropdown)}
-                title="Saved views"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              </button>
-            {showViewsDropdown && (
-              <div className="records-dropdown" style={dropdownStyle}>
-                <div
-                  onClick={() => applyView(null)}
-                  style={dropdownItemStyle}
-                >
+          <div ref={moreRef} style={{ marginLeft: 'auto', position: 'relative' }}>
+            <button
+              className="delight-button"
+              type="button"
+              onClick={() => setShowMoreDropdown(v => !v)}
+              style={utilityBtnStyle(showMoreDropdown)}
+            >
+              More
+            </button>
+            {showMoreDropdown && (
+              <div className="records-dropdown" style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 220 }}>
+                <div style={menuLabelStyle}>Views</div>
+                <button type="button" onClick={() => applyView(null)} style={dropdownButtonStyle}>
                   All People
-                </div>
+                </button>
                 {savedViews.map(view => (
                   <div
                     key={view.name}
-                    onClick={() => applyView(view)}
-                    style={{ ...dropdownItemStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={dropdownRowStyle}
                   >
-                    <span>{view.name}</span>
+                    <button type="button" onClick={() => applyView(view)} style={dropdownButtonStyle}>
+                      {view.name}
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => deleteView(view.name, e)}
@@ -1025,27 +906,14 @@ export function RecordsList() {
                       </button>
                     </div>
                   ) : (
-                    <div onClick={() => setShowSaveInput(true)} style={{ ...dropdownItemStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}>
+                    <button type="button" onClick={() => setShowSaveInput(true)} style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}>
                       + Save current view
-                    </div>
+                    </button>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* Columns toggle */}
-          <div ref={columnsRef} style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setShowColumnsDropdown(v => !v)}
-              style={utilityBtnStyle(showColumnsDropdown)}
-              title="Toggle columns"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            </button>
-            {showColumnsDropdown && (
-              <div className="records-dropdown" style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
+                <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                  <div style={menuLabelStyle}>Columns</div>
                 {COLUMNS.map(col => (
                   <label
                     key={col.id}
@@ -1060,46 +928,39 @@ export function RecordsList() {
                     <span style={{ fontSize: 13 }}>{col.label}</span>
                   </label>
                 ))}
-              </div>
-            )}
-          </div>
+                </div>
 
-          {/* Export */}
-          <div ref={exportRef} style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setShowExportDropdown(v => !v)}
-              style={utilityBtnStyle(showExportDropdown)}
-              title="Export"
-            >
-              <Download size={14} />
-            </button>
-            {showExportDropdown && (
-              <div className="records-dropdown" style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
-                <div
-                  onClick={() => { handleExportCsv(filtered); setShowExportDropdown(false) }}
-                  style={dropdownItemStyle}
+                <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                  <div style={menuLabelStyle}>Export</div>
+                <button
+                  type="button"
+                  onClick={() => { handleExportCsv(filtered); setShowMoreDropdown(false) }}
+                  style={dropdownButtonStyle}
                 >
                   Download CSV
-                </div>
-                <div
-                  onClick={() => { void handleShareAsLink(); setShowExportDropdown(false) }}
-                  style={dropdownItemStyle}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { void handleShareAsLink(); setShowMoreDropdown(false) }}
+                  style={dropdownButtonStyle}
                 >
                   {copyFeedback ? 'Link copied!' : 'Share as a link'}
+                </button>
                 </div>
+
                 <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
-                  <div
-                    onClick={() => { navigate('/import'); setShowExportDropdown(false) }}
-                    style={dropdownItemStyle}
+                  <div style={menuLabelStyle}>Import</div>
+                  <button
+                    type="button"
+                    onClick={() => { navigate('/import'); setShowMoreDropdown(false) }}
+                    style={dropdownButtonStyle}
                   >
                     Import CSV
-                  </div>
+                  </button>
                 </div>
               </div>
             )}
           </div>
-          </div>{/* end secondary utilities */}
         </div>
       </div>
 
@@ -1122,6 +983,7 @@ export function RecordsList() {
             {/* Pod actions */}
             <div ref={podPickerRef} style={{ position: 'relative' }}>
               <button
+                className="delight-button"
                 type="button"
                 onClick={() => { setShowPodPicker(v => !v); setShowFieldUpdate(false) }}
                 disabled={bulkOperating}
@@ -1136,28 +998,30 @@ export function RecordsList() {
                     Add to pod
                   </div>
                   {pods.map(pod => (
-                    <div
+                    <button
                       key={`add-${pod.id}`}
+                      type="button"
                       onClick={() => handleBulkPodAction(pod.id, 'add')}
-                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8 }}
+                      style={{ ...dropdownButtonStyle, gap: 8 }}
                     >
                       {pod.color && <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
                       {pod.name}
-                    </div>
+                    </button>
                   ))}
                   <div style={{ height: 1, background: 'var(--divider)', margin: '4px 0' }} />
                   <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Move to pod
                   </div>
                   {pods.map(pod => (
-                    <div
+                    <button
                       key={`move-${pod.id}`}
+                      type="button"
                       onClick={() => handleBulkPodAction(pod.id, 'move')}
-                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8 }}
+                      style={{ ...dropdownButtonStyle, gap: 8 }}
                     >
                       {pod.color && <span style={{ width: 8, height: 8, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
                       {pod.name}
-                    </div>
+                    </button>
                   ))}
                   {pods.length === 0 && (
                     <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No pods</div>
@@ -1169,6 +1033,7 @@ export function RecordsList() {
             {/* Field update */}
             <div ref={fieldUpdateRef} style={{ position: 'relative' }}>
               <button
+                className="delight-button"
                 type="button"
                 onClick={() => { setShowFieldUpdate(v => !v); setShowPodPicker(false) }}
                 disabled={bulkOperating}
@@ -1232,7 +1097,7 @@ export function RecordsList() {
                       borderRadius: 6,
                       background: 'var(--color-brand)',
                       border: 'none',
-                      color: '#fff',
+                      color: 'var(--header-band-text)',
                       fontSize: 11,
                       fontWeight: 600,
                       cursor: updateField && updateValue ? 'pointer' : 'not-allowed',
@@ -1247,6 +1112,7 @@ export function RecordsList() {
 
             {selectedIds.size === 2 && (
               <button
+                className="delight-button"
                 type="button"
                 onClick={() => setShowMergeModal(true)}
                 disabled={bulkOperating}
@@ -1257,6 +1123,7 @@ export function RecordsList() {
             )}
 
             <button
+              className="delight-button"
               type="button"
               onClick={() => handleExportCsv()}
               disabled={bulkOperating}
@@ -1265,14 +1132,16 @@ export function RecordsList() {
               Export CSV
             </button>
             <button
+              className="delight-button"
               type="button"
               onClick={() => setShowArchiveConfirm(true)}
               disabled={bulkOperating}
-              style={{ ...bulkBtnStyle, color: '#D93025' }}
+              style={{ ...bulkBtnStyle, color: 'var(--health-fading)' }}
             >
               Archive
             </button>
             <button
+              className="delight-button"
               type="button"
               onClick={() => setShowAddToCampaign(true)}
               disabled={bulkOperating}
@@ -1315,8 +1184,16 @@ export function RecordsList() {
       {showAddToCampaign && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setShowAddToCampaign(false)} />
-          <div style={{ position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(20px)', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}>
-            <h3 style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
+          <div
+            ref={addToCampaignDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-to-campaign-title"
+            tabIndex={-1}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowAddToCampaign(false) }}
+            style={{ position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(20px)', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}
+          >
+            <h3 id="add-to-campaign-title" style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
             {campaigns.filter(c => c.status === 'active').length === 0 ? (
               <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No active campaigns.</p>
             ) : (
@@ -1342,7 +1219,7 @@ export function RecordsList() {
               style={{
                 marginTop: 12, width: '100%', padding: '8px 16px', borderRadius: 8, border: 'none',
                 background: selectedCampaignId ? 'var(--color-text-primary)' : 'var(--edge-strong)',
-                color: selectedCampaignId ? '#fff' : 'var(--color-text-tertiary)',
+                color: selectedCampaignId ? 'var(--header-band-text)' : 'var(--color-text-tertiary)',
                 cursor: selectedCampaignId ? 'pointer' : 'default',
                 fontSize: 14, fontWeight: 500,
                 fontFamily: 'inherit',
@@ -1395,15 +1272,16 @@ export function RecordsList() {
               width: '100%',
               borderCollapse: 'collapse',
               fontSize: 13,
-              tableLayout: hasCustomWidths ? 'fixed' : 'auto',
+              tableLayout: 'auto',
             }}
           >
             <thead style={{ position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 1 }}>
               <tr style={{ borderBottom: '1px solid var(--edge)' }}>
                 <th style={{ width: 48, padding: 0, textAlign: 'center', height: 44, position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 44, cursor: 'pointer' }} onClick={toggleSelectAll}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 44 }}>
                     <input
                       type="checkbox"
+                      aria-label={allSelected ? 'Deselect all people' : 'Select all people'}
                       checked={allSelected}
                       onChange={toggleSelectAll}
                       style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-brand)' }}
@@ -1411,18 +1289,9 @@ export function RecordsList() {
                   </div>
                 </th>
                 {visibleCols.map(col => {
-                  const isDragSource = isDragging && dragCol.current === col.id
-                  const isDropTarget = dropTargetCol === col.id && dragCol.current !== col.id
-                  const canDrag = col.id !== 'name'
                   return (
                     <th
                       key={col.id}
-                      draggable={canDrag}
-                      onClick={() => toggleSort(col.id)}
-                      onDragStart={canDrag ? e => handleColDragStart(e, col.id) : undefined}
-                      onDragOver={canDrag ? e => handleColDragOver(e, col.id) : undefined}
-                      onDragLeave={canDrag ? handleColDragLeave : undefined}
-                      onDragEnd={canDrag ? handleColDragEnd : undefined}
                       style={{
                         textAlign: 'left',
                         padding: '10px 12px',
@@ -1431,47 +1300,27 @@ export function RecordsList() {
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase' as const,
                         color: sort.col === col.id ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                        cursor: canDrag ? 'grab' : 'pointer',
+                        cursor: 'pointer',
                         userSelect: 'none',
                         whiteSpace: 'nowrap',
                         position: 'relative',
-                        opacity: isDragSource ? 0.4 : 1,
-                        borderLeft: isDropTarget ? '2px solid var(--color-brand)' : undefined,
-                        width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined,
                       }}
                       title={col.id === 'equity' ? 'Relationship health based on interaction frequency. Thriving (85+), Steady (70+), Cooling (40+), Fading (<40)' : undefined}
                     >
-                      {col.label}
-                      <SortIcon active={sort.col === col.id} dir={sort.dir} />
-                      {/* Resize handle */}
-                      <div
-                        className="col-resize-handle"
-                        onClick={e => e.stopPropagation()}
-                        onPointerDown={e => handleResizePointerDown(e, col.id)}
-                        onPointerMove={e => handleResizePointerMove(e, col.id)}
-                        onPointerUp={handleResizePointerUp}
-                        onDoubleClick={() => handleResizeDoubleClick(col.id)}
-                        style={{
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 4,
-                          cursor: 'col-resize',
-                          zIndex: 2,
-                        }}
-                      />
+                      <button type="button" onClick={() => toggleSort(col.id)} aria-label={`Sort by ${col.label}`} style={sortButtonStyle}>
+                        {col.label}
+                        <SortIcon active={sort.col === col.id} dir={sort.dir} />
+                      </button>
                     </th>
                   )
                 })}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((contact, idx) => {
+              {filtered.map(contact => {
                 const score = equityMap[contact.id] ?? 0
                 const label = scoreLabel(score)
                 const badge = EQUITY_BADGE[label]
-                const primaryPod = contact.primary_list_id ? podMap[contact.primary_list_id] : null
                 const selected = selectedIds.has(contact.id)
 
                 return (
@@ -1482,14 +1331,14 @@ export function RecordsList() {
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
-                      background: selected ? 'rgba(37,180,57,0.06)' : 'transparent',
-                      animationDelay: `${Math.min(idx, 8) * 30}ms`,
+                      background: selected ? 'color-mix(in srgb, var(--color-brand) 10%, transparent)' : 'transparent',
                     }}
                   >
                     {/* Pod color + checkbox */}
                     <td style={{ padding: '0', width: 48, height: 52 }} onClick={e => toggleSelectRow(contact.id, e)}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: 'pointer' }}>
                         <input
+                          className="records-checkbox"
                           type="checkbox"
                           checked={selected}
                           onChange={() => {}}
@@ -1499,10 +1348,10 @@ export function RecordsList() {
                     </td>
 
                     {visibleCols.map(col => (
-                      <td key={col.id} style={{ padding: '10px 12px', height: 52, width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined }}>
+                      <td key={col.id} style={{ padding: '10px 12px', height: 52 }}>
                         {col.id === 'name' && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span style={{
+                            <span className="contact-avatar" style={{
                               width: 36,
                               height: 36,
                               borderRadius: '50%',
@@ -1512,7 +1361,7 @@ export function RecordsList() {
                               justifyContent: 'center',
                               fontSize: 12,
                               fontWeight: 600,
-                              color: '#fff',
+                              color: 'var(--header-band-text)',
                               flexShrink: 0,
                               letterSpacing: '0.02em',
                               boxShadow: `0 0 0 2px ${HEALTH_RING_COLOR[label] ?? 'var(--edge)'}`,
@@ -1520,7 +1369,7 @@ export function RecordsList() {
                               {initials(contact.name)}
                             </span>
                             <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-                              <span style={{
+                              <span className="contact-name" style={{
                                 fontFamily: 'var(--font-serif)',
                                 fontWeight: 700,
                                 fontSize: 14,
@@ -1572,7 +1421,7 @@ export function RecordsList() {
                           )
                         })()}
                         {col.id === 'equity' && (
-                          <span style={{
+                          <span className="health-badge" style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 5,
@@ -1601,14 +1450,14 @@ export function RecordsList() {
                             fontSize: 11,
                             fontWeight: 500,
                             background: contact.status === 'Active'
-                              ? 'rgba(37,180,57,0.1)'
+                              ? 'var(--health-thriving-bg)'
                               : contact.status === 'Pending'
-                              ? 'rgba(251,191,36,0.12)'
+                              ? 'var(--health-cooling-bg)'
                               : 'var(--tint)',
                             color: contact.status === 'Active'
-                              ? '#16a34a'
+                              ? 'var(--health-thriving)'
                               : contact.status === 'Pending'
-                              ? '#d97706'
+                              ? 'var(--health-cooling)'
                               : 'var(--color-text-secondary)',
                           }}>
                             {contact.status}
@@ -1656,12 +1505,20 @@ export function RecordsList() {
       {showArchiveConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)' }} onClick={() => setShowArchiveConfirm(false)} />
-          <div style={{
-            position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(24px)',
-            borderRadius: 14, padding: '24px 28px', maxWidth: 340, width: '100%',
-            boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
-          }}>
-            <p style={{ margin: '0 0 4px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+          <div
+            ref={archiveDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="archive-people-title"
+            tabIndex={-1}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowArchiveConfirm(false) }}
+            style={{
+              position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(24px)',
+              borderRadius: 14, padding: '24px 28px', maxWidth: 340, width: '100%',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
+            }}
+          >
+            <p id="archive-people-title" style={{ margin: '0 0 4px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
               Archive {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}?
             </p>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
@@ -1675,7 +1532,7 @@ export function RecordsList() {
               }}>Cancel</button>
               <button type="button" onClick={handleBulkArchive} style={{
                 padding: '7px 16px', borderRadius: 8, border: 'none',
-                background: '#D93025', color: '#fff', fontSize: 13, fontWeight: 600,
+                background: 'var(--health-fading)', color: 'var(--header-band-text)', fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit',
               }}>Archive</button>
             </div>
@@ -1689,7 +1546,7 @@ export function RecordsList() {
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
           zIndex: 10000, display: 'flex', alignItems: 'center', gap: 12,
           padding: '10px 16px', borderRadius: 10,
-          background: 'var(--color-text-primary)', color: '#fff',
+          background: 'var(--color-text-primary)', color: 'var(--color-bg)',
           fontSize: 13, fontWeight: 500,
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           animation: 'toast-enter 0.25s ease-out',
@@ -1698,7 +1555,7 @@ export function RecordsList() {
           {toast.undo && (
             <button type="button" onClick={() => { toast.undo?.(); setToast(null) }} style={{
               background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6,
-              color: '#fff', fontSize: 12, fontWeight: 600, padding: '4px 10px',
+              color: 'inherit', fontSize: 12, fontWeight: 600, padding: '4px 10px',
               cursor: 'pointer', fontFamily: 'inherit',
             }}>Undo</button>
           )}
@@ -1708,22 +1565,39 @@ export function RecordsList() {
       {/* HIG row styles */}
       <style>{`
         @media (max-width: 767px) {
-          .records-table { font-size: 12px; min-width: 600px; }
+          .records-table { font-size: 12px; min-width: 520px; }
+          .records-search { min-width: 100% !important; flex-basis: 100% !important; }
+          .records-toolbar-select { min-height: 40px !important; }
+          .records-toolbar-button { min-height: 40px !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .contacts-row,
+          .contact-avatar,
+          .contact-name,
+          .health-badge,
+          .delight-button,
+          .records-search,
+          .records-checkbox {
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+          }
         }
         @keyframes toast-enter {
           from { opacity: 0; transform: translateX(-50%) translateY(8px); }
           to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-        @keyframes row-enter {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes checkbox-pop {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.14); }
+          100% { transform: scale(1); }
         }
         .contacts-row {
-          animation: row-enter 0.25s ease-out both;
-          transition: background 0.12s ease;
+          transition: background 0.16s ease, transform 0.16s ease;
         }
         .contacts-row:hover {
-          background: rgba(0,0,0,0.025) !important;
+          background: color-mix(in srgb, var(--tint) 60%, transparent) !important;
+          transform: translateY(-1px);
         }
         .contacts-row:active {
           background: rgba(0,0,0,0.04) !important;
@@ -1731,18 +1605,48 @@ export function RecordsList() {
         .contacts-row[style*="rgba(37,180,57"]:hover {
           background: rgba(37,180,57,0.09) !important;
         }
-        .col-resize-handle {
-          opacity: 0;
-          transition: opacity 0.15s;
+        .contacts-row:hover .contact-avatar {
+          transform: translateY(-1px) scale(1.04);
+          box-shadow: 0 0 0 2px currentColor, 0 10px 18px rgba(0,0,0,0.08);
         }
-        th:hover .col-resize-handle {
-          opacity: 1;
-          background: var(--edge);
+        .contacts-row:hover .contact-name {
+          color: var(--color-brand);
+        }
+        .contacts-row:hover .health-badge {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+        }
+        .contact-avatar,
+        .contact-name,
+        .health-badge,
+        .delight-button,
+        .records-search {
+          transition: transform 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+        }
+        .delight-button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+        }
+        .delight-button:active {
+          transform: translateY(0);
+          box-shadow: none;
+        }
+        .records-search:focus {
+          outline: none;
+          border-color: color-mix(in srgb, var(--color-brand) 45%, var(--edge));
+          box-shadow: 0 0 0 4px rgba(37,180,57,0.08);
+        }
+        .records-checkbox:checked {
+          animation: checkbox-pop 0.22s ease-out;
         }
         .records-dropdown > div:hover {
           background: var(--tint);
         }
         .records-dropdown > label:hover {
+          background: var(--tint);
+        }
+        .records-dropdown > button:hover,
+        .records-dropdown > div > button:hover {
           background: var(--tint);
         }
       `}</style>
@@ -1754,8 +1658,8 @@ export function RecordsList() {
 
 function utilityBtnStyle(active: boolean): React.CSSProperties {
   return {
-    width: 36,
-    height: 36,
+    minWidth: 64,
+    minHeight: 44,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1765,14 +1669,16 @@ function utilityBtnStyle(active: boolean): React.CSSProperties {
     color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
     cursor: 'pointer',
     transition: 'background 0.12s, border-color 0.12s, color 0.12s',
-    padding: 0,
+    padding: '0 12px',
+    fontSize: 12,
+    fontWeight: 600,
     fontFamily: 'inherit',
   }
 }
 
 const selectStyle: React.CSSProperties = {
-  height: 36,
-  minHeight: 36,
+  height: 44,
+  minHeight: 44,
   padding: '0 10px',
   borderRadius: 8,
   border: '1px solid var(--edge)',
@@ -1810,6 +1716,45 @@ const dropdownItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   transition: 'background 0.1s',
+}
+
+const dropdownButtonStyle: React.CSSProperties = {
+  ...dropdownItemStyle,
+  width: '100%',
+  border: 'none',
+  background: 'transparent',
+  textAlign: 'left',
+  fontFamily: 'inherit',
+}
+
+const dropdownRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+}
+
+const sortButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  minHeight: 28,
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  color: 'inherit',
+  font: 'inherit',
+  textTransform: 'inherit',
+  letterSpacing: 'inherit',
+  cursor: 'pointer',
+}
+
+const menuLabelStyle: React.CSSProperties = {
+  padding: '6px 12px 2px',
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--color-text-tertiary)',
 }
 
 const bulkBtnStyle: React.CSSProperties = {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import type { Contact, Pod } from '../../lib/types'
+import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Pod, type RelationshipRing } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { updateContact, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
 import { logSystemEvent } from '../../lib/timeline'
@@ -37,6 +37,8 @@ export function CategorizationModal({
 }: CategorizationModalProps) {
   const [selectedPodIds, setSelectedPodIds] = useState<string[]>([])
   const [primaryPodId, setPrimaryPodId] = useState<string | null>(null)
+  const [selectedRings, setSelectedRings] = useState<RelationshipRing[]>(contact.ring_ids ?? [])
+  const [relationshipContext, setRelationshipContext] = useState(contact.relationship_context ?? '')
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -98,7 +100,18 @@ export function CategorizationModal({
     })
   })
 
-  const canSave = allRequiredAnswered && primaryPodId !== null && selectedPodIds.length > 0 && !saving
+  const canSave = allRequiredAnswered &&
+    primaryPodId !== null &&
+    selectedPodIds.length > 0 &&
+    selectedRings.length > 0 &&
+    relationshipContext.trim().length > 0 &&
+    !saving
+
+  function toggleRing(ring: RelationshipRing) {
+    setSelectedRings(prev =>
+      prev.includes(ring) ? prev.filter(id => id !== ring) : [...prev, ring]
+    )
+  }
 
   async function handleSave() {
     if (!canSave) return
@@ -109,17 +122,26 @@ export function CategorizationModal({
         status: 'Active',
         list_ids: selectedPodIds,
         primary_list_id: primaryPodId,
+        ring_ids: selectedRings,
+        relationship_context: relationshipContext.trim(),
         custom_fields: { ...contact.custom_fields, ...answers },
       })
 
       const podNames = selectedPodIds.map(id => pods.find(p => p.id === id)?.name ?? id)
       const primaryPodName = pods.find(p => p.id === primaryPodId)?.name ?? primaryPodId ?? ''
-      const noteText = `Categorized into: ${podNames.join(', ')}. Primary: ${primaryPodName}.${notes ? ` Notes: ${notes}` : ''}`
+      const ringNames = selectedRings.map(ring => RELATIONSHIP_RING_LABELS[ring])
+      const noteText = `Categorized into: ${podNames.join(', ')}. Primary: ${primaryPodName}. Rings: ${ringNames.join(', ')}.${notes ? ` Notes: ${notes}` : ''}`
 
       await logSystemEvent({
         contactId: contact.id,
         type: 'categorization',
-        detail: { pods: selectedPodIds, primaryPod: primaryPodId, answeredFields: Object.keys(answers) },
+        detail: {
+          pods: selectedPodIds,
+          primaryPod: primaryPodId,
+          rings: selectedRings,
+          relationshipContext: relationshipContext.trim(),
+          answeredFields: Object.keys(answers),
+        },
         notes: noteText,
       })
 
@@ -346,7 +368,62 @@ export function CategorizationModal({
           </div>
         </div>
 
-        {/* Required fields per pod — progressive disclosure */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
+          }}>
+            Rings
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {RELATIONSHIP_RINGS.map(ring => {
+              const selected = selectedRings.includes(ring)
+              return (
+                <button
+                  key={ring}
+                  type="button"
+                  onClick={() => toggleRing(ring)}
+                  style={{
+                    padding: '6px 12px',
+                    border: selected ? '2px solid var(--color-brand)' : '2px solid transparent',
+                    borderRadius: 20,
+                    background: selected ? 'rgba(37,180,57,0.12)' : 'var(--tint)',
+                    color: selected ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+                    fontSize: 13,
+                    fontWeight: selected ? 600 : 400,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {RELATIONSHIP_RING_LABELS[ring]}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={{
+            display: 'block',
+            fontSize: 12, fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: 6,
+          }}>
+            Relationship context
+          </label>
+          <textarea
+            value={relationshipContext}
+            onChange={e => setRelationshipContext(e.target.value)}
+            rows={3}
+            placeholder="How do you know them and why do they matter right now?"
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
+        </div>
+
+        {/* Required fields per pod - progressive disclosure */}
         {selectedPodIds.map(podId => {
           const pod = pods.find(p => p.id === podId)
           if (!pod) return null

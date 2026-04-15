@@ -15,15 +15,7 @@ interface Props {
 }
 
 const STEP_COUNT = 4
-const STEP_LABELS = ['Welcome', 'Philosophy', 'Pods', 'Import']
-
-/* ---------- static data (hoisted out of render) ---------- */
-
-const PRINCIPLES = [
-  { icon: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z', label: 'Give more than you take', stat: 'The strongest networks are built by people who show up for others first.' },
-  { icon: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', label: 'Trust is built on micro-habits', stat: 'A quick check-in today is worth more than a big gesture six months late.' },
-  { icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 0 0 6.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 0 0 6.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3', label: 'Relationship debt is real', stat: 'Skip a few months and even close ties start to fade. We help you stay ahead of that.' },
-]
+const STEP_LABELS = ['Welcome', 'Daily rhythm', 'Pods', 'Import']
 
 /* ---------- Seed-to-Tree persistent element ---------- */
 
@@ -119,6 +111,160 @@ function SeedTree({ step }: { step: number }) {
 
 const STORAGE_KEY = 'realdeal:onboarding-step'
 
+const CADENCE_PRESETS: Record<string, { accent: string; pulse: string; title: string; description: string }> = {
+  weekly: {
+    accent: '#6366F1',
+    pulse: 'Tight circle',
+    title: 'Weekly keeps the inner ring humming.',
+    description: 'Best for the people you never want to accidentally lose touch with.',
+  },
+  biweekly: {
+    accent: '#14B8A6',
+    pulse: 'Steady beat',
+    title: 'Biweekly gives you a healthy nudge.',
+    description: 'A great middle ground when the relationship matters but life moves fast.',
+  },
+  monthly: {
+    accent: '#25B439',
+    pulse: 'Gentle rhythm',
+    title: 'Monthly is the easiest habit to keep.',
+    description: 'It keeps important relationships warm without making outreach feel like homework.',
+  },
+  quarterly: {
+    accent: '#F59E0B',
+    pulse: 'Light touch',
+    title: 'Quarterly works for slower-burn relationships.',
+    description: 'Useful for broader circles where a thoughtful check-in still carries weight.',
+  },
+}
+
+const IMPORT_CONSTELLATION_NODES = [
+  { x: 0, y: -52, size: 10, color: '#F43F5E', delay: 120 },
+  { x: -62, y: -20, size: 11, color: '#6366F1', delay: 260 },
+  { x: 62, y: -10, size: 12, color: '#EC4899', delay: 420 },
+  { x: -42, y: 42, size: 10, color: '#F59E0B', delay: 520 },
+  { x: 46, y: 40, size: 11, color: '#14B8A6', delay: 680 },
+  { x: -14, y: 58, size: 8, color: '#8B5CF6', delay: 780 },
+] as const
+
+const IMPORT_LOADING_COPY = {
+  loading: [
+    'Looking for people already living in your Google contacts.',
+    'Checking names, emails, and duplicates before we show you a preview.',
+    'Keeping the first import clean so your first dashboard feels useful.',
+  ],
+  importing: [
+    'Saving each contact into your workspace.',
+    'Skipping duplicates automatically so you do not have to clean this up twice.',
+    'Setting up your first useful people view.',
+  ],
+} as const
+
+function getRitualCue() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Morning ritual'
+  if (hour < 18) return 'Midday reset'
+  return 'Evening catch-up'
+}
+
+function ImportConstellation({ mode }: { mode: 'idle' | 'loading' | 'done' }) {
+  const done = mode === 'done'
+  const active = mode === 'loading'
+  const centerX = 110
+  const centerY = 94
+
+  return (
+    <div className="onboard-constellation" aria-hidden style={{
+      position: 'relative',
+      width: 220,
+      height: 188,
+      opacity: done ? 1 : 0.96,
+      filter: done ? 'saturate(1.05)' : 'none',
+    }}>
+      <svg width="220" height="188" viewBox="0 0 220 188" style={{ position: 'absolute', inset: 0 }}>
+        {IMPORT_CONSTELLATION_NODES.map((node) => (
+          <line
+            key={`line-${node.x}-${node.y}`}
+            x1={centerX}
+            y1={centerY}
+            x2={centerX + node.x}
+            y2={centerY + node.y}
+            stroke={done ? 'rgba(37,180,57,0.30)' : 'rgba(0,0,0,0.08)'}
+            strokeWidth="1.2"
+            strokeDasharray={active ? '3 6' : undefined}
+            opacity={active ? 0.9 : 1}
+          />
+        ))}
+      </svg>
+
+      {done && [0, 1].map((index) => (
+        <div
+          key={`done-ring-${index}`}
+          style={{
+            position: 'absolute',
+            left: centerX - 42,
+            top: centerY - 42,
+            width: 84,
+            height: 84,
+            borderRadius: '50%',
+            border: '1px solid rgba(37,180,57,0.24)',
+            animation: `done-ring 1.6s ease-out ${index * 180}ms infinite`,
+          }}
+        />
+      ))}
+
+      {IMPORT_CONSTELLATION_NODES.map((node) => (
+        <div
+          key={`node-${node.x}-${node.y}`}
+          style={{
+            position: 'absolute',
+            left: centerX + node.x - node.size / 2,
+            top: centerY + node.y - node.size / 2,
+            width: node.size,
+            height: node.size,
+            borderRadius: '50%',
+            background: node.color,
+            boxShadow: `0 0 0 8px ${node.color}12`,
+            animation: `${active ? 'constellation-pulse' : 'gentle-float'} ${active ? '2.4s' : '6s'} ease-in-out ${node.delay}ms infinite`,
+          }}
+        />
+      ))}
+
+      <div style={{
+        position: 'absolute',
+        left: centerX - 34,
+        top: centerY - 34,
+        width: 68,
+        height: 68,
+        borderRadius: '50%',
+        background: done
+          ? 'linear-gradient(135deg, #25B439, #1A8A2A)'
+          : 'linear-gradient(135deg, rgba(52,177,93,0.92), rgba(26,138,42,0.94))',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: done
+          ? '0 18px 44px rgba(37,180,57,0.28)'
+          : '0 16px 38px rgba(37,180,57,0.22)',
+        animation: `${done ? 'welcome-pulse 2.8s ease-in-out infinite' : active ? 'onboard-core-pulse 1.8s ease-in-out infinite' : 'welcome-pulse 4.4s ease-in-out infinite'}`,
+      }}>
+        {done ? (
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        ) : (
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 6c2.21 0 4 1.79 4 4 0 1.65-1 3.07-2.43 3.69" />
+            <path d="M8 6C5.79 6 4 7.79 4 10c0 1.65 1 3.07 2.43 3.69" />
+            <path d="M8 18h8" />
+            <path d="M12 6v12" />
+          </svg>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function loadProgress(): { step: number; maxStep: number } {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -188,10 +334,46 @@ export function OnboardingFlow({ onComplete }: Props) {
       background: 'var(--color-bg)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
+      <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div style={{
+          position: 'absolute',
+          top: -140,
+          left: -120,
+          width: 420,
+          height: 420,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(37,180,57,0.16), rgba(37,180,57,0))',
+          animation: 'ambient-drift 18s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: 80,
+          right: -120,
+          width: 360,
+          height: 360,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.12), rgba(99,102,241,0))',
+          animation: 'ambient-drift 20s ease-in-out -6s infinite',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: -180,
+          left: '36%',
+          width: 420,
+          height: 420,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(236,72,153,0.08), rgba(236,72,153,0))',
+          animation: 'ambient-drift 24s ease-in-out -12s infinite',
+        }} />
+      </div>
       <style>{`
         @keyframes onboard-enter {
           from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ambient-drift {
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+          50% { transform: translate3d(20px, -18px, 0) scale(1.06); }
         }
         @keyframes onboard-slide-left {
           from { opacity: 0; transform: translateX(40px); }
@@ -220,6 +402,18 @@ export function OnboardingFlow({ onComplete }: Props) {
         @keyframes gentle-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
+        }
+        @keyframes constellation-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255,255,255,0.08); }
+          50% { transform: scale(1.22); box-shadow: 0 0 0 10px rgba(255,255,255,0.02); }
+        }
+        @keyframes onboard-core-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 16px 38px rgba(37,180,57,0.22); }
+          50% { transform: scale(1.05); box-shadow: 0 24px 48px rgba(37,180,57,0.30); }
+        }
+        @keyframes done-ring {
+          from { transform: scale(0.82); opacity: 0.72; }
+          to { transform: scale(1.68); opacity: 0; }
         }
         @keyframes branch-grow {
           from { stroke-dashoffset: var(--branch-len); }
@@ -275,8 +469,7 @@ export function OnboardingFlow({ onComplete }: Props) {
           .onboard-orbital { width: 140px !important; height: 140px !important; }
           .onboard-orbital svg { width: 140px !important; height: 140px !important; }
           .onboard-center-orb { width: 64px !important; height: 64px !important; left: 38px !important; top: 38px !important; }
-          .onboard-constellation { width: 160px !important; height: 144px !important; }
-          .onboard-constellation svg { width: 160px !important; height: 144px !important; }
+          .onboard-constellation { transform: scale(0.76); transform-origin: center; margin: -18px 0 -10px; }
         }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after {
@@ -322,9 +515,27 @@ export function OnboardingFlow({ onComplete }: Props) {
                   cursor: visited ? 'pointer' : 'default',
                   opacity: visited ? 1 : 0.5,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: i === step ? '0 8px 18px rgba(37,180,57,0.22)' : 'none',
                 }}
               >
-                {label}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {visited && i < step && (
+                    <span style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.24)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 9,
+                      fontWeight: 700,
+                    }}>
+                      ✓
+                    </span>
+                  )}
+                  <span>{label}</span>
+                </span>
               </button>
             )
           })}
@@ -423,6 +634,7 @@ function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?:
 /* ---------- individual steps ---------- */
 
 function StepWelcome({ onNext }: { onNext: () => void }) {
+  const ritualCue = getRitualCue()
   const orbs = [
     { color: '#6366F1', size: 12, r: 72, dur: 12, delay: 0 },
     { color: '#EC4899', size: 10, r: 72, dur: 15, delay: -4 },
@@ -434,6 +646,41 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
 
   return (
     <>
+      <div style={{ ...stagger(0), display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '7px 12px',
+          borderRadius: 999,
+          background: 'rgba(37,180,57,0.08)',
+          border: '1px solid rgba(37,180,57,0.16)',
+          color: 'var(--color-brand)',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          textTransform: 'uppercase',
+        }}>
+          {ritualCue}
+        </div>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '7px 12px',
+          borderRadius: 999,
+          background: 'var(--tint)',
+          border: '1px solid var(--edge)',
+          color: 'var(--color-text-secondary)',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          textTransform: 'uppercase',
+        }}>
+          Under 2 minutes
+        </div>
+      </div>
+
       {/* Orbital visual */}
       <div className="onboard-orbital" style={{ position: 'relative', width: 180, height: 180, opacity: 0, animation: 'onboard-enter 0.6s ease-out 0.1s forwards' }}>
         {/* Orbit rings */}
@@ -480,50 +727,109 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
         ...bodyStyle, fontSize: 15, lineHeight: 1.7, maxWidth: 340,
         opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.5s forwards',
       }}>
-        Your relationships are your superpower. This is your system to keep them strong.
+        Import your people, set your rhythm, and RealDeal will show you who needs love before the relationship drifts.
       </p>
-      <button type="button" onClick={onNext} className="onboard-btn-primary" style={{
-        ...primaryBtnStyle, opacity: 0, animation: 'onboard-enter 0.4s ease-out 0.7s forwards',
+      <div style={{
+        ...stagger(620),
+        width: '100%',
+        maxWidth: 360,
+        display: 'grid',
+        gap: 10,
       }}>
-        Get Started
+        {[
+          'See who needs attention today.',
+          'Group people into a few intentional pods.',
+          'Start with import now. Tidy later.',
+        ].map((item, index) => (
+          <div
+            key={item}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'var(--tint)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              opacity: 0,
+              animation: `onboard-enter 0.35s ease-out ${700 + (index * 90)}ms forwards`,
+              textAlign: 'left',
+            }}
+          >
+            <div style={{
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: 'rgba(37,180,57,0.12)',
+              color: 'var(--color-brand)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}>
+              {index + 1}
+            </div>
+            <span style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--color-text-primary)' }}>{item}</span>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={onNext} className="onboard-btn-primary" style={{
+        ...primaryBtnStyle, opacity: 0, animation: 'onboard-enter 0.4s ease-out 1s forwards',
+      }}>
+        Start setup
       </button>
     </>
   )
 }
 
 function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const PRINCIPLE_COLORS = ['#25B439', '#6366F1', '#EC4899']
+  const snapshots = [
+    {
+      color: '#25B439',
+      title: 'Today tells you where to show up',
+      text: 'You open the app and immediately see the people who are going cold, so outreach becomes obvious instead of another mental tab.',
+    },
+    {
+      color: '#6366F1',
+      title: 'Pods keep context intact',
+      text: 'Investors, talent, advisors, friends - each circle has its own rhythm, so you stop treating every relationship the same way.',
+    },
+    {
+      color: '#EC4899',
+      title: 'Small check-ins compound',
+      text: 'A quick note, text, or coffee logged here keeps your network warm long before you need to make an ask.',
+    },
+  ]
 
   return (
     <>
-      <h2 style={{ ...headingStyle, ...stagger(0) }}>A health tracker for your relationships</h2>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>What this becomes each day</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Not a sales pipeline. A system that tells you who needs you right now.
+        The aha moment is simple: you stop wondering who you forgot, and start acting on a clear signal.
       </p>
 
-      {/* Principles - single column, more breathing room */}
       <div style={{ ...stagger(120), display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 440, textAlign: 'left' }}>
-        {PRINCIPLES.map((p, i) => (
-          <div key={p.label} style={{
+        {snapshots.map((snapshot, i) => (
+          <div key={snapshot.title} style={{
             display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px',
             borderRadius: 14, background: 'var(--tint)',
-            border: `1px solid ${PRINCIPLE_COLORS[i]}15`,
+            border: `1px solid ${snapshot.color}15`,
             opacity: 0, animation: `onboard-enter 0.35s ease-out ${i * 120}ms forwards`,
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: PRINCIPLE_COLORS[i], display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: snapshot.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d={p.icon} />
-              </svg>
+              <span style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
             </div>
             <div>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
-                {p.label}
+                {snapshot.title}
               </span>
               <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5, marginTop: 4 }}>
-                {p.stat}
+                {snapshot.text}
               </div>
             </div>
           </div>
@@ -539,6 +845,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
   const [cadence, setCadence] = useState(() =>
     localStorage.getItem('realdeal:default-cadence') || 'monthly'
   )
+  const cadencePreview = CADENCE_PRESETS[cadence] || CADENCE_PRESETS.monthly
   const pods = [
     { name: 'Talent', color: '#6366F1', count: '15 people', emoji: '🎨' },
     { name: 'LPs', color: '#F59E0B', count: '12 people', emoji: '💰' },
@@ -561,7 +868,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
     <>
       <h2 style={{ ...headingStyle, ...stagger(0) }}>Organize by circles</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Pods are small groups of people you care about - your investors, your team, your advisors. Keep each circle tight and intentional.
+        Start with 2 to 4 circles that already exist in your head. Keep them small, clear, and easy to maintain.
       </p>
 
       {/* Pod cards with stagger */}
@@ -619,7 +926,63 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
         </div>
       </div>
 
-      <div style={stagger(180)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
+      <div style={{
+        ...stagger(140),
+        width: '100%',
+        maxWidth: 340,
+        padding: '15px 16px',
+        borderRadius: 18,
+        textAlign: 'left',
+        background: `linear-gradient(145deg, ${cadencePreview.accent}16, rgba(255,255,255,0.72))`,
+        border: `1px solid ${cadencePreview.accent}24`,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--color-text-secondary)',
+          }}>
+            Selected rhythm
+          </span>
+          <span style={{
+            padding: '4px 8px',
+            borderRadius: 999,
+            background: `${cadencePreview.accent}18`,
+            color: cadencePreview.accent,
+            fontSize: 11,
+            fontWeight: 700,
+          }}>
+            {cadencePreview.pulse}
+          </span>
+        </div>
+        <div style={{
+          marginTop: 10,
+          fontFamily: 'var(--font-serif)',
+          fontSize: 19,
+          fontWeight: 700,
+          color: 'var(--color-text-primary)',
+          letterSpacing: '-0.02em',
+        }}>
+          {cadencePreview.title}
+        </div>
+        <div style={{
+          marginTop: 6,
+          fontSize: 12,
+          lineHeight: 1.6,
+          color: 'var(--color-text-secondary)',
+        }}>
+          {cadencePreview.description}
+        </div>
+      </div>
+
+      <p style={{ ...bodyStyle, ...stagger(160), maxWidth: 320, fontSize: 12 }}>
+        You can rename these later. The important part is giving each group its own cadence now.
+      </p>
+
+      <div style={stagger(200)}><ActionRow onAction={onNext} onBack={onBack} label="Next" /></div>
     </>
   )
 }
@@ -630,6 +993,17 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
   const [googleContacts, setGoogleContacts] = useState<any[]>([])
   const [googleResult, setGoogleResult] = useState<{ imported: number; skipped: number } | null>(null)
   const [googleError, setGoogleError] = useState<string | null>(null)
+  const [loadingCopyIndex, setLoadingCopyIndex] = useState(0)
+
+  useEffect(() => {
+    if (googleState !== 'loading' && googleState !== 'importing') return
+    setLoadingCopyIndex(0)
+    const copy = googleState === 'loading' ? IMPORT_LOADING_COPY.loading : IMPORT_LOADING_COPY.importing
+    const interval = window.setInterval(() => {
+      setLoadingCopyIndex((index) => (index + 1) % copy.length)
+    }, 2000)
+    return () => window.clearInterval(interval)
+  }, [googleState])
 
   const handleGoogleImport = async () => {
     if (!activeWorkspace) return
@@ -666,33 +1040,34 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
     }
   }
 
-  const nodes = [
-    { x: 0, y: 0, size: 16, color: '#25B439', delay: 0 },
-    { x: -44, y: -32, size: 11, color: '#6366F1', delay: 100 },
-    { x: 48, y: -26, size: 12, color: '#EC4899', delay: 200 },
-    { x: -30, y: 38, size: 9, color: '#F59E0B', delay: 300 },
-    { x: 42, y: 34, size: 10, color: '#8B5CF6', delay: 150 },
-    { x: -56, y: 8, size: 8, color: '#14B8A6', delay: 250 },
-    { x: 58, y: 6, size: 7, color: '#F97316', delay: 350 },
-    { x: 0, y: -48, size: 8, color: '#F43F5E', delay: 180 },
-    { x: -16, y: -50, size: 6, color: '#0EA5E9', delay: 280 },
-  ]
-
   // Google import done state
   if (googleState === 'done' && googleResult) {
     return (
       <>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #25B439, #1A8A2A)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'onboard-enter 0.4s ease-out' }}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+        <div style={stagger(0)}>
+          <ImportConstellation mode="done" />
         </div>
         <h2 style={{ ...headingStyle, ...stagger(100) }}>{googleResult.imported} contacts imported</h2>
         <p style={{ ...bodyStyle, ...stagger(160) }}>
           {googleResult.skipped > 0 ? `${googleResult.skipped} duplicates were skipped. ` : ''}
-          Your network is ready to explore.
+          Your network is ready. Open your people view and start building the habit.
         </p>
-        <div style={stagger(220)}><ActionRow onAction={onComplete} onBack={onBack} label="Let's go" /></div>
+        {googleResult.skipped > 0 && (
+          <div style={{
+            ...stagger(200),
+            padding: '6px 12px',
+            borderRadius: 999,
+            background: 'rgba(37,180,57,0.08)',
+            color: 'var(--color-brand)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+          }}>
+            Cleaner than expected
+          </div>
+        )}
+        <div style={stagger(220)}><ActionRow onAction={() => { onComplete(); navigate('/contacts') }} onBack={onBack} label="Open my network" /></div>
       </>
     )
   }
@@ -749,13 +1124,30 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
 
   // Loading/importing state
   if (googleState === 'loading' || googleState === 'importing') {
+    const loadingTitle = googleState === 'loading' ? 'Finding your people' : 'Bringing your circle in'
+    const loadingCopy = googleState === 'loading' ? IMPORT_LOADING_COPY.loading : IMPORT_LOADING_COPY.importing
     return (
       <>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--edge)', borderTopColor: 'var(--color-brand)', animation: 'spin 0.8s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ ...bodyStyle, marginTop: 8 }}>
-          {googleState === 'loading' ? 'Fetching your Google contacts...' : 'Importing contacts...'}
+        <div style={stagger(0)}>
+          <ImportConstellation mode="loading" />
+        </div>
+        <h2 style={{ ...headingStyle, ...stagger(80) }}>{loadingTitle}</h2>
+        <p style={{ ...bodyStyle, ...stagger(140), maxWidth: 320 }}>
+          {loadingCopy[loadingCopyIndex]}
         </p>
+        <div style={{
+          ...stagger(180),
+          padding: '6px 12px',
+          borderRadius: 999,
+          background: 'var(--tint)',
+          color: 'var(--color-text-secondary)',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}>
+          This usually takes a moment
+        </div>
       </>
     )
   }
@@ -782,9 +1174,12 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
   // Default idle state - use universal ImportSourcePicker
   return (
     <>
-      <h2 style={{ ...headingStyle, ...stagger(0) }}>Bring your people in</h2>
+      <div style={stagger(0)}>
+        <ImportConstellation mode="idle" />
+      </div>
+      <h2 style={{ ...headingStyle, ...stagger(0) }}>Get to your first useful view</h2>
       <p style={{ ...bodyStyle, ...stagger(60) }}>
-        Your network already exists -- it just needs a home. Pick the fastest way to get started.
+        Import 20 to 50 people now. You can clean up fields and categories later.
       </p>
 
       <div style={{ ...stagger(120), width: '100%', maxWidth: 400 }}>
@@ -815,7 +1210,6 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
         />
       </div>
 
-      {/* Meeting notes providers */}
       <div style={{ ...stagger(200), width: '100%', maxWidth: 400 }}>
         <MeetingNotesOnboarding />
       </div>
@@ -835,6 +1229,7 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
 /* ---------- Meeting Notes Onboarding ---------- */
 
 function MeetingNotesOnboarding() {
+  const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [keyValue, setKeyValue] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -854,10 +1249,33 @@ function MeetingNotesOnboarding() {
 
   return (
     <div style={{ borderRadius: 12, border: '1px solid var(--edge)', overflow: 'hidden' }}>
-      <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--edge)', background: 'var(--tint)' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>Meeting notes (optional)</span>
-      </div>
-      {PROVIDERS.map(provider => {
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%',
+          padding: '10px 14px',
+          border: 'none',
+          borderBottom: open ? '1px solid var(--edge)' : 'none',
+          background: 'var(--tint)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>Meeting notes (optional)</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+            Connect Granola or other providers later if you want call notes in the timeline.
+          </div>
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+          {open ? 'Hide' : 'Connect now'}
+        </span>
+      </button>
+      {open && PROVIDERS.map(provider => {
         const connected = !!getProviderKey(provider)
         const isEditing = editingId === provider.id
         return (

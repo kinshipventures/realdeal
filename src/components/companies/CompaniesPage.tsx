@@ -12,8 +12,21 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   return <span style={{ marginLeft: 4, fontSize: 10 }}>{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
-export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
+
+export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange }: { embedded?: boolean; hideInlineCount?: boolean; onFilteredCountChange?: (count: number) => void } = {}) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -55,6 +68,10 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
     })
     return list
   }, [companies, search, sort])
+
+  useEffect(() => {
+    onFilteredCountChange?.(filtered.length)
+  }, [filtered.length, onFilteredCountChange])
 
   const thStyle: React.CSSProperties = {
     padding: '10px 12px',
@@ -113,6 +130,7 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
       <div style={{ padding: '12px clamp(16px, 4vw, 32px) 0' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <input
+            className="companies-search"
             type="text"
             placeholder="Search companies..."
             value={search}
@@ -120,6 +138,7 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
             style={{
               flex: 1,
               maxWidth: 320,
+              minHeight: 44,
               padding: '8px 12px',
               fontSize: 13,
               fontFamily: 'inherit',
@@ -127,12 +146,13 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
               borderRadius: 8,
               background: 'var(--color-bg)',
               color: 'var(--color-text-primary)',
-              outline: 'none',
             }}
           />
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'company' : 'companies'}
-          </span>
+          {!hideInlineCount && (
+            <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              {filtered.length} {filtered.length === 1 ? 'company' : 'companies'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -150,15 +170,46 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
           <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-text-tertiary)', fontSize: 14 }}>
             No companies match your search.
           </div>
+        ) : isMobile ? (
+          <div style={{ display: 'grid', gap: 12, paddingBottom: 24 }}>
+            {filtered.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => navigate(`/contact/${c.id}`)}
+                style={{
+                  display: 'grid',
+                  gap: 8,
+                  width: '100%',
+                  padding: '14px 16px',
+                  borderRadius: 14,
+                  border: '1px solid var(--edge)',
+                  background: 'var(--surface-panel)',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+                  {c.name}
+                </span>
+                <div style={{ display: 'grid', gap: 6, color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                  <span>{c.industry ?? 'No industry yet'}</span>
+                  <span>{c.stage ?? 'No stage yet'}</span>
+                  <span>{c.location ?? c.domain ?? 'No location or domain yet'}</span>
+                </div>
+              </button>
+            ))}
+          </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={thStyle} onClick={() => toggleSort('name')}>Name <SortIcon active={sort.col === 'name'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('industry')}>Industry <SortIcon active={sort.col === 'industry'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('stage')}>Stage <SortIcon active={sort.col === 'stage'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('domain')}>Domain <SortIcon active={sort.col === 'domain'} dir={sort.dir} /></th>
-                <th style={thStyle} onClick={() => toggleSort('location')}>Location <SortIcon active={sort.col === 'location'} dir={sort.dir} /></th>
+                <th style={thStyle}><button type="button" onClick={() => toggleSort('name')} style={sortButtonStyle}>Name <SortIcon active={sort.col === 'name'} dir={sort.dir} /></button></th>
+                <th style={thStyle}><button type="button" onClick={() => toggleSort('industry')} style={sortButtonStyle}>Industry <SortIcon active={sort.col === 'industry'} dir={sort.dir} /></button></th>
+                <th style={thStyle}><button type="button" onClick={() => toggleSort('stage')} style={sortButtonStyle}>Stage <SortIcon active={sort.col === 'stage'} dir={sort.dir} /></button></th>
+                <th style={thStyle}><button type="button" onClick={() => toggleSort('domain')} style={sortButtonStyle}>Domain <SortIcon active={sort.col === 'domain'} dir={sort.dir} /></button></th>
+                <th style={thStyle}><button type="button" onClick={() => toggleSort('location')} style={sortButtonStyle}>Location <SortIcon active={sort.col === 'location'} dir={sort.dir} /></button></th>
               </tr>
             </thead>
             <tbody>
@@ -166,6 +217,14 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
                 <tr
                   key={c.id}
                   style={{ cursor: 'pointer', transition: 'background 0.1s' }}
+                  tabIndex={0}
+                  onClick={() => navigate(`/contact/${c.id}`)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/contact/${c.id}`)
+                    }
+                  }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint-hover)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
@@ -180,6 +239,27 @@ export function CompaniesPage({ embedded }: { embedded?: boolean } = {}) {
           </table>
         )}
       </div>
+      <style>{`
+        .companies-search:focus {
+          border-color: color-mix(in srgb, var(--color-brand) 45%, var(--edge));
+          box-shadow: 0 0 0 4px rgba(37,180,57,0.08);
+        }
+      `}</style>
     </div>
   )
+}
+
+const sortButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  minHeight: 28,
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  color: 'inherit',
+  font: 'inherit',
+  textTransform: 'inherit',
+  letterSpacing: 'inherit',
+  cursor: 'pointer',
 }

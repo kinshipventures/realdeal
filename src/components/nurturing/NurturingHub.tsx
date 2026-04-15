@@ -173,10 +173,8 @@ export function NurturingHub() {
       if (isInGracePeriod(contact)) continue
       if (snoozedIds.has(contact.id)) continue
       if (followUpOverdueIds.has(contact.id)) continue  // already in follow-up overdue
-      const overdue = contact.list_ids.some(podId => {
-        const pod = pods.find(p => p.id === podId)
-        return isOverdue(contact, pod?.cadence ?? 'monthly')
-      })
+      const pod = contact.primary_list_id ? pods.find(p => p.id === contact.primary_list_id) : null
+      const overdue = isOverdue(contact, pod?.cadence ?? 'monthly')
       if (!overdue) continue
       const days = contact.last_contacted_at
         ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
@@ -258,13 +256,13 @@ export function NurturingHub() {
     }
 
     // No pod assigned
-    const noPod: Contact[] = contacts.filter(c => c.list_ids.length === 0 && c.status !== 'Archived')
+    const noPod: Contact[] = contacts.filter(c => (!c.primary_list_id || c.list_ids.length === 0) && c.status !== 'Archived')
 
     // Pods at capacity
     const podsAtCapacity: { pod: Pod; currentCount: number; capacity: number }[] = []
     for (const pod of pods) {
       if (!pod.capacity) continue
-      const count = contacts.filter(c => c.list_ids.includes(pod.id)).length
+      const count = contacts.filter(c => c.primary_list_id === pod.id).length
       if (count >= pod.capacity) {
         podsAtCapacity.push({ pod, currentCount: count, capacity: pod.capacity })
       }

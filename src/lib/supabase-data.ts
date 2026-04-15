@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
-import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Project, HexColor, RelationshipType, RelationshipStatus } from './types'
+import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Project, HexColor, RelationshipType, RelationshipStatus, RelationshipRing } from './types'
 import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
 
@@ -217,6 +217,12 @@ function mapContact(r: any, catIds?: string[]): Contact {
   const podIds = r.pod_ids ?? []
   const primaryPodId = r.primary_pod_id ?? (podIds.length > 0 ? podIds[0] : null)
   const companyIds = r.company_ids ?? (r.company_id ? [r.company_id] : [])
+  const customFields = r.custom_fields ?? {}
+  const ringIds = Array.isArray(r.ring_ids)
+    ? r.ring_ids
+    : Array.isArray(customFields.relationship_rings)
+      ? customFields.relationship_rings
+      : []
   return {
     id: r.id, name: r.name, email: r.email ?? null, phone: r.phone ?? null,
     company: r.company ?? null, role: r.role ?? null, location: r.location ?? null,
@@ -233,12 +239,14 @@ function mapContact(r: any, catIds?: string[]): Contact {
     next_follow_up_date: r.next_follow_up_date ?? null, next_action: r.next_action ?? null,
     kv_fund_investor: r.kv_fund_investor ?? null, spv_investor: r.spv_investor ?? null,
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
+    ring_ids: ringIds as RelationshipRing[],
     company_record_id: r.company_id ?? null,
     company_ids: companyIds,
     industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
     email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
-    custom_fields: r.custom_fields ?? {}, created_at: r.created_at,
+    photo_url: null,
+    custom_fields: customFields, created_at: r.created_at,
   }
 }
 
@@ -269,6 +277,10 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
   }
   const userId = await getUserId()
   const wsId = getActiveWorkspaceId()
+  const customFields = {
+    ...(data.custom_fields ?? {}),
+    relationship_rings: data.ring_ids ?? [],
+  }
   const insert: Record<string, unknown> = {
     user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,
@@ -285,7 +297,7 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     status: data.status, company_id: data.company_record_id, industry: data.industry,
     stage: data.stage, ticker: data.ticker, domain: data.domain,
     cadence_override: data.cadence_override, email_2: data.email_2, email_3: data.email_3,
-    custom_fields: data.custom_fields ?? {},
+    custom_fields: customFields,
     import_batch_id: (data as any).import_batch_id ?? null,
     import_source: (data as any).import_source ?? null,
     pod_ids: data.list_ids ?? [],
@@ -319,6 +331,14 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   ] as const
   for (const key of directFields) {
     if ((data as any)[key] !== undefined) update[key] = (data as any)[key]
+  }
+  if (data.ring_ids !== undefined) {
+    const existing = _contactsCache?.find(c => c.id === id)
+    update.custom_fields = {
+      ...(existing?.custom_fields ?? {}),
+      ...(typeof update.custom_fields === 'object' && update.custom_fields ? update.custom_fields as Record<string, unknown> : {}),
+      relationship_rings: data.ring_ids,
+    }
   }
   if (data.company_record_id !== undefined) update.company_id = data.company_record_id
   if (data.list_ids !== undefined) {
@@ -932,7 +952,13 @@ export async function getActiveContacts(): Promise<Contact[]> {
   const all = await getContacts(); return all.filter(c => c.status === 'Active')
 }
 export async function getPendingContacts(): Promise<Contact[]> {
-  const all = await getContacts(); return all.filter(c => c.status === 'Pending')
+  const all = await getContacts()
+  return all.filter(c =>
+    c.status === 'Pending' ||
+    !c.primary_list_id ||
+    c.list_ids.length === 0 ||
+    !(c.relationship_context ?? '').trim()
+  )
 }
 
 // ── Companies (from companies table) ────────────────────────────────────────

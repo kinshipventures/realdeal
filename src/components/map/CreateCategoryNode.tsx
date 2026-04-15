@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react'
+import { Position, type NodeProps, type Node } from '@xyflow/react'
+import { FlowCenterHandle } from './MapPrimitives'
 
 type CreateCategoryNodeData = {
   listColor?: string | null
@@ -64,9 +65,7 @@ export function CreateCategoryNodeComponent({ data }: NodeProps<CreateCategoryNo
 
   return (
     <>
-      <Handle type="target" position={Position.Left}
-        style={{ opacity: 0, width: 1, height: 1, top: SIZE / 2, left: SIZE / 2, transform: 'translate(-50%, -50%)' }}
-      />
+      <FlowCenterHandle type="target" position={Position.Left} size={SIZE} />
 
       <div
         className={`orb-enter${active ? '' : ' orb-interactive'}`}
