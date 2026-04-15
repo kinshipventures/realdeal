@@ -900,7 +900,6 @@ export function RecordsList() {
               backdropFilter: 'blur(20px)',
               fontSize: 13,
               color: 'var(--color-text-primary)',
-              outline: 'none',
               fontFamily: 'inherit',
               minWidth: 220,
               flex: '0 1 280px',
@@ -1010,8 +1009,7 @@ export function RecordsList() {
                           background: 'var(--color-bg)',
                           fontSize: 12,
                           color: 'var(--color-text-primary)',
-                          outline: 'none',
-                          fontFamily: 'inherit',
+                                      fontFamily: 'inherit',
                         }}
                       />
                       <button
@@ -1214,8 +1212,7 @@ export function RecordsList() {
                         background: 'var(--color-bg)',
                         fontSize: 12,
                         color: 'var(--color-text-primary)',
-                        outline: 'none',
-                        fontFamily: 'inherit',
+                                  fontFamily: 'inherit',
                         marginBottom: 6,
                         boxSizing: 'border-box',
                       }}
@@ -1781,7 +1778,6 @@ const selectStyle: React.CSSProperties = {
   fontSize: 12,
   fontFamily: 'inherit',
   cursor: 'pointer',
-  outline: 'none',
   transition: 'border-color 0.12s',
 }
 
