@@ -1543,7 +1543,7 @@ export function RecordsList() {
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                maxWidth: 200,
+                                maxWidth: 'clamp(120px, 15vw, 260px)',
                               }}>
                                 {contact.role && contact.company
                                   ? `${contact.role} at ${contact.company}`
