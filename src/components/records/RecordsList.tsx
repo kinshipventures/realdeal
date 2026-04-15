@@ -971,7 +971,7 @@ export function RecordsList() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
               </button>
             {showViewsDropdown && (
-              <div style={dropdownStyle}>
+              <div className="records-dropdown" style={dropdownStyle}>
                 <div
                   onClick={() => applyView(null)}
                   style={dropdownItemStyle}
@@ -1045,7 +1045,7 @@ export function RecordsList() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             </button>
             {showColumnsDropdown && (
-              <div style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
+              <div className="records-dropdown" style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
                 {COLUMNS.map(col => (
                   <label
                     key={col.id}
@@ -1075,7 +1075,7 @@ export function RecordsList() {
               <Download size={14} />
             </button>
             {showExportDropdown && (
-              <div style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
+              <div className="records-dropdown" style={{ ...dropdownStyle, right: 0, left: 'auto', minWidth: 160 }}>
                 <div
                   onClick={() => { handleExportCsv(filtered); setShowExportDropdown(false) }}
                   style={dropdownItemStyle}
@@ -1131,7 +1131,7 @@ export function RecordsList() {
                 <span style={{ marginLeft: 4, opacity: 0.5 }}>&#9662;</span>
               </button>
               {showPodPicker && (
-                <div style={{ ...dropdownStyle, minWidth: 200 }}>
+                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 200 }}>
                   <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Add to pod
                   </div>
@@ -1177,7 +1177,7 @@ export function RecordsList() {
                 Update field
               </button>
               {showFieldUpdate && (
-                <div style={{ ...dropdownStyle, minWidth: 200, padding: 8 }}>
+                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 200, padding: 8 }}>
                   <select
                     value={updateField}
                     onChange={e => setUpdateField(e.target.value)}
@@ -1738,6 +1738,12 @@ export function RecordsList() {
         th:hover .col-resize-handle {
           opacity: 1;
           background: var(--edge);
+        }
+        .records-dropdown > div:hover {
+          background: var(--tint);
+        }
+        .records-dropdown > label:hover {
+          background: var(--tint);
         }
       `}</style>
     </div>
