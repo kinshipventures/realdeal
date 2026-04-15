@@ -59,26 +59,6 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
     const isRequired = requiredFieldKeys?.has(key as string) ?? false
     const isMissingRequired = isRequired && !val
 
-    const displayStyle: React.CSSProperties = isMissingRequired
-      ? {
-          fontSize: 13,
-          fontWeight: 400,
-          color: 'var(--text-muted)',
-          cursor: 'text',
-          minHeight: 20,
-          lineHeight: '20px',
-          borderBottom: '1px dashed var(--color-text-tertiary)',
-          display: 'inline-block',
-        }
-      : {
-          fontSize: 13,
-          fontWeight: 400,
-          color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-          cursor: 'text',
-          minHeight: 20,
-          lineHeight: '20px',
-        }
-
     function renderValue() {
       if (key === 'website' && val) {
         const href = val.startsWith('http') ? val : `https://${val}`
@@ -102,64 +82,63 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
     }
 
     return (
-      <div style={{ marginBottom: 14 }}>
-        <div
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 2, padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+        <span
           onClick={() => { if (key !== 'website' || !val) setEditingField(key) }}
           style={{
-            fontSize: 11, fontWeight: 700,
+            fontSize: 13, fontWeight: 400,
             color: 'var(--color-text-secondary)',
-            letterSpacing: '0.02em',
-            marginBottom: 3,
-            textTransform: 'uppercase',
+            width: 120, flexShrink: 0,
+            paddingTop: editing ? 7 : 0,
             cursor: 'text',
           }}
         >
           {label}
-        </div>
-        {editing ? (
-          multi ? (
-            <textarea
-              autoFocus
-              defaultValue={val ?? ''}
-              onBlur={e => handleBlur(key, e.target.value)}
-              onKeyDown={e => onKeyDown(e, key)}
-              rows={3}
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+        </span>
+        <div style={{ flex: 1 }}>
+          {editing ? (
+            multi ? (
+              <textarea
+                autoFocus
+                defaultValue={val ?? ''}
+                onBlur={e => handleBlur(key, e.target.value)}
+                onKeyDown={e => onKeyDown(e, key)}
+                rows={3}
+                style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                autoFocus
+                type="text"
+                defaultValue={val ?? ''}
+                onBlur={e => handleBlur(key, e.target.value)}
+                onKeyDown={e => onKeyDown(e, key)}
+                style={inputStyle}
+              />
+            )
           ) : (
-            <input
-              autoFocus
-              type="text"
-              defaultValue={val ?? ''}
-              onBlur={e => handleBlur(key, e.target.value)}
-              onKeyDown={e => onKeyDown(e, key)}
-              style={inputStyle}
-            />
-          )
-        ) : (
-          <div
-            onClick={() => setEditingField(key)}
-            style={displayStyle}
-          >
-            {renderValue()}
-          </div>
-        )}
+            <div
+              onClick={() => setEditingField(key)}
+              style={{
+                fontSize: 13,
+                fontWeight: 400,
+                color: isMissingRequired ? 'var(--text-muted)' : (val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'),
+                cursor: 'text',
+                minHeight: 20,
+                lineHeight: '20px',
+                ...(isMissingRequired ? { borderBottom: '1px dashed var(--color-text-tertiary)', display: 'inline-block' } : {}),
+              }}
+            >
+              {renderValue()}
+            </div>
+          )}
+        </div>
       </div>
     )
   }
 
   return (
     <div style={WIDGET_STYLE}>
-      <div style={{
-        fontFamily: 'var(--font-serif)',
-        fontSize: 16,
-        fontWeight: 700,
-        color: 'var(--color-text-primary)',
-        marginBottom: 14,
-      }}>
-        Details
-      </div>
-
       {contact.type === 'Contact' ? (
         <>
           {field('email', 'Email')}

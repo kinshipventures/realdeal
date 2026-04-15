@@ -102,7 +102,6 @@ export function PodFieldsWidget({
     <div style={{
       background: 'var(--surface-panel)',
       border: '1px solid var(--edge)',
-      borderLeft: `4px solid ${pod.color ?? '#ccc'}`,
       borderRadius: 12,
       padding: '16px 20px',
       marginBottom: 12,
@@ -128,87 +127,87 @@ export function PodFieldsWidget({
         const editing = editingFieldId === fc.id
 
         return (
-          <div key={fc.id} style={{ marginBottom: 14 }}>
-            <div style={{
-              fontSize: 11,
-              fontWeight: 700,
+          <div key={fc.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+            <span style={{
+              fontSize: 13, fontWeight: 400,
               color: 'var(--color-text-secondary)',
-              letterSpacing: '0.02em',
-              marginBottom: 3,
-              textTransform: 'uppercase',
+              width: 120, flexShrink: 0,
+              paddingTop: editing ? 7 : 0,
             }}>
-              {fc.name}{fc.required && <span style={{ color: '#25B439', marginLeft: 2 }}>*</span>}
-            </div>
+              {fc.name}{fc.required && <span style={{ color: 'var(--color-brand)', marginLeft: 2 }}>*</span>}
+            </span>
 
-            {editing ? (
-              <>
-                {fc.field_type === 'multiline' && (
-                  <textarea
-                    autoFocus
-                    defaultValue={String(val ?? '')}
-                    onBlur={e => handleFieldSave(fc, e.target.value)}
-                    rows={3}
-                    style={{ ...inputStyle, resize: 'vertical' }}
-                  />
-                )}
-                {fc.field_type === 'checkbox' && (
-                  <input
-                    autoFocus
-                    type="checkbox"
-                    defaultChecked={!!val}
-                    onChange={e => handleFieldSave(fc, e.target.checked)}
-                    style={{ width: 'auto', cursor: 'pointer' }}
-                  />
-                )}
-                {fc.field_type === 'date' && (
-                  <input
-                    autoFocus
-                    type="date"
-                    defaultValue={String(val ?? '')}
-                    onBlur={e => handleFieldSave(fc, e.target.value)}
-                    style={inputStyle}
-                  />
-                )}
-                {fc.field_type === 'number' && (
-                  <input
-                    autoFocus
-                    type="number"
-                    defaultValue={String(val ?? '')}
-                    onBlur={e => handleFieldSave(fc, e.target.value)}
-                    style={inputStyle}
-                  />
-                )}
-                {(fc.field_type === 'text' || fc.field_type === 'select') && (
-                  <input
-                    autoFocus
-                    type="text"
-                    defaultValue={String(val ?? '')}
-                    onBlur={e => handleFieldSave(fc, e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') e.currentTarget.blur()
-                      if (e.key === 'Escape') { e.currentTarget.value = String(val ?? ''); e.currentTarget.blur(); e.stopPropagation() }
-                    }}
-                    style={inputStyle}
-                  />
-                )}
-              </>
-            ) : (
-              <div
-                onClick={() => setEditingFieldId(fc.id)}
-                style={{
-                  fontSize: 13,
-                  fontWeight: 400,
-                  color: val !== null && val !== undefined && val !== '' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                  cursor: 'text',
-                  minHeight: 20,
-                  lineHeight: '20px',
-                }}
-              >
-                {fc.field_type === 'checkbox'
-                  ? (val ? 'Yes' : 'No')
-                  : (val !== null && val !== undefined && val !== '' ? String(val) : '\u2014')}
-              </div>
-            )}
+            <div style={{ flex: 1 }}>
+              {editing ? (
+                <>
+                  {fc.field_type === 'multiline' && (
+                    <textarea
+                      autoFocus
+                      defaultValue={String(val ?? '')}
+                      onBlur={e => handleFieldSave(fc, e.target.value)}
+                      rows={3}
+                      style={{ ...inputStyle, resize: 'vertical' }}
+                    />
+                  )}
+                  {fc.field_type === 'checkbox' && (
+                    <input
+                      autoFocus
+                      type="checkbox"
+                      defaultChecked={!!val}
+                      onChange={e => handleFieldSave(fc, e.target.checked)}
+                      style={{ width: 'auto', cursor: 'pointer' }}
+                    />
+                  )}
+                  {fc.field_type === 'date' && (
+                    <input
+                      autoFocus
+                      type="date"
+                      defaultValue={String(val ?? '')}
+                      onBlur={e => handleFieldSave(fc, e.target.value)}
+                      style={inputStyle}
+                    />
+                  )}
+                  {fc.field_type === 'number' && (
+                    <input
+                      autoFocus
+                      type="number"
+                      defaultValue={String(val ?? '')}
+                      onBlur={e => handleFieldSave(fc, e.target.value)}
+                      style={inputStyle}
+                    />
+                  )}
+                  {(fc.field_type === 'text' || fc.field_type === 'select') && (
+                    <input
+                      autoFocus
+                      type="text"
+                      defaultValue={String(val ?? '')}
+                      onBlur={e => handleFieldSave(fc, e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') e.currentTarget.blur()
+                        if (e.key === 'Escape') { e.currentTarget.value = String(val ?? ''); e.currentTarget.blur(); e.stopPropagation() }
+                      }}
+                      style={inputStyle}
+                    />
+                  )}
+                </>
+              ) : (
+                <div
+                  onClick={() => setEditingFieldId(fc.id)}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: val !== null && val !== undefined && val !== '' ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                    cursor: 'text',
+                    minHeight: 20,
+                    lineHeight: '20px',
+                  }}
+                >
+                  {fc.field_type === 'checkbox'
+                    ? (val ? 'Yes' : 'No')
+                    : (val !== null && val !== undefined && val !== '' ? String(val) : '\u2014')}
+                </div>
+              )}
+            </div>
           </div>
         )
       })}

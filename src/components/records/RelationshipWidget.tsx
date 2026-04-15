@@ -1,15 +1,23 @@
 import { useState } from 'react'
-import type { Contact } from '../../lib/types'
+import type { Contact, Interaction, Pod } from '../../lib/types'
+import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { WIDGET_STYLE } from './shared'
+
+const LABEL_COLORS: Record<string, string> = {
+  Thriving: '#1A8A2A',
+  Steady: '#2563eb',
+  Cooling: '#CC7700',
+  Fading: '#FF3B30',
+}
 
 interface Props {
   contact: Contact
+  interactions: Interaction[]
+  pods: Pod[]
   onUpdate: (data: Partial<Contact>) => void
 }
 
-const COMM_TAGS = ['Text only', 'Email OK', 'Voice notes', 'WhatsApp', 'Call preferred', 'No calls'] as const
-
-export function RelationshipWidget({ contact, onUpdate }: Props) {
+export function RelationshipWidget({ contact, interactions, pods, onUpdate }: Props) {
   const [editingField, setEditingField] = useState<string | null>(null)
 
   const inputStyle: React.CSSProperties = {
@@ -44,159 +52,102 @@ export function RelationshipWidget({ contact, onUpdate }: Props) {
     }
   }
 
-  // Parse existing comm preferences into tags
-  const currentPrefs = (contact.communication_preferences ?? '').toLowerCase()
-  const activeTags = COMM_TAGS.filter(t => currentPrefs.includes(t.toLowerCase()))
-  const freeformPref = (contact.communication_preferences ?? '')
-    .split(/[,;]/)
-    .map(s => s.trim())
-    .filter(s => !COMM_TAGS.some(t => t.toLowerCase() === s.toLowerCase()))
-    .join(', ')
-
-  function toggleTag(tag: string) {
-    const parts = (contact.communication_preferences ?? '')
-      .split(/[,;]/)
-      .map(s => s.trim())
-      .filter(Boolean)
-
-    const exists = parts.some(p => p.toLowerCase() === tag.toLowerCase())
-    const next = exists
-      ? parts.filter(p => p.toLowerCase() !== tag.toLowerCase())
-      : [...parts, tag]
-
-    onUpdate({ communication_preferences: next.join(', ') || null })
-  }
-
   function textField(key: keyof Contact, label: string, placeholder: string) {
     const val = (contact[key] as string | null) ?? ''
     const editing = editingField === key
 
     return (
-      <div style={{ marginBottom: 14 }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700,
-          color: 'var(--color-text-secondary)',
-          letterSpacing: '0.02em',
-          marginBottom: 4,
-          textTransform: 'uppercase',
-        }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 2, padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+        <span
+          onClick={() => setEditingField(key)}
+          style={{
+            fontSize: 13, fontWeight: 400,
+            color: 'var(--color-text-secondary)',
+            width: 100, flexShrink: 0,
+            paddingTop: editing ? 7 : 0,
+            cursor: 'text',
+          }}
+        >
           {label}
+        </span>
+        <div style={{ flex: 1 }}>
+          {editing ? (
+            <textarea
+              autoFocus
+              defaultValue={val}
+              onBlur={e => handleBlur(key, e.target.value)}
+              onKeyDown={e => onKeyDown(e, key)}
+              rows={3}
+              style={inputStyle}
+              placeholder={placeholder}
+            />
+          ) : (
+            <div
+              onClick={() => setEditingField(key)}
+              style={{
+                fontSize: 13,
+                color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'text',
+                minHeight: 20,
+                lineHeight: '20px',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {val || placeholder}
+            </div>
+          )}
         </div>
-        {editing ? (
-          <textarea
-            autoFocus
-            defaultValue={val}
-            onBlur={e => handleBlur(key, e.target.value)}
-            onKeyDown={e => onKeyDown(e, key)}
-            rows={3}
-            style={inputStyle}
-            placeholder={placeholder}
-          />
-        ) : (
-          <div
-            onClick={() => setEditingField(key)}
-            style={{
-              fontSize: 13,
-              color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'text',
-              minHeight: 20,
-              lineHeight: '20px',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {val || placeholder}
-          </div>
-        )}
       </div>
     )
   }
 
+  const score = contactEquityScore(interactions)
+  const label = scoreLabel(score)
+  const color = LABEL_COLORS[label] ?? LABEL_COLORS.Fading
+
+  const ringSize = 56
+  const strokeWidth = 4.5
+  const radius = (ringSize - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const filled = (score / 100) * circumference
+
   return (
     <div style={WIDGET_STYLE}>
-      <div style={{
-        fontFamily: 'var(--font-serif)',
-        fontSize: 16,
-        fontWeight: 700,
-        color: 'var(--color-text-primary)',
-        marginBottom: 14,
-      }}>
-        Relationship
+      {/* Health score */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+        <svg width={ringSize} height={ringSize} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+          <circle
+            cx={ringSize / 2} cy={ringSize / 2} r={radius}
+            fill="none" stroke="var(--tint)" strokeWidth={strokeWidth}
+          />
+          <circle
+            cx={ringSize / 2} cy={ringSize / 2} r={radius}
+            fill="none" stroke={color} strokeWidth={strokeWidth}
+            strokeDasharray={`${filled} ${circumference}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 22,
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            lineHeight: 1,
+          }}>
+            {score}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 400, color, marginTop: 3 }}>
+            {label}
+          </div>
+        </div>
       </div>
 
-      {textField('relationship_context', 'Context', 'How you know them, shared history...')}
-      {textField('intel_notes', 'Intel', 'Personal notes - life events, preferences, things to remember...')}
-
-      {/* Communication preferences as tappable tags */}
-      <div style={{ marginBottom: 8 }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700,
-          color: 'var(--color-text-secondary)',
-          letterSpacing: '0.02em',
-          marginBottom: 6,
-          textTransform: 'uppercase',
-        }}>
-          How to reach them
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {COMM_TAGS.map(tag => {
-            const active = activeTags.includes(tag)
-            return (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                style={{
-                  fontSize: 12, fontWeight: 500,
-                  padding: '4px 12px', borderRadius: 100,
-                  border: active ? '1px solid var(--color-brand)' : '1px solid var(--edge)',
-                  background: active ? 'rgba(37,180,57,0.08)' : 'transparent',
-                  color: active ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                {tag}
-              </button>
-            )
-          })}
-        </div>
-        {/* Freeform note below tags */}
-        {editingField === 'comm_freeform' ? (
-          <textarea
-            autoFocus
-            defaultValue={freeformPref}
-            onBlur={e => {
-              setEditingField(null)
-              const tags = activeTags.join(', ')
-              const free = e.target.value.trim()
-              const combined = [tags, free].filter(Boolean).join(', ')
-              if (combined !== (contact.communication_preferences ?? '')) {
-                onUpdate({ communication_preferences: combined || null })
-              }
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.blur()
-              if (e.key === 'Escape') { e.currentTarget.blur(); e.stopPropagation() }
-            }}
-            rows={2}
-            style={{ ...inputStyle, marginTop: 8 }}
-            placeholder="Other notes - e.g. 'bullet-point texts only', 'never reads email'..."
-          />
-        ) : (
-          <div
-            onClick={() => setEditingField('comm_freeform')}
-            style={{
-              fontSize: 12,
-              color: freeformPref ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'text',
-              marginTop: 8,
-              lineHeight: '18px',
-            }}
-          >
-            {freeformPref || 'Add notes...'}
-          </div>
-        )}
+      {/* Relationship notes */}
+      <div style={{ borderTop: '1px solid var(--divider)', paddingTop: 8 }}>
+        {textField('relationship_context', 'Context', 'How you know them, shared history...')}
+        {textField('intel_notes', 'Intel', 'Personal notes, life events, things to remember...')}
+        {textField('communication_preferences', 'Reach', 'Text only, prefers WhatsApp, never reads email...')}
       </div>
     </div>
   )
