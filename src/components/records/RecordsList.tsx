@@ -1019,7 +1019,7 @@ export function RecordsList() {
                       <button
                         type="button"
                         onClick={saveView}
-                        style={{ background: '#25B439', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, padding: '0 8px', cursor: 'pointer' }}
+                        style={{ background: 'var(--color-brand)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, padding: '0 8px', cursor: 'pointer' }}
                       >
                         Save
                       </button>
@@ -1230,7 +1230,7 @@ export function RecordsList() {
                       width: '100%',
                       padding: '5px 0',
                       borderRadius: 6,
-                      background: '#25B439',
+                      background: 'var(--color-brand)',
                       border: 'none',
                       color: '#fff',
                       fontSize: 11,
@@ -1406,7 +1406,7 @@ export function RecordsList() {
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleSelectAll}
-                      style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#25B439' }}
+                      style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-brand)' }}
                     />
                   </div>
                 </th>
@@ -1436,7 +1436,7 @@ export function RecordsList() {
                         whiteSpace: 'nowrap',
                         position: 'relative',
                         opacity: isDragSource ? 0.4 : 1,
-                        borderLeft: isDropTarget ? '2px solid #25B439' : undefined,
+                        borderLeft: isDropTarget ? '2px solid var(--color-brand)' : undefined,
                         width: columnWidths[col.id] ? columnWidths[col.id] + 'px' : undefined,
                       }}
                       title={col.id === 'equity' ? 'Relationship health based on interaction frequency. Thriving (85+), Steady (70+), Cooling (40+), Fading (<40)' : undefined}
@@ -1493,7 +1493,7 @@ export function RecordsList() {
                           type="checkbox"
                           checked={selected}
                           onChange={() => {}}
-                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#25B439' }}
+                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-brand)' }}
                         />
                       </div>
                     </td>
