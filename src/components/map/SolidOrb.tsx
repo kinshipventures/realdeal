@@ -18,6 +18,7 @@ interface SolidOrbProps {
   color: HexColor
   shiftColor?: HexColor
   healthPercent?: number
+  idleBreath?: number
   glowIntensity?: 'low' | 'high'
   animationDelay?: string
   onClick?: () => void
@@ -31,6 +32,7 @@ export function SolidOrb({
   color,
   shiftColor,
   healthPercent,
+  idleBreath,
   glowIntensity,
   animationDelay,
   onClick,
@@ -113,7 +115,7 @@ export function SolidOrb({
         ref={orbRef}
         role={onClick ? 'button' : undefined}
         aria-label={ariaLabel}
-        className={`orb-enter orb-interactive${className ? ` ${className}` : ''}`}
+        className={`orb-enter orb-interactive${idleBreath ? ' orb-breathing' : ''}${className ? ` ${className}` : ''}`}
         onClick={onClick}
         onMouseEnter={() => {
           if (orbRef.current) orbRef.current.style.boxShadow = hoverShadow
@@ -125,6 +127,9 @@ export function SolidOrb({
           '--orb-scale': scale,
           '--orb-lift': lift,
           '--orb-color-rgb': hexToRgbValues(color),
+          '--orb-enter-delay': animationDelay ?? '0s',
+          '--orb-breath-scale': idleBreath ? `${1 + idleBreath}` : undefined,
+          '--orb-breath-lift': idleBreath ? `${Math.max(1, Math.round(idleBreath * 120))}px` : undefined,
           width: size,
           height: size,
           borderRadius: '50%',
@@ -136,7 +141,7 @@ export function SolidOrb({
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          animationDelay,
+          animationDelay: idleBreath ? undefined : animationDelay,
         } as React.CSSProperties}
       >
         {children}

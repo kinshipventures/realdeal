@@ -1019,6 +1019,47 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </span>
                 )}
               </div>
+
+              {!isNew && contactCampaignLinks.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                  {contactCampaignLinks.map(link => {
+                    const campaign = campaigns.find(c => c.id === link.campaign_id)
+                    if (!campaign || campaign.status !== 'active') return null
+                    const stage = (campaignStagesMap[link.campaign_id] ?? []).find(s => s.id === link.stage_id)
+
+                    return (
+                      <button
+                        key={link.id}
+                        type="button"
+                        onClick={() => window.location.assign(`/campaigns/${campaign.id}`)}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: 'var(--color-text-primary)',
+                          background: 'color-mix(in srgb, var(--surface-panel) 88%, var(--tint) 12%)',
+                          border: '1px solid var(--edge)',
+                          borderRadius: 999,
+                          padding: '4px 10px',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <span style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: stage?.color ?? 'var(--color-brand)',
+                          flexShrink: 0,
+                        }} />
+                        {campaign.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Equity score in header — existing contacts only */}
@@ -1174,6 +1215,129 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
+              {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>campaigns</div>
+                  </div>
+                  <div style={{ padding: '16px 18px' }}>
+                    {contactCampaignLinks.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                        {[...contactCampaignLinks]
+                          .sort((a, b) => {
+                            const campaignA = campaigns.find(c => c.id === a.campaign_id)
+                            const campaignB = campaigns.find(c => c.id === b.campaign_id)
+                            const activeA = campaignA?.status === 'active' ? 1 : 0
+                            const activeB = campaignB?.status === 'active' ? 1 : 0
+                            return activeB - activeA
+                          })
+                          .map(link => {
+                            const camp = campaigns.find(c => c.id === link.campaign_id)
+                            const stages = campaignStagesMap[link.campaign_id] ?? []
+                            const stage = stages.find(s => s.id === link.stage_id)
+                            const name = camp?.name ?? 'Campaign'
+                            const isActive = camp?.status === 'active'
+
+                            return (
+                              <div key={link.id} style={{
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '7px 10px', borderRadius: 10,
+                                background: isActive
+                                  ? 'color-mix(in srgb, var(--surface-panel) 90%, hsla(260, 44%, 62%, 0.10))'
+                                  : 'color-mix(in srgb, var(--surface-panel) 92%, var(--tint) 8%)',
+                                border: isActive
+                                  ? '1px solid color-mix(in srgb, hsla(260, 40%, 55%, 0.22) 45%, var(--edge) 55%)'
+                                  : '1px solid var(--edge)',
+                                opacity: isActive ? 1 : 0.72,
+                                boxShadow: 'none',
+                              }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isActive ? 'hsla(260, 50%, 50%, 0.6)' : 'var(--color-text-tertiary)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                                  <line x1="4" y1="22" x2="4" y2="15"/>
+                                </svg>
+                                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+                                  {name}
+                                </span>
+                                {stage && (
+                                  <span style={{
+                                    fontSize: 11, fontWeight: 500,
+                                    padding: '2px 7px', borderRadius: 100,
+                                    background: stage.color ? `${stage.color}18` : 'var(--tint)',
+                                    color: stage.color ?? 'var(--color-text-secondary)',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {stage.name}
+                                  </span>
+                                )}
+                                {camp && (
+                                  <span style={{ fontSize: 11, color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                                    {isActive ? camp.type : 'completed'}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                      </div>
+                    )}
+                    {addedCampaignId ? (
+                      <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
+                        Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
+                      </div>
+                    ) : campaigns.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setShowCampaignPicker(v => !v)}
+                          style={{
+                            background: 'color-mix(in srgb, var(--surface-panel) 90%, transparent)', border: '1px solid var(--edge)', cursor: 'pointer',
+                            fontSize: 13, color: 'var(--color-text-primary)',
+                            padding: '7px 12px', fontFamily: 'inherit', borderRadius: 999,
+                            fontWeight: 500,
+                          }}
+                        >
+                          Add to a campaign
+                        </button>
+                        {showCampaignPicker && (
+                          <div style={{
+                            marginTop: 6,
+                            background: 'var(--surface-panel)',
+                            border: '1px solid var(--edge)',
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          }}>
+                            {campaigns.filter(c => c.status === 'active' && !contactCampaignLinks.some(l => l.campaign_id === c.id)).map(campaign => (
+                              <button
+                                key={campaign.id}
+                                type="button"
+                                onClick={() => handleAddToCampaign(campaign.id)}
+                                disabled={addingToCampaign}
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  width: '100%', padding: '10px 14px',
+                                  background: 'none', border: 'none',
+                                  borderBottom: '1px solid var(--divider)',
+                                  cursor: addingToCampaign ? 'default' : 'pointer',
+                                  textAlign: 'left', fontFamily: 'inherit',
+                                  opacity: addingToCampaign ? 0.5 : 1,
+                                }}
+                              >
+                                <span style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.4 }}>
+                                  {campaign.name}
+                                </span>
+                                <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                                  {campaign.type}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div style={sectionShell}>
                 <div style={sectionHeader}>
                   <div style={sectionLabel}>relationship</div>
@@ -1310,113 +1474,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
-              {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>active campaigns</div>
-                  </div>
-                  <div style={{ padding: '16px 18px' }}>
-                {contactCampaignLinks.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-                    {contactCampaignLinks.map(link => {
-                      const camp = campaigns.find(c => c.id === link.campaign_id)
-                      const stages = campaignStagesMap[link.campaign_id] ?? []
-                      const stage = stages.find(s => s.id === link.stage_id)
-                      const name = camp?.name ?? 'Campaign'
-                      return (
-                        <div key={link.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '7px 10px', borderRadius: 10,
-                          background: 'color-mix(in srgb, var(--surface-panel) 90%, hsla(260, 44%, 62%, 0.10))',
-                          border: '1px solid color-mix(in srgb, hsla(260, 40%, 55%, 0.22) 45%, var(--edge) 55%)',
-                          boxShadow: 'none',
-                        }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsla(260, 50%, 50%, 0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                            <line x1="4" y1="22" x2="4" y2="15"/>
-                          </svg>
-                          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
-                            {name}
-                          </span>
-                          {stage && (
-                            <span style={{
-                              fontSize: 11, fontWeight: 500,
-                              padding: '2px 7px', borderRadius: 100,
-                              background: stage.color ? `${stage.color}18` : 'var(--tint)',
-                              color: stage.color ?? 'var(--color-text-secondary)',
-                              whiteSpace: 'nowrap',
-                            }}>
-                              {stage.name}
-                            </span>
-                          )}
-                          {camp && (
-                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
-                              {camp.type}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-                {addedCampaignId ? (
-                  <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
-                    Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
-                  </div>
-                ) : campaigns.length > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setShowCampaignPicker(v => !v)}
-                      style={{
-                        background: 'color-mix(in srgb, var(--surface-panel) 90%, transparent)', border: '1px solid var(--edge)', cursor: 'pointer',
-                      fontSize: 13, color: 'var(--color-text-primary)',
-                        padding: '7px 12px', fontFamily: 'inherit', borderRadius: 999,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Add to a campaign
-                    </button>
-                    {showCampaignPicker && (
-                      <div style={{
-                        marginTop: 6,
-                        background: 'var(--surface-panel)',
-                        border: '1px solid var(--edge)',
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      }}>
-                        {campaigns.filter(c => !contactCampaignLinks.some(l => l.campaign_id === c.id)).map(campaign => (
-                          <button
-                            key={campaign.id}
-                            type="button"
-                            onClick={() => handleAddToCampaign(campaign.id)}
-                            disabled={addingToCampaign}
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                              width: '100%', padding: '10px 14px',
-                              background: 'none', border: 'none',
-                              borderBottom: '1px solid var(--divider)',
-                              cursor: addingToCampaign ? 'default' : 'pointer',
-                              textAlign: 'left', fontFamily: 'inherit',
-                              opacity: addingToCampaign ? 0.5 : 1,
-                            }}
-                          >
-                            <span style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.4 }}>
-                              {campaign.name}
-                            </span>
-                            <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                              {campaign.type}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

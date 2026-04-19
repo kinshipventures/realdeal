@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
-import { lovable } from '@/integrations/lovable/index'
 import { supabase } from '@/integrations/supabase/client'
+import { isLovableAuthBridgeEnabled, signInWithGoogle } from '@/lib/auth'
 import { setDemoMode } from '@/lib/sampleData'
 
 type FeedbackTone = 'error' | 'success' | 'info'
@@ -121,6 +121,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null)
   const ritualContext = getRitualContext()
+  const usesLovableBridge = isLovableAuthBridgeEnabled()
 
   useEffect(() => {
     if (!session) return
@@ -132,14 +133,7 @@ export function LoginPage() {
     setLoading(true)
     setLoadingLabel('Opening Google...')
     setFeedback(null)
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-      extraParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-        scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/contacts.readonly',
-      },
-    })
+    const result = await signInWithGoogle()
     if (result.error) {
       setFeedback({ tone: 'error', text: 'Sign in failed. Please try again.' })
       setLoading(false)
@@ -176,8 +170,8 @@ export function LoginPage() {
 
   const authTitle = isSignUp ? 'Create your RealDeal account' : 'Welcome back'
   const authCopy = isSignUp
-    ? 'Start with Google for faster import, or use email and password.'
-    : 'Sign in and get back to the people who matter most.'
+    ? `Start with Google for faster import, or use email and password.${usesLovableBridge ? '' : ' This sign-in goes straight to your Supabase project.'}`
+    : `Sign in and get back to the people who matter most.${usesLovableBridge ? '' : ' Google sign-in now goes straight to your Supabase project.'}`
 
   return (
     <div className="login-page">

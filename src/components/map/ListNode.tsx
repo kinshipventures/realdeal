@@ -40,7 +40,7 @@ function fontSize(name: string): number {
 }
 
 export const ListNodeComponent = memo(function ListNodeComponent({ data }: NodeProps<ListNodeType>) {
-  const { list, contactCount, overdueCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, capacity, memberCount, categories = [], depth = 1.0, fading, highlighted, onHoverEnter, onHoverLeave, onDrillIn } = data
+  const { list, contactCount, healthPercent, loading, loadError, animationDelay, orbitStartX, orbitStartY, categories = [], depth = 1.0, fading, highlighted, onHoverEnter, onHoverLeave, onDrillIn } = data
   const navigate = useNavigate()
   const color = (list.color ?? '#718096') as HexColor
   const shiftColor = (POD_SHIFT_COLORS[color] ?? POD_SHIFT_COLORS[color.toUpperCase()]) as HexColor | undefined
@@ -64,11 +64,12 @@ export const ListNodeComponent = memo(function ListNodeComponent({ data }: NodeP
         color={color}
         shiftColor={shiftColor}
         healthPercent={healthPercent}
+        idleBreath={healthPercent !== undefined ? Math.min(0.02, 0.006 + (healthPercent / 100) * 0.012) : undefined}
         glowIntensity={list.is_priority ? 'high' : 'low'}
         animationDelay={animationDelay}
         onClick={() => onDrillIn ? onDrillIn(list) : navigate(`/pod/${list.id}`)}
         ariaLabel={`Pod: ${list.name}`}
-        className={loadError ? 'orb-error-flash' : undefined}
+        className={`${loadError ? 'orb-error-flash ' : ''}${highlighted ? 'orb-highlight-pulse ' : ''}`.trim() || undefined}
       >
         {loading ? (
           <div style={{
@@ -117,7 +118,7 @@ export const ListNodeComponent = memo(function ListNodeComponent({ data }: NodeP
       {categories.length > 0 && (
         <div className="satellite-ring">
           {categories.map((cat, i) => {
-            const expandRadius = 62
+            const expandRadius = 64 + Math.min(10, categories.length * 2)
             const angle = (i / categories.length) * 360
             const satColor = cat.color ?? list.color ?? '#718096'
 

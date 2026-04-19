@@ -1,0 +1,3 @@
+-- Legacy placeholder.
+-- Share links are created by 20260403072738_0ed9903f-b35e-4ea4-82fe-ca797543cd41.sql.
+-- This file only preserves migration ordering without creating duplicate schema objects.

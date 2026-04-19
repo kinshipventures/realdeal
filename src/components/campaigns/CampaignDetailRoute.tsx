@@ -293,8 +293,6 @@ export function CampaignDetailRoute() {
           <CampaignStatsBar
             stages={stages}
             campaignContacts={campaignContacts}
-            createdAt={campaign.created_at}
-            campaignType={campaign.type}
           />
         </div>
       )}

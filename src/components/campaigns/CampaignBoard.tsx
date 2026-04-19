@@ -183,6 +183,27 @@ export function CampaignBoard({
     updateCampaignStage(id, data).catch(() => onStagesChange(prev))
   }
 
+  function handleMoveStage(stageId: string, direction: 'left' | 'right') {
+    const sorted = [...stages].sort((a, b) => a.order - b.order)
+    const index = sorted.findIndex(stage => stage.id === stageId)
+    if (index === -1) return
+
+    const swapIndex = direction === 'left' ? index - 1 : index + 1
+    if (swapIndex < 0 || swapIndex >= sorted.length) return
+
+    const reordered = [...sorted]
+    const [movedStage] = reordered.splice(index, 1)
+    reordered.splice(swapIndex, 0, movedStage)
+
+    const normalized = reordered.map((stage, order) => ({ ...stage, order }))
+    const previous = [...stages]
+    onStagesChange(normalized)
+
+    Promise.all(
+      normalized.map(stage => updateCampaignStage(stage.id, { order: stage.order }))
+    ).catch(() => onStagesChange(previous))
+  }
+
   async function handleAddContact(contactId: string, stageId: string) {
     const cc = await addContactToCampaign(campaign.id, contactId, stageId)
     onContactsChange([...campaignContacts, cc])
@@ -294,6 +315,7 @@ export function CampaignBoard({
               onStageUpdate={handleStageUpdate}
               onDeleteStage={handleDeleteStage}
               onAddContact={handleAddContact}
+              onMoveStage={handleMoveStage}
               onCardClick={onCardClick}
               onTogglePriority={handleTogglePriority}
               selectedIds={selectedIds}

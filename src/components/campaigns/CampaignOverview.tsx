@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { getAllCampaigns, getContacts } from '../../lib/airtable'
-import type { Campaign, Contact, CampaignType } from '../../lib/types'
+import type { Campaign, Contact } from '../../lib/types'
 import { CampaignCreate } from './CampaignCreate'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { EmptyState } from '../empty/EmptyState'
@@ -10,6 +10,24 @@ import { Avatar } from '../ui'
 import { LayoutGrid, List } from 'lucide-react'
 
 const VIEW_KEY = 'realdeal:campaigns-view'
+const SORT_KEY = 'realdeal:campaigns-sort'
+const GROUP_KEY = 'realdeal:campaigns-group'
+
+type SortKey = 'newest' | 'name' | 'deadline' | 'contacts'
+type GroupKey = 'none' | 'type' | 'deadline'
+
+const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+  { key: 'newest', label: 'Newest first' },
+  { key: 'name', label: 'Name' },
+  { key: 'deadline', label: 'Deadline' },
+  { key: 'contacts', label: 'Most people' },
+]
+
+const GROUP_OPTIONS: Array<{ key: GroupKey; label: string }> = [
+  { key: 'none', label: 'No grouping' },
+  { key: 'type', label: 'Group by type' },
+  { key: 'deadline', label: 'Group by deadline' },
+]
 
 export function CampaignOverview() {
   const navigate = useNavigate()
@@ -21,6 +39,12 @@ export function CampaignOverview() {
   const [view, setView] = useState<'grid' | 'list'>(() =>
     (localStorage.getItem(VIEW_KEY) as 'grid' | 'list') || 'grid'
   )
+  const [sort, setSort] = useState<SortKey>(() =>
+    (localStorage.getItem(SORT_KEY) as SortKey) || 'newest'
+  )
+  const [groupBy, setGroupBy] = useState<GroupKey>(() =>
+    (localStorage.getItem(GROUP_KEY) as GroupKey) || 'none'
+  )
 
   const load = useCallback(async () => {
     const [c, ct] = await Promise.all([getAllCampaigns(), getContacts()])
@@ -29,6 +53,7 @@ export function CampaignOverview() {
     setLoading(false)
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
   function toggleView(v: 'grid' | 'list') {
@@ -36,7 +61,28 @@ export function CampaignOverview() {
     localStorage.setItem(VIEW_KEY, v)
   }
 
-  const filtered = campaigns.filter(c => c.status === filter)
+  function handleSortChange(next: SortKey) {
+    setSort(next)
+    localStorage.setItem(SORT_KEY, next)
+  }
+
+  function handleGroupChange(next: GroupKey) {
+    setGroupBy(next)
+    localStorage.setItem(GROUP_KEY, next)
+  }
+
+  const filtered = useMemo(
+    () => campaigns.filter(c => c.status === filter),
+    [campaigns, filter]
+  )
+
+  const sorted = useMemo(() => {
+    const list = [...filtered]
+    list.sort((a, b) => compareCampaigns(a, b, sort))
+    return list
+  }, [filtered, sort])
+
+  const grouped = useMemo(() => groupCampaigns(sorted, groupBy), [sorted, groupBy])
 
   if (loading) return <OverviewSkeleton />
 
@@ -84,10 +130,22 @@ export function CampaignOverview() {
         />
       )}
 
-      {/* Filter + view toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+      {/* Filter + organization controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         <StatusToggle active={filter} onChange={setFilter} />
-        <div style={{ flex: 1 }} />
+        <div style={{ flex: 1, minWidth: 12 }} />
+        <ControlSelect
+          label="Sort"
+          value={sort}
+          onChange={(value) => handleSortChange(value as SortKey)}
+          options={SORT_OPTIONS}
+        />
+        <ControlSelect
+          label="Group"
+          value={groupBy}
+          onChange={(value) => handleGroupChange(value as GroupKey)}
+          options={GROUP_OPTIONS}
+        />
         <div style={{ display: 'flex', gap: 2, background: 'var(--tint)', borderRadius: 8, padding: 2 }}>
           <button
             type="button"
@@ -118,7 +176,7 @@ export function CampaignOverview() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <EmptyState
           icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="6" width="5" height="15" rx="1"/><rect x="17" y="9" width="5" height="12" rx="1"/></svg>}
           heading={filter === 'active' ? 'No active campaigns' : 'No completed campaigns'}
@@ -130,23 +188,46 @@ export function CampaignOverview() {
           ghosts={2}
         />
       ) : view === 'grid' ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 16,
-        }}>
-          {filtered.map((c, i) => (
-            <CampaignCard
-              key={c.id}
-              campaign={c}
-              contacts={contacts}
-              onClick={() => navigate(`/campaigns/${c.id}`)}
-              stagger={i}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {grouped.map((group) => (
+            <section key={group.key}>
+              {groupBy !== 'none' && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--color-text-tertiary)',
+                    marginBottom: 4,
+                  }}>
+                    {group.label}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                    {group.items.length} {group.items.length === 1 ? 'campaign' : 'campaigns'}
+                  </div>
+                </div>
+              )}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 16,
+              }}>
+                {group.items.map((c, i) => (
+                  <CampaignCard
+                    key={c.id}
+                    campaign={c}
+                    contacts={contacts}
+                    onClick={() => navigate(`/campaigns/${c.id}`)}
+                    stagger={i}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       ) : (
-        <CampaignListTable campaigns={filtered} contacts={contacts} onRowClick={(id) => navigate(`/campaigns/${id}`)} />
+        <CampaignListTable groups={grouped} groupBy={groupBy} onRowClick={(id) => navigate(`/campaigns/${id}`)} />
       )}
     </div>
   )
@@ -252,9 +333,9 @@ function CampaignCard({ campaign, contacts, onClick, stagger = 0 }: {
 
 // -- List Table --
 
-function CampaignListTable({ campaigns, contacts, onRowClick }: {
-  campaigns: Campaign[]
-  contacts: Contact[]
+function CampaignListTable({ groups, groupBy, onRowClick }: {
+  groups: Array<{ key: string; label: string; items: Campaign[] }>
+  groupBy: GroupKey
   onRowClick: (id: string) => void
 }) {
   return (
@@ -274,47 +355,102 @@ function CampaignListTable({ campaigns, contacts, onRowClick }: {
           </tr>
         </thead>
         <tbody>
-          {campaigns.map((c, i) => (
-            <tr
-              key={c.id}
-              onClick={() => onRowClick(c.id)}
-              className="campaign-card-enter"
-              style={{ '--stagger': i, borderBottom: '1px solid var(--edge)', cursor: 'pointer' } as React.CSSProperties}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--tint)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <td style={{ padding: '10px 12px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                {c.name}
-              </td>
-              <td style={{ padding: '10px 12px' }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  fontSize: 12, color: TYPE_COLORS[c.type],
-                }}>
-                  <CampaignTypeIcon type={c.type} size={12} colored />
-                  {TYPE_LABELS[c.type]}
-                </span>
-              </td>
-              <td style={{ padding: '10px 12px' }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 100,
-                  background: c.status === 'active' ? 'rgba(72,187,120,0.1)' : 'var(--tint)',
-                  color: c.status === 'active' ? '#48BB78' : 'var(--color-text-tertiary)',
-                }}>
-                  {c.status === 'active' ? 'Active' : 'Completed'}
-                </span>
-              </td>
-              <td style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>
-                {c.contact_ids.length}
-              </td>
-              <td style={{ padding: '10px 12px', color: 'var(--color-text-tertiary)', fontSize: 12 }}>
-                {c.deadline ? formatDeadline(c.deadline) : '-'}
-              </td>
-            </tr>
+          {groups.map((group, groupIndex) => (
+            <>
+              {groupBy !== 'none' && (
+                <tr key={`${group.key}-label`} style={{ borderBottom: '1px solid var(--edge)' }}>
+                  <td colSpan={5} style={{ padding: '10px 12px', background: 'var(--tint)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)' }}>
+                      {group.label}
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {group.items.map((c, i) => (
+                <tr
+                  key={c.id}
+                  onClick={() => onRowClick(c.id)}
+                  className="campaign-card-enter"
+                  style={{ '--stagger': i + groupIndex, borderBottom: '1px solid var(--edge)', cursor: 'pointer' } as React.CSSProperties}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--tint)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{ padding: '10px 12px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                    {c.name}
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      fontSize: 12, color: TYPE_COLORS[c.type],
+                    }}>
+                      <CampaignTypeIcon type={c.type} size={12} colored />
+                      {TYPE_LABELS[c.type]}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 100,
+                      background: c.status === 'active' ? 'rgba(72,187,120,0.1)' : 'var(--tint)',
+                      color: c.status === 'active' ? '#48BB78' : 'var(--color-text-tertiary)',
+                    }}>
+                      {c.status === 'active' ? 'Active' : 'Completed'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>
+                    {c.contact_ids.length}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: 'var(--color-text-tertiary)', fontSize: 12 }}>
+                    {c.deadline ? formatDeadline(c.deadline) : '-'}
+                  </td>
+                </tr>
+              ))}
+            </>
           ))}
         </tbody>
       </table>
     </div>
+  )
+}
+
+function ControlSelect({ label, value, onChange, options }: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  options: Array<{ key: string; label: string }>
+}) {
+  return (
+    <label style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '6px 10px',
+      borderRadius: 10,
+      background: 'var(--surface-panel)',
+      border: '1px solid var(--edge)',
+    }}>
+      <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          color: 'var(--color-text-primary)',
+          fontSize: 12,
+          fontFamily: 'inherit',
+          outline: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        {options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 
@@ -326,6 +462,44 @@ function formatDeadline(d: string): string {
   if (days === 0) return 'Today'
   if (days === 1) return 'Tomorrow'
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function compareCampaigns(a: Campaign, b: Campaign, sort: SortKey): number {
+  if (sort === 'name') return a.name.localeCompare(b.name)
+  if (sort === 'contacts') return b.contact_ids.length - a.contact_ids.length || a.name.localeCompare(b.name)
+  if (sort === 'deadline') {
+    const aDays = a.deadline ? daysUntil(a.deadline) : Number.POSITIVE_INFINITY
+    const bDays = b.deadline ? daysUntil(b.deadline) : Number.POSITIVE_INFINITY
+    return aDays - bDays || a.name.localeCompare(b.name)
+  }
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+}
+
+function deadlineGroupLabel(campaign: Campaign): string {
+  if (!campaign.deadline) return 'No deadline'
+  const days = daysUntil(campaign.deadline)
+  if (days < 0) return 'Overdue'
+  if (days <= 7) return 'Due this week'
+  if (days <= 30) return 'Due this month'
+  return 'Later'
+}
+
+function groupCampaigns(campaigns: Campaign[], groupBy: GroupKey): Array<{ key: string; label: string; items: Campaign[] }> {
+  if (groupBy === 'none') return [{ key: 'all', label: 'All campaigns', items: campaigns }]
+
+  const grouped = new Map<string, Campaign[]>()
+  for (const campaign of campaigns) {
+    const key = groupBy === 'type' ? campaign.type : deadlineGroupLabel(campaign)
+    const existing = grouped.get(key)
+    if (existing) existing.push(campaign)
+    else grouped.set(key, [campaign])
+  }
+
+  return Array.from(grouped.entries()).map(([key, items]) => ({
+    key,
+    label: groupBy === 'type' ? TYPE_LABELS[key as keyof typeof TYPE_LABELS] : key,
+    items,
+  }))
 }
 
 function StatusToggle({ active, onChange }: { active: 'active' | 'completed'; onChange: (v: 'active' | 'completed') => void }) {

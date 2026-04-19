@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'react-router'
-import type { Contact, Interaction, Pod } from '../../lib/types'
+import type { Campaign, Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getContacts, getPods, getInteractions, updateContact, isOverdue, isInGracePeriod } from '../../lib/airtable'
+import { getContacts, getPods, getInteractions, updateContact, isOverdue, isInGracePeriod, getCampaigns, getCampaignContactsForContact } from '../../lib/airtable'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
@@ -32,6 +32,7 @@ export function RecordPage() {
   const [pods, setPods] = useState<Pod[]>([])
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
+  const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isBannerDismissed, setIsBannerDismissed] = useState(false)
@@ -49,13 +50,17 @@ export function RecordPage() {
       getPods(),
       getFieldConfigs(),
       getInteractions(id),
-    ]).then(([found, fetchedPods, fetchedConfigs, fetchedInteractions]) => {
+      getCampaignContactsForContact(id),
+      getCampaigns(),
+    ]).then(([found, fetchedPods, fetchedConfigs, fetchedInteractions, campaignLinks, campaigns]) => {
       if (canceled) return
       if (!found) { setNotFound(true); setLoading(false); return }
       setContact(found)
       setPods(fetchedPods)
       setFieldConfigs(fetchedConfigs)
       setInteractions(fetchedInteractions)
+      const campaignIds = new Set(campaignLinks.map(link => link.campaign_id))
+      setActiveCampaigns(campaigns.filter(campaign => campaign.status === 'active' && campaignIds.has(campaign.id)))
       setLoading(false)
     }).catch(() => {
       if (!canceled) { setNotFound(true); setLoading(false) }
@@ -146,7 +151,7 @@ export function RecordPage() {
 
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
-      <RecordHeader contact={contact} pods={pods} onUpdate={handleUpdate} />
+      <RecordHeader contact={contact} pods={pods} activeCampaigns={activeCampaigns} onUpdate={handleUpdate} />
 
       {urgentSignal && !isBannerDismissed && (
         <div style={{

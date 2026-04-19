@@ -115,29 +115,31 @@ ALTER TABLE public.share_links ADD COLUMN workspace_id uuid REFERENCES public.wo
 DO $$
 DECLARE
   _ws_id uuid := gen_random_uuid();
-  _user_id uuid := '9582e3a4-14d6-48b5-80ce-4f365b7f266a';
+  _user_id uuid := (SELECT id FROM auth.users ORDER BY created_at ASC LIMIT 1);
 BEGIN
-  INSERT INTO public.workspaces (id, name, slug) VALUES (_ws_id, 'Personal', 'personal');
-  INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES (_ws_id, _user_id, 'owner');
-  INSERT INTO public.profiles (id, display_name, email) VALUES (_user_id, 'Moj', NULL) ON CONFLICT (id) DO NOTHING;
+  IF _user_id IS NOT NULL THEN
+    INSERT INTO public.workspaces (id, name, slug) VALUES (_ws_id, 'Personal', 'personal');
+    INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES (_ws_id, _user_id, 'owner');
+    INSERT INTO public.profiles (id, display_name, email) VALUES (_user_id, 'Owner', NULL) ON CONFLICT (id) DO NOTHING;
 
-  UPDATE public.pods SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.categories SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.contact_pods SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.contact_categories SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.interactions SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.pipelines SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.pipeline_stages SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.opportunities SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.opportunity_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.campaigns SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.campaign_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.projects SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.project_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.project_opportunities SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.field_config SET workspace_id = _ws_id WHERE workspace_id IS NULL;
-  UPDATE public.share_links SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.pods SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.categories SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.contact_pods SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.contact_categories SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.interactions SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.pipelines SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.pipeline_stages SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.opportunities SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.opportunity_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.campaigns SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.campaign_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.projects SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.project_contacts SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.project_opportunities SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.field_config SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+    UPDATE public.share_links SET workspace_id = _ws_id WHERE workspace_id IS NULL;
+  END IF;
 END $$;
 
 -- 11. Make workspace_id NOT NULL after backfill

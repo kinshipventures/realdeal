@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
-import { Check, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import type { CampaignContact, CampaignStage, Contact, HexColor, Interaction } from '../../lib/types'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { CampaignContactCard } from './CampaignContactCard'
@@ -25,6 +25,7 @@ interface Props {
   onStageUpdate: (id: string, data: Partial<Pick<CampaignStage, 'name' | 'color'>>) => void
   onDeleteStage: (id: string) => void
   onAddContact: (contactId: string, stageId: string) => void
+  onMoveStage: (stageId: string, direction: 'left' | 'right') => void
   onCardClick: (cc: CampaignContact) => void
   onTogglePriority: (ccId: string) => void
   selectedIds: Set<string>
@@ -44,6 +45,7 @@ export function CampaignStageColumn({
   onStageUpdate,
   onDeleteStage,
   onAddContact,
+  onMoveStage,
   onCardClick,
   onTogglePriority,
   selectedIds,
@@ -222,6 +224,47 @@ export function CampaignStageColumn({
           {stageContacts.length}
         </span>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={() => onMoveStage(stage.id, 'left')}
+            aria-label="Move stage left"
+            disabled={isFirst}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: isFirst ? 'default' : 'pointer',
+              padding: 2,
+              color: isFirst ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)',
+              opacity: isFirst ? 0.35 : 1,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <ChevronLeft size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveStage(stage.id, 'right')}
+            aria-label="Move stage right"
+            disabled={isLast}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: isLast ? 'default' : 'pointer',
+              padding: 2,
+              color: isLast ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)',
+              opacity: isLast ? 0.35 : 1,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <ChevronRight size={13} />
+          </button>
+        </div>
+
         {canDelete && (
           <button
             onClick={() => onDeleteStage(stage.id)}
@@ -308,7 +351,7 @@ export function CampaignStageColumn({
         </SortableContext>
       </div>
 
-      {/* Add contact */}
+      {/* Add relationship */}
       <div style={{ padding: '0 12px 14px' }}>
         {showSearch ? (
           <div>
@@ -364,7 +407,7 @@ export function CampaignStageColumn({
               cursor: 'pointer', padding: '4px 6px',
             }}
           >
-            + Add contact
+            + Add Relationship
           </button>
         )}
       </div>

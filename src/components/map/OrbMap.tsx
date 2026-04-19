@@ -33,10 +33,11 @@ import { PodDetailPage } from '../pods/PodDetailPage'
 import { useEscape } from '../../lib/escapeStack'
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(false)
+  const [mobile, setMobile] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  ))
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
-    setMobile(mq.matches)
     const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
@@ -57,8 +58,6 @@ const edgeTypes = {
   gradient: GradientEdgeComponent,
 }
 
-const CREATE_POD_ID = '__create-pod__'
-
 // Radii for orbital rings — scale down on small screens so orbs stay visible
 const BASE_RADII = [210, 330, 460]
 const RING_RADII = typeof window !== 'undefined' && window.innerWidth < 500
@@ -67,7 +66,13 @@ const RING_RADII = typeof window !== 'undefined' && window.innerWidth < 500
 
 function hubLayout(
   lists: { id: string; is_priority?: boolean }[],
-): { mojPos: { x: number; y: number }; listPositions: Map<string, { x: number; y: number }>; activeRings: number[]; ringIndexByPod: Map<string, number> } {
+): {
+  mojPos: { x: number; y: number }
+  listPositions: Map<string, { x: number; y: number }>
+  activeRings: number[]
+  ringIndexByPod: Map<string, number>
+  ringPods: { id: string; is_priority?: boolean }[][]
+} {
   const mojPos = { x: -MOJ_SIZE / 2, y: -MOJ_SIZE / 2 }
   const listPositions = new Map<string, { x: number; y: number }>()
 
@@ -85,14 +90,13 @@ function hubLayout(
   const sorted = [...priority, ...rest]
 
   const ringBuckets: { id: string; is_priority?: boolean }[][] = rings.map(() => [])
-  sorted.forEach((item, i) => {
+  sorted.forEach((item) => {
     // Priority pods fill inner ring first, up to cap
     if (item.is_priority && ringBuckets[0].length < INNER_CAP) {
       ringBuckets[0].push(item)
     } else {
       // Fill remaining rings round-robin starting from ring 1 (or 0 if single ring)
       const startRing = rings.length > 1 ? 1 : 0
-      const available = rings.length - startRing
       const idx = startRing + (ringBuckets.slice(startRing).reduce((min, b, bi) =>
         b.length < ringBuckets[startRing + min].length ? bi : min, 0))
       ringBuckets[idx].push(item)
@@ -120,7 +124,7 @@ function hubLayout(
     })
   }
 
-  return { mojPos, listPositions, activeRings: rings, ringIndexByPod }
+  return { mojPos, listPositions, activeRings: rings, ringIndexByPod, ringPods: ringBuckets }
 }
 
 type PodCounts = { total: number; overdue: number }
@@ -134,7 +138,6 @@ interface BuildHomeNodesParams {
   overallHealth?: number
   totalContacts?: number
   userName?: string
-  onCreatePod: () => void
   onPodHoverEnter?: (podId: string, x: number, y: number) => void
   onPodHoverLeave?: () => void
   onDrillIn?: (pod: Pod) => void
@@ -149,13 +152,14 @@ function buildHomeNodes({
   overallHealth,
   totalContacts,
   userName,
-  onCreatePod,
   onPodHoverEnter,
   onPodHoverLeave,
   onDrillIn,
-}: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number> } {
-  const { mojPos, listPositions, activeRings, ringIndexByPod } = hubLayout(pods)
+}: BuildHomeNodesParams): { nodes: Node[]; activeRings: number[]; ringIndexByPod: Map<string, number>; ringAccentColors: string[] } {
+  const { mojPos, listPositions, activeRings, ringIndexByPod, ringPods } = hubLayout(pods)
   const DEPTH_BY_RING = [1.0, 0.92, 0.85]
+  const podColorById = new Map(pods.map(pod => [pod.id, pod.color ?? '#25B439']))
+  const ringAccentColors = ringPods.map((ring, index) => podColorById.get(ring[0]?.id ?? '') ?? (index === 0 ? '#25B439' : 'rgba(37,180,57,0.28)'))
 
   const mojNode: Node = {
     id: MOJ_ID,
@@ -202,13 +206,37 @@ function buildHomeNodes({
     })
   })
 
-  return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod }
+  return { nodes: [mojNode, ...podNodes], activeRings, ringIndexByPod, ringAccentColors }
 }
 
 const VIEWPORT_KEY = 'realdeal:map-viewport'
 
 function podSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function cadenceLabel(cadence: Pod['cadence']): string {
+  switch (cadence) {
+    case 'weekly': return 'weekly rhythm'
+    case 'biweekly': return 'two-week rhythm'
+    case 'quarterly': return 'quarterly rhythm'
+    case 'monthly':
+    default:
+      return 'monthly rhythm'
+  }
+}
+
+function podPulseCopy(score: number, overdueCount: number): string {
+  const label = scoreLabel(score)
+  if (overdueCount > 0) {
+    if (label === 'Thriving' || label === 'Steady') return 'Strong pod. A few people could use a check-in.'
+    if (label === 'Cooling') return 'This pod is ready for a little fresh energy.'
+    return 'A gentle reset here would go a long way.'
+  }
+  if (label === 'Thriving') return 'This pod feels active, warm, and well cared for.'
+  if (label === 'Steady') return 'This pod is in a good rhythm right now.'
+  if (label === 'Cooling') return 'Quiet lately, but still within reach.'
+  return 'This pod has gone quiet and is ready to be reawakened.'
 }
 
 function loadViewport(): Viewport | null {
@@ -490,6 +518,12 @@ export function OrbMap() {
   const [podsLoaded, setPodsLoaded] = useState(false)
   const [podsCount, setPodsCount] = useState(0)
   const [showCreatePod, setShowCreatePod] = useState(false)
+  const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
+  const [ringAccentColors, setRingAccentColors] = useState<string[]>([])
+  const [renderPods, setRenderPods] = useState<Pod[]>([])
+  const [renderCountsByPod, setRenderCountsByPod] = useState<Record<string, PodCounts>>({})
+  const [renderEquityByPod, setRenderEquityByPod] = useState<Record<string, number>>({})
+  const [renderCategoriesByPod, setRenderCategoriesByPod] = useState<Record<string, Category[]>>({})
 
   const podsRef = useRef<Pod[]>([])
   const countsByPodRef = useRef<Record<string, PodCounts>>({})
@@ -512,7 +546,7 @@ export function OrbMap() {
   }, [])
 
   const [hoveredPod, setHoveredPod] = useState<{
-    pod: Pod; health: number; contactCount: number; overdueCount: number
+    pod: Pod; health: number; contactCount: number; overdueCount: number; cadenceLabel: string; pulseCopy: string; x: number; y: number
   } | null>(null)
   const cursorRef = useRef({ x: 0, y: 0 })
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -558,6 +592,10 @@ export function OrbMap() {
       health: equityByPodRef.current[podId] ?? 0,
       contactCount: counts.total,
       overdueCount: counts.overdue,
+      cadenceLabel: cadenceLabel(pod.cadence),
+      pulseCopy: podPulseCopy(equityByPodRef.current[podId] ?? 0, counts.overdue),
+      x: clientX + 16,
+      y: clientY + 16,
     })
   }, [])
 
@@ -566,7 +604,7 @@ export function OrbMap() {
   }, [])
 
   const rebuildHomeView = useCallback(() => {
-    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
+    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap, ringAccentColors: accents } = buildHomeNodes({
       pods: podsRef.current,
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
@@ -575,16 +613,16 @@ export function OrbMap() {
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
       userName,
-      onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,
       onDrillIn: (pod) => drillInRef.current?.(pod),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
+    setRingAccentColors(accents)
     ringByPodRef.current = ringMap
     setEdges([])
-  }, [setNodes, setEdges, handlePodHoverEnter, handlePodHoverLeave])
+  }, [setNodes, setEdges, handlePodHoverEnter, handlePodHoverLeave, userName])
 
   // Keep drillInRef in sync so rebuildHomeView can reference drillIntoPod without a circular dep
   // (rebuildHomeView is defined before drillIntoPod)
@@ -607,13 +645,13 @@ export function OrbMap() {
     const ch = containerEl?.clientHeight ?? window.innerHeight
     const panelWidth = Math.min(520, cw - 32)
     const availableWidth = cw - panelWidth - 32 // space left of the overlay
-    const zoomTarget = Math.min(getZoom() * 1.6, 2.2)
+    const zoomTarget = Math.min(getZoom() * 1.58, 2.15)
     // Center the pod orb in the available left area, vertically centered
     setViewport({
       x: (availableWidth / 2) - podX * zoomTarget,
       y: (ch / 2) - podY * zoomTarget,
       zoom: zoomTarget,
-    }, { duration: 450 })
+    }, { duration: 400 })
 
     // Fade sibling pods during zoom
     setMapView('pod')
@@ -629,10 +667,12 @@ export function OrbMap() {
 
     setTimeout(() => {
       isAnimating.current = false
-    }, 500)
+    }, 440)
   }, [nodes, setNodes, setViewport, getZoom, navigate, podName])
 
-  drillInRef.current = drillIntoPod
+  useEffect(() => {
+    drillInRef.current = drillIntoPod
+  }, [drillIntoPod])
 
   const drillBackToHub = useCallback(() => {
     if (isAnimating.current) return
@@ -649,15 +689,17 @@ export function OrbMap() {
     })))
 
     requestAnimationFrame(() => {
-      fitView({ padding: 0.22, duration: 400 })
+      fitView({ padding: 0.22, duration: 360 })
       setTimeout(() => {
         isAnimating.current = false
         setFitViewEnabled(true)
-      }, 450)
+      }, 400)
     })
   }, [setNodes, fitView, navigate, podName])
 
-  drillBackRef.current = drillBackToHub
+  useEffect(() => {
+    drillBackRef.current = drillBackToHub
+  }, [drillBackToHub])
 
   // Escape key to drill back when in pod view
   const escapeHandler = useCallback(() => {
@@ -710,24 +752,28 @@ export function OrbMap() {
       getPods(), getContacts(), getAllInteractions(), getCategories(),
     ])
 
+    const podById = new Map(allPods.map(pod => [pod.id, pod]))
     const countsByPod: Record<string, PodCounts> = {}
     const memberCountByPod: Record<string, number> = {}
+    const contactsByPod = new Map<string, Contact[]>()
     for (const contact of allContacts) {
       const primaryPodId = contact.primary_list_id
       if (!primaryPodId) continue
       if (!countsByPod[primaryPodId]) countsByPod[primaryPodId] = { total: 0, overdue: 0 }
       countsByPod[primaryPodId].total++
-      const primaryPod = allPods.find(p => p.id === primaryPodId)
+      const primaryPod = podById.get(primaryPodId)
       if (isOverdue(contact, primaryPod?.cadence ?? 'monthly')) countsByPod[primaryPodId].overdue++
       memberCountByPod[primaryPodId] = (memberCountByPod[primaryPodId] ?? 0) + 1
+      const podContacts = contactsByPod.get(primaryPodId)
+      if (podContacts) podContacts.push(contact)
+      else contactsByPod.set(primaryPodId, [contact])
     }
 
     const byContact = indexByContact(allInteractions)
     const equityByPod: Record<string, number> = {}
-    for (const pod of allPods) {
-      const podContacts = allContacts.filter(c => c.primary_list_id === pod.id)
+    for (const [podId, podContacts] of contactsByPod.entries()) {
       if (podContacts.length > 0) {
-        equityByPod[pod.id] = podEquityScore(podContacts, byContact)
+        equityByPod[podId] = podEquityScore(podContacts, byContact)
       }
     }
 
@@ -748,7 +794,14 @@ export function OrbMap() {
     }
   }
 
-  const handlePodCreated = useCallback(async (newPod: Pod) => {
+  const syncRenderData = useCallback((pods: Pod[], countsByPod: Record<string, PodCounts>, equityByPod: Record<string, number>, categoriesByPod: Record<string, Category[]>) => {
+    setRenderPods(pods)
+    setRenderCountsByPod(countsByPod)
+    setRenderEquityByPod(equityByPod)
+    setRenderCategoriesByPod(categoriesByPod)
+  }, [])
+
+  const handlePodCreated = useCallback(async () => {
     setShowCreatePod(false)
     try {
       const data = await loadPodData()
@@ -761,13 +814,14 @@ export function OrbMap() {
       overallHealthRef.current = data.overallHealth
       totalContactsRef.current = data.allContacts.length
       categoriesByPodRef.current = data.catsByPod
+      syncRenderData(data.allPods, data.countsByPod, data.equityByPod, data.catsByPod)
 
       rebuildHomeView()
       setPodsCount(data.allPods.length)
     } catch (err) {
       console.error('Failed to refresh pods after creation:', err)
     }
-  }, [rebuildHomeView])
+  }, [rebuildHomeView, syncRenderData])
 
   useEffect(() => {
     let stale = false
@@ -786,7 +840,9 @@ export function OrbMap() {
         totalContactsRef.current = data.allContacts.length
         categoriesByPodRef.current = data.catsByPod
 
-        const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
+        syncRenderData(data.allPods, data.countsByPod, data.equityByPod, data.catsByPod)
+
+        const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap, ringAccentColors: accents } = buildHomeNodes({
           pods: data.allPods,
           countsByPod: data.countsByPod,
           equityByPod: data.equityByPod,
@@ -795,13 +851,13 @@ export function OrbMap() {
           overallHealth: data.overallHealth,
           totalContacts: data.allContacts.length,
           userName,
-          onCreatePod: () => setShowCreatePod(true),
           onPodHoverEnter: handlePodHoverEnter,
           onPodHoverLeave: handlePodHoverLeave,
           onDrillIn: (pod) => drillInRef.current?.(pod),
         })
         setNodes(homeNodes)
         setActiveRings(rings)
+        setRingAccentColors(accents)
         ringByPodRef.current = ringMap
         setEdges([])
         if (!stale) { setPodsLoaded(true); setPodsCount(data.allPods.length) }
@@ -812,7 +868,7 @@ export function OrbMap() {
     }
     init()
     return () => { stale = true }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handlePodHoverEnter, handlePodHoverLeave, setNodes, setEdges, syncRenderData, userName])
 
   useEffect(() => {
     if (!podsLoaded) return
@@ -877,9 +933,6 @@ export function OrbMap() {
     requestAnimationFrame(animate)
   }, [setNodes, mapView])
 
-  // Orbit ring radii for home view — match hub layout radii from DESIGN.md
-  const [activeRings, setActiveRings] = useState<number[]>(RING_RADII)
-
   const handleViewModeChange = useCallback((mode: 'map' | 'list') => {
     setViewMode(mode)
     localStorage.setItem('realdeal:pods-view-mode', mode)
@@ -906,29 +959,28 @@ export function OrbMap() {
   const handleResetLayout = useCallback(() => {
     clearAllPositions()
     localStorage.removeItem(VIEWPORT_KEY)
-    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap } = buildHomeNodes({
+    const { nodes: homeNodes, activeRings: rings, ringIndexByPod: ringMap, ringAccentColors: accents } = buildHomeNodes({
       pods: podsRef.current,
       countsByPod: countsByPodRef.current,
       equityByPod: equityByPodRef.current,
       categoriesByPod: categoriesByPodRef.current,
-      
       memberCountByPod: memberCountByPodRef.current,
       overallHealth: overallHealthRef.current,
       totalContacts: totalContactsRef.current,
       userName,
-      onCreatePod: () => setShowCreatePod(true),
       onPodHoverEnter: handlePodHoverEnter,
       onPodHoverLeave: handlePodHoverLeave,
       onDrillIn: (pod) => drillInRef.current?.(pod),
     })
     setNodes(homeNodes)
     setActiveRings(rings)
+    setRingAccentColors(accents)
     ringByPodRef.current = ringMap
     setEdges([])
     requestAnimationFrame(() => {
       fitView({ padding: 0.22, duration: 250 })
     })
-  }, [setNodes, setEdges, fitView, handlePodHoverEnter, handlePodHoverLeave])
+  }, [setNodes, setEdges, fitView, handlePodHoverEnter, handlePodHoverLeave, userName])
 
   return (
     <div ref={containerRef} style={{
@@ -1144,10 +1196,10 @@ export function OrbMap() {
       {/* List view */}
       {viewMode === 'list' && podsLoaded && (
         <PodListView
-          pods={podsRef.current}
-          countsByPod={countsByPodRef.current}
-          equityByPod={equityByPodRef.current}
-          categoriesByPod={categoriesByPodRef.current}
+          pods={renderPods}
+          countsByPod={renderCountsByPod}
+          equityByPod={renderEquityByPod}
+          categoriesByPod={renderCategoriesByPod}
           selectedPod={selectedPod}
           onPodClick={handleListPodClick}
           onCategoryClick={handleListCategoryClick}
@@ -1164,8 +1216,8 @@ export function OrbMap() {
               ref={tooltipRef}
               className="pod-tooltip"
               style={{
-                left: cursorRef.current.x + 16,
-                top: cursorRef.current.y + 16,
+                left: hoveredPod.x,
+                top: hoveredPod.y,
               }}
             >
               <div className="tooltip-header">
@@ -1174,10 +1226,10 @@ export function OrbMap() {
                   {hoveredPod.pod.name}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
                 <span style={{
                   display: 'inline-block',
-                  padding: '2px 8px',
+                  padding: '3px 8px',
                   borderRadius: 100,
                   fontSize: 10,
                   fontWeight: 600,
@@ -1189,12 +1241,22 @@ export function OrbMap() {
                 <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
                   {hoveredPod.contactCount} {hoveredPod.contactCount === 1 ? 'person' : 'people'}
                 </span>
-              </div>
-              {hoveredPod.overdueCount > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--health-cooling)', marginTop: 2 }}>
-                  {hoveredPod.overdueCount} need attention
+                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+                  {hoveredPod.cadenceLabel}
                 </span>
-              )}
+              </div>
+              <span style={{ fontSize: 11, lineHeight: 1.45, color: 'var(--color-text-secondary)' }}>
+                {hoveredPod.pulseCopy}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: hoveredPod.overdueCount > 0 ? 'var(--health-cooling)' : 'var(--color-brand-dark)',
+                }}>
+                  {hoveredPod.overdueCount > 0 ? `${hoveredPod.overdueCount} need attention` : 'Nothing urgent right now'}
+                </span>
+              </div>
             </div>
           )}
 
@@ -1222,21 +1284,39 @@ export function OrbMap() {
             </defs>
             <g ref={ringGroupRef}>
               {activeRings.map((r, ri) => (
-                <circle
-                  key={r}
-                  className="ring-enter"
-                  style={{
-                    '--ring-delay': `${ri * 0.15}s`,
-                    strokeWidth: 'var(--ring-stroke-width, 1.5px)',
-                  } as React.CSSProperties}
-                  cx={0}
-                  cy={0}
-                  r={r}
-                  fill="none"
-                  stroke="var(--stroke-subtle)"
-                  strokeOpacity={0.5 - ri * 0.1}
-                  filter="url(#ring-glow)"
-                />
+                <g key={r} className="ring-shell">
+                  <circle
+                    className="ring-enter ring-base"
+                    style={{
+                      '--ring-delay': `${ri * 0.15}s`,
+                      '--ring-drift-delay': `${ri * 0.6}s`,
+                      strokeWidth: 'var(--ring-stroke-width, 1.5px)',
+                    } as React.CSSProperties}
+                    cx={0}
+                    cy={0}
+                    r={r}
+                    fill="none"
+                    stroke="var(--stroke-subtle)"
+                    strokeOpacity={0.5 - ri * 0.1}
+                    filter="url(#ring-glow)"
+                  />
+                  <circle
+                    className="ring-shimmer"
+                    style={{
+                      '--ring-delay': `${ri * 0.15 + 0.35}s`,
+                      '--ring-shimmer-duration': `${15 + ri * 3}s`,
+                      strokeWidth: 'var(--ring-stroke-width, 1.5px)',
+                    } as React.CSSProperties}
+                    cx={0}
+                    cy={0}
+                    r={r}
+                    fill="none"
+                    stroke={ringAccentColors[ri] ?? 'rgba(37,180,57,0.28)'}
+                    strokeOpacity={0.18 - ri * 0.03}
+                    strokeDasharray={`${Math.max(42, r * 0.36)} ${Math.max(180, r * 2.4)}`}
+                    strokeLinecap="round"
+                  />
+                </g>
               ))}
             </g>
           </svg>

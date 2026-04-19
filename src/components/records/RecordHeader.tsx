@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { MoreHorizontal } from 'lucide-react'
-import type { Contact, Pod } from '../../lib/types'
+import type { Campaign, Contact, Pod } from '../../lib/types'
 import { getContactsByType, getContacts, createContact, deleteContact, invalidateContactsCache } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
 import { MergeModal } from '../merge/MergeModal'
@@ -25,6 +25,7 @@ const PILL_STYLE: React.CSSProperties = {
 interface RecordHeaderProps {
   contact: Contact
   pods: Pod[]
+  activeCampaigns?: Campaign[]
   onUpdate: (data: Partial<Contact>) => void
 }
 
@@ -32,7 +33,7 @@ function initials(name: string) {
   return name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
 }
 
-export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
+export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: RecordHeaderProps) {
   const navigate = useNavigate()
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(contact.name)
@@ -265,6 +266,41 @@ export function RecordHeader({ contact, pods, onUpdate }: RecordHeaderProps) {
           {companySubtitle && (
             <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)', marginBottom: 2 }}>
               {companySubtitle}
+            </div>
+          )}
+
+          {activeCampaigns.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {activeCampaigns.map(campaign => (
+                <button
+                  key={campaign.id}
+                  type="button"
+                  onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: 'var(--color-text-primary)',
+                    background: 'color-mix(in srgb, var(--surface-panel) 88%, var(--tint) 12%)',
+                    border: '1px solid var(--edge)',
+                    borderRadius: 999,
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--color-brand)',
+                    flexShrink: 0,
+                  }} />
+                  {campaign.name}
+                </button>
+              ))}
             </div>
           )}
 
