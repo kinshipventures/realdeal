@@ -180,11 +180,12 @@ Toggle via sidebar. When active, all data functions return static sample data. W
 
 ## Deploy Configuration
 
-- Platform: Lovable (hosts via lovable.app)
-- Production URL: https://real-deal.lovable.app
-- Auto-deploy on push to main
+- Platform: Vercel (auto-deploys from github main)
+- Production URL: https://real-deal-2.vercel.app
+- Supabase project: pnhyhcwecpgbcsoabbrm (personal, not Lovable Cloud)
+- Lovable editor still used for code edits (syncs via git); real-deal.lovable.app is a stale zombie
 - Pre-merge: `pnpm build`
-- Required env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
+- Required env vars (set in Vercel): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `VITE_USE_LOVABLE_AUTH_BRIDGE=false`
 
 ## Skill routing
 
