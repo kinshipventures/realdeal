@@ -181,8 +181,7 @@ Toggle via sidebar. When active, all data functions return static sample data. W
 ## Deploy Configuration
 
 - Platform: Lovable (hosts via lovable.app)
-- Production URL: https://kinshipbrain.lovable.app
-- Vercel project name: kinshipbrain (used for builds)
+- Production URL: https://real-deal.lovable.app
 - Auto-deploy on push to main
 - Pre-merge: `pnpm build`
 - Required env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`

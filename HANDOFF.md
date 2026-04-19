@@ -241,7 +241,7 @@ Airtable limits how fast data can be written. The import paces at roughly 10 con
 
 **2. Orb layout can get stuck**
 
-If the map view looks wrong — orbs overlapping or in unexpected positions — you can reset the layout. In Chrome or Safari: open DevTools (right-click → Inspect), go to Application → Local Storage, find the key `kinshipbrain:node-positions:v2`, and delete it. Refresh the page. The orbs will reset to their default circular layout.
+If the map view looks wrong — orbs overlapping or in unexpected positions — you can reset the layout. In Chrome or Safari: open DevTools (right-click → Inspect), go to Application → Local Storage, find the key `realdeal:node-positions:v3`, and delete it. Refresh the page. The orbs will reset to their default circular layout.
 
 **3. Equity scores assume monthly cadence by default**
 

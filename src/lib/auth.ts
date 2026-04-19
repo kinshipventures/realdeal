@@ -16,7 +16,7 @@ export async function signInWithGoogle(): Promise<GoogleSignInResult> {
   const queryParams = {
     access_type: 'offline',
     prompt: 'consent',
-    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/contacts.readonly',
+    scope: 'openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/contacts.readonly',
   }
 
   if (USE_LOVABLE_AUTH_BRIDGE) {
