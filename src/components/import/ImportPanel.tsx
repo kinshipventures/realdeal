@@ -234,9 +234,8 @@ export function ImportPanel() {
     }
   }
 
-  // ---- Outlook (placeholder - needs connector) ----
+  // ---- Outlook (coming soon - requires Microsoft OAuth connector) ----
   const handleOutlook = () => {
-    // TODO: Connect Microsoft Outlook connector
     alert('Outlook sync requires connecting your Microsoft account. This feature is coming soon.')
   }
 

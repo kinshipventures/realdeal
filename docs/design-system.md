@@ -1,257 +1,194 @@
-# RealDeal — Design System
+# Real Deal - Design System
 
-## Principles
+## Product Direction
 
-1. **Bold color and clarity** — brand green is confident and present. Use it to signal identity, not decoration.
-2. **Editorial authority** — serif headings give the interface weight and intention. Content-first.
-3. **Information density without overwhelm** — panels and cards show what matters, reveal more on demand.
-4. **Accessibility-first** — WCAG AA minimum on all text. White-on-green is explicitly validated.
+Real Deal should feel like a calm command surface for the day.
 
----
+The right mix is:
+- Dia's calm, report-like clarity
+- Arc's shell, framing, and product feel
+- Real Deal's practical daily utility
 
-## Color
+This is not a loud dashboard and not an internal admin tool.
+It should feel composed, premium, and useful.
 
-### Tokens
+## Core Rules
 
-All color tokens are defined in `src/styles/globals.css` in the `@theme` block (generates Tailwind utilities + CSS vars) and the `:root` block (component-specific constants).
+- Design the shell before the cards.
+- Start the home screen with one clear daily thesis.
+- Keep the base UI warm and neutral.
+- Use green as framing, not wallpaper.
+- Do not give every module the same weight.
 
-#### Brand
+## Visual Direction
 
-| Token | Value | Usage |
-|---|---|---|
-| `--color-brand` | `#25B439` | Primary brand green — nav active, focus card accent, section dividers |
-| `--color-brand-dark` | `#1A8A2A` | Darker variant for hover states on green |
-| `--header-band-bg` | `#25B439` | Dashboard green header band background |
+### Mood
 
-#### Background
+- Calm
+- Focused
+- Premium
+- Light, not sterile
+- Structured, not busy
 
-| Token | Value | Usage |
-|---|---|---|
-| `--color-bg` | `#f8f8f6` | App body background — near-white, slight warmth |
-| `--color-surface` | `#ffffff` | Pure white surface |
-| `--surface-panel` | `rgba(255,255,255,0.92)` | Panel / drawer backgrounds |
-| `--surface-panel-border` | `1px solid rgba(0,0,0,0.07)` | Panel border shorthand |
+### What The App Should Feel Like
 
-#### Orbs
+- A morning report with controls
+- A designed environment
+- A place to decide what matters fast
 
-| Token | Value | Usage |
-|---|---|---|
-| `--color-hub-orb` | `#1C1C1E` | Moj hub orb — near-black solid fill |
+### What To Avoid
 
-#### Text (on light background)
-
-| Token | Value | Contrast on `--surface-panel` | Usage |
-|---|---|---|---|
-| `--color-text-primary` | `rgba(0,0,0,0.82)` | ~12:1 ✅ AAA | Names, headings, primary content |
-| `--color-text-secondary` | `rgba(0,0,0,0.45)` | ~5.2:1 ✅ AA | Company, subtitles, secondary content |
-| `--color-text-tertiary` | `rgba(0,0,0,0.40)` | ~4.4:1 ✅ AA | Timestamps, metadata, hints |
-
-#### Text (on green band)
-
-| Value | Contrast on `#25B439` | Usage |
-|---|---|---|
-| `#ffffff` | ~5.5:1 ✅ AA | Score numbers, stat values, headings on green |
-| `rgba(255,255,255,0.70)` | ~4.8:1 ✅ AA | Secondary labels on green |
-| `rgba(255,255,255,0.55)` | ~3.8:1 ⚠️ AA large only | Tertiary labels on green (11px+) |
-
-#### Semantic Colors
-
-| Token | Value | Usage |
-|---|---|---|
-| `color-overdue` | `#FF3B30` | Overdue dot indicator |
-| `color-overdue-text` | `#D93025` | Overdue timestamp text |
-| `hsla(20, 80%, 45%, 0.80)` | warm orange | Overdue count labels — intentional semantic, not a shared token |
-
-> **WCAG thresholds**: 4.5:1 for normal text (AA), 3:1 for large/bold text (AA), 7:1 for AAA.
-
----
+- Big green sections that take over the whole screen
+- Generic dashboard gradients
+- Equal-weight cards from top to bottom
+- Too many pills, chips, and boxed stats
+- Styling that feels like a prettier admin panel
 
 ## Typography
 
-**Heading font**: [Fraunces](https://fonts.google.com/specimen/Fraunces) — variable optical size serif, heavier and more confident than Playfair. Matches Trolley CRM PDF energy.
+- Display and hero: Instrument Serif
+- Body and UI: Instrument Sans
+- Data accents and timestamps: Space Mono, used sparingly
 
-**Body font**: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) — geometric sans with tall x-height, open counters, contemporary feel. Replaces DM Sans entirely.
+### Type Scale
 
-Both loaded via Google Fonts in `index.html`.
-
-```css
---font-serif: 'Fraunces', serif;
---font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-```
-
-Loaded weights:
-- Fraunces: `400`, `700`, `800`, `900`
-- Plus Jakarta Sans: `400`, `500`, `600`
-
-### Scale
-
-| Usage | Size | Weight | Font | Notes |
-|---|---|---|---|---|
-| Dashboard section heading | 16px | 600 | Serif | `letter-spacing: -0.02em` |
-| Panel heading (category name) | 18px | 600 | Serif | `letter-spacing: -0.02em` |
-| Contact name | 18px | 600 | Serif | `letter-spacing: -0.02em` |
-| Section label (contact, context, personal) | 11px | 600 | Serif | lowercase |
-| Pod card name | 13px | 600 | Serif | `letter-spacing: -0.01em` |
-| Score number | 22–28px | 700 | Sans | `letter-spacing: -0.03em` |
-| Body / card content | 13px | 400–500 | Sans | |
-| Company / subtitle | 11–12px | 400 | Sans | |
-| Metadata / timestamp | 10–11px | 500 | Sans | `letter-spacing: 0.02em` |
-| Orb label | 8–13px | 600 | Sans | always white on solid orbs |
-
-> Heading CSS rule: `h1, h2, h3, .heading { font-family: var(--font-serif); }` — applied globally in globals.css.
-
----
-
-## Spacing
-
-8pt grid: `8, 16, 24, 32, 40, 48` px.
-
-| Context | Value |
-|---|---|
-| Panel padding (horizontal) | 24px |
-| Panel padding (top) | 28px |
-| Panel row padding | 10px 20px |
-| Header band padding | 28px 24px 32px |
-| Header bottom gap | 18px |
-| Contact card gap | 12px |
-| Orb-to-orb radius (lists) | 310px |
-| Orb-to-orb radius (categories) | 230px |
-
----
-
-## Components
-
-### Orb (solid sphere)
-
-Solid opaque fill with a single subtle radial gradient for shape/depth. No glass layers.
-
-```tsx
-// Solid fill with subtle shape radial
-const bg = color === '#1C1C1E'
-  ? '#1C1C1E'  // Hub: pure solid
-  : `radial-gradient(ellipse 55% 45% at 30% 25%, ${hexToRgba(color, 0.18)} 0%, transparent 100%), ${color}`
-```
-
-**All orb labels use white text** — `rgba(255,255,255,0.90-0.92)` for names, `rgba(255,255,255,0.50-0.55)` for counts.
-
-| Orb type | Size | Hover scale | Purpose |
+| Usage | Size | Weight | Font |
 |---|---|---|---|
-| Moj (hub) | 136px | — | Central identity, settings — pure solid near-black |
-| List | 96px | 1.05 | Navigate into a list |
-| Category | 60px | 1.08 | Open contact panel |
+| Hero thesis | 48-56px | 400-500 | Instrument Serif |
+| Page title | 32-40px | 500 | Instrument Serif |
+| Section title | 22-28px | 500 | Instrument Serif |
+| Card title | 17-20px | 500-600 | Instrument Sans |
+| Body | 14-16px | 400-500 | Instrument Sans |
+| Secondary body | 13-14px | 400-500 | Instrument Sans |
+| Meta / status | 11-12px | 500-600 | Instrument Sans / Space Mono |
 
-Shadow tokens:
-```css
---orb-shadow-base: 0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12);
---orb-shadow-hover: 0 8px 32px rgba(0,0,0,0.24), 0 2px 8px rgba(0,0,0,0.14);
---orb-shadow-hub: 0 8px 32px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.20);
-```
+## Color
 
-### Dashboard Green Header Band
+### Base Palette
 
-Top section wraps the equity ring + stats in a green full-width band with rounded bottom corners.
+- Page background: `#FAF8F4`
+- Elevated wash: `#F2EEE7`
+- Soft divider: `#E1D9CD`
+- Muted text: `#B2AAA0`
+- Secondary text: `#6F675F`
+- Primary ink: `#201D1A`
 
-```tsx
-<div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
-  {/* equity ring + stats — all text white */}
-</div>
-<div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 24px 80px' }}>
-  {/* pod cards, focus, overdue, dormant — light bg */}
-</div>
-```
+### Shell And Signal
 
-Equity ring on green: white ghost track `rgba(255,255,255,0.20)`, white-to-white gradient arc.
+- Primary shell accent: `#3147FF`
+- Secondary shell tint: `#EDEBFF`
+- Brand framing green: `#25B439`
 
-### Pod Cards
+### Support Accents
 
-Solid left border in pod color, white surface panel background, serif pod name.
+- Thesis highlight: `#FFF1C7`
+- Info wash: `#C9E7FF`
+- Watch state: `#F4D3D8`
 
-```tsx
-style={{
-  background: 'var(--surface-panel)',
-  border: '1px solid rgba(0,0,0,0.07)',
-  borderLeft: `4px solid ${pod.color}`,
-  borderRadius: 12,
-  padding: '16px 20px',
-}}
-```
+### Usage Rules
 
-### Panel (contact drawer)
+- Blue is for cooler shell moments, selection, and secondary framing.
+- Green is allowed in the shell, top framing, success states, and a few high-confidence actions.
+- Most surfaces should stay neutral.
+- Do not flood the page with brand color.
 
-- Width: 360px, full viewport height
-- Background: `var(--surface-panel)` + `backdrop-filter: var(--panel-blur)`
-- Enters from right: `cubic-bezier(0.87, 0, 0.13, 1)` at `0.35s`
-- Panel titles use serif font
+## Layout
 
-### Nav Pill
+- Editorial opening at the top
+- Disciplined app grid below
+- 12-column desktop structure
+- Strong left rail
+- One dominant action area above the fold
 
-Active tab: `var(--color-brand)` background, `#ffffff` text, `0 1px 4px rgba(37,180,57,0.30)` shadow.
-Inactive tab: transparent background, `rgba(0,0,0,0.35)` text.
+### Home Screen Order
 
-### Contact Card
+1. Show the daily thesis.
+2. Show what needs action now.
+3. Show waiting, drift, and movement.
 
-- Full-width button row, 44px min-height (Apple HIG touch target)
-- Avatar: 34px circle, HSL color derived from name hash (consistent per person)
-- Hover: `rgba(0,0,0,0.03)` background via `.interactive-row`
+If a section is not changing the next hour, it should not dominate the first screen.
 
----
+## Surfaces
+
+- Base surfaces should be light, warm, and low-contrast.
+- Use shell tint and blur on large containers, nav, and overlays.
+- Green-tinted framing is allowed for the rail and top shell moments.
+- Card borders should be soft but visible.
+- Shadows should be broad and subtle.
+
+### Surface Tokens
+
+- `surface-base`: `rgba(255,255,255,0.70)`
+- `surface-elevated`: `rgba(255,255,255,0.86)`
+- `surface-shell`: `rgba(237,235,255,0.55)`
+- `surface-overlay`: `rgba(255,255,255,0.62)`
+- `border-soft`: `rgba(32,29,26,0.08)`
+- `border-strong`: `rgba(32,29,26,0.14)`
+- `shadow-soft`: `0 12px 40px rgba(24, 20, 16, 0.08)`
+- `shadow-shell`: `0 20px 80px rgba(49, 71, 255, 0.10)`
+
+## Key Components
+
+### Left Rail
+
+- It should feel like part of the product identity.
+- Use green-tinted shell treatment or a soft framed treatment.
+- Keep it quieter than the main content.
+- Active states should feel selected by the shell, not just highlighted with a pill.
+
+### Thesis Band
+
+- One strong statement about the day
+- One supporting line
+- Two or three compact summary signals
+- This is the calmest and most editorial part of the screen
+- A restrained green frame can support this area without turning it into a hero banner
+
+### Cards
+
+- Cards should feel like grouped report sections
+- Lower the fill contrast
+- Reduce visual clutter inside each card
+- Keep labels quieter than the main content
+
+### Status And Tags
+
+- Use strong color only when the state matters
+- Default tags should lean neutral
+- Save the strongest saturation for framing, urgency, readiness, and selection
 
 ## Motion
 
-All easing values match the Dia browser motion language.
+- Keep motion quiet and helpful
+- Use it for orientation, not decoration
+- Panels should glide in
+- Hover states should be polished but subtle
 
-| Token | Curve | Duration | Usage |
-|---|---|---|---|
-| `ease-enter` | `cubic-bezier(0.5, 1, 0.9, 1)` | 500ms | Orb entrance |
-| `ease-decel` | `cubic-bezier(0.215, 0.61, 0.355, 1)` | 220ms | Hover, general transitions |
-| `ease-panel` | `cubic-bezier(0.87, 0, 0.13, 1)` | 350ms | Panel slide-in |
-| `ease-press` | `ease-in` | 80ms | Orb press-down |
+### Motion Tokens
 
-### Stagger delays
+- Enter: `cubic-bezier(0.2, 0.8, 0.2, 1)`
+- Exit: `cubic-bezier(0.4, 0, 0.2, 1)`
+- Move: `cubic-bezier(0.22, 1, 0.36, 1)`
+- Micro: `80ms`
+- Short: `160ms`
+- Medium: `240ms`
+- Long: `360ms`
 
-- List orbs on load: `i × 0.04s`
-- Category orbs on drill-in: `i × 0.03s`
+## Copy
 
----
+- Keep the voice direct and calm.
+- Headings should be short and confident.
+- Support text should reduce stress and make the next move obvious.
 
-## Accessibility
+## Build Priorities
 
-**Reference tool**: [WebAIM WAVE](https://wave.webaim.org/) — run on every major view before shipping.
+1. Redesign the shell and left rail.
+2. Replace the current opening with a stronger thesis band.
+3. Rebalance module weight on the home screen.
+4. Keep green in the frame, but let neutrals carry the main reading surfaces.
+5. Tighten type and spacing before adding effects.
 
-### Checklist
+## Source Of Truth
 
-- [ ] All body text meets WCAG AA (4.5:1 contrast)
-- [ ] White text on green band validated: `#ffffff` on `#25B439` = ~5.5:1 ✅ AA
-- [ ] Interactive elements have visible focus styles (suppressed via `outline: none` — needs keyboard nav solution before public launch)
-- [ ] Orb labels are readable — white `rgba(255,255,255,0.90)` on solid colored fills
-- [ ] Overdue indicators use both color AND shape (dot + text) — not color alone
-- [ ] Contact panel is keyboard-navigable (tab through rows)
-- [ ] `aria-label` on icon-only buttons (close ×, search ⌕)
-- [ ] `role="navigation"` on breadcrumb nav
-
-### Known gaps
-
-| Issue | Severity | Notes |
-|---|---|---|
-| Orb nodes not keyboard-focusable | Medium | `nodesFocusable={false}` in ReactFlow — intentional for now |
-| Close button (×) has no `aria-label` | Medium | Screen readers will read "×" literally |
-| `text-tertiary` at 10px | Low | `rgba(0,0,0,0.40)` passes AA but small sizes can still be hard to read — use for non-critical metadata only |
-
----
-
-## File Map
-
-| Path | Purpose |
-|---|---|
-| `src/styles/globals.css` | All design tokens (`@theme` + `:root`), animations, orb interactions, scrollbar, grain overlay |
-| `src/components/map/SolidOrb.tsx` | Shared solid orb component (replaces GlassOrb) |
-| `src/components/map/OrbMap.tsx` | Canvas layout, node/edge assembly, view state |
-| `src/components/map/ListNode.tsx` | 96px solid orb — list orbs |
-| `src/components/map/CategoryNode.tsx` | 60px solid orb — category orbs |
-| `src/components/map/MojNode.tsx` | 136px hub orb — Moj identity node |
-| `src/components/dashboard/Dashboard.tsx` | Green header band, equity ring, pod cards, focus, overdue, dormant |
-| `src/components/contacts/ContactPanel.tsx` | Right-side contact drawer |
-| `src/components/contacts/ContactCard.tsx` | Row component inside panel |
-| `src/lib/airtable.ts` | All Airtable reads/writes, in-memory cache |
-| `src/lib/types.ts` | Shared TypeScript interfaces |
-| `src/lib/utils.ts` | `hexToRgba`, `formatRelativeTime` |
+`DESIGN.md` is the main design direction document.
+Use this file as the quicker implementation guide.

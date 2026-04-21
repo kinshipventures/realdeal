@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real Deal Phase 1 Mockups</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f5f1e8;
+        --bg-warm: #efe8db;
+        --panel: rgba(255, 255, 255, 0.78);
+        --panel-strong: rgba(255, 255, 255, 0.9);
+        --ink: #1f1d1a;
+        --muted: #6f695f;
+        --line: rgba(41, 35, 28, 0.08);
+        --line-strong: rgba(41, 35, 28, 0.14);
+        --green: #34b15d;
+        --green-deep: #1f8b43;
+        --green-wash: rgba(52, 177, 93, 0.12);
+        --gold: #f4dca5;
+        --shadow: 0 22px 70px rgba(28, 24, 18, 0.08);
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(52, 177, 93, 0.12), transparent 22%),
+          radial-gradient(circle at top right, rgba(244, 220, 165, 0.35), transparent 30%),
+          linear-gradient(180deg, #f7f4ed 0%, var(--bg) 40%, var(--bg-warm) 100%);
+      }
+
+      h1, h2, h3 {
+        font-family: "Fraunces", serif;
+        margin: 0;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .page {
+        max-width: 1560px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+
+      .hero-card,
+      .note,
+      .board {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-card {
+        border-radius: var(--radius-xl);
+        padding: 28px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--green-deep);
+        margin-bottom: 14px;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 6px rgba(52, 177, 93, 0.12);
+      }
+
+      .title {
+        font-size: clamp(42px, 5vw, 68px);
+        line-height: 0.96;
+        max-width: 10ch;
+        margin-bottom: 14px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .mini {
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid var(--line);
+        padding: 14px 16px;
+      }
+
+      .mini strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+
+      .hero-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .note {
+        border-radius: var(--radius-xl);
+        padding: 22px 24px;
+      }
+
+      .note h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .chip {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+        padding: 8px 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .boards {
+        display: grid;
+        gap: 22px;
+      }
+
+      .board {
+        border-radius: 32px;
+        padding: 24px;
+      }
+
+      .board-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .board-header h2 {
+        font-size: 34px;
+      }
+
+      .board-sub {
+        max-width: 62ch;
+      }
+
+      .frame {
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background:
+          radial-gradient(circle at top left, rgba(52, 177, 93, 0.12), transparent 20%),
+          linear-gradient(180deg, #f8f5ee 0%, #f2eee6 100%);
+        padding: 18px;
+      }
+
+      .current-shot {
+        width: 100%;
+        display: block;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+      }
+
+      .mockup {
+        border-radius: 26px;
+        min-height: 740px;
+        padding: 18px;
+        border: 1px solid rgba(34, 30, 24, 0.08);
+        background:
+          radial-gradient(circle at top left, rgba(52, 177, 93, 0.14), transparent 22%),
+          radial-gradient(circle at top right, rgba(244, 220, 165, 0.3), transparent 34%),
+          linear-gradient(180deg, #f8f5ee 0%, #f3eee5 100%);
+        overflow: hidden;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+        gap: 16px;
+        height: 100%;
+      }
+
+      .rail {
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, rgba(52, 177, 93, 0.22) 0%, rgba(255, 255, 255, 0.96) 16%, rgba(255, 255, 255, 0.92) 100%);
+        border: 1px solid rgba(52, 177, 93, 0.16);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.44);
+        border: 1px solid rgba(52, 177, 93, 0.1);
+      }
+
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: linear-gradient(180deg, #48c66f 0%, var(--green-deep) 100%);
+      }
+
+      .brand-copy strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .brand-copy span {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .nav-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 12px;
+        border-radius: 14px;
+        color: #385344;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .nav-item.active {
+        background: linear-gradient(180deg, rgba(52, 177, 93, 0.2), rgba(52, 177, 93, 0.1));
+        border: 1px solid rgba(52, 177, 93, 0.18);
+        color: #204930;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(52, 177, 93, 0.6);
+      }
+
+      .stage {
+        border-radius: 28px;
+        border: 1px solid rgba(34, 30, 24, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.88) 100%);
+        box-shadow: 0 20px 64px rgba(26, 32, 23, 0.06);
+        padding: 20px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .stage-top {
+        border-radius: 22px;
+        padding: 18px 20px;
+        background: linear-gradient(180deg, rgba(52, 177, 93, 0.12), rgba(255, 255, 255, 0.7));
+        border: 1px solid rgba(52, 177, 93, 0.12);
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+
+      .stage-title {
+        font-family: "Fraunces", serif;
+        font-size: 44px;
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+        max-width: 11ch;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        align-self: start;
+      }
+
+      .summary {
+        border-radius: 16px;
+        padding: 13px 14px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--line);
+      }
+
+      .summary strong {
+        display: block;
+        font-size: 22px;
+      }
+
+      .summary span {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) 360px;
+        gap: 18px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .panel {
+        border-radius: 22px;
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .panel h3 {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      .kicker {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--green-deep);
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .focus-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .focus-card,
+      .reply-row,
+      .world-row,
+      .timeline-row,
+      .detail-card {
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 244, 237, 0.95));
+        border: 1px solid var(--line);
+      }
+
+      .focus-card {
+        min-height: 220px;
+        padding: 18px;
+      }
+
+      .focus-card h4 {
+        margin: 20px 0 10px;
+        font-size: 19px;
+        line-height: 1.15;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .tag.high {
+        background: rgba(244, 220, 165, 0.5);
+        color: #8c6721;
+      }
+
+      .tag.ok {
+        background: rgba(52, 177, 93, 0.12);
+        color: var(--green-deep);
+      }
+
+      .reply-list,
+      .world-list,
+      .timeline-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .reply-row,
+      .world-row,
+      .timeline-row {
+        padding: 14px 16px;
+      }
+
+      .reply-row strong,
+      .world-row strong,
+      .timeline-row strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .record-shell {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 18px;
+        height: 100%;
+      }
+
+      .record-header {
+        border-radius: 24px;
+        border: 1px solid rgba(52, 177, 93, 0.14);
+        background: linear-gradient(180deg, rgba(52, 177, 93, 0.12), rgba(255, 255, 255, 0.72));
+        padding: 22px;
+      }
+
+      .record-top {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .identity {
+        display: flex;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #53c878, #2f9250);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-family: "Fraunces", serif;
+        font-size: 24px;
+      }
+
+      .identity h3 {
+        font-size: 34px;
+        margin-bottom: 6px;
+      }
+
+      .signal {
+        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255, 242, 219, 0.8);
+        border: 1px solid rgba(219, 166, 66, 0.18);
+      }
+
+      .signal strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .signal button {
+        border: 1px solid rgba(52, 177, 93, 0.2);
+        background: rgba(255, 255, 255, 0.8);
+        color: var(--green-deep);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 700;
+      }
+
+      .record-body {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 16px;
+      }
+
+      .detail-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .detail-card {
+        padding: 16px;
+      }
+
+      .detail-card h4 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+
+      .detail-micro {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .detail-micro span {
+        display: block;
+        border-radius: 12px;
+        height: 14px;
+        background: rgba(34, 30, 24, 0.06);
+      }
+
+      .timeline {
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.88);
+        padding: 18px;
+      }
+
+      .timeline-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 7px 10px;
+        font-size: 11px;
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--muted);
+      }
+
+      .pill.active {
+        background: var(--green-wash);
+        border-color: rgba(52, 177, 93, 0.18);
+        color: var(--green-deep);
+      }
+
+      .caption {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 1200px) {
+        .hero,
+        .stage-top,
+        .dashboard-grid,
+        .record-top,
+        .record-body {
+          grid-template-columns: 1fr;
+        }
+
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          min-height: 180px;
+        }
+      }
+
+      @media (max-width: 840px) {
+        .page {
+          padding: 18px 14px 40px;
+        }
+
+        .title {
+          font-size: 38px;
+        }
+
+        .hero-grid,
+        .summary-grid,
+        .focus-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .mockup {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-card">
+          <div class="eyebrow">Phase 1 Mockups</div>
+          <h1 class="title">Current Real Deal first, then the redesign direction.</h1>
+          <p>
+            This board starts from the real current dashboard and then shows the first mockup pass for
+            the shell, dashboard, and record detail. No product code is involved here.
+          </p>
+          <div class="hero-grid">
+            <div class="mini">
+              <strong>Reference first</strong>
+              <p>Warm background, green accent, Fraunces display, soft white panels.</p>
+            </div>
+            <div class="mini">
+              <strong>Target</strong>
+              <p>Green-framed shell, calmer page openings, and stronger work surfaces.</p>
+            </div>
+            <div class="mini">
+              <strong>What stays</strong>
+              <p>Real Deal's warmth, clarity, and utility.</p>
+            </div>
+            <div class="mini">
+              <strong>What changes</strong>
+              <p>The product frame, hierarchy, and page composition.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="note">
+          <h3>Phase 1 choices</h3>
+          <p>
+            Shell uses a framed rail and nested workspace. Dashboard becomes a thesis-led command surface.
+            Record detail becomes more of a relationship workspace.
+          </p>
+          <div class="chips">
+            <span class="chip">Current screenshot included</span>
+            <span class="chip">Shell mockup</span>
+            <span class="chip">Dashboard mockup</span>
+            <span class="chip">Record detail mockup</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="boards">
+        <article class="board">
+          <div class="board-header">
+            <div>
+              <h2>1. Current Real Deal</h2>
+              <p class="board-sub">This is the live current dashboard capture. It is the reference point for the mockups below.</p>
+            </div>
+          </div>
+          <div class="frame">
+            <img class="current-shot" src="./assets/current-dashboard.png" alt="Current Real Deal dashboard screenshot" />
+          </div>
+        </article>
+
+        <article class="board">
+          <div class="board-header">
+            <div>
+              <h2>2. Shell Mockup</h2>
+              <p class="board-sub">The shell keeps Real Deal's warmth, but gives it a stronger green-framed rail and a nested workspace stage.</p>
+            </div>
+          </div>
+          <div class="mockup shell">
+            <aside class="rail">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-copy">
+                  <strong>Real Deal</strong>
+                  <span>Daily command surface</span>
+                </div>
+              </div>
+              <div class="nav-list">
+                <div class="nav-item active"><span class="dot"></span> Dashboard</div>
+                <div class="nav-item"><span class="dot"></span> Relationships</div>
+                <div class="nav-item"><span class="dot"></span> Campaigns</div>
+                <div class="nav-item"><span class="dot"></span> Pods</div>
+              </div>
+              <div class="nav-list" style="margin-top:auto;">
+                <div class="nav-item"><span class="dot"></span> Search</div>
+                <div class="nav-item"><span class="dot"></span> Settings</div>
+              </div>
+            </aside>
+
+            <section class="stage">
+              <div class="stage-top">
+                <div>
+                  <div class="kicker">Today</div>
+                  <div class="stage-title">See the day clearly. Move the right things first.</div>
+                  <p style="max-width: 54ch; margin-top: 10px;">
+                    One shared opening frame across screens, calmer than the current app, but still recognizably Real Deal.
+                  </p>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary"><strong>3</strong><span>priority items</span></div>
+                  <div class="summary"><strong>9</strong><span>needs reply</span></div>
+                  <div class="summary"><strong>6</strong><span>active worlds</span></div>
+                </div>
+              </div>
+
+              <div class="dashboard-grid">
+                <div class="stack">
+                  <div class="panel">
+                    <div class="kicker">Primary work</div>
+                    <h3>What deserves attention first?</h3>
+                    <p>The main work surface should take over faster and stop competing with the rest of the page.</p>
+                    <div class="focus-grid">
+                      <div class="focus-card">
+                        <span class="tag high">High priority</span>
+                        <h4>Large action card for the next important move</h4>
+                        <p>One larger card anchors the area before smaller actions fill in around it.</p>
+                      </div>
+                      <div class="stack">
+                        <div class="focus-card" style="min-height:104px;">
+                          <span class="tag ok">Support</span>
+                          <h4 style="margin-top:14px;">Smaller task card</h4>
+                        </div>
+                        <div class="focus-card" style="min-height:104px;">
+                          <span class="tag ok">Support</span>
+                          <h4 style="margin-top:14px;">Another smaller task</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="panel">
+                    <div class="kicker">Movement</div>
+                    <h3>Recent movement</h3>
+                    <div class="timeline-list">
+                      <div class="timeline-row"><strong>Ghost</strong><p>Calendar and email activity sits lower and calmer.</p></div>
+                      <div class="timeline-row"><strong>Relationships</strong><p>Still visible, but no longer competing with the hero area.</p></div>
+                    </div>
+                  </div>
+                </div>
+
+                <aside class="stack">
+                  <div class="panel">
+                    <div class="kicker">Support rail</div>
+                    <h3>Worlds</h3>
+                    <div class="world-list">
+                      <div class="world-row"><strong>Ghost</strong><p>3 calendar items and a reply due.</p></div>
+                      <div class="world-row"><strong>Relationships</strong><p>2 email signals in the last day.</p></div>
+                      <div class="world-row"><strong>Life admin</strong><p>1 watched item needs a check.</p></div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="board">
+          <div class="board-header">
+            <div>
+              <h2>3. Dashboard Mockup</h2>
+              <p class="board-sub">This is the dashboard direction after the shell refresh: one opening frame, one primary work area, one quieter support rail.</p>
+            </div>
+          </div>
+          <div class="mockup">
+            <section class="stage" style="height:100%;">
+              <div class="stage-top">
+                <div>
+                  <div class="kicker">Home</div>
+                  <div class="stage-title">See the day fast. Decide the next move. Ignore the rest.</div>
+                  <p style="max-width: 56ch; margin-top: 12px;">
+                    The top utility strip and the hero message become one opener instead of two separate boards.
+                  </p>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary"><strong>3</strong><span>priority items</span></div>
+                  <div class="summary"><strong>9</strong><span>needs reply</span></div>
+                  <div class="summary"><strong>6</strong><span>worlds active</span></div>
+                </div>
+              </div>
+
+              <div class="dashboard-grid">
+                <div class="stack">
+                  <div class="panel">
+                    <div class="kicker">Now</div>
+                    <h3>What deserves attention first?</h3>
+                    <div class="focus-grid">
+                      <div class="focus-card">
+                        <span class="tag high">Main action</span>
+                        <h4>One large card sets the first move</h4>
+                        <p>Large card holds the biggest decision and gives the page a stronger center of gravity.</p>
+                      </div>
+                      <div class="stack">
+                        <div class="focus-card" style="min-height:116px;">
+                          <span class="tag ok">Reply</span>
+                          <h4 style="margin-top:14px;">Short response queue</h4>
+                        </div>
+                        <div class="focus-card" style="min-height:116px;">
+                          <span class="tag ok">Watch</span>
+                          <h4 style="margin-top:14px;">One radar item</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="panel">
+                    <div class="kicker">Replies</div>
+                    <h3>Close loops before they drag</h3>
+                    <div class="reply-list">
+                      <div class="reply-row"><strong>Reply to Ken Ofriel</strong><p>People work stays high on the page, but under the main action area.</p></div>
+                      <div class="reply-row"><strong>Reply to Kristen D'Angelo</strong><p>Rows are calmer and more obviously grouped.</p></div>
+                      <div class="reply-row"><strong>Reply to Stephanie Wayne</strong><p>Less card noise, more page rhythm.</p></div>
+                    </div>
+                  </div>
+                </div>
+
+                <aside class="stack">
+                  <div class="panel">
+                    <div class="kicker">Worlds</div>
+                    <h3>Which world are you stepping into?</h3>
+                    <div class="world-list">
+                      <div class="world-row"><strong>Ghost</strong><p>Right rail stays useful, but quieter.</p></div>
+                      <div class="world-row"><strong>Uncategorized</strong><p>Context still visible without competing.</p></div>
+                      <div class="world-row"><strong>Life admin</strong><p>Support areas become more disciplined.</p></div>
+                    </div>
+                  </div>
+
+                  <div class="panel">
+                    <div class="kicker">Waiting</div>
+                    <h3>What is blocked on other people?</h3>
+                    <p>Lower-urgency modules stay present, but clearly step down.</p>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="board">
+          <div class="board-header">
+            <div>
+              <h2>4. Record Detail Mockup</h2>
+              <p class="board-sub">The record page becomes more of a relationship workspace: stronger identity, calmer signal, and a clearer working timeline.</p>
+            </div>
+          </div>
+          <div class="mockup">
+            <section class="record-shell">
+              <header class="record-header">
+                <div class="record-top">
+                  <div>
+                    <div class="kicker">Relationship</div>
+                    <div class="identity">
+                      <div class="avatar">KO</div>
+                      <div>
+                        <h3>Ken Ofriel</h3>
+                        <p>Investor at Ghost Capital</p>
+                        <div class="chips" style="margin-top:12px;">
+                          <span class="chip">Contact</span>
+                          <span class="chip">Ghost pod</span>
+                          <span class="chip">Steady relationship</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="panel" style="padding:16px;">
+                    <div class="kicker">Context</div>
+                    <h3 style="font-size:22px;">Reachable, but cooling.</h3>
+                    <p>Top frame gives the relationship a stronger sense of identity before the widgets start.</p>
+                  </div>
+                </div>
+
+                <div class="signal">
+                  <div>
+                    <strong>Signal</strong>
+                    <p>Last reached out 42 days ago. The warning state should feel integrated, not bolted on.</p>
+                  </div>
+                  <button>Log interaction</button>
+                </div>
+              </header>
+
+              <div class="record-body">
+                <div class="detail-stack">
+                  <div class="detail-card">
+                    <h4>Relationship summary</h4>
+                    <p>Left column becomes a calmer report instead of a pile of cards.</p>
+                    <div class="detail-micro">
+                      <span style="width:78%;"></span>
+                      <span style="width:92%;"></span>
+                      <span style="width:64%;"></span>
+                    </div>
+                  </div>
+                  <div class="detail-card">
+                    <h4>Details</h4>
+                    <div class="detail-micro">
+                      <span style="width:84%;"></span>
+                      <span style="width:68%;"></span>
+                      <span style="width:76%;"></span>
+                    </div>
+                  </div>
+                  <div class="detail-card">
+                    <h4>Pods and context</h4>
+                    <div class="detail-micro">
+                      <span style="width:88%;"></span>
+                      <span style="width:74%;"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <section class="timeline">
+                  <div class="timeline-top">
+                    <div>
+                      <div class="kicker">Timeline</div>
+                      <h3 style="font-size:30px;">Recent contact and next moves</h3>
+                    </div>
+                    <div class="filter-pills">
+                      <span class="pill active">All</span>
+                      <span class="pill">Calls</span>
+                      <span class="pill">Meetings</span>
+                      <span class="pill">Emails</span>
+                    </div>
+                  </div>
+                  <div class="timeline-list" style="margin-top:18px;">
+                    <div class="timeline-row">
+                      <strong>Meeting</strong>
+                      <p>Timeline becomes the main working surface, not just the right column content.</p>
+                    </div>
+                    <div class="timeline-row">
+                      <strong>Email follow-up</strong>
+                      <p>Filters stay available, but quieter and better integrated.</p>
+                    </div>
+                    <div class="timeline-row">
+                      <strong>Intro note</strong>
+                      <p>The page should feel like a relationship workspace, not a generic CRM profile.</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
