@@ -308,7 +308,6 @@ export function RadarWidget({ dimensions, loading, overallScore, overallLabel = 
   if (loading || dimensions.length === 0) {
     return (
       <div>
-        <SectionDivider title="Network Health" />
         <div style={{
           background: 'var(--surface-panel)',
           backdropFilter: 'var(--panel-blur)',
@@ -325,13 +324,12 @@ export function RadarWidget({ dimensions, loading, overallScore, overallLabel = 
             <div className="skeleton" style={{ width: '75%', height: 14, borderRadius: 6, background: 'var(--tint)' }} />
           </div>
         </div>
-      </div>
+        </div>
     )
   }
 
   return (
     <div>
-      <SectionDivider title="Network Health" />
       <div style={{
         background: 'var(--surface-panel)',
         backdropFilter: 'var(--panel-blur)',
@@ -350,13 +348,14 @@ export function RadarWidget({ dimensions, loading, overallScore, overallLabel = 
 
         {/* Right: narrative */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
-            Health Summary
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 14 }}>
+            Summary
           </div>
           <p style={{
-            fontSize: 15, lineHeight: 1.65, color: 'var(--color-text-primary)',
+            fontSize: 15, lineHeight: 1.7, color: 'var(--color-text-primary)',
             margin: '0 0 24px',
             fontFamily: 'var(--font-sans)',
+            maxWidth: '58ch',
           }}>
             {narrative}
           </p>
@@ -399,10 +398,10 @@ export function SectionDivider({ title }: { title: string }) {
     }}>
       <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
       <h2 style={{
-        fontSize: 22, fontWeight: 600,
-        fontFamily: 'var(--font-display)',
+        fontSize: 22, fontWeight: 400,
+        fontFamily: 'var(--font-serif)',
         color: 'var(--color-text-primary)',
-        letterSpacing: '-0.025em',
+        letterSpacing: '-0.01em',
         margin: 0, whiteSpace: 'nowrap',
       }}>
         {title}
