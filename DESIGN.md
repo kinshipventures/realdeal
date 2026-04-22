@@ -53,7 +53,7 @@
 
 ## Color
 - **Approach:** Restrained shell with signal accents.
-- **Primary shell accent (Arc blue):** `#3147FF` - active chrome, sidebar active state, selected views, focus rings, shell framing.
+- **Primary shell accent (Arc blue):** `#003DA5` - active chrome, sidebar active state, selected views, focus rings, shell framing.
 - **Secondary shell tint:** `#EDEBFF` - soft shell glow, highlighted surfaces, ambient framing.
 - **Signal green:** `#25B439` - success, equity/connected state, "thriving" status, primary CTA in content. Not used in the shell.
 - **Warm neutrals:**
@@ -118,7 +118,7 @@
 - `border-soft`: `rgba(32,29,26,0.08)`
 - `border-strong`: `rgba(32,29,26,0.14)`
 - `shadow-soft`: `0 12px 40px rgba(24, 20, 16, 0.08)`
-- `shadow-shell`: `0 20px 80px rgba(49, 71, 255, 0.10)`
+- `shadow-shell`: `0 20px 80px rgba(0, 61, 165, 0.10)`
 - `blur-shell`: `20px`
 
 ## Motion
@@ -195,4 +195,4 @@
 | 2026-04-21 | Shifted from green-first dashboard styling to calm command surface | The live product is now a broader personal OS, and the old Kinship design system no longer matches the product. |
 | 2026-04-21 | Chose Dia calm + Arc shell as the reference mix | Dia gives the right emotional tone, Arc gives the right framing and product shell. |
 | 2026-04-21 | Kept green as framing instead of full-page environment | Green should still shape the shell, but warm neutrals should carry most surfaces and reading areas. |
-| 2026-04-22 | Moved shell accent from green to Arc blue `#3147FF` | Separates shell chrome (blue) from content signals (green for success/equity/connected). Matches the Arc shell reference more faithfully. |
+| 2026-04-22 | Moved shell accent from green to Arc blue `#003DA5` | Separates shell chrome (blue) from content signals (green for success/equity/connected). Matches the Arc shell reference more faithfully. |
