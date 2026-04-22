@@ -99,20 +99,20 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
         {/* hub */}
         <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
         <circle cx="240" cy="160" r="60" stroke="#25B439" strokeWidth="1.5" opacity="0.3" fill="none" />
-        <text x="240" y="154" textAnchor="middle" fill={svgFg} fontSize="11" fontWeight="700" fontFamily="system-ui">Network</text>
+        <text x="240" y="154" textAnchor="middle" fill={svgFg} fontSize="11" fontWeight="700" fontFamily="system-ui">My Network</text>
         <text x="240" y="170" textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">Score 84</text>
         {/* pods */}
         <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
         <circle cx="120" cy="70" r="38" stroke="#25B439" strokeWidth="1" opacity="0.25" fill="none" />
-        <text x="120" y="74" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">LPs</text>
+        <text x="120" y="74" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Family</text>
         <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
-        <text x="370" y="84" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Talent</text>
+        <text x="370" y="84" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Creatives</text>
         <circle cx="380" cy="240" r="32" fill="url(#f1p3)" />
         <text x="380" y="244" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Founders</text>
         <circle cx="100" cy="250" r="26" fill="url(#f1p4)" />
-        <text x="100" y="254" textAnchor="middle" fill={svgFg} fontSize="9" fontWeight="600" fontFamily="system-ui">Media</text>
+        <text x="100" y="254" textAnchor="middle" fill={svgFg} fontSize="9" fontWeight="600" fontFamily="system-ui">Friends</text>
         <circle cx="165" cy="275" r="20" fill="url(#f1p1)" opacity="0.7" />
-        <text x="165" y="279" textAnchor="middle" fill={svgFg} fontSize="8" fontWeight="600" fontFamily="system-ui">VCs</text>
+        <text x="165" y="279" textAnchor="middle" fill={svgFg} fontSize="8" fontWeight="600" fontFamily="system-ui">Mentors</text>
       </svg>
     ),
   },
@@ -386,70 +386,6 @@ export function LandingPage() {
         </div>
       </nav>
 
-      {/* Manifesto - opens the page */}
-      <section
-        ref={problemRef as RefObject<HTMLElement>}
-        style={{
-          maxWidth: 760, margin: '0 auto', padding: '80px 40px 96px',
-          textAlign: 'left',
-        }}
-      >
-        <div style={{ ...reveal(problemVisible) }}>
-          <p style={{
-            fontSize: 'clamp(24px, 2.8vw, 34px)',
-            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.35,
-            color: t.fg, margin: '0 0 28px',
-            fontFamily: 'var(--font-serif)',
-          }}>
-            We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
-          </p>
-          <p style={{
-            fontSize: 'clamp(24px, 2.8vw, 34px)',
-            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.35,
-            color: t.fg45, margin: '0 0 56px',
-            fontFamily: 'var(--font-serif)',
-            fontStyle: 'italic',
-          }}>
-            And then we completely forgot about the thing that actually keeps us alive.
-          </p>
-          <p style={{
-            fontSize: 'clamp(32px, 4vw, 52px)',
-            fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1.15,
-            color: t.fg, margin: '0 0 20px',
-            fontFamily: 'var(--font-serif)',
-          }}>
-            Your people are medicine.
-          </p>
-          <p style={{
-            fontSize: 18, lineHeight: 1.65,
-            color: t.fg45, margin: '0 0 64px', maxWidth: 560,
-          }}>
-            The right ones lower your blood pressure. The wrong ones raise it.
-          </p>
-
-          <div style={{
-            borderLeft: `2px solid #25B439`,
-            paddingLeft: 24,
-            maxWidth: 560,
-          }}>
-            <p style={{
-              fontSize: 'clamp(20px, 2.2vw, 26px)',
-              fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.35,
-              color: t.fg, margin: '0 0 12px',
-              fontFamily: 'var(--font-sans)',
-            }}>
-              Real Deal isn't a network. It's a prescription.
-            </p>
-            <p style={{
-              fontSize: 15, lineHeight: 1.6,
-              color: t.fg45, margin: 0,
-            }}>
-              Curated for your nervous system. Built for your life.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Hero */}
       <section
         ref={heroRef as RefObject<HTMLElement>}
@@ -480,13 +416,44 @@ export function LandingPage() {
             Your network,<br />remembered.
           </h1>
 
-          <p style={{
-            fontSize: 'clamp(17px, 2vw, 21px)', lineHeight: 1.6,
-            color: t.fg50, maxWidth: 560, margin: '0 auto 44px',
-            ...reveal(heroVisible, 0.12),
-          }}>
-            Real Deal is your relationship pharmacy - a daily dose of the people who matter most, so nothing fades without you noticing.
-          </p>
+          <div style={{ maxWidth: 640, margin: '0 auto 48px', textAlign: 'left', ...reveal(heroVisible, 0.1) }}>
+            <p style={{
+              fontSize: 'clamp(18px, 1.8vw, 22px)',
+              fontWeight: 400, letterSpacing: '-0.01em', lineHeight: 1.5,
+              color: t.fg, margin: '0 0 20px',
+              fontFamily: 'var(--font-serif)',
+            }}>
+              We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
+            </p>
+            <p style={{
+              fontSize: 'clamp(18px, 1.8vw, 22px)',
+              fontWeight: 400, letterSpacing: '-0.01em', lineHeight: 1.5,
+              color: t.fg45, margin: '0 0 36px',
+              fontFamily: 'var(--font-serif)',
+              fontStyle: 'italic',
+            }}>
+              And then we completely forgot about the thing that actually keeps us alive.
+            </p>
+            <div style={{
+              borderLeft: `2px solid #25B439`,
+              paddingLeft: 20,
+            }}>
+              <p style={{
+                fontSize: 'clamp(18px, 1.8vw, 22px)',
+                fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.4,
+                color: t.fg, margin: '0 0 8px',
+                fontFamily: 'var(--font-sans)',
+              }}>
+                Real Deal isn't a network. It's a prescription.
+              </p>
+              <p style={{
+                fontSize: 14, lineHeight: 1.55,
+                color: t.fg45, margin: 0,
+              }}>
+                Curated for your nervous system. Built for your life.
+              </p>
+            </div>
+          </div>
 
           <div style={{
             display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72,
@@ -607,23 +574,23 @@ export function LandingPage() {
                 {/* hub */}
                 <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
                 <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
-                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">RealDeal</text>
+                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">My Network</text>
                 <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
                 {/* pods */}
                 <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
                 <circle cx="220" cy="100" r="43" stroke="#25B439" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">LPs</text>
+                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Family</text>
                 <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
                 <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Talent</text>
+                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Creatives</text>
                 <circle cx="640" cy="300" r="35" fill="url(#hp3)" />
                 <text x="640" y="304" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Founders</text>
                 <circle cx="200" cy="330" r="30" fill="url(#hp4)" />
-                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Media</text>
+                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Friends</text>
                 <circle cx="130" cy="220" r="27" fill="url(#hp5)" />
-                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">VCs</text>
+                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Investors</text>
                 <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
-                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Advisors</text>
+                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Mentors</text>
               </svg>
             </div>
           </div>
