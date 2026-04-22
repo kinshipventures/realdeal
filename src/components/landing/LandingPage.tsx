@@ -61,11 +61,11 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
       <svg viewBox="0 0 480 320" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f1hub" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#25B439" stopOpacity="0.9" />
+            <stop offset="0%" stopColor="#3147FF" stopOpacity="0.9" />
             <stop offset="100%" stopColor="#1a6632" stopOpacity="0.7" />
           </radialGradient>
           <radialGradient id="f1p1" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#25B439" stopOpacity="0.7" />
+            <stop offset="0%" stopColor="#3147FF" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#1a6632" stopOpacity="0.5" />
           </radialGradient>
           <radialGradient id="f1p2" cx="50%" cy="50%" r="50%">
@@ -81,8 +81,8 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
             <stop offset="100%" stopColor="#9d174d" stopOpacity="0.5" />
           </radialGradient>
           <radialGradient id="f1glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+            <stop offset="0%" stopColor="#3147FF" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#3147FF" stopOpacity="0" />
           </radialGradient>
           <filter id="f1blur">
             <feGaussianBlur stdDeviation="3" />
@@ -91,19 +91,19 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
         {/* ambient glow */}
         <ellipse cx="240" cy="160" rx="120" ry="100" fill="url(#f1glow)" />
         {/* connection lines */}
-        <line x1="240" y1="160" x2="120" y2="70" stroke="#25B439" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="120" y2="70" stroke="#3147FF" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.2" />
-        <line x1="240" y1="160" x2="160" y2="270" stroke="#25B439" strokeWidth="1" opacity="0.12" />
+        <line x1="240" y1="160" x2="160" y2="270" stroke="#3147FF" strokeWidth="1" opacity="0.12" />
         {/* hub */}
         <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
-        <circle cx="240" cy="160" r="60" stroke="#25B439" strokeWidth="1.5" opacity="0.3" fill="none" />
+        <circle cx="240" cy="160" r="60" stroke="#3147FF" strokeWidth="1.5" opacity="0.3" fill="none" />
         <text x="240" y="154" textAnchor="middle" fill={svgFg} fontSize="11" fontWeight="700" fontFamily="system-ui">My Network</text>
         <text x="240" y="170" textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">Score 84</text>
         {/* pods */}
         <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
-        <circle cx="120" cy="70" r="38" stroke="#25B439" strokeWidth="1" opacity="0.25" fill="none" />
+        <circle cx="120" cy="70" r="38" stroke="#3147FF" strokeWidth="1" opacity="0.25" fill="none" />
         <text x="120" y="74" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Family</text>
         <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
         <text x="370" y="84" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Creatives</text>
@@ -124,8 +124,8 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
       <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f2glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#25B439" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+            <stop offset="0%" stopColor="#3147FF" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#3147FF" stopOpacity="0" />
           </radialGradient>
         </defs>
         <ellipse cx="240" cy="140" rx="100" ry="80" fill="url(#f2glow)" />
@@ -154,15 +154,15 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
       <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f3glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#25B439" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+            <stop offset="0%" stopColor="#3147FF" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#3147FF" stopOpacity="0" />
           </radialGradient>
         </defs>
         <ellipse cx="240" cy="140" rx="110" ry="90" fill="url(#f3glow)" />
         {[
           { name: 'LPs Pod', cadence: 'Monthly', next: 'Overdue 3d', color: '#f87171', pct: 0.95 },
           { name: 'Founders Pod', cadence: 'Biweekly', next: 'In 4 days', color: '#f59e0b', pct: 0.6 },
-          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#25B439', pct: 0.12 },
+          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#3147FF', pct: 0.12 },
         ].map((row, i) => (
           <g key={i}>
             <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill={svgRect} stroke={svgStroke} strokeWidth="1" />
@@ -250,7 +250,7 @@ export function LandingPage() {
         aria-hidden
         style={{
           position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-          background: `radial-gradient(600px circle at ${mouse.x}% ${mouse.y}%, rgba(52,177,93,${dark ? 0.18 : 0.14}) 0%, rgba(52,177,93,${dark ? 0.06 : 0.04}) 35%, transparent 70%)`,
+          background: `radial-gradient(600px circle at ${mouse.x}% ${mouse.y}%, rgba(49, 71, 255,${dark ? 0.18 : 0.14}) 0%, rgba(49, 71, 255,${dark ? 0.06 : 0.04}) 35%, transparent 70%)`,
           transition: mouse.active ? 'background 0.2s cubic-bezier(0.22,1,0.36,1)' : 'none',
         }}
       />
@@ -298,7 +298,7 @@ export function LandingPage() {
         }
         .rd-cta-primary:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 32px rgba(52,177,93,0.45) !important;
+          box-shadow: 0 8px 32px rgba(49, 71, 255,0.45) !important;
         }
         .rd-cta-ghost {
           transition: background 0.15s;
@@ -310,7 +310,7 @@ export function LandingPage() {
         .rd-cta-primary:focus-visible,
         .rd-cta-ghost:focus-visible,
         .rd-footer-link:focus-visible {
-          outline: 2px solid #25B439;
+          outline: 2px solid #3147FF;
           outline-offset: 2px;
         }
         .rd-footer-link { transition: color 0.15s; }
@@ -345,7 +345,7 @@ export function LandingPage() {
         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="5" fill={t.fg} />
-            <circle cx="42" cy="24" r="2.8" fill="#25B439" />
+            <circle cx="42" cy="24" r="2.8" fill="#3147FF" />
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
             <circle cx="6"  cy="24" r="2.8" fill="#7E57C2" />
@@ -375,10 +375,10 @@ export function LandingPage() {
             onClick={() => navigate('/login?signup=1')}
             style={{
               padding: '8px 18px', borderRadius: 8, border: 'none',
-              background: '#25B439', color: '#fff', cursor: 'pointer',
+              background: '#3147FF', color: '#fff', cursor: 'pointer',
               fontSize: 14, fontWeight: 600,
               fontFamily: 'var(--font-sans)',
-              boxShadow: '0 4px 20px rgba(52,177,93,0.3)',
+              boxShadow: '0 4px 20px rgba(49, 71, 255,0.3)',
             }}
           >
             Get started
@@ -398,13 +398,13 @@ export function LandingPage() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,
             fontSize: 12, fontWeight: 500, letterSpacing: '0.22em',
-            textTransform: 'uppercase', color: '#25B439',
+            textTransform: 'uppercase', color: '#3147FF',
             marginBottom: 28,
             ...reveal(heroVisible, 0),
           }}>
-            <span style={{ width: 24, height: 1, background: '#25B439', opacity: 0.5 }} />
+            <span style={{ width: 24, height: 1, background: '#3147FF', opacity: 0.5 }} />
             Your relationship pharmacy
-            <span style={{ width: 24, height: 1, background: '#25B439', opacity: 0.5 }} />
+            <span style={{ width: 24, height: 1, background: '#3147FF', opacity: 0.5 }} />
           </div>
 
           <h1 style={{
@@ -470,9 +470,9 @@ export function LandingPage() {
               onClick={() => navigate('/login?signup=1')}
               style={{
                 padding: '14px 36px', borderRadius: 10, border: 'none',
-                background: '#25B439', color: '#fff', cursor: 'pointer',
+                background: '#3147FF', color: '#fff', cursor: 'pointer',
                 fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-sans)',
-                boxShadow: '0 4px 24px rgba(52,177,93,0.35)',
+                boxShadow: '0 4px 24px rgba(49, 71, 255,0.35)',
               }}
             >
               Get Started - Free
@@ -501,7 +501,7 @@ export function LandingPage() {
             <div aria-hidden style={{
               position: 'absolute', bottom: -60, left: '50%', transform: 'translateX(-50%)',
               width: '80%', height: 200,
-              background: 'radial-gradient(ellipse at 50% 100%, rgba(52,177,93,0.2) 0%, transparent 70%)',
+              background: 'radial-gradient(ellipse at 50% 100%, rgba(49, 71, 255,0.2) 0%, transparent 70%)',
               pointerEvents: 'none', zIndex: 0,
               filter: 'blur(20px)',
             }} />
@@ -536,15 +536,15 @@ export function LandingPage() {
               <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: t.mockupSvg }}>
                 <defs>
                   <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.95" />
+                    <stop offset="0%" stopColor="#3147FF" stopOpacity="0.95" />
                     <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
                   </radialGradient>
                   <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#3147FF" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#3147FF" stopOpacity="0" />
                   </radialGradient>
                   <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.8" />
+                    <stop offset="0%" stopColor="#3147FF" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
                   </radialGradient>
                   <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
@@ -571,7 +571,7 @@ export function LandingPage() {
                 {/* bg glow */}
                 <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
                 {/* lines */}
-                <line x1="420" y1="220" x2="220" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="220" y2="100" stroke="#3147FF" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
@@ -581,12 +581,12 @@ export function LandingPage() {
                 <line x1="420" y1="220" x2="490" y2="140" stroke="#7C3AED" strokeWidth="1.5" opacity="0.15" />
                 {/* hub */}
                 <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
-                <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
+                <circle cx="420" cy="220" r="64" stroke="#3147FF" strokeWidth="2" opacity="0.25" fill="none" />
                 <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">My Network</text>
                 <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
                 {/* pods */}
                 <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
-                <circle cx="220" cy="100" r="43" stroke="#25B439" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
+                <circle cx="220" cy="100" r="43" stroke="#3147FF" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
                 <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Family</text>
                 <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
                 <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
@@ -664,7 +664,7 @@ export function LandingPage() {
               {p.photo ? (
                 <img src={p.photo} alt={p.name} width={60} height={60} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${t.fg08}` }} />
               ) : (
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#25B439', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#3147FF', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
                   {p.initials}
                 </div>
               )}
@@ -700,7 +700,7 @@ export function LandingPage() {
           color: t.fg, margin: '0 auto 72px', textAlign: 'center', maxWidth: 720,
           fontFamily: 'var(--font-serif)',
         }}>
-          The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#25B439', fontStyle: 'italic' }}>close relationships</em>.
+          The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#3147FF', fontStyle: 'italic' }}>close relationships</em>.
         </p>
 
         <div className="rd-stats-grid" style={{
@@ -767,7 +767,7 @@ export function LandingPage() {
               }}>
                 <div style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-                  color: '#25B439', textTransform: 'uppercase', marginBottom: 20,
+                  color: '#3147FF', textTransform: 'uppercase', marginBottom: 20,
                 }}>
                   {f.label}
                 </div>
@@ -812,7 +812,7 @@ export function LandingPage() {
       >
         <div aria-hidden style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(ellipse 70% 100% at 50% 100%, rgba(52,177,93,0.14) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse 70% 100% at 50% 100%, rgba(49, 71, 255,0.14) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -839,9 +839,9 @@ export function LandingPage() {
               onClick={() => navigate('/login?signup=1')}
               style={{
                 padding: '16px 44px', borderRadius: 12, border: 'none',
-                background: '#25B439', color: '#fff', cursor: 'pointer',
+                background: '#3147FF', color: '#fff', cursor: 'pointer',
                 fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-sans)',
-                boxShadow: '0 4px 28px rgba(52,177,93,0.35)',
+                boxShadow: '0 4px 28px rgba(49, 71, 255,0.35)',
               }}
             >
               Get Started - Free
@@ -873,7 +873,7 @@ export function LandingPage() {
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="16" height="16" viewBox="0 0 48 48" fill="none" aria-hidden>
             <circle cx="24" cy="24" r="5" fill={t.fg} />
-            <circle cx="42" cy="24" r="2.8" fill="#25B439" />
+            <circle cx="42" cy="24" r="2.8" fill="#3147FF" />
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
             <circle cx="6"  cy="24" r="2.8" fill="#7E57C2" />
