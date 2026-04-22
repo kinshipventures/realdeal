@@ -13,7 +13,8 @@ import {
   getPrimaryPod,
 } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
-import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
+import { isContactSnoozed, snoozeContact } from '../../lib/snooze'
+import type { SnoozeDuration } from '../../lib/snooze'
 import { useDashboardConfig } from './useDashboardConfig'
 import type { WidgetId } from './useDashboardConfig'
 
@@ -46,7 +47,7 @@ export function Dashboard() {
   const [interactionsLoading, setInteractionsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-  const [snoozedIds, setSnoozedIds] = useState(() => getSnoozedIds())
+  const [snoozePickerForId, setSnoozePickerForId] = useState<string | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [campaignContacts, setCampaignContacts] = useState<CampaignContact[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
@@ -57,24 +58,27 @@ export function Dashboard() {
 
   // Graduated loading — each section loads independently
   useEffect(() => {
+    let stale = false
     getContacts()
-      .then(d => setContacts(d))
-      .catch(() => setError('Something hiccupped. Refresh to try again.'))
-      .finally(() => setContactsLoading(false))
+      .then(d => { if (!stale) setContacts(d) })
+      .catch(() => { if (!stale) setError('Something hiccupped. Refresh to try again.') })
+      .finally(() => { if (!stale) setContactsLoading(false) })
     getPods()
-      .then(d => setPods(d))
-      .finally(() => setPodsLoading(false))
+      .then(d => { if (!stale) setPods(d) })
+      .finally(() => { if (!stale) setPodsLoading(false) })
     getAllInteractions()
-      .then(d => setAllInteractions(d))
-      .finally(() => setInteractionsLoading(false))
+      .then(d => { if (!stale) setAllInteractions(d) })
+      .finally(() => { if (!stale) setInteractionsLoading(false) })
     getCampaigns()
       .then(d => {
+        if (stale) return
         setCampaigns(d)
         return Promise.all(d.map(c => getCampaignContacts(c.id)))
       })
-      .then(results => setCampaignContacts(results.flat()))
-      .finally(() => setCampaignsLoading(false))
-    getPendingContacts().then(d => setPendingContacts(d))
+      .then(results => { if (!stale && results) setCampaignContacts(results.flat()) })
+      .finally(() => { if (!stale) setCampaignsLoading(false) })
+    getPendingContacts().then(d => { if (!stale) setPendingContacts(d) })
+    return () => { stale = true }
   }, [])
 
   // Pre-index interactions by contact — O(m) single pass
@@ -272,10 +276,10 @@ export function Dashboard() {
   // Dormant contacts (90+ days, not snoozed)
   const dormantContacts = useMemo(
     () => contacts
-      .filter(c => isDormant(c) && !snoozedIds.has(c.id) && !isInGracePeriod(c))
+      .filter(c => isDormant(c) && !isContactSnoozed(c.snoozed_until) && !isInGracePeriod(c))
       .map(c => ({ contact: c, days: daysSinceContact(c) }))
       .sort((a, b) => (b.days ?? 999) - (a.days ?? 999)),
-    [contacts, snoozedIds]
+    [contacts]
   )
 
   // Score trend — compare this week's interactions to last week's
@@ -302,9 +306,11 @@ export function Dashboard() {
     setSelectedContact(null)
   }
 
-  function handleSnooze(id: string) {
-    snoozeContact(id)
-    setSnoozedIds(prev => new Set([...prev, id]))
+  async function handleSnooze(id: string, duration: SnoozeDuration) {
+    setSnoozePickerForId(null)
+    await snoozeContact(id, duration)
+    const updated = await getContacts()
+    setContacts(updated)
   }
 
   async function handleRemoveContact(id: string) {
@@ -370,10 +376,15 @@ export function Dashboard() {
       <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
-        {/* Green header band */}
-        <div style={{ background: 'var(--header-band-bg)', borderRadius: '0 0 20px 20px' }}>
-          <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 24px 32px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: isVisible('equity') ? 0 : 0 }}>
+        {/* Ambient header — color washes in, never paints */}
+        <div style={{ position: 'relative', overflow: 'hidden' }}>
+          <div aria-hidden style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse 110% 90% at 35% -5%, rgba(52,177,93,0.18) 0%, rgba(52,177,93,0.06) 45%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ position: 'relative', maxWidth: 960, margin: '0 auto', padding: '28px 24px 32px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               {isVisible('equity') ? (
                 <div style={{ flex: 1 }}>
                   <EquityWidget
@@ -388,7 +399,7 @@ export function Dashboard() {
                 </div>
               ) : (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                     Dashboard
                   </span>
                 </div>
@@ -399,9 +410,9 @@ export function Dashboard() {
                 onClick={() => setShowSettings(true)}
                 style={{
                   width: 44, height: 44, borderRadius: 8,
-                  background: 'rgba(255,255,255,0.15)', border: 'none',
+                  background: 'rgba(0,0,0,0.05)', border: '1px solid var(--edge)',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'rgba(255,255,255,0.80)', flexShrink: 0,
+                  color: 'var(--color-text-tertiary)', flexShrink: 0,
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -524,7 +535,7 @@ interface DashboardSectionProps {
   campaignsLoading: boolean
   pendingContacts: Contact[]
   onContactClick: (c: Contact) => void
-  onSnooze: (id: string) => void
+  onSnooze: (id: string, duration: SnoozeDuration) => void
   onRemoveContact: (id: string) => Promise<void>
   onRetry: () => void
   onReview: () => void

@@ -77,7 +77,7 @@ export const MojNodeComponent = memo(function MojNodeComponent({ data }: NodePro
             {overallHealth !== undefined ? (
               <>
                 <span style={{
-                  fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-serif)',
+                  fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-sans)',
                   color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.02em',
                   userSelect: 'none', lineHeight: 1,
                 }}>
@@ -99,7 +99,7 @@ export const MojNodeComponent = memo(function MojNodeComponent({ data }: NodePro
               </>
             ) : (
               <span style={{
-                fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)',
+                fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-sans)',
                 color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.01em',
                 userSelect: 'none', lineHeight: 1.2, textAlign: 'center',
               }}>
@@ -125,7 +125,7 @@ export const MojNodeComponent = memo(function MojNodeComponent({ data }: NodePro
                 <span style={{
                   fontSize: 28,
                   fontWeight: 800,
-                  fontFamily: 'var(--font-serif)',
+                  fontFamily: 'var(--font-sans)',
                   color: 'rgba(255,255,255,0.95)',
                   letterSpacing: '-0.02em',
                   userSelect: 'none',
@@ -156,7 +156,7 @@ export const MojNodeComponent = memo(function MojNodeComponent({ data }: NodePro
               <span style={{
                 fontSize: 14,
                 fontWeight: 700,
-                fontFamily: 'var(--font-serif)',
+                fontFamily: 'var(--font-sans)',
                 color: 'rgba(255,255,255,0.92)',
                 letterSpacing: '-0.01em',
                 userSelect: 'none',

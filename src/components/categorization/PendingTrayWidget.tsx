@@ -24,7 +24,7 @@ export function PendingTrayWidget({ pendingContacts, onReview }: PendingTrayWidg
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div style={{ flex: 1 }}>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 900,
             fontSize: 48,
             letterSpacing: '-0.04em',

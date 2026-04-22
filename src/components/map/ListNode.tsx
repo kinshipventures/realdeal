@@ -88,7 +88,7 @@ export const ListNodeComponent = memo(function ListNodeComponent({ data }: NodeP
             <span style={{
               fontSize: fontSize(list.name),
               fontWeight: 800,
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-sans)',
               color: 'rgba(255,255,255,0.95)',
               textAlign: 'center',
               lineHeight: 1.25,

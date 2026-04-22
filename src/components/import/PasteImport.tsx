@@ -27,7 +27,7 @@ export function PasteImport({ onParsed, onBack }: Props) {
   return (
     <div style={{ animation: 'fadeIn 0.3s ease-out', display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 16, color: 'var(--color-text-primary)', margin: 0 }}>
+        <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 16, color: 'var(--color-text-primary)', margin: 0 }}>
           Paste from spreadsheet
         </h3>
         <button type="button" onClick={onBack} style={{

@@ -49,7 +49,7 @@ export function AcceptInvitePage() {
   if (!session) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-sans)', background: 'var(--color-bg)' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em' }}>Sign in to join</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em' }}>Sign in to join</h1>
         <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: 280 }}>You need an account to accept this invite. Sign in or create one to get started.</p>
         <button type="button" onClick={() => navigate(`/login?return_to=${encodeURIComponent('/invite?token=' + token)}`)}
           style={{ padding: '10px 24px', fontSize: 14, fontWeight: 600, background: 'var(--color-brand)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
@@ -78,7 +78,7 @@ export function AcceptInvitePage() {
               style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
             <polyline points="18,28 25,35 38,22" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
             {message}
           </h1>
           {teamName && (
@@ -96,7 +96,7 @@ export function AcceptInvitePage() {
             <line x1="20" y1="20" x2="36" y2="36" stroke="var(--health-fading)" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="36" y1="20" x2="20" y2="36" stroke="var(--health-fading)" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
-          <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em', color: 'var(--health-fading)' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em', color: 'var(--health-fading)' }}>
             Something went wrong
           </h1>
           <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: 280 }}>{message}</p>

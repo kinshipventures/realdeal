@@ -92,7 +92,7 @@ export function CampaignOverview() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{
-            fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
+            fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 800,
             margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
           }}>
             Campaigns
@@ -296,7 +296,7 @@ function CampaignCard({ campaign, contacts, onClick, stagger = 0 }: {
       {/* Name */}
       <div style={{
         fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)',
-        fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em',
+        fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
       }}>
         {campaign.name}
       </div>

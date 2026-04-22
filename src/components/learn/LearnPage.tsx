@@ -23,7 +23,7 @@ export function LearnPage() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700,
+          fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 700,
           color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
         }}>
           How It Works
@@ -442,7 +442,7 @@ function ScoringSection() {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
                   <span style={{
                     fontSize: 14, fontWeight: 600, color: l.color,
-                    fontFamily: 'var(--font-serif)',
+                    fontFamily: 'var(--font-sans)',
                   }}>
                     {l.label}
                   </span>

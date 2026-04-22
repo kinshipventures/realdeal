@@ -261,7 +261,7 @@ export function CampaignDetailRoute() {
       {/* Header: title + type + deadline */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 800,
+          fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 800,
           margin: 0, color: 'var(--color-text-primary)', letterSpacing: '-0.03em',
         }}>
           {campaign.name}

@@ -86,7 +86,7 @@ function ContactCard({
       ) : (
         <>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 26,
             letterSpacing: '-0.02em',
@@ -241,7 +241,7 @@ export function CategorizationQueue({ contacts: initialContacts, onClose, onCate
           maxWidth: 320,
         }}>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 22,
             color: 'var(--color-text-primary)',

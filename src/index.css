@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800;9..144,900&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -25,21 +25,35 @@
 
 :root {
   --font-serif: 'Fraunces', serif;
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* Pod gradient pairs — hub + 5 pods */
+  --pod-hub-0: #1C1C1E;   --pod-hub-1: #2C2C30;
+  --pod-maps-0: #E53935;  --pod-maps-1: #FF6B4A;
+  --pod-lps-0: #FF6B8A;   --pod-lps-1: #FF8FA5;
+  --pod-co-0: #7E57C2;    --pod-co-1: #5C6BC0;
+  --pod-talent-0: #34B15D; --pod-talent-1: #00BFA5;
+  --pod-services-0: #F5A623; --pod-services-1: #FFD54F;
+
+  /* Active pod wash — set via JS on the root element.
+     Defaults to brand green. Components read --pod-wash-color. */
+  --pod-wash-color: 52, 177, 93;   /* rgb channels, brand green */
   --orb-hub: 136px;
   --orb-list: 96px;
   --orb-category: 60px;
   --orbit-lists: 310px;
   --orbit-categories: 230px;
-  --panel-bg: rgba(255,255,255,0.92);
-  --panel-blur: blur(32px);
-  --panel-border: rgba(0,0,0,0.07);
+  --panel-bg: rgba(255,255,255,0.76);
+  --panel-blur: blur(20px);
+  --panel-border: rgba(0,0,0,0.08);
   --panel-radius: 16px;
-  --surface-panel: rgba(255,255,255,0.92);
-  --surface-panel-border: 1px solid rgba(0,0,0,0.07);
+  --surface-panel: rgba(255,255,255,0.76);
+  --surface-panel-border: 1px solid rgba(0,0,0,0.08);
   --color-brand: #34B15D;
   --color-brand-dark: #1A8A2A;
-  --color-surface: #FFFFFF;
+  --color-surface: rgba(255,255,255,0.80);
   --color-bg: #F5F4F0;
   --color-text-primary: rgba(0,0,0,0.82);
   --color-text-secondary: rgba(0,0,0,0.45);
@@ -71,7 +85,14 @@
   --tint: rgba(0,0,0,0.04);
   --tint-hover: rgba(0,0,0,0.06);
   --text-muted: rgba(0,0,0,0.45);
-  --nav-bg: rgba(255,255,255,0.92);
+  --nav-bg: rgba(245,244,240,0.82);
+  --nav-wash: linear-gradient(
+    165deg,
+    rgba(var(--pod-wash-color), 0.14) 0%,
+    rgba(var(--pod-wash-color), 0.07) 35%,
+    transparent 65%
+  );
+  --nav-active: rgba(var(--pod-wash-color), 0.14);
   --stroke-subtle: rgba(0,0,0,0.06);
 }
 
@@ -99,7 +120,14 @@
     --tint: rgba(255,255,255,0.06);
     --tint-hover: rgba(255,255,255,0.08);
     --text-muted: rgba(255,255,255,0.40);
-    --nav-bg: rgba(30,30,30,0.85);
+    --nav-bg: rgba(28,28,30,0.86);
+    --nav-wash: linear-gradient(
+      165deg,
+      rgba(var(--pod-wash-color), 0.12) 0%,
+      rgba(var(--pod-wash-color), 0.05) 40%,
+      transparent 68%
+    );
+    --nav-active: rgba(var(--pod-wash-color), 0.18);
     --stroke-subtle: rgba(255,255,255,0.10);
     --interaction-note: rgba(255,255,255,0.50);
   }
@@ -153,16 +181,17 @@
     line-height: 1.5;
     font-kerning: normal;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-    font-variant-numeric: proportional-nums;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+    font-optical-sizing: auto;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, .heading {
-    font-family: var(--font-serif);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
@@ -423,7 +452,7 @@
 
 /* Category orb spring entrance for drill-down */
 .cat-spring-in {
-  animation: cat-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: cat-spring 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
   transform: scale(0);
 }
@@ -503,7 +532,7 @@
 .hub-stats-bar .stat-value {
   font-weight: 700;
   color: var(--color-text-primary);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   letter-spacing: -0.02em;
 }
 
@@ -935,7 +964,7 @@ body::after {
 .dashboard-heading-primary {
   font-size: 18px;
   font-weight: 800;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
   text-transform: none;
@@ -947,7 +976,7 @@ body::after {
 .dashboard-heading {
   font-size: 13px;
   font-weight: 600;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--color-text-tertiary);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -963,7 +992,7 @@ body::after {
 .dashboard-subheading {
   font-size: 15px;
   font-weight: 700;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
   margin: 0;
@@ -1100,11 +1129,11 @@ body::after {
 /* Widget card — unified hover lift + press */
 .widget-card {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 1px 3px var(--divider);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
 }
 .widget-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--divider);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
 }
 .widget-card:active {
   transform: scale(0.98) !important;
@@ -1183,7 +1212,7 @@ body::after {
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-tertiary);

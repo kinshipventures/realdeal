@@ -29,7 +29,7 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
           pointerEvents: 'none',
         }} />
         <div style={{
-          fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18,
+          fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18,
           position: 'relative', zIndex: 1,
         }}>
           Your week is quiet
@@ -68,7 +68,7 @@ export function WrappedCard({ insights }: { insights: WrappedInsight[] }) {
 
       {/* Big stat */}
       <div style={{
-        fontFamily: 'var(--font-serif)', fontWeight: 900,
+        fontFamily: 'var(--font-sans)', fontWeight: 900,
         fontSize: current.stat.length > 10 ? 32 : 48,
         letterSpacing: '-0.04em', lineHeight: 1,
         position: 'relative', zIndex: 1,

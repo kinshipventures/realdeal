@@ -45,8 +45,11 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
   const [mergeQuery, setMergeQuery] = useState('')
   const [mergeResults, setMergeResults] = useState<Contact[]>([])
   const [mergeTarget, setMergeTarget] = useState<Contact | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState(false)
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [deleteCountdown, setDeleteCountdown] = useState(5)
 
+  const [avatarHovered, setAvatarHovered] = useState(false)
   const [showTypeahead, setShowTypeahead] = useState(false)
   const [companyQuery, setCompanyQuery] = useState('')
   const [companyResults, setCompanyResults] = useState<Contact[]>([])
@@ -112,13 +115,33 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
     return () => clearTimeout(t)
   }, [mergeQuery, mergeSearchOpen, contact.id])
 
-  async function handleDelete() {
-    try {
-      await deleteContact(contact.id)
-      invalidateContactsCache()
-      navigate(-1)
-    } catch { /* navigation handles it */ }
+  function startPendingDelete() {
+    setPendingDelete(true)
+    setDeleteCountdown(5)
+    let count = 5
+    const tick = setInterval(() => {
+      count--
+      setDeleteCountdown(count)
+      if (count <= 0) clearInterval(tick)
+    }, 1000)
+    deleteTimerRef.current = setTimeout(async () => {
+      clearInterval(tick)
+      try {
+        await deleteContact(contact.id)
+        invalidateContactsCache()
+        navigate(-1)
+      } catch { navigate(-1) }
+    }, 5000)
   }
+
+  function cancelDelete() {
+    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+    deleteTimerRef.current = null
+    setPendingDelete(false)
+    setDeleteCountdown(5)
+  }
+
+  useEffect(() => () => { if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current) }, [])
 
   async function handleSelectCompany(c: Contact) {
     setShowTypeahead(false)
@@ -192,7 +215,7 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
       <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
         <button
           type="button"
-          onClick={() => navigate(contact.type === 'Company' ? '/companies' : '/contacts')}
+          onClick={() => navigate(contact.type === 'Company' ? '/relationships?view=companies' : '/relationships')}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 13 }}
         >
           {contact.type === 'Company' ? 'Companies' : 'People'}
@@ -204,14 +227,21 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8, position: 'relative' }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: '50%',
-          background: acBg,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, fontWeight: 700, color: acColor,
-          flexShrink: 0, marginTop: 2,
-          fontFamily: 'var(--font-serif)',
-        }}>
+        <div
+          onMouseEnter={() => setAvatarHovered(true)}
+          onMouseLeave={() => setAvatarHovered(false)}
+          style={{
+            width: 48, height: 48, borderRadius: '50%',
+            background: acBg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, fontWeight: 700, color: acColor,
+            flexShrink: 0, marginTop: 2,
+            fontFamily: 'var(--font-sans)',
+            transition: 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease',
+            transform: avatarHovered ? 'scale(1.1)' : 'scale(1)',
+            boxShadow: avatarHovered ? `0 4px 14px ${acBg}` : 'none',
+          }}
+        >
           {initials(contact.name)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -225,7 +255,7 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
                 onBlur={e => handleNameBlur(e.target.value)}
                 onKeyDown={handleNameKeyDown}
                 style={{
-                  fontFamily: 'var(--font-serif)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: 22,
                   fontWeight: 700,
                   lineHeight: 1.2,
@@ -243,7 +273,7 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
               <div
                 onClick={() => setEditingName(true)}
                 style={{
-                  fontFamily: 'var(--font-serif)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: 22,
                   fontWeight: 700,
                   lineHeight: 1.2,
@@ -289,7 +319,10 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = 'var(--color-brand)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = '' }}
                 >
                   <span style={{
                     width: 6,
@@ -313,7 +346,9 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
                     href={m.href}
                     target={m.external ? '_blank' : undefined}
                     rel={m.external ? 'noopener noreferrer' : undefined}
-                    style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
+                    style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none', transition: 'color 0.15s ease' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-brand)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
                   >
                     {m.label}
                   </a>
@@ -360,7 +395,7 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
               </button>
               <button
                 type="button"
-                onClick={() => { setShowOverflow(false); setConfirmDelete(true) }}
+                onClick={() => { setShowOverflow(false); startPendingDelete() }}
                 style={{
                   width: '100%', textAlign: 'left',
                   padding: '10px 14px', fontSize: 13, cursor: 'pointer',
@@ -506,7 +541,7 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
             position: 'relative', background: 'var(--color-surface)', borderRadius: 12,
             padding: 20, width: 340, boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
           }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
               Merge "{contact.name}" with...
             </div>
             <input
@@ -559,46 +594,49 @@ export function RecordHeader({ contact, pods, activeCampaigns = [], onUpdate }: 
         />
       )}
 
-      {confirmDelete && (
+      {pendingDelete && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: 'var(--color-text-primary)',
+          color: 'var(--bg)',
+          borderRadius: 10,
+          padding: '12px 16px',
+          display: 'flex', alignItems: 'center', gap: 14,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+          fontSize: 13, fontWeight: 500,
+          whiteSpace: 'nowrap',
+          animation: 'tooltipFadeIn 0.18s ease-out',
         }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setConfirmDelete(false)} />
-          <div style={{
-            position: 'relative', background: 'var(--color-surface)', borderRadius: 12,
-            padding: 24, width: 320, textAlign: 'center',
-            boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
+          <span style={{ opacity: 0.75 }}>Deleting "{contact.name}"</span>
+          <span style={{
+            width: 20, height: 20, borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.3)',
+            borderTopColor: 'rgba(255,255,255,0.9)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.9)',
           }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
-              Delete "{contact.name}"?
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
-              This cannot be undone.
-            </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button
-                type="button" onClick={() => setConfirmDelete(false)}
-                style={{
-                  padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid var(--edge-strong)',
-                  fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', fontFamily: 'inherit',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button" onClick={handleDelete}
-                style={{
-                  padding: '8px 20px', borderRadius: 8, cursor: 'pointer',
-                  background: 'var(--health-fading)', border: 'none',
-                  fontSize: 13, fontWeight: 600, color: '#fff', fontFamily: 'inherit',
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+            {deleteCountdown}
+          </span>
+          <button
+            type="button"
+            onClick={cancelDelete}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              borderRadius: 6,
+              color: '#fff',
+              fontSize: 12, fontWeight: 600,
+              padding: '4px 12px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.12s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+          >
+            Undo
+          </button>
         </div>
       )}
     </div>

@@ -100,6 +100,7 @@ export interface Contact {
   email_3: string | null
   photo_url: string | null
   custom_fields: Record<string, unknown>
+  snoozed_until: string | null  // ISO timestamp; null = not snoozed
   created_at: string
 }
 

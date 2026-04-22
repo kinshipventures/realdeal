@@ -512,7 +512,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 13,
-    fontFamily: 'var(--font-serif)',
+    fontFamily: 'var(--font-sans)',
     fontWeight: 600,
     color: 'color-mix(in srgb, var(--color-text-secondary) 90%, var(--color-brand) 10%)',
     marginBottom: 0,
@@ -964,7 +964,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     color: 'var(--color-text-primary)',
                     padding: '6px 12px',
                     outline: 'none',
-                    fontFamily: 'var(--font-serif)',
+                    fontFamily: 'var(--font-sans)',
                   }}
                 />
               ) : (
@@ -972,7 +972,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   onClick={() => setEditingField('name')}
                   style={{
                     fontSize: 36, fontWeight: 700,
-                    fontFamily: 'var(--font-serif)',
+                    fontFamily: 'var(--font-sans)',
                     lineHeight: 1.02,
                     letterSpacing: '-0.04em',
                     color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',

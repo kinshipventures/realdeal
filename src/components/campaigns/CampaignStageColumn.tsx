@@ -201,7 +201,7 @@ export function CampaignStageColumn({
             onBlur={handleNameBlur}
             onKeyDown={handleNameKeyDown}
             style={{
-              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-serif)',
+              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-sans)',
               letterSpacing: '-0.02em', color: 'var(--color-text-primary)',
               border: 'none', outline: '1px solid var(--color-brand)', borderRadius: 4,
               padding: '2px 4px', background: 'transparent', width: '100%',
@@ -211,7 +211,7 @@ export function CampaignStageColumn({
           <span
             onClick={handleNameClick}
             style={{
-              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-serif)',
+              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-sans)',
               letterSpacing: '-0.02em', color: 'var(--color-text-primary)',
               cursor: 'text', flex: 1,
             }}

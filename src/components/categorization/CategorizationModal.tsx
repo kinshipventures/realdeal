@@ -280,7 +280,7 @@ export function CategorizationModal({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <div style={{
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 700,
               fontSize: 18,
               color: 'var(--color-text-primary)',

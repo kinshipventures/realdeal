@@ -43,7 +43,7 @@ function PodRow({ pod, contactCount, overdueCount, score, scoreReady }: {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
               {pod.name}
             </span>
             {health && (
@@ -68,7 +68,7 @@ function PodRow({ pod, contactCount, overdueCount, score, scoreReady }: {
         </div>
       </div>
       {scoreReady && (
-        <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.03em', flexShrink: 0 }}>
+        <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', letterSpacing: '-0.03em', flexShrink: 0 }}>
           {score}
         </div>
       )}

@@ -13,7 +13,7 @@ function FundTagsWidget({ contact }: { contact: Contact }) {
   return (
     <div style={WIDGET_STYLE}>
       <div style={{
-        fontFamily: 'var(--font-serif)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 16,
         fontWeight: 700,
         color: 'var(--color-text-primary)',

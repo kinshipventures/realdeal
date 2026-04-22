@@ -112,7 +112,7 @@ export function ImportSourcePicker({ onFileSelected, onPasteSelected, onGoogleSe
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        <p style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 16, color: 'var(--color-text-primary)', margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 16, color: 'var(--color-text-primary)', margin: 0 }}>
           Drop any file here
         </p>
         <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0 }}>

@@ -195,7 +195,7 @@ export function CategoryTable() {
 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
           <h1 style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 30,
             fontWeight: 700,
             margin: 0,

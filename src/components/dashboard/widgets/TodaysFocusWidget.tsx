@@ -38,7 +38,7 @@ function FocusLead({ item, onClick }: { item: FocusItem; onClick: () => void }) 
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <Avatar name={item.contact.name} size={40} variant="subtle" />
-        <span style={{ fontSize: 21, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', flex: 1, letterSpacing: '-0.02em' }}>
+        <span style={{ fontSize: 21, fontWeight: 700, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', flex: 1, letterSpacing: '-0.02em' }}>
           {item.contact.name}
         </span>
         <span style={{
@@ -94,7 +94,7 @@ function FocusRow({ item, onClick }: { item: FocusItem; onClick: () => void }) {
     >
       <Avatar name={item.contact.name} size={30} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
           {item.contact.name}
         </div>
         <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>

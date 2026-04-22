@@ -1,0 +1,295 @@
+/*
+ * Arc Design Tokens
+ *
+ * Reverse-engineered. Values are observed from the product unless marked
+ * "documented". Semantic names follow Arc's own exposed palette vars
+ * (--arc-palette-*) where known.
+ */
+
+:root {
+  /* ----------------------------------------------------------------
+   * Signature brand colors
+   * Documented via public brand references.
+   * ---------------------------------------------------------------- */
+  --arc-brand-blue: #3139FB;          /* primary brand blue */
+  --arc-brand-red: #FF5060;           /* accent red */
+  --arc-brand-deep-purple: #2702C2;   /* deep gradient anchor */
+  --arc-brand-purple: #6E56FF;        /* gradient mid (observed) */
+  --arc-brand-pink: #FF5CA8;          /* gradient hot stop (observed) */
+  --arc-brand-orange: #FF8A4C;        /* gradient warm stop (observed) */
+  --arc-brand-yellow: #FFD447;        /* gradient sun stop (observed) */
+  --arc-brand-teal: #3DD9C4;          /* gradient cool stop (observed) */
+
+  /* ----------------------------------------------------------------
+   * User-selectable "theme color" seeds
+   * Arc lets users pick a single color or a 2-stop gradient at setup.
+   * These map to the --arc-background-gradient-color0/1 variables.
+   * ---------------------------------------------------------------- */
+  --arc-background-gradient-color0: #6E56FF;
+  --arc-background-gradient-color1: #FF5CA8;
+  --arc-background-gradient-overlay-color0: rgba(255, 255, 255, 0.08);
+  --arc-background-gradient-overlay-color1: rgba(0, 0, 0, 0.06);
+
+  /* The canonical Arc gradient as seen in marketing */
+  --arc-gradient-signature: linear-gradient(
+    135deg,
+    #2702C2 0%,
+    #3139FB 18%,
+    #6E56FF 38%,
+    #FF5CA8 58%,
+    #FF5060 76%,
+    #FF8A4C 92%
+  );
+
+  /* Softer sidebar ambient wash (2-stop user gradient) */
+  --arc-gradient-sidebar: linear-gradient(
+    160deg,
+    var(--arc-background-gradient-color0) 0%,
+    var(--arc-background-gradient-color1) 100%
+  );
+
+  /* ----------------------------------------------------------------
+   * Semantic palette - light appearance
+   * Names mirror Arc's exposed --arc-palette-* custom properties.
+   * ---------------------------------------------------------------- */
+  --arc-palette-background: #F7F5F2;          /* app background, warm off-white */
+  --arc-palette-background-extra: #FFFFFF;    /* web content / elevated surface */
+  --arc-palette-title: rgba(0, 0, 0, 0.92);   /* primary text */
+  --arc-palette-subtitle: rgba(0, 0, 0, 0.60); /* secondary text */
+  --arc-palette-foreground-primary: rgba(0, 0, 0, 0.92);
+  --arc-palette-foreground-secondary: rgba(0, 0, 0, 0.56);
+  --arc-palette-foreground-tertiary: rgba(0, 0, 0, 0.32);
+  --arc-palette-hover: rgba(0, 0, 0, 0.06);
+  --arc-palette-focus: rgba(49, 57, 251, 0.18);
+  --arc-palette-cutout: rgba(255, 255, 255, 0.55);
+  --arc-palette-min-contrast: rgba(0, 0, 0, 0.04);
+  --arc-palette-max-contrast: rgba(0, 0, 0, 0.92);
+
+  /* Sidebar surface - a translucent tint on top of the user gradient */
+  --arc-sidebar-surface: rgba(255, 255, 255, 0.22);
+  --arc-sidebar-surface-hover: rgba(255, 255, 255, 0.36);
+  --arc-sidebar-surface-active: rgba(255, 255, 255, 0.64);
+  --arc-sidebar-border: rgba(0, 0, 0, 0.06);
+  --arc-sidebar-divider: rgba(255, 255, 255, 0.22);
+
+  /* ----------------------------------------------------------------
+   * Typography
+   *
+   * Confirmed from arc.net and thebrowser.company CSS (April 2026):
+   *   - arc.net: "Marlin" (800, custom display) + "Marlin Soft Basic"
+   *     (400 regular/italic, OTF) + Space Mono (Google, 400/700).
+   *   - thebrowser.company: "ABCDiatypeMono" (Dinamo, licensed) and
+   *     "IvarText" (Letters from Sweden, licensed) for their corporate
+   *     site. Inter loaded as fallback.
+   *
+   * Marlin / Marlin Soft = a bespoke/commercial face by Typeverything
+   * (Wild Type Studio "Marlin Soft"). Not free.
+   * ABC Diatype Mono = Dinamo Typefaces. Paid license.
+   * Ivar Text = Letters from Sweden. Paid license.
+   *
+   * Product UI (Arc browser app): the macOS app renders with the
+   * system font (-apple-system / SF Pro). No custom UI face is
+   * bundled. Sidebar labels and command bar use SF Pro Text/Display.
+   *
+   * Free substitutes (stack below):
+   *   - Display (Marlin Soft) -> Inter Display or Space Grotesk:
+   *     geometric, slightly rounded, generous counters.
+   *   - Body (Ivar Text) -> EB Garamond or Source Serif 4: old-style
+   *     serif with moderate contrast, similar warm editorial tone.
+   *   - Mono (ABC Diatype Mono) -> JetBrains Mono: neo-grotesque
+   *     mono, rounded terminals, similar x-height.
+   *   - UI -> system (SF Pro on Apple, Segoe UI on Windows), Inter
+   *     fallback. Matches Arc's actual product rendering.
+   * ---------------------------------------------------------------- */
+  --arc-font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --arc-font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --arc-font-serif: 'EB Garamond', 'Source Serif 4', Georgia, serif;
+  --arc-font-mono: 'JetBrains Mono', 'Space Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Weights */
+  --arc-weight-regular: 400;
+  --arc-weight-medium: 500;
+  --arc-weight-semibold: 600;
+  --arc-weight-bold: 700;
+
+  /* Type scale - UI is small, dense, but not cramped */
+  --arc-text-xs: 11px;     /* badge, meta */
+  --arc-text-sm: 12px;     /* sidebar item, tooltip */
+  --arc-text-base: 13px;   /* body UI, input */
+  --arc-text-md: 14px;     /* emphasized body */
+  --arc-text-lg: 16px;     /* command bar input */
+  --arc-text-xl: 20px;     /* modal title */
+  --arc-text-2xl: 28px;    /* page title */
+  --arc-text-3xl: 40px;    /* hero title */
+  --arc-text-display: 64px; /* marketing hero */
+
+  /* Line heights */
+  --arc-leading-tight: 1.15;
+  --arc-leading-snug: 1.3;
+  --arc-leading-normal: 1.45;
+  --arc-leading-relaxed: 1.6;
+
+  /* Letter spacing - tight for display, neutral for UI */
+  --arc-tracking-tight: -0.02em;
+  --arc-tracking-snug: -0.01em;
+  --arc-tracking-normal: 0;
+  --arc-tracking-wide: 0.01em;
+
+  /* ----------------------------------------------------------------
+   * Spacing - 4pt base, generous at large sizes
+   * Arc uses tight rhythm inside the sidebar and generous breathing in
+   * modals and command bar.
+   * ---------------------------------------------------------------- */
+  --arc-space-0: 0;
+  --arc-space-1: 2px;
+  --arc-space-2: 4px;
+  --arc-space-3: 6px;
+  --arc-space-4: 8px;
+  --arc-space-5: 12px;
+  --arc-space-6: 16px;
+  --arc-space-7: 20px;
+  --arc-space-8: 24px;
+  --arc-space-9: 32px;
+  --arc-space-10: 40px;
+  --arc-space-11: 56px;
+  --arc-space-12: 72px;
+
+  /* Sidebar dimensions (observed) */
+  --arc-sidebar-width: 240px;
+  --arc-sidebar-width-min: 200px;
+  --arc-sidebar-width-max: 320px;
+  --arc-sidebar-padding-x: 8px;
+  --arc-sidebar-item-height: 30px;
+  --arc-sidebar-item-padding-x: 10px;
+  --arc-sidebar-item-gap: 2px;
+  --arc-sidebar-section-gap: 14px;
+
+  /* Window chrome */
+  --arc-window-padding: 8px;       /* the "frame" around web content */
+  --arc-window-inner-radius: 10px; /* inner content corner */
+  --arc-window-outer-radius: 14px; /* outer window corner (observed) */
+
+  /* ----------------------------------------------------------------
+   * Radii - pill buttons, soft squircles, no sharp corners
+   * ---------------------------------------------------------------- */
+  --arc-radius-xs: 4px;     /* tight chips */
+  --arc-radius-sm: 6px;     /* sidebar item, favicon */
+  --arc-radius-md: 8px;     /* inputs, cards */
+  --arc-radius-lg: 12px;    /* modal body */
+  --arc-radius-xl: 16px;    /* command bar container */
+  --arc-radius-2xl: 20px;   /* Little Arc window */
+  --arc-radius-pill: 999px; /* CTA button, status pill */
+
+  /* ----------------------------------------------------------------
+   * Elevation - always soft, often just a 1px inner border plus a tiny
+   * y-offset shadow. Never stack multiple heavy shadows.
+   * ---------------------------------------------------------------- */
+  --arc-border-hairline: 1px solid rgba(0, 0, 0, 0.06);
+  --arc-border-subtle: 1px solid rgba(0, 0, 0, 0.08);
+  --arc-border-strong: 1px solid rgba(0, 0, 0, 0.14);
+
+  --arc-shadow-none: none;
+
+  /* Resting lift: sidebar item active, button idle */
+  --arc-shadow-sm:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 1px 2px rgba(0, 0, 0, 0.06);
+
+  /* Floating: tooltips, dropdowns */
+  --arc-shadow-md:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 16px rgba(0, 0, 0, 0.08);
+
+  /* Command bar / Little Arc */
+  --arc-shadow-lg:
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.18);
+
+  /* Modal / Spaces switcher */
+  --arc-shadow-xl:
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    0 40px 80px rgba(0, 0, 0, 0.24);
+
+  /* Focus ring - a thicker, colored halo, not a browser default */
+  --arc-focus-ring: 0 0 0 3px var(--arc-palette-focus);
+
+  /* ----------------------------------------------------------------
+   * Glass / backdrop materials
+   * Sidebar and floating surfaces use heavy backdrop blur + saturate.
+   * Approximates macOS "Vibrancy" / Windows Mica.
+   * ---------------------------------------------------------------- */
+  --arc-blur-sidebar: blur(28px) saturate(180%);
+  --arc-blur-modal: blur(40px) saturate(160%);
+  --arc-blur-tooltip: blur(16px) saturate(140%);
+
+  /* ----------------------------------------------------------------
+   * Motion - spring-y, short, never linear for state changes.
+   * Durations are short; the spring does the expressive work.
+   * ---------------------------------------------------------------- */
+  --arc-duration-instant: 80ms;
+  --arc-duration-fast: 140ms;
+  --arc-duration-base: 220ms;
+  --arc-duration-slow: 380ms;
+  --arc-duration-slower: 560ms;
+
+  /* Cubic-bezier approximations of Arc's spring feel */
+  --arc-ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);         /* default enter */
+  --arc-ease-out-spring: cubic-bezier(0.34, 1.56, 0.64, 1);    /* slight overshoot */
+  --arc-ease-out-bold: cubic-bezier(0.16, 1, 0.3, 1);          /* command bar expand */
+  --arc-ease-in-soft: cubic-bezier(0.4, 0, 1, 1);              /* exit */
+  --arc-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);           /* space switch */
+  --arc-ease-linear: linear;
+
+  /* Signature composite transitions */
+  --arc-transition-hover: background-color var(--arc-duration-fast) var(--arc-ease-out-soft),
+                          color var(--arc-duration-fast) var(--arc-ease-out-soft);
+  --arc-transition-press: transform var(--arc-duration-instant) var(--arc-ease-out-soft);
+  --arc-transition-reveal: opacity var(--arc-duration-base) var(--arc-ease-out-soft),
+                           transform var(--arc-duration-base) var(--arc-ease-out-spring);
+}
+
+/* ------------------------------------------------------------------
+ * Dark appearance
+ * Arc's dark mode keeps the gradient but darkens the surfaces and
+ * flips foreground luminance. Trigger with [data-appearance="dark"]
+ * or prefers-color-scheme.
+ * ------------------------------------------------------------------ */
+:root[data-appearance="dark"],
+@media (prefers-color-scheme: dark) {
+  :root {
+    --arc-palette-background: #1C1B1E;
+    --arc-palette-background-extra: #252428;
+    --arc-palette-title: rgba(255, 255, 255, 0.94);
+    --arc-palette-subtitle: rgba(255, 255, 255, 0.62);
+    --arc-palette-foreground-primary: rgba(255, 255, 255, 0.94);
+    --arc-palette-foreground-secondary: rgba(255, 255, 255, 0.58);
+    --arc-palette-foreground-tertiary: rgba(255, 255, 255, 0.32);
+    --arc-palette-hover: rgba(255, 255, 255, 0.08);
+    --arc-palette-focus: rgba(110, 86, 255, 0.32);
+    --arc-palette-cutout: rgba(0, 0, 0, 0.4);
+    --arc-palette-min-contrast: rgba(255, 255, 255, 0.06);
+    --arc-palette-max-contrast: rgba(255, 255, 255, 0.94);
+
+    --arc-sidebar-surface: rgba(255, 255, 255, 0.06);
+    --arc-sidebar-surface-hover: rgba(255, 255, 255, 0.10);
+    --arc-sidebar-surface-active: rgba(255, 255, 255, 0.18);
+    --arc-sidebar-border: rgba(255, 255, 255, 0.08);
+
+    --arc-border-hairline: 1px solid rgba(255, 255, 255, 0.08);
+    --arc-border-subtle: 1px solid rgba(255, 255, 255, 0.12);
+    --arc-border-strong: 1px solid rgba(255, 255, 255, 0.2);
+
+    --arc-shadow-sm:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    --arc-shadow-md:
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 8px 16px rgba(0, 0, 0, 0.5);
+    --arc-shadow-lg:
+      0 4px 8px rgba(0, 0, 0, 0.4),
+      0 20px 40px rgba(0, 0, 0, 0.6);
+    --arc-shadow-xl:
+      0 8px 16px rgba(0, 0, 0, 0.5),
+      0 40px 80px rgba(0, 0, 0, 0.7);
+  }
+}

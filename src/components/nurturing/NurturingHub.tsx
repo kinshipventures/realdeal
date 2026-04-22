@@ -8,7 +8,8 @@ import { EmptyState } from '../empty/EmptyState'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact, contactCadenceDays, todaysFocus } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
-import { getSnoozedIds, snoozeContact } from '../../lib/snooze'
+import { isContactSnoozed, snoozeContact, DURATION_LABELS } from '../../lib/snooze'
+import type { SnoozeDuration } from '../../lib/snooze'
 import type { Contact, Pod, Interaction, FocusItem } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 
@@ -33,7 +34,7 @@ const sectionHeaderStyle: React.CSSProperties = {
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 15,
   fontWeight: 700,
-  fontFamily: 'var(--font-serif)',
+  fontFamily: 'var(--font-sans)',
   color: 'var(--color-text-primary)',
   letterSpacing: '-0.01em',
   margin: 0,
@@ -77,7 +78,7 @@ export function NurturingHub() {
   const [pods, setPods] = useState<Pod[]>([])
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
-  const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set())
+  const [snoozePickerForId, setSnoozePickerForId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [hygieneExpanded, setHygieneExpanded] = useState(false)
   const [helperDismissed, setHelperDismissed] = useState(() => {
@@ -104,7 +105,6 @@ export function NurturingHub() {
       setContacts(c)
       setPods(p)
       setInteractions(ix)
-      setSnoozedIds(getSnoozedIds())
       setLoading(false)
     }).catch(() => {
       if (!canceled) setLoading(false)
@@ -153,7 +153,7 @@ export function NurturingHub() {
     const followUpOverdueIds = new Set<string>()
     const followUpOverdue: { contact: Contact; days: number | null; isFollowUpOverdue: true }[] = []
     for (const contact of contacts) {
-      if (snoozedIds.has(contact.id)) continue
+      if (isContactSnoozed(contact.snoozed_until)) continue
       if (!contact.next_follow_up_date || contact.next_follow_up_date >= today) continue
       followUpOverdueIds.add(contact.id)
       const days = contact.last_contacted_at
@@ -171,7 +171,7 @@ export function NurturingHub() {
     const cadenceOverdue: { contact: Contact; days: number | null; isFollowUpOverdue?: undefined }[] = []
     for (const contact of contacts) {
       if (isInGracePeriod(contact)) continue
-      if (snoozedIds.has(contact.id)) continue
+      if (isContactSnoozed(contact.snoozed_until)) continue
       if (followUpOverdueIds.has(contact.id)) continue  // already in follow-up overdue
       const pod = contact.primary_list_id ? pods.find(p => p.id === contact.primary_list_id) : null
       const overdue = isOverdue(contact, pod?.cadence ?? 'monthly')
@@ -184,14 +184,14 @@ export function NurturingHub() {
     cadenceOverdue.sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
 
     return [...followUpOverdue, ...cadenceOverdue]
-  }, [contacts, pods, snoozedIds])
+  }, [contacts, pods])
 
   const staleContacts = useMemo(() => {
     return contacts
       .filter(c => isDormant(c) && !snoozedIds.has(c.id) && !isInGracePeriod(c))
       .map(c => ({ contact: c, days: daysSinceContact(c) }))
       .sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
-  }, [contacts, snoozedIds])
+  }, [contacts])
 
   const upcomingDates = useMemo(() => {
     const today = new Date()
@@ -275,9 +275,11 @@ export function NurturingHub() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  function handleSnooze(id: string) {
-    snoozeContact(id)
-    setSnoozedIds(prev => new Set([...prev, id]))
+  async function handleSnooze(id: string, duration: SnoozeDuration) {
+    setSnoozePickerForId(null)
+    await snoozeContact(id, duration)
+    const updated = await getContacts()
+    setContacts(updated)
   }
 
   function handleInteractionLogged() {
@@ -320,7 +322,7 @@ export function NurturingHub() {
       <h1 style={{
         fontSize: 26,
         fontWeight: 700,
-        fontFamily: 'var(--font-serif)',
+        fontFamily: 'var(--font-sans)',
         color: 'var(--color-text-primary)',
         margin: '0 0 12px',
         letterSpacing: '-0.02em',

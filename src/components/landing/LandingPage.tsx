@@ -7,7 +7,7 @@ import moonpayLogo from '@/assets/logos/moonpay.png'
 import forerunnerLogo from '@/assets/logos/forerunner.png'
 import wonderLogo from '@/assets/logos/wonder.png'
 
-function useInView(threshold = 0.15): [RefObject<HTMLElement | null>, boolean] {
+function useInView(threshold = 0.12): [RefObject<HTMLElement | null>, boolean] {
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
@@ -23,99 +23,9 @@ function useInView(threshold = 0.15): [RefObject<HTMLElement | null>, boolean] {
   return [ref, visible]
 }
 
-const FEATURES = [
-  {
-    title: 'Visual Network Map',
-    desc: 'See your entire relationship universe as an interactive orb map. Drill into pods, categories, and individual connections.',
-    icon: (
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="8" fill="var(--color-brand)" opacity="0.9" />
-        <circle cx="10" cy="10" r="4" fill="var(--color-brand)" opacity="0.5" />
-        <circle cx="32" cy="12" r="3" fill="var(--color-brand)" opacity="0.4" />
-        <circle cx="30" cy="32" r="5" fill="var(--color-brand)" opacity="0.6" />
-        <circle cx="8" cy="30" r="3" fill="var(--color-brand)" opacity="0.35" />
-        <line x1="20" y1="20" x2="10" y2="10" stroke="var(--color-brand)" strokeWidth="1" opacity="0.3" />
-        <line x1="20" y1="20" x2="32" y2="12" stroke="var(--color-brand)" strokeWidth="1" opacity="0.3" />
-        <line x1="20" y1="20" x2="30" y2="32" stroke="var(--color-brand)" strokeWidth="1" opacity="0.3" />
-        <line x1="20" y1="20" x2="8" y2="30" stroke="var(--color-brand)" strokeWidth="1" opacity="0.3" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Social Equity Scoring',
-    desc: 'Track relationship health with a 0-100 score based on interaction recency, frequency, and depth. Know who needs attention.',
-    icon: (
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="16" stroke="var(--color-brand)" strokeWidth="3" opacity="0.2" />
-        <path d="M 20 4 A 16 16 0 1 1 6.34 28" stroke="var(--color-brand)" strokeWidth="3" strokeLinecap="round" />
-        <text x="20" y="24" textAnchor="middle" fill="var(--color-brand)" fontSize="12" fontWeight="700">85</text>
-      </svg>
-    ),
-  },
-  {
-    title: 'Smart Pods',
-    desc: 'Organize contacts into pods with custom cadences. RealDeal nudges you when relationships need nurturing.',
-    icon: (
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <rect x="4" y="8" width="14" height="10" rx="4" fill="var(--color-brand)" opacity="0.7" />
-        <rect x="22" y="4" width="14" height="10" rx="4" fill="var(--color-brand)" opacity="0.5" />
-        <rect x="14" y="22" width="14" height="10" rx="4" fill="var(--color-brand)" opacity="0.6" />
-      </svg>
-    ),
-  },
-]
-
-const STEPS = [
-  {
-    num: '1', title: 'Import',
-    desc: 'Bring your existing network in seconds. Upload a CSV, connect your contacts, or add people one by one.',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <path d="M16 4v16M10 14l6 6 6-6" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M4 22v4a2 2 0 002 2h20a2 2 0 002-2v-4" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    num: '2', title: 'Organize',
-    desc: 'Group contacts into pods and categories that mirror how you actually think. Set cadences so nothing slips through the cracks.',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <rect x="4" y="6" width="10" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-        <rect x="18" y="4" width="10" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-        <rect x="10" y="20" width="12" height="8" rx="3" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-        <line x1="16" y1="14" x2="16" y2="20" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
-      </svg>
-    ),
-  },
-  {
-    num: '3', title: 'Engage',
-    desc: 'Log calls, emails, meetings, and intros. RealDeal auto-tracks recency so you always know where each relationship stands.',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <path d="M8 28c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="16" cy="12" r="5" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
-        <path d="M24 14l2 2 4-4" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    num: '4', title: 'Insights',
-    desc: 'Watch your Social Equity scores rise. Get smart nudges when relationships need attention and celebrate the ones that are thriving.',
-    icon: (
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
-        <path d="M16 4a12 12 0 0 1 10.4 6" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"/>
-        <text x="16" y="20" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontWeight="700">85</text>
-      </svg>
-    ),
-  },
-]
-
 const PARTNERS = [
-  { name: 'Moj Mahdara', role: 'Co-Founder & Managing Partner', initials: 'MM' },
-  { name: 'Gwyneth Paltrow', role: 'Partner', initials: 'GP' },
-  { name: 'Trina Spear', role: 'Partner', initials: 'TS' },
+  { name: 'Moj Mahdara', role: 'Co-Founder & Managing Partner', initials: 'MM', photo: 'https://images.squarespace-cdn.com/content/v1/6255af0f455c757ddc06592c/5554cf9e-73fe-48f0-82ca-c3c0da8e0cae/Moj+Mahdara.png' },
+  { name: 'Gwyneth Paltrow', role: 'Partner', initials: 'GP', photo: 'https://images.squarespace-cdn.com/content/v1/6255af0f455c757ddc06592c/91232f51-0b9d-4a2a-86d3-e31abd321d08/Gwyneth+Paltrow.png' },
 ]
 
 const PORTFOLIO_BRANDS = [
@@ -126,138 +36,241 @@ const PORTFOLIO_BRANDS = [
   { name: 'Wonder', logo: wonderLogo },
 ]
 
-function AppPreviewMockup() {
-  return (
-    <div style={{
-      maxWidth: 720, margin: '0 auto', borderRadius: 12,
-      boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)',
-      overflow: 'hidden', background: '#F5F4F0',
-    }}>
-      <div style={{
-        height: 36, background: '#E8E7E3', display: 'flex', alignItems: 'center',
-        padding: '0 12px', gap: 8,
-      }}>
-        <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF5F57' }} />
-        <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFBD2E' }} />
-        <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28C840' }} />
-        <span style={{
-          flex: 1, textAlign: 'center', fontSize: 12, color: 'rgba(0,0,0,0.4)',
-          fontFamily: 'var(--font-sans)', marginRight: 52,
-        }}>
-          RealDeal - Network Map
-        </span>
-      </div>
-      <svg viewBox="0 0 720 380" fill="none" style={{ display: 'block', width: '100%' }}>
-        <rect width="720" height="380" fill="#F5F4F0" />
-        <line x1="360" y1="190" x2="200" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <line x1="360" y1="190" x2="520" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <line x1="360" y1="190" x2="180" y2="280" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <line x1="360" y1="190" x2="540" y2="280" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <line x1="360" y1="190" x2="140" y2="190" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <line x1="360" y1="190" x2="580" y2="190" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-        <circle cx="360" cy="190" r="48" fill="url(#hubGrad)" />
-        <circle cx="360" cy="190" r="52" stroke="#25B439" strokeWidth="3" opacity="0.3" fill="none" />
-        <text x="360" y="185" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="var(--font-serif)">RealDeal</text>
-        <text x="360" y="200" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Score: 78</text>
-        <circle cx="200" cy="100" r="32" fill="url(#pod1Grad)" />
-        <circle cx="200" cy="100" r="36" stroke="#25B439" strokeWidth="2" strokeDasharray="180 226" strokeLinecap="round" fill="none" opacity="0.5" />
-        <text x="200" y="104" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">LPs</text>
-        <circle cx="520" cy="100" r="28" fill="url(#pod2Grad)" />
-        <circle cx="520" cy="100" r="32" stroke="#D97706" strokeWidth="2" strokeDasharray="140 201" strokeLinecap="round" fill="none" opacity="0.5" />
-        <text x="520" y="104" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Talent</text>
-        <circle cx="180" cy="280" r="26" fill="url(#pod3Grad)" />
-        <text x="180" y="284" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">Advisors</text>
-        <circle cx="540" cy="280" r="30" fill="url(#pod4Grad)" />
-        <circle cx="540" cy="280" r="34" stroke="#7C3AED" strokeWidth="2" strokeDasharray="170 214" strokeLinecap="round" fill="none" opacity="0.5" />
-        <text x="540" y="284" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Founders</text>
-        <circle cx="140" cy="190" r="24" fill="url(#pod5Grad)" />
-        <text x="140" y="194" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">Media</text>
-        <circle cx="580" cy="190" r="22" fill="url(#pod6Grad)" />
-        <text x="580" y="194" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">VCs</text>
+const FEATURES = [
+  {
+    label: '01',
+    title: 'Your whole network, mapped.',
+    desc: 'See every relationship as an interactive orb map. Pods, categories, and individual connections organized exactly how you think - not how a database does.',
+    visual: (
+      <svg viewBox="0 0 480 320" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
-          <linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#25B439" />
-            <stop offset="100%" stopColor="#1A8A2A" />
-          </linearGradient>
-          <linearGradient id="pod1Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#25B439" />
-            <stop offset="100%" stopColor="#1A8A2A" />
-          </linearGradient>
-          <linearGradient id="pod2Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#D97706" />
-            <stop offset="100%" stopColor="#B45309" />
-          </linearGradient>
-          <linearGradient id="pod3Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#0EA5E9" />
-            <stop offset="100%" stopColor="#0284C7" />
-          </linearGradient>
-          <linearGradient id="pod4Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#7C3AED" />
-            <stop offset="100%" stopColor="#6D28D9" />
-          </linearGradient>
-          <linearGradient id="pod5Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#EC4899" />
-            <stop offset="100%" stopColor="#DB2777" />
-          </linearGradient>
-          <linearGradient id="pod6Grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#F59E0B" />
-            <stop offset="100%" stopColor="#D97706" />
-          </linearGradient>
+          <radialGradient id="f1hub" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#1a6632" stopOpacity="0.7" />
+          </radialGradient>
+          <radialGradient id="f1p1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#1a6632" stopOpacity="0.5" />
+          </radialGradient>
+          <radialGradient id="f1p2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.5" />
+          </radialGradient>
+          <radialGradient id="f1p3" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#0369a1" stopOpacity="0.5" />
+          </radialGradient>
+          <radialGradient id="f1p4" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#EC4899" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#9d174d" stopOpacity="0.5" />
+          </radialGradient>
+          <radialGradient id="f1glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+          </radialGradient>
+          <filter id="f1blur">
+            <feGaussianBlur stdDeviation="3" />
+          </filter>
         </defs>
+        {/* ambient glow */}
+        <ellipse cx="240" cy="160" rx="120" ry="100" fill="url(#f1glow)" />
+        {/* connection lines */}
+        <line x1="240" y1="160" x2="120" y2="70" stroke="#34B15D" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="160" y2="270" stroke="#34B15D" strokeWidth="1" opacity="0.12" />
+        {/* hub */}
+        <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
+        <circle cx="240" cy="160" r="60" stroke="#34B15D" strokeWidth="1.5" opacity="0.3" fill="none" />
+        <text x="240" y="154" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="system-ui">Network</text>
+        <text x="240" y="170" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontFamily="system-ui">Score 84</text>
+        {/* pods */}
+        <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
+        <circle cx="120" cy="70" r="38" stroke="#34B15D" strokeWidth="1" opacity="0.25" fill="none" />
+        <text x="120" y="74" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">LPs</text>
+        <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
+        <text x="370" y="84" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Talent</text>
+        <circle cx="380" cy="240" r="32" fill="url(#f1p3)" />
+        <text x="380" y="244" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Founders</text>
+        <circle cx="100" cy="250" r="26" fill="url(#f1p4)" />
+        <text x="100" y="254" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Media</text>
+        <circle cx="165" cy="275" r="20" fill="url(#f1p1)" opacity="0.7" />
+        <text x="165" y="279" textAnchor="middle" fill="white" fontSize="8" fontWeight="600" fontFamily="system-ui">VCs</text>
       </svg>
-    </div>
-  )
-}
+    ),
+  },
+  {
+    label: '02',
+    title: 'Equity scoring that keeps you honest.',
+    desc: 'Every relationship gets a 0-100 Social Equity score based on recency, frequency, and depth of interactions. Thriving, Steady, Cooling, or Fading - you always know where you stand.',
+    visual: (
+      <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
+        <defs>
+          <radialGradient id="f2glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="240" cy="140" rx="100" ry="80" fill="url(#f2glow)" />
+        {[
+          { name: 'Sarah Chen', score: 92, label: 'Thriving', color: '#34B15D', y: 60 },
+          { name: 'Marcus Lee', score: 74, label: 'Steady', color: '#60a5fa', y: 120 },
+          { name: 'Jenna Park', score: 41, label: 'Cooling', color: '#f59e0b', y: 180 },
+          { name: 'David Osei', score: 18, label: 'Fading', color: '#f87171', y: 240 },
+        ].map((row, i) => (
+          <g key={i}>
+            <text x="32" y={row.y + 5} fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="system-ui">{row.name}</text>
+            <rect x="160" y={row.y - 10} width={240 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.25" />
+            <rect x="160" y={row.y - 10} width={160 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.7" />
+            <text x="410" y={row.y + 5} fill={row.color} fontSize="12" fontWeight="700" fontFamily="system-ui">{row.score}</text>
+            <text x="440" y={row.y + 5} fill={row.color} fontSize="10" fontFamily="system-ui" opacity="0.8">{row.label}</text>
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+  {
+    label: '03',
+    title: 'Never let a relationship slip.',
+    desc: 'Set cadences for every pod. RealDeal tracks recency automatically and surfaces who needs attention before you even have to think about it.',
+    visual: (
+      <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
+        <defs>
+          <radialGradient id="f3glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="240" cy="140" rx="110" ry="90" fill="url(#f3glow)" />
+        {[
+          { name: 'LPs Pod', cadence: 'Monthly', next: 'Overdue 3d', color: '#f87171', pct: 0.95 },
+          { name: 'Founders Pod', cadence: 'Biweekly', next: 'In 4 days', color: '#f59e0b', pct: 0.6 },
+          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#34B15D', pct: 0.12 },
+        ].map((row, i) => (
+          <g key={i}>
+            <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+            <text x="52" y={92 + i * 72} fill="rgba(255,255,255,0.9)" fontSize="13" fontWeight="600" fontFamily="system-ui">{row.name}</text>
+            <text x="52" y={110 + i * 72} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="system-ui">{row.cadence}</text>
+            <rect x="240" y={82 + i * 72} width="120" height="8" rx="4" fill="rgba(255,255,255,0.08)" />
+            <rect x="240" y={82 + i * 72} width={120 * row.pct} height="8" rx="4" fill={row.color} opacity="0.8" />
+            <text x="380" y={91 + i * 72} fill={row.color} fontSize="11" fontFamily="system-ui" fontWeight="600">{row.next}</text>
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+]
 
 export function LandingPage() {
   const navigate = useNavigate()
-  const [heroRef, heroVisible] = useInView(0.1)
-  const [featRef, featVisible] = useInView()
-  const [proofRef, proofVisible] = useInView()
-  const [stepsRef, stepsVisible] = useInView(0.1)
+  const [heroRef, heroVisible] = useInView(0.05)
+  const [f1Ref, f1Visible] = useInView()
+  const [f2Ref, f2Visible] = useInView()
+  const [f3Ref, f3Visible] = useInView()
+  const [partnersRef, partnersVisible] = useInView()
   const [ctaRef, ctaVisible] = useInView()
 
   const reveal = (visible: boolean, delay = 0) => ({
     opacity: visible ? 1 : 0,
-    transform: visible ? 'translateY(0)' : 'translateY(24px)',
-    transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
+    transform: visible ? 'translateY(0)' : 'translateY(28px)',
+    transition: `opacity 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
   })
 
+  const BG = '#0D0E0F'
+  const featureRefs = [f1Ref, f2Ref, f3Ref]
+  const featureVis = [f1Visible, f2Visible, f3Visible]
+
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh', fontFamily: 'var(--font-sans)' }}>
+    <div style={{ background: BG, minHeight: '100vh', fontFamily: 'var(--font-sans)', color: '#fff' }}>
+      <style>{`
+        @keyframes rd-ticker {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes rd-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        .rd-nav-btn {
+          transition: opacity 0.15s;
+        }
+        .rd-nav-btn:hover { opacity: 0.7; }
+        .rd-cta-primary {
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .rd-cta-primary:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 32px rgba(52,177,93,0.45) !important;
+        }
+        .rd-cta-ghost {
+          transition: background 0.15s;
+        }
+        .rd-cta-ghost:hover {
+          background: rgba(255,255,255,0.08) !important;
+        }
+        @media (max-width: 767px) {
+          .rd-feature-row {
+            grid-template-columns: 1fr !important;
+            direction: ltr !important;
+            gap: 40px !important;
+          }
+          .rd-feature-outer {
+            padding: 0 24px 80px !important;
+          }
+        }
+      `}</style>
+
       {/* Nav */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 24px', maxWidth: 1120, margin: '0 auto',
+        padding: 'clamp(16px, 3vw, 20px) clamp(16px, 4vw, 40px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: `${BG}cc`,
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }}>
-        <span style={{
-          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 800,
-          color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
-        }}>
-          RealDeal
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="5" fill="#fff" />
+            <circle cx="42" cy="24" r="2.8" fill="#34B15D" />
+            <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
+            <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
+            <circle cx="6"  cy="24" r="2.8" fill="#7E57C2" />
+            <circle cx="15" cy="8.4" r="2.8" fill="#E53935" />
+            <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5" />
+          </svg>
+          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.025em', color: '#fff' }}>
+            realdeal
+          </span>
         </span>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
+            className="rd-nav-btn"
             onClick={() => navigate('/login')}
             style={{
-              padding: '8px 20px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.12)',
+              padding: '8px 18px', borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.14)',
               background: 'transparent', cursor: 'pointer',
-              fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 500,
-              color: 'var(--color-text-primary)',
+              fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.75)',
+              fontFamily: 'var(--font-sans)',
             }}
           >
             Sign in
           </button>
           <button
+            className="rd-cta-primary"
             onClick={() => navigate('/login?signup=1')}
             style={{
-              padding: '8px 20px', borderRadius: 8, border: 'none',
-              background: 'var(--color-brand)', color: '#fff', cursor: 'pointer',
-              fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600,
+              padding: '8px 18px', borderRadius: 8, border: 'none',
+              background: '#34B15D', color: '#fff', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              boxShadow: '0 4px 20px rgba(52,177,93,0.3)',
             }}
           >
-            Get Started
+            Get started
           </button>
         </div>
       </nav>
@@ -266,286 +279,384 @@ export function LandingPage() {
       <section
         ref={heroRef as RefObject<HTMLElement>}
         style={{
-          maxWidth: 1120, margin: '0 auto', padding: '80px 24px 64px',
-          textAlign: 'center',
+          maxWidth: 1200, margin: '0 auto', padding: '96px 40px 80px',
+          textAlign: 'center', position: 'relative',
         }}
       >
-        <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 'clamp(36px, 6vw, 64px)',
-          fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1,
-          color: 'var(--color-text-primary)', margin: '0 0 20px',
-          ...reveal(heroVisible),
-        }}>
-          Real friends, real deal friends
-        </h1>
-        <p style={{
-          fontSize: 'clamp(16px, 2.5vw, 20px)', lineHeight: 1.6,
-          color: 'var(--color-text-secondary)', maxWidth: 560, margin: '0 auto 40px',
-          ...reveal(heroVisible, 0.1),
-        }}>
-          The relationship OS for people who build through connection.
-          Track, nurture, and deepen every relationship that matters.
-        </p>
-        <div style={{
-          display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48,
-          ...reveal(heroVisible, 0.2),
-        }}>
-          <button
-            onClick={() => navigate('/login?signup=1')}
-            style={{
-              padding: '14px 32px', borderRadius: 10, border: 'none',
-              background: 'var(--color-brand)', color: '#fff', cursor: 'pointer',
-              fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 600,
-              boxShadow: '0 4px 16px rgba(1,47,108,0.25)',
-            }}
-          >
-            Get Started - Free
-          </button>
-          <button
-            onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
-            style={{
-              padding: '14px 32px', borderRadius: 10,
-              border: '1px solid rgba(0,0,0,0.12)', background: 'var(--surface-panel)',
-              cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 500,
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            Try the Demo
-          </button>
-        </div>
+        {/* ambient light */}
+        <div aria-hidden style={{
+          position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)',
+          width: 800, height: 400,
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(52,177,93,0.18) 0%, rgba(52,177,93,0.06) 50%, transparent 75%)',
+          pointerEvents: 'none',
+        }} />
 
-        <div style={reveal(heroVisible, 0.3)}>
-          <AppPreviewMockup />
-        </div>
-      </section>
-
-      {/* Features */}
-      <section
-        ref={featRef as RefObject<HTMLElement>}
-        style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px' }}
-      >
-        <h2 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
-          textAlign: 'center', color: 'var(--color-text-primary)',
-          letterSpacing: '-0.02em', marginBottom: 48,
-          ...reveal(featVisible),
-        }}>
-          Everything you need to stay connected
-        </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 24,
-        }}>
-          {FEATURES.map((f, i) => (
-            <div
-              key={f.title}
-              style={{
-                background: 'var(--surface-panel)',
-                border: 'var(--surface-panel-border)',
-                borderRadius: 16, padding: '32px 28px',
-                ...reveal(featVisible, 0.1 + i * 0.1),
-              }}
-            >
-              <div style={{ marginBottom: 16 }}>{f.icon}</div>
-              <h3 style={{
-                fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600,
-                color: 'var(--color-text-primary)', marginBottom: 8, letterSpacing: '-0.01em',
-              }}>
-                {f.title}
-              </h3>
-              <p style={{
-                fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)', margin: 0,
-              }}>
-                {f.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Social proof */}
-      <section
-        ref={proofRef as RefObject<HTMLElement>}
-        style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px 80px' }}
-      >
-        <p style={{
-          textAlign: 'center', fontSize: 14, color: 'var(--color-text-secondary)',
-          marginBottom: 32, letterSpacing: '0.02em', textTransform: 'uppercase', fontWeight: 500,
-          ...reveal(proofVisible),
-        }}>
-          Built for{' '}
-          <a
-            href="https://kinshipventures.co"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--color-brand)', textDecoration: 'none', fontWeight: 600 }}
-          >
-            Kinship Ventures
-          </a>
-        </p>
-
-        <div style={{
-          display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap',
-          marginBottom: 48,
-        }}>
-          {PARTNERS.map((p, i) => (
-            <div
-              key={p.name}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: 'var(--surface-panel)',
-                border: 'var(--surface-panel-border)',
-                borderRadius: 12, padding: '16px 20px',
-                minWidth: 200,
-                ...reveal(proofVisible, 0.1 + i * 0.08),
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'var(--color-brand)', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>
-                {p.initials}
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                  {p.name}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                  {p.role}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Portfolio logo strip */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 40, flexWrap: 'wrap', opacity: proofVisible ? 0.45 : 0,
-          transform: proofVisible ? 'translateY(0)' : 'translateY(16px)',
-          transition: 'opacity 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s',
-        }}>
-          {PORTFOLIO_BRANDS.map((brand) => (
-            <img
-              key={brand.name}
-              src={brand.logo}
-              alt={brand.name}
-              loading="lazy"
-              style={{
-                height: 28,
-                width: 'auto',
-                objectFit: 'contain',
-                userSelect: 'none',
-              }}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section
-        ref={stepsRef as RefObject<HTMLElement>}
-        style={{
-          background: 'var(--color-brand)', padding: '80px 24px', borderRadius: '20px 20px 0 0',
-        }}
-      >
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <h2 style={{
-            fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 700,
-            textAlign: 'center', color: '#fff', letterSpacing: '-0.02em', marginBottom: 16,
-            ...reveal(stepsVisible),
-          }}>
-            How it works
-          </h2>
-          <p style={{
-            textAlign: 'center', fontSize: 16, color: 'rgba(255,255,255,0.6)',
-            marginBottom: 56, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto',
-            ...reveal(stepsVisible, 0.1),
-          }}>
-            From scattered contacts to a living relationship system in four steps.
-          </p>
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 24,
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '6px 14px', borderRadius: 100,
+            border: '1px solid rgba(52,177,93,0.3)',
+            background: 'rgba(52,177,93,0.08)',
+            marginBottom: 32,
+            ...reveal(heroVisible),
           }}>
-            {STEPS.map((s, i) => (
-              <div key={s.num} style={{
-                textAlign: 'center',
-                background: 'rgba(255,255,255,0.08)',
-                borderRadius: 16,
-                padding: '32px 20px 28px',
-                position: 'relative',
-                ...reveal(stepsVisible, 0.15 + i * 0.1),
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#34B15D' }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>
+              Backed by Kinship Ventures
+            </span>
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(44px, 7vw, 88px)',
+            fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.0,
+            color: '#fff', margin: '0 0 28px',
+            ...reveal(heroVisible, 0.05),
+          }}>
+            Feed what<br />feeds you.
+          </h1>
+
+          <p style={{
+            fontSize: 'clamp(17px, 2vw, 21px)', lineHeight: 1.6,
+            color: 'rgba(255,255,255,0.5)', maxWidth: 520, margin: '0 auto 44px',
+            ...reveal(heroVisible, 0.12),
+          }}>
+            The relationship OS for people who build through connection.
+          </p>
+
+          <div style={{
+            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72,
+            ...reveal(heroVisible, 0.2),
+          }}>
+            <button
+              className="rd-cta-primary"
+              onClick={() => navigate('/login?signup=1')}
+              style={{
+                padding: '14px 36px', borderRadius: 10, border: 'none',
+                background: '#34B15D', color: '#fff', cursor: 'pointer',
+                fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-sans)',
+                boxShadow: '0 4px 24px rgba(52,177,93,0.35)',
+              }}
+            >
+              Get Started - Free
+            </button>
+            <button
+              className="rd-cta-ghost"
+              onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
+              style={{
+                padding: '14px 36px', borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.04)',
+                cursor: 'pointer', fontSize: 16, fontWeight: 500,
+                color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              Try the Demo
+            </button>
+          </div>
+
+          {/* Product screenshot / mockup */}
+          <div style={{
+            position: 'relative',
+            ...reveal(heroVisible, 0.28),
+          }}>
+            {/* glow behind mockup */}
+            <div aria-hidden style={{
+              position: 'absolute', bottom: -60, left: '50%', transform: 'translateX(-50%)',
+              width: '80%', height: 200,
+              background: 'radial-gradient(ellipse at 50% 100%, rgba(52,177,93,0.2) 0%, transparent 70%)',
+              pointerEvents: 'none', zIndex: 0,
+              filter: 'blur(20px)',
+            }} />
+            <div style={{
+              position: 'relative', zIndex: 1,
+              maxWidth: 840, margin: '0 auto',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.08)',
+              overflow: 'hidden',
+              boxShadow: '0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)',
+              background: '#1A1B1C',
+              animation: 'rd-float 6s ease-in-out infinite',
+            }}>
+              {/* browser chrome */}
+              <div style={{
+                height: 40, background: '#111213',
+                display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}>
-                <div style={{ marginBottom: 12 }}>{s.icon}</div>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.15)', color: '#fff',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 700, marginBottom: 12,
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57', opacity: 0.8 }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E', opacity: 0.8 }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840', opacity: 0.8 }} />
+                <span style={{
+                  flex: 1, textAlign: 'center', fontSize: 11,
+                  color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-sans)',
+                  marginRight: 48,
                 }}>
-                  {s.num}
-                </div>
-                <h3 style={{
-                  fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
-                  color: '#fff', marginBottom: 10,
-                }}>
-                  {s.title}
-                </h3>
-                <p style={{ fontSize: 13, lineHeight: 1.65, color: 'rgba(255,255,255,0.65)', margin: 0 }}>
-                  {s.desc}
-                </p>
-                {i < STEPS.length - 1 && (
-                  <div style={{
-                    position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)',
-                    color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300,
-                    display: 'none',
-                  }} className="step-connector">
-                    &rarr;
-                  </div>
-                )}
+                  RealDeal - Network Map
+                </span>
               </div>
-            ))}
+              {/* mockup SVG */}
+              <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: '#0F1210' }}>
+                <defs>
+                  <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
+                  </radialGradient>
+                  <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp3" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp4" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#EC4899" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#9d174d" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp5" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#D97706" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp6" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.75" />
+                    <stop offset="100%" stopColor="#059669" stopOpacity="0.5" />
+                  </radialGradient>
+                </defs>
+                {/* bg glow */}
+                <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
+                {/* lines */}
+                <line x1="420" y1="220" x2="220" y2="100" stroke="#34B15D" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="130" y2="220" stroke="#F59E0B" strokeWidth="1.5" opacity="0.15" />
+                <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
+                {/* hub */}
+                <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
+                <circle cx="420" cy="220" r="64" stroke="#34B15D" strokeWidth="2" opacity="0.25" fill="none" />
+                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">RealDeal</text>
+                <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
+                {/* pods */}
+                <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
+                <circle cx="220" cy="100" r="43" stroke="#34B15D" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
+                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">LPs</text>
+                <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
+                <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
+                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Talent</text>
+                <circle cx="640" cy="300" r="35" fill="url(#hp3)" />
+                <text x="640" y="304" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Founders</text>
+                <circle cx="200" cy="330" r="30" fill="url(#hp4)" />
+                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Media</text>
+                <circle cx="130" cy="220" r="27" fill="url(#hp5)" />
+                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">VCs</text>
+                <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
+                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Advisors</text>
+              </svg>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Logo ticker */}
+      <div style={{ padding: '40px 0 56px', overflow: 'hidden' }}>
+        <p style={{
+          textAlign: 'center', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em',
+          color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 24,
+        }}>
+          Portfolio companies
+        </p>
+        <div style={{
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 80,
+            animation: 'rd-ticker 22s linear infinite', width: 'max-content',
+          }}>
+            {[...PORTFOLIO_BRANDS, ...PORTFOLIO_BRANDS].map((brand, i) => (
+              <img
+                key={`${brand.name}-${i}`}
+                src={brand.logo}
+                alt={brand.name}
+                loading="lazy"
+                width={120}
+                height={36}
+                style={{
+                  height: 36, width: 'auto', objectFit: 'contain',
+                  userSelect: 'none', flexShrink: 0,
+                  filter: 'brightness(0) invert(1)', opacity: 0.35,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Partners */}
+      <div
+        ref={partnersRef as RefObject<HTMLElement>}
+        style={{ maxWidth: 900, margin: '0 auto', padding: '0 40px 96px' }}
+      >
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap',
+          ...reveal(partnersVisible),
+        }}>
+          {PARTNERS.map((p, i) => (
+            <div key={p.name} style={{
+              display: 'flex', alignItems: 'center', gap: 18,
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 20,
+              padding: '20px 28px',
+              background: 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              minWidth: 280, flex: '1 1 280px', maxWidth: 380,
+              ...reveal(partnersVisible, i * 0.08),
+            }}>
+              {p.photo ? (
+                <img src={p.photo} alt={p.name} width={60} height={60} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.1)' }} />
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#34B15D', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                  {p.initials}
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 3 }}>{p.name}</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>{p.role}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Feature sections - editorial alternating */}
+      <div className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 40px 120px' }}>
+        {FEATURES.map((f, i) => {
+          const featureRef = featureRefs[i]
+          const isVisible = featureVis[i]
+          const isEven = i % 2 === 0
+
+          return (
+            <section
+              key={f.label}
+              ref={featureRef as RefObject<HTMLElement>}
+              className="rd-feature-row"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 80,
+                alignItems: 'center',
+                marginBottom: i < FEATURES.length - 1 ? 100 : 0,
+                direction: isEven ? 'ltr' : 'rtl',
+              }}
+            >
+              {/* text */}
+              <div style={{
+                direction: 'ltr',
+                ...reveal(isVisible, 0),
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+                  color: '#34B15D', textTransform: 'uppercase', marginBottom: 20,
+                }}>
+                  {f.label}
+                </div>
+                <h2 style={{
+                  fontSize: 'clamp(28px, 3.5vw, 44px)',
+                  fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1,
+                  color: '#fff', marginBottom: 20,
+                }}>
+                  {f.title}
+                </h2>
+                <p style={{
+                  fontSize: 17, lineHeight: 1.65,
+                  color: 'rgba(255,255,255,0.5)', maxWidth: 420,
+                }}>
+                  {f.desc}
+                </p>
+              </div>
+              {/* visual */}
+              <div style={{
+                direction: 'ltr',
+                borderRadius: 20,
+                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(255,255,255,0.02)',
+                padding: '32px 24px',
+                ...reveal(isVisible, 0.12),
+              }}>
+                {f.visual}
+              </div>
+            </section>
+          )
+        })}
+      </div>
 
       {/* CTA footer */}
       <section
         ref={ctaRef as RefObject<HTMLElement>}
         style={{
-          background: 'var(--color-brand)', padding: '0 24px 80px', textAlign: 'center',
+          padding: '100px 40px 120px', textAlign: 'center',
+          position: 'relative', overflow: 'hidden',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse 70% 100% at 50% 100%, rgba(52,177,93,0.14) 0%, transparent 65%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <h2 style={{
-            fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 800,
-            color: '#fff', letterSpacing: '-0.02em', marginBottom: 16,
+            fontSize: 'clamp(36px, 5vw, 64px)',
+            fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05,
+            color: '#fff', marginBottom: 24,
             ...reveal(ctaVisible),
           }}>
-            Ready to invest in your relationships?
+            Invest in your<br />relationships.
           </h2>
           <p style={{
-            fontSize: 16, color: 'rgba(255,255,255,0.70)', marginBottom: 32,
+            fontSize: 18, color: 'rgba(255,255,255,0.45)', marginBottom: 40,
             ...reveal(ctaVisible, 0.1),
           }}>
             Join RealDeal and start building deeper connections today.
           </p>
-          <div style={reveal(ctaVisible, 0.2)}>
+          <div style={{
+            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap',
+            ...reveal(ctaVisible, 0.2),
+          }}>
             <button
+              className="rd-cta-primary"
               onClick={() => navigate('/login?signup=1')}
               style={{
-                padding: '14px 40px', borderRadius: 10, border: 'none',
-                background: '#fff', color: 'var(--color-brand)', cursor: 'pointer',
-                fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 700,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                padding: '16px 44px', borderRadius: 12, border: 'none',
+                background: '#34B15D', color: '#fff', cursor: 'pointer',
+                fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-sans)',
+                boxShadow: '0 4px 28px rgba(52,177,93,0.35)',
               }}
             >
               Get Started - Free
+            </button>
+            <button
+              className="rd-cta-ghost"
+              onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
+              style={{
+                padding: '16px 44px', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.04)',
+                cursor: 'pointer', fontSize: 17, fontWeight: 500,
+                color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              Try the Demo
             </button>
           </div>
         </div>

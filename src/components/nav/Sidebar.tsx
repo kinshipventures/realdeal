@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '@/integrations/supabase/client'
+import { invalidateAllCaches } from '@/lib/supabase-data'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
 interface SidebarProps {
@@ -18,7 +19,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 
   const isPods = location.pathname === '/' || location.pathname === '/pods'
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
-  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
+  const isRelationships = location.pathname === '/relationships' || location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isLearn = location.pathname === '/learn'
   const isChangelog = location.pathname === '/changelog'
@@ -33,11 +34,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         left: 0,
         bottom: 0,
         width,
-        transition: 'width 0.2s cubic-bezier(0.215, 0.61, 0.355, 1)',
+        transition: 'width 0.22s cubic-bezier(0.215, 0.61, 0.355, 1)',
         background: 'var(--nav-bg)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid var(--edge-strong)',
+        backdropFilter: 'blur(32px)',
+        WebkitBackdropFilter: 'blur(32px)',
+        borderRight: '1px solid var(--edge)',
         scrollbarWidth: 'none' as any,
         display: 'flex',
         flexDirection: 'column',
@@ -47,8 +48,56 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         scrollbarGutter: 'stable',
       }}
     >
-      {/* Collapse toggle - top */}
-      <div style={{ padding: '8px 8px 0' }}>
+      {/* Pod ambient wash — radial glow from bottom, driven by --pod-wash-color */}
+      <div aria-hidden style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        background: 'var(--nav-wash)',
+        transition: 'background 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+        zIndex: 0,
+      }} />
+      {/* Header: brand + collapse toggle in one row */}
+      <div style={{
+        display: 'flex',
+        flexDirection: collapsed ? 'column' : 'row',
+        alignItems: 'center',
+        padding: collapsed ? '12px 8px 8px' : '14px 8px 10px',
+        gap: collapsed ? 2 : 0,
+      }}>
+        {/* Logo + wordmark */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flex: collapsed ? undefined : 1,
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          padding: collapsed ? 0 : '0 6px',
+          overflow: 'hidden',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 48 48" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="24" cy="24" r="5" fill="var(--color-text-primary)"/>
+            <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+            <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
+            <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
+            <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>
+            <circle cx="15" cy="8.4" r="2.8" fill="#E53935"/>
+            <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5"/>
+          </svg>
+          {!collapsed && (
+            <span style={{
+              fontSize: 15,
+              fontWeight: 600,
+              letterSpacing: '-0.025em',
+              color: 'var(--color-text-primary)',
+              whiteSpace: 'nowrap',
+            }}>
+              realdeal
+            </span>
+          )}
+        </div>
+
+        {/* Collapse toggle */}
         <button
           type="button"
           onClick={onToggle}
@@ -58,19 +107,19 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 44,
-            height: 44,
-            margin: collapsed ? '0 auto' : '0 0 0 auto',
+            width: 28,
+            height: 28,
+            flexShrink: 0,
             background: 'none',
             border: 'none',
-            borderRadius: 8,
+            borderRadius: 6,
             cursor: 'pointer',
             color: 'var(--color-text-tertiary)',
             transition: 'color 0.12s ease',
           }}
         >
           <svg
-            width="16" height="16" viewBox="0 0 24 24"
+            width="13" height="13" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="1.5"
             strokeLinecap="round" strokeLinejoin="round"
             style={{
@@ -86,8 +135,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Team switcher */}
       <WorkspaceSwitcher collapsed={collapsed} />
 
-      {/* Search - promoted to top for quick access */}
-      <div style={{ padding: '4px 8px' }}>
+      {/* Search */}
+      <div style={{ padding: '8px 8px 4px' }}>
         <NavItem
           icon={<SearchIcon />}
           label="Search"
@@ -101,7 +150,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       <Divider />
 
       {/* Primary nav */}
-      <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
           icon={<PodsIcon />}
           label="Pods"
@@ -121,7 +170,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="Relationships"
           active={isRelationships}
           collapsed={collapsed}
-          onClick={() => navigate('/contacts')}
+          onClick={() => navigate('/relationships')}
         />
         <NavItem
           icon={<CampaignsIcon />}
@@ -132,13 +181,11 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         />
       </div>
 
-      <Divider />
-
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
       {/* Account + utilities */}
-      <div style={{ padding: '4px 8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ padding: '4px 8px 16px', display: 'flex', flexDirection: 'column', gap: 1 }}>
         <NavItem
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
           label="Settings"
@@ -170,7 +217,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           label="Sign out"
           active={false}
           collapsed={collapsed}
-          onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+          onClick={async () => { invalidateAllCaches(); await supabase.auth.signOut(); window.location.href = '/login' }}
           labelStyle={{ color: 'var(--color-text-tertiary)' }}
         />
         {!collapsed && onDemoToggle && import.meta.env.DEV && (
@@ -213,6 +260,7 @@ function NavItem({
 }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
 
   function handleEnter() {
     if (!collapsed) return
@@ -241,12 +289,13 @@ function NavItem({
         minHeight: collapsed ? undefined : 44,
         margin: collapsed ? '0 auto' : undefined,
         padding: collapsed ? 0 : '8px 16px',
-        background: active ? 'var(--tint-hover)' : 'transparent',
+        background: active ? 'var(--nav-active)' : 'transparent',
         border: 'none',
         borderRadius: 8,
         cursor: 'pointer',
         fontFamily: 'inherit',
-        transition: 'background 0.12s ease',
+        color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+        transition: 'background 0.15s ease, color 0.15s ease',
         position: 'relative',
       }}
     >
@@ -267,7 +316,7 @@ function NavItem({
           overflow: 'hidden',
           fontSize: 13,
           fontWeight: active ? 600 : 500,
-          color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
           flex: 1,
           textAlign: 'left',
           ...labelStyle,

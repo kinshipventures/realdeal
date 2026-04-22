@@ -56,6 +56,7 @@ export function CampaignDetail({
   const [notes, setNotes] = useState(campaignNotes ?? '')
   const [notesEditing, setNotesEditing] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current) }, [])
 
   // Auto-save notes with debounce
   function handleNotesChange(value: string) {
@@ -161,7 +162,7 @@ export function CampaignDetail({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontSize: 18, fontWeight: 700,
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--color-text-primary)',
               letterSpacing: '-0.02em',
               lineHeight: 1.2,

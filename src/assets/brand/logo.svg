@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48" fill="none">
+  <!-- mark -->
+  <circle cx="24" cy="24" r="5" fill="#1C1C1E"/>
+  <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+  <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
+  <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
+  <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>
+  <circle cx="15" cy="8.4" r="2.8" fill="#E53935"/>
+  <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5"/>
+  <!-- wordmark -->
+  <text x="56" y="31" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="-0.03em" fill="#1C1C1E">realdeal</text>
+</svg>

@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router'
 import { Avatar } from '../ui'
 import { TYPE_ICONS } from '../contacts/InteractionSection'
 import { logInteraction, updateContact } from '../../lib/airtable'
+import { DURATION_LABELS } from '../../lib/snooze'
+import type { SnoozeDuration } from '../../lib/snooze'
 import type { Contact, InteractionType } from '../../lib/types'
 
 interface NurturingRowProps {
   contact: Contact
   signal: string
   signalColor: string
-  onSnooze: (id: string) => void
+  onSnooze: (id: string, duration: SnoozeDuration) => void
   onInteractionLogged: () => void
   onContactUpdated?: (contact: Contact) => void
 }
@@ -40,6 +42,7 @@ export function NurturingRow({ contact, signal, signalColor, onSnooze, onInterac
   const [logging, setLogging] = useState(false)
   const [showFollowUp, setShowFollowUp] = useState(false)
   const [followUpDate, setFollowUpDate] = useState('')
+  const [showSnoozePicker, setShowSnoozePicker] = useState(false)
   const [followUpAction, setFollowUpAction] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -125,17 +128,47 @@ export function NurturingRow({ contact, signal, signalColor, onSnooze, onInterac
             </svg>
           </button>
 
-          {/* Snooze 30d */}
-          <button
-            style={ghostBtnStyle}
-            title="Snooze 30 days"
-            onClick={e => { e.stopPropagation(); onSnooze(contact.id) }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </button>
+          {/* Snooze */}
+          <div style={{ position: 'relative' }}>
+            <button
+              style={ghostBtnStyle}
+              title="Snooze"
+              onClick={e => { e.stopPropagation(); setShowSnoozePicker(v => !v) }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </button>
+            {showSnoozePicker && (
+              <div
+                style={{
+                  position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 20,
+                  background: 'var(--color-bg)', border: '1px solid var(--edge-strong)',
+                  borderRadius: 8, padding: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  display: 'flex', flexDirection: 'column', gap: 2, minWidth: 110,
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                {(Object.keys(DURATION_LABELS) as SnoozeDuration[]).map(d => (
+                  <button
+                    key={d}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '6px 10px', borderRadius: 5, fontSize: 12,
+                      color: 'var(--color-text-primary)', textAlign: 'left',
+                      fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    onClick={() => onSnooze(contact.id, d)}
+                  >
+                    {DURATION_LABELS[d]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

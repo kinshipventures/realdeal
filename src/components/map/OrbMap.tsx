@@ -269,7 +269,7 @@ function ViewToggle({ mode, onChange }: { mode: 'map' | 'list'; onChange: (m: 'm
         aria-pressed={mode === 'map'}
         onClick={() => onChange('map')}
         style={{
-          width: 36, height: 36,
+          width: 44, height: 44,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           border: 'none', cursor: 'pointer',
           background: mode === 'map' ? 'var(--color-brand)' : 'transparent',
@@ -289,7 +289,7 @@ function ViewToggle({ mode, onChange }: { mode: 'map' | 'list'; onChange: (m: 'm
         aria-pressed={mode === 'list'}
         onClick={() => onChange('list')}
         style={{
-          width: 36, height: 36,
+          width: 44, height: 44,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           border: 'none', cursor: 'pointer',
           background: mode === 'list' ? 'var(--color-brand)' : 'transparent',
@@ -330,7 +330,7 @@ function PodListView({
           display: 'flex', alignItems: 'center', gap: 8,
           marginBottom: 16,
         }}>
-          <button onClick={onBack} style={{
+          <button onClick={onBack} aria-label="Back to all pods" style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
           }}>
@@ -373,7 +373,7 @@ function PodListView({
               >
                 <span style={{
                   fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-serif)',
+                  fontFamily: 'var(--font-sans)',
                 }}>{cat.name}</span>
               </button>
             </li>
@@ -422,7 +422,7 @@ function PodListView({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)',
-                    fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em',
+                    fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{pod.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
@@ -914,6 +914,7 @@ export function OrbMap() {
     const startTime = performance.now()
     const duration = 400
 
+    let snapRaf: number
     function animate(now: number) {
       const elapsed = now - startTime
       const t = Math.min(elapsed / duration, 1)
@@ -927,10 +928,11 @@ export function OrbMap() {
       ))
 
       if (t < 1) {
-        requestAnimationFrame(animate)
+        snapRaf = requestAnimationFrame(animate)
       }
     }
-    requestAnimationFrame(animate)
+    snapRaf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(snapRaf)
   }, [setNodes, mapView])
 
   const handleViewModeChange = useCallback((mode: 'map' | 'list') => {
@@ -1041,7 +1043,7 @@ export function OrbMap() {
               ))}
             </div>
             <h3 style={{
-              fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-serif)',
+              fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-sans)',
               color: 'var(--color-text-primary)', margin: '0 0 6px',
               letterSpacing: '-0.01em',
             }}>
@@ -1222,7 +1224,7 @@ export function OrbMap() {
             >
               <div className="tooltip-header">
                 <span className="tooltip-dot" style={{ background: hoveredPod.pod.color ?? '#718096' }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em' }}>
                   {hoveredPod.pod.name}
                 </span>
               </div>
@@ -1363,18 +1365,18 @@ export function OrbMap() {
                 height: 48,
                 borderRadius: '50%',
                 border: 'none',
-                background: '#25B439',
+                background: 'var(--color-brand)',
                 color: '#fff',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(37,180,57,0.35)',
+                boxShadow: '0 4px 14px rgba(52,177,93,0.35)',
                 transition: 'transform 0.15s, box-shadow 0.15s',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'scale(1.1)'
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,180,57,0.45)'
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(52,177,93,0.45)'
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.transform = 'scale(1)'

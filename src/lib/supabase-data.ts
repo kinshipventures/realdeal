@@ -246,7 +246,7 @@ function mapContact(r: any, catIds?: string[]): Contact {
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
     email_3: r.email_3 ?? null, communication_preferences: r.communication_preferences ?? null,
     photo_url: null,
-    custom_fields: customFields, created_at: r.created_at,
+    custom_fields: customFields, snoozed_until: r.snoozed_until ?? null, created_at: r.created_at,
   }
 }
 
@@ -327,7 +327,7 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     'relationship_owner', 'contact_frequency', 'next_follow_up_date', 'next_action',
     'kv_fund_investor', 'spv_investor', 'needs_review', 'type', 'status',
     'industry', 'stage', 'ticker', 'domain', 'cadence_override', 'email_2', 'email_3',
-    'custom_fields',
+    'custom_fields', 'snoozed_until',
   ] as const
   for (const key of directFields) {
     if ((data as any)[key] !== undefined) update[key] = (data as any)[key]

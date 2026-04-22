@@ -206,8 +206,29 @@ export function RecordsList() {
     return f
   })
 
-  // Sort
-  const [sort, setSort] = useState<{ col: ColumnId; dir: SortDir }>({ col: 'equity', dir: 'desc' })
+  // Sort - restore from URL query params
+  const [sort, setSort] = useState<{ col: ColumnId; dir: SortDir }>(() => {
+    const col = searchParams.get('sort_col') as ColumnId | null
+    const dir = searchParams.get('sort_dir') as SortDir | null
+    const validCols: ColumnId[] = ['name', 'company', 'pod', 'equity', 'type', 'status', 'last_contact', 'cadence', 'location', 'follow_up']
+    if (col && validCols.includes(col) && (dir === 'asc' || dir === 'desc')) return { col, dir }
+    return { col: 'equity', dir: 'desc' }
+  })
+
+  // Sync sort to URL
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (sort.col === 'equity' && sort.dir === 'desc') {
+        next.delete('sort_col')
+        next.delete('sort_dir')
+      } else {
+        next.set('sort_col', sort.col)
+        next.set('sort_dir', sort.dir)
+      }
+      return next
+    }, { replace: true })
+  }, [sort.col, sort.dir]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Column visibility
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnId>>(
@@ -247,6 +268,7 @@ export function RecordsList() {
   // Toast / undo
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
   function showToast(message: string, undo?: () => void) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ message, undo })
@@ -616,7 +638,7 @@ export function RecordsList() {
     if (filters.search) params.set('q', filters.search)
     if (filters.recency !== 'any') params.set('recency', filters.recency)
     const qs = params.toString()
-    const url = `${window.location.origin}/contacts${qs ? `?${qs}` : ''}`
+    const url = `${window.location.origin}/relationships${qs ? `?${qs}` : ''}`
     await navigator.clipboard.writeText(url)
     setCopyFeedback(true)
     setTimeout(() => setCopyFeedback(false), 2000)
@@ -717,7 +739,7 @@ export function RecordsList() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
               <h1 style={{
-                fontFamily: 'var(--font-serif)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: 28,
                 fontWeight: 800,
                 margin: 0,
@@ -746,7 +768,7 @@ export function RecordsList() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <h1 style={{
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 28,
               fontWeight: 800,
               margin: 0,
@@ -1212,7 +1234,7 @@ export function RecordsList() {
             onKeyDown={(e) => { if (e.key === 'Escape') setShowAddToCampaign(false) }}
             style={{ position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(20px)', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}
           >
-            <h3 id="add-to-campaign-title" style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
+            <h3 id="add-to-campaign-title" style={{ margin: '0 0 16px', fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
             {campaigns.filter(c => c.status === 'active').length === 0 ? (
               <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No active campaigns.</p>
             ) : (
@@ -1389,7 +1411,7 @@ export function RecordsList() {
                             </span>
                             <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
                               <span className="contact-name" style={{
-                                fontFamily: 'var(--font-serif)',
+                                fontFamily: 'var(--font-sans)',
                                 fontWeight: 700,
                                 fontSize: 14,
                                 letterSpacing: '-0.01em',
@@ -1537,7 +1559,7 @@ export function RecordsList() {
               boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
             }}
           >
-            <p id="archive-people-title" style={{ margin: '0 0 4px', fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+            <p id="archive-people-title" style={{ margin: '0 0 4px', fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
               Archive {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}?
             </p>
             <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
@@ -1668,6 +1690,12 @@ export function RecordsList() {
         }
         .records-checkbox:checked {
           animation: checkbox-pop 0.22s ease-out;
+        }
+        @media (prefers-color-scheme: dark) {
+          input[type="checkbox"] {
+            accent-color: var(--color-brand);
+            color-scheme: dark;
+          }
         }
         .records-dropdown > div:hover {
           background: var(--tint);

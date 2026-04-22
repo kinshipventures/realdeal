@@ -9,7 +9,7 @@ export function SplashScreen() {
       background: 'var(--color-bg)',
     }}>
       <span style={{
-        fontFamily: 'var(--font-serif)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 28,
         fontWeight: 700,
         color: 'var(--color-text-primary)',

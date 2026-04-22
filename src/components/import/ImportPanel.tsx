@@ -410,7 +410,7 @@ export function ImportPanel() {
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 80px' }}>
       <div style={{ width: '100%', maxWidth: 640 }}>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontWeight: 800,
+          fontFamily: 'var(--font-sans)', fontWeight: 800,
           fontSize: state === 'source' ? 28 : 18,
           color: 'var(--color-text-primary)', margin: '0 0 8px', letterSpacing: '-0.02em',
           textAlign: state === 'source' ? 'center' : undefined,
@@ -723,7 +723,7 @@ export function ImportPanel() {
         {state === 'importing' && progress && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fadeIn 0.2s ease' }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Importing...</p>
+              <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Importing...</p>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
                 {estSeconds > 0 ? `About ${estSeconds}s remaining` : 'Finishing up...'}
               </p>
@@ -752,7 +752,7 @@ export function ImportPanel() {
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(37,180,57,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-              <p style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Import complete</p>
+              <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Import complete</p>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
                 {result.imported} {recordType === 'Company' ? 'companies' : 'people'} imported via {SOURCE_LABELS[importSource]}
                 {result.skipped > 0 && ` - ${result.skipped} skipped`}
@@ -824,7 +824,7 @@ function GoogleSyncView({ state, contacts, result, error, onConfirm, onRetry, on
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #25B439, #1A8A2A)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
         </div>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 24, color: 'var(--color-text-primary)', margin: 0 }}>{result.imported} contacts imported</h2>
+        <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 24, color: 'var(--color-text-primary)', margin: 0 }}>{result.imported} contacts imported</h2>
         <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', margin: 0 }}>
           {result.skipped > 0 ? `${result.skipped} duplicates skipped. ` : ''}Your network is ready.
         </p>
@@ -839,7 +839,7 @@ function GoogleSyncView({ state, contacts, result, error, onConfirm, onRetry, on
   if (state === 'preview') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 22, color: 'var(--color-text-primary)', margin: 0 }}>{contacts.length} contacts found</h2>
+        <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 22, color: 'var(--color-text-primary)', margin: 0 }}>{contacts.length} contacts found</h2>
         <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>Duplicates (by email) will be skipped automatically.</p>
         <div style={{ maxHeight: 300, overflowY: 'auto', borderRadius: 12, border: '1px solid var(--edge)', background: 'var(--tint)', padding: 4 }}>
           {contacts.slice(0, 30).map((c: any, i: number) => (
@@ -881,7 +881,7 @@ function GoogleSyncView({ state, contacts, result, error, onConfirm, onRetry, on
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
         </div>
-        <h3 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: 0 }}>Couldn't connect</h3>
+        <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: 0 }}>Couldn't connect</h3>
         <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0, maxWidth: 320, textAlign: 'center' }}>{error}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" onClick={onBack} style={{ padding: '12px 24px', borderRadius: 100, border: '1px solid var(--edge-strong)', background: 'transparent', color: 'var(--color-text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>

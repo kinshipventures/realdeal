@@ -35,7 +35,7 @@ function Stat({ label, value, accent, warn, muted, primary }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <span style={{
-        fontSize: primary ? 24 : 18, fontWeight: 700, fontFamily: 'var(--font-serif)',
+        fontSize: primary ? 24 : 18, fontWeight: 700, fontFamily: 'var(--font-sans)',
         letterSpacing: '-0.02em',
         color: warn ? '#FF9500' : accent ? 'hsla(150, 60%, 35%, 1)' : muted ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)',
       }}>

@@ -48,7 +48,8 @@ export function ResetPasswordPage() {
       setLoading(false)
     } else {
       setSuccess(true)
-      setTimeout(() => navigate('/', { replace: true }), 2000)
+      const t = setTimeout(() => navigate('/', { replace: true }), 2000)
+      return () => clearTimeout(t)
     }
   }
 
@@ -74,7 +75,7 @@ export function ResetPasswordPage() {
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 320 }}>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 800,
+          fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 800,
           margin: '0 0 8px', letterSpacing: '-0.02em',
         }}>
           Reset password

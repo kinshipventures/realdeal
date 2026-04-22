@@ -30,7 +30,7 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
     <div style={WIDGET_STYLE}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{
-          fontFamily: 'var(--font-serif)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 16,
           fontWeight: 700,
           color: 'var(--color-text-primary)',

@@ -124,7 +124,7 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2 style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 20,
             color: 'var(--color-text-primary)',

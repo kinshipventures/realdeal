@@ -158,10 +158,10 @@ export function RecordPage() {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '8px 16px 8px 32px',
+          padding: '8px 16px',
           margin: '12px 32px 0',
           borderRadius: 8,
-          borderLeft: `3px solid ${urgentSignal.color}`,
+          border: `1px solid ${urgentSignal.color}33`,
           background: urgentSignal.type === 'overdue'
             ? 'rgba(255, 59, 48, 0.06)'
             : 'hsla(20, 80%, 45%, 0.06)',

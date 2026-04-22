@@ -122,7 +122,7 @@ export function MergeModal({ recordA, recordB, pods, onClose, onMerged }: MergeM
           padding: '20px 24px 16px', borderBottom: '1px solid var(--divider)',
         }}>
           <h2 style={{
-            margin: 0, fontFamily: 'var(--font-serif)',
+            margin: 0, fontFamily: 'var(--font-sans)',
             fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)',
           }}>
             Merge Records

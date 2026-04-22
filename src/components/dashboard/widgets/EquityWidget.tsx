@@ -14,8 +14,8 @@ function EquityRing({ score, size }: { score: number; size: number }) {
   }, [])
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.20))' }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={strokeWidth} />
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 0 12px rgba(52,177,93,0.28))' }}>
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(52,177,93,0.12)" strokeWidth={strokeWidth} />
       <circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none"
@@ -24,12 +24,12 @@ function EquityRing({ score, size }: { score: number; size: number }) {
         strokeDasharray={circumference}
         strokeDashoffset={mounted ? offset : circumference}
         strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)' }}
       />
       <defs>
         <linearGradient id="equityGradientLg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="rgba(255,255,255,1)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0.55)" />
+          <stop offset="0%" stopColor="#34B15D" />
+          <stop offset="100%" stopColor="#00BFA5" />
         </linearGradient>
       </defs>
     </svg>
@@ -60,10 +60,10 @@ function ScorePulse({ value }: { value: ScoreGrade }) {
       ref={ref}
       aria-live="polite"
       style={{
-        fontSize: 38, fontWeight: 900, color: '#ffffff',
+        fontSize: 38, fontWeight: 900, color: 'var(--color-text-primary)',
         letterSpacing: '-0.03em', lineHeight: 1,
-        fontFamily: 'var(--font-serif)',
-        transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease',
+        fontFamily: 'var(--font-sans)',
+        transition: 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease',
         display: 'inline-flex', alignItems: 'baseline', gap: 8,
       }}
     >
@@ -76,7 +76,7 @@ function ScorePulse({ value }: { value: ScoreGrade }) {
 function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' }) {
   if (trend === 'flat') {
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-tertiary)', fontSize: 12 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/></svg>
       </span>
     )
@@ -85,7 +85,7 @@ function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
-      color: isUp ? 'hsla(140, 70%, 75%, 0.95)' : 'hsla(0, 70%, 70%, 0.90)',
+      color: isUp ? '#16a34a' : '#dc2626',
       fontSize: 12,
     }}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -98,12 +98,12 @@ function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' }) {
   )
 }
 
-// Score label as colored chip
-const LABEL_COLORS: Record<ScoreLabel, { bg: string; text: string }> = {
-  Thriving: { bg: 'rgba(150, 255, 150, 0.18)', text: 'hsla(140, 80%, 80%, 1)' },
-  Steady:   { bg: 'rgba(150, 200, 255, 0.18)', text: 'hsla(210, 80%, 82%, 1)' },
-  Cooling:  { bg: 'rgba(255, 200, 100, 0.18)', text: 'hsla(35, 90%, 78%, 1)' },
-  Fading:   { bg: 'rgba(255, 130, 130, 0.18)', text: 'hsla(0, 80%, 78%, 1)' },
+// Score label as colored chip — colors adjusted for light background
+const LABEL_COLORS: Record<ScoreLabel, { bg: string; text: string; border: string }> = {
+  Thriving: { bg: 'rgba(22,163,74,0.10)',  text: '#15803d', border: 'rgba(22,163,74,0.20)' },
+  Steady:   { bg: 'rgba(37,99,235,0.08)',  text: '#1d4ed8', border: 'rgba(37,99,235,0.18)' },
+  Cooling:  { bg: 'rgba(217,119,6,0.10)',  text: '#b45309', border: 'rgba(217,119,6,0.20)' },
+  Fading:   { bg: 'rgba(220,38,38,0.08)',  text: '#b91c1c', border: 'rgba(220,38,38,0.18)' },
 }
 
 const SCORE_NUDGES: Record<ScoreLabel, string[]> = {
@@ -128,7 +128,7 @@ function ScoreLabelChip({ label }: { label: ScoreLabel }) {
       fontSize: 11, fontWeight: 600, letterSpacing: '0.04em',
       textTransform: 'uppercase',
       padding: '3px 8px', borderRadius: 6,
-      border: `1px solid ${colors.text.replace('1)', '0.20)')}`,
+      border: `1px solid ${colors.border}`,
     }}>
       {label}
     </span>
@@ -163,10 +163,10 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
       {/* Greeting + date + quick action */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 400, letterSpacing: '0.01em' }}>
+          <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 400, letterSpacing: '0.01em' }}>
             {getGreeting()}
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', marginTop: 2, letterSpacing: '0.02em' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 2, letterSpacing: '0.02em' }}>
             {formatDate()}
           </div>
         </div>
@@ -175,21 +175,19 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
             type="button"
             onClick={onQuickAction}
             style={{
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.22)',
+              background: 'var(--color-brand)',
+              border: 'none',
               borderRadius: 8,
               padding: '7px 16px',
               fontSize: 12, fontWeight: 600,
-              color: 'rgba(255,255,255,0.90)',
+              color: '#ffffff',
               cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', gap: 5,
               transition: 'background 0.15s ease, transform 0.15s ease',
               minHeight: 44,
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-brand-dark)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-brand)' }}
             onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
             onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
           >
@@ -203,10 +201,10 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
         {interactionsLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+            <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(52,177,93,0.08)' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="skeleton" style={{ width: 160, height: 16, background: 'rgba(255,255,255,0.12)', borderRadius: 8 }} />
-              <div className="skeleton" style={{ width: 60, height: 14, background: 'rgba(255,255,255,0.12)', borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: 160, height: 16, background: 'var(--tint)', borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: 60, height: 14, background: 'var(--tint)', borderRadius: 6 }} />
             </div>
           </div>
         ) : (
@@ -219,7 +217,7 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
               }}>
                 <ScorePulse value={grade} />
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
                   grade
                 </div>
               </div>
@@ -230,17 +228,17 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
                 <ScoreLabelChip label={label} />
                 {scoreTrend && <TrendArrow trend={scoreTrend} />}
                 <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
-                  <span className="widget-tooltip-icon" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.55)' }} aria-label="Info">?</span>
+                  <span className="widget-tooltip-icon" style={{ background: 'var(--tint)', border: '1px solid var(--edge)', color: 'var(--color-text-tertiary)' }} aria-label="Info">?</span>
                   <span className="widget-tooltip-bubble">How strong your connections are overall -- based on how recently and how often you've been in touch.</span>
                 </span>
               </div>
               <div style={{
-                fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.75)',
+                fontSize: 15, fontWeight: 400, color: 'var(--color-text-primary)',
                 lineHeight: 1.4, letterSpacing: '0.01em',
               }}>
                 {getNudge(label)}
               </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.52)', letterSpacing: '0.02em' }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
                 {overallScore} / 100 relationship health
               </div>
             </div>

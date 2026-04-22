@@ -53,7 +53,7 @@ export function MapLegend() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <span style={{
           fontSize: 11, fontWeight: 600, color: 'var(--color-text-primary)',
-          fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em',
+          fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em',
         }}>
           Reading the map
         </span>

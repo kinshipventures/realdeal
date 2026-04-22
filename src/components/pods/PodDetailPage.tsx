@@ -71,7 +71,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 const sectionHeadStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-serif)',
+  fontFamily: 'var(--font-sans)',
   fontWeight: 700,
   fontSize: 16,
   color: 'var(--color-text-primary)',
@@ -215,6 +215,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const [dragContactId, setDragContactId] = useState<string | null>(null)
   const [dndToast, setDndToast] = useState<{ message: string; onUndo: () => void } | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current) }, [])
 
   // Editable state
   const [description, setDescription] = useState('')
@@ -368,6 +369,19 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showMoreMenu])
 
+  // Sync pod color into ambient wash CSS variable; reset on unmount
+  useEffect(() => {
+    const color = pod?.color
+    if (!color || color === '#1C1C1E') return
+    const r = parseInt(color.slice(1, 3), 16)
+    const g = parseInt(color.slice(3, 5), 16)
+    const b = parseInt(color.slice(5, 7), 16)
+    document.documentElement.style.setProperty('--pod-wash-color', `${r}, ${g}, ${b}`)
+    return () => {
+      document.documentElement.style.setProperty('--pod-wash-color', '52, 177, 93')
+    }
+  }, [pod])
+
   const otherPods = useMemo(() => allPods.filter(p => p.id !== podId), [allPods, podId])
 
   function handleDragStart(event: DragStartEvent) {
@@ -443,8 +457,16 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }).length
 
   return (
-    <div style={{ background: isOverlay ? 'transparent' : 'var(--color-bg)', minHeight: isOverlay ? undefined : '100vh', paddingBottom: isOverlay ? 32 : 96 }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: isOverlay ? '0' : '32px 32px' }}>
+    <div style={{ position: 'relative', background: isOverlay ? 'transparent' : 'var(--color-bg)', minHeight: isOverlay ? undefined : '100vh', paddingBottom: isOverlay ? 32 : 96, overflow: isOverlay ? undefined : 'hidden' }}>
+      {!isOverlay && (
+        <div aria-hidden style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '40vh',
+          background: `radial-gradient(ellipse 90% 70% at 25% -15%, ${podColor}30 0%, ${podColor}10 40%, transparent 70%)`,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }} />
+      )}
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: isOverlay ? '0' : '32px 32px', position: 'relative', zIndex: 1 }}>
         {/* Breadcrumb */}
         {!isOverlay && (
         <nav style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: 'var(--color-text-secondary)' }}>
@@ -481,7 +503,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
             }}>
               <span style={{
                 fontSize: 28, fontWeight: 800, color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-serif)', lineHeight: 1, letterSpacing: '-0.02em',
+                fontFamily: 'var(--font-sans)', lineHeight: 1, letterSpacing: '-0.02em',
               }}>{podScore}</span>
             </div>
           </div>
@@ -505,7 +527,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                   }}
                   onBlur={handleRenamePod}
                   style={{
-                    fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
+                    fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 24,
                     color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
                     background: 'var(--tint)', border: '1px solid var(--edge)',
                     borderRadius: 6, padding: '2px 8px', outline: 'none',
@@ -514,7 +536,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                 />
               ) : (
                 <h1 style={{
-                  fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 24,
+                  fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 24,
                   color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.2,
                 }}>{pod.name}</h1>
               )}
@@ -660,7 +682,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               <button
                 type="button"
                 className="see-all-link"
-                onClick={() => navigate(`/contacts?pod=${podId}`)}
+                onClick={() => navigate(`/relationships?pod=${podId}`)}
               >
                 View table
               </button>

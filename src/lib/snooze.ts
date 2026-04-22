@@ -1,23 +1,29 @@
-const SNOOZE_KEY = 'realdeal:dormant-snooze'
+import { updateContact } from './airtable'
 
-export function getSnoozedIds(): Set<string> {
-  try {
-    const raw = JSON.parse(localStorage.getItem(SNOOZE_KEY) ?? '{}') as Record<string, number>
-    const now = Date.now()
-    const active = new Set<string>()
-    const cleaned: Record<string, number> = {}
-    for (const [id, until] of Object.entries(raw)) {
-      if (until > now) { active.add(id); cleaned[id] = until }
-    }
-    localStorage.setItem(SNOOZE_KEY, JSON.stringify(cleaned))
-    return active
-  } catch { return new Set() }
+export type SnoozeDuration = '1w' | '1m' | '3m'
+
+const DURATION_MS: Record<SnoozeDuration, number> = {
+  '1w':  7  * 24 * 60 * 60 * 1000,
+  '1m':  30 * 24 * 60 * 60 * 1000,
+  '3m':  90 * 24 * 60 * 60 * 1000,
 }
 
-export function snoozeContact(id: string) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(SNOOZE_KEY) ?? '{}')
-    raw[id] = Date.now() + 30 * 24 * 60 * 60 * 1000
-    localStorage.setItem(SNOOZE_KEY, JSON.stringify(raw))
-  } catch { /* silent */ }
+export const DURATION_LABELS: Record<SnoozeDuration, string> = {
+  '1w': '1 week',
+  '1m': '1 month',
+  '3m': '3 months',
+}
+
+export function isContactSnoozed(snoozedUntil: string | null): boolean {
+  if (!snoozedUntil) return false
+  return new Date(snoozedUntil).getTime() > Date.now()
+}
+
+export async function snoozeContact(id: string, duration: SnoozeDuration = '1m'): Promise<void> {
+  const snoozed_until = new Date(Date.now() + DURATION_MS[duration]).toISOString()
+  await updateContact(id, { snoozed_until } as any)
+}
+
+export async function unsnoozeContact(id: string): Promise<void> {
+  await updateContact(id, { snoozed_until: null } as any)
 }

@@ -1,35 +1,36 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Routes, Route, Outlet, useLocation, useNavigate, Navigate } from 'react-router'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { LoginPage } from './components/auth/LoginPage'
-import { OrbMap } from './components/map/OrbMap'
-import { Dashboard } from './components/dashboard/Dashboard'
-import { ImportPanel } from './components/import/ImportPanel'
-import { CategoryTable } from './components/contacts/CategoryTable'
 import { isDemoMode, setDemoMode } from './lib/sampleData'
-import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
-import { RecordPage } from './components/records/RecordPage'
-import { RecordsList } from './components/records/RecordsList'
-import { CreateRecordModal } from './components/records/CreateRecordModal'
-import { PodDetailPage } from './components/pods/PodDetailPage'
-import { CampaignsPage } from './components/campaigns/CampaignsPage'
-import { CampaignDetailRoute } from './components/campaigns/CampaignDetailRoute'
-
-import { NurturingHub } from './components/nurturing/NurturingHub'
-import { AccountPage } from './components/settings/AccountPage'
-import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
-import { NotFoundPage } from './components/errors/NotFoundPage'
-import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
-import { OnboardingFlow } from './components/onboarding/OnboardingFlow'
-import { SharedListPage } from './components/sharing/SharedListPage'
 import { LandingRedirect } from './components/landing/LandingRedirect'
-import { LearnPage } from './components/learn/LearnPage'
-import { ChangelogPage } from './components/changelog/ChangelogPage'
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
 import { Sidebar } from './components/nav/Sidebar'
+import { NotFoundPage } from './components/errors/NotFoundPage'
+import { ErrorBoundary } from './components/errors/ErrorBoundary'
+import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
+import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
+import { SharedListPage } from './components/sharing/SharedListPage'
+
+// Heavy routes — lazy loaded so they don't bloat the initial bundle
+const OrbMap = lazy(() => import('./components/map/OrbMap').then(m => ({ default: m.OrbMap })))
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
+const ImportPanel = lazy(() => import('./components/import/ImportPanel').then(m => ({ default: m.ImportPanel })))
+const CategoryTable = lazy(() => import('./components/contacts/CategoryTable').then(m => ({ default: m.CategoryTable })))
+const RecordPage = lazy(() => import('./components/records/RecordPage').then(m => ({ default: m.RecordPage })))
+const RecordsList = lazy(() => import('./components/records/RecordsList').then(m => ({ default: m.RecordsList })))
+const CreateRecordModal = lazy(() => import('./components/records/CreateRecordModal').then(m => ({ default: m.CreateRecordModal })))
+const PodDetailPage = lazy(() => import('./components/pods/PodDetailPage').then(m => ({ default: m.PodDetailPage })))
+const CampaignsPage = lazy(() => import('./components/campaigns/CampaignsPage').then(m => ({ default: m.CampaignsPage })))
+const CampaignDetailRoute = lazy(() => import('./components/campaigns/CampaignDetailRoute').then(m => ({ default: m.CampaignDetailRoute })))
+const NurturingHub = lazy(() => import('./components/nurturing/NurturingHub').then(m => ({ default: m.NurturingHub })))
+const AccountPage = lazy(() => import('./components/settings/AccountPage').then(m => ({ default: m.AccountPage })))
+const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
+const LearnPage = lazy(() => import('./components/learn/LearnPage').then(m => ({ default: m.LearnPage })))
+const ChangelogPage = lazy(() => import('./components/changelog/ChangelogPage').then(m => ({ default: m.ChangelogPage })))
 
 const BG = 'var(--color-bg)'
 
@@ -45,11 +46,35 @@ function useIsMobile() {
   return mobile
 }
 
+// Pod wash color map — rgb channel strings for --pod-wash-color CSS var
+const POD_WASH: Record<string, string> = {
+  // maps to pod ID extracted from /pod/:id routes
+  default:   '52, 177, 93',    // brand green
+  talent:    '52, 177, 93',    // green
+  maps:      '229, 57, 53',    // red
+  lps:       '255, 107, 138',  // pink
+  companies: '126, 87, 194',   // purple
+  services:  '245, 166, 35',   // orange
+  hub:       '44, 44, 48',     // dark
+}
+
+function usePodWash() {
+  const location = useLocation()
+  useEffect(() => {
+    // Extract pod id from /pod/:id — fall back to 'default'
+    const match = location.pathname.match(/^\/pod\/([^/]+)/)
+    const podId = match?.[1] ?? 'default'
+    const rgb = POD_WASH[podId] ?? POD_WASH.default
+    document.documentElement.style.setProperty('--pod-wash-color', rgb)
+  }, [location.pathname])
+}
+
 function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
+  usePodWash()
   const isPods = location.pathname === '/' || location.pathname === '/map' || location.pathname === '/pods' || location.pathname.startsWith('/pods/')
-  const isRelationships = location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
+  const isRelationships = location.pathname === '/relationships' || location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
   const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
@@ -128,7 +153,9 @@ function AppShell() {
         height: '100%',
         transition: isMobile ? undefined : 'padding-left 0.2s cubic-bezier(0.215, 0.61, 0.355, 1)',
       }}>
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </div>
 
       {isMobile && (
@@ -160,7 +187,7 @@ function AppShell() {
           <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/dashboard')}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </MobileTab>
-          <MobileTab active={isRelationships} label="People" onClick={() => navigate('/contacts')}>
+          <MobileTab active={isRelationships} label="People" onClick={() => navigate('/relationships')}>
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -304,8 +331,9 @@ export default function App() {
           <Route path="dashboard/nurturing" element={<NurturingHub />} />
           <Route path="pulse" element={<Navigate to="/dashboard" replace />} />
           <Route path="pulse/nurturing" element={<Navigate to="/dashboard/nurturing" replace />} />
-          <Route path="contacts" element={<RecordsList />} />
-          <Route path="companies" element={<Navigate to="/contacts?view=companies" replace />} />
+          <Route path="relationships" element={<RecordsList />} />
+          <Route path="contacts" element={<Navigate to="/relationships" replace />} />
+          <Route path="companies" element={<Navigate to="/relationships?view=companies" replace />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />

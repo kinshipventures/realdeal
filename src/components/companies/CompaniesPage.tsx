@@ -115,7 +115,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
           background: 'var(--surface-panel)',
         }}>
           <h1 style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 22,
             fontWeight: 700,
             letterSpacing: '-0.02em',
@@ -190,7 +190,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
                   cursor: 'pointer',
                 }}
               >
-                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
                   {c.name}
                 </span>
                 <div style={{ display: 'grid', gap: 6, color: 'var(--color-text-secondary)', fontSize: 13 }}>

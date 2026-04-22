@@ -32,7 +32,7 @@ function RecentActivityRow({ interaction, contact, onClick }: { interaction: Int
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
           {contact.name}
         </div>
         {summary && (

@@ -59,7 +59,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
         }} />
       )}
       <div style={{
-        fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)',
+        fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)',
         flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         letterSpacing: '-0.01em',
       }}>

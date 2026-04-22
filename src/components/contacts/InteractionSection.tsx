@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { EmptyState } from '../empty/EmptyState'
 import type { Contact, Interaction, InteractionType, ISODate, SystemEventType } from '../../lib/types'
 import { SYSTEM_TYPES } from '../../lib/types'
@@ -102,6 +102,9 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   const [logSuccess, setLogSuccess] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const deleteInteractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const deleteSnapshotRef = useRef<Interaction[]>([])
   const [editingInteraction, setEditingInteraction] = useState<EditingInteraction>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -114,6 +117,15 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       .catch(() => { if (!canceled) setInteractionsError(true) })
     return () => { canceled = true }
   }, [contact.id, externalInteractions])
+
+  // Auto-open log form if navigated here via quick-log
+  useEffect(() => {
+    const flag = sessionStorage.getItem('rd:auto-log')
+    if (flag === contact.id) {
+      sessionStorage.removeItem('rd:auto-log')
+      setShowLogForm(true)
+    }
+  }, [contact.id])
 
   // Summary bar — memoized per-type recency for primary channels
   const typeRecency = useMemo(() => {
@@ -191,25 +203,40 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
     }
   }
 
-  async function handleDeleteInteraction(id: string) {
+  function handleDeleteInteraction(id: string) {
     if (opState !== 'idle') return
-    setOpState('deleting')
-    setDeletingId(id)
-    setActionError(null)
-    try {
-      await deleteInteraction(id)
-      const remaining = interactions.filter(i => i.id !== id)
-      setInteractions(remaining)
-      const newDate = latestContactDate(remaining)
-      await updateContact(contact.id, { last_contacted_at: newDate })
-      onContactUpdated({ ...contact, last_contacted_at: newDate })
-    } catch {
-      setActionError('Could not delete that entry. Try again.')
-    } finally {
-      setDeletingId(null)
-      setOpState('idle')
-    }
+    setConfirmDeleteId(null)
+    const snapshot = [...interactions]
+    deleteSnapshotRef.current = snapshot
+    const remaining = interactions.filter(i => i.id !== id)
+    setInteractions(remaining)
+    setPendingDeleteId(id)
+    if (deleteInteractionTimerRef.current) clearTimeout(deleteInteractionTimerRef.current)
+    deleteInteractionTimerRef.current = setTimeout(async () => {
+      setPendingDeleteId(null)
+      setDeletingId(id)
+      try {
+        await deleteInteraction(id)
+        const newDate = latestContactDate(remaining)
+        await updateContact(contact.id, { last_contacted_at: newDate })
+        onContactUpdated({ ...contact, last_contacted_at: newDate })
+      } catch {
+        setInteractions(deleteSnapshotRef.current)
+        setActionError('Could not delete that entry. Try again.')
+      } finally {
+        setDeletingId(null)
+      }
+    }, 4000)
   }
+
+  function undoDeleteInteraction() {
+    if (deleteInteractionTimerRef.current) clearTimeout(deleteInteractionTimerRef.current)
+    deleteInteractionTimerRef.current = null
+    setInteractions(deleteSnapshotRef.current)
+    setPendingDeleteId(null)
+  }
+
+  useEffect(() => () => { if (deleteInteractionTimerRef.current) clearTimeout(deleteInteractionTimerRef.current) }, [])
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 12,
@@ -644,6 +671,32 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
         </div>
         )
       })}
+
+      {pendingDeleteId && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: 'var(--color-text-primary)', color: 'var(--bg)',
+          borderRadius: 10, padding: '12px 16px',
+          display: 'flex', alignItems: 'center', gap: 12,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+          fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap',
+          animation: 'tooltipFadeIn 0.18s ease-out',
+        }}>
+          <span style={{ opacity: 0.75 }}>Interaction removed</span>
+          <button
+            type="button"
+            onClick={undoDeleteInteraction}
+            style={{
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)',
+              borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600,
+              padding: '4px 12px', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -251,7 +251,7 @@ export function ChangelogPage() {
           </span>
         </div>
         <h1 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 700,
+          fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 700,
           color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
         }}>
           What's New
@@ -321,7 +321,7 @@ function ReleaseBlock({ release, isLatest }: { release: Release; isLatest: boole
         display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8,
       }}>
         <h2 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
+          fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 700,
           color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
         }}>
           {release.version}
@@ -629,7 +629,7 @@ function ComingNext() {
         display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
       }}>
         <h3 style={{
-          fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+          fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 700,
           color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
         }}>
           Coming Next

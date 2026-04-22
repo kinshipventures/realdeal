@@ -102,7 +102,7 @@ export function CampaignProgressWidget({ campaigns, campaignContacts, loading, o
           flexDirection: 'column',
           gap: 12,
         }}>
-          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
             Nothing live right now.
           </div>
           <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.55, maxWidth: '44ch' }}>
@@ -209,7 +209,7 @@ function FeaturedCampaignCard({ snapshot, onClick }: { snapshot: CampaignSnapsho
           fontSize: 24,
           lineHeight: 1.08,
           fontWeight: 700,
-          fontFamily: 'var(--font-serif)',
+          fontFamily: 'var(--font-sans)',
           color: 'var(--color-text-primary)',
           letterSpacing: '-0.03em',
           maxWidth: '20ch',
@@ -305,7 +305,7 @@ function CompactCampaignCard({ snapshot, onClick }: { snapshot: CampaignSnapshot
             fontSize: 17,
             lineHeight: 1.12,
             fontWeight: 700,
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',
             whiteSpace: 'nowrap',

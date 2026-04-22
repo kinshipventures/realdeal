@@ -3,6 +3,8 @@ import type { Contact, Campaign, CampaignContact } from '../../../lib/types'
 import { Avatar } from '../../ui'
 import { EmptyState } from '../../empty/EmptyState'
 import { WidgetHeading } from './WidgetHeading'
+import { DURATION_LABELS } from '../../../lib/snooze'
+import type { SnoozeDuration } from '../../../lib/snooze'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -28,7 +30,7 @@ function OverdueRow({ contact, days, podName, onClick }: { contact: Contact; day
     >
       <Avatar name={contact.name} size={32} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
           {contact.name}
         </div>
         {podName && (
@@ -72,7 +74,7 @@ function FollowUpOverdueRow({ contact, overdueDays, podName, action, onClick }: 
         <line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
           {contact.name}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -95,10 +97,11 @@ function FollowUpOverdueRow({ contact, overdueDays, podName, action, onClick }: 
   )
 }
 
-function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, onConfirmRemove, onCancelRemove }: {
-  contact: Contact; days: number | null; confirming: boolean
+function DormantRow({ contact, days, confirming, showSnoozePicker, onKeep, onReachOut, onRemove, onConfirmRemove, onCancelRemove, onSnoozeWithDuration }: {
+  contact: Contact; days: number | null; confirming: boolean; showSnoozePicker: boolean
   onKeep: () => void; onReachOut: () => void; onRemove: () => void
   onConfirmRemove: () => void; onCancelRemove: () => void
+  onSnoozeWithDuration: (d: SnoozeDuration) => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const dormancyLabel = (days ?? 0) >= 180 ? 'Slipping away' : (days ?? 0) >= 120 ? 'Going quiet' : 'Cooling off'
@@ -111,7 +114,7 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
     }}>
       <Avatar name={contact.name} size={28} variant="subtle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>{contact.name}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>{contact.name}</div>
         <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
           {dormancyLabel} · {days ? `${days}d ago` : 'Never reached'}
         </div>
@@ -130,9 +133,36 @@ function DormantRow({ contact, days, confirming, onKeep, onReachOut, onRemove, o
           <button type="button" onClick={onReachOut} className="action-pill-hig">
             Reach out
           </button>
-          <button type="button" onClick={onKeep} className="action-pill-hig">
-            Keep
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button type="button" onClick={onKeep} className="action-pill-hig">
+              Keep
+            </button>
+            {showSnoozePicker && (
+              <div style={{
+                position: 'absolute', left: 0, top: 'calc(100% + 4px)', zIndex: 20,
+                background: 'var(--color-bg)', border: '1px solid var(--edge-strong)',
+                borderRadius: 8, padding: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                display: 'flex', flexDirection: 'column', gap: 2, minWidth: 110,
+              }}>
+                {(Object.keys(DURATION_LABELS) as SnoozeDuration[]).map(d => (
+                  <button
+                    key={d}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '6px 10px', borderRadius: 5, fontSize: 12,
+                      color: 'var(--color-text-primary)', textAlign: 'left',
+                      fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    onClick={() => onSnoozeWithDuration(d)}
+                  >
+                    {DURATION_LABELS[d]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div style={{ position: 'relative' }}>
             <button
               type="button"
@@ -216,7 +246,7 @@ interface NeedsAttentionWidgetProps {
   contactsLoading: boolean
   error: string | null
   onContactClick: (contact: Contact) => void
-  onSnooze: (id: string) => void
+  onSnooze: (id: string, duration: SnoozeDuration) => void
   onRemoveContact: (id: string) => Promise<void>
   onRetry?: () => void
   onCampaignClick?: (campaignId: string) => void
@@ -230,6 +260,7 @@ export function NeedsAttentionWidget({
 }: NeedsAttentionWidgetProps) {
   const [dormantExpanded, setDormantExpanded] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [snoozePickerForId, setSnoozePickerForId] = useState<string | null>(null)
   const campaignStalls = computeCampaignStalls(campaigns, campaignContacts)
 
   return (
@@ -357,11 +388,13 @@ export function NeedsAttentionWidget({
                   contact={contact}
                   days={days}
                   confirming={confirmDeleteId === contact.id}
-                  onKeep={() => onSnooze(contact.id)}
+                  showSnoozePicker={snoozePickerForId === contact.id}
+                  onKeep={() => setSnoozePickerForId(snoozePickerForId === contact.id ? null : contact.id)}
                   onReachOut={() => onContactClick(contact)}
                   onRemove={() => setConfirmDeleteId(contact.id)}
                   onConfirmRemove={() => { onRemoveContact(contact.id); setConfirmDeleteId(null) }}
                   onCancelRemove={() => setConfirmDeleteId(null)}
+                  onSnoozeWithDuration={d => { setSnoozePickerForId(null); onSnooze(contact.id, d) }}
                 />
               ))}
             </div>

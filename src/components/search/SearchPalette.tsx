@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router'
 import type { Contact, Pod, Campaign, Project } from '../../lib/types'
 import { getContacts, getPods, getAllCampaigns, getProjects } from '../../lib/airtable'
 import { useEscape } from '../../lib/escapeStack'
@@ -13,7 +14,7 @@ export interface SearchResult {
   color?: string
 }
 
-export type QuickActionId = 'create-contact' | 'create-company' | 'new-campaign' | 'import'
+export type QuickActionId = 'create-contact' | 'create-company' | 'new-campaign' | 'import' | 'log-interaction'
 
 export interface QuickAction {
   id: QuickActionId
@@ -22,6 +23,7 @@ export interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
+  { id: 'log-interaction', label: 'Log touchpoint', description: 'Record a call, meeting, email...' },
   { id: 'create-contact', label: 'Create contact', description: 'Add a new person' },
   { id: 'create-company', label: 'Create company', description: 'Add an organization' },
   { id: 'new-campaign', label: 'New campaign', description: 'Start a campaign or pipeline' },
@@ -67,6 +69,9 @@ function TypeIcon({ type, size = 16, color = 'currentColor' }: { type: SearchRes
 function ActionIcon({ id, size = 16, color = 'currentColor' }: { id: QuickActionId; size?: number; color?: string }) {
   const s = { width: size, height: size, flexShrink: 0 } as const
   const p = { fill: 'none', stroke: color, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (id === 'log-interaction') return (
+    <svg viewBox="0 0 24 24" style={s} {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+  )
   if (id === 'create-contact') return (
     <svg viewBox="0 0 24 24" style={s} {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>
   )
@@ -83,6 +88,8 @@ function ActionIcon({ id, size = 16, color = 'currentColor' }: { id: QuickAction
 }
 
 export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContact }: SearchPaletteProps) {
+  const navigate = useNavigate()
+  const [logMode, setLogMode] = useState(false)
   const [query, setQuery] = useState('')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
@@ -93,8 +100,11 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
   const [hoveredIndex, setHoveredIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const handleClose = useCallback(() => onClose(), [onClose])
-  useEscape(handleClose)
+  const handleEscape = useCallback(() => {
+    if (logMode) { setLogMode(false); setQuery(''); setActiveIndex(-1) }
+    else onClose()
+  }, [logMode, onClose])
+  useEscape(handleEscape)
 
   useEffect(() => {
     let cancelled = false
@@ -151,11 +161,12 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
     }
 
     all.sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
-    return all.slice(0, 20)
+    const limited = all.slice(0, 20)
+    return logMode ? limited.filter(r => r.type === 'contact') : limited
   })() : []
 
-  // Filter quick actions by query too
-  const filteredActions = query
+  // Filter quick actions by query too; hide all in log mode
+  const filteredActions = logMode ? [] : query
     ? QUICK_ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q))
     : QUICK_ACTIONS
 
@@ -184,17 +195,26 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
   }
 
   function selectAtIndex(idx: number) {
-    // When no query: all items are quick actions
-    // When query: quick actions first, then results
     const actionCount = filteredActions.length
     if (idx < actionCount) {
-      onQuickAction?.(filteredActions[idx].id)
+      const action = filteredActions[idx]
+      if (action.id === 'log-interaction') {
+        setLogMode(true); setQuery(''); setActiveIndex(-1)
+        return
+      }
+      onQuickAction?.(action.id)
       onClose()
       return
     }
     const resultIdx = idx - actionCount
     if (query && resultIdx >= 0 && resultIdx < results.length) {
       const r = results[resultIdx]
+      if (logMode && r.type === 'contact') {
+        sessionStorage.setItem('rd:auto-log', r.id)
+        navigate(`/contact/${r.id}`)
+        onClose()
+        return
+      }
       if (onSelectContact && r.type === 'contact') {
         const c = contacts.find(ct => ct.id === r.id)
         if (c) { onSelectContact(c); return }
@@ -204,6 +224,12 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
   }
 
   function handleResultClick(r: SearchResult) {
+    if (logMode && r.type === 'contact') {
+      sessionStorage.setItem('rd:auto-log', r.id)
+      navigate(`/contact/${r.id}`)
+      onClose()
+      return
+    }
     if (onSelectContact && r.type === 'contact') {
       const c = contacts.find(ct => ct.id === r.id)
       if (c) { onSelectContact(c); return }
@@ -255,6 +281,29 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
           }
         `}</style>
 
+        {/* Log mode header */}
+        {logMode && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px 0',
+          }}>
+            <button
+              type="button"
+              onClick={() => { setLogMode(false); setQuery('') }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontSize: 11, fontWeight: 600, color: 'var(--color-brand)',
+                background: 'rgba(var(--color-brand-rgb, 27,107,74), 0.08)',
+                border: 'none', borderRadius: 100,
+                padding: '3px 10px 3px 8px', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Log touchpoint
+            </button>
+          </div>
+        )}
+
         {/* Search input */}
         <div style={{
           display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
@@ -267,7 +316,7 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
             autoFocus type="text" value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search or jump to..."
+            placeholder={logMode ? 'Who did you interact with?' : 'Search or jump to...'}
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
               fontSize: 18, fontWeight: 400, fontFamily: 'inherit',
@@ -300,7 +349,10 @@ export function SearchPalette({ onClose, onSelect, onQuickAction, onSelectContac
                   key={action.id}
                   type="button"
                   data-idx={i}
-                  onClick={() => { onQuickAction?.(action.id); onClose() }}
+                  onClick={() => {
+                    if (action.id === 'log-interaction') { setLogMode(true); setQuery(''); setActiveIndex(-1); return }
+                    onQuickAction?.(action.id); onClose()
+                  }}
                   onMouseEnter={() => { setHoveredIndex(i); setActiveIndex(-1) }}
                   onMouseLeave={() => setHoveredIndex(-1)}
                   style={{

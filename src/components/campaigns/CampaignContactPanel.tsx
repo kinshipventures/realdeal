@@ -205,7 +205,7 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
             <Avatar name={contact.name} size={isMobile ? 40 : 44} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: isMobile ? 17 : 18, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: isMobile ? 17 : 18, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', lineHeight: 1.2 }}>
               {contact.name}
             </div>
             {(contact.company || contact.role) && (

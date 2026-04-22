@@ -481,11 +481,20 @@ export function OnboardingFlow({ onComplete }: Props) {
         zIndex: 1,
       }}>
         {/* Logo */}
-        <span style={{
-          fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 18,
-          color: 'var(--color-text-primary)', letterSpacing: '-0.02em',
-        }}>
-          RealDeal
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="5" fill="#1C1C1E"/>
+            <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+            <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
+            <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
+            <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>
+            <circle cx="15" cy="8.4" r="2.8" fill="#E53935"/>
+            <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5"/>
+          </svg>
+          <span style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 15,
+            color: 'var(--color-text-primary)', letterSpacing: '-0.025em',
+          }}>realdeal</span>
         </span>
 
         {/* Progress: labels as segmented bar */}
@@ -783,7 +792,7 @@ function StepPhilosophy({ onNext, onBack }: { onNext: () => void; onBack: () => 
               <span style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
             </div>
             <div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)', letterSpacing: '-0.01em' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em' }}>
                 {snapshot.title}
               </span>
               <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5, marginTop: 4 }}>
@@ -847,7 +856,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
               <span style={{ fontSize: 18 }}>{p.emoji}</span>
             </SolidOrb>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}>{p.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'var(--font-sans)' }}>{p.name}</div>
               <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-sans)', marginTop: 2 }}>{p.count}</div>
             </div>
           </div>
@@ -918,7 +927,7 @@ function StepPods({ onNext, onBack }: { onNext: () => void; onBack: () => void }
         </div>
         <div style={{
           marginTop: 10,
-          fontFamily: 'var(--font-serif)',
+          fontFamily: 'var(--font-sans)',
           fontSize: 19,
           fontWeight: 700,
           color: 'var(--color-text-primary)',
@@ -1025,7 +1034,7 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
             Cleaner than expected
           </div>
         )}
-        <div style={stagger(220)}><ActionRow onAction={() => { onComplete(); navigate('/contacts') }} onBack={onBack} label="Open my network" /></div>
+        <div style={stagger(220)}><ActionRow onAction={() => { onComplete(); navigate('/relationships') }} onBack={onBack} label="Open my network" /></div>
       </>
     )
   }
@@ -1173,7 +1182,7 @@ function StepImport({ onComplete, onBack, navigate }: { onComplete: () => void; 
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, ...stagger(320) }}>
-        <button type="button" onClick={() => { onComplete(); navigate('/contacts') }} className="onboard-btn-secondary" style={secondaryBtnStyle}>
+        <button type="button" onClick={() => { onComplete(); navigate('/relationships') }} className="onboard-btn-secondary" style={secondaryBtnStyle}>
           I'll add people one by one
         </button>
         <button type="button" onClick={onComplete} style={{ fontSize: 13, color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 12px' }}>
@@ -1276,7 +1285,7 @@ function MeetingNotesOnboarding() {
 /* ---------- shared styles ---------- */
 
 const headingStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 800,
+  fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 800,
   color: 'var(--color-text-primary)', letterSpacing: '-0.02em', margin: 0,
 }
 

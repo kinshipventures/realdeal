@@ -7,7 +7,7 @@ import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import { PreferencesTab } from './PreferencesTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
-  revokeInvite, removeMember, updateMemberRole,
+  revokeInvite, removeMember, updateMemberRole, invalidateAllCaches,
   type WorkspaceMember, type WorkspaceInvite,
 } from '@/lib/supabase-data'
 
@@ -95,6 +95,7 @@ export function AccountPage() {
   }
 
   const handleSignOut = async () => {
+    invalidateAllCaches()
     await supabase.auth.signOut()
     navigate('/login')
   }
@@ -181,7 +182,7 @@ export function AccountPage() {
 
   const sectionHeading = (text: string) => (
     <h2 style={{
-      fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-serif)',
+      fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-sans)',
       color: 'var(--color-text-primary)', margin: '0 0 20px',
       letterSpacing: '-0.01em',
     }}>{text}</h2>
@@ -191,7 +192,7 @@ export function AccountPage() {
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px 80px' }}>
       <h1 style={{
         fontSize: 24, fontWeight: 800, marginBottom: 24,
-        fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em',
+        fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
       }}>Settings</h1>
 
       {/* ── Tab bar ───────────────────────────────────────────── */}
@@ -476,7 +477,7 @@ export function AccountPage() {
           }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-serif)', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-sans)', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
               {confirmAction.type === 'remove' ? 'Remove member' : confirmAction.type === 'revoke' ? 'Revoke invite' : 'Leave team'}
             </h3>
             <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', margin: '0 0 24px', lineHeight: 1.5 }}>

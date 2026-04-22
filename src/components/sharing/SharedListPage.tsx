@@ -100,7 +100,7 @@ export function SharedListPage() {
       }}>
         <div style={{ maxWidth: 480, width: '100%', textAlign: 'center' }}>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 20,
             color: 'var(--color-text-primary)',
@@ -109,7 +109,7 @@ export function SharedListPage() {
             RealDeal
           </div>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 24,
             color: 'var(--color-text-primary)',
@@ -141,7 +141,7 @@ export function SharedListPage() {
       }}>
         <div style={{ maxWidth: 360, width: '100%' }}>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 20,
             color: 'var(--color-text-primary)',
@@ -151,7 +151,7 @@ export function SharedListPage() {
             RealDeal
           </div>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 22,
             color: 'var(--color-text-primary)',
@@ -218,7 +218,7 @@ export function SharedListPage() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: 24,
             color: 'var(--color-text-primary)',

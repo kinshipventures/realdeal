@@ -62,7 +62,7 @@ export function EmptyState({
       {/* Heading */}
       <div
         style={{
-          fontFamily: 'var(--font-serif)',
+          fontFamily: 'var(--font-sans)',
           fontWeight: 700,
           fontSize: 15,
           letterSpacing: '-0.01em',

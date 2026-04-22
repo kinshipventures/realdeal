@@ -31,41 +31,6 @@ const HERO_NOTES = [
   },
 ] as const
 
-const HERO_PROMISES = [
-  {
-    label: 'Daily signal',
-    text: 'Know who is drifting before the relationship cools.',
-  },
-  {
-    label: 'Clear circles',
-    text: 'Keep investors, talent, advisors, and friends on their own rhythm.',
-  },
-  {
-    label: 'Warm follow-through',
-    text: 'Log the quick note, text, or coffee while the moment is fresh.',
-  },
-] as const
-
-function getRitualContext() {
-  const hour = new Date().getHours()
-  if (hour < 12) {
-    return {
-      eyebrow: 'Morning ritual',
-      prompt: 'Start the day with a clean read on your people.',
-    }
-  }
-  if (hour < 18) {
-    return {
-      eyebrow: 'Midday reset',
-      prompt: 'Take five minutes and get your circles back in view.',
-    }
-  }
-  return {
-    eyebrow: 'Evening catch-up',
-    prompt: 'Close the day with the people you still want to keep warm.',
-  }
-}
-
 function LoginOrb({ loading }: { loading: boolean }) {
   const orbiters = [
     { size: 12, radius: 88, duration: 18, delay: '0s', color: '#6366F1' },
@@ -120,9 +85,6 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null)
-  const ritualContext = getRitualContext()
-  const usesLovableBridge = isLovableAuthBridgeEnabled()
-
   useEffect(() => {
     if (!session) return
     const returnTo = searchParams.get('return_to') ?? '/'
@@ -168,18 +130,14 @@ export function LoginPage() {
     }
   }
 
-  const authTitle = isSignUp ? 'Create your RealDeal account' : 'Welcome back'
+  const authTitle = isSignUp ? 'Create your account' : 'Welcome back'
   const authCopy = isSignUp
-    ? `Start with Google for faster import, or use email and password.${usesLovableBridge ? '' : ' This sign-in goes straight to your Supabase project.'}`
-    : `Sign in and get back to the people who matter most.${usesLovableBridge ? '' : ' Google sign-in now goes straight to your Supabase project.'}`
+    ? 'Start with Google for faster setup, or use email and password.'
+    : 'Sign in and get back to the people who matter most.'
 
   return (
     <div className="login-page">
       <style>{`
-        @keyframes login-drift {
-          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-          50% { transform: translate3d(18px, -16px, 0) scale(1.04); }
-        }
         @keyframes login-float {
           0%, 100% { transform: translateY(0) rotate(var(--note-rotate, 0deg)); }
           50% { transform: translateY(-10px) rotate(var(--note-rotate, 0deg)); }
@@ -192,10 +150,6 @@ export function LoginPage() {
           0%, 100% { transform: scale(1); box-shadow: 0 20px 54px rgba(52,177,93,0.26); }
           50% { transform: scale(1.04); box-shadow: 0 28px 72px rgba(52,177,93,0.34); }
         }
-        @keyframes login-sheen {
-          from { transform: translateX(-110%); }
-          to { transform: translateX(110%); }
-        }
         .login-page {
           min-height: 100vh;
           padding: 24px;
@@ -203,27 +157,17 @@ export function LoginPage() {
           align-items: center;
           justify-content: center;
           background:
-            radial-gradient(circle at 18% 20%, rgba(52,177,93,0.16), transparent 32%),
-            radial-gradient(circle at 82% 16%, rgba(99,102,241,0.12), transparent 28%),
-            radial-gradient(circle at 50% 100%, rgba(236,72,153,0.08), transparent 34%),
+            radial-gradient(circle at 18% 20%, rgba(52,177,93,0.12), transparent 32%),
+            radial-gradient(circle at 82% 16%, rgba(99,102,241,0.08), transparent 28%),
             var(--color-bg);
           color: var(--color-text-primary);
           font-family: var(--font-sans);
           position: relative;
           overflow: hidden;
         }
-        .login-ambient {
-          position: absolute;
-          inset: auto;
-          border-radius: 999px;
-          filter: blur(14px);
-          opacity: 0.8;
-          pointer-events: none;
-          animation: login-drift 18s ease-in-out infinite;
-        }
         .login-shell {
           width: min(1120px, 100%);
-          min-height: min(760px, calc(100vh - 48px));
+          min-height: min(720px, calc(100vh - 48px));
           display: grid;
           grid-template-columns: 1.12fr minmax(360px, 420px);
           border-radius: 32px;
@@ -232,15 +176,6 @@ export function LoginPage() {
           background: linear-gradient(135deg, rgba(255,255,255,0.68), rgba(255,255,255,0.82));
           box-shadow: 0 30px 100px rgba(14, 20, 28, 0.12);
           backdrop-filter: blur(24px);
-          position: relative;
-          isolation: isolate;
-        }
-        .login-shell::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 35%, rgba(52,177,93,0.04));
-          pointer-events: none;
         }
         .login-story {
           padding: 44px 44px 40px;
@@ -249,9 +184,7 @@ export function LoginPage() {
           justify-content: space-between;
           gap: 28px;
           position: relative;
-          background:
-            linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,255,255,0.22)),
-            radial-gradient(circle at 22% 18%, rgba(52,177,93,0.10), transparent 36%);
+          background: radial-gradient(circle at 22% 18%, rgba(52,177,93,0.08), transparent 40%);
         }
         .login-panel-wrap {
           padding: 22px;
@@ -259,7 +192,7 @@ export function LoginPage() {
           align-items: center;
           justify-content: center;
           position: relative;
-          background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(255,255,255,0.16));
+          background: rgba(255,255,255,0.24);
         }
         .login-panel {
           width: 100%;
@@ -273,39 +206,10 @@ export function LoginPage() {
           gap: 18px;
           position: relative;
         }
-        .login-panel::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: linear-gradient(180deg, rgba(255,255,255,0.36), transparent 26%);
-          pointer-events: none;
-        }
-        .login-kicker {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          width: fit-content;
-          padding: 9px 14px;
-          border-radius: 999px;
-          background: rgba(52,177,93,0.10);
-          color: var(--color-brand);
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-        .login-kicker-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: currentColor;
-          box-shadow: 0 0 0 6px rgba(52,177,93,0.12);
-        }
         .login-hero-title {
           margin: 0;
           max-width: 10ch;
-          font-family: var(--font-serif);
+          font-family: var(--font-sans);
           font-size: clamp(3rem, 4vw, 4.75rem);
           line-height: 0.95;
           letter-spacing: -0.045em;
@@ -318,7 +222,8 @@ export function LoginPage() {
           color: var(--color-text-secondary);
         }
         .login-stage {
-          min-height: 330px;
+          flex: 1;
+          min-height: 280px;
           position: relative;
           display: flex;
           align-items: center;
@@ -340,7 +245,7 @@ export function LoginPage() {
           display: block;
           margin-bottom: 4px;
           font-size: 13px;
-          font-family: var(--font-serif);
+          font-family: var(--font-sans);
           letter-spacing: -0.01em;
         }
         .login-note span {
@@ -384,49 +289,13 @@ export function LoginPage() {
           animation-timing-function: linear;
           animation-iteration-count: infinite;
         }
-        .login-story-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
-        }
-        .login-story-card {
-          padding: 14px 14px 15px;
-          border-radius: 18px;
-          background: rgba(255,255,255,0.52);
-          border: 1px solid rgba(0,0,0,0.04);
-          min-height: 132px;
-          position: relative;
-          overflow: hidden;
-        }
-        .login-story-card::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.34), transparent);
-          transform: translateX(-110%);
-          animation: login-sheen 7.5s ease-in-out infinite;
-        }
-        .login-story-card strong {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 12px;
-          color: var(--color-text-primary);
-          letter-spacing: 0.02em;
-          text-transform: uppercase;
-        }
-        .login-story-card p {
-          margin: 0;
-          font-size: 13px;
-          line-height: 1.6;
-          color: var(--color-text-secondary);
-        }
         .login-brand {
           display: flex;
           flex-direction: column;
           gap: 6px;
         }
         .login-brand-mark {
-          font-family: var(--font-serif);
+          font-family: var(--font-sans);
           font-size: 26px;
           font-weight: 900;
           letter-spacing: -0.04em;
@@ -440,7 +309,7 @@ export function LoginPage() {
         }
         .login-auth-header h2 {
           margin: 0;
-          font-family: var(--font-serif);
+          font-family: var(--font-sans);
           font-size: 2rem;
           line-height: 1;
           letter-spacing: -0.04em;
@@ -479,9 +348,7 @@ export function LoginPage() {
           box-shadow: 0 16px 30px rgba(20, 26, 32, 0.10);
           background: rgba(255,255,255,0.92);
         }
-        .login-google-button:active:not(:disabled) {
-          transform: translateY(0);
-        }
+        .login-google-button:active:not(:disabled) { transform: translateY(0); }
         .login-google-button:disabled,
         .login-primary-button:disabled {
           cursor: wait;
@@ -529,12 +396,11 @@ export function LoginPage() {
           font-family: var(--font-sans);
           color: var(--color-text-primary);
           outline: none;
-          transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+          transition: border-color 0.18s ease, box-shadow 0.18s ease;
         }
         .login-field input:focus {
           border-color: rgba(52,177,93,0.42);
           box-shadow: 0 0 0 5px rgba(52,177,93,0.10);
-          transform: translateY(-1px);
         }
         .login-primary-button {
           width: 100%;
@@ -567,12 +433,10 @@ export function LoginPage() {
           font-size: 13px;
           padding: 6px 10px;
           color: var(--color-text-secondary);
-          transition: color 0.15s ease, opacity 0.15s ease;
+          transition: color 0.15s ease;
         }
         .login-secondary-link:hover,
-        .login-demo-link:hover {
-          color: var(--color-text-primary);
-        }
+        .login-demo-link:hover { color: var(--color-text-primary); }
         .login-demo-row {
           padding-top: 18px;
           border-top: 1px solid var(--edge);
@@ -607,11 +471,10 @@ export function LoginPage() {
         .login-success {
           padding: 18px;
           border-radius: 22px;
-          background: linear-gradient(180deg, rgba(52,177,93,0.12), rgba(52,177,93,0.06));
+          background: rgba(52,177,93,0.08);
           border: 1px solid rgba(52,177,93,0.16);
           display: grid;
           gap: 12px;
-          text-align: left;
         }
         .login-success-badge {
           width: 56px;
@@ -626,7 +489,7 @@ export function LoginPage() {
         }
         .login-success h3 {
           margin: 0;
-          font-family: var(--font-serif);
+          font-family: var(--font-sans);
           font-size: 24px;
           letter-spacing: -0.03em;
         }
@@ -641,38 +504,17 @@ export function LoginPage() {
             grid-template-columns: 1fr;
             min-height: auto;
           }
-          .login-story {
-            padding: 32px 28px 4px;
-          }
-          .login-panel-wrap {
-            padding: 16px 18px 20px;
-          }
-          .login-hero-title {
-            max-width: 12ch;
-          }
-          .login-stage {
-            min-height: 280px;
-          }
+          .login-story { padding: 32px 28px 4px; }
+          .login-panel-wrap { padding: 16px 18px 20px; }
+          .login-hero-title { max-width: 12ch; }
+          .login-stage { min-height: 260px; }
         }
         @media (max-width: 720px) {
-          .login-page {
-            padding: 16px;
-          }
-          .login-shell {
-            border-radius: 26px;
-          }
-          .login-story-grid {
-            grid-template-columns: 1fr;
-          }
-          .login-note {
-            display: none;
-          }
-          .login-stage {
-            min-height: 220px;
-          }
-          .login-panel {
-            padding: 24px 20px 20px;
-          }
+          .login-page { padding: 16px; }
+          .login-shell { border-radius: 26px; }
+          .login-note { display: none; }
+          .login-stage { min-height: 200px; }
+          .login-panel { padding: 24px 20px 20px; }
         }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after {
@@ -681,37 +523,73 @@ export function LoginPage() {
             transition-duration: 0.01ms !important;
           }
         }
+        @media (prefers-color-scheme: dark) {
+          .login-shell {
+            border-color: rgba(255,255,255,0.08);
+            background: linear-gradient(135deg, rgba(28,30,32,0.92), rgba(22,24,26,0.96));
+            box-shadow: 0 30px 100px rgba(0,0,0,0.5);
+          }
+          .login-story {
+            background: radial-gradient(circle at 22% 18%, rgba(52,177,93,0.10), transparent 36%);
+          }
+          .login-panel-wrap {
+            background: rgba(255,255,255,0.03);
+          }
+          .login-panel {
+            background: rgba(18,20,22,0.95);
+            border-color: rgba(255,255,255,0.08);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.3);
+          }
+          .login-note {
+            background: rgba(28,30,32,0.85);
+            border-color: rgba(255,255,255,0.08);
+            box-shadow: 0 18px 38px rgba(0,0,0,0.3);
+          }
+          .login-note strong { color: rgba(255,255,255,0.85); }
+          .login-google-button {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.10);
+            color: rgba(255,255,255,0.88);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+          }
+          .login-google-button:hover:not(:disabled) {
+            background: rgba(255,255,255,0.11);
+            box-shadow: 0 16px 30px rgba(0,0,0,0.25);
+          }
+          .login-field input {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.10);
+            color: rgba(255,255,255,0.9);
+          }
+          .login-field input::placeholder { color: rgba(255,255,255,0.3); }
+          .login-field input:focus {
+            border-color: rgba(52,177,93,0.45);
+            box-shadow: 0 0 0 5px rgba(52,177,93,0.12);
+          }
+          .login-feedback[data-tone="error"] {
+            color: #fca5a5;
+            background: rgba(220,38,38,0.12);
+            border-color: rgba(220,38,38,0.18);
+          }
+          .login-feedback[data-tone="success"] {
+            color: #86efac;
+            background: rgba(52,177,93,0.12);
+            border-color: rgba(52,177,93,0.20);
+          }
+          .login-feedback[data-tone="info"] {
+            color: #93c5fd;
+            background: rgba(37,99,235,0.12);
+            border-color: rgba(37,99,235,0.18);
+          }
+        }
       `}</style>
-
-      <div className="login-ambient" style={{
-        top: '-12%',
-        left: '-6%',
-        width: 280,
-        height: 280,
-        background: 'radial-gradient(circle, rgba(52,177,93,0.20), rgba(52,177,93,0))',
-      }} />
-      <div className="login-ambient" style={{
-        right: '-4%',
-        bottom: '8%',
-        width: 320,
-        height: 320,
-        background: 'radial-gradient(circle, rgba(236,72,153,0.14), rgba(236,72,153,0))',
-        animationDelay: '-7s',
-      }} />
 
       <div className="login-shell">
         <section className="login-story">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div className="login-kicker">
-              <span className="login-kicker-dot" />
-              <span>{ritualContext.eyebrow}</span>
-            </div>
-
             <div style={{ display: 'grid', gap: 14 }}>
               <h1 className="login-hero-title">Keep your people warm.</h1>
-              <p className="login-hero-copy">
-                {ritualContext.prompt} RealDeal turns the health of your network into something you want to check, not avoid.
-              </p>
+              <p className="login-hero-copy">Start the day with a clean read on your people.</p>
             </div>
           </div>
 
@@ -734,30 +612,30 @@ export function LoginPage() {
             ))}
             <LoginOrb loading={loading} />
           </div>
-
-          <div className="login-story-grid">
-            {HERO_PROMISES.map((promise, index) => (
-              <div key={promise.label} className="login-story-card" style={{ animationDelay: `${index * 1.2}s` }}>
-                <strong>{promise.label}</strong>
-                <p>{promise.text}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section className="login-panel-wrap">
           <div className="login-panel">
             <div className="login-brand">
-              <p className="login-brand-mark">RealDeal</p>
-              <p className="login-brand-copy">Real friends, real deal friends.</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="5" fill="var(--color-text-primary)"/>
+                  <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+                  <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
+                  <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
+                  <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>
+                  <circle cx="15" cy="8.4" r="2.8" fill="#E53935"/>
+                  <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5"/>
+                </svg>
+                <p className="login-brand-mark">realdeal</p>
+              </div>
+              <p className="login-brand-copy">Feed what feeds you.</p>
             </div>
 
             <div className="login-auth-header">
               <h2>{signUpSuccess ? 'Check your inbox' : authTitle}</h2>
               <p>
-                {signUpSuccess
-                  ? 'Your account is almost live.'
-                  : authCopy}
+                {signUpSuccess ? 'Your account is almost live.' : authCopy}
               </p>
             </div>
 
@@ -802,10 +680,7 @@ export function LoginPage() {
                       type="email"
                       placeholder="you@company.com"
                       value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value)
-                        if (feedback) setFeedback(null)
-                      }}
+                      onChange={(e) => { setEmail(e.target.value); if (feedback) setFeedback(null) }}
                       required
                     />
                   </label>
@@ -816,10 +691,7 @@ export function LoginPage() {
                       type="password"
                       placeholder="Minimum 6 characters"
                       value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value)
-                        if (feedback) setFeedback(null)
-                      }}
+                      onChange={(e) => { setPassword(e.target.value); if (feedback) setFeedback(null) }}
                       required
                       minLength={6}
                     />
@@ -833,10 +705,7 @@ export function LoginPage() {
                 <div className="login-auth-actions">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsSignUp(!isSignUp)
-                      setFeedback(null)
-                    }}
+                    onClick={() => { setIsSignUp(!isSignUp); setFeedback(null) }}
                     className="login-secondary-link"
                   >
                     {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
@@ -846,11 +715,7 @@ export function LoginPage() {
                     <button
                       type="button"
                       onClick={async () => {
-                        if (!email) {
-                          setFeedback({ tone: 'error', text: 'Enter your email first.' })
-                          return
-                        }
-
+                        if (!email) { setFeedback({ tone: 'error', text: 'Enter your email first.' }); return }
                         setLoading(true)
                         setLoadingLabel('Sending the reset link...')
                         setFeedback(null)
@@ -880,10 +745,7 @@ export function LoginPage() {
 
             <div className="login-demo-row">
               <button
-                onClick={() => {
-                  setDemoMode(true)
-                  window.location.href = '/'
-                }}
+                onClick={() => { setDemoMode(true); window.location.href = '/' }}
                 className="login-demo-link"
                 type="button"
               >

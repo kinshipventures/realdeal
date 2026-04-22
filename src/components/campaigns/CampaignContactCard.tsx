@@ -107,9 +107,14 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
       className={`cc-card${stagger != null ? ' cc-card-enter' : ''}`}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div onClick={handleAvatarClick} style={{ cursor: 'pointer', flexShrink: 0 }}>
+        <button
+          type="button"
+          onClick={handleAvatarClick}
+          aria-label={`View ${contact.name}`}
+          style={{ cursor: 'pointer', flexShrink: 0, background: 'none', border: 'none', padding: 0 }}
+        >
           <Avatar name={contact.name} size={28} />
-        </div>
+        </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
