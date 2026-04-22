@@ -382,30 +382,17 @@ export function LandingPage() {
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            className="rd-nav-btn"
+            className="rd-cta-primary"
             onClick={() => navigate('/login')}
             style={{
-              padding: '8px 18px', borderRadius: 8,
-              border: `1px solid ${t.border14}`,
-              background: 'transparent', cursor: 'pointer',
-              fontSize: 14, fontWeight: 500, color: t.fg70,
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            Sign in
-          </button>
-          <button
-            className="rd-cta-primary"
-            onClick={() => navigate('/login?signup=1')}
-            style={{
-              padding: '8px 18px', borderRadius: 8, border: 'none',
+              padding: '8px 20px', borderRadius: 8, border: 'none',
               background: '#003DA5', color: '#fff', cursor: 'pointer',
               fontSize: 14, fontWeight: 600,
               fontFamily: 'var(--font-sans)',
               boxShadow: '0 4px 20px rgba(0, 61, 165,0.3)',
             }}
           >
-            Get started
+            Sign in
           </button>
         </div>
       </nav>
@@ -441,38 +428,37 @@ export function LandingPage() {
             Your network, remembered.
           </h1>
 
-          <div style={{ maxWidth: 520, margin: '0 auto 32px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
+          <div style={{ maxWidth: 560, margin: '0 auto 32px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
             <p style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(16px, 1.4vw, 19px)',
+              fontSize: 'clamp(17px, 1.45vw, 20px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg, margin: '0 0 10px',
+              color: t.fg, margin: '0 0 14px',
             }}>
               We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
             </p>
             <p style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(16px, 1.4vw, 19px)',
+              fontSize: 'clamp(17px, 1.45vw, 20px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg45, margin: '0 0 20px',
-              fontStyle: 'italic',
+              color: t.fg, margin: '0 0 20px',
             }}>
-              And then we completely forgot what feeds us.
+              We need to remember that <em style={{ fontStyle: 'italic', color: '#003DA5' }}>your people are also medicine</em>.
             </p>
 
             <div style={{
               borderTop: `1px solid ${t.border14}`,
               padding: '18px 0 0',
-              maxWidth: 460,
+              maxWidth: 500,
               margin: '0 auto',
             }}>
               <p style={{
                 fontFamily: 'var(--font-sans)',
                 fontSize: 'clamp(15px, 1.35vw, 18px)',
                 fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4,
-                color: t.fg, margin: '0 0 4px',
+                color: t.fg, margin: '0 0 6px',
               }}>
-                Real Deal isn't a network. It's a prescription.
+                Real Deal isn't a CRM or a network. It's a prescription for your relationship.
               </p>
               <p style={{
                 fontSize: 13, lineHeight: 1.5,
@@ -498,103 +484,121 @@ export function LandingPage() {
             }} />
             <div className="rd-float-mockup" style={{
               position: 'relative', zIndex: 1,
-              maxWidth: 840, margin: '0 auto',
-              borderRadius: 16,
-              border: `1px solid ${t.border}`,
-              overflow: 'hidden',
-              boxShadow: dark ? '0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)' : '0 40px 120px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)',
-              background: t.mockupBg,
-              animation: 'rd-float 6s ease-in-out infinite',
+              maxWidth: 900, margin: '0 auto',
+              animation: 'rd-float 8s ease-in-out infinite',
             }}>
-              {/* browser chrome */}
-              <div style={{
-                height: 40, background: t.chromeBg,
-                display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
-                borderBottom: `1px solid ${t.border06}`,
-              }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57', opacity: 0.8 }} />
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E', opacity: 0.8 }} />
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840', opacity: 0.8 }} />
-                <span style={{
-                  flex: 1, textAlign: 'center', fontSize: 11,
-                  color: t.fg25, fontFamily: 'var(--font-sans)',
-                  marginRight: 48,
-                }}>
-                  RealDeal - Network Map
-                </span>
-              </div>
-              {/* mockup SVG */}
-              <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: t.mockupSvg }}>
+              <svg viewBox="0 0 900 560" fill="none" style={{ display: 'block', width: '100%' }}>
                 <defs>
-                  <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.95" />
-                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
+                  <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="14" />
+                  </filter>
+                  <filter id="nm-blur-soft" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="6" />
+                  </filter>
+                  <radialGradient id="nm-hub" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#201D1A" stopOpacity="0.92" />
+                    <stop offset="100%" stopColor="#201D1A" stopOpacity="0.0" />
                   </radialGradient>
-                  <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.15" />
+                  <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.35" />
                     <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
                   </radialGradient>
-                  <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp3" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp4" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#EC4899" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#9d174d" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp5" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#D97706" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp6" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.75" />
-                    <stop offset="100%" stopColor="#059669" stopOpacity="0.5" />
-                  </radialGradient>
                 </defs>
-                {/* bg glow */}
-                <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
-                {/* lines */}
-                <line x1="420" y1="220" x2="220" y2="100" stroke="#003DA5" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="130" y2="220" stroke="#F59E0B" strokeWidth="1.5" opacity="0.15" />
-                <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
-                <line x1="420" y1="220" x2="340" y2="390" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.15" />
-                <line x1="420" y1="220" x2="490" y2="140" stroke="#7C3AED" strokeWidth="1.5" opacity="0.15" />
-                {/* hub */}
-                <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
-                <circle cx="420" cy="220" r="64" stroke="#003DA5" strokeWidth="2" opacity="0.25" fill="none" />
-                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">My Network</text>
-                <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
-                {/* pods */}
-                <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
-                <circle cx="220" cy="100" r="43" stroke="#003DA5" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Family</text>
-                <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
-                <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Creatives</text>
-                <circle cx="640" cy="300" r="35" fill="url(#hp3)" />
-                <text x="640" y="304" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Founders</text>
-                <circle cx="200" cy="330" r="30" fill="url(#hp4)" />
-                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Friends</text>
-                <circle cx="130" cy="220" r="27" fill="url(#hp5)" />
-                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Investors</text>
-                <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
-                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Mentors</text>
-                <circle cx="340" cy="390" r="26" fill="url(#hp3)" opacity="0.85" />
-                <text x="340" y="388" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Business</text>
-                <text x="340" y="399" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Partners</text>
-                <circle cx="490" cy="140" r="24" fill="url(#hp2)" opacity="0.85" />
-                <text x="490" y="144" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Work</text>
+
+                {/* atmospheric halo */}
+                <ellipse cx="450" cy="280" rx="380" ry="240" fill="url(#nm-halo)" filter="url(#nm-blur)" />
+
+                {/* soft connection curves - near-invisible, organic */}
+                <path d="M 450 280 Q 340 200 210 150" stroke="#201D1A" strokeWidth="1" opacity="0.08" fill="none" />
+                <path d="M 450 280 Q 580 200 710 160" stroke="#201D1A" strokeWidth="1" opacity="0.08" fill="none" />
+                <path d="M 450 280 Q 600 380 720 440" stroke="#201D1A" strokeWidth="1" opacity="0.06" fill="none" />
+                <path d="M 450 280 Q 300 380 180 430" stroke="#201D1A" strokeWidth="1" opacity="0.05" fill="none" />
+                <path d="M 450 280 Q 320 260 140 270" stroke="#201D1A" strokeWidth="1" opacity="0.04" fill="none" />
+                <path d="M 450 280 Q 510 170 540 110" stroke="#201D1A" strokeWidth="1" opacity="0.06" fill="none" />
+                <path d="M 450 280 Q 400 400 370 480" stroke="#201D1A" strokeWidth="1" opacity="0.04" fill="none" />
+
+                {/* BLOBS - rendered back to front, warm-then-cool, each a blurred gradient */}
+                {/* Mentors - top right, small, fading (coral, lower opacity) */}
+                <circle cx="740" cy="130" r="38" fill="#FF6B8A" opacity="0.35" filter="url(#nm-blur)" />
+                <circle cx="740" cy="130" r="14" fill="#FF6B8A" opacity="0.6" filter="url(#nm-blur-soft)" />
+
+                {/* Family - upper left, big, close (coral) */}
+                <circle cx="210" cy="150" r="64" fill="#FF6B8A" opacity="0.55" filter="url(#nm-blur)" />
+                <circle cx="210" cy="150" r="22" fill="#FF6B8A" opacity="0.75" filter="url(#nm-blur-soft)" />
+
+                {/* Creatives - upper right, medium (purple from pod palette) */}
+                <circle cx="690" cy="170" r="54" fill="#7E57C2" opacity="0.5" filter="url(#nm-blur)" />
+                <circle cx="690" cy="170" r="18" fill="#7E57C2" opacity="0.7" filter="url(#nm-blur-soft)" />
+
+                {/* Investors - far left, medium (amber) */}
+                <circle cx="130" cy="290" r="48" fill="#F5A623" opacity="0.5" filter="url(#nm-blur)" />
+                <circle cx="130" cy="290" r="16" fill="#F5A623" opacity="0.7" filter="url(#nm-blur-soft)" />
+
+                {/* Work - upper mid, small (Pantone blue - neutral work tone) */}
+                <circle cx="540" cy="90" r="38" fill="#003DA5" opacity="0.38" filter="url(#nm-blur)" />
+                <circle cx="540" cy="90" r="12" fill="#003DA5" opacity="0.6" filter="url(#nm-blur-soft)" />
+
+                {/* Founders - bottom right, medium (teal) */}
+                <circle cx="720" cy="440" r="50" fill="#00BFA5" opacity="0.45" filter="url(#nm-blur)" />
+                <circle cx="720" cy="440" r="16" fill="#00BFA5" opacity="0.65" filter="url(#nm-blur-soft)" />
+
+                {/* Friends - bottom left, medium (green - thriving) */}
+                <circle cx="180" cy="440" r="52" fill="#25B439" opacity="0.5" filter="url(#nm-blur)" />
+                <circle cx="180" cy="440" r="18" fill="#25B439" opacity="0.7" filter="url(#nm-blur-soft)" />
+
+                {/* Business Partners - lower mid, small (rose) */}
+                <circle cx="370" cy="490" r="36" fill="#E53935" opacity="0.35" filter="url(#nm-blur)" />
+                <circle cx="370" cy="490" r="12" fill="#E53935" opacity="0.55" filter="url(#nm-blur-soft)" />
+
+                {/* HUB - soft charcoal blob with blue halo */}
+                <circle cx="450" cy="280" r="120" fill="url(#nm-halo)" filter="url(#nm-blur)" />
+                <circle cx="450" cy="280" r="46" fill="url(#nm-hub)" filter="url(#nm-blur-soft)" />
+
+                {/* LABELS - floating outside, Fraunces serif */}
+                {/* Pod labels with tiny health dot */}
+                <g fontFamily="var(--font-serif), Georgia, serif" fontWeight="500">
+                  {/* Family */}
+                  <circle cx="205" cy="80" r="3" fill="#FF6B8A" />
+                  <text x="215" y="84" fill="#201D1A" fontSize="15">Family</text>
+                  <text x="215" y="100" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">12 people - thriving</text>
+
+                  {/* Creatives */}
+                  <circle cx="645" cy="100" r="3" fill="#7E57C2" />
+                  <text x="655" y="104" fill="#201D1A" fontSize="15">Creatives</text>
+                  <text x="655" y="120" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">8 people - steady</text>
+
+                  {/* Work */}
+                  <circle cx="515" cy="40" r="3" fill="#003DA5" />
+                  <text x="525" y="44" fill="#201D1A" fontSize="14">Work</text>
+
+                  {/* Mentors - fading */}
+                  <circle cx="720" cy="80" r="3" fill="#FF6B8A" opacity="0.5" />
+                  <text x="730" y="84" fill="#6F675F" fontSize="13" fontStyle="italic">Mentors</text>
+                  <text x="730" y="99" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">3 people - cooling</text>
+
+                  {/* Investors */}
+                  <circle cx="35" cy="296" r="3" fill="#F5A623" />
+                  <text x="45" y="300" fill="#201D1A" fontSize="15">Investors</text>
+                  <text x="45" y="316" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">5 people - steady</text>
+
+                  {/* Friends */}
+                  <circle cx="75" cy="516" r="3" fill="#25B439" />
+                  <text x="85" y="520" fill="#201D1A" fontSize="15">Friends</text>
+                  <text x="85" y="536" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">14 people - thriving</text>
+
+                  {/* Founders */}
+                  <circle cx="710" cy="516" r="3" fill="#00BFA5" />
+                  <text x="720" y="520" fill="#201D1A" fontSize="15">Founders</text>
+                  <text x="720" y="536" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">7 people - steady</text>
+
+                  {/* Business Partners */}
+                  <circle cx="310" cy="542" r="3" fill="#E53935" opacity="0.5" />
+                  <text x="320" y="546" fill="#6F675F" fontSize="13" fontStyle="italic">Business Partners</text>
+
+                  {/* HUB LABEL */}
+                  <text x="450" y="278" textAnchor="middle" fill="#201D1A" fontSize="22" fontWeight="600">My Network</text>
+                  <text x="450" y="302" textAnchor="middle" fill="#6F675F" fontSize="12" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em">SCORE 81 - STEADY</text>
+                </g>
               </svg>
             </div>
           </div>
@@ -805,50 +809,57 @@ export function LandingPage() {
           background: 'radial-gradient(ellipse 70% 100% at 50% 100%, rgba(0, 61, 165,0.14) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
-        <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <h2 style={{
-            fontSize: 'clamp(36px, 5vw, 64px)',
-            fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05,
-            color: t.fg, marginBottom: 24,
+        <div style={{ maxWidth: 640, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.22em',
+            textTransform: 'uppercase', color: '#003DA5',
+            marginBottom: 32,
             ...reveal(ctaVisible),
           }}>
-            Invest in your<br />relationships.
+            <span style={{ width: 24, height: 1, background: '#003DA5', opacity: 0.5 }} />
+            Private beta
+            <span style={{ width: 24, height: 1, background: '#003DA5', opacity: 0.5 }} />
+          </div>
+
+          <h2 style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(40px, 5.5vw, 68px)',
+            fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05,
+            color: t.fg, marginBottom: 24,
+            ...reveal(ctaVisible, 0.05),
+          }}>
+            We're growing slowly.<br /><em style={{ fontStyle: 'italic', fontWeight: 500 }}>On purpose.</em>
           </h2>
+
           <p style={{
-            fontSize: 18, color: t.fg45, marginBottom: 40,
+            fontSize: 17, color: t.fg70, marginBottom: 48, lineHeight: 1.6,
+            maxWidth: 520, margin: '0 auto 48px',
             ...reveal(ctaVisible, 0.1),
           }}>
-            Join RealDeal and start building deeper connections today.
+            Real Deal is in private beta. We're onboarding a handful of people at a time so every relationship gets the attention it deserves.
           </p>
+
           <div style={{
-            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
             ...reveal(ctaVisible, 0.2),
           }}>
             <button
               className="rd-cta-primary"
-              onClick={() => navigate('/login?signup=1')}
+              onClick={() => navigate('/waitlist')}
               style={{
-                padding: '16px 44px', borderRadius: 12, border: 'none',
+                padding: '16px 44px', borderRadius: 999, border: 'none',
                 background: '#003DA5', color: '#fff', cursor: 'pointer',
-                fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-sans)',
+                fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-sans)',
                 boxShadow: '0 4px 28px rgba(0, 61, 165,0.35)',
+                letterSpacing: '0.01em',
               }}
             >
-              Get Started - Free
+              Join the wait list
             </button>
-            <button
-              className="rd-cta-ghost"
-              onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
-              style={{
-                padding: '16px 44px', borderRadius: 12,
-                border: `1px solid ${t.border14}`,
-                background: t.fg04,
-                cursor: 'pointer', fontSize: 17, fontWeight: 500,
-                color: t.fg70, fontFamily: 'var(--font-sans)',
-              }}
-            >
-              Try the Demo
-            </button>
+            <p style={{ fontSize: 12, color: t.fg45, margin: 0, letterSpacing: '0.02em' }}>
+              When your spot opens, you'll be the first to know.
+            </p>
           </div>
         </div>
       </section>
