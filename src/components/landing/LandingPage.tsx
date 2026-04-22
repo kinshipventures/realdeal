@@ -1,6 +1,25 @@
 import { useNavigate } from 'react-router'
 import { useRef, useEffect, useState, type RefObject } from 'react'
 import { setDemoMode } from '@/lib/sampleData'
+
+function useTheme(): 'light' | 'dark' {
+  const getTheme = (): 'light' | 'dark' => {
+    const attr = document.documentElement.getAttribute('data-theme')
+    if (attr === 'dark') return 'dark'
+    if (attr === 'light') return 'light'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  const [theme, setTheme] = useState<'light' | 'dark'>(getTheme)
+  useEffect(() => {
+    const obs = new MutationObserver(() => setTheme(getTheme()))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onMq = () => setTheme(getTheme())
+    mq.addEventListener('change', onMq)
+    return () => { obs.disconnect(); mq.removeEventListener('change', onMq) }
+  }, [])
+  return theme
+}
 import goopLogo from '@/assets/logos/goop.png'
 import figsLogo from '@/assets/logos/figs.png'
 import moonpayLogo from '@/assets/logos/moonpay.png'
@@ -36,7 +55,7 @@ const PORTFOLIO_BRANDS = [
   { name: 'Wonder', logo: wonderLogo },
 ]
 
-const FEATURES = [
+function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect: string) { return [
   {
     label: '01',
     title: 'Your whole network, mapped.',
@@ -83,20 +102,20 @@ const FEATURES = [
         {/* hub */}
         <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
         <circle cx="240" cy="160" r="60" stroke="#25B439" strokeWidth="1.5" opacity="0.3" fill="none" />
-        <text x="240" y="154" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="system-ui">Network</text>
-        <text x="240" y="170" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontFamily="system-ui">Score 84</text>
+        <text x="240" y="154" textAnchor="middle" fill={svgFg} fontSize="11" fontWeight="700" fontFamily="system-ui">Network</text>
+        <text x="240" y="170" textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">Score 84</text>
         {/* pods */}
         <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
         <circle cx="120" cy="70" r="38" stroke="#25B439" strokeWidth="1" opacity="0.25" fill="none" />
-        <text x="120" y="74" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">LPs</text>
+        <text x="120" y="74" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">LPs</text>
         <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
-        <text x="370" y="84" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Talent</text>
+        <text x="370" y="84" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Talent</text>
         <circle cx="380" cy="240" r="32" fill="url(#f1p3)" />
-        <text x="380" y="244" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Founders</text>
+        <text x="380" y="244" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Founders</text>
         <circle cx="100" cy="250" r="26" fill="url(#f1p4)" />
-        <text x="100" y="254" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Media</text>
+        <text x="100" y="254" textAnchor="middle" fill={svgFg} fontSize="9" fontWeight="600" fontFamily="system-ui">Media</text>
         <circle cx="165" cy="275" r="20" fill="url(#f1p1)" opacity="0.7" />
-        <text x="165" y="279" textAnchor="middle" fill="white" fontSize="8" fontWeight="600" fontFamily="system-ui">VCs</text>
+        <text x="165" y="279" textAnchor="middle" fill={svgFg} fontSize="8" fontWeight="600" fontFamily="system-ui">VCs</text>
       </svg>
     ),
   },
@@ -120,7 +139,7 @@ const FEATURES = [
           { name: 'David Osei', score: 18, label: 'Fading', color: '#f87171', y: 240 },
         ].map((row, i) => (
           <g key={i}>
-            <text x="32" y={row.y + 5} fill="rgba(255,255,255,0.6)" fontSize="12" fontFamily="system-ui">{row.name}</text>
+            <text x="32" y={row.y + 5} fill={svgFg40} fontSize="12" fontFamily="system-ui">{row.name}</text>
             <rect x="160" y={row.y - 10} width={240 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.25" />
             <rect x="160" y={row.y - 10} width={160 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.7" />
             <text x="410" y={row.y + 5} fill={row.color} fontSize="12" fontWeight="700" fontFamily="system-ui">{row.score}</text>
@@ -149,10 +168,10 @@ const FEATURES = [
           { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#25B439', pct: 0.12 },
         ].map((row, i) => (
           <g key={i}>
-            <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-            <text x="52" y={92 + i * 72} fill="rgba(255,255,255,0.9)" fontSize="13" fontWeight="600" fontFamily="system-ui">{row.name}</text>
-            <text x="52" y={110 + i * 72} fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="system-ui">{row.cadence}</text>
-            <rect x="240" y={82 + i * 72} width="120" height="8" rx="4" fill="rgba(255,255,255,0.08)" />
+            <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill={svgRect} stroke={svgStroke} strokeWidth="1" />
+            <text x="52" y={92 + i * 72} fill={svgFg} fontSize="13" fontWeight="600" fontFamily="system-ui">{row.name}</text>
+            <text x="52" y={110 + i * 72} fill={svgFg40} fontSize="10" fontFamily="system-ui">{row.cadence}</text>
+            <rect x="240" y={82 + i * 72} width="120" height="8" rx="4" fill={svgStroke} />
             <rect x="240" y={82 + i * 72} width={120 * row.pct} height="8" rx="4" fill={row.color} opacity="0.8" />
             <text x="380" y={91 + i * 72} fill={row.color} fontSize="11" fontFamily="system-ui" fontWeight="600">{row.next}</text>
           </g>
@@ -160,7 +179,7 @@ const FEATURES = [
       </svg>
     ),
   },
-]
+] }  // end getFeatures
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -169,7 +188,23 @@ export function LandingPage() {
   const [f2Ref, f2Visible] = useInView()
   const [f3Ref, f3Visible] = useInView()
   const [partnersRef, partnersVisible] = useInView()
+  const [problemRef, problemVisible] = useInView()
   const [ctaRef, ctaVisible] = useInView()
+
+  const [mouse, setMouse] = useState({ x: 50, y: 30, active: false })
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (mq.matches) return
+    const onMove = (e: MouseEvent) => {
+      setMouse({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100,
+        active: true,
+      })
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [])
 
   const reveal = (visible: boolean, delay = 0) => ({
     opacity: visible ? 1 : 0,
@@ -177,12 +212,51 @@ export function LandingPage() {
     transition: `opacity 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
   })
 
-  const BG = '#0D0E0F'
+  const theme = useTheme()
+  const dark = theme === 'dark'
+
+  const t = {
+    bg:        dark ? '#0D0E0F'                    : '#FAF8F4',
+    navBg:     dark ? '#0D0E0Fcc'                  : '#FAF8F4cc',
+    navBorder: dark ? 'rgba(255,255,255,0.06)'     : 'rgba(0,0,0,0.07)',
+    fg:        dark ? '#fff'                       : '#201D1A',
+    fg70:      dark ? 'rgba(255,255,255,0.7)'      : 'rgba(0,0,0,0.7)',
+    fg50:      dark ? 'rgba(255,255,255,0.5)'      : 'rgba(0,0,0,0.5)',
+    fg45:      dark ? 'rgba(255,255,255,0.45)'     : 'rgba(0,0,0,0.45)',
+    fg25:      dark ? 'rgba(255,255,255,0.25)'     : 'rgba(0,0,0,0.25)',
+    fg08:      dark ? 'rgba(255,255,255,0.08)'     : 'rgba(0,0,0,0.06)',
+    fg04:      dark ? 'rgba(255,255,255,0.04)'     : 'rgba(0,0,0,0.03)',
+    fg03:      dark ? 'rgba(255,255,255,0.03)'     : 'rgba(0,0,0,0.02)',
+    border:    dark ? 'rgba(255,255,255,0.08)'     : 'rgba(0,0,0,0.08)',
+    border07:  dark ? 'rgba(255,255,255,0.07)'     : 'rgba(0,0,0,0.07)',
+    border06:  dark ? 'rgba(255,255,255,0.06)'     : 'rgba(0,0,0,0.06)',
+    border14:  dark ? 'rgba(255,255,255,0.14)'     : 'rgba(0,0,0,0.14)',
+    mockupBg:  dark ? '#1A1B1C'                    : '#F0EDE8',
+    chromeBg:  dark ? '#111213'                    : '#E8E5E0',
+    mockupSvg: dark ? '#0F1210'                    : '#EAE7E2',
+    logoFilter:dark ? 'brightness(0) invert(1)'    : 'brightness(0)',
+    // SVG text colors (SVG doesn't inherit CSS vars)
+    svgFg:     dark ? 'rgba(255,255,255,0.9)'      : 'rgba(0,0,0,0.82)',
+    svgFg40:   dark ? 'rgba(255,255,255,0.4)'      : 'rgba(0,0,0,0.4)',
+    svgStroke: dark ? 'rgba(255,255,255,0.08)'     : 'rgba(0,0,0,0.08)',
+    svgRect:   dark ? 'rgba(255,255,255,0.03)'     : 'rgba(0,0,0,0.03)',
+  }
+
+  const FEATURES = getFeatures(t.svgFg, t.svgFg40, t.svgStroke, t.svgRect)
   const featureRefs = [f1Ref, f2Ref, f3Ref]
   const featureVis = [f1Visible, f2Visible, f3Visible]
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', fontFamily: 'var(--font-sans)', color: '#fff' }}>
+    <div style={{ background: t.bg, minHeight: '100vh', fontFamily: 'var(--font-sans)', color: t.fg, position: 'relative', overflow: 'hidden' }}>
+      {/* mouse-tracked ambient glow */}
+      <div
+        aria-hidden
+        style={{
+          position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+          background: `radial-gradient(600px circle at ${mouse.x}% ${mouse.y}%, rgba(52,177,93,${dark ? 0.18 : 0.14}) 0%, rgba(52,177,93,${dark ? 0.06 : 0.04}) 35%, transparent 70%)`,
+          transition: mouse.active ? 'background 0.2s cubic-bezier(0.22,1,0.36,1)' : 'none',
+        }}
+      />
       <style>{`
         @keyframes rd-ticker {
           0% { transform: translateX(0); }
@@ -233,7 +307,21 @@ export function LandingPage() {
           transition: background 0.15s;
         }
         .rd-cta-ghost:hover {
-          background: rgba(255,255,255,0.08) !important;
+          background: ${t.fg08} !important;
+        }
+        .rd-nav-btn:focus-visible,
+        .rd-cta-primary:focus-visible,
+        .rd-cta-ghost:focus-visible,
+        .rd-footer-link:focus-visible {
+          outline: 2px solid #25B439;
+          outline-offset: 2px;
+        }
+        .rd-footer-link { transition: color 0.15s; }
+        .rd-footer-link:hover { color: ${t.fg} !important; }
+        @media (prefers-reduced-motion: reduce) {
+          .rd-float-mockup { animation: none !important; }
+          .rd-ticker-inner { animation: none !important; }
+          * { transition-duration: 0.01ms !important; }
         }
         @media (max-width: 767px) {
           .rd-feature-row {
@@ -252,14 +340,14 @@ export function LandingPage() {
         position: 'sticky', top: 0, zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: 'clamp(16px, 3vw, 20px) clamp(16px, 4vw, 40px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: `${BG}cc`,
+        borderBottom: `1px solid ${t.navBorder}`,
+        background: t.navBg,
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
       }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="5" fill="#fff" />
+            <circle cx="24" cy="24" r="5" fill={t.fg} />
             <circle cx="42" cy="24" r="2.8" fill="#25B439" />
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
@@ -267,7 +355,7 @@ export function LandingPage() {
             <circle cx="15" cy="8.4" r="2.8" fill="#E53935" />
             <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5" />
           </svg>
-          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.025em', color: '#fff' }}>
+          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.025em', color: t.fg }}>
             realdeal
           </span>
         </span>
@@ -277,9 +365,9 @@ export function LandingPage() {
             onClick={() => navigate('/login')}
             style={{
               padding: '8px 18px', borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.14)',
+              border: `1px solid ${t.border14}`,
               background: 'transparent', cursor: 'pointer',
-              fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.75)',
+              fontSize: 14, fontWeight: 500, color: t.fg70,
               fontFamily: 'var(--font-sans)',
             }}
           >
@@ -309,41 +397,19 @@ export function LandingPage() {
           textAlign: 'center', position: 'relative',
         }}
       >
-        {/* ambient light */}
-        <div aria-hidden style={{
-          position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)',
-          width: 800, height: 400,
-          background: 'radial-gradient(ellipse at 50% 40%, rgba(52,177,93,0.18) 0%, rgba(52,177,93,0.06) 50%, transparent 75%)',
-          pointerEvents: 'none',
-        }} />
-
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 14px', borderRadius: 100,
-            border: '1px solid rgba(52,177,93,0.3)',
-            background: 'rgba(52,177,93,0.08)',
-            marginBottom: 32,
-            ...reveal(heroVisible),
-          }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#25B439' }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>
-              Backed by Kinship Ventures
-            </span>
-          </div>
-
           <h1 style={{
             fontSize: 'clamp(44px, 7vw, 88px)',
             fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.0,
-            color: '#fff', margin: '0 0 28px',
+            color: t.fg, margin: '0 0 28px',
             ...reveal(heroVisible, 0.05),
           }}>
-            Feed what<br />feeds you.
+            Your network,<br />remembered.
           </h1>
 
           <p style={{
             fontSize: 'clamp(17px, 2vw, 21px)', lineHeight: 1.6,
-            color: 'rgba(255,255,255,0.5)', maxWidth: 520, margin: '0 auto 44px',
+            color: t.fg50, maxWidth: 520, margin: '0 auto 44px',
             ...reveal(heroVisible, 0.12),
           }}>
             The relationship OS for people who build through connection.
@@ -370,10 +436,10 @@ export function LandingPage() {
               onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
               style={{
                 padding: '14px 36px', borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.14)',
-                background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${t.border14}`,
+                background: t.fg04,
                 cursor: 'pointer', fontSize: 16, fontWeight: 500,
-                color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-sans)',
+                color: t.fg70, fontFamily: 'var(--font-sans)',
               }}
             >
               Try the Demo
@@ -393,178 +459,99 @@ export function LandingPage() {
               pointerEvents: 'none', zIndex: 0,
               filter: 'blur(20px)',
             }} />
-            <div style={{
+            <div className="rd-float-mockup" style={{
               position: 'relative', zIndex: 1,
               maxWidth: 840, margin: '0 auto',
               borderRadius: 16,
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: `1px solid ${t.border}`,
               overflow: 'hidden',
-              boxShadow: '0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)',
-              background: '#1A1B1C',
+              boxShadow: dark ? '0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)' : '0 40px 120px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)',
+              background: t.mockupBg,
               animation: 'rd-float 6s ease-in-out infinite',
             }}>
               {/* browser chrome */}
               <div style={{
-                height: 40, background: '#111213',
+                height: 40, background: t.chromeBg,
                 display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: `1px solid ${t.border06}`,
               }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57', opacity: 0.8 }} />
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E', opacity: 0.8 }} />
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840', opacity: 0.8 }} />
                 <span style={{
                   flex: 1, textAlign: 'center', fontSize: 11,
-                  color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-sans)',
+                  color: t.fg25, fontFamily: 'var(--font-sans)',
                   marginRight: 48,
                 }}>
                   RealDeal - Network Map
                 </span>
               </div>
               {/* mockup SVG */}
-              {(() => {
-                const HUB = { x: 420, y: 220 }
-                const PODS = [
-                  { id: 'lps',      label: 'LPs',       count: 24, x: 215, y: 96,  r: 46, color: '#25B439', shift: '#7CE28D', health: 0.92, state: 'Thriving', ring: '#25B439' },
-                  { id: 'talent',   label: 'Talent',    count: 38, x: 625, y: 92,  r: 40, color: '#7C3AED', shift: '#B794F6', health: 0.78, state: 'Steady',   ring: '#A78BFA' },
-                  { id: 'founders', label: 'Founders',  count: 52, x: 648, y: 300, r: 44, color: '#0EA5E9', shift: '#7DD3FC', health: 0.88, state: 'Thriving', ring: '#38BDF8' },
-                  { id: 'media',    label: 'Media',     count: 17, x: 196, y: 332, r: 36, color: '#EC4899', shift: '#F9A8D4', health: 0.42, state: 'Cooling',  ring: '#F472B6' },
-                  { id: 'vcs',      label: 'VCs',       count: 19, x: 112, y: 218, r: 34, color: '#F59E0B', shift: '#FCD34D', health: 0.65, state: 'Steady',   ring: '#FBBF24' },
-                  { id: 'advisors', label: 'Advisors',  count: 11, x: 556, y: 386, r: 30, color: '#10B981', shift: '#6EE7B7', health: 0.3,  state: 'Cooling',  ring: '#34D399' },
-                ]
-                const trim = (x1: number, y1: number, x2: number, y2: number, startPad: number, endPad: number) => {
-                  const dx = x2 - x1, dy = y2 - y1
-                  const d = Math.hypot(dx, dy)
-                  const ux = dx / d, uy = dy / d
-                  return { x1: x1 + ux * startPad, y1: y1 + uy * startPad, x2: x2 - ux * endPad, y2: y2 - uy * endPad }
-                }
-                return (
-                <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: 'radial-gradient(ellipse at 50% 45%, #0F1810 0%, #080A09 70%)' }}>
-                  <defs>
-                    <radialGradient id="heroAtmo" cx="50%" cy="48%" r="55%">
-                      <stop offset="0%" stopColor="#25B439" stopOpacity="0.22" />
-                      <stop offset="55%" stopColor="#25B439" stopOpacity="0.05" />
-                      <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
-                    </radialGradient>
-                    <radialGradient id="heroHubGrad" cx="35%" cy="30%" r="75%">
-                      <stop offset="0%"  stopColor="#9EF2AE" stopOpacity="1" />
-                      <stop offset="45%" stopColor="#25B439" stopOpacity="1" />
-                      <stop offset="100%" stopColor="#0B4A1C" stopOpacity="1" />
-                    </radialGradient>
-                    <radialGradient id="heroHubSpec" cx="35%" cy="25%" r="40%">
-                      <stop offset="0%" stopColor="#fff" stopOpacity="0.55" />
-                      <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-                    </radialGradient>
-                    {PODS.map(p => (
-                      <radialGradient key={`g-${p.id}`} id={`hp-${p.id}`} cx="32%" cy="28%" r="80%">
-                        <stop offset="0%"  stopColor={p.shift} stopOpacity="1" />
-                        <stop offset="55%" stopColor={p.color} stopOpacity="1" />
-                        <stop offset="100%" stopColor="#000" stopOpacity="0.55" />
-                      </radialGradient>
-                    ))}
-                    {PODS.map(p => (
-                      <radialGradient key={`s-${p.id}`} id={`hps-${p.id}`} cx="32%" cy="22%" r="40%">
-                        <stop offset="0%" stopColor="#fff" stopOpacity="0.5" />
-                        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-                      </radialGradient>
-                    ))}
-                    {PODS.map(p => {
-                      const t = trim(HUB.x, HUB.y, p.x, p.y, 68, p.r + 6)
-                      return (
-                        <linearGradient key={`l-${p.id}`} id={`ln-${p.id}`} gradientUnits="userSpaceOnUse" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}>
-                          <stop offset="0%"  stopColor="#25B439" stopOpacity="0.65" />
-                          <stop offset="100%" stopColor={p.color} stopOpacity="0.9" />
-                        </linearGradient>
-                      )
-                    })}
-                    <filter id="heroGlow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="6" />
-                    </filter>
-                  </defs>
-
-                  {/* atmospheric wash */}
-                  <rect x="0" y="0" width="840" height="440" fill="url(#heroAtmo)" />
-
-                  {/* starfield */}
-                  {[
-                    [64,48],[780,60],[88,378],[760,380],[420,40],[420,410],[150,160],[690,165],
-                    [140,280],[700,280],[330,50],[520,48],[330,400],[520,402],[40,220],[800,220],
-                  ].map(([x,y], i) => (
-                    <circle key={`st-${i}`} cx={x} cy={y} r={i % 3 === 0 ? 1.6 : 1} fill="#C3F8CE" opacity="0.22" className="rd-twinkle" style={{ animationDelay: `${(i % 5) * 0.4}s` }} />
-                  ))}
-
-                  {/* faint orbit rings */}
-                  <circle cx={HUB.x} cy={HUB.y} r="128" stroke="#25B439" strokeOpacity="0.08" strokeWidth="1" strokeDasharray="2 6" fill="none" />
-                  <circle cx={HUB.x} cy={HUB.y} r="186" stroke="#25B439" strokeOpacity="0.06" strokeWidth="1" strokeDasharray="2 6" fill="none" />
-
-                  {/* connection lines with travelling pulses */}
-                  {PODS.map(p => {
-                    const t = trim(HUB.x, HUB.y, p.x, p.y, 68, p.r + 6)
-                    const path = `M ${t.x1} ${t.y1} L ${t.x2} ${t.y2}`
-                    return (
-                      <g key={`edge-${p.id}`}>
-                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={`url(#ln-${p.id})`} strokeWidth="1.4" strokeLinecap="round" />
-                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={p.color} strokeWidth="0.8" strokeOpacity="0.35" strokeDasharray="2 10" strokeLinecap="round" className="rd-dash" />
-                        <circle r="2.4" fill={p.shift} className="rd-pulse-dot" style={{ offsetPath: `path('${path}')`, animationDelay: `${(PODS.indexOf(p)) * 0.45}s` }}>
-                          <animate attributeName="r" values="2;3.2;2" dur="3.4s" repeatCount="indefinite" />
-                        </circle>
-                      </g>
-                    )
-                  })}
-
-                  {/* hub sonar */}
-                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.5" className="rd-sonar" />
-                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.4" className="rd-sonar" style={{ animationDelay: '1.2s' }} />
-                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.3" className="rd-sonar" style={{ animationDelay: '2.4s' }} />
-
-                  {/* hub halo */}
-                  <circle cx={HUB.x} cy={HUB.y} r="110" fill="#25B439" opacity="0.18" filter="url(#heroGlow)" />
-
-                  {/* hub orb */}
-                  <g className="rd-orb-breath">
-                    <circle cx={HUB.x} cy={HUB.y} r="62" fill="url(#heroHubGrad)" />
-                    <circle cx={HUB.x} cy={HUB.y} r="62" fill="url(#heroHubSpec)" />
-                    <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#fff" strokeOpacity="0.14" strokeWidth="1" fill="none" />
-                    {/* health ring - full thriving */}
-                    <circle cx={HUB.x} cy={HUB.y} r="72" stroke="#25B439" strokeOpacity="0.45" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${0.94 * 2 * Math.PI * 72} ${2 * Math.PI * 72}`} transform={`rotate(-90 ${HUB.x} ${HUB.y})`} fill="none" />
-                  </g>
-
-                  {/* hub readout */}
-                  <text x={HUB.x} y={HUB.y - 6} textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="9" fontWeight="600" letterSpacing="2.5" fontFamily="var(--font-sans)">NETWORK</text>
-                  <text x={HUB.x} y={HUB.y + 18} textAnchor="middle" fill="#fff" fontSize="30" fontWeight="800" letterSpacing="-1" fontFamily="var(--font-sans)" fontStyle="italic">81</text>
-                  <text x={HUB.x} y={HUB.y + 34} textAnchor="middle" fill="#9EF2AE" fontSize="8" fontWeight="700" letterSpacing="2" fontFamily="var(--font-sans)">THRIVING</text>
-
-                  {/* pods */}
-                  {PODS.map((p, i) => {
-                    const ringR = p.r + 7
-                    const circ = 2 * Math.PI * ringR
-                    const labelOffset = p.r + 22
-                    const isTopHalf = p.y < HUB.y
-                    const labelY = p.y + (isTopHalf ? -labelOffset : labelOffset)
-                    return (
-                      <g key={p.id}>
-                        {/* halo */}
-                        <circle cx={p.x} cy={p.y} r={p.r + 26} fill={p.color} opacity="0.14" filter="url(#heroGlow)" />
-                        {/* health ring track */}
-                        <circle cx={p.x} cy={p.y} r={ringR} stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none" />
-                        {/* health ring fill */}
-                        <circle cx={p.x} cy={p.y} r={ringR} stroke={p.ring} strokeOpacity="0.95" strokeWidth="2.25" strokeLinecap="round" strokeDasharray={`${p.health * circ} ${circ}`} transform={`rotate(-90 ${p.x} ${p.y})`} fill="none" />
-                        {/* orb */}
-                        <g className="rd-orb-breath" style={{ animationDelay: `${i * 0.35}s` }}>
-                          <circle cx={p.x} cy={p.y} r={p.r} fill={`url(#hp-${p.id})`} />
-                          <circle cx={p.x} cy={p.y} r={p.r} fill={`url(#hps-${p.id})`} />
-                          <circle cx={p.x} cy={p.y} r={p.r} stroke="#fff" strokeOpacity="0.12" strokeWidth="1" fill="none" />
-                        </g>
-                        {/* count inside */}
-                        <text x={p.x} y={p.y + 5} textAnchor="middle" fill="#fff" fontSize={p.r >= 40 ? 20 : 16} fontWeight="800" letterSpacing="-0.5" fontFamily="var(--font-sans)" fontStyle="italic">{p.count}</text>
-                        {/* label outside */}
-                        <text x={p.x} y={labelY} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700" letterSpacing="-0.2" fontFamily="var(--font-sans)">{p.label}</text>
-                        <text x={p.x} y={labelY + 13} textAnchor="middle" fill={p.ring} fillOpacity="0.85" fontSize="9" fontWeight="700" letterSpacing="1.5" fontFamily="var(--font-sans)">{p.state.toUpperCase()}</text>
-                      </g>
-                    )
-                  })}
-                </svg>
-                )
-              })()}
+              <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: t.mockupSvg }}>
+                <defs>
+                  <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
+                  </radialGradient>
+                  <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp3" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp4" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#EC4899" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#9d174d" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp5" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#D97706" stopOpacity="0.6" />
+                  </radialGradient>
+                  <radialGradient id="hp6" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.75" />
+                    <stop offset="100%" stopColor="#059669" stopOpacity="0.5" />
+                  </radialGradient>
+                </defs>
+                {/* bg glow */}
+                <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
+                {/* lines */}
+                <line x1="420" y1="220" x2="220" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="130" y2="220" stroke="#F59E0B" strokeWidth="1.5" opacity="0.15" />
+                <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
+                {/* hub */}
+                <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
+                <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
+                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">RealDeal</text>
+                <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
+                {/* pods */}
+                <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
+                <circle cx="220" cy="100" r="43" stroke="#25B439" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
+                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">LPs</text>
+                <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
+                <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
+                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Talent</text>
+                <circle cx="640" cy="300" r="35" fill="url(#hp3)" />
+                <text x="640" y="304" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Founders</text>
+                <circle cx="200" cy="330" r="30" fill="url(#hp4)" />
+                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Media</text>
+                <circle cx="130" cy="220" r="27" fill="url(#hp5)" />
+                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">VCs</text>
+                <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
+                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Advisors</text>
+              </svg>
             </div>
           </div>
         </div>
@@ -572,33 +559,27 @@ export function LandingPage() {
 
       {/* Logo ticker */}
       <div style={{ padding: '40px 0 56px', overflow: 'hidden' }}>
-        <p style={{
-          textAlign: 'center', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em',
-          color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 24,
-        }}>
-          Portfolio companies
-        </p>
         <div style={{
           overflow: 'hidden',
           maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
           WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
         }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 80,
-            animation: 'rd-ticker 22s linear infinite', width: 'max-content',
+          <div className="rd-ticker-inner" style={{
+            display: 'flex', alignItems: 'center', gap: 120,
+            animation: 'rd-ticker 33s linear infinite', width: 'max-content',
           }}>
-            {[...PORTFOLIO_BRANDS, ...PORTFOLIO_BRANDS].map((brand, i) => (
+            {[...PORTFOLIO_BRANDS, ...PORTFOLIO_BRANDS, ...PORTFOLIO_BRANDS].map((brand, i) => (
               <img
                 key={`${brand.name}-${i}`}
                 src={brand.logo}
                 alt={brand.name}
                 loading="lazy"
-                width={120}
-                height={36}
+                width={160}
+                height={64}
                 style={{
-                  height: 36, width: 'auto', objectFit: 'contain',
+                  height: 64, width: 'auto', objectFit: 'contain',
                   userSelect: 'none', flexShrink: 0,
-                  filter: 'brightness(0) invert(1)', opacity: 0.35,
+                  filter: t.logoFilter, opacity: 0.35,
                 }}
               />
             ))}
@@ -618,30 +599,59 @@ export function LandingPage() {
           {PARTNERS.map((p, i) => (
             <div key={p.name} style={{
               display: 'flex', alignItems: 'center', gap: 18,
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: `1px solid ${t.border}`,
               borderRadius: 20,
               padding: '20px 28px',
-              background: 'rgba(255,255,255,0.03)',
+              background: t.fg03,
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
               minWidth: 280, flex: '1 1 280px', maxWidth: 380,
               ...reveal(partnersVisible, i * 0.08),
             }}>
               {p.photo ? (
-                <img src={p.photo} alt={p.name} width={60} height={60} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.1)' }} />
+                <img src={p.photo} alt={p.name} width={60} height={60} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${t.fg08}` }} />
               ) : (
                 <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#25B439', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
                   {p.initials}
                 </div>
               )}
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 3 }}>{p.name}</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>{p.role}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: t.fg, marginBottom: 3 }}>{p.name}</div>
+                <div style={{ fontSize: 13, color: t.fg45 }}>{p.role}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Problem statement */}
+      <section
+        ref={problemRef as RefObject<HTMLElement>}
+        style={{
+          maxWidth: 800, margin: '0 auto', padding: '0 40px 112px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ ...reveal(problemVisible) }}>
+          <p style={{
+            fontSize: 'clamp(26px, 3.5vw, 40px)',
+            fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.25,
+            color: t.fg, marginBottom: 24,
+            fontFamily: 'var(--font-serif)',
+          }}>
+            Your network is your biggest asset.<br />
+            You just never act like it is.
+          </p>
+          <p style={{
+            fontSize: 17, lineHeight: 1.7,
+            color: t.fg45, maxWidth: 560, margin: '0 auto',
+          }}>
+            You know you should have followed up. You meant to. But it's been three months, and now
+            it's awkward. Meanwhile someone else got the intro, the deal, the hire - because they
+            stayed warm when you went cold.
+          </p>
+        </div>
+      </section>
 
       {/* Feature sections - editorial alternating */}
       <div className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 40px 120px' }}>
@@ -678,13 +688,13 @@ export function LandingPage() {
                 <h2 style={{
                   fontSize: 'clamp(28px, 3.5vw, 44px)',
                   fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1,
-                  color: '#fff', marginBottom: 20,
+                  color: t.fg, marginBottom: 20,
                 }}>
                   {f.title}
                 </h2>
                 <p style={{
                   fontSize: 17, lineHeight: 1.65,
-                  color: 'rgba(255,255,255,0.5)', maxWidth: 420,
+                  color: t.fg50, maxWidth: 420,
                 }}>
                   {f.desc}
                 </p>
@@ -693,8 +703,8 @@ export function LandingPage() {
               <div style={{
                 direction: 'ltr',
                 borderRadius: 20,
-                border: '1px solid rgba(255,255,255,0.07)',
-                background: 'rgba(255,255,255,0.02)',
+                border: `1px solid ${t.border07}`,
+                background: t.fg03,
                 padding: '32px 24px',
                 ...reveal(isVisible, 0.12),
               }}>
@@ -711,7 +721,7 @@ export function LandingPage() {
         style={{
           padding: '100px 40px 120px', textAlign: 'center',
           position: 'relative', overflow: 'hidden',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: `1px solid ${t.border06}`,
         }}
       >
         <div aria-hidden style={{
@@ -723,13 +733,13 @@ export function LandingPage() {
           <h2 style={{
             fontSize: 'clamp(36px, 5vw, 64px)',
             fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05,
-            color: '#fff', marginBottom: 24,
+            color: t.fg, marginBottom: 24,
             ...reveal(ctaVisible),
           }}>
             Invest in your<br />relationships.
           </h2>
           <p style={{
-            fontSize: 18, color: 'rgba(255,255,255,0.45)', marginBottom: 40,
+            fontSize: 18, color: t.fg45, marginBottom: 40,
             ...reveal(ctaVisible, 0.1),
           }}>
             Join RealDeal and start building deeper connections today.
@@ -755,10 +765,10 @@ export function LandingPage() {
               onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
               style={{
                 padding: '16px 44px', borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.14)',
-                background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${t.border14}`,
+                background: t.fg04,
                 cursor: 'pointer', fontSize: 17, fontWeight: 500,
-                color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-sans)',
+                color: t.fg70, fontFamily: 'var(--font-sans)',
               }}
             >
               Try the Demo
@@ -766,6 +776,45 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer style={{
+        borderTop: `1px solid ${t.border}`,
+        padding: '32px 40px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 16,
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 48 48" fill="none" aria-hidden>
+            <circle cx="24" cy="24" r="5" fill={t.fg} />
+            <circle cx="42" cy="24" r="2.8" fill="#25B439" />
+            <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
+            <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
+            <circle cx="6"  cy="24" r="2.8" fill="#7E57C2" />
+            <circle cx="15" cy="8.4" r="2.8" fill="#E53935" />
+            <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5" />
+          </svg>
+          <span style={{ fontSize: 13, color: t.fg45 }}>
+            &copy; {new Date().getFullYear()} RealDeal. All rights reserved.
+          </span>
+        </span>
+        <nav style={{ display: 'flex', gap: 24 }} aria-label="Footer">
+          {[
+            { label: 'Privacy', href: '/privacy' },
+            { label: 'Terms', href: '/terms' },
+            { label: 'X / Twitter', href: 'https://x.com' },
+          ].map(link => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="rd-footer-link"
+              style={{ fontSize: 13, color: t.fg45, textDecoration: 'none' }}
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      </footer>
     </div>
   )
 }

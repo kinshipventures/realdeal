@@ -152,18 +152,18 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
       {/* Primary nav */}
       <div style={{ padding: '8px 8px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavItem
-          icon={<PodsIcon />}
-          label="Pods"
-          active={isPods}
-          collapsed={collapsed}
-          onClick={() => navigate('/pods')}
-        />
-        <NavItem
           icon={<DashboardIcon />}
           label="Dashboard"
           active={isDashboard}
           collapsed={collapsed}
           onClick={() => navigate('/dashboard')}
+        />
+        <NavItem
+          icon={<PodsIcon />}
+          label="Pods"
+          active={isPods}
+          collapsed={collapsed}
+          onClick={() => navigate('/pods')}
         />
         <NavItem
           icon={<RelationshipsIcon />}

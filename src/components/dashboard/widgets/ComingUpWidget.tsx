@@ -1,5 +1,6 @@
 import type { Contact, Pod } from '../../../lib/types'
 import { WidgetHeading } from './WidgetHeading'
+import { SectionDivider } from './RadarWidget'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -100,9 +101,7 @@ export function ComingUpWidget({ items, onContactClick }: ComingUpWidgetProps) {
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ marginBottom: 12 }}>
-        <WidgetHeading title="coming up" />
-      </div>
+      <SectionDivider title="Coming Up" />
       <div style={{ ...PANEL, overflow: 'hidden' }}>
         {sorted.map((item, i) => (
           <UpcomingRow key={`${item.type}-${item.contact.id}-${i}`} item={item} onClick={() => onContactClick(item.contact)} />

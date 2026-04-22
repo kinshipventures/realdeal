@@ -1,7 +1,7 @@
 import type { Contact, Interaction } from '../../../lib/types'
 import { TYPE_ICONS } from '../../contacts/InteractionSection'
 import { formatRelativeTime } from '../../../lib/utils'
-import { WidgetHeading } from './WidgetHeading'
+import { SectionDivider } from './RadarWidget'
 
 const PANEL: React.CSSProperties = {
   background: 'var(--surface-panel)',
@@ -65,9 +65,7 @@ export function RecentActivityWidget({ items, onContactClick }: RecentActivityWi
 
   return (
     <div style={{ marginBottom: 0 }}>
-      <div style={{ marginBottom: 12 }}>
-        <WidgetHeading title="recent activity" />
-      </div>
+      <SectionDivider title="Recent Activity" />
       <div style={{ ...PANEL, overflow: 'hidden' }}>
         {items.map(({ interaction, contact }) => (
           <RecentActivityRow key={interaction.id} interaction={interaction} contact={contact} onClick={() => onContactClick(contact)} />

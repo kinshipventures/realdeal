@@ -159,92 +159,85 @@ export function EquityWidget({ overallScore, interactionsLoading, dataReady, sco
   const grade = scoreGrade(overallScore)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Greeting + date + quick action */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 400, letterSpacing: '0.01em' }}>
-            {getGreeting()}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 2, letterSpacing: '0.02em' }}>
-            {formatDate()}
-          </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+      {/* Left: greeting thesis */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 'clamp(24px, 3vw, 32px)',
+          fontWeight: 600,
+          fontFamily: 'var(--font-display)',
+          color: 'var(--color-text-primary)',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.1,
+          marginBottom: 6,
+        }}>
+          {getGreeting()}.
         </div>
-        {dataReady && onQuickAction && (
-          <button
-            type="button"
-            onClick={onQuickAction}
-            style={{
-              background: 'var(--color-brand)',
-              border: 'none',
-              borderRadius: 8,
-              padding: '7px 16px',
-              fontSize: 12, fontWeight: 600,
-              color: '#ffffff',
-              cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              transition: 'background 0.15s ease, transform 0.15s ease',
-              minHeight: 44,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-brand-dark)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-brand)' }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Log interaction
-          </button>
+        <div style={{ fontSize: 13, color: 'var(--color-text-tertiary)', letterSpacing: '0.01em' }}>
+          {formatDate()}
+        </div>
+        {dataReady && !interactionsLoading && (
+          <div style={{ marginTop: 12, fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+            {getNudge(label)}
+          </div>
         )}
       </div>
 
-      {/* Equity score - the hero moment */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-        {interactionsLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', background: 'rgba(52,177,93,0.08)' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="skeleton" style={{ width: 160, height: 16, background: 'var(--tint)', borderRadius: 8 }} />
-              <div className="skeleton" style={{ width: 60, height: 14, background: 'var(--tint)', borderRadius: 6 }} />
+      {/* Right: compact score ring */}
+      {interactionsLoading ? (
+        <div className="skeleton" style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(52,177,93,0.08)', flexShrink: 0 }} />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <div style={{ position: 'relative', width: 72, height: 72 }}>
+            <EquityRing score={overallScore} size={72} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
+            }}>
+              <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
+                {grade}
+              </span>
             </div>
           </div>
-        ) : (
-          <>
-            {/* Ring with score inside */}
-            <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
-              <EquityRing score={overallScore} size={120} />
-              <div style={{
-                position: 'absolute', inset: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
-              }}>
-                <ScorePulse value={grade} />
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
-                  grade
-                </div>
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ScoreLabelChip label={label} />
+              {scoreTrend && <TrendArrow trend={scoreTrend} />}
             </div>
-            {/* Label + nudge */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <ScoreLabelChip label={label} />
-                {scoreTrend && <TrendArrow trend={scoreTrend} />}
-                <span className="widget-tooltip-wrap" style={{ fontSize: 0, lineHeight: 0 }}>
-                  <span className="widget-tooltip-icon" style={{ background: 'var(--tint)', border: '1px solid var(--edge)', color: 'var(--color-text-tertiary)' }} aria-label="Info">?</span>
-                  <span className="widget-tooltip-bubble">How strong your connections are overall -- based on how recently and how often you've been in touch.</span>
-                </span>
-              </div>
-              <div style={{
-                fontSize: 15, fontWeight: 400, color: 'var(--color-text-primary)',
-                lineHeight: 1.4, letterSpacing: '0.01em',
-              }}>
-                {getNudge(label)}
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-secondary)', letterSpacing: '0.02em' }}>
-                {overallScore} / 100 relationship health
-              </div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', letterSpacing: '0.02em' }}>
+              {overallScore} / 100
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Log interaction CTA */}
+      {dataReady && onQuickAction && (
+        <button
+          type="button"
+          onClick={onQuickAction}
+          style={{
+            background: 'var(--color-brand)',
+            border: 'none',
+            borderRadius: 8,
+            padding: '8px 18px',
+            fontSize: 13, fontWeight: 600,
+            color: '#ffffff',
+            cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            transition: 'background 0.15s ease, transform 0.15s ease',
+            minHeight: 44,
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-brand-dark)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-brand)' }}
+          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Log interaction
+        </button>
+      )}
     </div>
   )
 }

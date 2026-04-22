@@ -15,8 +15,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ["'Fraunces'", "serif"],
-        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        serif: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        display: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["'Space Mono'", "'SF Mono'", "Menlo", "Consolas", "monospace"],
       },
       colors: {
         brand: "var(--color-brand)",

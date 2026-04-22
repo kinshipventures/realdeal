@@ -11,12 +11,12 @@ import {
   todaysFocus,
   contactCadenceDays,
   getPrimaryPod,
+  scoreLabel,
 } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { isContactSnoozed, snoozeContact } from '../../lib/snooze'
 import type { SnoozeDuration } from '../../lib/snooze'
 import { useDashboardConfig } from './useDashboardConfig'
-import type { WidgetId } from './useDashboardConfig'
 
 import type { Contact, Pod, Interaction, Campaign, CampaignContact } from '../../lib/types'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -26,14 +26,14 @@ import type { WrappedInsight } from './WrappedCard'
 import { PendingTrayWidget } from '../categorization/PendingTrayWidget'
 import { CategorizationQueue } from '../categorization/CategorizationQueue'
 import { DashboardSettings } from './DashboardSettings'
-import { EquityWidget } from './widgets/EquityWidget'
 import { PodHealthWidget } from './widgets/PodHealthWidget'
-import { WrappedWidget } from './widgets/WrappedWidget'
 import { TodaysFocusWidget } from './widgets/TodaysFocusWidget'
 import { NeedsAttentionWidget } from './widgets/NeedsAttentionWidget'
 import { ComingUpWidget } from './widgets/ComingUpWidget'
-import { RecentActivityWidget } from './widgets/RecentActivityWidget'
+import { ThisWeekWidget } from './widgets/ThisWeekWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
+import { RadarWidget } from './widgets/RadarWidget'
+import { AiInsightsWidget } from './widgets/AiInsightsWidget'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
@@ -296,6 +296,66 @@ export function Dashboard() {
     return 'flat'
   }, [allInteractions, interactionsLoading, dashboardNow])
 
+  // Radar dimensions — 5 axes derived from real data
+  const radarDimensions = useMemo(() => {
+    if (interactionsLoading || contactsLoading || contacts.length === 0) return []
+
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000
+    const oneWeek = 7 * 24 * 60 * 60 * 1000
+
+    // Reach: % of contacts with any interaction in last 30 days
+    const touchedLast30 = contacts.filter(c => {
+      const ixs = byContact.get(c.id) ?? []
+      return ixs.some(ix => dashboardNow - new Date(ix.date).getTime() < thirtyDays)
+    }).length
+    const reach = Math.min(100, Math.round((touchedLast30 / contacts.length) * 100))
+
+    // Consistency: % of contacts NOT overdue relative to their pod cadence
+    const overdueCount = overdueContacts.length
+    const consistency = Math.min(100, Math.round(((contacts.length - overdueCount) / contacts.length) * 100))
+
+    // Momentum: activity trend score (thisWeek vs last, mapped to 0-100)
+    const thisWeekCount = allInteractions.filter(ix => dashboardNow - new Date(ix.date).getTime() < oneWeek).length
+    const lastWeekCount = allInteractions.filter(ix => {
+      const age = dashboardNow - new Date(ix.date).getTime()
+      return age >= oneWeek && age < oneWeek * 2
+    }).length
+    const momentumRaw = lastWeekCount === 0
+      ? (thisWeekCount > 0 ? 80 : 30)
+      : Math.round((thisWeekCount / lastWeekCount) * 70)
+    const momentum = Math.min(100, Math.max(10, momentumRaw))
+
+    // Depth: % of interactions that are meetings/calls (high-quality)
+    const recentIxs = allInteractions.filter(ix => dashboardNow - new Date(ix.date).getTime() < thirtyDays)
+    const deepIxs = recentIxs.filter(ix => ix.type === 'meeting' || ix.type === 'call').length
+    const depth = recentIxs.length === 0
+      ? 50
+      : Math.min(100, Math.round((deepIxs / recentIxs.length) * 100) + 20)
+
+    // Warmth: overall equity score directly
+    const warmth = overallScore
+
+    return [
+      { key: 'reach', label: 'Reach', score: reach, sublabel: `${touchedLast30} touched` },
+      { key: 'consistency', label: 'Consistency', score: consistency, sublabel: `${overdueCount} overdue` },
+      { key: 'momentum', label: 'Momentum', score: momentum, sublabel: scoreTrend === 'up' ? 'trending up' : scoreTrend === 'down' ? 'trending down' : 'steady' },
+      { key: 'depth', label: 'Depth', score: depth, sublabel: `${deepIxs} quality` },
+      { key: 'warmth', label: 'Warmth', score: warmth, sublabel: 'equity score' },
+    ]
+  }, [contacts, byContact, allInteractions, overdueContacts, overallScore, scoreTrend, interactionsLoading, contactsLoading, dashboardNow])
+
+  // People reached this week (for AI insights widget)
+  const peopleTouchedThisWeek = useMemo(() => {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000
+    const ids = new Set(allInteractions.filter(ix => dashboardNow - new Date(ix.date).getTime() < oneWeek).map(ix => ix.contact_id))
+    return ids.size
+  }, [allInteractions, dashboardNow])
+
+  const topPod = useMemo(() => {
+    if (podStats.length === 0) return null
+    return [...podStats].sort((a, b) => b.score - a.score)[0]
+  }, [podStats])
+
   function handleContactSaved(updated: Contact) {
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
   }
@@ -350,6 +410,13 @@ export function Dashboard() {
 
   return (
     <>
+      <AiInsightsWidget
+        overallScore={overallScore}
+        peopleTouched={peopleTouchedThisWeek}
+        overdueCount={overdueContacts.length}
+        topPodName={topPod?.pod.name}
+        topPodScore={topPod?.score}
+      />
       {showQueue && (
         <CategorizationQueue
           contacts={pendingContacts}
@@ -376,46 +443,38 @@ export function Dashboard() {
       <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
-        {/* Ambient header — color washes in, never paints */}
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <div aria-hidden style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse 110% 90% at 35% -5%, rgba(52,177,93,0.18) 0%, rgba(52,177,93,0.06) 45%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-          <div style={{ position: 'relative', maxWidth: 960, margin: '0 auto', padding: '28px 24px 32px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-              {isVisible('equity') ? (
-                <div style={{ flex: 1 }}>
-                  <EquityWidget
-                    overallScore={overallScore}
-                    interactionsLoading={interactionsLoading}
-                    dataReady={dataReady}
-                    scoreTrend={scoreTrend}
-                    onQuickAction={() => {
-                      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
-                    }}
-                  />
-                </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                    Dashboard
-                  </span>
-                </div>
-              )}
+        {/* Thesis band — editorial header, green as thin accent only */}
+        <div style={{
+          borderBottom: '1px solid var(--divider)',
+          borderLeft: '3px solid var(--color-brand)',
+          background: 'var(--surface-panel)',
+          backdropFilter: 'var(--panel-blur)',
+          WebkitBackdropFilter: 'var(--panel-blur)',
+        }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '36px 24px 36px 21px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 32, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+                  Dashboard
+                </span>
+              </div>
               {/* Gear icon */}
               <button
                 type="button"
                 onClick={() => setShowSettings(true)}
+                aria-label="Customize dashboard"
+                title="Customize dashboard"
                 style={{
-                  width: 44, height: 44, borderRadius: 8,
-                  background: 'rgba(0,0,0,0.05)', border: '1px solid var(--edge)',
+                  width: 36, height: 36, borderRadius: 8,
+                  background: 'transparent', border: '1px solid var(--edge)',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'var(--color-text-tertiary)', flexShrink: 0,
+                  transition: 'background 0.15s ease',
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
@@ -424,8 +483,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Rest of dashboard on light background */}
-        <div style={{ maxWidth: 1040, margin: '0 auto', padding: '32px 24px 96px' }}>
+        {/* Main content — 2-column layout */}
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px 120px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
@@ -449,33 +508,105 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Wrapped card - weekly pulse */}
-          {isVisible('wrapped') && (
-            <div className="widget-enter dashboard-hero-stack" style={{ '--stagger': 0 } as React.CSSProperties}>
-              <WrappedWidget insights={wrappedInsights} loading={interactionsLoading} />
-            </div>
-          )}
+          {/* Primary 2-column grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 380px',
+            gap: 28,
+            alignItems: 'start',
+          }}
+          className="dashboard-2col"
+          >
+            {/* Left column: radar (anchor) + pod health + needs attention + campaigns */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+              <div className="widget-enter" style={{ '--stagger': 0 } as React.CSSProperties}>
+                <RadarWidget
+                  dimensions={radarDimensions}
+                  loading={interactionsLoading || contactsLoading}
+                  overallScore={overallScore}
+                  overallLabel={scoreLabel(overallScore)}
+                />
+              </div>
 
-          {renderDashboardSections({
-            order: config.order,
-            isVisible,
-            podStats, dataReady,
-            focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
-            contactsLoading, error, recentActivity, campaigns, campaignContacts,
-            campaignsLoading, pendingContacts,
-            onContactClick: handleContactClick,
-            onSnooze: handleSnooze,
-            onRemoveContact: handleRemoveContact,
-            onRetry: () => {
-              setError(null)
-              setContactsLoading(true)
-              getContacts()
-                .then(d => setContacts(d))
-                .catch(() => setError('Something hiccupped. Refresh to try again.'))
-                .finally(() => setContactsLoading(false))
-            },
-            onReview: () => setShowQueue(true),
-          })}
+              {isVisible('pod-health') && (
+                <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                  <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+                </div>
+              )}
+
+              {isVisible('needs-attention') && (
+                <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                  <NeedsAttentionWidget
+                    overdueContacts={overdueContacts}
+                    followUpOverdue={followUpOverdue}
+                    dormantContacts={dormantContacts}
+                    campaigns={campaigns}
+                    campaignContacts={campaignContacts}
+                    contactsLoading={contactsLoading}
+                    error={error}
+                    onContactClick={handleContactClick}
+                    onSnooze={handleSnooze}
+                    onRemoveContact={handleRemoveContact}
+                    onRetry={() => {
+                      setError(null)
+                      setContactsLoading(true)
+                      getContacts()
+                        .then(d => setContacts(d))
+                        .catch(() => setError('Something hiccupped. Refresh to try again.'))
+                        .finally(() => setContactsLoading(false))
+                    }}
+                    onCampaignClick={(cId) => {
+                      window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                    }}
+                  />
+                </div>
+              )}
+
+              {isVisible('campaign-progress') && (
+                <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+                  <CampaignProgressWidget
+                    campaigns={campaigns}
+                    campaignContacts={campaignContacts}
+                    loading={campaignsLoading}
+                    onCampaignClick={(cId) => {
+                      window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right rail: today's focus + coming up + this week (capped at 3) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+              {isVisible('todays-focus') && (
+                <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                  <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
+                </div>
+              )}
+
+              {isVisible('coming-up') && (
+                <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                  <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
+                </div>
+              )}
+
+              {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
+                <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+                  <ThisWeekWidget
+                    insights={isVisible('wrapped') ? wrappedInsights : []}
+                    activity={isVisible('recent-activity') ? recentActivity : []}
+                    onContactClick={handleContactClick}
+                  />
+                </div>
+              )}
+
+              {pendingContacts.length > 0 && isVisible('pending-tray') && (
+                <div className="widget-enter" style={{ '--stagger': 4 } as React.CSSProperties}>
+                  <PendingTrayWidget pendingContacts={pendingContacts} onReview={() => setShowQueue(true)} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
       </main>
@@ -511,139 +642,6 @@ export function Dashboard() {
       })()}
     </>
   )
-}
-
-// ── Dashboard sections ───────────────────────────────────────────────────────
-
-type PodStat = { pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean; sparkline: number[] | null }
-
-interface DashboardSectionProps {
-  order: WidgetId[]
-  isVisible: (id: WidgetId) => boolean
-  podStats: PodStat[]
-  dataReady: boolean
-  focusItems: ReturnType<typeof todaysFocus>
-  upcomingItems: Array<{ type: 'birthday' | 'follow-up'; contact: Contact; pod: Pod | null; daysUntil: number; label: string; sublabel: string; isOverdue?: boolean }>
-  overdueContacts: Array<{ contact: Contact; days: number | null; podName: string; overdueDays: number }>
-  followUpOverdue: Array<{ contact: Contact; overdueDays: number; podName: string; action: string | null }>
-  dormantContacts: Array<{ contact: Contact; days: number | null }>
-  contactsLoading: boolean
-  error: string | null
-  recentActivity: Array<{ interaction: Interaction; contact: Contact }>
-  campaigns: Campaign[]
-  campaignContacts: CampaignContact[]
-  campaignsLoading: boolean
-  pendingContacts: Contact[]
-  onContactClick: (c: Contact) => void
-  onSnooze: (id: string, duration: SnoozeDuration) => void
-  onRemoveContact: (id: string) => Promise<void>
-  onRetry: () => void
-  onReview: () => void
-}
-
-function renderDashboardSections(props: DashboardSectionProps) {
-  const {
-    order, isVisible, podStats, dataReady,
-    focusItems, upcomingItems, overdueContacts, followUpOverdue, dormantContacts,
-    contactsLoading, error, recentActivity, campaigns, campaignContacts,
-    campaignsLoading, pendingContacts, onContactClick, onSnooze, onRemoveContact, onRetry, onReview,
-  } = props
-
-  const elements: React.ReactNode[] = []
-  let stagger = 0
-
-  const sectionOrder = order.filter(id => isVisible(id) && id !== 'wrapped' && id !== 'equity')
-  const layoutByWidget: Partial<Record<WidgetId, 'wide' | 'narrow' | 'full'>> = {
-    'todays-focus': 'full',
-    'needs-attention': 'wide',
-    'coming-up': 'narrow',
-    'campaign-progress': 'full',
-    'pod-health': 'full',
-    'recent-activity': 'full',
-    'pending-tray': 'full',
-  }
-
-  for (const id of sectionOrder) {
-    const delay = stagger++
-    const style = {
-      '--stagger': delay,
-      gridColumn: layoutByWidget[id] === 'wide'
-        ? 'span 7'
-        : layoutByWidget[id] === 'narrow'
-          ? 'span 5'
-          : '1 / -1',
-    } as React.CSSProperties
-
-    if (id === 'todays-focus') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <TodaysFocusWidget items={focusItems} onContactClick={onContactClick} />
-        </div>
-      )
-    } else if (id === 'coming-up') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <ComingUpWidget items={upcomingItems} onContactClick={onContactClick} />
-        </div>
-      )
-    } else if (id === 'needs-attention') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <NeedsAttentionWidget
-            overdueContacts={overdueContacts}
-            followUpOverdue={followUpOverdue}
-            dormantContacts={dormantContacts}
-            campaigns={campaigns}
-            campaignContacts={campaignContacts}
-            contactsLoading={contactsLoading}
-            error={error}
-            onContactClick={onContactClick}
-            onSnooze={onSnooze}
-            onRemoveContact={onRemoveContact}
-            onRetry={onRetry}
-            onCampaignClick={(cId) => {
-              window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-            }}
-          />
-        </div>
-      )
-    } else if (id === 'pod-health') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <PodHealthWidget podStats={podStats} dataReady={dataReady} />
-        </div>
-      )
-    } else if (id === 'recent-activity') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <RecentActivityWidget items={recentActivity} onContactClick={onContactClick} />
-        </div>
-      )
-    } else if (id === 'pending-tray') {
-      if (pendingContacts.length > 0) {
-        elements.push(
-          <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-            <PendingTrayWidget pendingContacts={pendingContacts} onReview={onReview} />
-          </div>
-        )
-      }
-    } else if (id === 'campaign-progress') {
-      elements.push(
-        <div key={id} className="widget-enter dashboard-grid-item" style={style}>
-          <CampaignProgressWidget
-            campaigns={campaigns}
-            campaignContacts={campaignContacts}
-            loading={campaignsLoading}
-            onCampaignClick={(cId) => {
-              window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-            }}
-          />
-        </div>
-      )
-    }
-  }
-
-  return <div className="dashboard-grid">{elements}</div>
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
