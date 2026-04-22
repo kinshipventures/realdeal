@@ -443,48 +443,7 @@ export function Dashboard() {
       <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
-        {/* Thesis band — editorial header, green as thin accent only */}
-        <div style={{
-          borderBottom: '1px solid var(--divider)',
-          borderLeft: '3px solid var(--color-brand)',
-          background: 'var(--surface-panel)',
-          backdropFilter: 'var(--panel-blur)',
-          WebkitBackdropFilter: 'var(--panel-blur)',
-        }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '36px 24px 36px 21px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 32, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
-                  Dashboard
-                </span>
-              </div>
-              {/* Gear icon */}
-              <button
-                type="button"
-                onClick={() => setShowSettings(true)}
-                aria-label="Customize dashboard"
-                title="Customize dashboard"
-                style={{
-                  width: 36, height: 36, borderRadius: 8,
-                  background: 'transparent', border: '1px solid var(--edge)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--color-text-tertiary)', flexShrink: 0,
-                  transition: 'background 0.15s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content — 2-column layout */}
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px 120px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 24px 120px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
@@ -508,105 +467,162 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Primary 2-column grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 380px',
-            gap: 28,
-            alignItems: 'start',
-          }}
-          className="dashboard-2col"
-          >
-            {/* Left column: radar (anchor) + pod health + needs attention + campaigns */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-              <div className="widget-enter" style={{ '--stagger': 0 } as React.CSSProperties}>
-                <RadarWidget
-                  dimensions={radarDimensions}
-                  loading={interactionsLoading || contactsLoading}
-                  overallScore={overallScore}
-                  overallLabel={scoreLabel(overallScore)}
+          {/* Gear — floats top-right of hero */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -36 }}>
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              aria-label="Customize dashboard"
+              title="Customize dashboard"
+              style={{
+                width: 36, height: 36, borderRadius: 8,
+                background: 'transparent', border: '1px solid var(--edge)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--color-text-tertiary)', flexShrink: 0,
+                transition: 'background 0.15s ease',
+                position: 'relative', zIndex: 2,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* ─── Hero ─── */}
+          <section className="dashboard-hero widget-enter" style={{ '--stagger': 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, marginBottom: 32 } as React.CSSProperties}>
+            <h1 style={{
+              fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 'clamp(2.8rem, 1.6rem + 3vw, 4.2rem)',
+              margin: 0, letterSpacing: '-0.025em', color: 'var(--color-text-primary)', lineHeight: 1, textAlign: 'center',
+            }}>
+              Your Network
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>Health</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scoreLabel(overallScore)}</span>
+              <span style={{ display: 'inline-flex', gap: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 40 ? '#25B439' : 'var(--edge)' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 70 ? '#25B439' : 'var(--edge)' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 85 ? '#25B439' : 'var(--edge)' }} />
+              </span>
+            </div>
+            <div style={{ width: '100%' }}>
+              <RadarWidget
+                dimensions={radarDimensions}
+                loading={interactionsLoading || contactsLoading}
+                overallScore={overallScore}
+                overallLabel={scoreLabel(overallScore)}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
+              disabled={focusItems.length === 0}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '13px 26px', borderRadius: 999,
+                background: 'var(--color-text-primary)', color: '#F5F4F0',
+                border: 'none', cursor: focusItems.length === 0 ? 'default' : 'pointer',
+                fontSize: 14, fontWeight: 500, letterSpacing: '0.01em',
+                opacity: focusItems.length === 0 ? 0.5 : 1,
+                transition: 'transform 0.15s ease',
+                marginTop: 4,
+              }}
+              onMouseEnter={e => { if (focusItems.length > 0) e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Log a touch
+            </button>
+          </section>
+
+          {/* ─── Chapter 1: Core Signals ─── */}
+          <ChapterHeader title="Core Signals" />
+          <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
+            {isVisible('pod-health') && (
+              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                <PodHealthWidget podStats={podStats} dataReady={dataReady} />
+              </div>
+            )}
+            {isVisible('campaign-progress') && (
+              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                <CampaignProgressWidget
+                  campaigns={campaigns}
+                  campaignContacts={campaignContacts}
+                  loading={campaignsLoading}
+                  onCampaignClick={(cId) => {
+                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                  }}
                 />
               </div>
+            )}
+            {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
+              <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+                <ThisWeekWidget
+                  insights={isVisible('wrapped') ? wrappedInsights : []}
+                  activity={isVisible('recent-activity') ? recentActivity : []}
+                  onContactClick={handleContactClick}
+                />
+              </div>
+            )}
+          </div>
 
-              {isVisible('pod-health') && (
+          {/* ─── Chapter 2: Who Needs Attention ─── */}
+          <ChapterHeader title="Who Needs Attention" />
+          <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
+            {isVisible('todays-focus') && (
+              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
+              </div>
+            )}
+            {isVisible('needs-attention') && (
+              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                <NeedsAttentionWidget
+                  overdueContacts={overdueContacts}
+                  followUpOverdue={followUpOverdue}
+                  dormantContacts={dormantContacts}
+                  campaigns={campaigns}
+                  campaignContacts={campaignContacts}
+                  contactsLoading={contactsLoading}
+                  error={error}
+                  onContactClick={handleContactClick}
+                  onSnooze={handleSnooze}
+                  onRemoveContact={handleRemoveContact}
+                  onRetry={() => {
+                    setError(null)
+                    setContactsLoading(true)
+                    getContacts()
+                      .then(d => setContacts(d))
+                      .catch(() => setError('Something hiccupped. Refresh to try again.'))
+                      .finally(() => setContactsLoading(false))
+                  }}
+                  onCampaignClick={(cId) => {
+                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                  }}
+                />
+              </div>
+            )}
+            {isVisible('coming-up') && (
+              <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+                <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
+              </div>
+            )}
+          </div>
+
+          {/* ─── Chapter 3: In Motion ─── */}
+          {pendingContacts.length > 0 && isVisible('pending-tray') && (
+            <>
+              <ChapterHeader title="In Motion" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 24 }}>
                 <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                  <PodHealthWidget podStats={podStats} dataReady={dataReady} />
-                </div>
-              )}
-
-              {isVisible('needs-attention') && (
-                <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-                  <NeedsAttentionWidget
-                    overdueContacts={overdueContacts}
-                    followUpOverdue={followUpOverdue}
-                    dormantContacts={dormantContacts}
-                    campaigns={campaigns}
-                    campaignContacts={campaignContacts}
-                    contactsLoading={contactsLoading}
-                    error={error}
-                    onContactClick={handleContactClick}
-                    onSnooze={handleSnooze}
-                    onRemoveContact={handleRemoveContact}
-                    onRetry={() => {
-                      setError(null)
-                      setContactsLoading(true)
-                      getContacts()
-                        .then(d => setContacts(d))
-                        .catch(() => setError('Something hiccupped. Refresh to try again.'))
-                        .finally(() => setContactsLoading(false))
-                    }}
-                    onCampaignClick={(cId) => {
-                      window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                    }}
-                  />
-                </div>
-              )}
-
-              {isVisible('campaign-progress') && (
-                <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-                  <CampaignProgressWidget
-                    campaigns={campaigns}
-                    campaignContacts={campaignContacts}
-                    loading={campaignsLoading}
-                    onCampaignClick={(cId) => {
-                      window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Right rail: today's focus + coming up + this week (capped at 3) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              {isVisible('todays-focus') && (
-                <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                  <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
-                </div>
-              )}
-
-              {isVisible('coming-up') && (
-                <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-                  <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
-                </div>
-              )}
-
-              {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
-                <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-                  <ThisWeekWidget
-                    insights={isVisible('wrapped') ? wrappedInsights : []}
-                    activity={isVisible('recent-activity') ? recentActivity : []}
-                    onContactClick={handleContactClick}
-                  />
-                </div>
-              )}
-
-              {pendingContacts.length > 0 && isVisible('pending-tray') && (
-                <div className="widget-enter" style={{ '--stagger': 4 } as React.CSSProperties}>
                   <PendingTrayWidget pendingContacts={pendingContacts} onReview={() => setShowQueue(true)} />
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
       </main>
@@ -641,6 +657,24 @@ export function Dashboard() {
         )
       })()}
     </>
+  )
+}
+
+// ── Chapter Header ───────────────────────────────────────────────────────────
+
+function ChapterHeader({ title }: { title: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 24, margin: '96px 0 40px' }}>
+      <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
+      <h2 style={{
+        fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 28,
+        color: 'var(--color-text-primary)', margin: 0, letterSpacing: '-0.01em',
+        whiteSpace: 'nowrap',
+      }}>
+        {title}
+      </h2>
+      <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
+    </div>
   )
 }
 
