@@ -541,26 +541,14 @@ export function Dashboard() {
 
           {/* ─── Chapter 1: Core Signals ─── */}
           <ChapterHeader title="Core Signals" />
-          <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
+          <div className="chapter-2up" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
             {isVisible('pod-health') && (
               <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />
               </div>
             )}
-            {isVisible('campaign-progress') && (
-              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-                <CampaignProgressWidget
-                  campaigns={campaigns}
-                  campaignContacts={campaignContacts}
-                  loading={campaignsLoading}
-                  onCampaignClick={(cId) => {
-                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                  }}
-                />
-              </div>
-            )}
             {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
-              <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
                 <ThisWeekWidget
                   insights={isVisible('wrapped') ? wrappedInsights : []}
                   activity={isVisible('recent-activity') ? recentActivity : []}
@@ -569,6 +557,19 @@ export function Dashboard() {
               </div>
             )}
           </div>
+
+          {isVisible('campaign-progress') && (
+            <div className="widget-enter" style={{ '--stagger': 3, marginTop: 24 } as React.CSSProperties}>
+              <CampaignProgressWidget
+                campaigns={campaigns}
+                campaignContacts={campaignContacts}
+                loading={campaignsLoading}
+                onCampaignClick={(cId) => {
+                  window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
+                }}
+              />
+            </div>
+          )}
 
           {/* ─── Chapter 2: Who Needs Attention ─── */}
           <ChapterHeader title="Who Needs Attention" />
