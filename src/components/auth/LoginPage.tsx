@@ -616,22 +616,6 @@ export function LoginPage() {
 
         <section className="login-panel-wrap">
           <div className="login-panel">
-            <div className="login-brand">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="5" fill="var(--color-text-primary)"/>
-                  <circle cx="42" cy="24" r="2.8" fill="#25B439"/>
-                  <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
-                  <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
-                  <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>
-                  <circle cx="15" cy="8.4" r="2.8" fill="#E53935"/>
-                  <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5"/>
-                </svg>
-                <p className="login-brand-mark">realdeal</p>
-              </div>
-              <p className="login-brand-copy">Feed what feeds you.</p>
-            </div>
-
             <div className="login-auth-header">
               <h2>{signUpSuccess ? 'Check your inbox' : authTitle}</h2>
               <p>
