@@ -28,7 +28,7 @@ function EquityRing({ score, size }: { score: number; size: number }) {
       />
       <defs>
         <linearGradient id="equityGradientLg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#34B15D" />
+          <stop offset="0%" stopColor="#25B439" />
           <stop offset="100%" stopColor="#00BFA5" />
         </linearGradient>
       </defs>

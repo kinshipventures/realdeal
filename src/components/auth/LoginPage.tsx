@@ -266,7 +266,7 @@ export function LoginPage() {
           width: 96px;
           height: 96px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #34B15D, #1A8A2A);
+          background: linear-gradient(135deg, #25B439, #1A8A2A);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -407,7 +407,7 @@ export function LoginPage() {
           padding: 14px 18px;
           border: none;
           border-radius: 16px;
-          background: linear-gradient(135deg, #34B15D, #1A8A2A);
+          background: linear-gradient(135deg, #25B439, #1A8A2A);
           color: #fff;
           font-size: 15px;
           font-weight: 700;
@@ -483,7 +483,7 @@ export function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #34B15D, #1A8A2A);
+          background: linear-gradient(135deg, #25B439, #1A8A2A);
           color: #fff;
           box-shadow: 0 16px 34px rgba(52,177,93,0.22);
         }
@@ -620,7 +620,7 @@ export function LoginPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="5" fill="var(--color-text-primary)"/>
-                  <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+                  <circle cx="42" cy="24" r="2.8" fill="#25B439"/>
                   <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
                   <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
                   <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>

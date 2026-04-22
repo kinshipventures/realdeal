@@ -114,7 +114,7 @@ export function PodCreateModal({ isOpen, onClose, onCreated }: Props) {
       }}
     >
       <div style={{
-        background: 'var(--color-surface, #F5F4F0)',
+        background: 'var(--color-surface, #FAF8F4)',
         borderRadius: 16,
         maxWidth: 480,
         width: '100%',

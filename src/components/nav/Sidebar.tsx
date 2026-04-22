@@ -77,7 +77,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         }}>
           <svg width="24" height="24" viewBox="0 0 48 48" fill="none" style={{ flexShrink: 0 }}>
             <circle cx="24" cy="24" r="5" fill="var(--color-text-primary)"/>
-            <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+            <circle cx="42" cy="24" r="2.8" fill="#25B439"/>
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
             <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>

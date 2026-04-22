@@ -484,7 +484,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="5" fill="#1C1C1E"/>
-            <circle cx="42" cy="24" r="2.8" fill="#34B15D"/>
+            <circle cx="42" cy="24" r="2.8" fill="#25B439"/>
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A"/>
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623"/>
             <circle cx="6"  cy="24" r="2.8" fill="#7E57C2"/>

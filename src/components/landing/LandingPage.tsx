@@ -45,11 +45,11 @@ const FEATURES = [
       <svg viewBox="0 0 480 320" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f1hub" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.9" />
+            <stop offset="0%" stopColor="#25B439" stopOpacity="0.9" />
             <stop offset="100%" stopColor="#1a6632" stopOpacity="0.7" />
           </radialGradient>
           <radialGradient id="f1p1" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.7" />
+            <stop offset="0%" stopColor="#25B439" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#1a6632" stopOpacity="0.5" />
           </radialGradient>
           <radialGradient id="f1p2" cx="50%" cy="50%" r="50%">
@@ -65,8 +65,8 @@ const FEATURES = [
             <stop offset="100%" stopColor="#9d174d" stopOpacity="0.5" />
           </radialGradient>
           <radialGradient id="f1glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+            <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
           </radialGradient>
           <filter id="f1blur">
             <feGaussianBlur stdDeviation="3" />
@@ -75,19 +75,19 @@ const FEATURES = [
         {/* ambient glow */}
         <ellipse cx="240" cy="160" rx="120" ry="100" fill="url(#f1glow)" />
         {/* connection lines */}
-        <line x1="240" y1="160" x2="120" y2="70" stroke="#34B15D" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="120" y2="70" stroke="#25B439" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.2" />
         <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.2" />
-        <line x1="240" y1="160" x2="160" y2="270" stroke="#34B15D" strokeWidth="1" opacity="0.12" />
+        <line x1="240" y1="160" x2="160" y2="270" stroke="#25B439" strokeWidth="1" opacity="0.12" />
         {/* hub */}
         <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
-        <circle cx="240" cy="160" r="60" stroke="#34B15D" strokeWidth="1.5" opacity="0.3" fill="none" />
+        <circle cx="240" cy="160" r="60" stroke="#25B439" strokeWidth="1.5" opacity="0.3" fill="none" />
         <text x="240" y="154" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="system-ui">Network</text>
         <text x="240" y="170" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontFamily="system-ui">Score 84</text>
         {/* pods */}
         <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
-        <circle cx="120" cy="70" r="38" stroke="#34B15D" strokeWidth="1" opacity="0.25" fill="none" />
+        <circle cx="120" cy="70" r="38" stroke="#25B439" strokeWidth="1" opacity="0.25" fill="none" />
         <text x="120" y="74" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">LPs</text>
         <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
         <text x="370" y="84" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Talent</text>
@@ -108,13 +108,13 @@ const FEATURES = [
       <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f2glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+            <stop offset="0%" stopColor="#25B439" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
           </radialGradient>
         </defs>
         <ellipse cx="240" cy="140" rx="100" ry="80" fill="url(#f2glow)" />
         {[
-          { name: 'Sarah Chen', score: 92, label: 'Thriving', color: '#34B15D', y: 60 },
+          { name: 'Sarah Chen', score: 92, label: 'Thriving', color: '#25B439', y: 60 },
           { name: 'Marcus Lee', score: 74, label: 'Steady', color: '#60a5fa', y: 120 },
           { name: 'Jenna Park', score: 41, label: 'Cooling', color: '#f59e0b', y: 180 },
           { name: 'David Osei', score: 18, label: 'Fading', color: '#f87171', y: 240 },
@@ -138,15 +138,15 @@ const FEATURES = [
       <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <radialGradient id="f3glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#34B15D" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+            <stop offset="0%" stopColor="#25B439" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
           </radialGradient>
         </defs>
         <ellipse cx="240" cy="140" rx="110" ry="90" fill="url(#f3glow)" />
         {[
           { name: 'LPs Pod', cadence: 'Monthly', next: 'Overdue 3d', color: '#f87171', pct: 0.95 },
           { name: 'Founders Pod', cadence: 'Biweekly', next: 'In 4 days', color: '#f59e0b', pct: 0.6 },
-          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#34B15D', pct: 0.12 },
+          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#25B439', pct: 0.12 },
         ].map((row, i) => (
           <g key={i}>
             <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
@@ -234,7 +234,7 @@ export function LandingPage() {
         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="5" fill="#fff" />
-            <circle cx="42" cy="24" r="2.8" fill="#34B15D" />
+            <circle cx="42" cy="24" r="2.8" fill="#25B439" />
             <circle cx="33" cy="39.6" r="2.8" fill="#FF6B8A" />
             <circle cx="15" cy="39.6" r="2.8" fill="#F5A623" />
             <circle cx="6"  cy="24" r="2.8" fill="#7E57C2" />
@@ -264,7 +264,7 @@ export function LandingPage() {
             onClick={() => navigate('/login?signup=1')}
             style={{
               padding: '8px 18px', borderRadius: 8, border: 'none',
-              background: '#34B15D', color: '#fff', cursor: 'pointer',
+              background: '#25B439', color: '#fff', cursor: 'pointer',
               fontSize: 14, fontWeight: 600,
               fontFamily: 'var(--font-sans)',
               boxShadow: '0 4px 20px rgba(52,177,93,0.3)',
@@ -300,7 +300,7 @@ export function LandingPage() {
             marginBottom: 32,
             ...reveal(heroVisible),
           }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#34B15D' }} />
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#25B439' }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.02em' }}>
               Backed by Kinship Ventures
             </span>
@@ -332,7 +332,7 @@ export function LandingPage() {
               onClick={() => navigate('/login?signup=1')}
               style={{
                 padding: '14px 36px', borderRadius: 10, border: 'none',
-                background: '#34B15D', color: '#fff', cursor: 'pointer',
+                background: '#25B439', color: '#fff', cursor: 'pointer',
                 fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-sans)',
                 boxShadow: '0 4px 24px rgba(52,177,93,0.35)',
               }}
@@ -398,15 +398,15 @@ export function LandingPage() {
               <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: '#0F1210' }}>
                 <defs>
                   <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.95" />
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.95" />
                     <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
                   </radialGradient>
                   <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#34B15D" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
                   </radialGradient>
                   <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#34B15D" stopOpacity="0.8" />
+                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
                   </radialGradient>
                   <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
@@ -433,7 +433,7 @@ export function LandingPage() {
                 {/* bg glow */}
                 <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
                 {/* lines */}
-                <line x1="420" y1="220" x2="220" y2="100" stroke="#34B15D" strokeWidth="1.5" opacity="0.2" />
+                <line x1="420" y1="220" x2="220" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
@@ -441,12 +441,12 @@ export function LandingPage() {
                 <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
                 {/* hub */}
                 <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
-                <circle cx="420" cy="220" r="64" stroke="#34B15D" strokeWidth="2" opacity="0.25" fill="none" />
+                <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
                 <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">RealDeal</text>
                 <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
                 {/* pods */}
                 <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
-                <circle cx="220" cy="100" r="43" stroke="#34B15D" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
+                <circle cx="220" cy="100" r="43" stroke="#25B439" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
                 <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">LPs</text>
                 <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
                 <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
@@ -525,7 +525,7 @@ export function LandingPage() {
               {p.photo ? (
                 <img src={p.photo} alt={p.name} width={60} height={60} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid rgba(255,255,255,0.1)' }} />
               ) : (
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#34B15D', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#25B439', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
                   {p.initials}
                 </div>
               )}
@@ -566,7 +566,7 @@ export function LandingPage() {
               }}>
                 <div style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-                  color: '#34B15D', textTransform: 'uppercase', marginBottom: 20,
+                  color: '#25B439', textTransform: 'uppercase', marginBottom: 20,
                 }}>
                   {f.label}
                 </div>
@@ -638,7 +638,7 @@ export function LandingPage() {
               onClick={() => navigate('/login?signup=1')}
               style={{
                 padding: '16px 44px', borderRadius: 12, border: 'none',
-                background: '#34B15D', color: '#fff', cursor: 'pointer',
+                background: '#25B439', color: '#fff', cursor: 'pointer',
                 fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-sans)',
                 boxShadow: '0 4px 28px rgba(52,177,93,0.35)',
               }}

@@ -8,7 +8,7 @@ export const POD_SHIFT_COLORS: Record<string, string> = {
   '#FF6B8A': '#FF80AB',
   '#7E57C2': '#B39DDB',
   '#25B439': '#81C784',
-  '#34B15D': '#81C784',
+  '#25B439': '#81C784',
   '#F5A623': '#FFD54F',
   '#1C1C1E': '#2C2C30',
 }

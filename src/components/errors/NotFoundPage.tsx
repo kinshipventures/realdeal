@@ -7,7 +7,7 @@ export function NotFoundPage() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', gap: 16, padding: 32, fontFamily: 'var(--font-body, system-ui)',
-      background: 'var(--color-bg, #F5F4F0)',
+      background: 'var(--color-bg, #FAF8F4)',
     }}>
       <div style={{ fontSize: 64, fontWeight: 800, color: 'var(--color-text-tertiary, #ccc)' }}>404</div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-text-primary, #000)' }}>
