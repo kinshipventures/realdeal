@@ -8,6 +8,7 @@ const VIEW_KEY = 'realdeal:pods-view-mode'
 const DASH_KEY = 'realdeal:dashboard-config:v5'
 const SIDEBAR_KEY = 'realdeal:sidebar-collapsed'
 const NUDGE_KEY = 'realdeal:show-nudges'
+const THEME_KEY = 'realdeal:theme'
 
 type CadenceOption = 'weekly' | 'biweekly' | 'monthly' | 'quarterly'
 type ViewMode = 'map' | 'list'
@@ -136,6 +137,14 @@ export function PreferencesTab() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readBool(SIDEBAR_KEY, false))
   const [showNudges, setShowNudges] = useState(() => readBool(NUDGE_KEY, true))
   const [confirmReset, setConfirmReset] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => read(THEME_KEY, 'system') === 'dark')
+
+  function handleThemeToggle(dark: boolean) {
+    setDarkMode(dark)
+    const theme = dark ? 'dark' : 'light'
+    write(THEME_KEY, theme)
+    document.documentElement.setAttribute('data-theme', theme)
+  }
 
   return (
     <div>
@@ -196,6 +205,15 @@ export function PreferencesTab() {
           <p style={descStyle}>Collapse the sidebar to show only icons.</p>
         </div>
         <Toggle checked={sidebarCollapsed} onChange={v => { setSidebarCollapsed(v); writeBool(SIDEBAR_KEY, v) }} />
+      </div>
+
+      {/* Dark mode */}
+      <div style={rowStyle}>
+        <div style={{ flex: 1, minWidth: 0, marginRight: 16 }}>
+          <span style={labelStyle}>Dark mode</span>
+          <p style={descStyle}>Override your system appearance setting.</p>
+        </div>
+        <Toggle checked={darkMode} onChange={handleThemeToggle} />
       </div>
 
       {/* Overdue nudges */}

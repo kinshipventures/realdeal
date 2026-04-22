@@ -160,12 +160,6 @@ const IMPORT_LOADING_COPY = {
   ],
 } as const
 
-function getRitualCue() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Morning ritual'
-  if (hour < 18) return 'Midday reset'
-  return 'Evening catch-up'
-}
 
 function ImportConstellation({ mode }: { mode: 'idle' | 'loading' | 'done' }) {
   const done = mode === 'done'
@@ -634,7 +628,6 @@ function ActionRow({ onAction, onBack, label }: { onAction: () => void; onBack?:
 /* ---------- individual steps ---------- */
 
 function StepWelcome({ onNext }: { onNext: () => void }) {
-  const ritualCue = getRitualCue()
   const orbs = [
     { color: '#6366F1', size: 12, r: 72, dur: 12, delay: 0 },
     { color: '#EC4899', size: 10, r: 72, dur: 15, delay: -4 },
@@ -646,41 +639,6 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
 
   return (
     <>
-      <div style={{ ...stagger(0), display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '7px 12px',
-          borderRadius: 999,
-          background: 'rgba(37,180,57,0.08)',
-          border: '1px solid rgba(37,180,57,0.16)',
-          color: 'var(--color-brand)',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-          textTransform: 'uppercase',
-        }}>
-          {ritualCue}
-        </div>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '7px 12px',
-          borderRadius: 999,
-          background: 'var(--tint)',
-          border: '1px solid var(--edge)',
-          color: 'var(--color-text-secondary)',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-          textTransform: 'uppercase',
-        }}>
-          Under 2 minutes
-        </div>
-      </div>
-
       {/* Orbital visual */}
       <div className="onboard-orbital" style={{ position: 'relative', width: 180, height: 180, opacity: 0, animation: 'onboard-enter 0.6s ease-out 0.1s forwards' }}>
         {/* Orbit rings */}
@@ -721,7 +679,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
         ...headingStyle, fontSize: 34, letterSpacing: '-0.03em',
         opacity: 0, animation: 'welcome-heading 0.5s ease-out 0.3s forwards',
       }}>
-        Feed what feeds you
+        Real friends, real deal friends
       </h1>
       <p style={{
         ...bodyStyle, fontSize: 15, lineHeight: 1.7, maxWidth: 340,

@@ -276,7 +276,7 @@ export function LandingPage() {
           color: 'var(--color-text-primary)', margin: '0 0 20px',
           ...reveal(heroVisible),
         }}>
-          Feed what feeds you
+          Real friends, real deal friends
         </h1>
         <p style={{
           fontSize: 'clamp(16px, 2.5vw, 20px)', lineHeight: 1.6,

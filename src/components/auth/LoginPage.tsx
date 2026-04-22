@@ -749,7 +749,7 @@ export function LoginPage() {
           <div className="login-panel">
             <div className="login-brand">
               <p className="login-brand-mark">RealDeal</p>
-              <p className="login-brand-copy">Feed what feeds you.</p>
+              <p className="login-brand-copy">Real friends, real deal friends.</p>
             </div>
 
             <div className="login-auth-header">
