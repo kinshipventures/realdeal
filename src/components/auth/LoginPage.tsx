@@ -727,7 +727,20 @@ export function LoginPage() {
               </div>
             )}
 
-            <div className="login-demo-row">
+            <div className="login-demo-row" style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <button
+                onClick={() => navigate('/waitlist')}
+                type="button"
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                  color: '#25B439', letterSpacing: '0.01em',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                Request private beta access
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </button>
               <button
                 onClick={() => { setDemoMode(true); window.location.href = '/' }}
                 className="login-demo-link"

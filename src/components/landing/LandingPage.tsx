@@ -398,6 +398,18 @@ export function LandingPage() {
         }}
       >
         <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            fontSize: 12, fontWeight: 500, letterSpacing: '0.22em',
+            textTransform: 'uppercase', color: '#25B439',
+            marginBottom: 28,
+            ...reveal(heroVisible, 0),
+          }}>
+            <span style={{ width: 24, height: 1, background: '#25B439', opacity: 0.5 }} />
+            Your relationship pharmacy
+            <span style={{ width: 24, height: 1, background: '#25B439', opacity: 0.5 }} />
+          </div>
+
           <h1 style={{
             fontSize: 'clamp(44px, 7vw, 88px)',
             fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.0,
@@ -409,10 +421,10 @@ export function LandingPage() {
 
           <p style={{
             fontSize: 'clamp(17px, 2vw, 21px)', lineHeight: 1.6,
-            color: t.fg50, maxWidth: 520, margin: '0 auto 44px',
+            color: t.fg50, maxWidth: 560, margin: '0 auto 44px',
             ...reveal(heroVisible, 0.12),
           }}>
-            The relationship OS for people who build through connection.
+            Real Deal is your relationship pharmacy - a daily dose of the people who matter most, so nothing fades without you noticing.
           </p>
 
           <div style={{
@@ -624,32 +636,128 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* Problem statement */}
+      {/* Science / evidence band */}
+      <section
+        style={{
+          maxWidth: 1100, margin: '0 auto', padding: '40px 40px 112px',
+        }}
+      >
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 20, marginBottom: 56, justifyContent: 'center',
+        }}>
+          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
+          <span style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.22em',
+            textTransform: 'uppercase', color: t.fg45,
+          }}>The science</span>
+          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
+        </div>
+
+        <p style={{
+          fontSize: 'clamp(26px, 3.5vw, 40px)',
+          fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.25,
+          color: t.fg, margin: '0 auto 72px', textAlign: 'center', maxWidth: 720,
+          fontFamily: 'var(--font-serif)',
+        }}>
+          The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#25B439', fontStyle: 'italic' }}>close relationships</em>.
+        </p>
+
+        <div className="rd-stats-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 48,
+          alignItems: 'start',
+        }}>
+          {[
+            { stat: '85+', label: 'Years of research', source: 'Harvard Study of Adult Development, running since 1938' },
+            { stat: '#1', label: 'Predictor of a happy life', source: 'Ahead of income, IQ, social class, genes - Dr. Robert Waldinger' },
+            { stat: '15', label: 'Cigarettes a day', source: 'Mortality risk of chronic loneliness, per the US Surgeon General (2023)' },
+          ].map((s) => (
+            <div key={s.label} style={{ textAlign: 'left', borderTop: `1px solid ${t.border14}`, paddingTop: 24 }}>
+              <div style={{
+                fontFamily: 'var(--font-serif)', fontWeight: 400,
+                fontSize: 'clamp(52px, 6vw, 80px)', lineHeight: 1,
+                letterSpacing: '-0.03em', color: t.fg, marginBottom: 16,
+              }}>
+                {s.stat}
+              </div>
+              <div style={{
+                fontSize: 15, fontWeight: 600, color: t.fg,
+                marginBottom: 8, letterSpacing: '-0.005em',
+              }}>
+                {s.label}
+              </div>
+              <div style={{
+                fontSize: 13, lineHeight: 1.55, color: t.fg45,
+              }}>
+                {s.source}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Manifesto */}
       <section
         ref={problemRef as RefObject<HTMLElement>}
         style={{
-          maxWidth: 800, margin: '0 auto', padding: '0 40px 112px',
-          textAlign: 'center',
+          maxWidth: 760, margin: '0 auto', padding: '0 40px 112px',
+          textAlign: 'left',
         }}
       >
         <div style={{ ...reveal(problemVisible) }}>
           <p style={{
-            fontSize: 'clamp(26px, 3.5vw, 40px)',
-            fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.25,
-            color: t.fg, marginBottom: 24,
+            fontSize: 'clamp(22px, 2.6vw, 30px)',
+            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.4,
+            color: t.fg, margin: '0 0 28px',
             fontFamily: 'var(--font-serif)',
           }}>
-            Your network is your biggest asset.<br />
-            You just never act like it is.
+            We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
+          </p>
+          <p style={{
+            fontSize: 'clamp(22px, 2.6vw, 30px)',
+            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.4,
+            color: t.fg45, margin: '0 0 48px',
+            fontFamily: 'var(--font-serif)',
+            fontStyle: 'italic',
+          }}>
+            And then we completely forgot about the thing that actually keeps us alive.
+          </p>
+          <p style={{
+            fontSize: 'clamp(28px, 3.4vw, 42px)',
+            fontWeight: 400, letterSpacing: '-0.025em', lineHeight: 1.25,
+            color: t.fg, margin: '0 0 20px',
+            fontFamily: 'var(--font-serif)',
+          }}>
+            Your people are medicine.
           </p>
           <p style={{
             fontSize: 17, lineHeight: 1.7,
-            color: t.fg45, maxWidth: 560, margin: '0 auto',
+            color: t.fg45, margin: '0 0 56px', maxWidth: 560,
           }}>
-            You know you should have followed up. You meant to. But it's been three months, and now
-            it's awkward. Meanwhile someone else got the intro, the deal, the hire - because they
-            stayed warm when you went cold.
+            The right ones lower your blood pressure. The wrong ones raise it.
           </p>
+
+          <div style={{
+            borderLeft: `2px solid #25B439`,
+            paddingLeft: 24,
+            maxWidth: 560,
+          }}>
+            <p style={{
+              fontSize: 'clamp(20px, 2.2vw, 26px)',
+              fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.35,
+              color: t.fg, margin: '0 0 12px',
+              fontFamily: 'var(--font-sans)',
+            }}>
+              Real Deal isn't a network. It's a prescription.
+            </p>
+            <p style={{
+              fontSize: 15, lineHeight: 1.6,
+              color: t.fg45, margin: 0,
+            }}>
+              Curated for your nervous system. Built for your life.
+            </p>
+          </div>
         </div>
       </section>
 
