@@ -8,12 +8,14 @@ import type { Contact } from './lib/types'
 import { useAuth } from './contexts/AuthContext'
 import { LandingRedirect } from './components/landing/LandingRedirect'
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
+import { WaitlistPage } from './components/waitlist/WaitlistPage'
 import { Sidebar } from './components/nav/Sidebar'
 import { NotFoundPage } from './components/errors/NotFoundPage'
 import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
 import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
 import { SharedListPage } from './components/sharing/SharedListPage'
+import { ChatPanel } from '@/components/chat/ChatPanel'
 
 // Heavy routes — lazy loaded so they don't bloat the initial bundle
 const OrbMap = lazy(() => import('./components/map/OrbMap').then(m => ({ default: m.OrbMap })))
@@ -283,6 +285,8 @@ function AppShell() {
           {demo ? 'demo on' : 'demo off'}
         </button>
       )}
+
+      <ChatPanel />
     </div>
   )
 }
@@ -319,6 +323,7 @@ export default function App() {
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route path="waitlist" element={<WaitlistPage />} />
       <Route path="s/:token" element={<SharedListPage />} />
       <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route path="invite" element={<AcceptInvitePage />} />
