@@ -294,7 +294,7 @@ function NavItem({
         borderRadius: 8,
         cursor: 'pointer',
         fontFamily: 'inherit',
-        color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+        color: active ? 'var(--color-shell)' : 'var(--color-text-secondary)',
         transition: 'background 0.15s ease, color 0.15s ease',
         position: 'relative',
       }}
@@ -305,7 +305,7 @@ function NavItem({
           <span className="badge-pulse" style={{
             position: 'absolute', top: -2, right: -2,
             width: 6, height: 6, borderRadius: '50%',
-            background: 'var(--color-brand)',
+            background: 'var(--color-shell)',
           }} />
         )}
       </span>
@@ -316,7 +316,7 @@ function NavItem({
           overflow: 'hidden',
           fontSize: 13,
           fontWeight: active ? 600 : 500,
-          color: active ? 'var(--color-brand)' : 'var(--color-text-secondary)',
+          color: active ? 'var(--color-shell)' : 'var(--color-text-secondary)',
           flex: 1,
           textAlign: 'left',
           ...labelStyle,
@@ -327,7 +327,7 @@ function NavItem({
       {badge && !collapsed && (
         <span className="badge-pulse" style={{
           width: 6, height: 6, borderRadius: '50%',
-          background: 'var(--color-brand)', flexShrink: 0,
+          background: 'var(--color-shell)', flexShrink: 0,
         }} />
       )}
       {hint && !collapsed && (
