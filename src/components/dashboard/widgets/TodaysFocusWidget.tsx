@@ -131,46 +131,78 @@ function FocusLead({ item, onClick }: { item: FocusItem; onClick: () => void }) 
 
 function FocusRow({ item, onClick }: { item: FocusItem; onClick: () => void }) {
   const days = daysSinceContact(item.contact)
+  const podColor = item.pod?.color ?? 'var(--color-text-tertiary)'
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className="interactive-row"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        width: '100%',
-        padding: '13px 24px',
-        background: 'none',
-        border: 'none',
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', padding: '13px 24px',
         borderBottom: '1px solid var(--divider)',
-        textAlign: 'left',
-        cursor: 'pointer',
-        fontFamily: 'inherit',
+        position: 'relative',
       }}
     >
-      <Avatar name={item.contact.name} size={28} variant="subtle" />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
-          {item.contact.name}
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%', background: podColor, flexShrink: 0,
+      }} aria-hidden />
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0,
+          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+          textAlign: 'left', fontFamily: 'inherit',
+        }}
+      >
+        <Avatar name={item.contact.name} size={28} variant="subtle" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)', letterSpacing: '-0.01em' }}>
+            {item.contact.name}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
+            {days !== null ? `${days}d silence` : 'No touch'}{item.pod ? ` - ${item.pod.name}` : ''}
+          </div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
-          {days !== null ? `${days}d` : 'No touch'}{item.pod ? ` - ${item.pod.name}` : ''}
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: item.reason === 'overdue' ? '#ef4444' : '#f59e0b',
+          fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase',
+          color: item.reason === 'overdue' ? '#b91c1c' : 'var(--color-text-tertiary)',
+          padding: '3px 7px', borderRadius: 999,
+          background: item.reason === 'overdue' ? 'rgba(220,38,38,0.08)' : 'var(--tint)',
+          border: `1px solid ${item.reason === 'overdue' ? 'rgba(220,38,38,0.2)' : 'var(--edge)'}`,
           flexShrink: 0,
-        }} />
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)' }}>
+        }}>
           {item.reason === 'overdue' ? 'Overdue' : 'Check in'}
         </span>
-      </div>
-    </button>
+      </button>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="Log interaction"
+        title="Log interaction"
+        style={{
+          width: 28, height: 28, borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', border: '1px solid var(--edge)',
+          color: 'var(--color-text-secondary)', cursor: 'pointer', flexShrink: 0,
+          transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = 'rgba(37,180,57,0.08)'
+          e.currentTarget.style.borderColor = 'rgba(37,180,57,0.3)'
+          e.currentTarget.style.color = 'var(--color-brand)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.borderColor = 'var(--edge)'
+          e.currentTarget.style.color = 'var(--color-text-secondary)'
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
+    </div>
   )
 }
 

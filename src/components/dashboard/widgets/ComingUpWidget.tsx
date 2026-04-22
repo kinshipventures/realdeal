@@ -76,7 +76,8 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
         {item.sublabel}
       </span>
       {item.pod && (
-        <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: item.pod.color ?? 'var(--color-text-tertiary)' }} />
           {item.pod.name}
         </span>
       )}
