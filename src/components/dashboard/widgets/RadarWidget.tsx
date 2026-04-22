@@ -109,17 +109,12 @@ function RadarChart({ dimensions, overallScore, overallLabel, size = 260 }: Rada
 
   const rings = [25, 50, 75, 100]
 
-  // Smooth closed path using quadratic bezier: vertices as control pts, midpoints as anchors
+  // Closed polygon passing through each vertex (so the shape actually touches the dots)
   function smoothPath(pts: { x: number; y: number }[]): string {
-    const m = pts.length
-    const mid = (a: { x: number; y: number }, b: { x: number; y: number }) =>
-      ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
-    const midpoints = pts.map((p, i) => mid(p, pts[(i + 1) % m]))
-    let d = `M ${midpoints[0].x},${midpoints[0].y}`
-    for (let i = 0; i < m; i++) {
-      const cp = pts[(i + 1) % m]
-      const end = midpoints[(i + 1) % m]
-      d += ` Q ${cp.x},${cp.y} ${end.x},${end.y}`
+    if (pts.length === 0) return ''
+    let d = `M ${pts[0].x},${pts[0].y}`
+    for (let i = 1; i < pts.length; i++) {
+      d += ` L ${pts[i].x},${pts[i].y}`
     }
     return d + ' Z'
   }
