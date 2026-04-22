@@ -408,47 +408,53 @@ export function LandingPage() {
           </div>
 
           <h1 style={{
-            fontSize: 'clamp(44px, 7vw, 88px)',
-            fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.0,
-            color: t.fg, margin: '0 0 28px',
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(44px, 6.2vw, 78px)',
+            fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1.02,
+            color: t.fg, margin: '0 auto 40px', maxWidth: 900,
             ...reveal(heroVisible, 0.05),
           }}>
-            Your network,<br />remembered.
+            Your network, remembered.
           </h1>
 
-          <div style={{ maxWidth: 640, margin: '0 auto 48px', textAlign: 'left', ...reveal(heroVisible, 0.1) }}>
+          <div style={{ maxWidth: 560, margin: '0 auto 52px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
             <p style={{
-              fontSize: 'clamp(18px, 1.8vw, 22px)',
-              fontWeight: 400, letterSpacing: '-0.01em', lineHeight: 1.5,
-              color: t.fg, margin: '0 0 20px',
               fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(17px, 1.6vw, 20px)',
+              fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
+              color: t.fg, margin: '0 0 14px',
             }}>
               We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
             </p>
             <p style={{
-              fontSize: 'clamp(18px, 1.8vw, 22px)',
-              fontWeight: 400, letterSpacing: '-0.01em', lineHeight: 1.5,
-              color: t.fg45, margin: '0 0 36px',
               fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(17px, 1.6vw, 20px)',
+              fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
+              color: t.fg45, margin: '0 0 32px',
               fontStyle: 'italic',
             }}>
               And then we completely forgot about the thing that actually keeps us alive.
             </p>
+
             <div style={{
-              borderLeft: `2px solid #25B439`,
-              paddingLeft: 20,
+              display: 'inline-block',
+              borderTop: `1px solid ${t.border14}`,
+              borderBottom: `1px solid ${t.border14}`,
+              padding: '20px 0',
+              maxWidth: 480,
             }}>
               <p style={{
-                fontSize: 'clamp(18px, 1.8vw, 22px)',
-                fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.4,
-                color: t.fg, margin: '0 0 8px',
                 fontFamily: 'var(--font-sans)',
+                fontSize: 'clamp(16px, 1.5vw, 19px)',
+                fontWeight: 500, letterSpacing: '-0.005em', lineHeight: 1.4,
+                color: t.fg, margin: '0 0 6px',
               }}>
                 Real Deal isn't a network. It's a prescription.
               </p>
               <p style={{
-                fontSize: 14, lineHeight: 1.55,
+                fontSize: 13, lineHeight: 1.5,
                 color: t.fg45, margin: 0,
+                letterSpacing: '0.01em',
               }}>
                 Curated for your nervous system. Built for your life.
               </p>
@@ -571,6 +577,8 @@ export function LandingPage() {
                 <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
                 <line x1="420" y1="220" x2="130" y2="220" stroke="#F59E0B" strokeWidth="1.5" opacity="0.15" />
                 <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
+                <line x1="420" y1="220" x2="340" y2="390" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.15" />
+                <line x1="420" y1="220" x2="490" y2="140" stroke="#7C3AED" strokeWidth="1.5" opacity="0.15" />
                 {/* hub */}
                 <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
                 <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
@@ -591,6 +599,11 @@ export function LandingPage() {
                 <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Investors</text>
                 <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
                 <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Mentors</text>
+                <circle cx="340" cy="390" r="26" fill="url(#hp3)" opacity="0.85" />
+                <text x="340" y="388" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Business</text>
+                <text x="340" y="399" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui">Partners</text>
+                <circle cx="490" cy="140" r="24" fill="url(#hp2)" opacity="0.85" />
+                <text x="490" y="144" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Work</text>
               </svg>
             </div>
           </div>
