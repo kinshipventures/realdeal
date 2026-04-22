@@ -457,7 +457,7 @@ export function LandingPage() {
               color: t.fg45, margin: '0 0 20px',
               fontStyle: 'italic',
             }}>
-              And then we completely forgot about the thing that actually keeps us alive.
+              And then we completely forgot what feeds us.
             </p>
 
             <div style={{
