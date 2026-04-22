@@ -245,13 +245,37 @@ export function LandingPage() {
 
   return (
     <div style={{ background: t.bg, minHeight: '100vh', fontFamily: 'var(--font-sans)', color: t.fg, position: 'relative', overflow: 'hidden' }}>
-      {/* mouse-tracked ambient glow */}
+      {/* layered aurora gradient - fixed, translucent, non-chromatic */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+          background: `
+            radial-gradient(900px 600px at 12% 8%, rgba(49, 71, 255, ${dark ? 0.22 : 0.18}) 0%, transparent 60%),
+            radial-gradient(800px 520px at 88% 14%, rgba(255, 107, 138, ${dark ? 0.18 : 0.14}) 0%, transparent 60%),
+            radial-gradient(1100px 700px at 50% 92%, rgba(237, 235, 255, ${dark ? 0.12 : 0.70}) 0%, transparent 55%)
+          `,
+          filter: 'blur(40px)',
+        }}
+      />
+      {/* grain overlay for depth */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+          opacity: dark ? 0.25 : 0.35,
+          mixBlendMode: 'overlay',
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.2 0 0 0 0 0.3 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`,
+        }}
+      />
+      {/* mouse-tracked spotlight over the aurora */}
       <div
         aria-hidden
         style={{
           position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-          background: `radial-gradient(600px circle at ${mouse.x}% ${mouse.y}%, rgba(49, 71, 255,${dark ? 0.18 : 0.14}) 0%, rgba(49, 71, 255,${dark ? 0.06 : 0.04}) 35%, transparent 70%)`,
+          background: `radial-gradient(500px circle at ${mouse.x}% ${mouse.y}%, rgba(49, 71, 255,${dark ? 0.14 : 0.10}) 0%, transparent 65%)`,
           transition: mouse.active ? 'background 0.2s cubic-bezier(0.22,1,0.36,1)' : 'none',
+          mixBlendMode: dark ? 'screen' : 'multiply',
         }}
       />
       <style>{`
