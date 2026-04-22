@@ -89,6 +89,8 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   const [braindump, setBraindump] = useState(false)
   const [dumpText, setDumpText] = useState('')
 
+  const [notes, setNotes] = useState('')
+
   // Company typeahead for Contact form
   const [companyQuery, setCompanyQuery] = useState('')
   const [companyResults, setCompanyResults] = useState<Contact[]>([])
@@ -145,7 +147,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     setStep('type')
     setRecordType('Contact')
     setFormMode('single')
-    setFirstName(''); setLastName(''); setEmail('')
+    setFirstName(''); setLastName(''); setEmail(''); setNotes('')
     setSelectedPodIds([])
     setBraindump(false); setDumpText('')
     setCompanyQuery(''); setCompanyResults([])
@@ -241,6 +243,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             email: email.trim() || null,
+            notes: notes.trim() || null,
             list_ids: selectedPodIds,
             type: 'Contact',
             company_record_id: coId,
@@ -516,6 +519,17 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                   )}
                 </div>
 
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Notes</label>
+                  <textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Any context, intel, or first impressions..."
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: 72 }}
+                  />
+                </div>
+
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
 
                 <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 4 }}>
@@ -621,11 +635,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                 title={!canSubmit ? 'Fill required fields' : undefined}
                 style={{
                   flex: 1, padding: 12,
-                  background: canSubmit && !saving ? '#25B439' : 'var(--tint)',
+                  background: canSubmit && !saving ? 'var(--color-brand)' : 'var(--tint)',
                   border: 'none', borderRadius: 8,
                   color: canSubmit && !saving ? '#fff' : 'var(--color-text-tertiary)',
-                  fontSize: 13, fontWeight: 700, cursor: canSubmit && !saving ? 'pointer' : 'default',
-                  fontFamily: 'inherit', transition: 'all 0.15s',
+                  fontSize: 13, fontWeight: 700, cursor: canSubmit && !saving ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit', transition: 'all 0.15s', opacity: 1,
                 }}
               >
                 {saving ? 'Creating...' : `Create ${recordType}`}
@@ -737,12 +751,12 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                 disabled={!canMultiSubmit || saving}
                 style={{
                   flex: 1, padding: 12,
-                  background: canMultiSubmit && !saving ? '#25B439' : 'var(--tint)',
+                  background: canMultiSubmit && !saving ? 'var(--color-brand)' : 'var(--tint)',
                   border: 'none', borderRadius: 8,
                   color: canMultiSubmit && !saving ? '#fff' : 'var(--color-text-tertiary)',
                   fontSize: 13, fontWeight: 700,
-                  cursor: canMultiSubmit && !saving ? 'pointer' : 'default',
-                  fontFamily: 'inherit', transition: 'all 0.15s',
+                  cursor: canMultiSubmit && !saving ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit', transition: 'all 0.15s', opacity: 1,
                 }}
               >
                 {saving

@@ -4,6 +4,7 @@ import type { FieldConfig } from '../../lib/fieldConfig'
 import { DetailsWidget } from './DetailsWidget'
 import { HealthWidget } from './HealthWidget'
 import { AssociatedPeopleWidget } from './AssociatedPeopleWidget'
+import { AssociatedCompanyWidget } from './AssociatedCompanyWidget'
 import { PodFieldsWidget } from './PodFieldsWidget'
 import { RelationshipWidget } from './RelationshipWidget'
 import { PipelinesWidget } from './PipelinesWidget'
@@ -89,6 +90,9 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
       {(contact.kv_fund_investor?.length || contact.spv_investor?.length) ? (
         <FundTagsWidget contact={contact} />
       ) : null}
+      {contact.type === 'Contact' && contact.company_record_id && (
+        <AssociatedCompanyWidget contact={contact} />
+      )}
       {contact.type === 'Company' && (
         <AssociatedPeopleWidget contact={contact} />
       )}

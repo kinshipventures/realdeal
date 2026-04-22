@@ -4,12 +4,12 @@ import { getContacts, getPods, getCategories, getAllInteractions, updateContact,
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail } from '../contacts/ContactDetail'
+import { CreateRecordModal } from './CreateRecordModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
 import { CompaniesPage } from '../companies/CompaniesPage'
-import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus } from '../../lib/types'
-import type { Interaction } from '../../lib/types'
+import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
 
@@ -262,6 +262,7 @@ export function RecordsList() {
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
+  const [showCreate, setShowCreate] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
@@ -366,7 +367,7 @@ export function RecordsList() {
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = contacts
+    let result = contacts.filter(c => c.type !== 'Company')
 
     if (filters.search.trim()) {
       const q = filters.search.toLowerCase()
@@ -510,7 +511,11 @@ export function RecordsList() {
     setFilters(DEFAULT_FILTERS)
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.recency !== 'any'
+  const hasActiveFilters = filters.search || filters.pod || filters.category || filters.recency !== 'any'
+  const activeFilterCount =
+    (filters.search ? 1 : 0) +
+    (filters.pod || filters.category ? 1 : 0) +
+    (filters.recency !== 'any' ? 1 : 0)
   const atRiskCount = useMemo(
     () => filtered.reduce((count, contact) => count + ((equityMap[contact.id] ?? 0) < 70 ? 1 : 0), 0),
     [filtered, equityMap]
@@ -874,14 +879,32 @@ export function RecordsList() {
             <option value="never">Never contacted</option>
           </select>
 
-          {hasActiveFilters && (
-            <button type="button" className="records-toolbar-button" onClick={clearFilters} style={{
-              height: 36, padding: '0 10px', borderRadius: 8, border: 'none',
-              background: 'transparent', color: 'var(--color-text-tertiary)',
-              fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+          {activeFilterCount > 0 && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
             }}>
-              Clear
-            </button>
+              <span style={{
+                padding: '2px 8px',
+                borderRadius: 100,
+                background: 'color-mix(in srgb, var(--color-brand) 14%, transparent)',
+                color: 'var(--color-brand)',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.01em',
+                whiteSpace: 'nowrap',
+              }}>
+                {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'}
+              </span>
+              <button type="button" className="records-toolbar-button" onClick={clearFilters} style={{
+                height: 28, padding: '0 8px', borderRadius: 6, border: 'none',
+                background: 'transparent', color: 'var(--color-text-tertiary)',
+                fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                Clear
+              </button>
+            </span>
           )}
 
           <div ref={moreRef} style={{ marginLeft: 'auto', position: 'relative' }}>
@@ -1591,6 +1614,32 @@ export function RecordsList() {
           pods={pods}
         />
       )}
+
+      {/* Create FAB */}
+      {activeView === 'people' && (
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          aria-label="Add contact"
+          style={{
+            position: 'fixed', bottom: 88, right: 20, zIndex: 200,
+            width: 48, height: 48, borderRadius: '50%',
+            background: 'var(--color-brand)', border: 'none',
+            color: '#fff', fontSize: 24, fontWeight: 300,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.24)',
+          }}
+        >
+          +
+        </button>
+      )}
+
+      <CreateRecordModal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => { setShowCreate(false); setRefreshKey(k => k + 1) }}
+        initialType="Contact"
+      />
 
       {/* Toast */}
       {toast && (

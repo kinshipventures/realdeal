@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router'
 import type { Pod } from '../../../lib/types'
 import { WidgetHeading } from './WidgetHeading'
 
@@ -19,17 +20,20 @@ function healthLabel(score: number): { text: string; color: string; bg: string }
 function PodRow({ pod, contactCount, overdueCount, score, scoreReady }: {
   pod: Pod; contactCount: number; overdueCount: number; score: number; scoreReady: boolean
 }) {
+  const navigate = useNavigate()
   const cadence = pod.cadence ?? 'monthly'
   const health = scoreReady ? healthLabel(score) : null
 
   return (
     <div
+      onClick={() => navigate(`/pod/${pod.id}`)}
       style={{
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         borderBottom: '1px solid var(--divider)',
+        cursor: 'pointer',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
