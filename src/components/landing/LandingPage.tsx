@@ -495,109 +495,105 @@ export function LandingPage() {
                   <filter id="nm-blur-soft" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur stdDeviation="6" />
                   </filter>
-                  <radialGradient id="nm-hub" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#201D1A" stopOpacity="0.92" />
-                    <stop offset="100%" stopColor="#201D1A" stopOpacity="0.0" />
-                  </radialGradient>
                   <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.35" />
+                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.22" />
                     <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
                   </radialGradient>
                 </defs>
 
-                {/* atmospheric halo */}
-                <ellipse cx="450" cy="280" rx="380" ry="240" fill="url(#nm-halo)" filter="url(#nm-blur)" />
+                {/* atmospheric halo behind hub */}
+                <ellipse cx="450" cy="280" rx="320" ry="220" fill="url(#nm-halo)" filter="url(#nm-blur)" />
 
-                {/* soft connection curves - near-invisible, organic */}
-                <path d="M 450 280 Q 340 200 210 150" stroke="#201D1A" strokeWidth="1" opacity="0.08" fill="none" />
-                <path d="M 450 280 Q 580 200 710 160" stroke="#201D1A" strokeWidth="1" opacity="0.08" fill="none" />
-                <path d="M 450 280 Q 600 380 720 440" stroke="#201D1A" strokeWidth="1" opacity="0.06" fill="none" />
-                <path d="M 450 280 Q 300 380 180 430" stroke="#201D1A" strokeWidth="1" opacity="0.05" fill="none" />
-                <path d="M 450 280 Q 320 260 140 270" stroke="#201D1A" strokeWidth="1" opacity="0.04" fill="none" />
-                <path d="M 450 280 Q 510 170 540 110" stroke="#201D1A" strokeWidth="1" opacity="0.06" fill="none" />
-                <path d="M 450 280 Q 400 400 370 480" stroke="#201D1A" strokeWidth="1" opacity="0.04" fill="none" />
+                {/*
+                  ORB GEOMETRY ENCODES DATA:
+                  - radius: 32 + people * 2.5  (Friends 14 -> 67, Mentors 3 -> 40)
+                  - distance from hub: thriving 150-180, steady 210-250, cooling 290-320, fading 340
+                  - saturation: thriving 0.6, steady 0.5, cooling 0.35, fading 0.25
+                  Rendered back to front (fading first, thriving last).
+                */}
 
-                {/* BLOBS - rendered back to front, warm-then-cool, each a blurred gradient */}
-                {/* Mentors - top right, small, fading (coral, lower opacity) */}
-                <circle cx="740" cy="130" r="38" fill="#FF6B8A" opacity="0.35" filter="url(#nm-blur)" />
-                <circle cx="740" cy="130" r="14" fill="#FF6B8A" opacity="0.6" filter="url(#nm-blur-soft)" />
+                {/* FADING: Business Partners - small, far, very pale */}
+                <circle cx="360" cy="510" r="40" fill="#E53935" opacity="0.22" filter="url(#nm-blur)" />
+                <circle cx="360" cy="510" r="12" fill="#E53935" opacity="0.45" filter="url(#nm-blur-soft)" />
 
-                {/* Family - upper left, big, close (coral) */}
-                <circle cx="210" cy="150" r="64" fill="#FF6B8A" opacity="0.55" filter="url(#nm-blur)" />
-                <circle cx="210" cy="150" r="22" fill="#FF6B8A" opacity="0.75" filter="url(#nm-blur-soft)" />
+                {/* COOLING: Mentors - small, far, muted coral */}
+                <circle cx="790" cy="120" r="40" fill="#FF6B8A" opacity="0.3" filter="url(#nm-blur)" />
+                <circle cx="790" cy="120" r="12" fill="#FF6B8A" opacity="0.5" filter="url(#nm-blur-soft)" />
 
-                {/* Creatives - upper right, medium (purple from pod palette) */}
-                <circle cx="690" cy="170" r="54" fill="#7E57C2" opacity="0.5" filter="url(#nm-blur)" />
-                <circle cx="690" cy="170" r="18" fill="#7E57C2" opacity="0.7" filter="url(#nm-blur-soft)" />
+                {/* STEADY: Investors - 5 ppl, medium distance */}
+                <circle cx="140" cy="290" r="44" fill="#F5A623" opacity="0.45" filter="url(#nm-blur)" />
+                <circle cx="140" cy="290" r="14" fill="#F5A623" opacity="0.65" filter="url(#nm-blur-soft)" />
 
-                {/* Investors - far left, medium (amber) */}
-                <circle cx="130" cy="290" r="48" fill="#F5A623" opacity="0.5" filter="url(#nm-blur)" />
-                <circle cx="130" cy="290" r="16" fill="#F5A623" opacity="0.7" filter="url(#nm-blur-soft)" />
+                {/* STEADY: Founders - 7 ppl */}
+                <circle cx="660" cy="380" r="50" fill="#00BFA5" opacity="0.45" filter="url(#nm-blur)" />
+                <circle cx="660" cy="380" r="16" fill="#00BFA5" opacity="0.65" filter="url(#nm-blur-soft)" />
 
-                {/* Work - upper mid, small (Pantone blue - neutral work tone) */}
-                <circle cx="540" cy="90" r="38" fill="#003DA5" opacity="0.38" filter="url(#nm-blur)" />
-                <circle cx="540" cy="90" r="12" fill="#003DA5" opacity="0.6" filter="url(#nm-blur-soft)" />
+                {/* STEADY: Creatives - 8 ppl */}
+                <circle cx="680" cy="180" r="52" fill="#7E57C2" opacity="0.48" filter="url(#nm-blur)" />
+                <circle cx="680" cy="180" r="17" fill="#7E57C2" opacity="0.68" filter="url(#nm-blur-soft)" />
 
-                {/* Founders - bottom right, medium (teal) */}
-                <circle cx="720" cy="440" r="50" fill="#00BFA5" opacity="0.45" filter="url(#nm-blur)" />
-                <circle cx="720" cy="440" r="16" fill="#00BFA5" opacity="0.65" filter="url(#nm-blur-soft)" />
+                {/* STEADY: Work - small cluster */}
+                <circle cx="500" cy="110" r="36" fill="#003DA5" opacity="0.38" filter="url(#nm-blur)" />
+                <circle cx="500" cy="110" r="11" fill="#003DA5" opacity="0.58" filter="url(#nm-blur-soft)" />
 
-                {/* Friends - bottom left, medium (green - thriving) */}
-                <circle cx="180" cy="440" r="52" fill="#25B439" opacity="0.5" filter="url(#nm-blur)" />
-                <circle cx="180" cy="440" r="18" fill="#25B439" opacity="0.7" filter="url(#nm-blur-soft)" />
+                {/* THRIVING: Family - 12 ppl, close */}
+                <circle cx="260" cy="180" r="62" fill="#FF6B8A" opacity="0.6" filter="url(#nm-blur)" />
+                <circle cx="260" cy="180" r="20" fill="#FF6B8A" opacity="0.8" filter="url(#nm-blur-soft)" />
 
-                {/* Business Partners - lower mid, small (rose) */}
-                <circle cx="370" cy="490" r="36" fill="#E53935" opacity="0.35" filter="url(#nm-blur)" />
-                <circle cx="370" cy="490" r="12" fill="#E53935" opacity="0.55" filter="url(#nm-blur-soft)" />
+                {/* THRIVING: Friends - 14 ppl, closest, largest */}
+                <circle cx="230" cy="420" r="67" fill="#25B439" opacity="0.6" filter="url(#nm-blur)" />
+                <circle cx="230" cy="420" r="22" fill="#25B439" opacity="0.8" filter="url(#nm-blur-soft)" />
 
-                {/* HUB - soft charcoal blob with blue halo */}
-                <circle cx="450" cy="280" r="120" fill="url(#nm-halo)" filter="url(#nm-blur)" />
-                <circle cx="450" cy="280" r="46" fill="url(#nm-hub)" filter="url(#nm-blur-soft)" />
+                {/* HUB - solid Pantone 293 dot */}
+                <circle cx="450" cy="280" r="10" fill="#003DA5" />
+                <circle cx="450" cy="280" r="20" stroke="#003DA5" strokeOpacity="0.25" strokeWidth="1" fill="none" />
 
-                {/* LABELS - floating outside, Fraunces serif */}
-                {/* Pod labels with tiny health dot */}
+                {/* LABELS */}
                 <g fontFamily="var(--font-serif), Georgia, serif" fontWeight="500">
-                  {/* Family */}
-                  <circle cx="205" cy="80" r="3" fill="#FF6B8A" />
-                  <text x="215" y="84" fill="#201D1A" fontSize="15">Family</text>
-                  <text x="215" y="100" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">12 people - thriving</text>
+                  {/* HUB LABEL - editorial eyebrow + serif title above the dot */}
+                  <text x="450" y="228" textAnchor="middle" fill="#6F675F" fontSize="10" fontFamily="var(--font-sans), system-ui" letterSpacing="0.18em" fontWeight="600">MY NETWORK</text>
+                  <text x="450" y="256" textAnchor="middle" fill="#201D1A" fontSize="26" fontWeight="600" letterSpacing="-0.02em">Score 81</text>
+                  <text x="450" y="316" textAnchor="middle" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em" fontStyle="italic">steady</text>
 
-                  {/* Creatives */}
-                  <circle cx="645" cy="100" r="3" fill="#7E57C2" />
-                  <text x="655" y="104" fill="#201D1A" fontSize="15">Creatives</text>
-                  <text x="655" y="120" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">8 people - steady</text>
+                  {/* Friends - thriving, biggest */}
+                  <circle cx="80" cy="500" r="3" fill="#25B439" />
+                  <text x="90" y="504" fill="#201D1A" fontSize="16">Friends</text>
+                  <text x="90" y="520" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">14 people - thriving</text>
 
-                  {/* Work */}
-                  <circle cx="515" cy="40" r="3" fill="#003DA5" />
-                  <text x="525" y="44" fill="#201D1A" fontSize="14">Work</text>
+                  {/* Family - thriving */}
+                  <circle cx="255" cy="90" r="3" fill="#FF6B8A" />
+                  <text x="265" y="94" fill="#201D1A" fontSize="16">Family</text>
+                  <text x="265" y="110" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">12 people - thriving</text>
 
-                  {/* Mentors - fading */}
-                  <circle cx="720" cy="80" r="3" fill="#FF6B8A" opacity="0.5" />
-                  <text x="730" y="84" fill="#6F675F" fontSize="13" fontStyle="italic">Mentors</text>
-                  <text x="730" y="99" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">3 people - cooling</text>
+                  {/* Creatives - steady */}
+                  <circle cx="640" cy="100" r="3" fill="#7E57C2" />
+                  <text x="650" y="104" fill="#201D1A" fontSize="15">Creatives</text>
+                  <text x="650" y="120" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">8 people - steady</text>
 
-                  {/* Investors */}
-                  <circle cx="35" cy="296" r="3" fill="#F5A623" />
-                  <text x="45" y="300" fill="#201D1A" fontSize="15">Investors</text>
-                  <text x="45" y="316" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">5 people - steady</text>
+                  {/* Founders - steady */}
+                  <circle cx="730" cy="470" r="3" fill="#00BFA5" />
+                  <text x="740" y="474" fill="#201D1A" fontSize="15">Founders</text>
+                  <text x="740" y="490" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">7 people - steady</text>
 
-                  {/* Friends */}
-                  <circle cx="75" cy="516" r="3" fill="#25B439" />
-                  <text x="85" y="520" fill="#201D1A" fontSize="15">Friends</text>
-                  <text x="85" y="536" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">14 people - thriving</text>
+                  {/* Investors - steady */}
+                  <circle cx="40" cy="290" r="3" fill="#F5A623" />
+                  <text x="50" y="294" fill="#201D1A" fontSize="15">Investors</text>
+                  <text x="50" y="310" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">5 people - steady</text>
 
-                  {/* Founders */}
-                  <circle cx="710" cy="516" r="3" fill="#00BFA5" />
-                  <text x="720" y="520" fill="#201D1A" fontSize="15">Founders</text>
-                  <text x="720" y="536" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">7 people - steady</text>
+                  {/* Work - steady, compact label */}
+                  <circle cx="470" cy="52" r="3" fill="#003DA5" />
+                  <text x="480" y="56" fill="#201D1A" fontSize="14">Work</text>
+                  <text x="480" y="70" fill="#6F675F" fontSize="10" fontFamily="var(--font-sans), system-ui">6 people - steady</text>
 
-                  {/* Business Partners */}
-                  <circle cx="310" cy="542" r="3" fill="#E53935" opacity="0.5" />
-                  <text x="320" y="546" fill="#6F675F" fontSize="13" fontStyle="italic">Business Partners</text>
+                  {/* Mentors - cooling, italic, muted */}
+                  <circle cx="768" cy="52" r="3" fill="#FF6B8A" opacity="0.55" />
+                  <text x="778" y="56" fill="#6F675F" fontSize="13" fontStyle="italic">Mentors</text>
+                  <text x="778" y="70" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">3 people - cooling</text>
 
-                  {/* HUB LABEL */}
-                  <text x="450" y="278" textAnchor="middle" fill="#201D1A" fontSize="22" fontWeight="600">My Network</text>
-                  <text x="450" y="302" textAnchor="middle" fill="#6F675F" fontSize="12" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em">SCORE 81 - STEADY</text>
+                  {/* Business Partners - fading, italic, palest */}
+                  <circle cx="245" cy="536" r="3" fill="#E53935" opacity="0.4" />
+                  <text x="255" y="540" fill="#9C948A" fontSize="13" fontStyle="italic">Business Partners</text>
+                  <text x="255" y="554" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">4 people - fading</text>
                 </g>
               </svg>
             </div>
