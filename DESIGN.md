@@ -15,7 +15,7 @@
 ## Core Design Thesis
 - The shell should feel designed before the cards do.
 - The first screen should make one strong point before it shows the full workload.
-- Most of the page should live in warm neutrals. Green can still frame the experience, but it should do that through controlled shell treatment instead of full-page wash.
+- Most of the page should live in warm neutrals. Arc blue frames the shell; green is reserved for success, equity, and connected-state moments inside content.
 - The app should feel like a morning report with controls, not a control room with extra copy.
 
 ## Safe And Risky Decisions
@@ -53,9 +53,9 @@
 
 ## Color
 - **Approach:** Restrained shell with signal accents.
-- **Primary shell accent:** `#3147FF` - active chrome, selected views, important focus states.
+- **Primary shell accent (Arc blue):** `#3147FF` - active chrome, sidebar active state, selected views, focus rings, shell framing.
 - **Secondary shell tint:** `#EDEBFF` - soft shell glow, highlighted surfaces, ambient framing.
-- **Brand framing green:** `#25B439` - shell framing, selected app moments, success, connected state, and a few high-confidence actions.
+- **Signal green:** `#25B439` - success, equity/connected state, "thriving" status, primary CTA in content. Not used in the shell.
 - **Warm neutrals:**
   - `#FAF8F4` - page background
   - `#F2EEE7` - elevated wash
@@ -143,7 +143,7 @@
 
 ### Left Rail
 - Stronger visual identity than the current sidebar.
-- Green-tinted shell treatment is allowed here.
+- Arc-blue-tinted shell treatment (active state, hover wash, icon accents).
 - Fewer hard dividers.
 - Active state should feel selected by the shell, not just highlighted with a pill.
 
@@ -151,7 +151,7 @@
 - Replace the current generic opening with a stronger daily thesis.
 - Use serif display, one supporting line, and 2-3 compact summary signals.
 - This is the main place where Dia's calm should show up.
-- A restrained green frame or underlay can live here if the content still reads clearly.
+- A restrained shell-blue frame or underlay can live here if the content still reads clearly.
 
 ### Priority Modules
 - Use one dominant action area.
@@ -164,8 +164,8 @@
 - Labels should be quieter.
 
 ### Tags And Status
-- Green can appear in the shell and top framing, but not on every card.
-- Reserve the strongest saturation for framing, status, urgency, or selection.
+- Shell elements and framing use Arc blue; green is reserved for success, equity, and connected states inside content.
+- Reserve the strongest saturation for status, urgency, or selection - never as decoration.
 - Most tags should use ink, smoke, sand, or cool shell tones.
 
 ## Copy And Voice
@@ -175,18 +175,18 @@
 - Prefer support copy that reduces anxiety and clarifies what to do next.
 
 ## What To Avoid
-- Big green fills that flatten the whole page into one block.
+- Big color fills (blue or green) that flatten the whole page into one block.
 - Equal-weight cards from top to bottom.
 - Generic dashboard gradients.
 - Excessive chips, pills, and boxed metrics fighting for attention.
-- Overusing green inside every module at once.
+- Using green in the shell, or blue inside success/equity content - the two roles must stay separate.
 - UI that feels like a prettier admin panel instead of a designed environment.
 
 ## Implementation Priorities
-1. Redesign the shell and left rail.
+1. Redesign the shell and left rail in Arc blue.
 2. Rewrite the top section into a stronger thesis band.
 3. Rebalance module weight on the home screen.
-4. Use green as restrained framing, then let neutrals handle most surfaces.
+4. Keep green strictly for success/equity signals, let neutrals carry most surfaces.
 5. Tighten type hierarchy and spacing before adding any new visual effects.
 
 ## Decisions Log
@@ -195,3 +195,4 @@
 | 2026-04-21 | Shifted from green-first dashboard styling to calm command surface | The live product is now a broader personal OS, and the old Kinship design system no longer matches the product. |
 | 2026-04-21 | Chose Dia calm + Arc shell as the reference mix | Dia gives the right emotional tone, Arc gives the right framing and product shell. |
 | 2026-04-21 | Kept green as framing instead of full-page environment | Green should still shape the shell, but warm neutrals should carry most surfaces and reading areas. |
+| 2026-04-22 | Moved shell accent from green to Arc blue `#3147FF` | Separates shell chrome (blue) from content signals (green for success/equity/connected). Matches the Arc shell reference more faithfully. |
