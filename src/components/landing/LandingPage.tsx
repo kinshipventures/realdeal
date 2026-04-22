@@ -21,7 +21,6 @@ function useTheme(): 'light' | 'dark' {
   return theme
 }
 import goopLogo from '@/assets/logos/goop.png'
-import figsLogo from '@/assets/logos/figs.png'
 import moonpayLogo from '@/assets/logos/moonpay.png'
 import forerunnerLogo from '@/assets/logos/forerunner.png'
 import wonderLogo from '@/assets/logos/wonder.png'
@@ -44,12 +43,10 @@ function useInView(threshold = 0.12): [RefObject<HTMLElement | null>, boolean] {
 
 const PARTNERS = [
   { name: 'Moj Mahdara', role: 'Co-Founder & Managing Partner', initials: 'MM', photo: 'https://images.squarespace-cdn.com/content/v1/6255af0f455c757ddc06592c/5554cf9e-73fe-48f0-82ca-c3c0da8e0cae/Moj+Mahdara.png' },
-  { name: 'Gwyneth Paltrow', role: 'Partner', initials: 'GP', photo: 'https://images.squarespace-cdn.com/content/v1/6255af0f455c757ddc06592c/91232f51-0b9d-4a2a-86d3-e31abd321d08/Gwyneth+Paltrow.png' },
 ]
 
 const PORTFOLIO_BRANDS = [
   { name: 'goop', logo: goopLogo },
-  { name: 'FIGS', logo: figsLogo },
   { name: 'MoonPay', logo: moonpayLogo },
   { name: 'Forerunner', logo: forerunnerLogo },
   { name: 'Wonder', logo: wonderLogo },
@@ -389,6 +386,70 @@ export function LandingPage() {
         </div>
       </nav>
 
+      {/* Manifesto - opens the page */}
+      <section
+        ref={problemRef as RefObject<HTMLElement>}
+        style={{
+          maxWidth: 760, margin: '0 auto', padding: '80px 40px 96px',
+          textAlign: 'left',
+        }}
+      >
+        <div style={{ ...reveal(problemVisible) }}>
+          <p style={{
+            fontSize: 'clamp(24px, 2.8vw, 34px)',
+            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.35,
+            color: t.fg, margin: '0 0 28px',
+            fontFamily: 'var(--font-serif)',
+          }}>
+            We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
+          </p>
+          <p style={{
+            fontSize: 'clamp(24px, 2.8vw, 34px)',
+            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.35,
+            color: t.fg45, margin: '0 0 56px',
+            fontFamily: 'var(--font-serif)',
+            fontStyle: 'italic',
+          }}>
+            And then we completely forgot about the thing that actually keeps us alive.
+          </p>
+          <p style={{
+            fontSize: 'clamp(32px, 4vw, 52px)',
+            fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1.15,
+            color: t.fg, margin: '0 0 20px',
+            fontFamily: 'var(--font-serif)',
+          }}>
+            Your people are medicine.
+          </p>
+          <p style={{
+            fontSize: 18, lineHeight: 1.65,
+            color: t.fg45, margin: '0 0 64px', maxWidth: 560,
+          }}>
+            The right ones lower your blood pressure. The wrong ones raise it.
+          </p>
+
+          <div style={{
+            borderLeft: `2px solid #25B439`,
+            paddingLeft: 24,
+            maxWidth: 560,
+          }}>
+            <p style={{
+              fontSize: 'clamp(20px, 2.2vw, 26px)',
+              fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.35,
+              color: t.fg, margin: '0 0 12px',
+              fontFamily: 'var(--font-sans)',
+            }}>
+              Real Deal isn't a network. It's a prescription.
+            </p>
+            <p style={{
+              fontSize: 15, lineHeight: 1.6,
+              color: t.fg45, margin: 0,
+            }}>
+              Curated for your nervous system. Built for your life.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Hero */}
       <section
         ref={heroRef as RefObject<HTMLElement>}
@@ -586,12 +647,12 @@ export function LandingPage() {
                 src={brand.logo}
                 alt={brand.name}
                 loading="lazy"
-                width={160}
-                height={64}
+                width={220}
+                height={96}
                 style={{
-                  height: 64, width: 'auto', objectFit: 'contain',
+                  height: 96, width: 'auto', objectFit: 'contain',
                   userSelect: 'none', flexShrink: 0,
-                  filter: t.logoFilter, opacity: 0.35,
+                  filter: t.logoFilter, opacity: 0.45,
                 }}
               />
             ))}
@@ -697,69 +758,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Manifesto */}
-      <section
-        ref={problemRef as RefObject<HTMLElement>}
-        style={{
-          maxWidth: 760, margin: '0 auto', padding: '0 40px 112px',
-          textAlign: 'left',
-        }}
-      >
-        <div style={{ ...reveal(problemVisible) }}>
-          <p style={{
-            fontSize: 'clamp(22px, 2.6vw, 30px)',
-            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.4,
-            color: t.fg, margin: '0 0 28px',
-            fontFamily: 'var(--font-serif)',
-          }}>
-            We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
-          </p>
-          <p style={{
-            fontSize: 'clamp(22px, 2.6vw, 30px)',
-            fontWeight: 400, letterSpacing: '-0.015em', lineHeight: 1.4,
-            color: t.fg45, margin: '0 0 48px',
-            fontFamily: 'var(--font-serif)',
-            fontStyle: 'italic',
-          }}>
-            And then we completely forgot about the thing that actually keeps us alive.
-          </p>
-          <p style={{
-            fontSize: 'clamp(28px, 3.4vw, 42px)',
-            fontWeight: 400, letterSpacing: '-0.025em', lineHeight: 1.25,
-            color: t.fg, margin: '0 0 20px',
-            fontFamily: 'var(--font-serif)',
-          }}>
-            Your people are medicine.
-          </p>
-          <p style={{
-            fontSize: 17, lineHeight: 1.7,
-            color: t.fg45, margin: '0 0 56px', maxWidth: 560,
-          }}>
-            The right ones lower your blood pressure. The wrong ones raise it.
-          </p>
-
-          <div style={{
-            borderLeft: `2px solid #25B439`,
-            paddingLeft: 24,
-            maxWidth: 560,
-          }}>
-            <p style={{
-              fontSize: 'clamp(20px, 2.2vw, 26px)',
-              fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.35,
-              color: t.fg, margin: '0 0 12px',
-              fontFamily: 'var(--font-sans)',
-            }}>
-              Real Deal isn't a network. It's a prescription.
-            </p>
-            <p style={{
-              fontSize: 15, lineHeight: 1.6,
-              color: t.fg45, margin: 0,
-            }}>
-              Curated for your nervous system. Built for your life.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Feature sections - editorial alternating */}
       <div className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 40px 120px' }}>
