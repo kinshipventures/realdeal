@@ -483,37 +483,6 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div style={{
-            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56,
-            ...reveal(heroVisible, 0.2),
-          }}>
-            <button
-              className="rd-cta-primary"
-              onClick={() => navigate('/login?signup=1')}
-              style={{
-                padding: '14px 36px', borderRadius: 10, border: 'none',
-                background: '#003DA5', color: '#fff', cursor: 'pointer',
-                fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-sans)',
-                boxShadow: '0 4px 24px rgba(0, 61, 165,0.35)',
-              }}
-            >
-              Get Started - Free
-            </button>
-            <button
-              className="rd-cta-ghost"
-              onClick={() => { setDemoMode(true); window.location.href = '/pods' }}
-              style={{
-                padding: '14px 36px', borderRadius: 10,
-                border: `1px solid ${t.border14}`,
-                background: t.fg04,
-                cursor: 'pointer', fontSize: 16, fontWeight: 500,
-                color: t.fg70, fontFamily: 'var(--font-sans)',
-              }}
-            >
-              Try the Demo
-            </button>
-          </div>
-
           {/* Product screenshot / mockup */}
           <div style={{
             position: 'relative',
