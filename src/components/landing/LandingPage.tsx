@@ -192,6 +192,32 @@ export function LandingPage() {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-8px); }
         }
+        @keyframes rd-breath {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50%      { transform: scale(1.035); opacity: 1; }
+        }
+        @keyframes rd-sonar {
+          0%   { transform: scale(0.6); opacity: 0.55; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+        @keyframes rd-dash {
+          to { stroke-dashoffset: -260; }
+        }
+        @keyframes rd-pulse-dot {
+          0%   { offset-distance: 0%;   opacity: 0; }
+          8%   { opacity: 1; }
+          92%  { opacity: 1; }
+          100% { offset-distance: 100%; opacity: 0; }
+        }
+        @keyframes rd-twinkle {
+          0%, 100% { opacity: 0.15; }
+          50%      { opacity: 0.55; }
+        }
+        .rd-orb-breath { transform-origin: center; transform-box: fill-box; animation: rd-breath 5.5s cubic-bezier(0.45,0,0.55,1) infinite; }
+        .rd-sonar      { transform-origin: center; transform-box: fill-box; animation: rd-sonar 3.6s cubic-bezier(0.22,1,0.36,1) infinite; }
+        .rd-dash       { animation: rd-dash 6s linear infinite; }
+        .rd-twinkle    { animation: rd-twinkle 3.2s ease-in-out infinite; }
+        .rd-pulse-dot  { animation: rd-pulse-dot 3.4s cubic-bezier(0.55,0,0.45,1) infinite; }
         .rd-nav-btn {
           transition: opacity 0.15s;
         }
@@ -395,71 +421,150 @@ export function LandingPage() {
                 </span>
               </div>
               {/* mockup SVG */}
-              <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: '#0F1210' }}>
-                <defs>
-                  <radialGradient id="heroHubGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.95" />
-                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.8" />
-                  </radialGradient>
-                  <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
-                  </radialGradient>
-                  <radialGradient id="hp1" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#25B439" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#1a6632" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp2" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp3" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp4" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#EC4899" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#9d174d" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp5" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#D97706" stopOpacity="0.6" />
-                  </radialGradient>
-                  <radialGradient id="hp6" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.75" />
-                    <stop offset="100%" stopColor="#059669" stopOpacity="0.5" />
-                  </radialGradient>
-                </defs>
-                {/* bg glow */}
-                <ellipse cx="420" cy="220" rx="220" ry="160" fill="url(#heroGlow)" />
-                {/* lines */}
-                <line x1="420" y1="220" x2="220" y2="100" stroke="#25B439" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="620" y2="100" stroke="#7C3AED" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="640" y2="300" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="200" y2="330" stroke="#EC4899" strokeWidth="1.5" opacity="0.2" />
-                <line x1="420" y1="220" x2="130" y2="220" stroke="#F59E0B" strokeWidth="1.5" opacity="0.15" />
-                <line x1="420" y1="220" x2="560" y2="380" stroke="#10B981" strokeWidth="1.5" opacity="0.15" />
-                {/* hub */}
-                <circle cx="420" cy="220" r="58" fill="url(#heroHubGrad)" />
-                <circle cx="420" cy="220" r="64" stroke="#25B439" strokeWidth="2" opacity="0.25" fill="none" />
-                <text x="420" y="215" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="system-ui">RealDeal</text>
-                <text x="420" y="232" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="11" fontFamily="system-ui">Score: 81</text>
-                {/* pods */}
-                <circle cx="220" cy="100" r="38" fill="url(#hp1)" />
-                <circle cx="220" cy="100" r="43" stroke="#25B439" strokeWidth="1.5" strokeDasharray="200 270" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="220" y="104" textAnchor="middle" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">LPs</text>
-                <circle cx="620" cy="100" r="32" fill="url(#hp2)" />
-                <circle cx="620" cy="100" r="37" stroke="#7C3AED" strokeWidth="1.5" strokeDasharray="155 233" strokeLinecap="round" fill="none" opacity="0.4" />
-                <text x="620" y="104" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Talent</text>
-                <circle cx="640" cy="300" r="35" fill="url(#hp3)" />
-                <text x="640" y="304" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Founders</text>
-                <circle cx="200" cy="330" r="30" fill="url(#hp4)" />
-                <text x="200" y="334" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="system-ui">Media</text>
-                <circle cx="130" cy="220" r="27" fill="url(#hp5)" />
-                <text x="130" y="224" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">VCs</text>
-                <circle cx="560" cy="380" r="25" fill="url(#hp6)" />
-                <text x="560" y="384" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="system-ui">Advisors</text>
-              </svg>
+              {(() => {
+                const HUB = { x: 420, y: 220 }
+                const PODS = [
+                  { id: 'lps',      label: 'LPs',       count: 24, x: 215, y: 96,  r: 46, color: '#25B439', shift: '#7CE28D', health: 0.92, state: 'Thriving', ring: '#25B439' },
+                  { id: 'talent',   label: 'Talent',    count: 38, x: 625, y: 92,  r: 40, color: '#7C3AED', shift: '#B794F6', health: 0.78, state: 'Steady',   ring: '#A78BFA' },
+                  { id: 'founders', label: 'Founders',  count: 52, x: 648, y: 300, r: 44, color: '#0EA5E9', shift: '#7DD3FC', health: 0.88, state: 'Thriving', ring: '#38BDF8' },
+                  { id: 'media',    label: 'Media',     count: 17, x: 196, y: 332, r: 36, color: '#EC4899', shift: '#F9A8D4', health: 0.42, state: 'Cooling',  ring: '#F472B6' },
+                  { id: 'vcs',      label: 'VCs',       count: 19, x: 112, y: 218, r: 34, color: '#F59E0B', shift: '#FCD34D', health: 0.65, state: 'Steady',   ring: '#FBBF24' },
+                  { id: 'advisors', label: 'Advisors',  count: 11, x: 556, y: 386, r: 30, color: '#10B981', shift: '#6EE7B7', health: 0.3,  state: 'Cooling',  ring: '#34D399' },
+                ]
+                const trim = (x1: number, y1: number, x2: number, y2: number, startPad: number, endPad: number) => {
+                  const dx = x2 - x1, dy = y2 - y1
+                  const d = Math.hypot(dx, dy)
+                  const ux = dx / d, uy = dy / d
+                  return { x1: x1 + ux * startPad, y1: y1 + uy * startPad, x2: x2 - ux * endPad, y2: y2 - uy * endPad }
+                }
+                return (
+                <svg viewBox="0 0 840 440" fill="none" style={{ display: 'block', width: '100%', background: 'radial-gradient(ellipse at 50% 45%, #0F1810 0%, #080A09 70%)' }}>
+                  <defs>
+                    <radialGradient id="heroAtmo" cx="50%" cy="48%" r="55%">
+                      <stop offset="0%" stopColor="#25B439" stopOpacity="0.22" />
+                      <stop offset="55%" stopColor="#25B439" stopOpacity="0.05" />
+                      <stop offset="100%" stopColor="#25B439" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="heroHubGrad" cx="35%" cy="30%" r="75%">
+                      <stop offset="0%"  stopColor="#9EF2AE" stopOpacity="1" />
+                      <stop offset="45%" stopColor="#25B439" stopOpacity="1" />
+                      <stop offset="100%" stopColor="#0B4A1C" stopOpacity="1" />
+                    </radialGradient>
+                    <radialGradient id="heroHubSpec" cx="35%" cy="25%" r="40%">
+                      <stop offset="0%" stopColor="#fff" stopOpacity="0.55" />
+                      <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                    </radialGradient>
+                    {PODS.map(p => (
+                      <radialGradient key={`g-${p.id}`} id={`hp-${p.id}`} cx="32%" cy="28%" r="80%">
+                        <stop offset="0%"  stopColor={p.shift} stopOpacity="1" />
+                        <stop offset="55%" stopColor={p.color} stopOpacity="1" />
+                        <stop offset="100%" stopColor="#000" stopOpacity="0.55" />
+                      </radialGradient>
+                    ))}
+                    {PODS.map(p => (
+                      <radialGradient key={`s-${p.id}`} id={`hps-${p.id}`} cx="32%" cy="22%" r="40%">
+                        <stop offset="0%" stopColor="#fff" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                      </radialGradient>
+                    ))}
+                    {PODS.map(p => {
+                      const t = trim(HUB.x, HUB.y, p.x, p.y, 68, p.r + 6)
+                      return (
+                        <linearGradient key={`l-${p.id}`} id={`ln-${p.id}`} gradientUnits="userSpaceOnUse" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}>
+                          <stop offset="0%"  stopColor="#25B439" stopOpacity="0.65" />
+                          <stop offset="100%" stopColor={p.color} stopOpacity="0.9" />
+                        </linearGradient>
+                      )
+                    })}
+                    <filter id="heroGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="6" />
+                    </filter>
+                  </defs>
+
+                  {/* atmospheric wash */}
+                  <rect x="0" y="0" width="840" height="440" fill="url(#heroAtmo)" />
+
+                  {/* starfield */}
+                  {[
+                    [64,48],[780,60],[88,378],[760,380],[420,40],[420,410],[150,160],[690,165],
+                    [140,280],[700,280],[330,50],[520,48],[330,400],[520,402],[40,220],[800,220],
+                  ].map(([x,y], i) => (
+                    <circle key={`st-${i}`} cx={x} cy={y} r={i % 3 === 0 ? 1.6 : 1} fill="#C3F8CE" opacity="0.22" className="rd-twinkle" style={{ animationDelay: `${(i % 5) * 0.4}s` }} />
+                  ))}
+
+                  {/* faint orbit rings */}
+                  <circle cx={HUB.x} cy={HUB.y} r="128" stroke="#25B439" strokeOpacity="0.08" strokeWidth="1" strokeDasharray="2 6" fill="none" />
+                  <circle cx={HUB.x} cy={HUB.y} r="186" stroke="#25B439" strokeOpacity="0.06" strokeWidth="1" strokeDasharray="2 6" fill="none" />
+
+                  {/* connection lines with travelling pulses */}
+                  {PODS.map(p => {
+                    const t = trim(HUB.x, HUB.y, p.x, p.y, 68, p.r + 6)
+                    const path = `M ${t.x1} ${t.y1} L ${t.x2} ${t.y2}`
+                    return (
+                      <g key={`edge-${p.id}`}>
+                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={`url(#ln-${p.id})`} strokeWidth="1.4" strokeLinecap="round" />
+                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={p.color} strokeWidth="0.8" strokeOpacity="0.35" strokeDasharray="2 10" strokeLinecap="round" className="rd-dash" />
+                        <circle r="2.4" fill={p.shift} className="rd-pulse-dot" style={{ offsetPath: `path('${path}')`, animationDelay: `${(PODS.indexOf(p)) * 0.45}s` }}>
+                          <animate attributeName="r" values="2;3.2;2" dur="3.4s" repeatCount="indefinite" />
+                        </circle>
+                      </g>
+                    )
+                  })}
+
+                  {/* hub sonar */}
+                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.5" className="rd-sonar" />
+                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.4" className="rd-sonar" style={{ animationDelay: '1.2s' }} />
+                  <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#25B439" strokeWidth="1.5" fill="none" opacity="0.3" className="rd-sonar" style={{ animationDelay: '2.4s' }} />
+
+                  {/* hub halo */}
+                  <circle cx={HUB.x} cy={HUB.y} r="110" fill="#25B439" opacity="0.18" filter="url(#heroGlow)" />
+
+                  {/* hub orb */}
+                  <g className="rd-orb-breath">
+                    <circle cx={HUB.x} cy={HUB.y} r="62" fill="url(#heroHubGrad)" />
+                    <circle cx={HUB.x} cy={HUB.y} r="62" fill="url(#heroHubSpec)" />
+                    <circle cx={HUB.x} cy={HUB.y} r="62" stroke="#fff" strokeOpacity="0.14" strokeWidth="1" fill="none" />
+                    {/* health ring - full thriving */}
+                    <circle cx={HUB.x} cy={HUB.y} r="72" stroke="#25B439" strokeOpacity="0.45" strokeWidth="2.5" strokeLinecap="round" strokeDasharray={`${0.94 * 2 * Math.PI * 72} ${2 * Math.PI * 72}`} transform={`rotate(-90 ${HUB.x} ${HUB.y})`} fill="none" />
+                  </g>
+
+                  {/* hub readout */}
+                  <text x={HUB.x} y={HUB.y - 6} textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="9" fontWeight="600" letterSpacing="2.5" fontFamily="var(--font-sans)">NETWORK</text>
+                  <text x={HUB.x} y={HUB.y + 18} textAnchor="middle" fill="#fff" fontSize="30" fontWeight="800" letterSpacing="-1" fontFamily="var(--font-sans)" fontStyle="italic">81</text>
+                  <text x={HUB.x} y={HUB.y + 34} textAnchor="middle" fill="#9EF2AE" fontSize="8" fontWeight="700" letterSpacing="2" fontFamily="var(--font-sans)">THRIVING</text>
+
+                  {/* pods */}
+                  {PODS.map((p, i) => {
+                    const ringR = p.r + 7
+                    const circ = 2 * Math.PI * ringR
+                    const labelOffset = p.r + 22
+                    const isTopHalf = p.y < HUB.y
+                    const labelY = p.y + (isTopHalf ? -labelOffset : labelOffset)
+                    return (
+                      <g key={p.id}>
+                        {/* halo */}
+                        <circle cx={p.x} cy={p.y} r={p.r + 26} fill={p.color} opacity="0.14" filter="url(#heroGlow)" />
+                        {/* health ring track */}
+                        <circle cx={p.x} cy={p.y} r={ringR} stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none" />
+                        {/* health ring fill */}
+                        <circle cx={p.x} cy={p.y} r={ringR} stroke={p.ring} strokeOpacity="0.95" strokeWidth="2.25" strokeLinecap="round" strokeDasharray={`${p.health * circ} ${circ}`} transform={`rotate(-90 ${p.x} ${p.y})`} fill="none" />
+                        {/* orb */}
+                        <g className="rd-orb-breath" style={{ animationDelay: `${i * 0.35}s` }}>
+                          <circle cx={p.x} cy={p.y} r={p.r} fill={`url(#hp-${p.id})`} />
+                          <circle cx={p.x} cy={p.y} r={p.r} fill={`url(#hps-${p.id})`} />
+                          <circle cx={p.x} cy={p.y} r={p.r} stroke="#fff" strokeOpacity="0.12" strokeWidth="1" fill="none" />
+                        </g>
+                        {/* count inside */}
+                        <text x={p.x} y={p.y + 5} textAnchor="middle" fill="#fff" fontSize={p.r >= 40 ? 20 : 16} fontWeight="800" letterSpacing="-0.5" fontFamily="var(--font-sans)" fontStyle="italic">{p.count}</text>
+                        {/* label outside */}
+                        <text x={p.x} y={labelY} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700" letterSpacing="-0.2" fontFamily="var(--font-sans)">{p.label}</text>
+                        <text x={p.x} y={labelY + 13} textAnchor="middle" fill={p.ring} fillOpacity="0.85" fontSize="9" fontWeight="700" letterSpacing="1.5" fontFamily="var(--font-sans)">{p.state.toUpperCase()}</text>
+                      </g>
+                    )
+                  })}
+                </svg>
+                )
+              })()}
             </div>
           </div>
         </div>
