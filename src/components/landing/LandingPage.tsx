@@ -25,6 +25,159 @@ import moonpayLogo from '@/assets/logos/moonpay.png'
 import forerunnerLogo from '@/assets/logos/forerunner.png'
 import wonderLogo from '@/assets/logos/wonder.png'
 
+type PodHealth = 'thriving' | 'steady' | 'cooling' | 'fading'
+interface NetworkPod {
+  id: string
+  label: string
+  people: number
+  health: PodHealth
+  color: string
+  x: number
+  y: number
+  r: number
+  icon: 'heart' | 'users' | 'sparkles' | 'compass' | 'trending' | 'briefcase' | 'book' | 'handshake'
+}
+
+const NETWORK_PODS: NetworkPod[] = [
+  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#25B439', x: 230, y: 420, r: 62, icon: 'users' },
+  { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF6B8A', x: 260, y: 180, r: 58, icon: 'heart' },
+  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#7E57C2', x: 680, y: 180, r: 50, icon: 'sparkles' },
+  { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00BFA5', x: 660, y: 380, r: 48, icon: 'compass' },
+  { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 500, y: 110, r: 40, icon: 'briefcase' },
+  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#F5A623', x: 140, y: 290, r: 42, icon: 'trending' },
+  { id: 'biz',       label: 'Business Partners', people: 4,  health: 'fading',   color: '#E53935', x: 360, y: 510, r: 36, icon: 'handshake' },
+  { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FF6B8A', x: 790, y: 120, r: 38, icon: 'book' },
+]
+
+const HEALTH_SATURATION: Record<PodHealth, number> = {
+  thriving: 1,
+  steady: 0.92,
+  cooling: 0.55,
+  fading: 0.4,
+}
+
+function PodIcon({ kind, size = 18 }: { kind: NetworkPod['icon']; size?: number }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  switch (kind) {
+    case 'heart':     return <svg {...common}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+    case 'users':     return <svg {...common}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+    case 'sparkles':  return <svg {...common}><path d="M12 3L9.5 9.5 3 12l6.5 2.5L12 21l2.5-6.5L21 12l-6.5-2.5z" /></svg>
+    case 'compass':   return <svg {...common}><circle cx="12" cy="12" r="10" /><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" /></svg>
+    case 'trending':  return <svg {...common}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+    case 'briefcase': return <svg {...common}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>
+    case 'book':      return <svg {...common}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+    case 'handshake': return <svg {...common}><path d="M11 17l2-2 2 2 3-3-2-2-3 3-2-2M5 11l7 7 7-7-7-7z" /></svg>
+  }
+}
+
+function NetworkMap() {
+  const [hovered, setHovered] = useState<string | null>(null)
+  const W = 900
+  const H = 560
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', width: '100%' }}>
+        <defs>
+          <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="18" />
+          </filter>
+          <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.20" />
+            <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
+          </radialGradient>
+          {NETWORK_PODS.map(p => (
+            <radialGradient key={p.id} id={`nm-orb-${p.id}`} cx="32%" cy="28%" r="75%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+              <stop offset="18%" stopColor={p.color} stopOpacity="0.98" />
+              <stop offset="100%" stopColor={p.color} stopOpacity="0.85" />
+            </radialGradient>
+          ))}
+          <radialGradient id="nm-orb-shadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#000" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#000" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Atmospheric halo behind hub */}
+        <ellipse cx={450} cy={280} rx={340} ry={230} fill="url(#nm-halo)" filter="url(#nm-blur)" />
+
+        {/* HUB */}
+        <circle cx={450} cy={280} r={10} fill="#003DA5" />
+        <circle cx={450} cy={280} r={22} stroke="#003DA5" strokeOpacity="0.25" strokeWidth="1" fill="none" />
+
+        {/* HUB LABEL */}
+        <g fontFamily="var(--font-serif), Georgia, serif">
+          <text x={450} y={228} textAnchor="middle" fill="#6F675F" fontSize="10" fontFamily="var(--font-sans), system-ui" letterSpacing="0.18em" fontWeight="600">MY NETWORK</text>
+          <text x={450} y={256} textAnchor="middle" fill="#201D1A" fontSize="26" fontWeight="600" letterSpacing="-0.02em">Score 81</text>
+          <text x={450} y={316} textAnchor="middle" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em" fontStyle="italic">steady</text>
+        </g>
+
+        {/* PODS */}
+        {NETWORK_PODS.map(p => {
+          const sat = HEALTH_SATURATION[p.health]
+          const isHovered = hovered === p.id
+          return (
+            <g
+              key={p.id}
+              style={{ cursor: 'pointer', transition: 'opacity 0.2s ease' }}
+              opacity={sat}
+              onMouseEnter={() => setHovered(p.id)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* soft drop shadow */}
+              <ellipse cx={p.x + 2} cy={p.y + p.r * 0.35} rx={p.r * 0.9} ry={p.r * 0.28} fill="url(#nm-orb-shadow)" />
+              {/* solid spherical orb */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={p.r}
+                fill={`url(#nm-orb-${p.id})`}
+                style={{ transition: 'transform 0.25s ease', transformOrigin: `${p.x}px ${p.y}px`, transform: isHovered ? 'scale(1.06)' : 'scale(1)' }}
+              />
+              {/* highlight ring */}
+              <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
+              {/* icon at center */}
+              <g transform={`translate(${p.x - 11} ${p.y - 11})`} color="#ffffff" style={{ pointerEvents: 'none' }}>
+                <PodIcon kind={p.icon} size={22} />
+              </g>
+            </g>
+          )
+        })}
+      </svg>
+
+      {/* Hover tooltip */}
+      {hovered && (() => {
+        const p = NETWORK_PODS.find(x => x.id === hovered)
+        if (!p) return null
+        const leftPct = (p.x / W) * 100
+        const topPct = ((p.y - p.r - 18) / H) * 100
+        return (
+          <div style={{
+            position: 'absolute',
+            left: `${leftPct}%`, top: `${topPct}%`,
+            transform: 'translate(-50%, -100%)',
+            background: '#201D1A', color: '#F5F4F0',
+            padding: '10px 14px', borderRadius: 10,
+            fontSize: 13, fontFamily: 'var(--font-sans)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.18)',
+            pointerEvents: 'none', whiteSpace: 'nowrap',
+            zIndex: 3,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color }} />
+              <strong style={{ fontWeight: 600 }}>{p.label}</strong>
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.72, letterSpacing: '0.01em' }}>
+              {p.people} people - {p.health}
+            </div>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
 function useInView(threshold = 0.12): [RefObject<HTMLElement | null>, boolean] {
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
@@ -487,115 +640,7 @@ export function LandingPage() {
               maxWidth: 900, margin: '0 auto',
               animation: 'rd-float 8s ease-in-out infinite',
             }}>
-              <svg viewBox="0 0 900 560" fill="none" style={{ display: 'block', width: '100%' }}>
-                <defs>
-                  <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="14" />
-                  </filter>
-                  <filter id="nm-blur-soft" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="6" />
-                  </filter>
-                  <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#003DA5" stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-
-                {/* atmospheric halo behind hub */}
-                <ellipse cx="450" cy="280" rx="320" ry="220" fill="url(#nm-halo)" filter="url(#nm-blur)" />
-
-                {/*
-                  ORB GEOMETRY ENCODES DATA:
-                  - radius: 32 + people * 2.5  (Friends 14 -> 67, Mentors 3 -> 40)
-                  - distance from hub: thriving 150-180, steady 210-250, cooling 290-320, fading 340
-                  - saturation: thriving 0.6, steady 0.5, cooling 0.35, fading 0.25
-                  Rendered back to front (fading first, thriving last).
-                */}
-
-                {/* FADING: Business Partners - small, far, very pale */}
-                <circle cx="360" cy="510" r="40" fill="#E53935" opacity="0.22" filter="url(#nm-blur)" />
-                <circle cx="360" cy="510" r="12" fill="#E53935" opacity="0.45" filter="url(#nm-blur-soft)" />
-
-                {/* COOLING: Mentors - small, far, muted coral */}
-                <circle cx="790" cy="120" r="40" fill="#FF6B8A" opacity="0.3" filter="url(#nm-blur)" />
-                <circle cx="790" cy="120" r="12" fill="#FF6B8A" opacity="0.5" filter="url(#nm-blur-soft)" />
-
-                {/* STEADY: Investors - 5 ppl, medium distance */}
-                <circle cx="140" cy="290" r="44" fill="#F5A623" opacity="0.45" filter="url(#nm-blur)" />
-                <circle cx="140" cy="290" r="14" fill="#F5A623" opacity="0.65" filter="url(#nm-blur-soft)" />
-
-                {/* STEADY: Founders - 7 ppl */}
-                <circle cx="660" cy="380" r="50" fill="#00BFA5" opacity="0.45" filter="url(#nm-blur)" />
-                <circle cx="660" cy="380" r="16" fill="#00BFA5" opacity="0.65" filter="url(#nm-blur-soft)" />
-
-                {/* STEADY: Creatives - 8 ppl */}
-                <circle cx="680" cy="180" r="52" fill="#7E57C2" opacity="0.48" filter="url(#nm-blur)" />
-                <circle cx="680" cy="180" r="17" fill="#7E57C2" opacity="0.68" filter="url(#nm-blur-soft)" />
-
-                {/* STEADY: Work - small cluster */}
-                <circle cx="500" cy="110" r="36" fill="#003DA5" opacity="0.38" filter="url(#nm-blur)" />
-                <circle cx="500" cy="110" r="11" fill="#003DA5" opacity="0.58" filter="url(#nm-blur-soft)" />
-
-                {/* THRIVING: Family - 12 ppl, close */}
-                <circle cx="260" cy="180" r="62" fill="#FF6B8A" opacity="0.6" filter="url(#nm-blur)" />
-                <circle cx="260" cy="180" r="20" fill="#FF6B8A" opacity="0.8" filter="url(#nm-blur-soft)" />
-
-                {/* THRIVING: Friends - 14 ppl, closest, largest */}
-                <circle cx="230" cy="420" r="67" fill="#25B439" opacity="0.6" filter="url(#nm-blur)" />
-                <circle cx="230" cy="420" r="22" fill="#25B439" opacity="0.8" filter="url(#nm-blur-soft)" />
-
-                {/* HUB - solid Pantone 293 dot */}
-                <circle cx="450" cy="280" r="10" fill="#003DA5" />
-                <circle cx="450" cy="280" r="20" stroke="#003DA5" strokeOpacity="0.25" strokeWidth="1" fill="none" />
-
-                {/* LABELS */}
-                <g fontFamily="var(--font-serif), Georgia, serif" fontWeight="500">
-                  {/* HUB LABEL - editorial eyebrow + serif title above the dot */}
-                  <text x="450" y="228" textAnchor="middle" fill="#6F675F" fontSize="10" fontFamily="var(--font-sans), system-ui" letterSpacing="0.18em" fontWeight="600">MY NETWORK</text>
-                  <text x="450" y="256" textAnchor="middle" fill="#201D1A" fontSize="26" fontWeight="600" letterSpacing="-0.02em">Score 81</text>
-                  <text x="450" y="316" textAnchor="middle" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em" fontStyle="italic">steady</text>
-
-                  {/* Friends - thriving, biggest */}
-                  <circle cx="80" cy="500" r="3" fill="#25B439" />
-                  <text x="90" y="504" fill="#201D1A" fontSize="16">Friends</text>
-                  <text x="90" y="520" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">14 people - thriving</text>
-
-                  {/* Family - thriving */}
-                  <circle cx="255" cy="90" r="3" fill="#FF6B8A" />
-                  <text x="265" y="94" fill="#201D1A" fontSize="16">Family</text>
-                  <text x="265" y="110" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">12 people - thriving</text>
-
-                  {/* Creatives - steady */}
-                  <circle cx="640" cy="100" r="3" fill="#7E57C2" />
-                  <text x="650" y="104" fill="#201D1A" fontSize="15">Creatives</text>
-                  <text x="650" y="120" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">8 people - steady</text>
-
-                  {/* Founders - steady */}
-                  <circle cx="730" cy="470" r="3" fill="#00BFA5" />
-                  <text x="740" y="474" fill="#201D1A" fontSize="15">Founders</text>
-                  <text x="740" y="490" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">7 people - steady</text>
-
-                  {/* Investors - steady */}
-                  <circle cx="40" cy="290" r="3" fill="#F5A623" />
-                  <text x="50" y="294" fill="#201D1A" fontSize="15">Investors</text>
-                  <text x="50" y="310" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui">5 people - steady</text>
-
-                  {/* Work - steady, compact label */}
-                  <circle cx="470" cy="52" r="3" fill="#003DA5" />
-                  <text x="480" y="56" fill="#201D1A" fontSize="14">Work</text>
-                  <text x="480" y="70" fill="#6F675F" fontSize="10" fontFamily="var(--font-sans), system-ui">6 people - steady</text>
-
-                  {/* Mentors - cooling, italic, muted */}
-                  <circle cx="768" cy="52" r="3" fill="#FF6B8A" opacity="0.55" />
-                  <text x="778" y="56" fill="#6F675F" fontSize="13" fontStyle="italic">Mentors</text>
-                  <text x="778" y="70" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">3 people - cooling</text>
-
-                  {/* Business Partners - fading, italic, palest */}
-                  <circle cx="245" cy="536" r="3" fill="#E53935" opacity="0.4" />
-                  <text x="255" y="540" fill="#9C948A" fontSize="13" fontStyle="italic">Business Partners</text>
-                  <text x="255" y="554" fill="#B2AAA0" fontSize="10" fontFamily="var(--font-sans), system-ui">4 people - fading</text>
-                </g>
-              </svg>
+              <NetworkMap />
             </div>
           </div>
         </div>
@@ -634,9 +679,18 @@ export function LandingPage() {
           alignItems: 'start',
         }}>
           {[
-            { stat: '85+', label: 'Years of research', source: 'Harvard Study of Adult Development, running since 1938' },
-            { stat: '#1', label: 'Predictor of a happy life', source: 'Ahead of income, IQ, social class, genes - Dr. Robert Waldinger' },
-            { stat: '15', label: 'Cigarettes a day', source: 'Mortality risk of chronic loneliness, per the US Surgeon General (2023)' },
+            {
+              stat: '85+', label: 'Years of research',
+              source: <>Harvard Study of Adult Development, running since 1938. <a href="https://www.adultdevelopmentstudy.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#003DA5', textDecoration: 'underline', textUnderlineOffset: 2 }}>See the study -&gt;</a></>,
+            },
+            {
+              stat: '#1', label: 'Predictor of a happy life',
+              source: <>Ahead of income, IQ, social class, genes. <a href="https://www.ted.com/talks/robert_waldinger_what_makes_a_good_life_lessons_from_the_longest_study_on_happiness" target="_blank" rel="noopener noreferrer" style={{ color: '#003DA5', textDecoration: 'underline', textUnderlineOffset: 2 }}>Dr. Robert Waldinger, TED -&gt;</a></>,
+            },
+            {
+              stat: '15', label: 'Cigarettes a day',
+              source: <>Mortality risk of chronic loneliness. <a href="https://www.hhs.gov/sites/default/files/surgeon-general-social-connection-advisory.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#003DA5', textDecoration: 'underline', textUnderlineOffset: 2 }}>US Surgeon General, 2023 -&gt;</a></>,
+            },
           ].map((s) => (
             <div key={s.label} style={{ textAlign: 'left', borderTop: `1px solid ${t.border14}`, paddingTop: 24 }}>
               <div style={{
