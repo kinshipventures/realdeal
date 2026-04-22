@@ -441,44 +441,42 @@ export function LandingPage() {
             Your network, remembered.
           </h1>
 
-          <div style={{ maxWidth: 560, margin: '0 auto 52px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
+          <div style={{ maxWidth: 520, margin: '0 auto 32px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
             <p style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(17px, 1.6vw, 20px)',
+              fontSize: 'clamp(16px, 1.4vw, 19px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg, margin: '0 0 14px',
+              color: t.fg, margin: '0 0 10px',
             }}>
               We got obsessed with food as medicine. Sleep as medicine. Movement as medicine.
             </p>
             <p style={{
               fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(17px, 1.6vw, 20px)',
+              fontSize: 'clamp(16px, 1.4vw, 19px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg45, margin: '0 0 32px',
+              color: t.fg45, margin: '0 0 20px',
               fontStyle: 'italic',
             }}>
               And then we completely forgot about the thing that actually keeps us alive.
             </p>
 
             <div style={{
-              display: 'inline-block',
               borderTop: `1px solid ${t.border14}`,
-              borderBottom: `1px solid ${t.border14}`,
-              padding: '20px 0',
-              maxWidth: 480,
+              padding: '18px 0 0',
+              maxWidth: 460,
+              margin: '0 auto',
             }}>
               <p style={{
                 fontFamily: 'var(--font-sans)',
-                fontSize: 'clamp(16px, 1.5vw, 19px)',
-                fontWeight: 500, letterSpacing: '-0.005em', lineHeight: 1.4,
-                color: t.fg, margin: '0 0 6px',
+                fontSize: 'clamp(15px, 1.35vw, 18px)',
+                fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4,
+                color: t.fg, margin: '0 0 4px',
               }}>
                 Real Deal isn't a network. It's a prescription.
               </p>
               <p style={{
                 fontSize: 13, lineHeight: 1.5,
                 color: t.fg45, margin: 0,
-                letterSpacing: '0.01em',
               }}>
                 Curated for your nervous system. Built for your life.
               </p>
@@ -486,7 +484,7 @@ export function LandingPage() {
           </div>
 
           <div style={{
-            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72,
+            display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56,
             ...reveal(heroVisible, 0.2),
           }}>
             <button
@@ -634,6 +632,67 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Science / evidence band */}
+      <section
+        style={{
+          maxWidth: 1100, margin: '0 auto', padding: '40px 40px 96px',
+        }}
+      >
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 20, marginBottom: 56, justifyContent: 'center',
+        }}>
+          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
+          <span style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.22em',
+            textTransform: 'uppercase', color: t.fg45,
+          }}>The science</span>
+          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
+        </div>
+
+        <p style={{
+          fontSize: 'clamp(26px, 3.5vw, 40px)',
+          fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.25,
+          color: t.fg, margin: '0 auto 72px', textAlign: 'center', maxWidth: 720,
+          fontFamily: 'var(--font-serif)',
+        }}>
+          The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#003DA5', fontStyle: 'italic' }}>close relationships</em>.
+        </p>
+
+        <div className="rd-stats-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 48,
+          alignItems: 'start',
+        }}>
+          {[
+            { stat: '85+', label: 'Years of research', source: 'Harvard Study of Adult Development, running since 1938' },
+            { stat: '#1', label: 'Predictor of a happy life', source: 'Ahead of income, IQ, social class, genes - Dr. Robert Waldinger' },
+            { stat: '15', label: 'Cigarettes a day', source: 'Mortality risk of chronic loneliness, per the US Surgeon General (2023)' },
+          ].map((s) => (
+            <div key={s.label} style={{ textAlign: 'left', borderTop: `1px solid ${t.border14}`, paddingTop: 24 }}>
+              <div style={{
+                fontFamily: 'var(--font-serif)', fontWeight: 400,
+                fontSize: 'clamp(52px, 6vw, 80px)', lineHeight: 1,
+                letterSpacing: '-0.03em', color: t.fg, marginBottom: 16,
+              }}>
+                {s.stat}
+              </div>
+              <div style={{
+                fontSize: 15, fontWeight: 600, color: t.fg,
+                marginBottom: 8, letterSpacing: '-0.005em',
+              }}>
+                {s.label}
+              </div>
+              <div style={{
+                fontSize: 13, lineHeight: 1.55, color: t.fg45,
+              }}>
+                {s.source}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Logo ticker */}
       <div style={{ padding: '40px 0 56px', overflow: 'hidden' }}>
         <div style={{
@@ -700,68 +759,6 @@ export function LandingPage() {
           ))}
         </div>
       </div>
-
-      {/* Science / evidence band */}
-      <section
-        style={{
-          maxWidth: 1100, margin: '0 auto', padding: '40px 40px 112px',
-        }}
-      >
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 20, marginBottom: 56, justifyContent: 'center',
-        }}>
-          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
-          <span style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: '0.22em',
-            textTransform: 'uppercase', color: t.fg45,
-          }}>The science</span>
-          <div style={{ flex: 1, maxWidth: 120, height: 1, background: t.border14 }} />
-        </div>
-
-        <p style={{
-          fontSize: 'clamp(26px, 3.5vw, 40px)',
-          fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.25,
-          color: t.fg, margin: '0 auto 72px', textAlign: 'center', maxWidth: 720,
-          fontFamily: 'var(--font-serif)',
-        }}>
-          The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#003DA5', fontStyle: 'italic' }}>close relationships</em>.
-        </p>
-
-        <div className="rd-stats-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 48,
-          alignItems: 'start',
-        }}>
-          {[
-            { stat: '85+', label: 'Years of research', source: 'Harvard Study of Adult Development, running since 1938' },
-            { stat: '#1', label: 'Predictor of a happy life', source: 'Ahead of income, IQ, social class, genes - Dr. Robert Waldinger' },
-            { stat: '15', label: 'Cigarettes a day', source: 'Mortality risk of chronic loneliness, per the US Surgeon General (2023)' },
-          ].map((s) => (
-            <div key={s.label} style={{ textAlign: 'left', borderTop: `1px solid ${t.border14}`, paddingTop: 24 }}>
-              <div style={{
-                fontFamily: 'var(--font-serif)', fontWeight: 400,
-                fontSize: 'clamp(52px, 6vw, 80px)', lineHeight: 1,
-                letterSpacing: '-0.03em', color: t.fg, marginBottom: 16,
-              }}>
-                {s.stat}
-              </div>
-              <div style={{
-                fontSize: 15, fontWeight: 600, color: t.fg,
-                marginBottom: 8, letterSpacing: '-0.005em',
-              }}>
-                {s.label}
-              </div>
-              <div style={{
-                fontSize: 13, lineHeight: 1.55, color: t.fg45,
-              }}>
-                {s.source}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
 
       {/* Feature sections - editorial alternating */}
       <div className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 40px 120px' }}>
