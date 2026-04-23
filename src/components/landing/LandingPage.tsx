@@ -604,21 +604,14 @@ export function LandingPage() {
               We need to remember that <em style={{ fontStyle: 'italic', color: '#003DA5' }}>your people are also medicine</em>.
             </p>
 
-            <div style={{
-              borderTop: `1px solid ${t.border14}`,
-              padding: '24px 0 0',
-              maxWidth: 500,
-              margin: '0 auto',
+            <p style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(17px, 1.45vw, 20px)',
+              fontWeight: 400, fontStyle: 'italic', letterSpacing: '-0.005em', lineHeight: 1.55,
+              color: '#003DA5', margin: 0,
             }}>
-              <p style={{
-                fontFamily: 'var(--font-sans)',
-                fontSize: 'clamp(15px, 1.35vw, 18px)',
-                fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4,
-                color: t.fg, margin: 0,
-              }}>
-                Real Deal isn't a CRM or a network, it's your relationship pharmacy.
-              </p>
-            </div>
+              Real Deal isn't a CRM or a network, it's your relationship pharmacy.
+            </p>
           </div>
 
           {/* Product screenshot / mockup */}
