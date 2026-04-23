@@ -410,48 +410,87 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
   const v = visible ?? false
   // Inner Circle connects to FocusPanel story: Sarah is overdue, dragging the pod
   const rows = [
-    { pod: 'Inner Circle', cadence: 'Weekly cadence',    status: 'Overdue 6 days', color: '#DC2626', pct: 0.98, people: '1 overdue',   action: 'Reach out' },
-    { pod: 'LPs Pod',      cadence: 'Monthly cadence',   status: 'Overdue 3 days', color: '#D97706', pct: 0.72, people: '5 members',   action: 'Schedule'  },
-    { pod: 'Founders Pod', cadence: 'Biweekly cadence',  status: 'Due in 4 days',  color: '#6366F1', pct: 0.42, people: '7 members',   action: 'On track'  },
+    { pod: 'Inner Circle', cadence: 'Weekly cadence',   status: 'overdue', days: 6, color: '#D65A4A', pct: 0.98, people: '1 overdue', action: 'Reach out' },
+    { pod: 'LPs Pod',      cadence: 'Monthly cadence',  status: 'overdue', days: 3, color: '#E3A63A', pct: 0.72, people: '5 members', action: 'Schedule'  },
+    { pod: 'Founders Pod', cadence: 'Biweekly cadence', status: 'due in',  days: 4, color: '#5B79FF', pct: 0.42, people: '7 members', action: 'On track'  },
   ]
   return (
     <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
-      {/* header - consistent with FocusPanel + PodHealthCard */}
-      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Needs Attention</div>
-        <div style={{ fontSize: 11, color: t.fg45 }}>sorted by urgency</div>
+      {/* header - editorial weight */}
+      <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em' }}>Needs Attention</div>
+        <div style={{ fontSize: 10, fontWeight: 600, color: t.fg45, textTransform: 'uppercase', letterSpacing: '0.14em' }}>sorted by urgency</div>
       </div>
-      <div style={{ padding: '10px 0' }}>
-        {rows.map((r, i) => (
-          <div key={r.pod} style={{
-            padding: '14px 18px',
-            background: i === 0 ? (t.dark ? 'rgba(220,38,38,0.05)' : 'rgba(220,38,38,0.025)') : 'transparent',
-            borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
-            opacity: v ? 1 : 0,
-            transform: v ? 'translateY(0)' : 'translateY(8px)',
-            transition: `opacity 0.4s ease ${0.08 + i * 0.09}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.09}s`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: t.fg, letterSpacing: '-0.005em' }}>{r.pod}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: r.color, fontVariantNumeric: 'tabular-nums' }}>{r.status}</div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: t.fg50, marginBottom: 9 }}>
-              <span>{r.cadence} - {r.people}</span>
-              <span style={{ color: r.color, fontWeight: 600 }}>{r.action} -&gt;</span>
-            </div>
-            {/* scaleX animation - compositor-safe, no layout change */}
-            <div style={{ position: 'relative', height: 5, borderRadius: 3, background: t.fg08, overflow: 'hidden' }}>
+      <div>
+        {rows.map((r, i) => {
+          const isTop = i === 0
+          return (
+            <div key={r.pod} style={{
+              position: 'relative',
+              padding: isTop ? '20px 20px 20px 24px' : '18px 20px',
+              background: isTop ? (t.dark ? 'rgba(214,90,74,0.08)' : 'rgba(214,90,74,0.04)') : 'transparent',
+              borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
+              opacity: v ? 1 : 0,
+              transform: v ? 'translateY(0)' : 'translateY(8px)',
+              transition: `opacity 0.4s ease ${0.08 + i * 0.09}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.09}s`,
+            }}>
+              {/* urgency accent stripe on top row */}
+              {isTop && (
+                <span aria-hidden style={{
+                  position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+                  background: r.color,
+                }} />
+              )}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: isTop ? 20 : 17,
+                    fontWeight: 600,
+                    color: t.fg,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.1,
+                  }}>{r.pod}</div>
+                  <div style={{ fontSize: 12, color: t.fg50, marginTop: 4, letterSpacing: '0.005em' }}>
+                    {r.cadence} - {r.people}
+                  </div>
+                </div>
+                {/* big-number status, editorial metric style */}
+                <div style={{ textAlign: 'right', flexShrink: 0, color: r.color, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 6, lineHeight: 1 }}>
+                    <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: isTop ? 34 : 28, letterSpacing: '-0.03em' }}>{r.days}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>d</span>
+                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: 4, opacity: 0.9 }}>
+                    {r.status}
+                  </div>
+                </div>
+              </div>
+              {/* progress bar - beefier, intentional */}
+              <div style={{ position: 'relative', height: 6, borderRadius: 4, background: t.fg08, overflow: 'hidden' }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: r.color,
+                  borderRadius: 4,
+                  transformOrigin: 'left',
+                  transform: v ? `scaleX(${r.pct})` : 'scaleX(0)',
+                  transition: `transform 0.7s cubic-bezier(0.22,1,0.36,1) ${0.18 + i * 0.1}s`,
+                }} />
+              </div>
+              {/* action row - small but present */}
               <div style={{
-                position: 'absolute', inset: 0,
-                background: r.color,
-                borderRadius: 3,
-                transformOrigin: 'left',
-                transform: v ? `scaleX(${r.pct})` : 'scaleX(0)',
-                transition: `transform 0.7s cubic-bezier(0.22,1,0.36,1) ${0.18 + i * 0.1}s`,
-              }} />
+                marginTop: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                color: r.color,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+              }}>
+                {r.action} -&gt;
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
