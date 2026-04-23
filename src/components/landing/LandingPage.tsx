@@ -580,13 +580,13 @@ export function LandingPage() {
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(44px, 6.2vw, 78px)',
             fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.02,
-            color: t.fg, margin: '0 auto 20px', maxWidth: 900,
+            color: t.fg, margin: '0 auto 32px', maxWidth: 900,
             ...reveal(heroVisible, 0),
           }}>
             Your network, remembered.
           </h1>
 
-          <div style={{ maxWidth: 560, margin: '0 auto 40px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
+          <div style={{ maxWidth: 600, margin: '0 auto 56px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
             <p style={{
               fontFamily: 'var(--font-serif)',
               fontSize: 'clamp(17px, 1.45vw, 20px)',
