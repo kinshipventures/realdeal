@@ -80,31 +80,42 @@ function NetworkMap() {
       <svg viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', width: '100%' }}>
         <defs>
           <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="18" />
+            <feGaussianBlur stdDeviation="22" />
+          </filter>
+          <filter id="nm-soft" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.2" />
           </filter>
           <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.20" />
+            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.18" />
             <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
           </radialGradient>
+          <radialGradient id="nm-cool-wash" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#EDEBFF" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#EDEBFF" stopOpacity="0" />
+          </radialGradient>
           {NETWORK_PODS.map(p => (
-            <radialGradient key={p.id} id={`nm-orb-${p.id}`} cx="32%" cy="28%" r="75%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-              <stop offset="18%" stopColor={p.color} stopOpacity="0.98" />
-              <stop offset="100%" stopColor={p.color} stopOpacity="0.85" />
+            <radialGradient key={p.id} id={`nm-orb-${p.id}`} cx="38%" cy="32%" r="75%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
+              <stop offset="30%" stopColor={p.color} stopOpacity="0.35" />
+              <stop offset="70%" stopColor={p.color} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={p.color} stopOpacity="0.08" />
             </radialGradient>
           ))}
           <radialGradient id="nm-orb-shadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#000" stopOpacity="0" />
+            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
           </radialGradient>
         </defs>
 
+        {/* cool ambient wash across the whole canvas */}
+        <rect x={0} y={0} width={W} height={H} fill="url(#nm-cool-wash)" />
+
         {/* Atmospheric halo behind hub */}
-        <ellipse cx={450} cy={280} rx={340} ry={230} fill="url(#nm-halo)" filter="url(#nm-blur)" />
+        <ellipse cx={450} cy={280} rx={380} ry={260} fill="url(#nm-halo)" filter="url(#nm-blur)" />
 
         {/* HUB */}
-        <circle cx={450} cy={280} r={10} fill="#003DA5" />
-        <circle cx={450} cy={280} r={22} stroke="#003DA5" strokeOpacity="0.25" strokeWidth="1" fill="none" />
+        <circle cx={450} cy={280} r={10} fill="#003DA5" opacity="0.75" />
+        <circle cx={450} cy={280} r={22} stroke="#003DA5" strokeOpacity="0.2" strokeWidth="1" fill="none" />
 
         {/* HUB LABEL */}
         <g fontFamily="var(--font-serif), Georgia, serif">
@@ -113,32 +124,36 @@ function NetworkMap() {
           <text x={450} y={316} textAnchor="middle" fill="#6F675F" fontSize="11" fontFamily="var(--font-sans), system-ui" letterSpacing="0.08em" fontStyle="italic">steady</text>
         </g>
 
-        {/* PODS */}
+        {/* PODS - translucent glass spheres */}
         {NETWORK_PODS.map(p => {
           const sat = HEALTH_SATURATION[p.health]
           const isHovered = hovered === p.id
           return (
             <g
               key={p.id}
-              style={{ cursor: 'pointer', transition: 'opacity 0.2s ease' }}
+              style={{ cursor: 'pointer', transition: 'opacity 0.25s ease' }}
               opacity={sat}
               onMouseEnter={() => setHovered(p.id)}
               onMouseLeave={() => setHovered(null)}
             >
-              {/* soft drop shadow */}
-              <ellipse cx={p.x + 2} cy={p.y + p.r * 0.35} rx={p.r * 0.9} ry={p.r * 0.28} fill="url(#nm-orb-shadow)" />
-              {/* solid spherical orb */}
+              {/* soft cool drop-shadow under orb */}
+              <ellipse cx={p.x} cy={p.y + p.r * 0.5} rx={p.r * 0.85} ry={p.r * 0.22} fill="url(#nm-orb-shadow)" filter="url(#nm-soft)" />
+              {/* ambient outer glow */}
+              <circle cx={p.x} cy={p.y} r={p.r * 1.25} fill={p.color} opacity="0.10" filter="url(#nm-soft)" />
+              {/* translucent glass orb */}
               <circle
                 cx={p.x}
                 cy={p.y}
                 r={p.r}
                 fill={`url(#nm-orb-${p.id})`}
-                style={{ transition: 'transform 0.25s ease', transformOrigin: `${p.x}px ${p.y}px`, transform: isHovered ? 'scale(1.06)' : 'scale(1)' }}
+                style={{ transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1)', transformOrigin: `${p.x}px ${p.y}px`, transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
               />
-              {/* highlight ring */}
-              <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
-              {/* icon at center */}
-              <g transform={`translate(${p.x - 11} ${p.y - 11})`} color="#ffffff" style={{ pointerEvents: 'none' }}>
+              {/* thin edge ring - cool shell blue */}
+              <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke={p.color} strokeOpacity="0.35" strokeWidth="0.5" />
+              {/* soft inner highlight ellipse (top-left) - glass reflection */}
+              <ellipse cx={p.x - p.r * 0.32} cy={p.y - p.r * 0.4} rx={p.r * 0.38} ry={p.r * 0.22} fill="#ffffff" opacity="0.45" filter="url(#nm-soft)" />
+              {/* icon at center, low-opacity pod color so it doesn't overpower the translucency */}
+              <g transform={`translate(${p.x - 11} ${p.y - 11})`} color={p.color} opacity="0.75" style={{ pointerEvents: 'none' }}>
                 <PodIcon kind={p.icon} size={22} />
               </g>
             </g>
