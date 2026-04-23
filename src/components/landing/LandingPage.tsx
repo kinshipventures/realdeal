@@ -406,6 +406,24 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
   )
 }
 
+function useCountUp(target: number, start: boolean, durationMs: number) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    if (!start) { setValue(0); return }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / durationMs)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setValue(Math.round(eased * target))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, start, durationMs])
+  return value
+}
+
 function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
   const v = visible ?? false
   // Inner Circle connects to FocusPanel story: Sarah is overdue, dragging the pod
@@ -414,8 +432,31 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
     { pod: 'LPs Pod',      cadence: 'Monthly cadence',  status: 'overdue', days: 3, color: '#E3A63A', pct: 0.72, people: '5 members', action: 'Schedule'  },
     { pod: 'Founders Pod', cadence: 'Biweekly cadence', status: 'due in',  days: 4, color: '#5B79FF', pct: 0.42, people: '7 members', action: 'On track'  },
   ]
+  const day0 = useCountUp(rows[0].days, v, 900)
+  const day1 = useCountUp(rows[1].days, v, 800)
+  const day2 = useCountUp(rows[2].days, v, 700)
+  const animatedDays = [day0, day1, day2]
   return (
     <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
+      <style>{`
+        @keyframes rd-urgent-pulse {
+          0%   { transform: scale(1); opacity: 0.9; }
+          70%  { transform: scale(2.2); opacity: 0; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes rd-bar-shimmer {
+          0%   { transform: translateX(-60%); }
+          100% { transform: translateX(260%); }
+        }
+        .rd-na-row { transition: background 260ms cubic-bezier(0.22,1,0.36,1); }
+        .rd-na-row:hover { background: rgba(0,0,0,0.015); }
+        .rd-na-row .rd-na-arrow { display: inline-block; transition: transform 220ms cubic-bezier(0.22,1,0.36,1); }
+        .rd-na-row:hover .rd-na-arrow { transform: translateX(4px); }
+        .rd-na-urgent:hover { background: rgba(214,90,74,0.07) !important; }
+        @media (prefers-reduced-motion: reduce) {
+          .rd-na-urgent-dot, .rd-na-bar-shimmer { animation: none !important; }
+        }
+      `}</style>
       {/* header - editorial weight */}
       <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em' }}>Needs Attention</div>
@@ -424,16 +465,21 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
       <div>
         {rows.map((r, i) => {
           const isTop = i === 0
+          const isOverdue = r.status === 'overdue'
           return (
-            <div key={r.pod} style={{
-              position: 'relative',
-              padding: isTop ? '20px 20px 20px 24px' : '18px 20px',
-              background: isTop ? (t.dark ? 'rgba(214,90,74,0.08)' : 'rgba(214,90,74,0.04)') : 'transparent',
-              borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
-              opacity: v ? 1 : 0,
-              transform: v ? 'translateY(0)' : 'translateY(8px)',
-              transition: `opacity 0.4s ease ${0.08 + i * 0.09}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.09}s`,
-            }}>
+            <div
+              key={r.pod}
+              className={`rd-na-row ${isTop ? 'rd-na-urgent' : ''}`}
+              style={{
+                position: 'relative',
+                padding: isTop ? '20px 20px 20px 24px' : '18px 20px',
+                background: isTop ? (t.dark ? 'rgba(214,90,74,0.08)' : 'rgba(214,90,74,0.04)') : 'transparent',
+                borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
+                opacity: v ? 1 : 0,
+                transform: v ? 'translateY(0)' : 'translateY(8px)',
+                transition: `opacity 0.4s ease ${0.08 + i * 0.09}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.09}s, background 260ms cubic-bezier(0.22,1,0.36,1)`,
+              }}
+            >
               {/* urgency accent stripe on top row */}
               {isTop && (
                 <span aria-hidden style={{
@@ -458,10 +504,25 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
                 {/* big-number status, editorial metric style */}
                 <div style={{ textAlign: 'right', flexShrink: 0, color: r.color, fontVariantNumeric: 'tabular-nums' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 6, lineHeight: 1 }}>
-                    <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: isTop ? 34 : 28, letterSpacing: '-0.03em' }}>{r.days}</span>
+                    <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: isTop ? 34 : 28, letterSpacing: '-0.03em' }}>
+                      {v ? animatedDays[i] : 0}
+                    </span>
                     <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>d</span>
                   </div>
-                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: 4, opacity: 0.9 }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: 4, opacity: 0.9 }}>
+                    {isOverdue && (
+                      <span aria-hidden style={{ position: 'relative', width: 6, height: 6, display: 'inline-block' }}>
+                        <span style={{
+                          position: 'absolute', inset: 0, borderRadius: '50%',
+                          background: r.color,
+                        }} />
+                        <span className="rd-na-urgent-dot" style={{
+                          position: 'absolute', inset: 0, borderRadius: '50%',
+                          background: r.color,
+                          animation: `rd-urgent-pulse 1800ms cubic-bezier(0.22,1,0.36,1) ${0.6 + i * 0.2}s infinite`,
+                        }} />
+                      </span>
+                    )}
                     {r.status}
                   </div>
                 </div>
@@ -476,6 +537,21 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
                   transform: v ? `scaleX(${r.pct})` : 'scaleX(0)',
                   transition: `transform 0.7s cubic-bezier(0.22,1,0.36,1) ${0.18 + i * 0.1}s`,
                 }} />
+                {/* one-shot shimmer sweep after fill — only on the overdue heavyweight */}
+                {isTop && v && (
+                  <div
+                    aria-hidden
+                    className="rd-na-bar-shimmer"
+                    style={{
+                      position: 'absolute', top: 0, bottom: 0, left: 0, width: '28%',
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                      mixBlendMode: 'overlay',
+                      animation: 'rd-bar-shimmer 1600ms cubic-bezier(0.22,1,0.36,1) 900ms 1 forwards',
+                      transform: 'translateX(-60%)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
               </div>
               {/* action row - small but present */}
               <div style={{
@@ -486,7 +562,7 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
                 textTransform: 'uppercase',
                 letterSpacing: '0.14em',
               }}>
-                {r.action} -&gt;
+                {r.action} <span className="rd-na-arrow">-&gt;</span>
               </div>
             </div>
           )
