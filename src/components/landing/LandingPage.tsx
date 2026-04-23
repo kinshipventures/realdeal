@@ -593,7 +593,7 @@ export function LandingPage() {
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
               color: t.fg, margin: '0 0 14px',
             }}>
-              We are obsessed with food as medicine. Sleep as medicine. Movement as medicine.
+              We are obsessed with food as medicine.<br />Sleep as medicine.<br />Movement as medicine.
             </p>
             <p style={{
               fontFamily: 'var(--font-serif)',
@@ -610,7 +610,7 @@ export function LandingPage() {
               fontWeight: 400, fontStyle: 'italic', letterSpacing: '-0.005em', lineHeight: 1.55,
               color: '#003DA5', margin: 0,
             }}>
-              Real Deal isn't a CRM or a network, it's your relationship pharmacy.
+              Real Deal isn't a CRM or a network,<br />it's your relationship pharmacy.
             </p>
           </div>
 
