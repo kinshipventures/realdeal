@@ -243,15 +243,16 @@ function Orb({ size, color, ring }: { size: number; color: string; ring?: string
   )
 }
 
-function ScoreRing({ score, color, size = 44, stroke = 4 }: { score: number; color: string; size?: number; stroke?: number }) {
+function ScoreRing({ score, color, size = 44, stroke = 4, visible = true }: { score: number; color: string; size?: number; stroke?: number; visible?: boolean }) {
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
-  const dash = (score / 100) * circ
+  const dash = visible ? (score / 100) * circ : 0
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, display: 'block' }}>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={stroke} />
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-        strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${size/2} ${size/2})`} />
+        strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${size/2} ${size/2})`}
+        style={{ transition: 'stroke-dasharray 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
       <text x={size/2} y={size/2 + 4} textAnchor="middle" fill={color} fontSize={size * 0.3} fontWeight="700" fontFamily="var(--font-sans)">{score}</text>
     </svg>
   )
@@ -269,32 +270,32 @@ function Chip({ label, color, bg }: { label: string; color: string; bg?: string 
   )
 }
 
-function FocusPanel({ t }: { t: FeatureTheme }) {
+function FocusPanel({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
+  const v = visible ?? false
   const rows = [
-    { name: 'Sarah Chen',   pod: 'Inner Circle', podColor: '#FF6B8A', score: 42, grade: 'D', status: 'Overdue 6d', statusColor: '#DC2626', primary: true },
-    { name: 'Marcus Lee',   pod: 'Founders',     podColor: '#003DA5', score: 58, grade: 'C', status: 'Due today',  statusColor: '#D97706' },
-    { name: 'Jenna Park',   pod: 'Advisors',     podColor: '#7C3AED', score: 74, grade: 'B', status: 'Due in 2d',  statusColor: '#2563EB' },
-    { name: 'David Osei',   pod: 'LPs',          podColor: '#00BFA5', score: 81, grade: 'B', status: 'Due in 4d',  statusColor: '#2563EB' },
+    { name: 'Sarah Chen', pod: 'Inner Circle', podColor: '#FF6B8A', score: 42, grade: 'D', status: 'Overdue 6d', statusColor: '#DC2626', primary: true },
+    { name: 'Marcus Lee', pod: 'Founders',     podColor: '#7C3AED', score: 58, grade: 'C', status: 'Due today',  statusColor: '#D97706' },
+    { name: 'Jenna Park', pod: 'Advisors',     podColor: '#00BFA5', score: 74, grade: 'B', status: 'Due in 2d',  statusColor: '#6366F1' },
+    { name: 'David Osei', pod: 'LPs',          podColor: '#F5A623', score: 81, grade: 'B', status: 'Due in 4d',  statusColor: '#6366F1' },
   ]
   return (
     <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
-      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}` }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Today's Focus</div>
-          <div style={{ fontSize: 11, color: t.fg45, fontVariantNumeric: 'tabular-nums' }}>4 of 12</div>
-        </div>
-        <div style={{ fontSize: 12, color: t.fg50, marginTop: 2 }}>People who need you before the week ends</div>
+      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Today's Focus</div>
+        <div style={{ fontSize: 11, color: t.fg45, fontVariantNumeric: 'tabular-nums' }}>4 of 12</div>
       </div>
       <div>
         {rows.map((r, i) => (
           <div key={r.name} style={{
             display: 'grid', gridTemplateColumns: '28px 1fr auto', alignItems: 'center', gap: 12,
             padding: '12px 18px',
-            background: r.primary ? (t.dark ? 'rgba(220,38,38,0.08)' : 'rgba(220,38,38,0.035)') : 'transparent',
+            background: r.primary ? (t.dark ? 'rgba(220,38,38,0.06)' : 'rgba(220,38,38,0.035)') : 'transparent',
             borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
-            borderLeft: r.primary ? `2px solid ${r.statusColor}` : '2px solid transparent',
+            opacity: v ? 1 : 0,
+            transform: v ? 'translateY(0)' : 'translateY(8px)',
+            transition: `opacity 0.45s ease ${0.08 + i * 0.07}s, transform 0.45s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.07}s`,
           }}>
-            <Orb size={26} color={r.podColor} ring={r.primary ? `${r.statusColor}55` : undefined} />
+            <Orb size={26} color={r.podColor} ring={r.primary ? `${r.statusColor}66` : undefined} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: t.fg, letterSpacing: '-0.005em' }}>{r.name}</div>
               <div style={{ fontSize: 11, color: t.fg50, marginTop: 1 }}>
@@ -304,7 +305,7 @@ function FocusPanel({ t }: { t: FeatureTheme }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Chip label={r.status} color={r.statusColor} />
-              <ScoreRing score={r.score} color={r.statusColor} size={32} stroke={3} />
+              <ScoreRing score={r.score} color={r.statusColor} size={32} stroke={3} visible={v} />
             </div>
           </div>
         ))}
@@ -313,84 +314,104 @@ function FocusPanel({ t }: { t: FeatureTheme }) {
   )
 }
 
-function PodHealthCard({ t }: { t: FeatureTheme }) {
-  const green = '#16A34A', blue = '#2563EB', amber = '#D97706'
+function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
+  const v = visible ?? false
+  const green = '#16A34A', amber = '#D97706'
+  const circ48 = 2 * Math.PI * 48
+  // Members mirror FocusPanel pod colors: Sarah (#FF6B8A), Marcus (#7C3AED), Jenna (#00BFA5), David (#F5A623), +1
   const members = [
-    { color: '#FF6B8A', score: 92, ring: green },
-    { color: '#003DA5', score: 84, ring: green },
-    { color: '#7C3AED', score: 71, ring: blue },
-    { color: '#00BFA5', score: 58, ring: amber },
-    { color: '#F5A623', score: 44, ring: amber },
+    { color: '#FF6B8A', score: 42, ring: '#DC2626' },  // Sarah - overdue, drags score
+    { color: '#7C3AED', score: 84, ring: green },
+    { color: '#00BFA5', score: 92, ring: green },
+    { color: '#F5A623', score: 71, ring: green },
+    { color: '#003DA5', score: 58, ring: amber },
+  ]
+  const stats = [
+    { label: 'Trend', value: '+4 this month', color: green },
+    { label: 'Last touch', value: '2 days ago', color: t.fg },
+    { label: 'At risk', value: '1 member', color: amber },
   ]
   return (
     <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
-      <div style={{ padding: '18px 20px 16px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: '#003DA5', textTransform: 'uppercase' }}>Pod</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em', marginTop: 2 }}>Inner Circle</div>
-          <div style={{ fontSize: 12, color: t.fg50, marginTop: 4 }}>12 members - weekly cadence</div>
-        </div>
+      {/* header - matches FocusPanel/NeedsAttentionCard pattern */}
+      <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Inner Circle</div>
         <Chip label="Thriving" color={green} />
       </div>
-      <div style={{ padding: '22px 20px 20px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 22, alignItems: 'center' }}>
+      {/* score ring + stats */}
+      <div style={{
+        padding: '20px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 20, alignItems: 'center',
+        opacity: v ? 1 : 0, transition: 'opacity 0.4s ease 0.06s',
+      }}>
         <div style={{ position: 'relative', width: 108, height: 108 }}>
           <svg width={108} height={108} style={{ display: 'block' }}>
             <circle cx={54} cy={54} r={48} fill="none" stroke={t.fg08} strokeWidth={8} />
             <circle cx={54} cy={54} r={48} fill="none" stroke={green} strokeWidth={8} strokeLinecap="round"
-              strokeDasharray={`${0.87 * 2 * Math.PI * 48} ${2 * Math.PI * 48}`} transform="rotate(-90 54 54)" />
+              strokeDasharray={`${v ? 0.87 * circ48 : 0} ${circ48}`} transform="rotate(-90 54 54)"
+              style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.22,1,0.36,1) 0.15s' }} />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em', lineHeight: 1 }}>87</div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: t.fg45, textTransform: 'uppercase', marginTop: 3 }}>Grade A</div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: t.fg45, textTransform: 'uppercase', marginTop: 3 }}>Grade A</div>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Trend</span>
-            <span style={{ fontSize: 12, color: green, fontWeight: 600 }}>+4 this month</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Last touch</span>
-            <span style={{ fontSize: 12, color: t.fg, fontWeight: 500 }}>2 days ago</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>At risk</span>
-            <span style={{ fontSize: 12, color: amber, fontWeight: 600 }}>2 members</span>
-          </div>
-        </div>
-      </div>
-      <div style={{ padding: '14px 20px 18px', borderTop: `1px solid ${t.border}` }}>
-        <div style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>Members</div>
-        <div style={{ display: 'flex', gap: 14 }}>
-          {members.map((m, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-              <div style={{ position: 'relative', width: 36, height: 36 }}>
-                <svg width={36} height={36} style={{ position: 'absolute', inset: 0 }}>
-                  <circle cx={18} cy={18} r={16} fill="none" stroke={m.ring} strokeWidth={2} strokeOpacity={0.85}
-                    strokeDasharray={`${(m.score / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`}
-                    strokeLinecap="round" transform="rotate(-90 18 18)" />
-                </svg>
-                <div style={{ position: 'absolute', inset: 4, display: 'flex' }}>
-                  <Orb size={28} color={m.color} />
-                </div>
-              </div>
-              <div style={{ fontSize: 10, color: t.fg50, fontVariantNumeric: 'tabular-nums' }}>{m.score}</div>
+          {stats.map((s, i) => (
+            <div key={s.label} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              opacity: v ? 1 : 0, transform: v ? 'translateX(0)' : 'translateX(8px)',
+              transition: `opacity 0.4s ease ${0.2 + i * 0.08}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.2 + i * 0.08}s`,
+            }}>
+              <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>{s.label}</span>
+              <span style={{ fontSize: 12, color: s.color, fontWeight: 600 }}>{s.value}</span>
             </div>
           ))}
+        </div>
+      </div>
+      {/* members */}
+      <div style={{ padding: '12px 20px 18px', borderTop: `1px solid ${t.border}` }}>
+        <div style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>Members</div>
+        <div style={{ display: 'flex', gap: 14 }}>
+          {members.map((m, i) => {
+            const mc = 2 * Math.PI * 16
+            return (
+              <div key={i} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1,
+                opacity: v ? 1 : 0, transform: v ? 'translateY(0)' : 'translateY(6px)',
+                transition: `opacity 0.35s ease ${0.3 + i * 0.06}s, transform 0.35s cubic-bezier(0.22,1,0.36,1) ${0.3 + i * 0.06}s`,
+              }}>
+                <div style={{ position: 'relative', width: 36, height: 36 }}>
+                  <svg width={36} height={36} style={{ position: 'absolute', inset: 0 }}>
+                    <circle cx={18} cy={18} r={16} fill="none" stroke={m.ring} strokeWidth={2} strokeOpacity={0.8}
+                      strokeDasharray={`${v ? (m.score / 100) * mc : 0} ${mc}`}
+                      strokeLinecap="round" transform="rotate(-90 18 18)"
+                      style={{ transition: `stroke-dasharray 0.7s cubic-bezier(0.22,1,0.36,1) ${0.32 + i * 0.06}s` }} />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 4, display: 'flex' }}>
+                    <Orb size={28} color={m.color} />
+                  </div>
+                </div>
+                <div style={{ fontSize: 10, color: t.fg50, fontVariantNumeric: 'tabular-nums' }}>{m.score}</div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
   )
 }
 
-function NeedsAttentionCard({ t }: { t: FeatureTheme }) {
+function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
+  const v = visible ?? false
+  // Inner Circle connects to FocusPanel story: Sarah is overdue, dragging the pod
   const rows = [
-    { pod: 'LPs Pod',      cadence: 'Monthly cadence',   status: 'Overdue 3 days',  color: '#DC2626', pct: 0.96, people: '5 members',  action: 'Reach out' },
-    { pod: 'Founders Pod', cadence: 'Biweekly cadence',  status: 'Due in 4 days',   color: '#D97706', pct: 0.64, people: '7 members',  action: 'Schedule'  },
-    { pod: 'Advisors Pod', cadence: 'Quarterly cadence', status: 'Due in 38 days',  color: '#2563EB', pct: 0.14, people: '3 members',  action: 'On track'  },
+    { pod: 'Inner Circle', cadence: 'Weekly cadence',    status: 'Overdue 6 days', color: '#DC2626', pct: 0.98, people: '1 overdue',   action: 'Reach out' },
+    { pod: 'LPs Pod',      cadence: 'Monthly cadence',   status: 'Overdue 3 days', color: '#D97706', pct: 0.72, people: '5 members',   action: 'Schedule'  },
+    { pod: 'Founders Pod', cadence: 'Biweekly cadence',  status: 'Due in 4 days',  color: '#6366F1', pct: 0.42, people: '7 members',   action: 'On track'  },
   ]
   return (
     <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
+      {/* header - consistent with FocusPanel + PodHealthCard */}
       <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Needs Attention</div>
         <div style={{ fontSize: 11, color: t.fg45 }}>sorted by urgency</div>
@@ -398,10 +419,13 @@ function NeedsAttentionCard({ t }: { t: FeatureTheme }) {
       <div style={{ padding: '10px 0' }}>
         {rows.map((r, i) => (
           <div key={r.pod} style={{
-            position: 'relative', padding: '14px 18px 14px 22px',
+            padding: '14px 18px',
+            background: i === 0 ? (t.dark ? 'rgba(220,38,38,0.05)' : 'rgba(220,38,38,0.025)') : 'transparent',
             borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
+            opacity: v ? 1 : 0,
+            transform: v ? 'translateY(0)' : 'translateY(8px)',
+            transition: `opacity 0.4s ease ${0.08 + i * 0.09}s, transform 0.4s cubic-bezier(0.22,1,0.36,1) ${0.08 + i * 0.09}s`,
           }}>
-            <span style={{ position: 'absolute', left: 10, top: 14, bottom: 14, width: 3, borderRadius: 2, background: r.color, opacity: 0.9 }} />
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: t.fg, letterSpacing: '-0.005em' }}>{r.pod}</div>
               <div style={{ fontSize: 12, fontWeight: 700, color: r.color, fontVariantNumeric: 'tabular-nums' }}>{r.status}</div>
@@ -410,8 +434,16 @@ function NeedsAttentionCard({ t }: { t: FeatureTheme }) {
               <span>{r.cadence} - {r.people}</span>
               <span style={{ color: r.color, fontWeight: 600 }}>{r.action} -&gt;</span>
             </div>
+            {/* scaleX animation - compositor-safe, no layout change */}
             <div style={{ position: 'relative', height: 5, borderRadius: 3, background: t.fg08, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, width: `${r.pct * 100}%`, background: `linear-gradient(90deg, ${r.color}bb, ${r.color})`, borderRadius: 3 }} />
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: r.color,
+                borderRadius: 3,
+                transformOrigin: 'left',
+                transform: v ? `scaleX(${r.pct})` : 'scaleX(0)',
+                transition: `transform 0.7s cubic-bezier(0.22,1,0.36,1) ${0.18 + i * 0.1}s`,
+              }} />
             </div>
           </div>
         ))}
@@ -420,24 +452,24 @@ function NeedsAttentionCard({ t }: { t: FeatureTheme }) {
   )
 }
 
-function getFeatures(t: FeatureTheme) { return [
+function getFeatures(t: FeatureTheme, vis: boolean[]) { return [
   {
     label: '01',
     title: 'Your day, prioritized automatically.',
     desc: "RealDeal surfaces the people who need you most today. Weighted by cadence, recency, and pod priority - so you never open the app wondering who to reach out to.",
-    visual: <FocusPanel t={t} />,
+    visual: <FocusPanel t={t} visible={vis[0]} />,
   },
   {
     label: '02',
     title: 'Equity scoring that keeps you honest.',
     desc: 'Every pod and every relationship gets a 0-100 Social Equity score based on recency, frequency, and depth of interactions. Thriving, Steady, Cooling, or Fading - you always know where you stand.',
-    visual: <PodHealthCard t={t} />,
+    visual: <PodHealthCard t={t} visible={vis[1]} />,
   },
   {
     label: '03',
     title: 'Never let a relationship slip.',
     desc: 'Set cadences for every pod. RealDeal tracks recency automatically and surfaces who needs attention before you even have to think about it.',
-    visual: <NeedsAttentionCard t={t} />,
+    visual: <NeedsAttentionCard t={t} visible={vis[2]} />,
   },
 ] }  // end getFeatures
 
@@ -508,7 +540,7 @@ export function LandingPage() {
     panelBg: dark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
     rowBg: dark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
     dark,
-  })
+  }, [f1Visible, f2Visible, f3Visible])
   const featureRefs = [f1Ref, f2Ref, f3Ref]
   const featureVis = [f1Visible, f2Visible, f3Visible]
 
