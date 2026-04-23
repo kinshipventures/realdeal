@@ -586,45 +586,19 @@ export function LandingPage() {
             Your network, remembered.
           </h1>
 
-          <div style={{ maxWidth: 560, margin: '0 auto 36px', textAlign: 'center', ...reveal(heroVisible, 0.05) }}>
-            <p style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: 'clamp(15px, 1.2vw, 17px)',
-              fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4,
-              color: '#003DA5', margin: '0 0 6px',
-            }}>
-              Real Deal is your relationship pharmacy.
-            </p>
-            <p style={{
-              fontSize: 'clamp(14px, 1.1vw, 16px)',
-              fontWeight: 400, lineHeight: 1.5,
-              color: t.fg45, margin: 0,
-            }}>
-              A daily dose of the people who matter most so nothing fades without you noticing.
-            </p>
-          </div>
-
-          <div style={{ maxWidth: 560, margin: '0 auto 32px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
+          <div style={{ maxWidth: 560, margin: '0 auto 40px', textAlign: 'center', ...reveal(heroVisible, 0.1) }}>
             <p style={{
               fontFamily: 'var(--font-serif)',
               fontSize: 'clamp(17px, 1.45vw, 20px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg, margin: '0 0 14px',
-            }}>
-              We are obsessed with food as medicine. Sleep as medicine. Movement as medicine.
-            </p>
-            <p style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(17px, 1.45vw, 20px)',
-              fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
-              color: t.fg, margin: '0 0 20px',
+              color: t.fg, margin: '0 0 24px',
             }}>
               We need to remember that <em style={{ fontStyle: 'italic', color: '#003DA5' }}>your people are also medicine</em>.
             </p>
 
             <div style={{
               borderTop: `1px solid ${t.border14}`,
-              padding: '18px 0 0',
+              padding: '24px 0 0',
               maxWidth: 500,
               margin: '0 auto',
             }}>
@@ -632,15 +606,9 @@ export function LandingPage() {
                 fontFamily: 'var(--font-sans)',
                 fontSize: 'clamp(15px, 1.35vw, 18px)',
                 fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4,
-                color: t.fg, margin: '0 0 6px',
+                color: t.fg, margin: 0,
               }}>
-                Real Deal isn't a CRM or a network. It's a prescription for your relationship.
-              </p>
-              <p style={{
-                fontSize: 13, lineHeight: 1.5,
-                color: t.fg45, margin: 0,
-              }}>
-                Curated for your nervous system. Built for your life.
+                Real Deal isn't a CRM or a network, it's your relationship pharmacy.
               </p>
             </div>
           </div>
