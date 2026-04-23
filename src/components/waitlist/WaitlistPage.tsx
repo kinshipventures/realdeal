@@ -48,13 +48,16 @@ export function WaitlistPage() {
   const [focused, setFocused] = useState(false)
   const [hover, setHover] = useState(false)
   const [pressed, setPressed] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'exiting' | 'done'>('idle')
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!email.trim() || status !== 'idle') return
     setStatus('loading')
-    setTimeout(() => setStatus('done'), 600)
+    setTimeout(() => {
+      setStatus('exiting')
+      setTimeout(() => setStatus('done'), 260)
+    }, 600)
   }
 
   return (
@@ -152,50 +155,63 @@ export function WaitlistPage() {
           {status === 'done' ? (
             <div
               style={{
-                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 14,
-                padding: '18px 20px',
-                background: 'rgba(0,61,165,0.06)',
-                border: '1px solid rgba(0,61,165,0.22)',
-                borderRadius: 14,
-                animation: 'rd-pop 500ms cubic-bezier(0.16,1,0.3,1) both',
+                gap: 18,
+                padding: '20px 22px',
+                background: 'rgba(0,61,165,0.05)',
+                border: '1px solid rgba(0,61,165,0.18)',
+                borderRadius: 16,
+                animation: 'rd-success-enter 550ms cubic-bezier(0.22,1,0.36,1) both',
               }}
             >
+              {/* Checkmark circle with pulse ring + orb burst */}
               <span
                 aria-hidden
                 style={{
                   position: 'relative',
-                  width: 28,
-                  height: 28,
+                  width: 44,
+                  height: 44,
                   borderRadius: '50%',
                   background: BLUE,
-                  color: 'white',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
+                  animation: 'rd-circle-pop 420ms cubic-bezier(0.22,1,0.36,1) both',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                {/* Expanding pulse ring */}
+                <span
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: -2,
+                    borderRadius: '50%',
+                    border: `2px solid ${BLUE}`,
+                    animation: 'rd-pulse-ring 700ms cubic-bezier(0.16,1,0.3,1) 120ms both',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
                   <path
-                    d="M2.5 6.2l2.3 2.3L9.5 3.8"
+                    d="M2.5 7.2l2.8 2.8L11.5 3.5"
                     stroke="white"
-                    strokeWidth="2"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     style={{
-                      strokeDasharray: 12,
-                      strokeDashoffset: 12,
-                      animation: 'rd-check 450ms cubic-bezier(0.65,0,0.35,1) 180ms forwards',
+                      strokeDasharray: 16,
+                      strokeDashoffset: 16,
+                      animation: 'rd-check 500ms cubic-bezier(0.65,0,0.35,1) 200ms forwards',
                     }}
                   />
                 </svg>
+                {/* Orb burst particles */}
                 {ORB_COLORS.map((c, i) => {
-                  const angle = (i / ORB_COLORS.length) * Math.PI * 2
-                  const tx = Math.cos(angle) * 38
-                  const ty = Math.sin(angle) * 38
+                  const angle = (i / ORB_COLORS.length) * Math.PI * 2 - Math.PI / 6
+                  const tx = Math.cos(angle) * 52
+                  const ty = Math.sin(angle) * 52
                   return (
                     <span
                       key={c}
@@ -204,32 +220,57 @@ export function WaitlistPage() {
                         position: 'absolute',
                         left: '50%',
                         top: '50%',
-                        width: 5,
-                        height: 5,
-                        marginLeft: -2.5,
-                        marginTop: -2.5,
+                        width: 6,
+                        height: 6,
+                        marginLeft: -3,
+                        marginTop: -3,
                         borderRadius: '50%',
                         background: c,
                         opacity: 0,
                         ['--tx' as any]: `${tx}px`,
                         ['--ty' as any]: `${ty}px`,
-                        animation: `rd-orbit 900ms cubic-bezier(0.16,1,0.3,1) ${220 + i * 40}ms forwards`,
+                        animation: `rd-burst 800ms cubic-bezier(0.16,1,0.3,1) ${160 + i * 45}ms forwards`,
                       }}
                     />
                   )
                 })}
               </span>
               <div>
-                <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: 18, color: 'var(--color-text-primary)' }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontWeight: 700,
+                    fontSize: 20,
+                    color: 'var(--color-text-primary)',
+                    animation: 'rd-rise 450ms cubic-bezier(0.22,1,0.36,1) 140ms both',
+                  }}
+                >
                   You're in.
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: 'var(--color-text-secondary)',
+                    marginTop: 3,
+                    animation: 'rd-rise 450ms cubic-bezier(0.22,1,0.36,1) 230ms both',
+                  }}
+                >
                   Good company is on the way.
                 </div>
               </div>
             </div>
           ) : (
-            <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form
+              onSubmit={onSubmit}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                opacity: status === 'exiting' ? 0 : 1,
+                transform: status === 'exiting' ? 'translateY(-6px)' : 'translateY(0)',
+                transition: 'opacity 220ms ease, transform 220ms cubic-bezier(0.22,1,0.36,1)',
+              }}
+            >
               <input
                 type="email"
                 required
@@ -331,52 +372,63 @@ export function WaitlistPage() {
                 )}
               </button>
 
-              <style>{`
-                @keyframes rd-rise {
-                  from { opacity: 0; transform: translateY(14px); }
-                  to   { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes rd-rise-accent {
-                  from { opacity: 0; transform: translateY(14px); color: ${BLUE}; }
-                  70%  { color: ${BLUE}; }
-                  to   { opacity: 1; transform: translateY(0); color: inherit; }
-                }
-                @keyframes rd-pop {
-                  0%   { opacity: 0; transform: scale(0.96); }
-                  60%  { opacity: 1; transform: scale(1.015); }
-                  100% { opacity: 1; transform: scale(1); }
-                }
-                @keyframes rd-check {
-                  to { stroke-dashoffset: 0; }
-                }
-                @keyframes rd-orbit {
-                  0%   { opacity: 0; transform: translate(0,0) scale(0.6); }
-                  35%  { opacity: 1; }
-                  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1); }
-                }
-                @keyframes rd-dot-bounce {
-                  from { transform: translateY(0); opacity: 0.6; }
-                  to   { transform: translateY(-5px); opacity: 1; }
-                }
-                @keyframes rd-constellation-spin {
-                  from { transform: rotate(0deg); }
-                  to   { transform: rotate(360deg); }
-                }
-                @keyframes rd-float {
-                  from { transform: translateY(0); }
-                  to   { transform: translateY(-6px); }
-                }
-                @media (prefers-reduced-motion: reduce) {
-                  *, *::before, *::after {
-                    animation-duration: 0.001ms !important;
-                    animation-iteration-count: 1 !important;
-                    transition-duration: 0.001ms !important;
-                  }
-                }
-              `}</style>
             </form>
           )}
         </div>
+
+        <style>{`
+          @keyframes rd-rise {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes rd-rise-accent {
+            from { opacity: 0; transform: translateY(14px); color: ${BLUE}; }
+            70%  { color: ${BLUE}; }
+            to   { opacity: 1; transform: translateY(0); color: inherit; }
+          }
+          @keyframes rd-success-enter {
+            0%   { opacity: 0; transform: translateY(10px) scale(0.97); }
+            60%  { opacity: 1; transform: translateY(-2px) scale(1.005); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes rd-circle-pop {
+            0%   { transform: scale(0); opacity: 0; }
+            55%  { transform: scale(1.18); opacity: 1; }
+            75%  { transform: scale(0.94); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes rd-pulse-ring {
+            0%   { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.4); opacity: 0; }
+          }
+          @keyframes rd-check {
+            to { stroke-dashoffset: 0; }
+          }
+          @keyframes rd-burst {
+            0%   { opacity: 0; transform: translate(0,0) scale(0.4); }
+            30%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.2); }
+          }
+          @keyframes rd-dot-bounce {
+            from { transform: translateY(0); opacity: 0.6; }
+            to   { transform: translateY(-5px); opacity: 1; }
+          }
+          @keyframes rd-constellation-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+          }
+          @keyframes rd-float {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-6px); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+              animation-duration: 0.001ms !important;
+              animation-iteration-count: 1 !important;
+              transition-duration: 0.001ms !important;
+            }
+          }
+        `}</style>
       </main>
     </div>
   )
