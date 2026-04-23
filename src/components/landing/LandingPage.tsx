@@ -591,6 +591,14 @@ export function LandingPage() {
               fontFamily: 'var(--font-serif)',
               fontSize: 'clamp(17px, 1.45vw, 20px)',
               fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
+              color: t.fg, margin: '0 0 14px',
+            }}>
+              We are obsessed with food as medicine. Sleep as medicine. Movement as medicine.
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(17px, 1.45vw, 20px)',
+              fontWeight: 400, letterSpacing: '-0.005em', lineHeight: 1.55,
               color: t.fg, margin: '0 0 24px',
             }}>
               We need to remember that <em style={{ fontStyle: 'italic', color: '#003DA5' }}>your people are also medicine</em>.
