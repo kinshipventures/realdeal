@@ -519,7 +519,7 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
       onSubmit={submit}
       style={{
         maxWidth: maxW, margin: '0 auto',
-        display: 'flex', gap: 10, flexWrap: 'wrap',
+        display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center',
         opacity: isExiting ? 0 : 1,
         transform: isExiting ? 'translateY(-4px)' : 'translateY(0)',
         transition: 'opacity 220ms ease, transform 220ms cubic-bezier(0.22,1,0.36,1)',
@@ -956,7 +956,7 @@ export function LandingPage() {
       </section>
 
       {/* Logo ticker */}
-      <div style={{ padding: '40px 0 56px', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 40px 56px', overflow: 'hidden' }}>
         <div style={{
           overflow: 'hidden',
           maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
