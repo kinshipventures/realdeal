@@ -785,18 +785,6 @@ export function LandingPage() {
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            className="rd-cta-ghost rd-nav-signin"
-            onClick={() => navigate('/login')}
-            style={{
-              padding: '8px 14px', borderRadius: 8, border: 'none',
-              background: 'transparent', color: t.fg70, cursor: 'pointer',
-              fontSize: 14, fontWeight: 500,
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            Sign in
-          </button>
-          <button
             className="rd-cta-primary"
             onClick={() => {
               const el = document.getElementById('waitlist-cta')
