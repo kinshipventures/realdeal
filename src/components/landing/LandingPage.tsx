@@ -220,131 +220,224 @@ const PORTFOLIO_BRANDS = [
   { name: 'Wonder', logo: wonderLogo },
 ]
 
-function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect: string) { return [
+type FeatureTheme = {
+  fg: string
+  fg45: string
+  fg50: string
+  fg08: string
+  border: string
+  panelBg: string
+  rowBg: string
+  dark: boolean
+}
+
+function Orb({ size, color, ring }: { size: number; color: string; ring?: string }) {
+  return (
+    <span style={{
+      position: 'relative',
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: `radial-gradient(circle at 32% 26%, #fff 0%, rgba(255,255,255,0.55) 38%, ${color}44 70%, ${color} 100%)`,
+      boxShadow: ring ? `0 0 0 1.5px ${ring}, 0 1px 3px rgba(0,0,0,0.08)` : '0 1px 3px rgba(0,0,0,0.08)',
+      display: 'inline-block',
+    }} />
+  )
+}
+
+function ScoreRing({ score, color, size = 44, stroke = 4 }: { score: number; color: string; size?: number; stroke?: number }) {
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const dash = (score / 100) * circ
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0, display: 'block' }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${size/2} ${size/2})`} />
+      <text x={size/2} y={size/2 + 4} textAnchor="middle" fill={color} fontSize={size * 0.3} fontWeight="700" fontFamily="var(--font-sans)">{score}</text>
+    </svg>
+  )
+}
+
+function Chip({ label, color, bg }: { label: string; color: string; bg?: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '3px 8px', borderRadius: 999,
+      fontSize: 10.5, fontWeight: 600, letterSpacing: '0.01em',
+      color, background: bg ?? `${color}1a`,
+      whiteSpace: 'nowrap',
+    }}>{label}</span>
+  )
+}
+
+function FocusPanel({ t }: { t: FeatureTheme }) {
+  const rows = [
+    { name: 'Sarah Chen',   pod: 'Inner Circle', podColor: '#FF6B8A', score: 42, grade: 'D', status: 'Overdue 6d', statusColor: '#DC2626', primary: true },
+    { name: 'Marcus Lee',   pod: 'Founders',     podColor: '#003DA5', score: 58, grade: 'C', status: 'Due today',  statusColor: '#D97706' },
+    { name: 'Jenna Park',   pod: 'Advisors',     podColor: '#7C3AED', score: 74, grade: 'B', status: 'Due in 2d',  statusColor: '#2563EB' },
+    { name: 'David Osei',   pod: 'LPs',          podColor: '#00BFA5', score: 81, grade: 'B', status: 'Due in 4d',  statusColor: '#2563EB' },
+  ]
+  return (
+    <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Today's Focus</div>
+          <div style={{ fontSize: 11, color: t.fg45, fontVariantNumeric: 'tabular-nums' }}>4 of 12</div>
+        </div>
+        <div style={{ fontSize: 12, color: t.fg50, marginTop: 2 }}>People who need you before the week ends</div>
+      </div>
+      <div>
+        {rows.map((r, i) => (
+          <div key={r.name} style={{
+            display: 'grid', gridTemplateColumns: '28px 1fr auto', alignItems: 'center', gap: 12,
+            padding: '12px 18px',
+            background: r.primary ? (t.dark ? 'rgba(220,38,38,0.08)' : 'rgba(220,38,38,0.035)') : 'transparent',
+            borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
+            borderLeft: r.primary ? `2px solid ${r.statusColor}` : '2px solid transparent',
+          }}>
+            <Orb size={26} color={r.podColor} ring={r.primary ? `${r.statusColor}55` : undefined} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: t.fg, letterSpacing: '-0.005em' }}>{r.name}</div>
+              <div style={{ fontSize: 11, color: t.fg50, marginTop: 1 }}>
+                <span style={{ color: r.podColor, fontWeight: 600 }}>{r.pod}</span>
+                <span style={{ color: t.fg45 }}> - {r.grade} grade</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Chip label={r.status} color={r.statusColor} />
+              <ScoreRing score={r.score} color={r.statusColor} size={32} stroke={3} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PodHealthCard({ t }: { t: FeatureTheme }) {
+  const green = '#16A34A', blue = '#2563EB', amber = '#D97706'
+  const members = [
+    { color: '#FF6B8A', score: 92, ring: green },
+    { color: '#003DA5', score: 84, ring: green },
+    { color: '#7C3AED', score: 71, ring: blue },
+    { color: '#00BFA5', score: 58, ring: amber },
+    { color: '#F5A623', score: 44, ring: amber },
+  ]
+  return (
+    <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '18px 20px 16px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', color: '#003DA5', textTransform: 'uppercase' }}>Pod</div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em', marginTop: 2 }}>Inner Circle</div>
+          <div style={{ fontSize: 12, color: t.fg50, marginTop: 4 }}>12 members - weekly cadence</div>
+        </div>
+        <Chip label="Thriving" color={green} />
+      </div>
+      <div style={{ padding: '22px 20px 20px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 22, alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: 108, height: 108 }}>
+          <svg width={108} height={108} style={{ display: 'block' }}>
+            <circle cx={54} cy={54} r={48} fill="none" stroke={t.fg08} strokeWidth={8} />
+            <circle cx={54} cy={54} r={48} fill="none" stroke={green} strokeWidth={8} strokeLinecap="round"
+              strokeDasharray={`${0.87 * 2 * Math.PI * 48} ${2 * Math.PI * 48}`} transform="rotate(-90 54 54)" />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 700, color: t.fg, letterSpacing: '-0.02em', lineHeight: 1 }}>87</div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: t.fg45, textTransform: 'uppercase', marginTop: 3 }}>Grade A</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Trend</span>
+            <span style={{ fontSize: 12, color: green, fontWeight: 600 }}>+4 this month</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>Last touch</span>
+            <span style={{ fontSize: 12, color: t.fg, fontWeight: 500 }}>2 days ago</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>At risk</span>
+            <span style={{ fontSize: 12, color: amber, fontWeight: 600 }}>2 members</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '14px 20px 18px', borderTop: `1px solid ${t.border}` }}>
+        <div style={{ fontSize: 11, color: t.fg45, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>Members</div>
+        <div style={{ display: 'flex', gap: 14 }}>
+          {members.map((m, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+              <div style={{ position: 'relative', width: 36, height: 36 }}>
+                <svg width={36} height={36} style={{ position: 'absolute', inset: 0 }}>
+                  <circle cx={18} cy={18} r={16} fill="none" stroke={m.ring} strokeWidth={2} strokeOpacity={0.85}
+                    strokeDasharray={`${(m.score / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`}
+                    strokeLinecap="round" transform="rotate(-90 18 18)" />
+                </svg>
+                <div style={{ position: 'absolute', inset: 4, display: 'flex' }}>
+                  <Orb size={28} color={m.color} />
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: t.fg50, fontVariantNumeric: 'tabular-nums' }}>{m.score}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NeedsAttentionCard({ t }: { t: FeatureTheme }) {
+  const rows = [
+    { pod: 'LPs Pod',      cadence: 'Monthly cadence',   status: 'Overdue 3 days',  color: '#DC2626', pct: 0.96, people: '5 members',  action: 'Reach out' },
+    { pod: 'Founders Pod', cadence: 'Biweekly cadence',  status: 'Due in 4 days',   color: '#D97706', pct: 0.64, people: '7 members',  action: 'Schedule'  },
+    { pod: 'Advisors Pod', cadence: 'Quarterly cadence', status: 'Due in 38 days',  color: '#2563EB', pct: 0.14, people: '3 members',  action: 'On track'  },
+  ]
+  return (
+    <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: t.dark ? 'none' : '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: t.fg, letterSpacing: '-0.01em' }}>Needs Attention</div>
+        <div style={{ fontSize: 11, color: t.fg45 }}>sorted by urgency</div>
+      </div>
+      <div style={{ padding: '10px 0' }}>
+        {rows.map((r, i) => (
+          <div key={r.pod} style={{
+            position: 'relative', padding: '14px 18px 14px 22px',
+            borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
+          }}>
+            <span style={{ position: 'absolute', left: 10, top: 14, bottom: 14, width: 3, borderRadius: 2, background: r.color, opacity: 0.9 }} />
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: t.fg, letterSpacing: '-0.005em' }}>{r.pod}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: r.color, fontVariantNumeric: 'tabular-nums' }}>{r.status}</div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: t.fg50, marginBottom: 9 }}>
+              <span>{r.cadence} - {r.people}</span>
+              <span style={{ color: r.color, fontWeight: 600 }}>{r.action} -&gt;</span>
+            </div>
+            <div style={{ position: 'relative', height: 5, borderRadius: 3, background: t.fg08, overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, width: `${r.pct * 100}%`, background: `linear-gradient(90deg, ${r.color}bb, ${r.color})`, borderRadius: 3 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function getFeatures(t: FeatureTheme) { return [
   {
     label: '01',
-    title: 'Your whole network, mapped.',
-    desc: 'See every relationship as an interactive orb map. Pods, categories, and individual connections organized exactly how you think - not how a database does.',
-    visual: (
-      <svg viewBox="0 0 480 320" fill="none" style={{ width: '100%', height: 'auto' }}>
-        <defs>
-          {[
-            { id: 'f1hub', c: '#003DA5' },
-            { id: 'f1p1', c: '#003DA5' },
-            { id: 'f1p2', c: '#7C3AED' },
-            { id: 'f1p3', c: '#0EA5E9' },
-            { id: 'f1p4', c: '#EC4899' },
-          ].map(g => (
-            <radialGradient key={g.id} id={g.id} cx="35%" cy="28%" r="75%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.98" />
-              <stop offset="38%" stopColor="#ffffff" stopOpacity="0.55" />
-              <stop offset="72%" stopColor={g.c} stopOpacity="0.28" />
-              <stop offset="92%" stopColor={g.c} stopOpacity="0.65" />
-              <stop offset="100%" stopColor={g.c} stopOpacity="0.95" />
-            </radialGradient>
-          ))}
-          {[
-            { id: 'f1h_hub', c: '#003DA5' },
-            { id: 'f1h_1', c: '#003DA5' },
-            { id: 'f1h_2', c: '#7C3AED' },
-            { id: 'f1h_3', c: '#0EA5E9' },
-            { id: 'f1h_4', c: '#EC4899' },
-          ].map(g => (
-            <radialGradient key={g.id} id={g.id} cx="50%" cy="50%" r="50%">
-              <stop offset="35%" stopColor={g.c} stopOpacity="0.28" />
-              <stop offset="70%" stopColor={g.c} stopOpacity="0.08" />
-              <stop offset="100%" stopColor={g.c} stopOpacity="0" />
-            </radialGradient>
-          ))}
-          <radialGradient id="f1glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="240" cy="160" rx="120" ry="100" fill="url(#f1glow)" />
-        <line x1="240" y1="160" x2="120" y2="70" stroke="#003DA5" strokeWidth="1" opacity="0.18" />
-        <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.18" />
-        <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.18" />
-        <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.18" />
-        <line x1="240" y1="160" x2="160" y2="270" stroke="#003DA5" strokeWidth="1" opacity="0.12" />
-        {[
-          { x: 240, y: 160, r: 54, grad: 'f1hub', halo: 'f1h_hub', label: 'My Network', sub: 'Score 84', fs: 11 },
-          { x: 120, y: 70, r: 34, grad: 'f1p1', halo: 'f1h_1', label: 'Family', fs: 10 },
-          { x: 370, y: 80, r: 28, grad: 'f1p2', halo: 'f1h_2', label: 'Creatives', fs: 10 },
-          { x: 380, y: 240, r: 32, grad: 'f1p3', halo: 'f1h_3', label: 'Founders', fs: 10 },
-          { x: 100, y: 250, r: 26, grad: 'f1p4', halo: 'f1h_4', label: 'Friends', fs: 9 },
-          { x: 165, y: 275, r: 20, grad: 'f1p1', halo: 'f1h_1', label: 'Mentors', fs: 8 },
-        ].map((o, i) => (
-          <g key={i}>
-            <circle cx={o.x} cy={o.y} r={o.r * 1.75} fill={`url(#${o.halo})`} />
-            <circle cx={o.x} cy={o.y} r={o.r} fill={`url(#${o.grad})`} />
-            <ellipse cx={o.x - o.r * 0.28} cy={o.y - o.r * 0.42} rx={o.r * 0.32} ry={o.r * 0.18} fill="#ffffff" opacity="0.85" />
-            <text x={o.x} y={o.sub ? o.y - 3 : o.y + 4} textAnchor="middle" fill={svgFg} fontSize={o.fs} fontWeight="700" fontFamily="system-ui">{o.label}</text>
-            {o.sub && <text x={o.x} y={o.y + 11} textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">{o.sub}</text>}
-          </g>
-        ))}
-      </svg>
-    ),
+    title: 'Your day, prioritized automatically.',
+    desc: "RealDeal surfaces the people who need you most today. Weighted by cadence, recency, and pod priority - so you never open the app wondering who to reach out to.",
+    visual: <FocusPanel t={t} />,
   },
   {
     label: '02',
     title: 'Equity scoring that keeps you honest.',
-    desc: 'Every relationship gets a 0-100 Social Equity score based on recency, frequency, and depth of interactions. Thriving, Steady, Cooling, or Fading - you always know where you stand.',
-    visual: (
-      <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
-        <defs>
-          <radialGradient id="f2glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="240" cy="140" rx="100" ry="80" fill="url(#f2glow)" />
-        {[
-          { name: 'Sarah Chen', score: 92, label: 'Thriving', color: '#25B439', y: 60 },
-          { name: 'Marcus Lee', score: 74, label: 'Steady', color: '#60a5fa', y: 120 },
-          { name: 'Jenna Park', score: 41, label: 'Cooling', color: '#f59e0b', y: 180 },
-          { name: 'David Osei', score: 18, label: 'Fading', color: '#f87171', y: 240 },
-        ].map((row, i) => (
-          <g key={i}>
-            <text x="32" y={row.y + 5} fill={svgFg40} fontSize="12" fontFamily="system-ui">{row.name}</text>
-            <rect x="160" y={row.y - 10} width={240 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.25" />
-            <rect x="160" y={row.y - 10} width={160 * (row.score / 100)} height="16" rx="8" fill={row.color} opacity="0.7" />
-            <text x="410" y={row.y + 5} fill={row.color} fontSize="12" fontWeight="700" fontFamily="system-ui">{row.score}</text>
-            <text x="440" y={row.y + 5} fill={row.color} fontSize="10" fontFamily="system-ui" opacity="0.8">{row.label}</text>
-          </g>
-        ))}
-      </svg>
-    ),
+    desc: 'Every pod and every relationship gets a 0-100 Social Equity score based on recency, frequency, and depth of interactions. Thriving, Steady, Cooling, or Fading - you always know where you stand.',
+    visual: <PodHealthCard t={t} />,
   },
   {
     label: '03',
     title: 'Never let a relationship slip.',
     desc: 'Set cadences for every pod. RealDeal tracks recency automatically and surfaces who needs attention before you even have to think about it.',
-    visual: (
-      <svg viewBox="0 0 480 280" fill="none" style={{ width: '100%', height: 'auto' }}>
-        <defs>
-          <radialGradient id="f3glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="240" cy="140" rx="110" ry="90" fill="url(#f3glow)" />
-        {[
-          { name: 'LPs Pod', cadence: 'Monthly', next: 'Overdue 3d', color: '#f87171', pct: 0.95 },
-          { name: 'Founders Pod', cadence: 'Biweekly', next: 'In 4 days', color: '#f59e0b', pct: 0.6 },
-          { name: 'Advisors Pod', cadence: 'Quarterly', next: 'In 38 days', color: '#003DA5', pct: 0.12 },
-        ].map((row, i) => (
-          <g key={i}>
-            <rect x="32" y={60 + i * 72} width="416" height="56" rx="12" fill={svgRect} stroke={svgStroke} strokeWidth="1" />
-            <text x="52" y={92 + i * 72} fill={svgFg} fontSize="13" fontWeight="600" fontFamily="system-ui">{row.name}</text>
-            <text x="52" y={110 + i * 72} fill={svgFg40} fontSize="10" fontFamily="system-ui">{row.cadence}</text>
-            <rect x="240" y={82 + i * 72} width="120" height="8" rx="4" fill={svgStroke} />
-            <rect x="240" y={82 + i * 72} width={120 * row.pct} height="8" rx="4" fill={row.color} opacity="0.8" />
-            <text x="380" y={91 + i * 72} fill={row.color} fontSize="11" fontFamily="system-ui" fontWeight="600">{row.next}</text>
-          </g>
-        ))}
-      </svg>
-    ),
+    visual: <NeedsAttentionCard t={t} />,
   },
 ] }  // end getFeatures
 
@@ -409,7 +502,13 @@ export function LandingPage() {
     svgRect:   dark ? 'rgba(255,255,255,0.03)'     : 'rgba(0,0,0,0.03)',
   }
 
-  const FEATURES = getFeatures(t.svgFg, t.svgFg40, t.svgStroke, t.svgRect)
+  const FEATURES = getFeatures({
+    fg: t.fg, fg45: t.fg45, fg50: t.fg50, fg08: t.fg08,
+    border: t.border07,
+    panelBg: dark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
+    rowBg: dark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+    dark,
+  })
   const featureRefs = [f1Ref, f2Ref, f3Ref]
   const featureVis = [f1Visible, f2Visible, f3Visible]
 
