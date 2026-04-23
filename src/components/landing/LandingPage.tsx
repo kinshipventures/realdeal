@@ -487,7 +487,8 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
   const inputBorder = dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)'
   const captionColor = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'
   const textColor = dark ? '#fff' : '#201D1A'
-  const maxW = variant === 'hero' ? 460 : 520
+  const maxW = variant === 'hero' ? 460 : 420
+  const isFooter = variant === 'footer'
 
   if (isDone) {
     return (
@@ -518,8 +519,12 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
     <form
       onSubmit={submit}
       style={{
-        maxWidth: maxW, margin: '0 auto',
-        display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center',
+        maxWidth: maxW, margin: '0 auto', width: '100%',
+        display: 'flex',
+        flexDirection: isFooter ? 'column' : 'row',
+        gap: isFooter ? 12 : 10,
+        flexWrap: isFooter ? 'nowrap' : 'wrap',
+        justifyContent: 'center',
         opacity: isExiting ? 0 : 1,
         transform: isExiting ? 'translateY(-4px)' : 'translateY(0)',
         transition: 'opacity 220ms ease, transform 220ms cubic-bezier(0.22,1,0.36,1)',
@@ -533,7 +538,8 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
         onChange={(e) => setEmail(e.target.value)}
         className="rd-waitlist-input"
         style={{
-          flex: '1 1 220px', minWidth: 0,
+          width: isFooter ? '100%' : undefined,
+          flex: isFooter ? undefined : '1 1 220px', minWidth: 0,
           height: 52, padding: '0 18px',
           fontSize: 15, fontFamily: 'inherit',
           color: textColor,
@@ -542,6 +548,7 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
           borderRadius: 12, outline: 'none',
           transition: 'border-color 180ms ease, box-shadow 180ms ease',
           boxSizing: 'border-box',
+          textAlign: isFooter ? 'center' : 'left',
         }}
       />
       <button
@@ -549,6 +556,7 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
         disabled={isLoading}
         className="rd-cta-primary"
         style={{
+          width: isFooter ? '100%' : undefined,
           height: 52, padding: '0 26px',
           fontSize: 15, fontWeight: 600, fontFamily: 'inherit',
           color: '#fff', background: '#003DA5',
@@ -1122,22 +1130,22 @@ export function LandingPage() {
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(40px, 5.5vw, 68px)',
             fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05,
-            color: t.fg, marginBottom: 24,
+            color: t.fg, marginBottom: 20,
             ...reveal(ctaVisible, 0.05),
           }}>
             We're growing slowly.<br /><em style={{ fontStyle: 'italic', fontWeight: 500 }}>On purpose.</em>
           </h2>
 
           <p style={{
-            fontSize: 17, color: t.fg70, marginBottom: 48, lineHeight: 1.6,
-            maxWidth: 520, margin: '0 auto 48px',
+            fontSize: 17, color: t.fg70, lineHeight: 1.6,
+            maxWidth: 520, margin: '0 auto 40px',
             ...reveal(ctaVisible, 0.1),
           }}>
             Real Deal is in private beta. We're onboarding a handful of people at a time so every relationship gets the attention it deserves.
           </p>
 
           <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
             ...reveal(ctaVisible, 0.2),
           }}>
             <WaitlistForm variant="footer" dark={dark} />
