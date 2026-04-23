@@ -228,59 +228,61 @@ function getFeatures(svgFg: string, svgFg40: string, svgStroke: string, svgRect:
     visual: (
       <svg viewBox="0 0 480 320" fill="none" style={{ width: '100%', height: 'auto' }}>
         <defs>
-          <radialGradient id="f1hub" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#1a6632" stopOpacity="0.7" />
-          </radialGradient>
-          <radialGradient id="f1p1" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#1a6632" stopOpacity="0.5" />
-          </radialGradient>
-          <radialGradient id="f1p2" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#4c1d95" stopOpacity="0.5" />
-          </radialGradient>
-          <radialGradient id="f1p3" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#0369a1" stopOpacity="0.5" />
-          </radialGradient>
-          <radialGradient id="f1p4" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#EC4899" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#9d174d" stopOpacity="0.5" />
-          </radialGradient>
+          {[
+            { id: 'f1hub', c: '#003DA5' },
+            { id: 'f1p1', c: '#003DA5' },
+            { id: 'f1p2', c: '#7C3AED' },
+            { id: 'f1p3', c: '#0EA5E9' },
+            { id: 'f1p4', c: '#EC4899' },
+          ].map(g => (
+            <radialGradient key={g.id} id={g.id} cx="35%" cy="28%" r="75%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.98" />
+              <stop offset="38%" stopColor="#ffffff" stopOpacity="0.55" />
+              <stop offset="72%" stopColor={g.c} stopOpacity="0.28" />
+              <stop offset="92%" stopColor={g.c} stopOpacity="0.65" />
+              <stop offset="100%" stopColor={g.c} stopOpacity="0.95" />
+            </radialGradient>
+          ))}
+          {[
+            { id: 'f1h_hub', c: '#003DA5' },
+            { id: 'f1h_1', c: '#003DA5' },
+            { id: 'f1h_2', c: '#7C3AED' },
+            { id: 'f1h_3', c: '#0EA5E9' },
+            { id: 'f1h_4', c: '#EC4899' },
+          ].map(g => (
+            <radialGradient key={g.id} id={g.id} cx="50%" cy="50%" r="50%">
+              <stop offset="35%" stopColor={g.c} stopOpacity="0.28" />
+              <stop offset="70%" stopColor={g.c} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={g.c} stopOpacity="0" />
+            </radialGradient>
+          ))}
           <radialGradient id="f1glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.15" />
+            <stop offset="0%" stopColor="#003DA5" stopOpacity="0.12" />
             <stop offset="100%" stopColor="#003DA5" stopOpacity="0" />
           </radialGradient>
-          <filter id="f1blur">
-            <feGaussianBlur stdDeviation="3" />
-          </filter>
         </defs>
-        {/* ambient glow */}
         <ellipse cx="240" cy="160" rx="120" ry="100" fill="url(#f1glow)" />
-        {/* connection lines */}
-        <line x1="240" y1="160" x2="120" y2="70" stroke="#003DA5" strokeWidth="1" opacity="0.2" />
-        <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.2" />
-        <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.2" />
-        <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.2" />
+        <line x1="240" y1="160" x2="120" y2="70" stroke="#003DA5" strokeWidth="1" opacity="0.18" />
+        <line x1="240" y1="160" x2="370" y2="80" stroke="#7C3AED" strokeWidth="1" opacity="0.18" />
+        <line x1="240" y1="160" x2="380" y2="240" stroke="#0EA5E9" strokeWidth="1" opacity="0.18" />
+        <line x1="240" y1="160" x2="100" y2="250" stroke="#EC4899" strokeWidth="1" opacity="0.18" />
         <line x1="240" y1="160" x2="160" y2="270" stroke="#003DA5" strokeWidth="1" opacity="0.12" />
-        {/* hub */}
-        <circle cx="240" cy="160" r="54" fill="url(#f1hub)" />
-        <circle cx="240" cy="160" r="60" stroke="#003DA5" strokeWidth="1.5" opacity="0.3" fill="none" />
-        <text x="240" y="154" textAnchor="middle" fill={svgFg} fontSize="11" fontWeight="700" fontFamily="system-ui">My Network</text>
-        <text x="240" y="170" textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">Score 84</text>
-        {/* pods */}
-        <circle cx="120" cy="70" r="34" fill="url(#f1p1)" />
-        <circle cx="120" cy="70" r="38" stroke="#003DA5" strokeWidth="1" opacity="0.25" fill="none" />
-        <text x="120" y="74" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Family</text>
-        <circle cx="370" cy="80" r="28" fill="url(#f1p2)" />
-        <text x="370" y="84" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Creatives</text>
-        <circle cx="380" cy="240" r="32" fill="url(#f1p3)" />
-        <text x="380" y="244" textAnchor="middle" fill={svgFg} fontSize="10" fontWeight="600" fontFamily="system-ui">Founders</text>
-        <circle cx="100" cy="250" r="26" fill="url(#f1p4)" />
-        <text x="100" y="254" textAnchor="middle" fill={svgFg} fontSize="9" fontWeight="600" fontFamily="system-ui">Friends</text>
-        <circle cx="165" cy="275" r="20" fill="url(#f1p1)" opacity="0.7" />
-        <text x="165" y="279" textAnchor="middle" fill={svgFg} fontSize="8" fontWeight="600" fontFamily="system-ui">Mentors</text>
+        {[
+          { x: 240, y: 160, r: 54, grad: 'f1hub', halo: 'f1h_hub', label: 'My Network', sub: 'Score 84', fs: 11 },
+          { x: 120, y: 70, r: 34, grad: 'f1p1', halo: 'f1h_1', label: 'Family', fs: 10 },
+          { x: 370, y: 80, r: 28, grad: 'f1p2', halo: 'f1h_2', label: 'Creatives', fs: 10 },
+          { x: 380, y: 240, r: 32, grad: 'f1p3', halo: 'f1h_3', label: 'Founders', fs: 10 },
+          { x: 100, y: 250, r: 26, grad: 'f1p4', halo: 'f1h_4', label: 'Friends', fs: 9 },
+          { x: 165, y: 275, r: 20, grad: 'f1p1', halo: 'f1h_1', label: 'Mentors', fs: 8 },
+        ].map((o, i) => (
+          <g key={i}>
+            <circle cx={o.x} cy={o.y} r={o.r * 1.75} fill={`url(#${o.halo})`} />
+            <circle cx={o.x} cy={o.y} r={o.r} fill={`url(#${o.grad})`} />
+            <ellipse cx={o.x - o.r * 0.28} cy={o.y - o.r * 0.42} rx={o.r * 0.32} ry={o.r * 0.18} fill="#ffffff" opacity="0.85" />
+            <text x={o.x} y={o.sub ? o.y - 3 : o.y + 4} textAnchor="middle" fill={svgFg} fontSize={o.fs} fontWeight="700" fontFamily="system-ui">{o.label}</text>
+            {o.sub && <text x={o.x} y={o.y + 11} textAnchor="middle" fill={svgFg40} fontSize="10" fontFamily="system-ui">{o.sub}</text>}
+          </g>
+        ))}
       </svg>
     ),
   },
