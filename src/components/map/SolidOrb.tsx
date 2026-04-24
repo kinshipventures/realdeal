@@ -59,8 +59,8 @@ export function SolidOrb({
 
   // Shaded halo behind the orb — a solid low-opacity disc with a heavy blur,
   // matching landing's `<circle fill={color} opacity="0.5" filter=stdDev22 />`.
-  const haloSize = Math.round(size * 1.25)
-  const haloBlur = Math.round(size * 0.42)
+  const haloSize = Math.round(size * 1.8)
+  const haloBlur = Math.round(size * 0.5)
 
   return (
     <div
