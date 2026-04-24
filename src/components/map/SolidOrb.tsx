@@ -57,10 +57,10 @@ export function SolidOrb({
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
 
-  // Shaded halo behind the orb — a large low-opacity filled disc with soft
-  // blurred edges. Matches landing's ambient color wash.
+  // Shaded halo behind the orb — a large low-opacity filled disc with a
+  // gentle blur to soften the edge. The disc should read as a defined circle.
   const haloSize = Math.round(size * 2.5)
-  const haloBlur = Math.round(size * 0.35)
+  const haloBlur = Math.round(size * 0.12)
 
   return (
     <div
