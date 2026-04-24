@@ -22,13 +22,13 @@ interface NetworkPod {
 // Larger/thriving pods closer in, cooling/fading further out.
 const NETWORK_PODS: NetworkPod[] = [
   { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF2D6F', x: 309, y: 139, r: 58, icon: 'heart' },
-  { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 450, y:  95, r: 40, icon: 'briefcase' },
+  { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 501, y: 100, r: 40, icon: 'briefcase' },
   { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FFB400', x: 655, y: 100, r: 38, icon: 'book' },
-  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#6A2BE2', x: 680, y: 260, r: 50, icon: 'sparkles' },
+  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#6A2BE2', x: 693, y: 285, r: 50, icon: 'sparkles' },
   { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00C7A3', x: 613, y: 450, r: 48, icon: 'compass' },
-  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E01414', x: 450, y: 480, r: 36, icon: 'handshake' },
-  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#00A82D', x: 309, y: 421, r: 62, icon: 'users' },
-  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#FF8A00', x: 160, y: 280, r: 42, icon: 'trending' },
+  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E01414', x: 453, y: 477, r: 36, icon: 'handshake' },
+  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#00A82D', x: 291, y: 417, r: 62, icon: 'users' },
+  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#FF8A00', x: 157, y: 284, r: 42, icon: 'trending' },
 ]
 
 const HEALTH_SATURATION: Record<PodHealth, number> = {
