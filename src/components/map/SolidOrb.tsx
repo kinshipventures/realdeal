@@ -44,13 +44,17 @@ export function SolidOrb({
   void glowIntensity
 
   const orbRef = useRef<HTMLDivElement>(null)
-  const glowSize = size >= 96 ? 28 : 20
-  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 8px 20px -4px rgba(0,0,0,0.18)`
-  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 12px 28px -4px rgba(0,0,0,0.22)`
+  // Atmospheric halo — scales with orb size. Matches the landing NetworkMap glow.
+  const haloR = Math.round(size * 0.55)
+  const haloNear = Math.round(size * 0.28)
+  const edge = hexToRgba(color, 0.55)
+  const restShadow = `0 0 ${haloR}px ${hexToRgba(color, 0.32)}, 0 0 ${haloNear}px ${hexToRgba(color, 0.22)}, 0 6px 18px -4px rgba(0,0,0,0.18), inset 0 0 0 1px ${edge}`
+  const hoverShadow = `0 0 ${Math.round(haloR * 1.25)}px ${hexToRgba(color, 0.45)}, 0 0 ${haloNear}px ${hexToRgba(color, 0.30)}, 0 10px 28px -4px rgba(0,0,0,0.22), inset 0 0 0 1px ${edge}`
 
-  const bg = shiftColor
-    ? `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`
-    : `linear-gradient(135deg, ${color} 0%, ${color} 100%)`
+  // Glass sphere: subtle white hotspot top-left, fading into pod color. Mirrors landing NetworkMap stops.
+  // shiftColor (when provided) sits mid-gradient so two-color pods keep their identity.
+  const mid = shiftColor ?? color
+  const bg = `radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55) 0%, ${hexToRgba(mid, 0.72)} 22%, ${color} 70%, ${color} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
