@@ -7,6 +7,9 @@ import { WorkspaceProvider } from './contexts/WorkspaceContext'
 import './index.css'
 import App from './App'
 
+// Force light mode site-wide. Overrides system preference.
+document.documentElement.setAttribute('data-theme', 'light')
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ReactFlowProvider>
