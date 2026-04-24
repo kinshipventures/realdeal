@@ -36,14 +36,14 @@ interface NetworkPod {
 }
 
 const NETWORK_PODS: NetworkPod[] = [
-  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#25B439', x: 230, y: 420, r: 62, icon: 'users' },
-  { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF6B8A', x: 260, y: 180, r: 58, icon: 'heart' },
-  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#7E57C2', x: 680, y: 180, r: 50, icon: 'sparkles' },
-  { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00BFA5', x: 660, y: 380, r: 48, icon: 'compass' },
+  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#00A82D', x: 230, y: 420, r: 62, icon: 'users' },
+  { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF2D6F', x: 260, y: 180, r: 58, icon: 'heart' },
+  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#6A2BE2', x: 680, y: 180, r: 50, icon: 'sparkles' },
+  { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00C7A3', x: 660, y: 380, r: 48, icon: 'compass' },
   { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 500, y: 110, r: 40, icon: 'briefcase' },
-  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#F5A623', x: 140, y: 290, r: 42, icon: 'trending' },
-  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E53935', x: 360, y: 510, r: 36, icon: 'handshake' },
-  { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FF6B8A', x: 790, y: 120, r: 38, icon: 'book' },
+  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#FF8A00', x: 140, y: 290, r: 42, icon: 'trending' },
+  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E01414', x: 360, y: 490, r: 36, icon: 'handshake' },
+  { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FFB400', x: 790, y: 120, r: 38, icon: 'book' },
 ]
 
 const HEALTH_SATURATION: Record<PodHealth, number> = {
@@ -76,7 +76,7 @@ function NetworkMap() {
   const ringStroke = isDark ? '#6B8FD9' : '#003DA5'
   const ringOpacity = isDark ? 0.28 : 0.18
   const W = 900
-  const H = 560
+  const H = 580
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -98,10 +98,10 @@ function NetworkMap() {
           </radialGradient>
           {NETWORK_PODS.map(p => (
             <radialGradient key={p.id} id={`nm-orb-${p.id}`} cx="38%" cy="32%" r="75%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
-              <stop offset="30%" stopColor={p.color} stopOpacity="0.35" />
-              <stop offset="70%" stopColor={p.color} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={p.color} stopOpacity="0.08" />
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+              <stop offset="22%" stopColor={p.color} stopOpacity="0.62" />
+              <stop offset="70%" stopColor={p.color} stopOpacity="0.82" />
+              <stop offset="100%" stopColor={p.color} stopOpacity="0.72" />
             </radialGradient>
           ))}
           <radialGradient id="nm-orb-shadow" cx="50%" cy="50%" r="50%">
@@ -181,7 +181,7 @@ function NetworkMap() {
               {/* soft cool drop-shadow under orb */}
               <ellipse cx={p.x} cy={p.y + p.r * 0.5} rx={p.r * 0.85} ry={p.r * 0.22} fill="url(#nm-orb-shadow)" filter="url(#nm-soft)" />
               {/* ambient outer glow */}
-              <circle cx={p.x} cy={p.y} r={p.r * 1.25} fill={p.color} opacity="0.10" filter="url(#nm-soft)" />
+              <circle cx={p.x} cy={p.y} r={p.r * 1.25} fill={p.color} opacity="0.18" filter="url(#nm-soft)" />
               {/* translucent glass orb */}
               <circle
                 cx={p.x}
@@ -191,7 +191,7 @@ function NetworkMap() {
                 style={{ transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1)', transformOrigin: `${p.x}px ${p.y}px`, transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
               />
               {/* thin edge ring - cool shell blue */}
-              <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke={p.color} strokeOpacity="0.35" strokeWidth="0.5" />
+              <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke={p.color} strokeOpacity="0.6" strokeWidth="0.75" />
               {/* soft inner highlight ellipse (top-left) - glass reflection */}
               <ellipse cx={p.x - p.r * 0.32} cy={p.y - p.r * 0.4} rx={p.r * 0.38} ry={p.r * 0.22} fill="#ffffff" opacity="0.45" filter="url(#nm-soft)" />
               {/* pod name label below orb */}
@@ -818,7 +818,7 @@ function WaitlistForm({ variant, dark }: { variant: 'hero' | 'footer'; dark: boo
         </span>
         <div style={{ textAlign: 'left' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 16, color: textColor }}>You're in.</div>
-          <div style={{ fontSize: 13, color: captionColor, marginTop: 1 }}>Good company is on the way.</div>
+          <div style={{ fontSize: 13, color: captionColor, marginTop: 1 }}>We'll ping you when a spot opens up.</div>
         </div>
       </div>
     )
