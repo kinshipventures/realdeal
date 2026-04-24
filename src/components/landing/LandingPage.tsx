@@ -338,7 +338,7 @@ function FocusPanel({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
       `}</style>
 
       {/* header */}
-      <div style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 20, fontWeight: 700, color: t.fg,
@@ -361,8 +361,8 @@ function FocusPanel({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
               key={r.name}
               className={`rd-fp-row ${isUrgent ? 'rd-fp-urgent' : ''}`}
               style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: isUrgent ? '18px 22px' : '14px 22px',
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: isUrgent ? '20px 24px' : '16px 24px',
                 background: isUrgent ? (t.dark ? 'rgba(214,90,74,0.06)' : 'rgba(214,90,74,0.035)') : 'transparent',
                 borderBottom: i < rows.length - 1 ? `1px solid ${t.border}` : 'none',
                 opacity: v ? 1 : 0,
@@ -466,7 +466,7 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
       `}</style>
 
       {/* header */}
-      <div style={{ padding: '18px 22px 8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 24px 8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: t.fg45, textTransform: 'uppercase', letterSpacing: '0.18em' }}>Inner Circle</div>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -481,7 +481,7 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
       </div>
 
       {/* hero score */}
-      <div style={{ padding: '0 22px 18px', display: 'flex', alignItems: 'baseline', gap: 10 }}>
+      <div style={{ padding: '0 24px 20px', display: 'flex', alignItems: 'baseline', gap: 12 }}>
         <div style={{
           fontFamily: 'var(--font-serif)',
           fontSize: 64, fontWeight: 700, color: t.fg,
@@ -494,7 +494,7 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
       </div>
 
       {/* spectrum */}
-      <div style={{ padding: '0 22px 10px' }}>
+      <div style={{ padding: '0 24px 12px' }}>
         {/* pod pin above the bar */}
         <div style={{ position: 'relative', height: 26 }}>
           <div
@@ -614,8 +614,8 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
 
       {/* at-risk callout */}
       <div style={{
-        margin: '2px 14px 14px',
-        padding: '12px 14px',
+        margin: '4px 12px 12px',
+        padding: '12px 16px',
         borderRadius: 10,
         background: t.dark ? 'rgba(214,90,74,0.08)' : 'rgba(214,90,74,0.06)',
         opacity: v ? 1 : 0,
@@ -707,7 +707,7 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
 
       {/* featured - one named story */}
       <div style={{
-        padding: '22px 24px 20px',
+        padding: '20px 24px 20px',
         opacity: v ? 1 : 0,
         transform: v ? 'translateY(0)' : 'translateY(8px)',
         transition: 'opacity 0.5s ease 0.12s, transform 0.5s cubic-bezier(0.22,1,0.36,1) 0.12s',
@@ -1149,23 +1149,23 @@ export function LandingPage() {
             gap: 40px !important;
           }
           .rd-feature-outer {
-            padding: 24px 20px 64px !important;
+            padding: 48px 20px 64px !important;
           }
           .rd-portfolio-logo {
             height: 48px !important;
           }
           .rd-nav-anchors { display: none !important; }
           .rd-hero-section {
-            padding: 56px 20px 48px !important;
+            padding: 64px 20px 64px !important;
           }
           .rd-science-section {
-            padding: 24px 20px 64px !important;
+            padding: 48px 20px 64px !important;
           }
           .rd-team-section {
-            padding: 24px 20px 64px !important;
+            padding: 48px 20px 64px !important;
           }
           .rd-cta-section {
-            padding: 64px 20px 72px !important;
+            padding: 64px 20px 80px !important;
           }
           .rd-moj-row {
             flex-direction: column !important;
@@ -1257,7 +1257,7 @@ export function LandingPage() {
         ref={heroRef as RefObject<HTMLElement>}
         className="rd-hero-section"
         style={{
-          maxWidth: 1200, margin: '0 auto', padding: '96px 40px 80px',
+          maxWidth: 1200, margin: '0 auto', padding: '96px 40px 96px',
           textAlign: 'center', position: 'relative',
         }}
       >
@@ -1330,7 +1330,7 @@ export function LandingPage() {
       </section>
 
       {/* Feature sections - editorial alternating */}
-      <div id="features" className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 40px 120px', scrollMarginTop: 80 }}>
+      <div id="features" className="rd-feature-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 40px 96px', scrollMarginTop: 80 }}>
         <div style={{
           fontSize: 10, fontWeight: 700, letterSpacing: '0.24em',
           textTransform: 'uppercase', color: t.fg45,
@@ -1404,7 +1404,7 @@ export function LandingPage() {
         ref={scienceRef as RefObject<HTMLElement>}
         className="rd-science-section"
         style={{
-          maxWidth: 1100, margin: '0 auto', padding: '40px 40px 96px',
+          maxWidth: 1100, margin: '0 auto', padding: '64px 40px 96px',
           scrollMarginTop: 80,
         }}
       >
@@ -1419,7 +1419,7 @@ export function LandingPage() {
         <p style={{
           fontSize: 'clamp(26px, 3.5vw, 40px)',
           fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.25,
-          color: t.fg, margin: '0 auto 72px', textAlign: 'center', maxWidth: 720,
+          color: t.fg, margin: '0 auto 64px', textAlign: 'center', maxWidth: 720,
           fontFamily: 'var(--font-serif)',
         }}>
           The longest study on happiness ever run found one thing that beats money, fame, or career: <em style={{ color: '#003DA5', fontStyle: 'italic' }}>close relationships</em>.
@@ -1477,7 +1477,7 @@ export function LandingPage() {
         id="team"
         ref={partnersRef as RefObject<HTMLElement>}
         className="rd-team-section"
-        style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 40px 96px', scrollMarginTop: 80 }}
+        style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 40px 96px', scrollMarginTop: 80 }}
       >
         <div style={{ maxWidth: 720, marginBottom: 64 }}>
           <div style={{
@@ -1548,7 +1548,7 @@ export function LandingPage() {
         ref={ctaRef as RefObject<HTMLElement>}
         className="rd-cta-section"
         style={{
-          padding: '100px 40px 120px', textAlign: 'center',
+          padding: '96px 40px 120px', textAlign: 'center',
           position: 'relative', overflow: 'hidden',
           borderTop: `1px solid ${t.border06}`,
           scrollMarginTop: 80,
