@@ -51,16 +51,19 @@ export function SolidOrb({
   const restShadow = `0 6px 18px -4px rgba(0,0,0,0.18), inset 0 0 0 1px ${edge}`
   const hoverShadow = `0 10px 28px -4px rgba(0,0,0,0.22), inset 0 0 0 1px ${edge}`
 
-  // Glass sphere — mirrors landing NetworkMap stops (38% 32%, same opacities).
-  const bg = `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.55) 0%, ${hexToRgba(color, 0.62)} 22%, ${hexToRgba(color, 0.82)} 70%, ${hexToRgba(color, 0.72)} 100%)`
+  // Glass sphere — pulled toward more saturated/vibrant color, with a subtle
+  // hotspot rather than a heavy white wash.
+  const bg = `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.42) 0%, ${hexToRgba(color, 0.78)} 22%, ${color} 60%, ${color} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
 
-  // Shaded halo behind the orb — a tight low-opacity filled disc with a
-  // crisp edge. Just slightly larger than the orb itself.
-  const haloSize = Math.round(size * 1.35)
-  const haloBlur = 0
+  // Two layers behind the orb:
+  // 1. Disc — tight crisp-edged filled circle, slightly larger than the orb.
+  // 2. Glow — wider blurred ambient wash that bleeds color into the page.
+  const discSize = Math.round(size * 1.2)
+  const glowSize = Math.round(size * 2.0)
+  const glowBlur = Math.round(size * 0.35)
 
   return (
     <div
@@ -75,19 +78,35 @@ export function SolidOrb({
         isolation: 'isolate',
       }}
     >
-      {/* Far diffuse halo — color bleeds into the surrounding space */}
+      {/* Layer 1 — outer glow, wider blurred ambient wash */}
       <div
         aria-hidden
         style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
-          width: haloSize,
-          height: haloSize,
+          width: glowSize,
+          height: glowSize,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          background: hexToRgba(color, 0.32),
+          filter: `blur(${glowBlur}px)`,
+          pointerEvents: 'none',
+          zIndex: -2,
+        }}
+      />
+      {/* Layer 2 — disc, tight crisp-edged filled circle behind the orb */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: discSize,
+          height: discSize,
           transform: 'translate(-50%, -50%)',
           borderRadius: '50%',
           background: hexToRgba(color, 0.38),
-          filter: `blur(${haloBlur}px)`,
           pointerEvents: 'none',
           zIndex: -1,
         }}
