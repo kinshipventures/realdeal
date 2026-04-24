@@ -51,10 +51,10 @@ export function SolidOrb({
   const restShadow = `0 0 ${haloR}px ${hexToRgba(color, 0.32)}, 0 0 ${haloNear}px ${hexToRgba(color, 0.22)}, 0 6px 18px -4px rgba(0,0,0,0.18), inset 0 0 0 1px ${edge}`
   const hoverShadow = `0 0 ${Math.round(haloR * 1.25)}px ${hexToRgba(color, 0.45)}, 0 0 ${haloNear}px ${hexToRgba(color, 0.30)}, 0 10px 28px -4px rgba(0,0,0,0.22), inset 0 0 0 1px ${edge}`
 
-  // Glass sphere: subtle white hotspot top-left, fading into pod color. Mirrors landing NetworkMap stops.
-  // shiftColor (when provided) sits mid-gradient so two-color pods keep their identity.
-  const mid = shiftColor ?? color
-  const bg = `radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55) 0%, ${hexToRgba(mid, 0.72)} 22%, ${color} 70%, ${color} 100%)`
+  // Glass sphere — mirrors landing NetworkMap stops (38% 32%, same opacities).
+  // shiftColor accepted for API compat but the landing look uses a single color all the way.
+  void shiftColor
+  const bg = `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.55) 0%, ${hexToRgba(color, 0.62)} 22%, ${hexToRgba(color, 0.82)} 70%, ${hexToRgba(color, 0.72)} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
