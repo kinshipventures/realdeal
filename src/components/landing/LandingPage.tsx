@@ -21,10 +21,6 @@ function useTheme(): 'light' | 'dark' {
   }, [])
   return theme
 }
-import goopLogo from '@/assets/logos/goop.png'
-import moonpayLogo from '@/assets/logos/moonpay.png'
-import forerunnerLogo from '@/assets/logos/forerunner.png'
-import wonderLogo from '@/assets/logos/wonder.png'
 
 type PodHealth = 'thriving' | 'steady' | 'cooling' | 'fading'
 interface NetworkPod {
@@ -254,13 +250,6 @@ const FOUNDER = {
   initials: 'MM',
   photo: 'https://images.squarespace-cdn.com/content/v1/6255af0f455c757ddc06592c/5554cf9e-73fe-48f0-82ca-c3c0da8e0cae/Moj+Mahdara.png',
 }
-
-const PORTFOLIO_BRANDS = [
-  { name: 'goop', logo: goopLogo },
-  { name: 'MoonPay', logo: moonpayLogo },
-  { name: 'Forerunner', logo: forerunnerLogo },
-  { name: 'Wonder', logo: wonderLogo },
-]
 
 type FeatureTheme = {
   fg: string
@@ -1235,10 +1224,7 @@ export function LandingPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             className="rd-cta-primary"
-            onClick={() => {
-              const el = document.getElementById('waitlist-cta')
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }}
+            onClick={() => navigate('/login')}
             style={{
               padding: '8px 20px', borderRadius: 8, border: 'none',
               background: '#003DA5', color: '#fff', cursor: 'pointer',
@@ -1247,7 +1233,7 @@ export function LandingPage() {
               boxShadow: '0 4px 20px rgba(0, 61, 165,0.3)',
             }}
           >
-            Join waitlist
+            Sign in
           </button>
         </div>
       </nav>
@@ -1509,35 +1495,6 @@ export function LandingPage() {
               <div style={{ fontSize: 13, color: t.fg45, marginBottom: 10, letterSpacing: '0.01em' }}>{FOUNDER.role}</div>
               <div style={{ fontSize: 14, color: t.fg, lineHeight: 1.5, maxWidth: 440 }}>{FOUNDER.bio}</div>
             </div>
-          </div>
-        </div>
-
-        <div style={{ ...reveal(partnersVisible, 0.18) }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.24em',
-            textTransform: 'uppercase', color: t.fg45,
-            marginBottom: 32,
-          }}>
-            From the Kinship Ventures portfolio
-          </div>
-          <div className="rd-portfolio-row" style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 32, flexWrap: 'wrap',
-          }}>
-            {PORTFOLIO_BRANDS.map((brand) => (
-              <img
-                key={brand.name}
-                className="rd-portfolio-logo"
-                src={brand.logo}
-                alt={brand.name}
-                loading="lazy"
-                style={{
-                  height: 160, width: 'auto', objectFit: 'contain',
-                  userSelect: 'none', flex: '1 1 0', minWidth: 0,
-                  filter: t.logoFilter, opacity: 0.7,
-                }}
-              />
-            ))}
           </div>
         </div>
       </section>
