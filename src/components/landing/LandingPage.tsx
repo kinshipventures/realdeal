@@ -1,25 +1,9 @@
 import { useNavigate } from 'react-router'
-import { useRef, useEffect, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWaitlistSubmit } from '@/components/waitlist/useWaitlistSubmit'
-
-function useTheme(): 'light' | 'dark' {
-  const getTheme = (): 'light' | 'dark' => {
-    const attr = document.documentElement.getAttribute('data-theme')
-    if (attr === 'dark') return 'dark'
-    if (attr === 'light') return 'light'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  const [theme, setTheme] = useState<'light' | 'dark'>(getTheme)
-  useEffect(() => {
-    const obs = new MutationObserver(() => setTheme(getTheme()))
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onMq = () => setTheme(getTheme())
-    mq.addEventListener('change', onMq)
-    return () => { obs.disconnect(); mq.removeEventListener('change', onMq) }
-  }, [])
-  return theme
-}
+import { useTheme } from '@/hooks/useTheme'
+import { useInView } from '@/hooks/useInView'
+import { useCountUp } from '@/hooks/useCountUp'
 
 type PodHealth = 'thriving' | 'steady' | 'cooling' | 'fading'
 interface NetworkPod {
@@ -34,15 +18,17 @@ interface NetworkPod {
   icon: 'heart' | 'users' | 'sparkles' | 'compass' | 'trending' | 'briefcase' | 'book' | 'handshake'
 }
 
+// 8-way angular distribution (45 deg apart) around hub (450, 280).
+// Larger/thriving pods closer in, cooling/fading further out.
 const NETWORK_PODS: NetworkPod[] = [
-  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#00A82D', x: 230, y: 420, r: 62, icon: 'users' },
-  { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF2D6F', x: 260, y: 180, r: 58, icon: 'heart' },
-  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#6A2BE2', x: 680, y: 180, r: 50, icon: 'sparkles' },
-  { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00C7A3', x: 660, y: 380, r: 48, icon: 'compass' },
-  { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 500, y: 110, r: 40, icon: 'briefcase' },
-  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#FF8A00', x: 140, y: 290, r: 42, icon: 'trending' },
-  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E01414', x: 360, y: 490, r: 36, icon: 'handshake' },
-  { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FFB400', x: 790, y: 120, r: 38, icon: 'book' },
+  { id: 'family',    label: 'Family',            people: 12, health: 'thriving', color: '#FF2D6F', x: 309, y: 139, r: 58, icon: 'heart' },
+  { id: 'work',      label: 'Work',              people: 6,  health: 'steady',   color: '#003DA5', x: 450, y:  95, r: 40, icon: 'briefcase' },
+  { id: 'mentors',   label: 'Mentors',           people: 3,  health: 'cooling',  color: '#FFB400', x: 655, y: 100, r: 38, icon: 'book' },
+  { id: 'creatives', label: 'Creatives',         people: 8,  health: 'steady',   color: '#6A2BE2', x: 680, y: 260, r: 50, icon: 'sparkles' },
+  { id: 'founders',  label: 'Founders',          people: 7,  health: 'steady',   color: '#00C7A3', x: 613, y: 450, r: 48, icon: 'compass' },
+  { id: 'biz',       label: 'Partners',          people: 4,  health: 'fading',   color: '#E01414', x: 450, y: 480, r: 36, icon: 'handshake' },
+  { id: 'friends',   label: 'Friends',           people: 14, health: 'thriving', color: '#00A82D', x: 309, y: 421, r: 62, icon: 'users' },
+  { id: 'investors', label: 'Investors',         people: 5,  health: 'steady',   color: '#FF8A00', x: 160, y: 280, r: 42, icon: 'trending' },
 ]
 
 const HEALTH_SATURATION: Record<PodHealth, number> = {
@@ -78,6 +64,39 @@ function NetworkMap() {
   const W = 900
   const H = 580
 
+  // Dev-only layout editor: enable with ?layout=edit. Drag orbs, copy positions.
+  const editMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('layout') === 'edit'
+  const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(() =>
+    Object.fromEntries(NETWORK_PODS.map(p => [p.id, { x: p.x, y: p.y }]))
+  )
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const dragIdRef = useRef<string | null>(null)
+  const pods = editMode
+    ? NETWORK_PODS.map(p => ({ ...p, x: positions[p.id]?.x ?? p.x, y: positions[p.id]?.y ?? p.y }))
+    : NETWORK_PODS
+
+  const onOrbPointerDown = (id: string) => (e: React.PointerEvent<SVGGElement>) => {
+    if (!editMode) return
+    e.stopPropagation()
+    dragIdRef.current = id
+    ;(e.target as Element).setPointerCapture?.(e.pointerId)
+  }
+  const onSvgPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!editMode || !dragIdRef.current || !svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * W)
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * H)
+    setPositions(prev => ({ ...prev, [dragIdRef.current!]: { x, y } }))
+  }
+  const onSvgPointerUp = () => { dragIdRef.current = null }
+  const copyPositions = () => {
+    const out = NETWORK_PODS.map(p => {
+      const pos = positions[p.id] ?? { x: p.x, y: p.y }
+      return `  { id: '${p.id}', x: ${pos.x}, y: ${pos.y}, r: ${p.r} },`
+    }).join('\n')
+    navigator.clipboard?.writeText(out)
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <style>{`
@@ -90,7 +109,7 @@ function NetworkMap() {
           .nm-hover-spoke { animation: none; }
         }
       `}</style>
-      <svg viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', width: '100%' }}>
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', width: '100%' }} onPointerMove={onSvgPointerMove} onPointerUp={onSvgPointerUp} onPointerLeave={onSvgPointerUp}>
         <defs>
           <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="22" />
@@ -209,7 +228,7 @@ function NetworkMap() {
         })()}
 
         {/* PODS - translucent glass spheres */}
-        {NETWORK_PODS.map(p => {
+        {pods.map(p => {
           const sat = HEALTH_SATURATION[p.health]
           const isHovered = hovered === p.id
           return (
@@ -218,11 +237,12 @@ function NetworkMap() {
               role="button"
               tabIndex={0}
               aria-label={`${p.label}, ${p.people} people, ${p.health}`}
-              style={{ cursor: 'pointer', transition: 'opacity 0.25s ease', outline: 'none' }}
+              style={{ cursor: editMode ? 'grab' : 'pointer', transition: 'opacity 0.25s ease', outline: 'none' }}
               opacity={sat}
-              onMouseEnter={() => setHovered(p.id)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => setHovered(h => h === p.id ? null : p.id)}
+              onPointerDown={onOrbPointerDown(p.id)}
+              onMouseEnter={() => !editMode && setHovered(p.id)}
+              onMouseLeave={() => !editMode && setHovered(null)}
+              onClick={() => !editMode && setHovered(h => h === p.id ? null : p.id)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
@@ -291,24 +311,30 @@ function NetworkMap() {
         })}
       </svg>
 
+      {editMode && (
+        <div style={{
+          position: 'absolute', top: 12, right: 12, zIndex: 10,
+          background: 'rgba(24,20,16,0.92)', color: '#fff',
+          padding: '10px 14px', borderRadius: 10,
+          fontFamily: 'var(--font-mono, monospace)', fontSize: 11, lineHeight: 1.5,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          maxHeight: '80%', overflowY: 'auto', minWidth: 220,
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span>LAYOUT EDIT</span>
+            <button onClick={copyPositions} style={{ background: '#25B439', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>COPY</button>
+          </div>
+          {pods.map(p => (
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, opacity: 0.85 }}>
+              <span style={{ color: p.color }}>{p.id}</span>
+              <span>{Math.round(positions[p.id]?.x ?? p.x)}, {Math.round(positions[p.id]?.y ?? p.y)}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 8, fontSize: 9, opacity: 0.6 }}>drag orbs · COPY pastes array</div>
+        </div>
+      )}
     </div>
   )
-}
-
-function useInView(threshold = 0.12): [RefObject<HTMLElement | null>, boolean] {
-  const ref = useRef<HTMLElement | null>(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
-      { threshold },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [threshold])
-  return [ref, visible]
 }
 
 const FOUNDER = {
@@ -695,24 +721,6 @@ function PodHealthCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
       </div>
     </div>
   )
-}
-
-function useCountUp(target: number, start: boolean, durationMs: number) {
-  const [value, setValue] = useState(0)
-  useEffect(() => {
-    if (!start) { setValue(0); return }
-    let raf = 0
-    const t0 = performance.now()
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - t0) / durationMs)
-      const eased = 1 - Math.pow(1 - p, 3)
-      setValue(Math.round(eased * target))
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, start, durationMs])
-  return value
 }
 
 function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean }) {
