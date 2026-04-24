@@ -57,10 +57,10 @@ export function SolidOrb({
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
 
-  // Shaded halo behind the orb — wider, more saturated color bleed matching
-  // the landing NetworkMap's stdDev=22 gaussian glow.
-  const haloSize = Math.round(size * 2.6)
-  const haloBlur = Math.round(size * 0.30)
+  // Shaded halo behind the orb — a solid low-opacity disc with a heavy blur,
+  // matching landing's `<circle fill={color} opacity="0.5" filter=stdDev22 />`.
+  const haloSize = Math.round(size * 1.25)
+  const haloBlur = Math.round(size * 0.42)
 
   return (
     <div
@@ -86,7 +86,7 @@ export function SolidOrb({
           height: haloSize,
           transform: 'translate(-50%, -50%)',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${hexToRgba(color, 0.55)} 0%, ${hexToRgba(color, 0.28)} 35%, ${hexToRgba(color, 0)} 70%)`,
+          background: hexToRgba(color, 0.5),
           filter: `blur(${haloBlur}px)`,
           pointerEvents: 'none',
           zIndex: -1,
