@@ -70,8 +70,8 @@
   --pod-services-0: #F5A623;  --pod-services-1: #FFD54F;
 
   /* Active pod wash — set via JS on the root element.
-     Defaults to brand green. Components read --pod-wash-color. */
-  --pod-wash-color: 37, 180, 57;   /* rgb channels, new brand green #25B439 */
+     Defaults to Arc shell blue. Components read --pod-wash-color. */
+  --pod-wash-color: 0, 61, 165;   /* rgb channels, Arc blue #003DA5 */
   --orb-hub: 136px;
   --orb-list: 96px;
   --orb-category: 60px;

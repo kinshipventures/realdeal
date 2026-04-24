@@ -1,0 +1,42 @@
+{
+  "date": "2026-04-24",
+  "window": "7d",
+  "metrics": {
+    "commits": 54,
+    "contributors": 1,
+    "prs_merged": 5,
+    "insertions": 221826,
+    "deletions": 4851,
+    "net_loc": 216975,
+    "test_loc": 0,
+    "test_ratio": 0,
+    "active_days": 4,
+    "sessions": 12,
+    "deep_sessions": 2,
+    "avg_session_minutes": 22,
+    "feat_pct": 0.41,
+    "fix_pct": 0.06,
+    "style_pct": 0.20,
+    "peak_hour": 15,
+    "ai_assisted_commits": 5
+  },
+  "authors": {
+    "Gabriel Murray": {
+      "commits": 54,
+      "insertions": 221826,
+      "deletions": 4851,
+      "test_ratio": 0,
+      "top_area": "src/components/landing/"
+    }
+  },
+  "streak_days": 3,
+  "personal_streak_days": 3,
+  "tweetable": "Week of Apr 17: 54 commits, big landing/login redesign, peak 3pm+late-night | Streak: 3d",
+  "backlog": {
+    "total_open": 2,
+    "p0_p1": 0,
+    "p2": 2,
+    "completed_this_period": 0,
+    "added_this_period": 0
+  }
+}

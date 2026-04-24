@@ -118,7 +118,7 @@ export function ChatPanel() {
               width: 36,
               height: 36,
               borderRadius: '50%',
-              background: 'var(--color-brand)',
+              background: 'var(--color-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -210,7 +210,7 @@ export function ChatPanel() {
                 lineHeight: 1.45,
                 background:
                   m.from === 'user'
-                    ? 'var(--color-brand)'
+                    ? 'var(--color-accent)'
                     : 'rgba(0,0,0,0.04)',
                 color:
                   m.from === 'user'
@@ -286,7 +286,7 @@ export function ChatPanel() {
               outline: 'none',
               transition: 'border-color 0.15s',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-brand)')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-accent)')}
             onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--edge)')}
           />
           <button
@@ -298,7 +298,7 @@ export function ChatPanel() {
               height: 38,
               borderRadius: '50%',
               border: 'none',
-              background: input.trim() ? 'var(--color-brand)' : 'rgba(0,0,0,0.08)',
+              background: input.trim() ? 'var(--color-accent)' : 'rgba(0,0,0,0.08)',
               color: '#fff',
               cursor: input.trim() ? 'pointer' : 'default',
               display: 'flex',
@@ -329,10 +329,10 @@ export function ChatPanel() {
           height: 56,
           borderRadius: '50%',
           border: 'none',
-          background: 'var(--color-brand)',
+          background: 'var(--color-accent)',
           color: '#fff',
           cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(52,177,93,0.35), 0 2px 6px rgba(0,0,0,0.12)',
+          boxShadow: '0 8px 24px rgba(0,61,165,0.30), 0 2px 6px rgba(0,0,0,0.12)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

@@ -62,7 +62,7 @@ export function GmailSyncWidget() {
             onClick={handleSync}
             disabled={syncing}
             style={{
-              background: syncing ? 'var(--tint)' : 'var(--color-brand)',
+              background: syncing ? 'var(--tint)' : 'var(--color-accent)',
               border: 'none',
               borderRadius: 8,
               color: syncing ? 'var(--color-text-secondary)' : '#fff',
