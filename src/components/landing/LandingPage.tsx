@@ -1010,10 +1010,11 @@ export function LandingPage() {
         className="rd-aurora"
         style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+          display: dark ? 'none' : 'block',
           background: `
-            radial-gradient(900px 600px at 12% 8%, rgba(0, 61, 165, ${dark ? 0.22 : 0.18}) 0%, transparent 60%),
-            radial-gradient(800px 520px at 88% 14%, rgba(255, 107, 138, ${dark ? 0.18 : 0.14}) 0%, transparent 60%),
-            radial-gradient(1100px 700px at 50% 92%, rgba(237, 235, 255, ${dark ? 0.12 : 0.70}) 0%, transparent 55%)
+            radial-gradient(900px 600px at 12% 8%, rgba(0, 61, 165, 0.18) 0%, transparent 60%),
+            radial-gradient(800px 520px at 88% 14%, rgba(255, 107, 138, 0.14) 0%, transparent 60%),
+            radial-gradient(1100px 700px at 50% 92%, rgba(237, 235, 255, 0.70) 0%, transparent 55%)
           `,
           filter: 'blur(40px)',
         }}
@@ -1024,7 +1025,8 @@ export function LandingPage() {
         className="rd-grain"
         style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-          opacity: dark ? 0.25 : 0.35,
+          display: dark ? 'none' : 'block',
+          opacity: 0.35,
           mixBlendMode: 'overlay',
           backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.2 0 0 0 0 0.3 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`,
         }}
@@ -1041,8 +1043,8 @@ export function LandingPage() {
           ['--imx' as any]: 'calc(100% - var(--mx))',
           ['--imy' as any]: 'calc(100% - var(--my))',
           background: `
-            radial-gradient(1600px circle at var(--mx) var(--my), rgba(0, 61, 165, ${dark ? 0.10 : 0.07}) 0%, transparent 60%),
-            radial-gradient(1400px circle at var(--imx) var(--imy), rgba(255, 107, 138, ${dark ? 0.08 : 0.06}) 0%, transparent 60%)
+            radial-gradient(1600px circle at var(--mx) var(--my), rgba(0, 61, 165, ${dark ? 0.05 : 0.07}) 0%, transparent 60%),
+            radial-gradient(1400px circle at var(--imx) var(--imy), rgba(255, 107, 138, ${dark ? 0.04 : 0.06}) 0%, transparent 60%)
           `,
           mixBlendMode: dark ? 'screen' : 'multiply',
           transition: 'background 800ms cubic-bezier(0.22,1,0.36,1)',
@@ -1301,12 +1303,6 @@ export function LandingPage() {
           {/* Inline waitlist capture */}
           <div style={{ marginBottom: 72, ...reveal(heroVisible, 0.18) }}>
             <WaitlistForm variant="hero" dark={dark} />
-            <p style={{
-              fontSize: 12, color: t.fg45, margin: '14px 0 0',
-              letterSpacing: '0.02em', textAlign: 'center',
-            }}>
-              Onboarding a handful each month. No spam, no data sold.
-            </p>
           </div>
 
           {/* Product screenshot / mockup */}
