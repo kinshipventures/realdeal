@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router'
 import { useRef, useEffect, useState, type RefObject } from 'react'
-import { setDemoMode } from '@/lib/sampleData'
 import { useWaitlistSubmit } from '@/components/waitlist/useWaitlistSubmit'
 
 function useTheme(): 'light' | 'dark' {
@@ -53,6 +52,7 @@ const HEALTH_SATURATION: Record<PodHealth, number> = {
   fading: 0.4,
 }
 
+
 function PodIcon({ kind, size = 18 }: { kind: NetworkPod['icon']; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (kind) {
@@ -80,6 +80,16 @@ function NetworkMap() {
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
+      <style>{`
+        @keyframes nm-spoke-draw {
+          from { stroke-dashoffset: var(--spoke-len, 600); }
+          to   { stroke-dashoffset: 0; }
+        }
+        .nm-hover-spoke { stroke-dasharray: var(--spoke-len, 600); animation: nm-spoke-draw 360ms cubic-bezier(0.22,1,0.36,1) forwards; }
+        @media (prefers-reduced-motion: reduce) {
+          .nm-hover-spoke { animation: none; }
+        }
+      `}</style>
       <svg viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', width: '100%' }}>
         <defs>
           <filter id="nm-blur" x="-50%" y="-50%" width="200%" height="200%">
@@ -88,6 +98,17 @@ function NetworkMap() {
           <filter id="nm-soft" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="1.2" />
           </filter>
+          <filter id="nm-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="22" />
+          </filter>
+          <filter id="nm-shine" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="8" />
+          </filter>
+          <radialGradient id="nm-shine-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.72" />
+            <stop offset="40%" stopColor="#ffffff" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </radialGradient>
           <radialGradient id="nm-halo" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={isDark ? '#4A5FA8' : '#003DA5'} stopOpacity={isDark ? 0.08 : 0.18} />
             <stop offset="100%" stopColor={isDark ? '#4A5FA8' : '#003DA5'} stopOpacity="0" />
@@ -122,6 +143,39 @@ function NetworkMap() {
           <circle cx={450} cy={280} r={230} strokeDasharray="2 6" />
           <circle cx={450} cy={280} r={310} strokeDasharray="2 6" />
         </g>
+
+        {/* Hover spoke - single thread from hub to hovered pod, reinforces hub-and-spoke model */}
+        {(() => {
+          const p = hovered ? NETWORK_PODS.find(x => x.id === hovered) : null
+          if (!p) return null
+          const dx = p.x - 450
+          const dy = p.y - 280
+          const d = Math.hypot(dx, dy)
+          const ux = dx / d
+          const uy = dy / d
+          const hubPad = 92 // clear the editorial hub text + pod label region
+          const podPad = p.r + 10 // stop outside the orb edge
+          const x1 = 450 + ux * hubPad
+          const y1 = 280 + uy * hubPad
+          const x2 = p.x - ux * podPad
+          const y2 = p.y - uy * podPad
+          const len = Math.hypot(x2 - x1, y2 - y1)
+          return (
+            <line
+              key={p.id}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={p.color}
+              strokeWidth={1.4}
+              strokeLinecap="round"
+              opacity={0.55}
+              className="nm-hover-spoke"
+              style={{ ['--spoke-len' as string]: len } as React.CSSProperties}
+            />
+          )
+        })()}
 
         {/* HUB - editorial wordmark, swaps to pod detail on hover */}
         {(() => {
@@ -180,24 +234,38 @@ function NetworkMap() {
             >
               {/* soft cool drop-shadow under orb */}
               <ellipse cx={p.x} cy={p.y + p.r * 0.5} rx={p.r * 0.85} ry={p.r * 0.22} fill="url(#nm-orb-shadow)" filter="url(#nm-soft)" />
-              {/* ambient outer glow */}
-              <circle cx={p.x} cy={p.y} r={p.r * 1.25} fill={p.color} opacity="0.18" filter="url(#nm-soft)" />
+              {/* far diffuse halo - heavy blur bleeds color into the page */}
+              <circle cx={p.x} cy={p.y} r={p.r * 1.18} fill={p.color} opacity="0.5" filter="url(#nm-glow)" />
+              {/* close halo - soft shaded ring hugging the orb */}
+              <circle cx={p.x} cy={p.y} r={p.r * 1.22} fill={p.color} opacity="0.24" filter="url(#nm-soft)" />
               {/* translucent glass orb */}
               <circle
                 cx={p.x}
                 cy={p.y}
                 r={p.r}
                 fill={`url(#nm-orb-${p.id})`}
-                style={{ transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1)', transformOrigin: `${p.x}px ${p.y}px`, transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
+                style={{
+                  transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1)',
+                  transformBox: 'fill-box' as never,
+                  transformOrigin: 'center',
+                  transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                }}
               />
               {/* thin edge ring - cool shell blue */}
               <circle cx={p.x} cy={p.y} r={p.r} fill="none" stroke={p.color} strokeOpacity="0.6" strokeWidth="0.75" />
-              {/* soft inner highlight ellipse (top-left) - glass reflection */}
-              <ellipse cx={p.x - p.r * 0.32} cy={p.y - p.r * 0.4} rx={p.r * 0.38} ry={p.r * 0.22} fill="#ffffff" opacity="0.45" filter="url(#nm-soft)" />
+              {/* soft inner highlight (top-left) - gradient-faded gloss, no hard edge */}
+              <ellipse
+                cx={p.x - p.r * 0.26}
+                cy={p.y - p.r * 0.36}
+                rx={p.r * 0.58}
+                ry={p.r * 0.38}
+                fill="url(#nm-shine-grad)"
+                filter="url(#nm-shine)"
+              />
               {/* pod name label below orb */}
               <text
                 x={p.x}
-                y={p.y + p.r + 22}
+                y={p.y + p.r + 32}
                 textAnchor="middle"
                 fill={fgPrimary}
                 fontSize="11"
@@ -209,7 +277,7 @@ function NetworkMap() {
               {/* member count sub-label */}
               <text
                 x={p.x}
-                y={p.y + p.r + 38}
+                y={p.y + p.r + 48}
                 textAnchor="middle"
                 fill={fgMuted}
                 fontSize="10"
@@ -764,18 +832,21 @@ function NeedsAttentionCard({ t, visible }: { t: FeatureTheme; visible?: boolean
 function getFeatures(t: FeatureTheme, vis: boolean[]) { return [
   {
     label: '01',
+    accent: '#FF2D6F',
     title: 'Your day, prioritized automatically.',
     desc: "RealDeal surfaces the people who need you most today. Weighted by cadence, recency, and pod priority - so you never open the app wondering who to reach out to.",
     visual: <FocusPanel t={t} visible={vis[0]} />,
   },
   {
     label: '02',
+    accent: '#00C7A3',
     title: 'Equity scoring that keeps you honest.',
     desc: 'Every pod and every relationship gets a 0-100 Social Equity score based on recency, frequency, and depth of interactions. Thriving, Steady, Cooling, or Fading - you always know where you stand.',
     visual: <PodHealthCard t={t} visible={vis[1]} />,
   },
   {
     label: '03',
+    accent: '#FF8A00',
     title: 'Never let a relationship slip.',
     desc: 'Set cadences for every pod. RealDeal tracks recency automatically and surfaces who needs attention before you even have to think about it.',
     visual: <NeedsAttentionCard t={t} visible={vis[2]} />,
@@ -903,7 +974,6 @@ export function LandingPage() {
   const [scienceRef, scienceVisible] = useInView()
   const scienceYears = useCountUp(85, scienceVisible, 1400)
   const scienceCigs = useCountUp(15, scienceVisible, 1000)
-  const [problemRef, problemVisible] = useInView()
   const [ctaRef, ctaVisible] = useInView()
 
   const spotlightRef = useRef<HTMLDivElement | null>(null)
@@ -1131,12 +1201,14 @@ export function LandingPage() {
           .rd-float-mockup { animation: none !important; }
           * { transition-duration: 0.01ms !important; }
         }
-        @media (max-width: 767px) {
+        @media (max-width: 960px) {
           .rd-feature-row {
             grid-template-columns: 1fr !important;
             direction: ltr !important;
             gap: 40px !important;
           }
+        }
+        @media (max-width: 767px) {
           .rd-feature-outer {
             padding: 48px 20px 64px !important;
           }
@@ -1145,30 +1217,72 @@ export function LandingPage() {
           }
           .rd-nav-anchors { display: none !important; }
           .rd-hero-section {
-            padding: 64px 20px 64px !important;
+            padding: 64px 20px 56px !important;
           }
           .rd-science-section {
             padding: 48px 20px 64px !important;
           }
           .rd-team-section {
-            padding: 48px 20px 64px !important;
+            padding: 48px 20px 56px !important;
           }
           .rd-cta-section {
             padding: 64px 20px 80px !important;
           }
-          .rd-moj-row {
+          .rd-footer {
+            padding: 28px 20px !important;
             flex-direction: column !important;
             align-items: flex-start !important;
             gap: 18px !important;
           }
+          .rd-moj-row {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 18px !important;
+          }
+          .rd-moj-row > div { text-align: center !important; }
+          .rd-moj-photo {
+            width: 72px !important;
+            height: 72px !important;
+            font-size: 20px !important;
+          }
+          .rd-moj-name { font-size: 28px !important; }
           .rd-portfolio-row {
             gap: 20px !important;
           }
           .rd-stats-grid {
             gap: 32px !important;
           }
+          .rd-stats-number { font-size: 48px !important; }
+          .rd-feature-visual {
+            padding: 24px 16px !important;
+          }
           .rd-aurora, .rd-grain, .rd-spotlight {
             display: none !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .rd-hero-section {
+            padding: 48px 16px 48px !important;
+          }
+          .rd-feature-outer {
+            padding: 40px 16px 56px !important;
+          }
+          .rd-science-section {
+            padding: 40px 16px 56px !important;
+          }
+          .rd-team-section {
+            padding: 40px 16px 48px !important;
+          }
+          .rd-cta-section {
+            padding: 56px 16px 72px !important;
+          }
+          .rd-footer {
+            padding: 24px 16px !important;
+          }
+          .rd-feature-visual {
+            padding: 20px 12px !important;
+            border-radius: 16px !important;
           }
         }
       `}</style>
@@ -1350,13 +1464,14 @@ export function LandingPage() {
               }}>
                 <div style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-                  color: '#003DA5', textTransform: 'uppercase', marginBottom: 20,
+                  color: f.accent, textTransform: 'uppercase', marginBottom: 20,
                 }}>
                   {f.label}
                 </div>
                 <h2 style={{
+                  fontFamily: 'var(--font-serif)',
                   fontSize: 'clamp(28px, 3.5vw, 44px)',
-                  fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1,
+                  fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
                   color: t.fg, marginBottom: 20,
                 }}>
                   {f.title}
@@ -1369,12 +1484,14 @@ export function LandingPage() {
                 </p>
               </div>
               {/* visual */}
-              <div style={{
+              <div className="rd-feature-visual" style={{
                 direction: 'ltr',
+                position: 'relative',
                 borderRadius: 20,
-                border: `1px solid ${t.border07}`,
-                background: t.fg03,
+                border: `1px solid ${f.accent}33`,
+                background: `radial-gradient(120% 80% at 50% 0%, ${f.accent}1F 0%, ${f.accent}0A 45%, ${t.fg03} 80%)`,
                 padding: '32px 24px',
+                boxShadow: `0 24px 60px -24px ${f.accent}4D, 0 2px 8px -2px ${f.accent}26`,
                 ...reveal(isVisible, 0.12),
               }}>
                 {f.visual}
@@ -1434,7 +1551,7 @@ export function LandingPage() {
             },
           ].map((s, idx) => (
             <div key={idx} style={{ textAlign: 'left', borderTop: `1px solid ${t.border14}`, paddingTop: 24 }}>
-              <div style={{
+              <div className="rd-stats-number" style={{
                 fontFamily: 'var(--font-serif)', fontWeight: 400,
                 fontSize: 'clamp(52px, 6vw, 80px)', lineHeight: 1,
                 letterSpacing: '-0.03em', color: t.fg, marginBottom: 16,
@@ -1463,9 +1580,9 @@ export function LandingPage() {
         id="team"
         ref={partnersRef as RefObject<HTMLElement>}
         className="rd-team-section"
-        style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 40px 96px', scrollMarginTop: 80 }}
+        style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 40px 72px', scrollMarginTop: 80 }}
       >
-        <div style={{ maxWidth: 720, marginBottom: 64 }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
           <div style={{
             fontSize: 10, fontWeight: 700, letterSpacing: '0.24em',
             textTransform: 'uppercase', color: t.fg45,
@@ -1476,17 +1593,18 @@ export function LandingPage() {
           </div>
           <div className="rd-moj-row" style={{
             display: 'flex', alignItems: 'center', gap: 28,
+            justifyContent: 'center', textAlign: 'left',
             ...reveal(partnersVisible, 0.08),
           }}>
             {FOUNDER.photo ? (
-              <img src={FOUNDER.photo} alt={FOUNDER.name} width={88} height={88} style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              <img src={FOUNDER.photo} alt={FOUNDER.name} width={88} height={88} className="rd-moj-photo" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
             ) : (
-              <div style={{ width: 88, height: 88, borderRadius: '50%', background: '#003DA5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
+              <div className="rd-moj-photo" style={{ width: 88, height: 88, borderRadius: '50%', background: '#003DA5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>
                 {FOUNDER.initials}
               </div>
             )}
             <div style={{ minWidth: 0 }}>
-              <div style={{
+              <div className="rd-moj-name" style={{
                 fontFamily: 'var(--font-serif)',
                 fontSize: 32, fontWeight: 700,
                 color: t.fg, letterSpacing: '-0.03em',
@@ -1557,7 +1675,7 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer style={{
+      <footer className="rd-footer" style={{
         borderTop: `1px solid ${t.border}`,
         padding: '32px 40px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1574,7 +1692,7 @@ export function LandingPage() {
             <circle cx="33" cy="8.4" r="2.8" fill="#00BFA5" />
           </svg>
           <span style={{ fontSize: 13, color: t.fg45 }}>
-            &copy; {new Date().getFullYear()} RealDeal. All rights reserved.
+            &copy; {new Date().getFullYear()} Real Deal. All rights reserved.
           </span>
         </span>
         <nav style={{ display: 'flex', gap: 24 }} aria-label="Footer">
