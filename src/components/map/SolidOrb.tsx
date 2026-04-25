@@ -68,6 +68,7 @@ export function SolidOrb({
   return (
     <div
       style={{
+        '--orb-enter-delay': animationDelay ?? '0s',
         position: 'relative',
         width: size,
         height: size,
@@ -76,11 +77,12 @@ export function SolidOrb({
         justifyContent: 'center',
         flexShrink: 0,
         isolation: 'isolate',
-      }}
+      } as React.CSSProperties}
     >
       {/* Layer 1 — outer glow, wider blurred ambient wash */}
       <div
         aria-hidden
+        className="orb-halo"
         style={{
           position: 'absolute',
           top: '50%',
@@ -98,6 +100,7 @@ export function SolidOrb({
       {/* Layer 2 — disc, tight crisp-edged filled circle behind the orb */}
       <div
         aria-hidden
+        className="orb-halo"
         style={{
           position: 'absolute',
           top: '50%',
