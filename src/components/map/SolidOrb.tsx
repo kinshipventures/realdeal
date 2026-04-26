@@ -40,76 +40,80 @@ export function SolidOrb({
   className,
   children,
 }: SolidOrbProps) {
-  // glowIntensity retained for drop-in compatibility
+  // healthPercent / glowIntensity / shiftColor retained for drop-in API compat.
+  // Landing-style finish uses a single color with a shaded halo behind, no ring.
   void glowIntensity
+  void healthPercent
+  void shiftColor
 
   const orbRef = useRef<HTMLDivElement>(null)
-  const glowSize = size >= 96 ? 28 : 20
-  const restShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.25)}, 0 8px 20px -4px rgba(0,0,0,0.18)`
-  const hoverShadow = `0 0 ${glowSize}px ${hexToRgba(color, 0.40)}, 0 12px 28px -4px rgba(0,0,0,0.22)`
+  const edge = hexToRgba(color, 0.55)
+  const restShadow = `0 6px 18px -4px rgba(0,0,0,0.18), inset 0 0 0 1px ${edge}`
+  const hoverShadow = `0 10px 28px -4px rgba(0,0,0,0.22), inset 0 0 0 1px ${edge}`
 
-  const bg = shiftColor
-    ? `linear-gradient(135deg, ${color} 0%, ${shiftColor} 100%)`
-    : `linear-gradient(135deg, ${color} 0%, ${color} 100%)`
+  // Glass sphere — pulled toward more saturated/vibrant color, with a subtle
+  // hotspot rather than a heavy white wash.
+  const bg = `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.42) 0%, ${hexToRgba(color, 0.78)} 22%, ${color} 60%, ${color} 100%)`
 
   const scale = size >= 96 ? '1.05' : '1.08'
   const lift = '-3px'
 
-  // Health ring geometry
-  const containerSize = size + 8
-  const ringRadius = (containerSize - 4) / 2
-  const cx = containerSize / 2
-  const cy = containerSize / 2
-  const circumference = 2 * Math.PI * ringRadius
+  // Two layers behind the orb:
+  // 1. Disc — tight crisp-edged filled circle, slightly larger than the orb.
+  // 2. Glow — wider blurred ambient wash that bleeds color into the page.
+  const discSize = Math.round(size * 1.2)
+  const glowSize = Math.round(size * 2.0)
+  const glowBlur = Math.round(size * 0.35)
 
   return (
     <div
       style={{
+        '--orb-enter-delay': animationDelay ?? '0s',
         position: 'relative',
-        width: healthPercent !== undefined ? containerSize : size,
-        height: healthPercent !== undefined ? containerSize : size,
+        width: size,
+        height: size,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-      }}
+        isolation: 'isolate',
+      } as React.CSSProperties}
     >
-      {healthPercent !== undefined && (
-        <svg
-          width={containerSize}
-          height={containerSize}
-          viewBox={`0 0 ${containerSize} ${containerSize}`}
-          className="health-ring-enter"
-          style={{
-            position: 'absolute', top: 0, left: 0, pointerEvents: 'none',
-            animationDelay: animationDelay
-              ? `${parseFloat(animationDelay) + 0.7}s`
-              : '0.7s',
-          }}
-        >
-          {/* Track circle */}
-          <circle
-            cx={cx}
-            cy={cy}
-            r={ringRadius}
-            fill="none"
-            stroke="var(--stroke-subtle)"
-            strokeWidth={2}
-          />
-          {/* Fill arc */}
-          <circle
-            cx={cx}
-            cy={cy}
-            r={ringRadius}
-            fill="none"
-            stroke={color}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeDasharray={`${(healthPercent / 100) * circumference} ${circumference}`}
-            transform={`rotate(-90 ${cx} ${cy})`}
-          />
-        </svg>
-      )}
+      {/* Layer 1 — outer glow, wider blurred ambient wash */}
+      <div
+        aria-hidden
+        className="orb-halo"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: glowSize,
+          height: glowSize,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          background: hexToRgba(color, 0.32),
+          filter: `blur(${glowBlur}px)`,
+          pointerEvents: 'none',
+          zIndex: -2,
+        }}
+      />
+      {/* Layer 2 — disc, tight crisp-edged filled circle behind the orb */}
+      <div
+        aria-hidden
+        className="orb-halo"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: discSize,
+          height: discSize,
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          background: hexToRgba(color, 0.38),
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+      />
 
       <div
         ref={orbRef}
@@ -146,7 +150,6 @@ export function SolidOrb({
       >
         {children}
       </div>
-
     </div>
   )
 }

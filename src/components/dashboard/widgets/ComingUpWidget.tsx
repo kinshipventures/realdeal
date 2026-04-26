@@ -25,7 +25,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
   const timeColor = item.isOverdue
     ? '#DC2626'
     : isToday
-      ? isBirthday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-brand)'
+      ? isBirthday ? 'hsla(30, 80%, 55%, 0.90)' : 'var(--color-accent)'
       : 'var(--color-text-tertiary)'
 
   return (
@@ -56,7 +56,7 @@ function UpcomingRow({ item, onClick }: { item: UpcomingItem; onClick: () => voi
       ) : (
         <div style={{
           width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-          background: item.isOverdue ? '#DC2626' : 'var(--color-brand)',
+          background: item.isOverdue ? '#DC2626' : 'var(--color-accent)',
         }} />
       )}
       <div style={{

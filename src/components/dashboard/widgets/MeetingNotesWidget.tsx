@@ -91,7 +91,7 @@ function ProviderRow({ provider }: { provider: MeetingProvider }) {
                 onClick={handleSync}
                 disabled={syncing}
                 style={{
-                  background: syncing ? 'var(--tint)' : 'var(--color-brand)',
+                  background: syncing ? 'var(--tint)' : 'var(--color-accent)',
                   border: 'none', borderRadius: 8,
                   color: syncing ? 'var(--color-text-secondary)' : '#fff',
                   fontSize: 12, fontWeight: 600,
@@ -157,7 +157,7 @@ function ProviderRow({ provider }: { provider: MeetingProvider }) {
             type="button"
             onClick={handleSaveKey}
             style={{
-              background: 'var(--color-brand)', border: 'none',
+              background: 'var(--color-accent)', border: 'none',
               borderRadius: 6, color: '#fff', fontSize: 12,
               fontWeight: 600, padding: '7px 12px',
               cursor: 'pointer', fontFamily: 'inherit',

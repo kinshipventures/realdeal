@@ -52,7 +52,7 @@ function useIsMobile() {
 // Pod wash color map — rgb channel strings for --pod-wash-color CSS var
 const POD_WASH: Record<string, string> = {
   // maps to pod ID extracted from /pod/:id routes
-  default:   '52, 177, 93',    // brand green
+  default:   '0, 61, 165',     // Arc shell blue
   talent:    '52, 177, 93',    // green
   maps:      '229, 57, 53',    // red
   lps:       '255, 107, 138',  // pink

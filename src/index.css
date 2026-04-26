@@ -70,8 +70,8 @@
   --pod-services-0: #F5A623;  --pod-services-1: #FFD54F;
 
   /* Active pod wash — set via JS on the root element.
-     Defaults to brand green. Components read --pod-wash-color. */
-  --pod-wash-color: 37, 180, 57;   /* rgb channels, new brand green #25B439 */
+     Defaults to Arc shell blue. Components read --pod-wash-color. */
+  --pod-wash-color: 0, 61, 165;   /* rgb channels, Arc blue #003DA5 */
   --orb-hub: 136px;
   --orb-list: 96px;
   --orb-category: 60px;
@@ -577,6 +577,16 @@
 
 .orb-enter {
   animation: orbit-slide 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes orb-halo-fade-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.orb-halo {
+  animation: orb-halo-fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--orb-enter-delay, 0s) + 0.6s);
 }
 
 .orb-breathing {

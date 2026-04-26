@@ -188,9 +188,9 @@ function FocusRow({ item, onClick }: { item: FocusItem; onClick: () => void }) {
           transition: 'background 0.12s, border-color 0.12s, color 0.12s',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(37,180,57,0.08)'
-          e.currentTarget.style.borderColor = 'rgba(37,180,57,0.3)'
-          e.currentTarget.style.color = 'var(--color-brand)'
+          e.currentTarget.style.background = 'rgba(0,61,165,0.06)'
+          e.currentTarget.style.borderColor = 'rgba(0,61,165,0.25)'
+          e.currentTarget.style.color = 'var(--color-accent)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.background = 'transparent'

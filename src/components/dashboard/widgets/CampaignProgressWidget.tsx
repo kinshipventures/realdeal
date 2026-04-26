@@ -118,7 +118,7 @@ export function CampaignProgressWidget({ campaigns, campaignContacts, loading, o
                 padding: '8px 14px',
                 borderRadius: 999,
                 border: 'none',
-                background: 'var(--color-brand)',
+                background: 'var(--color-accent)',
                 color: '#fff',
                 cursor: 'pointer',
                 fontFamily: 'inherit',

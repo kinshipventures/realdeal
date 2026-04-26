@@ -220,7 +220,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           onClick={async () => { invalidateAllCaches(); await supabase.auth.signOut(); window.location.href = '/login' }}
           labelStyle={{ color: 'var(--color-text-tertiary)' }}
         />
-        {!collapsed && onDemoToggle && import.meta.env.DEV && (
+        {!collapsed && onDemoToggle && (import.meta.env.DEV || demo) && (
           <button
             type="button"
             onClick={onDemoToggle}
