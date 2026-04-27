@@ -6,7 +6,7 @@ import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { useEscape } from '../../lib/escapeStack'
 
-const ALL_TYPES: CampaignType[] = ['event', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'investment', 'other']
+const ALL_TYPES: CampaignType[] = ['brand_event', 'launch', 'other']
 
 interface Props {
   campaign: Campaign

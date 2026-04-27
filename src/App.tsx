@@ -24,7 +24,6 @@ const Dashboard = lazy(() => import('./components/dashboard/Dashboard').then(m =
 const ImportPanel = lazy(() => import('./components/import/ImportPanel').then(m => ({ default: m.ImportPanel })))
 const CategoryTable = lazy(() => import('./components/contacts/CategoryTable').then(m => ({ default: m.CategoryTable })))
 const RecordPage = lazy(() => import('./components/records/RecordPage').then(m => ({ default: m.RecordPage })))
-const RecordsList = lazy(() => import('./components/records/RecordsList').then(m => ({ default: m.RecordsList })))
 const CreateRecordModal = lazy(() => import('./components/records/CreateRecordModal').then(m => ({ default: m.CreateRecordModal })))
 const PodDetailPage = lazy(() => import('./components/pods/PodDetailPage').then(m => ({ default: m.PodDetailPage })))
 const CampaignsPage = lazy(() => import('./components/campaigns/CampaignsPage').then(m => ({ default: m.CampaignsPage })))
@@ -76,8 +75,17 @@ function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   usePodWash()
-  const isPods = location.pathname === '/' || location.pathname === '/map' || location.pathname === '/pods' || location.pathname.startsWith('/pods/')
-  const isRelationships = location.pathname === '/relationships' || location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname === '/companies' || location.pathname.startsWith('/category/')
+  const isPods =
+    location.pathname === '/' ||
+    location.pathname === '/map' ||
+    location.pathname === '/pods' ||
+    location.pathname.startsWith('/pods/') ||
+    location.pathname === '/relationships' ||
+    location.pathname === '/contacts' ||
+    location.pathname.startsWith('/contact/') ||
+    location.pathname === '/companies' ||
+    location.pathname.startsWith('/category/') ||
+    location.pathname.startsWith('/pod/')
   const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
@@ -189,11 +197,6 @@ function AppShell() {
           </MobileTab>
           <MobileTab active={isDashboard} label="Dashboard" onClick={() => navigate('/dashboard')}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </MobileTab>
-          <MobileTab active={isRelationships} label="People" onClick={() => navigate('/relationships')}>
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </MobileTab>
           <MobileTab active={isCampaigns} label="Campaigns" onClick={() => navigate('/campaigns')}>
             <rect x="2" y="3" width="5" height="18" rx="1" fill={isCampaigns ? 'currentColor' : 'none'}/>
@@ -338,9 +341,9 @@ export default function App() {
           <Route path="dashboard/nurturing" element={<NurturingHub />} />
           <Route path="pulse" element={<Navigate to="/dashboard" replace />} />
           <Route path="pulse/nurturing" element={<Navigate to="/dashboard/nurturing" replace />} />
-          <Route path="relationships" element={<RecordsList />} />
-          <Route path="contacts" element={<Navigate to="/relationships" replace />} />
-          <Route path="companies" element={<Navigate to="/relationships?view=companies" replace />} />
+          <Route path="relationships" element={<Navigate to="/pods?view=list" replace />} />
+          <Route path="contacts" element={<Navigate to="/pods?view=list" replace />} />
+          <Route path="companies" element={<Navigate to="/pods?view=list" replace />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />

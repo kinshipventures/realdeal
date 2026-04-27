@@ -23,17 +23,12 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { CampaignDetail } from '../campaigns/CampaignDetail'
 import { EmptyState } from '../empty/EmptyState'
 import type { WrappedInsight } from './WrappedCard'
-import { PendingTrayWidget } from '../categorization/PendingTrayWidget'
 import { CategorizationQueue } from '../categorization/CategorizationQueue'
 import { DashboardSettings } from './DashboardSettings'
 import { PodHealthWidget } from './widgets/PodHealthWidget'
 import { TodaysFocusWidget } from './widgets/TodaysFocusWidget'
-import { NeedsAttentionWidget } from './widgets/NeedsAttentionWidget'
 import { ComingUpWidget } from './widgets/ComingUpWidget'
-import { ThisWeekWidget } from './widgets/ThisWeekWidget'
-import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
-import { RadarWidget } from './widgets/RadarWidget'
-import { AiInsightsWidget } from './widgets/AiInsightsWidget'
+import { EquityWidget } from './widgets/EquityWidget'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
@@ -410,13 +405,6 @@ export function Dashboard() {
 
   return (
     <>
-      <AiInsightsWidget
-        overallScore={overallScore}
-        peopleTouched={peopleTouchedThisWeek}
-        overdueCount={overdueContacts.length}
-        topPodName={topPod?.pod.name}
-        topPodScore={topPod?.score}
-      />
       {showQueue && (
         <CategorizationQueue
           contacts={pendingContacts}
@@ -492,137 +480,36 @@ export function Dashboard() {
             </button>
           </div>
 
-          {/* ─── Hero ─── */}
-          <section className="dashboard-hero widget-enter" style={{ '--stagger': 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, marginBottom: 32 } as React.CSSProperties}>
-            <h1 style={{
-              fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 'clamp(2.8rem, 1.6rem + 3vw, 4.2rem)',
-              margin: 0, letterSpacing: '-0.025em', color: 'var(--color-text-primary)', lineHeight: 1, textAlign: 'center',
-            }}>
-              Your Network
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>Health</span>
-              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scoreLabel(overallScore)}</span>
-              <span style={{ display: 'inline-flex', gap: 3 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 40 ? '#25B439' : 'var(--edge)' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 70 ? '#25B439' : 'var(--edge)' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 85 ? '#25B439' : 'var(--edge)' }} />
-              </span>
-            </div>
-            <div style={{ width: '100%' }}>
-              <RadarWidget
-                dimensions={radarDimensions}
-                loading={interactionsLoading || contactsLoading}
+          {/* ─── Hero: Today's Focus ─── */}
+          {isVisible('todays-focus') && (
+            <section className="widget-enter" style={{ '--stagger': 0, marginBottom: 28 } as React.CSSProperties}>
+              <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
+            </section>
+          )}
+
+          {/* ─── Support row: Equity + Pod Health ─── */}
+          <div className="chapter-2up" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, alignItems: 'start', marginBottom: 28 }}>
+            <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+              <EquityWidget
                 overallScore={overallScore}
-                overallLabel={scoreLabel(overallScore)}
+                interactionsLoading={interactionsLoading}
+                dataReady={dataReady}
+                scoreTrend={scoreTrend}
+                onQuickAction={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
               />
             </div>
-            <button
-              type="button"
-              onClick={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
-              disabled={focusItems.length === 0}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '13px 26px', borderRadius: 999,
-                background: 'var(--color-text-primary)', color: '#F5F4F0',
-                border: 'none', cursor: focusItems.length === 0 ? 'default' : 'pointer',
-                fontSize: 14, fontWeight: 500, letterSpacing: '0.01em',
-                opacity: focusItems.length === 0 ? 0.5 : 1,
-                transition: 'transform 0.15s ease',
-                marginTop: 4,
-              }}
-              onMouseEnter={e => { if (focusItems.length > 0) e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-              Log a touch
-            </button>
-          </section>
-
-          {/* ─── Chapter 1: Core Signals ─── */}
-          <ChapterHeader title="Core Signals" />
-          <div className="chapter-2up" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
             {isVisible('pod-health') && (
-              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />
               </div>
             )}
-            {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
-              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-                <ThisWeekWidget
-                  insights={isVisible('wrapped') ? wrappedInsights : []}
-                  activity={isVisible('recent-activity') ? recentActivity : []}
-                  onContactClick={handleContactClick}
-                />
-              </div>
-            )}
           </div>
 
-          {isVisible('campaign-progress') && (
-            <div className="widget-enter" style={{ '--stagger': 3, marginTop: 24 } as React.CSSProperties}>
-              <CampaignProgressWidget
-                campaigns={campaigns}
-                campaignContacts={campaignContacts}
-                loading={campaignsLoading}
-                onCampaignClick={(cId) => {
-                  window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                }}
-              />
-            </div>
-          )}
-
-          {/* ─── Chapter 2: Who Needs Attention ─── */}
-          <ChapterHeader title="Who Needs Attention" />
-          <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
-            {isVisible('todays-focus') && (
-              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
-              </div>
-            )}
-            {isVisible('needs-attention') && (
-              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
-                <NeedsAttentionWidget
-                  overdueContacts={overdueContacts}
-                  followUpOverdue={followUpOverdue}
-                  dormantContacts={dormantContacts}
-                  campaigns={campaigns}
-                  campaignContacts={campaignContacts}
-                  contactsLoading={contactsLoading}
-                  error={error}
-                  onContactClick={handleContactClick}
-                  onSnooze={handleSnooze}
-                  onRemoveContact={handleRemoveContact}
-                  onRetry={() => {
-                    setError(null)
-                    setContactsLoading(true)
-                    getContacts()
-                      .then(d => setContacts(d))
-                      .catch(() => setError('Something hiccupped. Refresh to try again.'))
-                      .finally(() => setContactsLoading(false))
-                  }}
-                  onCampaignClick={(cId) => {
-                    window.dispatchEvent(new CustomEvent('dashboard:open-campaign', { detail: cId }))
-                  }}
-                />
-              </div>
-            )}
-            {isVisible('coming-up') && (
-              <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
-                <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
-              </div>
-            )}
-          </div>
-
-          {/* ─── Chapter 3: In Motion ─── */}
-          {pendingContacts.length > 0 && isVisible('pending-tray') && (
-            <>
-              <ChapterHeader title="In Motion" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 24 }}>
-                <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                  <PendingTrayWidget pendingContacts={pendingContacts} onReview={() => setShowQueue(true)} />
-                </div>
-              </div>
-            </>
+          {/* ─── Footer: Coming Up ─── */}
+          {isVisible('coming-up') && (
+            <section className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+              <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
+            </section>
           )}
         </div>
 

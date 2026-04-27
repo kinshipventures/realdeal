@@ -146,8 +146,19 @@ export interface FocusItem {
   score: number
 }
 
-// Campaign types - all campaigns are contact-centric with stages
-export type CampaignType = 'event' | 'investment' | 'outreach' | 'deal_flow' | 'fundraise' | 'talent' | 'partnerships' | 'other'
+// Campaign templates - 2 active templates surface in the UI; legacy types preserved for old data.
+export type CampaignType =
+  | 'brand_event'
+  | 'launch'
+  | 'other'
+  // legacy (read-only — not surfaced as a creation choice)
+  | 'event'
+  | 'investment'
+  | 'outreach'
+  | 'deal_flow'
+  | 'fundraise'
+  | 'talent'
+  | 'partnerships'
 export type CampaignContactStatus = 'pending' | 'reached' | 'responded' | 'confirmed'
 export type CampaignStatus = 'active' | 'completed' | 'hidden'
 

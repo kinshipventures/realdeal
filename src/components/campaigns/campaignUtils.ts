@@ -2,6 +2,10 @@ import type { CampaignType } from '../../lib/types'
 
 // Type labels
 export const TYPE_LABELS: Record<CampaignType, string> = {
+  brand_event: 'Brand Event',
+  launch: 'Launch',
+  other: 'Other',
+  // legacy
   event: 'Event',
   investment: 'Investment',
   outreach: 'Outreach',
@@ -9,11 +13,14 @@ export const TYPE_LABELS: Record<CampaignType, string> = {
   fundraise: 'Fundraise',
   talent: 'Talent',
   partnerships: 'Partnerships',
-  other: 'Other',
 }
 
 // Type colors
 export const TYPE_COLORS: Record<CampaignType, string> = {
+  brand_event: '#7E57C2',
+  launch: '#003DA5',
+  other: '#718096',
+  // legacy
   event: '#4299E1',
   investment: '#48BB78',
   outreach: '#7E57C2',
@@ -21,11 +28,14 @@ export const TYPE_COLORS: Record<CampaignType, string> = {
   fundraise: '#38B2AC',
   talent: '#D53F8C',
   partnerships: '#667EEA',
-  other: '#718096',
 }
 
 // Lucide icon names per type
 export const TYPE_ICONS: Record<CampaignType, string> = {
+  brand_event: 'calendar-days',
+  launch: 'rocket',
+  other: 'folder',
+  // legacy
   event: 'calendar-days',
   investment: 'trending-up',
   outreach: 'send',
@@ -33,7 +43,6 @@ export const TYPE_ICONS: Record<CampaignType, string> = {
   fundraise: 'piggy-bank',
   talent: 'users',
   partnerships: 'handshake',
-  other: 'folder',
 }
 
 export const STALE_DAYS = 7

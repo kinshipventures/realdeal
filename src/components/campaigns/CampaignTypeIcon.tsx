@@ -1,11 +1,15 @@
 import {
   CalendarDays, TrendingUp, Send, GitBranch,
-  PiggyBank, Users, Handshake, Folder,
+  PiggyBank, Users, Handshake, Folder, Rocket,
 } from 'lucide-react'
 import type { CampaignType } from '../../lib/types'
 import { TYPE_COLORS } from './campaignUtils'
 
 const ICON_MAP: Record<CampaignType, React.ComponentType<any>> = {
+  brand_event: CalendarDays,
+  launch: Rocket,
+  other: Folder,
+  // legacy
   event: CalendarDays,
   investment: TrendingUp,
   outreach: Send,
@@ -13,7 +17,6 @@ const ICON_MAP: Record<CampaignType, React.ComponentType<any>> = {
   fundraise: PiggyBank,
   talent: Users,
   partnerships: Handshake,
-  other: Folder,
 }
 
 interface Props {
