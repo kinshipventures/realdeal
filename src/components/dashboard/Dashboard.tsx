@@ -489,15 +489,17 @@ export function Dashboard() {
 
           {/* ─── Support row: Equity + Pod Health ─── */}
           <div className="chapter-2up" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, alignItems: 'start', marginBottom: 28 }}>
-            <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-              <EquityWidget
-                overallScore={overallScore}
-                interactionsLoading={interactionsLoading}
-                dataReady={dataReady}
-                scoreTrend={scoreTrend}
-                onQuickAction={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
-              />
-            </div>
+            {isVisible('equity') && (
+              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                <EquityWidget
+                  overallScore={overallScore}
+                  interactionsLoading={interactionsLoading}
+                  dataReady={dataReady}
+                  scoreTrend={scoreTrend}
+                  onQuickAction={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
+                />
+              </div>
+            )}
             {isVisible('pod-health') && (
               <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />

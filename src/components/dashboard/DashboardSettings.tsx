@@ -27,8 +27,6 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
     .map(id => ALL_WIDGETS.find(w => w.id === id))
     .filter(Boolean) as { id: WidgetId; label: string }[]
 
-  const equityWidget = ALL_WIDGETS.find(w => w.id === 'equity')!
-
   function getInsertIndex(clientY: number): number {
     for (let i = 0; i < rowRefs.current.length; i++) {
       const row = rowRefs.current[i]
@@ -222,18 +220,8 @@ export function DashboardSettings({ config, pods, onToggle, onPreset, onReorder,
 
         {/* Widget list */}
         <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-          <div style={{ padding: '12px 20px 8px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Header
-          </div>
-          <WidgetRow
-            widget={equityWidget}
-            visible={config.visible.has(equityWidget.id)}
-            onToggle={onToggle}
-            draggable={false}
-          />
-
-          <div style={{ padding: '16px 20px 6px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Dashboard flow
+          <div style={{ padding: '12px 20px 6px', fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Widgets
           </div>
           <div style={{ padding: '0 20px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
             Drag to reorder. Toggle what shows.
