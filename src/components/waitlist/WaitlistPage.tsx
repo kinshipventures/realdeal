@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
+import { useWaitlistSubmit } from './useWaitlistSubmit'
 
 const BLUE = '#003DA5'
 const ORB_COLORS = ['#003DA5', '#FF6B8A', '#F5A623', '#7E57C2', '#E53935', '#00BFA5']
@@ -44,21 +45,10 @@ function Constellation() {
 }
 
 export function WaitlistPage() {
-  const [email, setEmail] = useState('')
+  const { email, setEmail, status, error, submit: onSubmit } = useWaitlistSubmit()
   const [focused, setFocused] = useState(false)
   const [hover, setHover] = useState(false)
   const [pressed, setPressed] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'loading' | 'exiting' | 'done'>('idle')
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!email.trim() || status !== 'idle') return
-    setStatus('loading')
-    setTimeout(() => {
-      setStatus('exiting')
-      setTimeout(() => setStatus('done'), 260)
-    }, 600)
-  }
 
   return (
     <div
@@ -274,6 +264,9 @@ export function WaitlistPage() {
               <input
                 type="email"
                 required
+                aria-label="Email address"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'waitlist-error' : undefined}
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -287,14 +280,31 @@ export function WaitlistPage() {
                   fontFamily: 'inherit',
                   color: 'var(--color-text-primary)',
                   background: focused ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
-                  border: `1px solid ${focused ? BLUE : 'rgba(0,0,0,0.12)'}`,
+                  border: `1px solid ${error ? 'var(--color-error)' : focused ? 'var(--color-accent)' : 'var(--color-border-soft)'}`,
                   borderRadius: 12,
                   outline: 'none',
-                  boxShadow: focused ? '0 0 0 4px rgba(0,61,165,0.12)' : 'none',
+                  boxShadow: error
+                    ? '0 0 0 4px rgba(214,90,74,0.14)'
+                    : focused
+                      ? '0 0 0 4px rgba(0,61,165,0.12)'
+                      : 'none',
                   transition: 'border-color 200ms ease, box-shadow 200ms ease, background 200ms ease',
                   boxSizing: 'border-box',
                 }}
               />
+              {error && (
+                <div
+                  id="waitlist-error"
+                  role="alert"
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--color-error)',
+                    marginTop: -4,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={status === 'loading'}
@@ -311,11 +321,11 @@ export function WaitlistPage() {
                   fontWeight: 600,
                   fontFamily: 'inherit',
                   color: 'white',
-                  background: BLUE,
+                  background: 'var(--color-accent)',
                   border: 'none',
                   borderRadius: 12,
-                  cursor: status === 'loading' ? 'default' : 'pointer',
-                  opacity: status === 'loading' ? 0.85 : 1,
+                  cursor: status === 'loading' ? 'wait' : 'pointer',
+                  opacity: status === 'loading' ? 0.7 : 1,
                   transform: pressed ? 'translateY(1px) scale(0.995)' : hover ? 'translateY(-2px)' : 'translateY(0)',
                   boxShadow: hover
                     ? '0 12px 32px rgba(0,61,165,0.35)'

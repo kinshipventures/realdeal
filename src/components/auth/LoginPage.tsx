@@ -399,25 +399,32 @@ export function LoginPage() {
           transition: border-color 0.18s ease, box-shadow 0.18s ease;
         }
         .login-field input:focus {
-          border-color: rgba(52,177,93,0.42);
-          box-shadow: 0 0 0 5px rgba(52,177,93,0.10);
+          border-color: var(--color-accent);
+          box-shadow: 0 0 0 4px rgba(0,61,165,0.12);
         }
         .login-primary-button {
           width: 100%;
           padding: 14px 18px;
           border: none;
           border-radius: 16px;
-          background: linear-gradient(135deg, #25B439, #1A8A2A);
+          background: var(--color-accent);
           color: #fff;
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 600;
           cursor: pointer;
-          transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.18s ease;
-          box-shadow: 0 16px 30px rgba(52,177,93,0.22);
+          transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease;
+          box-shadow: 0 12px 28px rgba(0,61,165,0.22);
         }
         .login-primary-button:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 22px 38px rgba(52,177,93,0.28);
+          box-shadow: 0 18px 36px rgba(0,61,165,0.28);
+        }
+        .login-primary-button:focus-visible,
+        .login-google-button:focus-visible,
+        .login-secondary-link:focus-visible,
+        .login-demo-link:focus-visible {
+          outline: 2px solid var(--color-accent);
+          outline-offset: 2px;
         }
         .login-auth-actions {
           display: flex;
@@ -431,9 +438,10 @@ export function LoginPage() {
           border: none;
           cursor: pointer;
           font-size: 13px;
-          padding: 6px 10px;
+          padding: 10px 12px;
+          border-radius: 8px;
           color: var(--color-text-secondary);
-          transition: color 0.15s ease;
+          transition: color 0.15s ease, background 0.15s ease;
         }
         .login-secondary-link:hover,
         .login-demo-link:hover { color: var(--color-text-primary); }
@@ -443,7 +451,7 @@ export function LoginPage() {
           text-align: center;
         }
         .login-demo-link {
-          color: var(--color-brand);
+          color: var(--color-accent);
           font-weight: 600;
         }
         .login-feedback {
@@ -454,19 +462,19 @@ export function LoginPage() {
           border: 1px solid transparent;
         }
         .login-feedback[data-tone="error"] {
-          color: #9f2e2e;
-          background: rgba(220, 38, 38, 0.08);
-          border-color: rgba(220, 38, 38, 0.12);
+          color: var(--color-error);
+          background: rgba(214,90,74,0.08);
+          border-color: rgba(214,90,74,0.18);
         }
         .login-feedback[data-tone="success"] {
-          color: #14532d;
-          background: rgba(52,177,93,0.10);
-          border-color: rgba(52,177,93,0.16);
+          color: var(--color-success);
+          background: rgba(37,180,57,0.08);
+          border-color: rgba(37,180,57,0.18);
         }
         .login-feedback[data-tone="info"] {
-          color: #1d4ed8;
-          background: rgba(37,99,235,0.08);
-          border-color: rgba(37,99,235,0.14);
+          color: var(--color-info);
+          background: rgba(91,121,255,0.08);
+          border-color: rgba(91,121,255,0.18);
         }
         .login-success {
           padding: 18px;
@@ -563,8 +571,8 @@ export function LoginPage() {
           }
           .login-field input::placeholder { color: rgba(255,255,255,0.3); }
           .login-field input:focus {
-            border-color: rgba(52,177,93,0.45);
-            box-shadow: 0 0 0 5px rgba(52,177,93,0.12);
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 4px rgba(0,61,165,0.18);
           }
           .login-feedback[data-tone="error"] {
             color: #fca5a5;
@@ -712,7 +720,7 @@ export function LoginPage() {
                         else setFeedback({ tone: 'success', text: 'Check your inbox for the reset link.' })
                       }}
                       className="login-secondary-link"
-                      style={{ color: 'var(--color-brand)', fontWeight: 600 }}
+                      style={{ color: 'var(--color-accent)', fontWeight: 600 }}
                     >
                       Forgot password?
                     </button>
@@ -740,7 +748,7 @@ export function LoginPage() {
                   style={{
                     background: 'none', border: 'none', padding: 0, cursor: 'pointer',
                     fontFamily: 'inherit', fontSize: 'inherit',
-                    fontWeight: 600, color: '#25B439',
+                    fontWeight: 600, color: 'var(--color-accent)',
                     textDecoration: 'underline', textUnderlineOffset: 3,
                   }}
                 >
