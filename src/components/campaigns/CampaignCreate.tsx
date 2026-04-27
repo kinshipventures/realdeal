@@ -4,17 +4,13 @@ import { createCampaign, createCampaignStage } from '../../lib/airtable'
 import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 
-const TYPES: CampaignType[] = ['event', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'investment', 'other']
+const TYPES: CampaignType[] = ['brand_event', 'launch', 'other']
 
 const STAGE_TEMPLATES: Record<string, { label: string; stages: string[] }> = {
-  event:        { label: 'Event',        stages: ['Invited', "RSVP'd", 'Confirmed', 'Attended'] },
-  outreach:     { label: 'Outreach',     stages: ['Identified', 'Contacted', 'Responded', 'Closed'] },
-  deal_flow:    { label: 'Deal Flow',    stages: ['Sourced', 'First Meeting', 'Deep Dive', 'Term Sheet', 'Pass'] },
-  fundraise:    { label: 'Fundraise',    stages: ['Prospect', 'Deck Sent', 'In Diligence', 'Committed'] },
-  talent:       { label: 'Talent',       stages: ['Scouting', 'Intro Call', 'Collab Proposed', 'Active Partner'] },
-  partnerships: { label: 'Partnerships', stages: ['Identified', 'Intro Sent', 'Negotiating', 'Signed'] },
-  investment:   { label: 'Investment',   stages: ['Researching', 'Outreach', 'In Diligence', 'Committed'] },
-  custom:       { label: 'Custom',       stages: ['Stage 1', 'Stage 2', 'Stage 3'] },
+  brand_event: { label: 'Brand Event', stages: ['Invited', "RSVP'd", 'Reminded', 'Attended', 'Thanked'] },
+  launch:      { label: 'Launch',      stages: ['Drafted', 'Sent', 'Confirmed', 'Coverage', 'Recap'] },
+  other:       { label: 'Other',       stages: ['Stage 1', 'Stage 2', 'Stage 3'] },
+  custom:      { label: 'Custom',      stages: ['Stage 1', 'Stage 2', 'Stage 3'] },
 }
 
 const STAGE_COLORS = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#7E57C2', '#F5A623']
@@ -26,9 +22,9 @@ interface Props {
 
 export function CampaignCreate({ onCreated, onCancel }: Props) {
   const [name, setName] = useState('')
-  const [type, setType] = useState<CampaignType>('outreach')
+  const [type, setType] = useState<CampaignType>('brand_event')
   const [deadline, setDeadline] = useState('')
-  const [template, setTemplate] = useState('outreach')
+  const [template, setTemplate] = useState('brand_event')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)

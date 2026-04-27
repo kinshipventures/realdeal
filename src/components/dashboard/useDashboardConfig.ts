@@ -2,53 +2,32 @@ import { useState, useCallback } from 'react'
 
 export type WidgetId =
   | 'equity'
-  | 'wrapped'
-  | 'pod-health'
   | 'todays-focus'
-  | 'needs-attention'
+  | 'pod-health'
   | 'coming-up'
-  | 'recent-activity'
-  | 'quick-links'
-  | 'campaign-progress'
-  | 'pending-tray'
-  | 'gmail-sync'
-  | 'meeting-notes'
 
 export type Preset = 'full' | 'focus'
 
 export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
-  { id: 'equity', label: 'Equity Ring' },
-  { id: 'wrapped', label: 'Wrapped Insights' },
-  { id: 'pod-health', label: 'Pod Health' },
   { id: 'todays-focus', label: "Today's Focus" },
-  { id: 'needs-attention', label: 'Needs Attention' },
+  { id: 'equity', label: 'Equity Ring' },
+  { id: 'pod-health', label: 'Pod Health' },
   { id: 'coming-up', label: 'Coming Up' },
-  { id: 'recent-activity', label: 'Recent Activity' },
-  { id: 'quick-links', label: 'Quick Links' },
-  { id: 'campaign-progress', label: 'Campaign Progress' },
-  { id: 'pending-tray', label: 'Pending Tray' },
-  { id: 'gmail-sync', label: 'Email Sync' },
-  { id: 'meeting-notes', label: 'Meeting Notes' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'pod-health', 'recent-activity'],
-  focus: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up'],
+  full: ['todays-focus', 'equity', 'pod-health', 'coming-up'],
+  focus: ['todays-focus', 'coming-up'],
 }
 
-// Orderable widgets (equity lives in header band, wrapped lives above the main flow)
 const DEFAULT_ORDER: WidgetId[] = [
-  'pending-tray',
   'todays-focus',
-  'needs-attention',
-  'coming-up',
-  'campaign-progress',
+  'equity',
   'pod-health',
-  'recent-activity',
-  'wrapped',
+  'coming-up',
 ]
 
-const STORAGE_KEY = 'realdeal:dashboard-config:v7'
+const STORAGE_KEY = 'realdeal:dashboard-config:v8'
 
 interface StoredConfig {
   preset: Preset
@@ -71,14 +50,12 @@ function loadConfig(): DashboardConfig {
     const parsed = JSON.parse(raw) as StoredConfig
     const preset: Preset = parsed.preset === 'focus' ? 'focus' : 'full'
 
-    // Migrate stale widget ID from older configs.
-    const migrate = (ids: WidgetId[]) =>
-      ids.map(id => id === 'granola-sync' ? 'meeting-notes' : id)
-    if (parsed.visible) parsed.visible = migrate(parsed.visible)
-    if (parsed.order) parsed.order = migrate(parsed.order)
+    // Filter out any unknown widget IDs from older configs (post-cleanup).
+    const known = new Set(ALL_WIDGETS.map(w => w.id) as WidgetId[])
+    const safeFilter = (ids: unknown): WidgetId[] =>
+      Array.isArray(ids) ? (ids.filter(id => known.has(id as WidgetId)) as WidgetId[]) : []
 
-    // Version-drift protection: fill any missing widget IDs from current preset defaults
-    const storedSet = new Set(parsed.visible ?? []) as Set<WidgetId>
+    const storedSet = new Set(safeFilter(parsed.visible))
     const defaults = new Set(PRESET_CONFIGS[preset])
     for (const id of ALL_WIDGETS.map(w => w.id)) {
       if (!storedSet.has(id) && defaults.has(id)) {
@@ -86,8 +63,7 @@ function loadConfig(): DashboardConfig {
       }
     }
 
-    // Order drift protection: append any new orderable widget IDs not in stored order
-    const storedOrder: WidgetId[] = parsed.order ?? DEFAULT_ORDER
+    const storedOrder: WidgetId[] = safeFilter(parsed.order)
     const orderSet = new Set(storedOrder)
     for (const id of DEFAULT_ORDER) {
       if (!orderSet.has(id)) storedOrder.push(id)
