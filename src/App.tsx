@@ -52,7 +52,7 @@ function useIsMobile() {
 // Pod wash color map — rgb channel strings for --pod-wash-color CSS var
 const POD_WASH: Record<string, string> = {
   // maps to pod ID extracted from /pod/:id routes
-  default:   '52, 177, 93',    // brand green
+  default:   '0, 61, 165',     // Real Deal blue
   talent:    '52, 177, 93',    // green
   maps:      '229, 57, 53',    // red
   lps:       '255, 107, 138',  // pink
@@ -136,7 +136,7 @@ function AppShell() {
   const showDemoControls = demo || window.location.hostname === 'localhost'
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
+    <div className="rd-product-shell" style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       <a href="#main-content" className="sr-only">Skip to main content</a>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
 
@@ -150,7 +150,7 @@ function AppShell() {
         />
       )}
 
-      <div id="main-content" style={{
+      <div id="main-content" className="rd-product-main" style={{
         paddingLeft: isMobile ? 0 : (collapsed ? 56 : 220),
         paddingBottom: isMobile ? 56 : 0,
         height: '100%',

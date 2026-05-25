@@ -54,8 +54,8 @@
   --leading-normal:  1.5;
   --leading-relaxed: 1.6;
 
-  --tracking-tight: -0.02em;
-  --tracking-snug:  -0.01em;
+  --tracking-tight: 0;
+  --tracking-snug:  0;
   --tracking-normal: 0;
   --tracking-wide:   0.02em;
   --tracking-caps:   0.06em;
@@ -80,27 +80,28 @@
 
   /* ── Brand ──────────────────────────────────────────────────────── */
   --color-shell:        #003DA5;
-  --color-shell-soft:   #EDEBFF;
-  --color-brand:        #25B439;
-  --color-brand-dark:   #1A8A2A;
+  --color-shell-soft:   #EEF4FF;
+  --color-brand:        #003DA5;
+  --color-brand-rgb:    0, 61, 165;
+  --color-brand-dark:   #002F7D;
   --color-accent:       #003DA5;
-  --color-accent-soft:  #EDEBFF;
+  --color-accent-soft:  #EEF4FF;
 
   /* ── Neutrals — warm ink over warm paper ────────────────────────── */
-  --color-bg:               #FAF8F4;
-  --color-bg-elevated:      #F2EEE7;
-  --color-surface:          rgba(255,255,255,0.70);
-  --color-surface-elevated: rgba(255,255,255,0.86);
-  --color-surface-shell:    rgba(237,235,255,0.40);
-  --color-surface-overlay:  rgba(255,255,255,0.62);
+  --color-bg:               #F8FAFD;
+  --color-bg-elevated:      #EEF3F8;
+  --color-surface:          rgba(255,255,255,0.78);
+  --color-surface-elevated: rgba(255,255,255,0.92);
+  --color-surface-shell:    rgba(238,244,255,0.62);
+  --color-surface-overlay:  rgba(255,255,255,0.72);
 
-  --color-text-primary:    #201D1A;
-  --color-text-secondary:  #6F675F;
-  --color-text-tertiary:   #B2AAA0;
-  --color-text-quaternary: rgba(32,29,26,0.18);
+  --color-text-primary:    #1D1D1F;
+  --color-text-secondary:  #5D6470;
+  --color-text-tertiary:   #9AA3AF;
+  --color-text-quaternary: rgba(29,29,31,0.18);
 
-  --color-border-soft:   rgba(32,29,26,0.08);
-  --color-border-strong: rgba(32,29,26,0.14);
+  --color-border-soft:   rgba(29,29,31,0.08);
+  --color-border-strong: rgba(29,29,31,0.14);
 
   /* ── Support accents ────────────────────────────────────────────── */
   --color-highlight: #FFF1C7;
@@ -117,7 +118,7 @@
   --panel-bg:    var(--color-surface);
   --panel-blur:  blur(20px);
   --panel-border: var(--color-border-soft);
-  --panel-radius: 16px;
+  --panel-radius: 10px;
   --surface-panel: var(--color-surface);
   --surface-panel-border: var(--color-border-soft);
 
@@ -140,12 +141,12 @@
   --health-fading:   #DC2626; --health-fading-bg:   rgba(220,38,38,0.08);
 
   /* ── Alpha tokens (warm-tinted, flip for dark) ──────────────────── */
-  --divider:      rgba(32,29,26,0.04);
-  --edge:         rgba(32,29,26,0.08);
-  --edge-strong:  rgba(32,29,26,0.14);
-  --tint:         rgba(32,29,26,0.04);
-  --tint-hover:   rgba(32,29,26,0.06);
-  --tint-active:  rgba(32,29,26,0.10);
+  --divider:      rgba(29,29,31,0.05);
+  --edge:         rgba(29,29,31,0.09);
+  --edge-strong:  rgba(29,29,31,0.15);
+  --tint:         rgba(0,61,165,0.045);
+  --tint-hover:   rgba(0,61,165,0.075);
+  --tint-active:  rgba(0,61,165,0.11);
   --text-muted:   var(--color-text-secondary);
   --stroke-subtle: rgba(32,29,26,0.06);
 
@@ -162,28 +163,28 @@
 
   /* ── Radii ──────────────────────────────────────────────────────── */
   --radius-xs:   6px;
-  --radius-sm:  10px;
-  --radius-md:  16px;
-  --radius-lg:  24px;
-  --radius-xl:  32px;
+  --radius-sm:  8px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
   --radius-pill: 999px;
 
   /* ── Shadows ────────────────────────────────────────────────────── */
   --shadow-sm:
-    0 1px 0 rgba(255,255,255,0.5) inset,
-    0 1px 3px rgba(32,29,26,0.06);
+    0 1px 0 rgba(255,255,255,0.65) inset,
+    0 1px 3px rgba(29,29,31,0.06);
   --shadow-md:
-    0 2px 4px rgba(32,29,26,0.04),
-    0 12px 40px rgba(32,29,26,0.08);
+    0 2px 4px rgba(29,29,31,0.035),
+    0 14px 42px rgba(0,61,165,0.08);
   --shadow-lg:
-    0 4px 8px rgba(32,29,26,0.06),
-    0 20px 40px rgba(32,29,26,0.14);
+    0 4px 8px rgba(29,29,31,0.05),
+    0 22px 48px rgba(0,61,165,0.12);
   --shadow-xl:
-    0 8px 16px rgba(32,29,26,0.08),
-    0 40px 80px rgba(32,29,26,0.18);
-  --shadow-shell: 0 20px 80px rgba(37,180,57,0.10);
+    0 8px 16px rgba(29,29,31,0.08),
+    0 40px 80px rgba(0,61,165,0.16);
+  --shadow-shell: 0 20px 80px rgba(0,61,165,0.12);
 
-  --focus-ring: 0 0 0 3px rgba(37,180,57,0.24);
+  --focus-ring: 0 0 0 3px rgba(0,61,165,0.22);
 
   /* Legacy orb shadow aliases */
   --orb-shadow-base:  var(--shadow-md);
@@ -196,14 +197,14 @@
   --blur-tooltip: blur(14px);
 
   /* ── Nav wash (pod-tinted glass) ────────────────────────────────── */
-  --nav-bg: rgba(250,248,244,0.82);
+  --nav-bg: rgba(248,250,253,0.84);
   --nav-wash: linear-gradient(
     165deg,
-    rgba(var(--pod-wash-color), 0.14) 0%,
-    rgba(var(--pod-wash-color), 0.07) 35%,
+    rgba(var(--pod-wash-color), 0.10) 0%,
+    rgba(0,61,165,0.055) 38%,
     transparent 65%
   );
-  --nav-active: rgba(var(--pod-wash-color), 0.14);
+  --nav-active: rgba(0,61,165,0.10);
 
   /* ── Motion ─────────────────────────────────────────────────────── */
   --duration-micro: 80ms;
@@ -229,71 +230,114 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-brand: #25B439;
-    --color-brand-dark: #1A8A2A;
-    --color-bg: #1A1916;
-    --color-bg-elevated: #211F1C;
-    --color-surface: rgba(35,32,28,0.80);
-    --color-surface-elevated: rgba(42,38,33,0.90);
-    --color-surface-shell: rgba(0, 61, 165,0.12);
-    --color-text-primary: rgba(255,252,246,0.92);
-    --color-text-secondary: rgba(255,252,246,0.55);
-    --color-text-tertiary: rgba(255,252,246,0.32);
-    --color-text-quaternary: rgba(255,252,246,0.18);
-    --color-border-soft: rgba(255,252,246,0.08);
-    --color-border-strong: rgba(255,252,246,0.14);
-    --surface-panel: rgba(42,38,33,0.90);
-    --surface-panel-border: rgba(255,252,246,0.08);
-    --panel-bg: rgba(35,32,28,0.80);
-    --panel-border: rgba(255,252,246,0.08);
-    --header-band-bg: #25B439;
-    --divider: rgba(255,252,246,0.06);
-    --edge: rgba(255,252,246,0.10);
-    --edge-strong: rgba(255,252,246,0.16);
-    --tint: rgba(255,252,246,0.05);
-    --tint-hover: rgba(255,252,246,0.08);
-    --text-muted: rgba(255,252,246,0.55);
-    --nav-bg: rgba(26,25,22,0.86);
+    --color-shell: #A8C1FF;
+    --color-brand: #7FA8FF;
+    --color-brand-rgb: 127, 168, 255;
+    --color-brand-dark: #B7CBFF;
+    --color-bg: #0D0E0F;
+    --color-bg-elevated: #121416;
+    --color-surface: rgba(255,255,255,0.045);
+    --color-surface-elevated: rgba(18,20,22,0.86);
+    --color-surface-shell: rgba(127,168,255,0.10);
+    --color-surface-overlay: rgba(13,14,15,0.78);
+    --color-text-primary: rgba(255,255,255,0.92);
+    --color-text-secondary: rgba(255,255,255,0.64);
+    --color-text-tertiary: rgba(255,255,255,0.42);
+    --color-text-quaternary: rgba(255,255,255,0.18);
+    --color-border-soft: rgba(255,255,255,0.08);
+    --color-border-strong: rgba(255,255,255,0.14);
+    --surface-panel: rgba(18,20,22,0.86);
+    --surface-panel-border: rgba(255,255,255,0.08);
+    --panel-bg: rgba(18,20,22,0.86);
+    --panel-border: rgba(255,255,255,0.08);
+    --header-band-bg: #003DA5;
+    --divider: rgba(255,255,255,0.07);
+    --edge: rgba(255,255,255,0.10);
+    --edge-strong: rgba(255,255,255,0.16);
+    --tint: rgba(255,255,255,0.055);
+    --tint-hover: rgba(255,255,255,0.085);
+    --tint-active: rgba(127,168,255,0.18);
+    --text-muted: rgba(255,255,255,0.62);
+    --nav-bg: rgba(13,14,15,0.84);
     --nav-wash: linear-gradient(
       165deg,
-      rgba(var(--pod-wash-color), 0.12) 0%,
-      rgba(var(--pod-wash-color), 0.05) 40%,
+      rgba(var(--pod-wash-color), 0.18) 0%,
+      rgba(127,168,255,0.08) 40%,
       transparent 68%
     );
-    --nav-active: rgba(var(--pod-wash-color), 0.18);
-    --stroke-subtle: rgba(255,252,246,0.10);
-    --interaction-note: rgba(255,252,246,0.50);
+    --nav-active: rgba(127,168,255,0.16);
+    --stroke-subtle: rgba(255,255,255,0.10);
+    --interaction-note: rgba(255,255,255,0.50);
+    --shadow-sm:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 1px 3px rgba(0,0,0,0.22);
+    --shadow-md:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 18px 52px rgba(0,0,0,0.34);
+    --shadow-lg:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 28px 72px rgba(0,0,0,0.46);
+    --shadow-xl:
+      0 1px 0 rgba(255,255,255,0.07) inset,
+      0 42px 96px rgba(0,0,0,0.58);
+    --shadow-shell: 0 28px 90px rgba(0,61,165,0.16);
+    --focus-ring: 0 0 0 3px rgba(127,168,255,0.26);
   }
 }
 
 :root[data-theme="dark"] {
-  --color-brand: #25B439;
-  --color-brand-dark: #1A8A2A;
-  --color-bg: #1A1916;
-  --color-bg-elevated: #211F1C;
-  --color-surface: rgba(35,32,28,0.80);
-  --color-surface-elevated: rgba(42,38,33,0.90);
-  --color-surface-shell: rgba(0, 61, 165,0.12);
-  --color-text-primary: rgba(255,252,246,0.92);
-  --color-text-secondary: rgba(255,252,246,0.55);
-  --color-text-tertiary: rgba(255,252,246,0.32);
-  --color-text-quaternary: rgba(255,252,246,0.18);
-  --color-border-soft: rgba(255,252,246,0.08);
-  --color-border-strong: rgba(255,252,246,0.14);
-  --surface-panel: rgba(42,38,33,0.90);
-  --surface-panel-border: rgba(255,252,246,0.08);
-  --panel-bg: rgba(35,32,28,0.80);
-  --panel-border: rgba(255,252,246,0.08);
-  --header-band-bg: #25B439;
-  --divider: rgba(255,252,246,0.06);
-  --edge: rgba(255,252,246,0.10);
-  --edge-strong: rgba(255,252,246,0.16);
-  --tint: rgba(255,252,246,0.05);
-  --tint-hover: rgba(255,252,246,0.08);
-  --text-muted: rgba(255,252,246,0.55);
-  --nav-bg: rgba(26,25,22,0.86);
-  --stroke-subtle: rgba(255,252,246,0.10);
-  --interaction-note: rgba(255,252,246,0.50);
+  --color-shell: #A8C1FF;
+  --color-brand: #7FA8FF;
+  --color-brand-rgb: 127, 168, 255;
+  --color-brand-dark: #B7CBFF;
+  --color-bg: #0D0E0F;
+  --color-bg-elevated: #121416;
+  --color-surface: rgba(255,255,255,0.045);
+  --color-surface-elevated: rgba(18,20,22,0.86);
+  --color-surface-shell: rgba(127,168,255,0.10);
+  --color-surface-overlay: rgba(13,14,15,0.78);
+  --color-text-primary: rgba(255,255,255,0.92);
+  --color-text-secondary: rgba(255,255,255,0.64);
+  --color-text-tertiary: rgba(255,255,255,0.42);
+  --color-text-quaternary: rgba(255,255,255,0.18);
+  --color-border-soft: rgba(255,255,255,0.08);
+  --color-border-strong: rgba(255,255,255,0.14);
+  --surface-panel: rgba(18,20,22,0.86);
+  --surface-panel-border: rgba(255,255,255,0.08);
+  --panel-bg: rgba(18,20,22,0.86);
+  --panel-border: rgba(255,255,255,0.08);
+  --header-band-bg: #003DA5;
+  --divider: rgba(255,255,255,0.07);
+  --edge: rgba(255,255,255,0.10);
+  --edge-strong: rgba(255,255,255,0.16);
+  --tint: rgba(255,255,255,0.055);
+  --tint-hover: rgba(255,255,255,0.085);
+  --tint-active: rgba(127,168,255,0.18);
+  --text-muted: rgba(255,255,255,0.62);
+  --nav-bg: rgba(13,14,15,0.84);
+  --nav-wash: linear-gradient(
+    165deg,
+    rgba(var(--pod-wash-color), 0.18) 0%,
+    rgba(127,168,255,0.08) 40%,
+    transparent 68%
+  );
+  --nav-active: rgba(127,168,255,0.16);
+  --stroke-subtle: rgba(255,255,255,0.10);
+  --interaction-note: rgba(255,255,255,0.50);
+  --shadow-sm:
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 1px 3px rgba(0,0,0,0.22);
+  --shadow-md:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 18px 52px rgba(0,0,0,0.34);
+  --shadow-lg:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 28px 72px rgba(0,0,0,0.46);
+  --shadow-xl:
+    0 1px 0 rgba(255,255,255,0.07) inset,
+    0 42px 96px rgba(0,0,0,0.58);
+  --shadow-shell: 0 28px 90px rgba(0,61,165,0.16);
+  --focus-ring: 0 0 0 3px rgba(127,168,255,0.26);
 }
 
 @layer base {
@@ -1659,4 +1703,288 @@ body::after {
   .cc-card-added { animation: none; opacity: 1; }
   .cc-card,
   .campaign-overview-card { transition: none; }
+}
+
+/* Real Deal product visual refresh */
+.rd-product-shell {
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(0, 61, 165, 0.075) 0%, rgba(0, 61, 165, 0.02) 28%, transparent 52%),
+    linear-gradient(315deg, rgba(255, 107, 138, 0.07) 0%, rgba(255, 180, 0, 0.035) 34%, transparent 58%),
+    var(--color-bg) !important;
+}
+
+.rd-product-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 199, 163, 0.045), transparent 32%, rgba(126, 87, 194, 0.04)),
+    linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.12) 55%, rgba(248,250,253,0.78));
+}
+
+.rd-product-main {
+  position: relative;
+  z-index: 1;
+}
+
+.rd-product-main .content-enter,
+.rd-product-main main.content-enter {
+  background: transparent !important;
+}
+
+.dashboard-hero {
+  position: relative;
+  padding: clamp(40px, 6vw, 76px) clamp(20px, 4vw, 48px) clamp(24px, 4vw, 44px);
+  overflow: hidden;
+}
+
+.dashboard-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(120deg, rgba(0,61,165,0.08), transparent 42%),
+    linear-gradient(300deg, rgba(255,107,138,0.07), transparent 45%);
+  border-bottom: 1px solid var(--divider);
+}
+
+.dashboard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-section,
+.dashboard-section-primary,
+.widget-card,
+.records-dropdown,
+.icon-picker,
+.contact-lightbox,
+.hig-confirm-sheet {
+  background: var(--color-surface-elevated) !important;
+  border: 1px solid var(--edge) !important;
+  box-shadow: var(--shadow-sm) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.dashboard-section,
+.dashboard-section-primary,
+.widget-card {
+  border-radius: 8px !important;
+}
+
+.widget-card:hover,
+.campaign-overview-card:hover,
+.cc-card:hover {
+  box-shadow: var(--shadow-md) !important;
+  border-color: color-mix(in srgb, var(--color-brand) 18%, var(--edge)) !important;
+}
+
+.dashboard-heading,
+.dashboard-subheading,
+.records-table th {
+  letter-spacing: 0.06em !important;
+  color: var(--color-text-tertiary) !important;
+}
+
+.dashboard-heading-primary,
+.dashboard-heading-primary *,
+.widget-card h2,
+.widget-card h3 {
+  letter-spacing: 0 !important;
+}
+
+.records-search,
+.companies-search,
+.records-toolbar-select,
+.records-toolbar-button,
+.delight-button,
+.action-pill-hig {
+  border-radius: 8px !important;
+  border-color: var(--edge) !important;
+  background: var(--color-surface-elevated) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.72) inset;
+}
+
+.records-search:focus,
+.companies-search:focus,
+.records-toolbar-select:focus,
+.records-toolbar-button:focus-visible,
+.delight-button:focus-visible {
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--edge)) !important;
+  box-shadow: var(--focus-ring) !important;
+}
+
+.records-table {
+  border-collapse: separate !important;
+  border-spacing: 0 4px !important;
+}
+
+.records-table thead {
+  background: rgba(248,250,253,0.86) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.records-table th {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+.records-table .contacts-row {
+  background: rgba(255,255,255,0.58);
+  box-shadow: inset 0 0 0 1px rgba(29,29,31,0.055);
+}
+
+.records-table .contacts-row:hover {
+  background: rgba(255,255,255,0.84) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 16%, var(--edge));
+}
+
+.contact-avatar,
+.health-badge {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset;
+}
+
+.pod-tooltip,
+.records-dropdown,
+.icon-picker {
+  border-radius: 8px !important;
+}
+
+.close-trigger span {
+  border-radius: 8px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rd-product-shell {
+    background:
+      radial-gradient(1000px circle at 22% 8%, rgba(0,61,165,0.20), transparent 46%),
+      radial-gradient(1100px circle at 88% 18%, rgba(255,107,138,0.11), transparent 48%),
+      radial-gradient(900px circle at 48% 112%, rgba(0,199,163,0.08), transparent 45%),
+      #0D0E0F !important;
+  }
+
+  :root:not([data-theme="light"]) .rd-product-shell::before {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01) 42%, rgba(0,0,0,0.20)),
+      radial-gradient(1400px circle at 50% 0%, rgba(127,168,255,0.06), transparent 58%);
+  }
+
+  :root:not([data-theme="light"]) .dashboard-hero::before {
+    background:
+      radial-gradient(760px circle at 50% 4%, rgba(127,168,255,0.18), transparent 58%),
+      radial-gradient(820px circle at 88% 22%, rgba(255,107,138,0.09), transparent 56%),
+      linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0));
+    border-bottom-color: rgba(255,255,255,0.07);
+  }
+
+  :root:not([data-theme="light"]) .dashboard-section,
+  :root:not([data-theme="light"]) .dashboard-section-primary,
+  :root:not([data-theme="light"]) .widget-card,
+  :root:not([data-theme="light"]) .records-dropdown,
+  :root:not([data-theme="light"]) .icon-picker,
+  :root:not([data-theme="light"]) .contact-lightbox,
+  :root:not([data-theme="light"]) .hig-confirm-sheet {
+    background: rgba(18,20,22,0.78) !important;
+    border-color: rgba(255,255,255,0.09) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  :root:not([data-theme="light"]) .records-search,
+  :root:not([data-theme="light"]) .companies-search,
+  :root:not([data-theme="light"]) .records-toolbar-select,
+  :root:not([data-theme="light"]) .records-toolbar-button,
+  :root:not([data-theme="light"]) .delight-button,
+  :root:not([data-theme="light"]) .action-pill-hig {
+    background: rgba(18,20,22,0.72) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.055) inset;
+  }
+
+  :root:not([data-theme="light"]) .records-table thead {
+    background: rgba(13,14,15,0.82) !important;
+  }
+
+  :root:not([data-theme="light"]) .records-table .contacts-row {
+    background: rgba(255,255,255,0.035);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.055);
+  }
+
+  :root:not([data-theme="light"]) .records-table .contacts-row:hover {
+    background: rgba(255,255,255,0.065) !important;
+    box-shadow: inset 0 0 0 1px rgba(127,168,255,0.22);
+  }
+}
+
+:root[data-theme="dark"] .rd-product-shell {
+  background:
+    radial-gradient(1000px circle at 22% 8%, rgba(0,61,165,0.20), transparent 46%),
+    radial-gradient(1100px circle at 88% 18%, rgba(255,107,138,0.11), transparent 48%),
+    radial-gradient(900px circle at 48% 112%, rgba(0,199,163,0.08), transparent 45%),
+    #0D0E0F !important;
+}
+
+:root[data-theme="dark"] .rd-product-shell::before {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01) 42%, rgba(0,0,0,0.20)),
+    radial-gradient(1400px circle at 50% 0%, rgba(127,168,255,0.06), transparent 58%);
+}
+
+:root[data-theme="dark"] .dashboard-hero::before {
+  background:
+    radial-gradient(760px circle at 50% 4%, rgba(127,168,255,0.18), transparent 58%),
+    radial-gradient(820px circle at 88% 22%, rgba(255,107,138,0.09), transparent 56%),
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0));
+  border-bottom-color: rgba(255,255,255,0.07);
+}
+
+:root[data-theme="dark"] .dashboard-section,
+:root[data-theme="dark"] .dashboard-section-primary,
+:root[data-theme="dark"] .widget-card,
+:root[data-theme="dark"] .records-dropdown,
+:root[data-theme="dark"] .icon-picker,
+:root[data-theme="dark"] .contact-lightbox,
+:root[data-theme="dark"] .hig-confirm-sheet {
+  background: rgba(18,20,22,0.78) !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+:root[data-theme="dark"] .records-search,
+:root[data-theme="dark"] .companies-search,
+:root[data-theme="dark"] .records-toolbar-select,
+:root[data-theme="dark"] .records-toolbar-button,
+:root[data-theme="dark"] .delight-button,
+:root[data-theme="dark"] .action-pill-hig {
+  background: rgba(18,20,22,0.72) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.055) inset;
+}
+
+:root[data-theme="dark"] .records-table thead {
+  background: rgba(13,14,15,0.82) !important;
+}
+
+:root[data-theme="dark"] .records-table .contacts-row {
+  background: rgba(255,255,255,0.035);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.055);
+}
+
+:root[data-theme="dark"] .records-table .contacts-row:hover {
+  background: rgba(255,255,255,0.065) !important;
+  box-shadow: inset 0 0 0 1px rgba(127,168,255,0.22);
+}
+
+@media (max-width: 767px) {
+  .dashboard-hero {
+    padding: 36px 18px 28px;
+  }
+
+  .dashboard-hero h1 {
+    max-width: 10ch;
+  }
 }

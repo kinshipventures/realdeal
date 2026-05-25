@@ -495,10 +495,10 @@ export function Dashboard() {
           {/* ─── Hero ─── */}
           <section className="dashboard-hero widget-enter" style={{ '--stagger': 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, marginBottom: 32 } as React.CSSProperties}>
             <h1 style={{
-              fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 'clamp(2.8rem, 1.6rem + 3vw, 4.2rem)',
-              margin: 0, letterSpacing: '-0.025em', color: 'var(--color-text-primary)', lineHeight: 1, textAlign: 'center',
+              fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 'clamp(3rem, 1.7rem + 3.4vw, 4.8rem)',
+              margin: 0, letterSpacing: 0, color: 'var(--color-text-primary)', lineHeight: 0.98, textAlign: 'center',
             }}>
-              Your Network
+              Your network, remembered.
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
               <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>Health</span>
@@ -523,12 +523,13 @@ export function Dashboard() {
               disabled={focusItems.length === 0}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '13px 26px', borderRadius: 999,
-                background: 'var(--color-text-primary)', color: '#F5F4F0',
+                padding: '13px 26px', borderRadius: 8,
+                background: 'var(--color-brand)', color: '#FFFFFF',
                 border: 'none', cursor: focusItems.length === 0 ? 'default' : 'pointer',
-                fontSize: 14, fontWeight: 500, letterSpacing: '0.01em',
+                fontSize: 14, fontWeight: 700, letterSpacing: '0',
                 opacity: focusItems.length === 0 ? 0.5 : 1,
-                transition: 'transform 0.15s ease',
+                boxShadow: '0 12px 30px rgba(0,61,165,0.22)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 marginTop: 4,
               }}
               onMouseEnter={e => { if (focusItems.length > 0) e.currentTarget.style.transform = 'translateY(-1px)' }}
@@ -668,8 +669,8 @@ function ChapterHeader({ title }: { title: string }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 24, margin: '96px 0 40px' }}>
       <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
       <h2 style={{
-        fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 28,
-        color: 'var(--color-text-primary)', margin: 0, letterSpacing: '-0.01em',
+        fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 28,
+        color: 'var(--color-text-primary)', margin: 0, letterSpacing: 0,
         whiteSpace: 'nowrap',
       }}>
         {title}
