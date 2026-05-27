@@ -333,6 +333,20 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     : firstName.trim() && lastName.trim() && selectedPodIds.length > 0
   const companyValid = companyName.trim().length > 0 && selectedPodIds.length > 0
   const canSubmit = recordType === 'Contact' ? contactValid : companyValid
+  const submitBlockedReason =
+    recordType === 'Contact'
+      ? braindump
+        ? 'Add context before creating this record'
+        : !firstName.trim() || !lastName.trim()
+          ? 'Add first and last name'
+          : selectedPodIds.length === 0
+            ? 'Select at least one pod'
+            : undefined
+      : !companyName.trim()
+        ? 'Add company name'
+        : selectedPodIds.length === 0
+          ? 'Select at least one pod'
+          : undefined
 
   const nonEmptyMultiRows = multiRows.filter(r =>
     recordType === 'Contact'
@@ -345,6 +359,12 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
       : r.companyName.trim()
   ).length
   const canMultiSubmit = validMultiCount > 0 && multiPodIds.length > 0
+  const multiSubmitBlockedReason =
+    validMultiCount === 0
+      ? 'Add at least one valid record'
+      : multiPodIds.length === 0
+        ? 'Select at least one pod'
+        : undefined
 
   if (!isOpen) return null
 
@@ -524,6 +544,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                 </div>
 
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
+                {!braindump && firstName.trim() && lastName.trim() && selectedPodIds.length === 0 && (
+                  <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
+                    Select at least one pod to create this contact.
+                  </p>
+                )}
 
                 <div style={{ display: 'flex', gap: 12, marginBottom: 16, marginTop: 4 }}>
                   <button type="button" onClick={() => setBraindump(true)} style={{
@@ -556,6 +581,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                   Saved as Pending for review
                 </p>
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
+                {companyName.trim() && selectedPodIds.length === 0 && (
+                  <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
+                    Select at least one pod to create this company.
+                  </p>
+                )}
                 <button type="button" onClick={() => setBraindump(false)} style={{
                   background: 'none', border: 'none', padding: 0,
                   fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer',
@@ -625,7 +655,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
               <button
                 type="button" onClick={handleSubmit}
                 disabled={!canSubmit || saving}
-                title={!canSubmit ? 'Fill required fields' : undefined}
+                title={!canSubmit ? submitBlockedReason : undefined}
                 style={{
                   flex: 1, padding: 12,
                   background: canSubmit && !saving ? 'var(--color-brand)' : 'var(--tint)',
@@ -645,6 +675,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
         {step === 'form' && formMode === 'multi' && (
           <>
             <PodPicker pods={pods} selectedPodIds={multiPodIds} onToggle={toggleMultiPod} />
+            {validMultiCount > 0 && multiPodIds.length === 0 && (
+              <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
+                Select at least one pod before creating records.
+              </p>
+            )}
 
             <div style={{ marginBottom: 8 }}>
               {multiRows.map((row, idx) => (
@@ -742,6 +777,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
               <button
                 type="button" onClick={handleMultiSubmit}
                 disabled={!canMultiSubmit || saving}
+                title={!canMultiSubmit ? multiSubmitBlockedReason : undefined}
                 style={{
                   flex: 1, padding: 12,
                   background: canMultiSubmit && !saving ? 'var(--color-brand)' : 'var(--tint)',
