@@ -852,20 +852,47 @@ export interface WorkspaceInvite {
   invited_by: string
 }
 
+type WorkspaceMemberRow = Pick<WorkspaceMember, 'id' | 'user_id' | 'role' | 'created_at'>
+
+type ProfileRow = {
+  id: string
+  display_name: string | null
+  email: string | null
+}
+
 export async function fetchWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
-  const { data, error } = await supabase
+  const { data: members, error } = await supabase
     .from('workspace_members')
-    .select('id, user_id, role, created_at, profiles:user_id(display_name, email)')
+    .select('id, user_id, role, created_at')
     .eq('workspace_id', workspaceId)
   if (error) throw error
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    user_id: row.user_id,
-    role: row.role,
-    created_at: row.created_at,
-    display_name: row.profiles?.display_name ?? null,
-    email: row.profiles?.email ?? null,
-  }))
+
+  const memberRows = (members ?? []) as WorkspaceMemberRow[]
+  const userIds = [...new Set(memberRows.map(member => member.user_id).filter(Boolean))]
+
+  const profilesById = new Map<string, ProfileRow>()
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', userIds)
+
+    for (const profile of (profiles ?? []) as ProfileRow[]) {
+      profilesById.set(profile.id, profile)
+    }
+  }
+
+  return memberRows.map(row => {
+    const profile = profilesById.get(row.user_id)
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      role: row.role,
+      created_at: row.created_at,
+      display_name: profile?.display_name ?? null,
+      email: profile?.email ?? null,
+    }
+  })
 }
 
 export async function fetchPendingInvites(workspaceId: string): Promise<WorkspaceInvite[]> {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   contactEquityScore,
   contactEquityBreakdown,
@@ -10,8 +10,6 @@ import {
   indexByContact,
   isDormant,
   daysSinceContact,
-  INTERACTION_WEIGHTS,
-  CADENCE_DAYS,
 } from './equity'
 import type { Interaction, Contact, Pod } from './types'
 
@@ -235,7 +233,7 @@ describe('overallEquityScore', () => {
 
   it('averages across priority pods only', () => {
     const pod = makePod({ id: 'pod-1', is_priority: true })
-    const contact = makeContact({ id: 'c-1', list_ids: ['pod-1'] })
+    const contact = makeContact({ id: 'c-1', list_ids: ['pod-1'], primary_list_id: 'pod-1' })
     const byContact = new Map([
       ['c-1', [makeInteraction({ contact_id: 'c-1', type: 'meeting', date: daysAgo(1) })]],
     ])
@@ -322,11 +320,13 @@ describe('todaysFocus', () => {
     const overdue = makeContact({
       id: 'c-overdue',
       list_ids: ['pod-1'],
+      primary_list_id: 'pod-1',
       last_contacted_at: daysAgo(14), // 2x weekly cadence
     })
     const recent = makeContact({
       id: 'c-recent',
       list_ids: ['pod-1'],
+      primary_list_id: 'pod-1',
       last_contacted_at: daysAgo(2),
     })
     const focus = todaysFocus([overdue, recent], new Map(), [pod], 3)
@@ -341,6 +341,7 @@ describe('todaysFocus', () => {
     const neverContacted = makeContact({
       id: 'c-never',
       list_ids: ['pod-1'],
+      primary_list_id: 'pod-1',
       last_contacted_at: null,
     })
     const focus = todaysFocus([neverContacted], new Map(), [pod], 3)

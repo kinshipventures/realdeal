@@ -820,13 +820,12 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
         )}
 
         {/* ── Sub-pods ── */}
-        {(categories.length > 0 || true) && (
-          <section style={{ marginBottom: 32 }}>
-            <div style={sectionHeadStyle}>
-              Sub-pods <Badge label={String(categories.length)} />
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-              {categories.map(cat => (
+        <section style={{ marginBottom: 32 }}>
+          <div style={sectionHeadStyle}>
+            Sub-pods <Badge label={String(categories.length)} />
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {categories.map(cat => (
                 <div key={cat.id} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                   {editingCatId === cat.id ? (
                     <input
@@ -956,7 +955,6 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               </button>
             )}
           </section>
-        )}
 
         {/* ── Shared links (if any) ── */}
         {shareLinks.length > 0 && (

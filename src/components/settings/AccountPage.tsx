@@ -77,12 +77,17 @@ export function AccountPage() {
 
   async function loadWorkspaceData() {
     if (!activeWorkspace) return
-    const [m, inv] = await Promise.all([
-      fetchWorkspaceMembers(activeWorkspace.id),
-      fetchPendingInvites(activeWorkspace.id),
-    ])
-    setMembers(m)
-    setInvites(inv)
+    setInviteError('')
+    try {
+      const [m, inv] = await Promise.all([
+        fetchWorkspaceMembers(activeWorkspace.id),
+        fetchPendingInvites(activeWorkspace.id),
+      ])
+      setMembers(m)
+      setInvites(inv)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to load team data')
+    }
   }
 
   const handleSave = async () => {
