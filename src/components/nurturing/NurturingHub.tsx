@@ -12,6 +12,7 @@ import { isContactSnoozed, snoozeContact, DURATION_LABELS } from '../../lib/snoo
 import type { SnoozeDuration } from '../../lib/snooze'
 import type { Contact, Pod, Interaction, FocusItem } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
+import { useAppClock } from '../../hooks/useAppClock'
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
@@ -59,9 +60,9 @@ function CountBadge({ count, color = 'var(--tint)', textColor = 'var(--color-tex
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getOverdueSignal(contact: Contact, pods: Pod[]): string {
+function getOverdueSignal(contact: Contact, now = Date.now()): string {
   const days = contact.last_contacted_at
-    ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
+    ? Math.floor((now - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
     : null
   if (days === null) return 'Never contacted — consider reaching out'
   return `Last reached out ${days} days ago`
@@ -72,6 +73,7 @@ function getOverdueSignal(contact: Contact, pods: Pod[]): string {
 export function NurturingHub() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const appClock = useAppClock()
   const filterParam = searchParams.get('filter') // focus | overdue | stale | dates | hygiene
 
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -143,11 +145,11 @@ export function NurturingHub() {
       arr.push(ix)
       byContact.set(ix.contact_id, arr)
     }
-    return todaysFocus(contacts, byContact, pods, 10)
-  }, [contacts, pods, interactions])
+    return todaysFocus(contacts, byContact, pods, 10, appClock.now, appClock.todayKey)
+  }, [contacts, pods, interactions, appClock.now, appClock.todayKey])
 
   const needsAttentionContacts = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = appClock.todayKey
 
     // Follow-up overdue (stronger signal) — sorted first per D-23
     const followUpOverdueIds = new Set<string>()
@@ -157,13 +159,13 @@ export function NurturingHub() {
       if (!contact.next_follow_up_date || contact.next_follow_up_date >= today) continue
       followUpOverdueIds.add(contact.id)
       const days = contact.last_contacted_at
-        ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
+        ? Math.floor((appClock.now - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
         : null
       followUpOverdue.push({ contact, days, isFollowUpOverdue: true })
     }
     followUpOverdue.sort((a, b) => {
-      const aOver = a.contact.next_follow_up_date ? Math.floor((Date.now() - new Date(a.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
-      const bOver = b.contact.next_follow_up_date ? Math.floor((Date.now() - new Date(b.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
+      const aOver = a.contact.next_follow_up_date ? Math.floor((appClock.now - new Date(a.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
+      const bOver = b.contact.next_follow_up_date ? Math.floor((appClock.now - new Date(b.contact.next_follow_up_date + 'T00:00:00').getTime()) / 86_400_000) : 0
       return bOver - aOver
     })
 
@@ -177,25 +179,24 @@ export function NurturingHub() {
       const overdue = isOverdue(contact, pod?.cadence ?? 'monthly')
       if (!overdue) continue
       const days = contact.last_contacted_at
-        ? Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
+        ? Math.floor((appClock.now - new Date(contact.last_contacted_at).getTime()) / 86_400_000)
         : null
       cadenceOverdue.push({ contact, days })
     }
     cadenceOverdue.sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
 
     return [...followUpOverdue, ...cadenceOverdue]
-  }, [contacts, pods])
+  }, [contacts, pods, appClock.now, appClock.todayKey])
 
   const staleContacts = useMemo(() => {
     return contacts
-      .filter(c => isDormant(c) && !snoozedIds.has(c.id) && !isInGracePeriod(c))
-      .map(c => ({ contact: c, days: daysSinceContact(c) }))
+      .filter(c => isDormant(c, appClock.now) && !isContactSnoozed(c.snoozed_until) && !isInGracePeriod(c))
+      .map(c => ({ contact: c, days: daysSinceContact(c, appClock.now) }))
       .sort((a, b) => (b.days ?? 999) - (a.days ?? 999))
-  }, [contacts])
+  }, [contacts, appClock.now])
 
   const upcomingDates = useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date(appClock.todayStartMs)
     const windowEnd = new Date(today)
     windowEnd.setDate(windowEnd.getDate() + 14)
     const podMap = new Map(pods.map(p => [p.id, p]))
@@ -233,7 +234,7 @@ export function NurturingHub() {
     }
 
     return items.sort((a, b) => a.daysUntil - b.daysUntil)
-  }, [contacts, pods])
+  }, [contacts, pods, appClock.todayKey, appClock.todayStartMs])
 
   const dataHygieneItems = useMemo(() => {
     // Missing required fields per pod
@@ -388,7 +389,7 @@ export function NurturingHub() {
           <div style={PANEL}>
             {focusItems.map(item => {
               const days = item.contact.last_contacted_at
-                ? Math.floor((Date.now() - new Date(item.contact.last_contacted_at).getTime()) / 86_400_000)
+                ? Math.floor((appClock.now - new Date(item.contact.last_contacted_at).getTime()) / 86_400_000)
                 : null
               const signal = item.reason === 'overdue'
                 ? days === null ? 'Never contacted' : `${days} days since last contact`
@@ -421,7 +422,7 @@ export function NurturingHub() {
             {needsAttentionContacts.map(({ contact, isFollowUpOverdue }) => {
               const signal = isFollowUpOverdue
                 ? (contact.next_action ? `Follow-up overdue: ${contact.next_action}` : 'Follow-up overdue')
-                : getOverdueSignal(contact, pods)
+                : getOverdueSignal(contact, appClock.now)
               const signalColor = isFollowUpOverdue ? '#DC2626' : 'hsla(20, 80%, 45%, 1)'
               return (
                 <NurturingRow

@@ -89,8 +89,7 @@ export function indexByContact(interactions: Interaction[]): Map<string, Interac
 // ── Contact equity score ────────────────────────────────────────────────────
 // Takes interactions already filtered to one contact. Returns normalized 0-100.
 
-export function contactEquityScore(interactions: Interaction[]): number {
-  const now = Date.now()
+export function contactEquityScore(interactions: Interaction[], now = Date.now()): number {
   let raw = 0
   for (const ix of interactions) {
     const weight = INTERACTION_WEIGHTS[ix.type]
@@ -110,8 +109,7 @@ export interface EquityBreakdown {
   weight: number   // raw weight from INTERACTION_WEIGHTS
 }
 
-export function contactEquityBreakdown(interactions: Interaction[]): EquityBreakdown[] {
-  const now = Date.now()
+export function contactEquityBreakdown(interactions: Interaction[], now = Date.now()): EquityBreakdown[] {
   const byType = new Map<InteractionType, number>()
 
   for (const ix of interactions) {
@@ -133,12 +131,13 @@ export function contactEquityBreakdown(interactions: Interaction[]): EquityBreak
 
 export function podEquityScore(
   contacts: Contact[],
-  byContact: Map<string, Interaction[]>
+  byContact: Map<string, Interaction[]>,
+  now = Date.now()
 ): number {
   if (contacts.length === 0) return 0
   let sum = 0
   for (const c of contacts) {
-    sum += contactEquityScore(byContact.get(c.id) ?? [])
+    sum += contactEquityScore(byContact.get(c.id) ?? [], now)
   }
   return Math.round(sum / contacts.length)
 }
@@ -149,13 +148,14 @@ export function podEquityScore(
 export function overallEquityScore(
   priorityPods: Pod[],
   contacts: Contact[],
-  byContact: Map<string, Interaction[]>
+  byContact: Map<string, Interaction[]>,
+  now = Date.now()
 ): number {
   if (priorityPods.length === 0) return 0
   let sum = 0
   for (const pod of priorityPods) {
     const podContacts = contacts.filter(c => c.primary_list_id === pod.id)
-    sum += podEquityScore(podContacts, byContact)
+    sum += podEquityScore(podContacts, byContact, now)
   }
   const result = Math.round(sum / priorityPods.length)
   return Number.isFinite(result) ? result : 0
@@ -165,14 +165,14 @@ export function overallEquityScore(
 
 const DORMANT_MS = 90 * DAY_MS
 
-export function isDormant(contact: Contact): boolean {
+export function isDormant(contact: Contact, now = Date.now()): boolean {
   if (!contact.last_contacted_at) return true
-  return Date.now() - new Date(contact.last_contacted_at).getTime() > DORMANT_MS
+  return now - new Date(contact.last_contacted_at).getTime() > DORMANT_MS
 }
 
-export function daysSinceContact(contact: Contact): number | null {
+export function daysSinceContact(contact: Contact, now = Date.now()): number | null {
   if (!contact.last_contacted_at) return null
-  return Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / DAY_MS)
+  return Math.floor((now - new Date(contact.last_contacted_at).getTime()) / DAY_MS)
 }
 
 // ── Today's Focus ───────────────────────────────────────────────────────────
@@ -182,7 +182,9 @@ export function todaysFocus(
   contacts: Contact[],
   _byContact: Map<string, Interaction[]>,
   pods: Pod[],
-  limit = 3
+  limit = 3,
+  now = Date.now(),
+  dateKey = String(Math.floor(now / DAY_MS))
 ): FocusItem[] {
   const priorityPodIds = new Set(pods.filter(p => p.is_priority).map(p => p.id))
   const podById = new Map(pods.map(p => [p.id, p]))
@@ -205,7 +207,7 @@ export function todaysFocus(
       continue
     }
 
-    const elapsed = Date.now() - new Date(contact.last_contacted_at).getTime()
+    const elapsed = now - new Date(contact.last_contacted_at).getTime()
     if (elapsed > thresholdMs) {
       candidates.push({
         contact,
@@ -232,10 +234,9 @@ export function todaysFocus(
   )
 
   // Shuffle deterministically by day (same picks within a day)
-  const dayKey = Math.floor(Date.now() / DAY_MS)
   const shuffled = serendipityCandidates.sort((a, b) => {
-    const ha = hashCode(a.id + dayKey)
-    const hb = hashCode(b.id + dayKey)
+    const ha = hashCode(a.id + dateKey)
+    const hb = hashCode(b.id + dateKey)
     return ha - hb
   })
 

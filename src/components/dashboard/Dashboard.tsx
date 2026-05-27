@@ -17,6 +17,7 @@ import { getUpcomingBirthdays } from '../../lib/birthdays'
 import { isContactSnoozed, snoozeContact } from '../../lib/snooze'
 import type { SnoozeDuration } from '../../lib/snooze'
 import { useDashboardConfig } from './useDashboardConfig'
+import { useAppClock } from '../../hooks/useAppClock'
 
 import type { Contact, Pod, Interaction, Campaign, CampaignContact } from '../../lib/types'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -37,6 +38,7 @@ import { AiInsightsWidget } from './widgets/AiInsightsWidget'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
+  const appClock = useAppClock()
   const [showSettings, setShowSettings] = useState(false)
 
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -54,7 +56,7 @@ export function Dashboard() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [pendingContacts, setPendingContacts] = useState<Contact[]>([])
   const [showQueue, setShowQueue] = useState(false)
-  const [dashboardNow] = useState(() => Date.now())
+  const dashboardNow = appClock.now
 
   // Graduated loading — each section loads independently
   useEffect(() => {
@@ -95,8 +97,8 @@ export function Dashboard() {
 
   // Overall equity score
   const overallScore = useMemo(
-    () => overallEquityScore(equityPods, contacts, byContact),
-    [equityPods, contacts, byContact]
+    () => overallEquityScore(equityPods, contacts, byContact, dashboardNow),
+    [equityPods, contacts, byContact, dashboardNow]
   )
 
   // Pod stats
@@ -109,7 +111,7 @@ export function Dashboard() {
       const podContacts = contacts.filter(c => c.primary_list_id === pod.id)
       const cadence = pod.cadence ?? 'monthly'
       const overdueCount = podContacts.filter(c => isOverdue(c, cadence)).length
-      const score = podEquityScore(podContacts, byContact)
+      const score = podEquityScore(podContacts, byContact, dashboardNow)
 
       const podContactIds = new Set(podContacts.map(c => c.id))
       const buckets = new Array<number>(BUCKETS).fill(0)
@@ -144,7 +146,7 @@ export function Dashboard() {
 
     const podScores = pods.map(p => ({
       pod: p,
-      score: podEquityScore(contacts.filter(c => c.primary_list_id === p.id), byContact),
+      score: podEquityScore(contacts.filter(c => c.primary_list_id === p.id), byContact, dashboardNow),
     }))
     const topPodEntry = podScores.sort((a, b) => b.score - a.score)[0] ?? null
 
@@ -206,20 +208,20 @@ export function Dashboard() {
       }
     }
     return result.sort((a, b) => b.overdueDays - a.overdueDays)
-  }, [contacts, pods])
+  }, [contacts, pods, dashboardNow])
 
   // Today's Focus
   const focusItems = useMemo(
-    () => todaysFocus(contacts, byContact, pods),
-    [contacts, byContact, pods]
+    () => todaysFocus(contacts, byContact, pods, 3, dashboardNow, appClock.todayKey),
+    [contacts, byContact, pods, dashboardNow, appClock.todayKey]
   )
 
   // Upcoming birthdays
-  const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(contacts, pods), [contacts, pods])
+  const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(contacts, pods), [contacts, pods, appClock.todayKey])
 
   // Follow-up overdue contacts — next_follow_up_date < today
   const followUpOverdue = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = appClock.todayKey
     return contacts
       .filter(c => c.next_follow_up_date && c.next_follow_up_date < today)
       .map(c => {
@@ -228,12 +230,11 @@ export function Dashboard() {
         return { contact: c, overdueDays, podName: pod?.name ?? '', action: c.next_action }
       })
       .sort((a, b) => b.overdueDays - a.overdueDays)
-  }, [contacts, pods, dashboardNow])
+  }, [contacts, pods, dashboardNow, appClock.todayKey])
 
   // Follow-ups due this week (and overdue)
   const followUpItems = useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date(appClock.todayStartMs)
     const endOfWeek = new Date(today)
     endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()))
     const podMap = new Map(pods.map(p => [p.id, p]))
@@ -250,7 +251,7 @@ export function Dashboard() {
         return { contact: c, daysUntil, pod, type: 'follow-up' as const }
       })
       .sort((a, b) => a.daysUntil - b.daysUntil)
-  }, [contacts, pods])
+  }, [contacts, pods, appClock.todayStartMs])
 
   // Merged upcoming — birthdays + follow-ups (including overdue)
   const upcomingItems = useMemo(() => {
@@ -276,10 +277,10 @@ export function Dashboard() {
   // Dormant contacts (90+ days, not snoozed)
   const dormantContacts = useMemo(
     () => contacts
-      .filter(c => isDormant(c) && !isContactSnoozed(c.snoozed_until) && !isInGracePeriod(c))
-      .map(c => ({ contact: c, days: daysSinceContact(c) }))
+      .filter(c => isDormant(c, dashboardNow) && !isContactSnoozed(c.snoozed_until) && !isInGracePeriod(c))
+      .map(c => ({ contact: c, days: daysSinceContact(c, dashboardNow) }))
       .sort((a, b) => (b.days ?? 999) - (a.days ?? 999)),
-    [contacts]
+    [contacts, dashboardNow]
   )
 
   // Score trend — compare this week's interactions to last week's
