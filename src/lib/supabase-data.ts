@@ -215,7 +215,7 @@ async function enrichContactJunctions(contacts: any[]): Promise<Contact[]> {
 function mapContact(r: any, catIds?: string[]): Contact {
   const categoryIds = catIds ?? r.category_ids ?? []
   const podIds = r.pod_ids ?? []
-  const primaryPodId = r.primary_pod_id ?? (podIds.length > 0 ? podIds[0] : null)
+  const primaryPodId = r.primary_pod_id ?? null
   const companyIds = r.company_ids ?? (r.company_id ? [r.company_id] : [])
   const customFields = r.custom_fields ?? {}
   const ringIds = Array.isArray(r.ring_ids)
@@ -301,7 +301,7 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     import_batch_id: (data as any).import_batch_id ?? null,
     import_source: (data as any).import_source ?? null,
     pod_ids: data.list_ids ?? [],
-    primary_pod_id: data.primary_list_id ?? (data.list_ids.length ? data.list_ids[0] : null),
+    primary_pod_id: data.primary_list_id ?? null,
     company_ids: data.company_ids?.length ? data.company_ids : (data.company_record_id ? [data.company_record_id] : []),
     category_ids: data.category_ids ?? [],
   }
@@ -343,7 +343,9 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
   if (data.company_record_id !== undefined) update.company_id = data.company_record_id
   if (data.list_ids !== undefined) {
     update.pod_ids = data.list_ids
-    update.primary_pod_id = data.primary_list_id ?? (data.list_ids.length ? data.list_ids[0] : null)
+  }
+  if (data.primary_list_id !== undefined) {
+    update.primary_pod_id = data.primary_list_id
   }
   if (data.company_ids !== undefined) {
     update.company_ids = data.company_ids
