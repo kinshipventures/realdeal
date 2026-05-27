@@ -210,10 +210,6 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     communication_preferences: null, custom_fields: {},
   }
 
-  async function createCompanyInline(name: string): Promise<Contact> {
-    return createContact({ ...baseContact, name, type: 'Company', status: 'Active' })
-  }
-
   async function handleSubmit() {
     setSaving(true)
     setError(null)
@@ -221,11 +217,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
       let created: Contact
 
       if (recordType === 'Contact') {
-        let coId = selectedCompany?.id ?? null
-        if (!coId && companyQuery.trim().length > 2) {
-          const newCo = await createCompanyInline(companyQuery.trim())
-          coId = newCo.id
-        }
+        const companyName = selectedCompany?.name ?? companyQuery.trim()
 
         if (braindump) {
           created = await createContact({
@@ -246,8 +238,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             notes: notes.trim() || null,
             list_ids: selectedPodIds,
             type: 'Contact',
-            company_record_id: coId,
-            company: selectedCompany?.name ?? (companyQuery.trim() || null),
+            company_record_id: null,
+            company_ids: [],
+            company: companyName || null,
           })
         }
       } else {
@@ -499,10 +492,10 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                       ))}
                       {companyQuery.length > 2 && !companyResults.find(c => c.name.toLowerCase() === companyQuery.toLowerCase()) && (
                         <div
-                          onMouseDown={async () => {
+                          onMouseDown={() => {
                             setShowCompanyDrop(false)
-                            const newCo = await createCompanyInline(companyQuery.trim())
-                            selectCompany(newCo)
+                            setSelectedCompany(null)
+                            setCompanyQuery(companyQuery.trim())
                           }}
                           style={{
                             padding: '10px 12px', fontSize: 13, color: '#25B439',
@@ -512,7 +505,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,180,57,0.06)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                         >
-                          + Create "{companyQuery}" as company
+                          Use "{companyQuery}" as company
                         </div>
                       )}
                     </div>
