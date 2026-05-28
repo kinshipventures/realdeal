@@ -13,7 +13,7 @@ const SOURCES = [
   {
     id: 'file' as const,
     label: 'Upload a file',
-    desc: 'CSV, vCard (.vcf), or LinkedIn export',
+    desc: 'Excel .xlsx, CSV, vCard (.vcf), or LinkedIn export',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -116,13 +116,13 @@ export function ImportSourcePicker({ onFileSelected, onPasteSelected, onGoogleSe
           Drop any file here
         </p>
         <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0 }}>
-          CSV, vCard (.vcf), LinkedIn export, or Excel
+          Excel .xlsx, CSV, vCard (.vcf), or LinkedIn export
         </p>
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept=".csv,.vcf,.txt,.tsv"
+        accept=".xlsx,.csv,.vcf,.txt,.tsv"
         style={{ display: 'none' }}
         onChange={e => {
           const file = e.target.files?.[0]

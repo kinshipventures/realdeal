@@ -1,9 +1,9 @@
-import type { RelationshipType } from './types'
-import { getContacts, createContact } from './airtable'
+import * as Papa from 'papaparse'
+import { strFromU8, unzipSync } from 'fflate'
+import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
+import { createContactsBulk, getContacts } from './airtable'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
+export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
 export type ColumnMapping = { csvHeader: string; airtableField: string | null }[]
 
@@ -11,11 +11,14 @@ export type ImportProgress = { current: number; total: number; imported: number;
 
 export type ImportResult = { imported: number; skipped: number; errors: string[] }
 
-// ── Target fields (what RealDeal accepts) ────────────────────────────────────
-
-export type RowWarning = { rowIndex: number; kind: 'missing_name' | 'duplicate' | 'bad_date'; detail?: string }
+export type RowWarning = {
+  rowIndex: number
+  kind: 'missing_name' | 'duplicate' | 'bad_date' | 'bad_email'
+  detail?: string
+}
 
 export const TARGET_FIELDS = [
+  'Pod', 'Sub-pod',
   'Name', 'First Name', 'Last Name',
   'Email', 'Phone', 'Company', 'Role', 'Location',
   'Website', 'LinkedIn', 'Notes', 'Birthday',
@@ -24,108 +27,428 @@ export const TARGET_FIELDS = [
   'Country', 'Gender',
   'Interests', 'Relationship Context',
   'Email 2', 'Email 3',
-  'Introduced By', 'Intel Notes', 'Contact Frequency',
+  'Introduced By', 'Intel Notes', 'Relationship Owner',
+  'Contact Frequency', 'Cadence Override',
+  'Last Contacted', 'Next Follow Up Date', 'Next Action',
+  'KV Fund Investor', 'SPV Investor',
 ] as const
 
 type TargetField = typeof TARGET_FIELDS[number]
+type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
-// ── Known field aliases ───────────────────────────────────────────────────────
-// Maps normalized CSV header -> RealDeal target field.
-// Covers Google Contacts, Apple Contacts, LinkedIn, Outlook, HubSpot, Salesforce.
+const BULK_INSERT_CHUNK_SIZE = 100
 
 const KNOWN_ALIASES: Record<string, TargetField> = {
+  // App structure
+  'pod': 'Pod',
+  'pods': 'Pod',
+  'relationship pod': 'Pod',
+  'relationship pods': 'Pod',
+  'group': 'Pod',
+  'groups': 'Pod',
+  'list': 'Pod',
+  'lists': 'Pod',
+  'segment': 'Pod',
+  'segments': 'Pod',
+  'sub pod': 'Sub-pod',
+  'subpod': 'Sub-pod',
+  'sub pods': 'Sub-pod',
+  'subpods': 'Sub-pod',
+  'sub pod category': 'Sub-pod',
+  'category': 'Sub-pod',
+  'categories': 'Sub-pod',
+
   // Name
-  'name': 'Name', 'full name': 'Name', 'display name': 'Name', 'contact name': 'Name',
-  'agency': 'Name', 'company name': 'Name',
-  'first name': 'First Name', 'given name': 'First Name', 'first': 'First Name', 'firstname': 'First Name',
-  'last name': 'Last Name', 'family name': 'Last Name', 'surname': 'Last Name', 'last': 'Last Name', 'lastname': 'Last Name',
+  'name': 'Name',
+  'full name': 'Name',
+  'display name': 'Name',
+  'contact name': 'Name',
+  'person': 'Name',
+  'relationship': 'Name',
+  'agency': 'Name',
+  'company name': 'Name',
+  'first name': 'First Name',
+  'given name': 'First Name',
+  'first': 'First Name',
+  'firstname': 'First Name',
+  'last name': 'Last Name',
+  'family name': 'Last Name',
+  'surname': 'Last Name',
+  'last': 'Last Name',
+  'lastname': 'Last Name',
+
   // Email
-  'email': 'Email', 'email address': 'Email', 'e-mail': 'Email', 'e-mail address': 'Email',
-  'primary email': 'Email', 'email 1': 'Email', 'email 1 - value': 'Email',
-  'work email': 'Email', 'personal email': 'Email', 'home email': 'Email',
+  'email': 'Email',
+  'email address': 'Email',
+  'e mail': 'Email',
+  'e mail address': 'Email',
+  'primary email': 'Email',
+  'email 1': 'Email',
+  'email 1 value': 'Email',
+  'work email': 'Email',
+  'personal email': 'Email',
+  'home email': 'Email',
+
   // Phone
-  'phone': 'Phone', 'phone number': 'Phone', 'mobile': 'Phone', 'mobile phone': 'Phone',
-  'cell': 'Phone', 'cell phone': 'Phone', 'telephone': 'Phone', 'contact info': 'Phone',
-  'phone 1 - value': 'Phone', 'work phone': 'Phone', 'home phone': 'Phone',
-  // Company
-  'company': 'Company', 'organization': 'Company', 'organization 1 - name': 'Company',
-  'employer': 'Company', 'firm': 'Company', 'account name': 'Company',
-  'company/organization': 'Company',
-  // Role
-  'role': 'Role', 'title': 'Role', 'job title': 'Role', 'position': 'Role',
-  'organization 1 - title': 'Role', 'designation': 'Role',
+  'phone': 'Phone',
+  'phone number': 'Phone',
+  'mobile': 'Phone',
+  'mobile phone': 'Phone',
+  'cell': 'Phone',
+  'cell phone': 'Phone',
+  'telephone': 'Phone',
+  'contact info': 'Phone',
+  'phone 1 value': 'Phone',
+  'work phone': 'Phone',
+  'home phone': 'Phone',
+
+  // Company and role
+  'company': 'Company',
+  'organization': 'Company',
+  'organization 1 name': 'Company',
+  'employer': 'Company',
+  'firm': 'Company',
+  'account name': 'Company',
+  'company organization': 'Company',
+  'role': 'Role',
+  'title': 'Role',
+  'job title': 'Role',
+  'position': 'Role',
+  'organization 1 title': 'Role',
+  'designation': 'Role',
+
   // Location
-  'location': 'Location', 'city': 'Location', 'address': 'Location',
-  'city/town': 'Location', 'home city': 'Location', 'work city': 'Location',
-  'address 1 - formatted': 'Location',
-  // Website
-  'website': 'Website', 'url': 'Website', 'web page': 'Website',
-  'website 1 - value': 'Website', 'personal website': 'Website', 'blog': 'Website',
-  // LinkedIn
-  'linkedin': 'LinkedIn', 'linkedin url': 'LinkedIn', 'linkedin profile': 'LinkedIn',
+  'location': 'Location',
+  'city': 'Location',
+  'address': 'Location',
+  'city town': 'Location',
+  'home city': 'Location',
+  'work city': 'Location',
+  'address 1 formatted': 'Location',
+  'country': 'Country',
+  'country region': 'Country',
+  'nation': 'Country',
+
+  // Web
+  'website': 'Website',
+  'url': 'Website',
+  'web page': 'Website',
+  'website 1 value': 'Website',
+  'personal website': 'Website',
+  'blog': 'Website',
+  'linkedin': 'LinkedIn',
+  'linkedin url': 'LinkedIn',
+  'linkedin profile': 'LinkedIn',
   'linkedin profile url': 'LinkedIn',
-  // Notes
-  'notes': 'Notes', 'note': 'Notes', 'description': 'Notes', 'comments': 'Notes', 'bio': 'Notes',
-  // Birthday
-  'birthday': 'Birthday', 'date of birth': 'Birthday', 'dob': 'Birthday', 'birthdate': 'Birthday',
-  // Industry
-  'industry': 'Industry', 'sector': 'Industry',
-  // Domain
-  'domain': 'Domain', 'company domain': 'Domain', 'website domain': 'Domain',
-  // Other
-  'specialization': 'Specialization', 'specialty': 'Specialization', 'expertise': 'Specialization',
-  'recommended by': 'Recommended By', 'referred by': 'Recommended By', 'referral': 'Recommended By', 'source': 'Recommended By',
+
+  // Context
+  'notes': 'Notes',
+  'note': 'Notes',
+  'description': 'Notes',
+  'comments': 'Notes',
+  'bio': 'Notes',
+  'relationship context': 'Relationship Context',
+  'relationship notes': 'Relationship Context',
+  'context': 'Relationship Context',
+  'intel notes': 'Intel Notes',
+  'intel': 'Intel Notes',
+  'relationship owner': 'Relationship Owner',
+  'owner': 'Relationship Owner',
+  'introduced by': 'Introduced By',
+  'intro by': 'Introduced By',
+  'recommended by': 'Recommended By',
+  'referred by': 'Recommended By',
+  'referral': 'Recommended By',
+  'source': 'Recommended By',
+
+  // Dates and cadence
+  'birthday': 'Birthday',
+  'date of birth': 'Birthday',
+  'dob': 'Birthday',
+  'birthdate': 'Birthday',
+  'last contacted': 'Last Contacted',
+  'last contact': 'Last Contacted',
+  'last touch': 'Last Contacted',
+  'last interaction': 'Last Contacted',
+  'last contacted at': 'Last Contacted',
+  'next follow up': 'Next Follow Up Date',
+  'next follow up date': 'Next Follow Up Date',
+  'follow up date': 'Next Follow Up Date',
+  'next action': 'Next Action',
+  'recommended next action': 'Next Action',
+  'contact frequency': 'Contact Frequency',
+  'frequency': 'Contact Frequency',
+  'cadence': 'Contact Frequency',
+  'cadence override': 'Cadence Override',
+
+  // Other contact fields
+  'industry': 'Industry',
+  'sector': 'Industry',
+  'domain': 'Domain',
+  'company domain': 'Domain',
+  'website domain': 'Domain',
+  'stage': 'Stage',
+  'funding stage': 'Stage',
+  'ticker': 'Ticker',
+  'stock ticker': 'Ticker',
+  'symbol': 'Ticker',
+  'specialization': 'Specialization',
+  'specialty': 'Specialization',
+  'expertise': 'Specialization',
   'past clients': 'Past Clients',
-  'country': 'Country', 'country/region': 'Country', 'nation': 'Country',
-  'gender': 'Gender', 'sex': 'Gender',
-  'stage': 'Stage', 'funding stage': 'Stage',
-  'ticker': 'Ticker', 'stock ticker': 'Ticker', 'symbol': 'Ticker',
-  // Expanded fields
-  'interests': 'Interests', 'hobbies': 'Interests', 'passions': 'Interests',
-  'relationship context': 'Relationship Context', 'relationship notes': 'Relationship Context',
-  'email 2': 'Email 2', 'email2': 'Email 2', 'secondary email': 'Email 2', 'email 2  value': 'Email 2',
-  'email 3': 'Email 3', 'email3': 'Email 3', 'tertiary email': 'Email 3', 'email 3  value': 'Email 3',
-  'introduced by': 'Introduced By', 'intro by': 'Introduced By',
-  'intel notes': 'Intel Notes', 'intel': 'Intel Notes',
-  'contact frequency': 'Contact Frequency', 'frequency': 'Contact Frequency', 'cadence': 'Contact Frequency',
-  'category': '_category' as any,
+  'gender': 'Gender',
+  'sex': 'Gender',
+  'interests': 'Interests',
+  'hobbies': 'Interests',
+  'passions': 'Interests',
+  'email 2': 'Email 2',
+  'email2': 'Email 2',
+  'secondary email': 'Email 2',
+  'email 2 value': 'Email 2',
+  'email 3': 'Email 3',
+  'email3': 'Email 3',
+  'tertiary email': 'Email 3',
+  'email 3 value': 'Email 3',
+  'kv fund investor': 'KV Fund Investor',
+  'kinship fund investor': 'KV Fund Investor',
+  'fund investor': 'KV Fund Investor',
+  'spv investor': 'SPV Investor',
 }
 
-// ── CSV parsing ───────────────────────────────────────────────────────────────
-
-function parseRow(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (ch === '"') { inQuotes = !inQuotes }
-    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = '' }
-    else { current += ch }
-  }
-  result.push(current.trim())
-  return result
+function cellToString(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  return String(value).replace(/\r\n/g, '\n').trim()
 }
 
-export function parseCSV(content: string): ParsedCSV {
-  const lines = content.split('\n').filter(l => l.trim())
-  if (lines.length < 2) return { headers: [], rows: [] }
+function uniqueHeaders(rawHeaders: unknown[]): string[] {
+  const seen = new Map<string, number>()
+  return rawHeaders.map((header, index) => {
+    const base = cellToString(header).replace(/\s+/g, ' ') || `Column ${index + 1}`
+    const count = seen.get(base) ?? 0
+    seen.set(base, count + 1)
+    return count === 0 ? base : `${base} (${count + 1})`
+  })
+}
 
-  const headers = parseRow(lines[0])
-  const rows = lines.slice(1).map(line => {
-    const values = parseRow(line)
-    const row: Record<string, string> = {}
-    headers.forEach((h, i) => { row[h] = values[i] ?? '' })
-    return row
-  }).filter(row => Object.values(row).some(v => v.trim() !== ''))
+function tableToRows(table: unknown[][]): ParsedCSV {
+  const usableRows = table.filter(row => row.some(cell => cellToString(cell)))
+  if (usableRows.length === 0) return { headers: [], rows: [] }
+
+  const headers = uniqueHeaders(usableRows[0])
+  if (usableRows.length < 2) return { headers, rows: [] }
+
+  const rows = usableRows.slice(1)
+    .map(values => {
+      const row: Record<string, string> = {}
+      headers.forEach((header, index) => {
+        row[header] = cellToString(values[index])
+      })
+      return row
+    })
+    .filter(row => Object.values(row).some(value => value.trim()))
 
   return { headers, rows }
 }
 
-// ── Column detection ─────────────────────────────────────────────────────────
+export function parseCSV(content: string): ParsedCSV {
+  const cleaned = content.replace(/^\uFEFF/, '')
+  const parsed = Papa.parse<string[]>(cleaned, {
+    skipEmptyLines: 'greedy',
+  })
+  return tableToRows((parsed.data ?? []) as unknown[][])
+}
+
+function parseXml(xml: string): Document {
+  return new DOMParser().parseFromString(xml, 'application/xml')
+}
+
+function elementsByLocalName(node: ParentNode, localName: string): Element[] {
+  return Array.from(node.getElementsByTagName('*')).filter(element => element.localName === localName)
+}
+
+function getZipText(files: Record<string, Uint8Array>, path: string): string | null {
+  const file = files[path]
+  return file ? strFromU8(file) : null
+}
+
+function normalizeXlsxPath(path: string): string {
+  const parts: string[] = []
+  for (const part of path.split('/')) {
+    if (!part || part === '.') continue
+    if (part === '..') parts.pop()
+    else parts.push(part)
+  }
+  return parts.join('/')
+}
+
+function resolveXlsxPartPath(target: string): string {
+  if (target.startsWith('/')) {
+    return normalizeXlsxPath(target.slice(1))
+  }
+  if (target.startsWith('xl/')) {
+    return normalizeXlsxPath(target)
+  }
+  return normalizeXlsxPath(`xl/${target}`)
+}
+
+function getFirstWorksheetPath(files: Record<string, Uint8Array>): string {
+  const workbookXml = getZipText(files, 'xl/workbook.xml')
+  const relationshipsXml = getZipText(files, 'xl/_rels/workbook.xml.rels')
+
+  if (workbookXml && relationshipsXml) {
+    const workbook = parseXml(workbookXml)
+    const relationships = parseXml(relationshipsXml)
+    const firstSheet = elementsByLocalName(workbook, 'sheet')[0]
+    const relId = firstSheet?.getAttribute('r:id') ?? firstSheet?.getAttribute('id')
+
+    if (relId) {
+      const rel = elementsByLocalName(relationships, 'Relationship')
+        .find(item => item.getAttribute('Id') === relId)
+      const target = rel?.getAttribute('Target')
+      if (target) return resolveXlsxPartPath(target)
+    }
+  }
+
+  const fallback = Object.keys(files)
+    .filter(path => /^xl\/worksheets\/sheet\d+\.xml$/i.test(path))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))[0]
+
+  if (!fallback) throw new Error('No worksheet was found in the Excel file.')
+  return fallback
+}
+
+function getNodeText(node: Element): string {
+  return elementsByLocalName(node, 't')
+    .map(textNode => textNode.textContent ?? '')
+    .join('')
+}
+
+function readSharedStrings(files: Record<string, Uint8Array>): string[] {
+  const sharedStringsXml = getZipText(files, 'xl/sharedStrings.xml')
+  if (!sharedStringsXml) return []
+
+  const doc = parseXml(sharedStringsXml)
+  return elementsByLocalName(doc, 'si').map(getNodeText)
+}
+
+const BUILT_IN_DATE_FORMAT_IDS = new Set([
+  14, 15, 16, 17, 22, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 45, 46, 47, 50, 51, 52, 53, 54, 55, 56, 57, 58,
+])
+
+function isDateFormatCode(formatCode: string): boolean {
+  const cleaned = formatCode
+    .replace(/"[^"]*"/g, '')
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/\\./g, '')
+  return /[ymdhHsS]/.test(cleaned)
+}
+
+function readDateStyleIds(files: Record<string, Uint8Array>): Set<string> {
+  const stylesXml = getZipText(files, 'xl/styles.xml')
+  if (!stylesXml) return new Set()
+
+  const doc = parseXml(stylesXml)
+  const dateFormatIds = new Set<number>(BUILT_IN_DATE_FORMAT_IDS)
+  for (const numFmt of elementsByLocalName(doc, 'numFmt')) {
+    const id = Number(numFmt.getAttribute('numFmtId'))
+    const formatCode = numFmt.getAttribute('formatCode') ?? ''
+    if (Number.isFinite(id) && isDateFormatCode(formatCode)) {
+      dateFormatIds.add(id)
+    }
+  }
+
+  const styleIds = new Set<string>()
+  const cellXfs = elementsByLocalName(doc, 'cellXfs')[0]
+  const xfs = cellXfs ? elementsByLocalName(cellXfs, 'xf') : []
+  xfs.forEach((xf, index) => {
+    const numFmtId = Number(xf.getAttribute('numFmtId'))
+    if (dateFormatIds.has(numFmtId)) styleIds.add(String(index))
+  })
+  return styleIds
+}
+
+function getColumnIndex(cellReference: string | null, fallback: number): number {
+  const letters = cellReference?.match(/[A-Z]+/i)?.[0]
+  if (!letters) return fallback
+  return letters
+    .toUpperCase()
+    .split('')
+    .reduce((sum, letter) => sum * 26 + letter.charCodeAt(0) - 64, 0) - 1
+}
+
+function excelSerialToDateString(value: string): string {
+  const serial = Number(value)
+  if (!Number.isFinite(serial)) return value
+  const date = new Date(Math.round((serial - 25569) * 86_400_000))
+  if (Number.isNaN(date.getTime())) return value
+  return date.toISOString().slice(0, 10)
+}
+
+function getCellValue(cell: Element, sharedStrings: string[], dateStyleIds: Set<string>): string {
+  const type = cell.getAttribute('t')
+  const styleId = cell.getAttribute('s') ?? ''
+  const value = elementsByLocalName(cell, 'v')[0]?.textContent ?? ''
+
+  if (type === 'inlineStr') return getNodeText(cell)
+  if (!value) return ''
+  if (type === 's') return sharedStrings[Number(value)] ?? ''
+  if (type === 'b') return value === '1' ? 'TRUE' : 'FALSE'
+  if (dateStyleIds.has(styleId)) return excelSerialToDateString(value)
+  return value
+}
+
+function parseXlsxRows(buffer: ArrayBuffer): unknown[][] {
+  const files = unzipSync(new Uint8Array(buffer))
+  const worksheetPath = getFirstWorksheetPath(files)
+  const worksheetXml = getZipText(files, worksheetPath)
+  if (!worksheetXml) throw new Error('The first worksheet could not be read.')
+
+  const sharedStrings = readSharedStrings(files)
+  const dateStyleIds = readDateStyleIds(files)
+  const worksheet = parseXml(worksheetXml)
+  const sheetData = elementsByLocalName(worksheet, 'sheetData')[0]
+  if (!sheetData) return []
+
+  return elementsByLocalName(sheetData, 'row').map(row => {
+    const values: string[] = []
+    for (const cell of elementsByLocalName(row, 'c')) {
+      const index = getColumnIndex(cell.getAttribute('r'), values.length)
+      values[index] = getCellValue(cell, sharedStrings, dateStyleIds)
+    }
+    return values
+  })
+}
+
+export async function parseWorkbookBuffer(buffer: ArrayBuffer): Promise<ParsedCSV> {
+  return tableToRows(parseXlsxRows(buffer))
+}
+
+export async function parseImportFile(file: File): Promise<ParsedCSV> {
+  const name = file.name.toLowerCase()
+  if (name.endsWith('.xlsx')) {
+    return parseWorkbookBuffer(await file.arrayBuffer())
+  }
+  if (name.endsWith('.xls')) {
+    throw new Error('Legacy .xls files are not supported yet. Save the workbook as .xlsx or CSV and import again.')
+  }
+  return parseCSV(await file.text())
+}
 
 export function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+export function splitMultiValue(value: string): string[] {
+  return value
+    .split(/[;,|\n]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
 }
 
 export function detectColumns(headers: string[]): ColumnMapping {
@@ -133,7 +456,6 @@ export function detectColumns(headers: string[]): ColumnMapping {
   return headers.map(csvHeader => {
     const norm = normalize(csvHeader)
     const match = KNOWN_ALIASES[norm] ?? null
-    // Avoid mapping two CSV columns to the same target (first wins)
     if (match && used.has(match)) {
       return { csvHeader, airtableField: null }
     }
@@ -142,7 +464,77 @@ export function detectColumns(headers: string[]): ColumnMapping {
   })
 }
 
-// ── Row warnings ─────────────────────────────────────────────────────────────
+function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
+  const col = mapping.find(m => m.airtableField === target)
+  if (!col) return ''
+  return (row[col.csvHeader] ?? '').trim()
+}
+
+export function resolveMappedValue(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
+  return resolve(row, mapping, target)
+}
+
+function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: RelationshipType): string {
+  const direct = resolve(row, mapping, 'Name')
+  if (direct) return direct
+  if (type === 'Company') {
+    const companyName = resolve(row, mapping, 'Company')
+    if (companyName) return companyName
+  }
+  const first = resolve(row, mapping, 'First Name')
+  const last = resolve(row, mapping, 'Last Name')
+  return [first, last].filter(Boolean).join(' ')
+}
+
+function normalizeDate(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const numeric = Number(trimmed)
+  if (Number.isFinite(numeric) && numeric > 20_000 && numeric < 80_000) {
+    const date = new Date(Date.UTC(1899, 11, 30) + numeric * 86_400_000)
+    return date.toISOString().slice(0, 10)
+  }
+
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed.toISOString().slice(0, 10)
+}
+
+function normalizeFrequency(value: string): ContactFrequency | null {
+  const norm = normalize(value)
+  if (!norm) return null
+  if (['weekly', 'week', 'every week'].includes(norm)) return 'Weekly'
+  if (['monthly', 'month', 'every month'].includes(norm)) return 'Monthly'
+  if (['quarterly', 'quarter', 'every quarter'].includes(norm)) return 'Quarterly'
+  if (['annual', 'annually', 'yearly', 'year'].includes(norm)) return 'Annual'
+  if (['as needed', 'asneeded', 'ad hoc', 'adhoc'].includes(norm)) return 'As Needed'
+  return null
+}
+
+function normalizeCadence(value: string): Cadence | null {
+  const norm = normalize(value)
+  if (!norm) return null
+  if (['weekly', 'week'].includes(norm)) return 'weekly'
+  if (['biweekly', 'bi weekly', 'every two weeks', 'every 2 weeks'].includes(norm)) return 'biweekly'
+  if (['monthly', 'month'].includes(norm)) return 'monthly'
+  if (['quarterly', 'quarter'].includes(norm)) return 'quarterly'
+  return null
+}
+
+function normalizeGender(value: string): Gender | null {
+  const norm = normalize(value)
+  if (!norm) return null
+  if (norm === 'male' || norm === 'm') return 'Male'
+  if (norm === 'female' || norm === 'f') return 'Female'
+  if (norm === 'non binary' || norm === 'nonbinary') return 'Non-binary'
+  return 'Other'
+}
+
+function hasLikelyEmail(value: string): boolean {
+  if (!value) return true
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
 
 export function getRowWarnings(
   rows: Record<string, string>[],
@@ -166,6 +558,10 @@ export function getRowWarnings(
     const nameLower = name.toLowerCase().trim()
     const emailLower = email.toLowerCase()
 
+    if (!hasLikelyEmail(email)) {
+      warnings.push({ rowIndex: i, kind: 'bad_email', detail: email })
+    }
+
     if ((emailLower && (existingEmails.has(emailLower) || seenEmails.has(emailLower)))
         || (existingNames.has(nameLower) || seenNames.has(nameLower))) {
       warnings.push({ rowIndex: i, kind: 'duplicate', detail: email || name })
@@ -174,40 +570,14 @@ export function getRowWarnings(
     if (emailLower) seenEmails.add(emailLower)
     seenNames.add(nameLower)
 
-    const birthday = resolve(row, mapping, 'Birthday')
-    if (birthday && isNaN(Date.parse(birthday))) {
-      warnings.push({ rowIndex: i, kind: 'bad_date', detail: birthday })
+    for (const dateField of ['Birthday', 'Last Contacted', 'Next Follow Up Date']) {
+      const dateValue = resolve(row, mapping, dateField)
+      if (dateValue && !normalizeDate(dateValue)) {
+        warnings.push({ rowIndex: i, kind: 'bad_date', detail: `${dateField}: ${dateValue}` })
+      }
     }
   }
   return warnings
-}
-
-// ── Mapping helpers ──────────────────────────────────────────────────────────
-
-/** Given a column mapping and a row, resolve the value for a target field. */
-function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
-  const col = mapping.find(m => m.airtableField === target)
-  if (!col) return ''
-  return (row[col.csvHeader] ?? '').trim()
-}
-
-/** Resolve name: handles Name, or First Name + Last Name merge. */
-function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: RelationshipType): string {
-  const direct = resolve(row, mapping, 'Name')
-  if (direct) return direct
-  if (type === 'Company') {
-    const companyName = resolve(row, mapping, 'Company')
-    if (companyName) return companyName
-  }
-  const first = resolve(row, mapping, 'First Name')
-  const last = resolve(row, mapping, 'Last Name')
-  return [first, last].filter(Boolean).join(' ')
-}
-
-// ── Import ────────────────────────────────────────────────────────────────────
-
-function delay(ms: number) {
-  return new Promise(r => setTimeout(r, ms))
 }
 
 export function countInvalidRows(
@@ -216,13 +586,51 @@ export function countInvalidRows(
   mapping?: ColumnMapping
 ): number {
   if (!mapping) {
-    // Legacy fallback
     return rows.filter(row => {
       const name = (row['Name'] ?? row['Agency'] ?? row['Company Name'] ?? '').trim()
       return !name
     }).length
   }
   return rows.filter(row => !resolveName(row, mapping, type)).length
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))]
+}
+
+function resolvePodIds(
+  row: Record<string, string>,
+  mapping: ColumnMapping | undefined,
+  fallbackPodIds: string[],
+  podMap: Map<string, string>,
+): string[] {
+  if (!mapping) return fallbackPodIds
+  const podValue = resolve(row, mapping, 'Pod')
+  const mappedPodIds = splitMultiValue(podValue)
+    .map(podName => podMap.get(normalize(podName)))
+    .filter(Boolean) as string[]
+  return mappedPodIds.length > 0 ? unique(mappedPodIds) : fallbackPodIds
+}
+
+function resolveCategoryIds(
+  row: Record<string, string>,
+  mapping: ColumnMapping | undefined,
+  primaryPodId: string | null,
+  categoryMap: Map<string, string>,
+): string[] {
+  if (!mapping || !primaryPodId) return []
+  const categoryValue = resolve(row, mapping, 'Sub-pod') || resolve(row, mapping, '_category')
+  return splitMultiValue(categoryValue)
+    .map(categoryName =>
+      categoryMap.get(`${primaryPodId}:${normalize(categoryName)}`)
+      ?? categoryMap.get(normalize(categoryName))
+    )
+    .filter(Boolean) as string[]
+}
+
+function normalizedList(value: string): string[] | null {
+  const items = splitMultiValue(value)
+  return items.length > 0 ? items : null
 }
 
 export async function importContacts(
@@ -233,22 +641,23 @@ export async function importContacts(
     type?: RelationshipType
     podIds?: string[]
     mapping?: ColumnMapping
-    customFieldMap?: Record<string, string>  // csvHeader -> fieldConfig.id
-    categoryMap?: Map<string, string>        // normalized category value -> category id
+    customFieldMap?: Record<string, string>
+    categoryMap?: Map<string, string>
+    podMap?: Map<string, string>
     batchId?: string
     importSource?: string
   }
 ): Promise<ImportResult> {
   const recordType: RelationshipType = options?.type ?? 'Contact'
-  const listIds: string[] = options?.podIds ?? [podId]
+  const fallbackPodIds: string[] = options?.podIds?.length ? options.podIds : [podId].filter(Boolean)
   const mapping = options?.mapping
   const customFieldMap = options?.customFieldMap ?? {}
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
+  const podMap = options?.podMap ?? new Map<string, string>()
   const batchId = options?.batchId ?? null
   const importSrc = options?.importSource ?? null
   const existing = await getContacts()
 
-  // Build dual dedup index
   const emailIndex = new Map<string, string>()
   const nameIndex = new Map<string, string>()
   for (const c of existing) {
@@ -259,26 +668,25 @@ export async function importContacts(
   let imported = 0
   let skipped = 0
   const errors: string[] = []
+  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput }> = []
 
-  // Helper: resolve a value using mapping or legacy hardcoded keys
   const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
     if (mapping) return resolve(row, mapping, target)
-    for (const k of legacyKeys) {
-      const v = (row[k] ?? '').trim()
-      if (v) return v
+    for (const key of legacyKeys) {
+      const value = (row[key] ?? '').trim()
+      if (value) return value
     }
     return ''
   }
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
-
     const name = mapping
       ? resolveName(row, mapping, recordType)
       : (recordType === 'Company'
-          ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
-          : (row['Name'] ?? row['Agency'] ?? '')
-        ).trim()
+        ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
+        : (row['Name'] ?? row['Agency'] ?? '')
+      ).trim()
 
     if (!name) {
       skipped++
@@ -287,11 +695,10 @@ export async function importContacts(
     }
 
     const email = r(row, 'Email', 'Email')
-    const nameLower = name.toLowerCase()
+    const nameLower = name.toLowerCase().trim()
     const emailLower = email.toLowerCase()
 
-    const isDup = (emailLower && emailIndex.has(emailLower)) || nameIndex.has(nameLower)
-    if (isDup) {
+    if ((emailLower && emailIndex.has(emailLower)) || nameIndex.has(nameLower)) {
       skipped++
       onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
       continue
@@ -299,85 +706,107 @@ export async function importContacts(
 
     const firstName = mapping ? resolve(row, mapping, 'First Name') : null
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
+    const rowPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
+    const primaryPodId = rowPodIds[0] ?? null
+    const categoryIds = resolveCategoryIds(row, mapping, primaryPodId, categoryMap)
+    const birthday = normalizeDate(r(row, 'Birthday', 'Birthday'))
+    const lastContacted = normalizeDate(r(row, 'Last Contacted', 'Last Contacted'))
+    const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))
 
-    try {
-      // Build custom_fields from cf:-prefixed mappings
-      const cfValues: Record<string, unknown> = {}
-      if (mapping) {
-        for (const [csvHeader, fieldId] of Object.entries(customFieldMap)) {
-          const val = (row[csvHeader] ?? '').trim()
-          if (val) cfValues[fieldId] = val
-        }
+    const customFields: Record<string, unknown> = {}
+    if (mapping) {
+      for (const [csvHeader, fieldId] of Object.entries(customFieldMap)) {
+        const value = (row[csvHeader] ?? '').trim()
+        if (value) customFields[fieldId] = value
       }
-
-      // Resolve category from _category sentinel
-      const catIds: string[] = []
-      if (mapping) {
-        const catCol = mapping.find(m => m.airtableField === '_category')
-        if (catCol) {
-          const catVal = (row[catCol.csvHeader] ?? '').trim()
-          if (catVal) {
-            const catId = categoryMap.get(normalize(catVal))
-            if (catId) catIds.push(catId)
-          }
-        }
-      }
-
-      const contact = await createContact({
-        name,
-        type: recordType,
-        status: 'Pending',
-        email: email || null,
-        phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
-        company: r(row, 'Company', 'Company') || null,
-        role: r(row, 'Role', 'Role') || null,
-        location: r(row, 'Location', 'Location') || null,
-        website: r(row, 'Website', 'Website') || null,
-        notes: r(row, 'Notes', 'Notes') || null,
-        recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
-        specialization: r(row, 'Specialization', 'Specialization') || null,
-        past_clients: r(row, 'Past Clients', 'Past Clients') || null,
-        industry: r(row, 'Industry', 'Industry') || null,
-        domain: r(row, 'Domain', 'Domain') || null,
-        stage: r(row, 'Stage', 'Stage') || null,
-        ticker: r(row, 'Ticker', 'Ticker') || null,
-        linkedin: r(row, 'LinkedIn', 'LinkedIn', 'Linkedin') || null,
-        birthday: r(row, 'Birthday', 'Birthday') || null,
-        milestones: null,
-        interests: r(row, 'Interests', 'Interests') || null,
-        relationship_context: r(row, 'Relationship Context', 'Relationship Context') || null,
-        last_contacted_at: null,
-        list_ids: listIds,
-        category_ids: catIds,
-        first_name: firstName || null,
-        last_name: lastName || null,
-        country: r(row, 'Country', 'Country') || null,
-        global_region: null,
-        gender: r(row, 'Gender', 'Gender') as any || null,
-        introduced_by: r(row, 'Introduced By', 'Introduced By') || null,
-        intel_notes: r(row, 'Intel Notes', 'Intel Notes') || null,
-        relationship_owner: null,
-        contact_frequency: r(row, 'Contact Frequency', 'Contact Frequency') as any || null,
-        next_follow_up_date: null, next_action: null,
-        kv_fund_investor: null, spv_investor: null, needs_review: false,
-        company_record_id: null, company_ids: [], custom_fields: cfValues,
-        primary_list_id: null, cadence_override: null,
-        email_2: r(row, 'Email 2', 'Email 2') || null,
-        email_3: r(row, 'Email 3', 'Email 3') || null,
-        communication_preferences: null,
-        import_batch_id: batchId,
-        import_source: importSrc,
-      } as any)
-
-      if (email) emailIndex.set(emailLower, contact.id)
-      nameIndex.set(nameLower, contact.id)
-      imported++
-    } catch (err) {
-      errors.push(`${name}: ${err instanceof Error ? err.message : String(err)}`)
     }
 
-    onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
-    await delay(250)
+    const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
+    const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
+
+    const contact: ContactInput = {
+      name,
+      type: recordType,
+      status: 'Pending',
+      email: email || null,
+      phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
+      company: r(row, 'Company', 'Company') || null,
+      role: r(row, 'Role', 'Role') || null,
+      location: r(row, 'Location', 'Location') || null,
+      website: r(row, 'Website', 'Website') || null,
+      notes: r(row, 'Notes', 'Notes') || null,
+      recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
+      specialization: r(row, 'Specialization', 'Specialization') || null,
+      past_clients: r(row, 'Past Clients', 'Past Clients') || null,
+      industry: r(row, 'Industry', 'Industry') || null,
+      domain: r(row, 'Domain', 'Domain') || null,
+      stage: r(row, 'Stage', 'Stage') || null,
+      ticker: r(row, 'Ticker', 'Ticker') || null,
+      linkedin: r(row, 'LinkedIn', 'LinkedIn', 'Linkedin') || null,
+      birthday,
+      milestones: null,
+      interests: r(row, 'Interests', 'Interests') || null,
+      relationship_context: r(row, 'Relationship Context', 'Relationship Context') || null,
+      last_contacted_at: lastContacted,
+      list_ids: rowPodIds,
+      category_ids: categoryIds,
+      primary_list_id: primaryPodId,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      country: r(row, 'Country', 'Country') || null,
+      global_region: null,
+      gender: normalizeGender(r(row, 'Gender', 'Gender')),
+      introduced_by: r(row, 'Introduced By', 'Introduced By') || null,
+      intel_notes: r(row, 'Intel Notes', 'Intel Notes') || null,
+      relationship_owner: r(row, 'Relationship Owner', 'Relationship Owner') || null,
+      contact_frequency: contactFrequency,
+      cadence_override: cadenceOverride,
+      next_follow_up_date: nextFollowUp,
+      next_action: r(row, 'Next Action', 'Next Action') || null,
+      kv_fund_investor: normalizedList(r(row, 'KV Fund Investor', 'KV Fund Investor')),
+      spv_investor: normalizedList(r(row, 'SPV Investor', 'SPV Investor')),
+      needs_review: false,
+      company_record_id: null,
+      company_ids: [],
+      email_2: r(row, 'Email 2', 'Email 2') || null,
+      email_3: r(row, 'Email 3', 'Email 3') || null,
+      communication_preferences: null,
+      custom_fields: customFields,
+      ring_ids: [],
+      photo_url: null,
+      snoozed_until: null,
+      import_batch_id: batchId,
+      import_source: importSrc,
+    } as ContactInput
+
+    toCreate.push({ rowNumber: i + 2, name, email, contact })
+    if (emailLower) emailIndex.set(emailLower, 'pending')
+    nameIndex.set(nameLower, 'pending')
+  }
+
+  const total = rows.length
+  let processedForProgress = skipped
+  onProgress?.({ current: processedForProgress, total, imported, skipped })
+
+  for (let i = 0; i < toCreate.length; i += BULK_INSERT_CHUNK_SIZE) {
+    const chunk = toCreate.slice(i, i + BULK_INSERT_CHUNK_SIZE)
+    try {
+      const created = await createContactsBulk(chunk.map(item => item.contact), BULK_INSERT_CHUNK_SIZE)
+      imported += created.length
+      processedForProgress += chunk.length
+      onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped })
+    } catch (chunkError) {
+      for (const item of chunk) {
+        try {
+          await createContactsBulk([item.contact], 1)
+          imported++
+        } catch (rowError) {
+          errors.push(`Row ${item.rowNumber} (${item.name}): ${rowError instanceof Error ? rowError.message : String(rowError)}`)
+        }
+        processedForProgress++
+        onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped })
+      }
+    }
   }
 
   return { imported, skipped, errors }

@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, getContacts, getCategories, createCategory, invalidateContactsCache } from '../../lib/airtable'
-import { parseCSV, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, TARGET_FIELDS } from '../../lib/csvImport'
+import { getPods, getContacts, getCategories, createCategory, createPod, invalidateContactsCache } from '../../lib/airtable'
+import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, TARGET_FIELDS, resolveMappedValue, splitMultiValue } from '../../lib/csvImport'
 import { getFieldConfigs, createCustomField, getFieldConfigsForRecord } from '../../lib/fieldConfig'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import type { Pod, Category, Contact } from '../../lib/types'
+import type { Pod, Contact } from '../../lib/types'
 import type { RelationshipType } from '../../lib/types'
 import type { ImportProgress, ImportResult, ColumnMapping, RowWarning } from '../../lib/csvImport'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
@@ -20,7 +20,7 @@ type ImportSource = 'csv' | 'vcard' | 'linkedin' | 'paste' | 'google' | 'outlook
 const STEPS = ['Source', 'Configure', 'Import'] as const
 
 const SOURCE_LABELS: Record<ImportSource, string> = {
-  csv: 'CSV File',
+  csv: 'CSV / Excel File',
   vcard: 'Apple Contacts (vCard)',
   linkedin: 'LinkedIn Export',
   paste: 'Pasted Data',
@@ -29,12 +29,10 @@ const SOURCE_LABELS: Record<ImportSource, string> = {
 }
 
 function generateTemplate() {
-  const csv = 'Name,Email,Phone,Company,Role,Location\nJane Doe,jane@example.com,555-0100,Acme Inc,CEO,New York\n'
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url; a.download = 'import-template.csv'; a.click()
-  URL.revokeObjectURL(url)
+  a.href = '/templates/realdeal-contact-import-template.xlsx'
+  a.download = 'realdeal-contact-import-template.xlsx'
+  a.click()
 }
 
 function StepIndicator({ current }: { current: number }) {
@@ -81,7 +79,6 @@ function SourceBadge({ source }: { source: ImportSource }) {
 export function ImportPanel() {
   const navigate = useNavigate()
   const { activeWorkspace } = useWorkspace()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [pods, setPods] = useState<Pod[]>([])
   const [selectedPodIds, setSelectedPodIds] = useState<string[]>([])
@@ -91,6 +88,7 @@ export function ImportPanel() {
   const [showPaste, setShowPaste] = useState(false)
 
   const [fileName, setFileName] = useState('')
+  const [fileError, setFileError] = useState<string | null>(null)
   const [parsedHeaders, setParsedHeaders] = useState<string[]>([])
   const [parsedRows, setParsedRows] = useState<Record<string, string>[]>([])
 
@@ -101,7 +99,6 @@ export function ImportPanel() {
 
   const [customFields, setCustomFields] = useState<FieldConfig[]>([])
   const [existingContacts, setExistingContacts] = useState<Contact[]>([])
-  const [podCategories, setPodCategories] = useState<Category[]>([])
   const [unmatchedDecisions, setUnmatchedDecisions] = useState<Record<string, 'skip' | 'create'>>({})
   const [rowWarnings, setRowWarnings] = useState<RowWarning[]>([])
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>([])
@@ -138,12 +135,6 @@ export function ImportPanel() {
     getContacts().then(setExistingContacts)
   }, [])
 
-  const primaryPodId = selectedPodIds[0] ?? null
-  useEffect(() => {
-    if (!primaryPodId) { setPodCategories([]); return }
-    getCategories(primaryPodId).then(setPodCategories)
-  }, [primaryPodId])
-
   useEffect(() => {
     if (parsedRows.length === 0 || columnMapping.length === 0) return
     const emailIdx = new Map<string, string>()
@@ -160,28 +151,36 @@ export function ImportPanel() {
   }
 
   // ---- File processing with auto-format detection ----
-  function processFile(file: File, source: ImportSource) {
+  async function processFile(file: File, source: ImportSource) {
     setImportSource(source)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const content = e.target?.result as string
+    setFileError(null)
 
+    try {
+      const lowerName = file.name.toLowerCase()
       // Auto-detect vCard even if extension wasn't .vcf
-      if (isVCard(content)) {
-        const contacts = parseVCard(content)
-        if (contacts.length === 0) { return }
-        const { headers, rows } = vcardToRows(contacts)
-        setFileName(file.name)
-        setParsedHeaders(headers)
-        setParsedRows(rows)
-        setImportSource('vcard')
-        setState('preview')
-        return
+      if (!lowerName.endsWith('.xlsx') && !lowerName.endsWith('.xls')) {
+        const content = await file.text()
+        if (isVCard(content)) {
+          const contacts = parseVCard(content)
+          if (contacts.length === 0) {
+            setFileError('No contacts were found in this vCard file.')
+            return
+          }
+          const { headers, rows } = vcardToRows(contacts)
+          setFileName(file.name)
+          setParsedHeaders(headers)
+          setParsedRows(rows)
+          setImportSource('vcard')
+          setState('preview')
+          return
+        }
       }
 
-      // CSV/LinkedIn parsing
-      const parsed = parseCSV(content)
-      if (parsed.rows.length === 0) return
+      const parsed = await parseImportFile(file)
+      if (parsed.rows.length === 0) {
+        setFileError('No importable rows were found. Make sure the first sheet has a header row and at least one contact row.')
+        return
+      }
       setFileName(file.name)
       setParsedHeaders(parsed.headers)
       setParsedRows(parsed.rows)
@@ -193,8 +192,9 @@ export function ImportPanel() {
       }
 
       setState('preview')
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : 'Could not read this file.')
     }
-    reader.readAsText(file)
   }
 
   // ---- Google Contacts sync ----
@@ -251,7 +251,8 @@ export function ImportPanel() {
 
   // ---- Import ----
   async function handleImport() {
-    if (selectedPodIds.length === 0) return
+    const hasPodMapping = columnMapping.some(m => m.airtableField === 'Pod')
+    if (selectedPodIds.length === 0 && !hasPodMapping) return
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
@@ -279,24 +280,58 @@ export function ImportPanel() {
       }
     }
 
+    let availablePods = pods
+    const podMap = new Map<string, string>()
+    for (const pod of availablePods) {
+      podMap.set(normalize(pod.name), pod.id)
+    }
+
+    const podCol = columnMapping.find(m => m.airtableField === 'Pod')
+    if (podCol) {
+      const distinctPodNames = new Set<string>()
+      for (const row of parsedRows) {
+        for (const podName of splitMultiValue(resolveMappedValue(row, columnMapping, 'Pod'))) {
+          distinctPodNames.add(podName)
+        }
+      }
+      for (const podName of distinctPodNames) {
+        const key = normalize(podName)
+        if (!podMap.has(key)) {
+          try {
+            const pod = await createPod({ name: podName, cadence: null })
+            availablePods = [...availablePods, pod]
+            podMap.set(key, pod.id)
+          } catch (err) { console.error(`Failed to create pod "${podName}":`, err) }
+        }
+      }
+      if (availablePods.length !== pods.length) setPods(availablePods)
+    }
+
     const categoryMap = new Map<string, string>()
-    for (const cat of podCategories) {
+    const categories = await getCategories()
+    for (const cat of categories) {
+      categoryMap.set(`${cat.list_id}:${normalize(cat.name)}`, cat.id)
       categoryMap.set(normalize(cat.name), cat.id)
     }
 
-    const catCol = columnMapping.find(m => m.airtableField === '_category')
-    if (catCol && selectedPodIds[0]) {
-      const distinctValues = new Set<string>()
+    const subPodCol = columnMapping.find(m => m.airtableField === 'Sub-pod' || m.airtableField === '_category')
+    if (subPodCol) {
       for (const row of parsedRows) {
-        const val = (row[catCol.csvHeader] ?? '').trim()
-        if (val) distinctValues.add(val)
-      }
-      for (const val of distinctValues) {
-        if (!categoryMap.has(normalize(val))) {
-          try {
-            const cat = await createCategory(val, selectedPodIds[0])
-            categoryMap.set(normalize(val), cat.id)
-          } catch (err) { console.error(`Failed to create category "${val}":`, err) }
+        const rowPodIds = splitMultiValue(resolveMappedValue(row, columnMapping, 'Pod'))
+          .map(podName => podMap.get(normalize(podName)))
+          .filter(Boolean) as string[]
+        const primaryPodId = rowPodIds[0] ?? selectedPodIds[0]
+        if (!primaryPodId) continue
+
+        for (const value of splitMultiValue(row[subPodCol.csvHeader] ?? '')) {
+          const key = `${primaryPodId}:${normalize(value)}`
+          if (!categoryMap.has(key)) {
+            try {
+              const cat = await createCategory(value, primaryPodId)
+              categoryMap.set(key, cat.id)
+              categoryMap.set(normalize(value), cat.id)
+            } catch (err) { console.error(`Failed to create sub-pod "${value}":`, err) }
+          }
         }
       }
     }
@@ -305,7 +340,7 @@ export function ImportPanel() {
       parsedRows, selectedPodIds[0], (p) => setProgress(p),
       {
         type: recordType, podIds: selectedPodIds, mapping: columnMapping,
-        customFieldMap, categoryMap,
+        customFieldMap, categoryMap, podMap,
         batchId: newBatchId, importSource,
       }
     )
@@ -341,6 +376,7 @@ export function ImportPanel() {
   function handleReset() {
     setState('source')
     setFileName('')
+    setFileError(null)
     setParsedHeaders([])
     setParsedRows([])
     setColumnMapping([])
@@ -351,7 +387,6 @@ export function ImportPanel() {
     setShowErrors(false)
     setUnmatchedDecisions({})
     setRowWarnings([])
-    setPodCategories([])
     setShowPaste(false)
     setGoogleState('idle')
     setGoogleContacts([])
@@ -360,7 +395,6 @@ export function ImportPanel() {
     setBatchId(null)
     setUndoAvailable(false)
     setUndoResult(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   function updateMapping(csvHeader: string, targetField: string | null) {
@@ -372,6 +406,8 @@ export function ImportPanel() {
   const invalidCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, columnMapping) : 0
   const validCount = parsedRows.length - invalidCount
   const hasNameMapping = columnMapping.some(m => m.airtableField === 'Name' || m.airtableField === 'First Name')
+  const hasPodMapping = columnMapping.some(m => m.airtableField === 'Pod')
+  const canImport = validCount > 0 && hasNameMapping && (selectedPodIds.length > 0 || hasPodMapping)
 
   const relevantCustomFields = useMemo(() =>
     getFieldConfigsForRecord(customFields, recordType, selectedPodIds),
@@ -382,7 +418,7 @@ export function ImportPanel() {
   const stepNumber = state === 'source' ? 1 : state === 'preview' ? 2 : 3
   const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
   const remaining = progress ? (progress.total - progress.current) : 0
-  const estSeconds = Math.ceil((remaining * 250) / 1000)
+  const estSeconds = Math.ceil(remaining / 250)
 
   // ---- Google sync sub-views ----
   if (googleState !== 'idle' && state === 'source') {
@@ -440,8 +476,11 @@ export function ImportPanel() {
                 background: 'none', border: 'none', fontSize: 13, color: 'var(--color-brand)',
                 cursor: 'pointer', fontFamily: 'inherit', padding: '10px 0', minHeight: 44,
               }}>
-                Need a template? Download sample CSV
+                Need a template? Download Excel template
               </button>
+              {fileError && (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#D32F2F' }}>{fileError}</p>
+              )}
             </div>
           </>
         )}
@@ -527,6 +566,11 @@ export function ImportPanel() {
                 </div>
               )}
             </div>
+            {hasPodMapping && selectedPodIds.length === 0 && (
+              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '-12px 0 0' }}>
+                Pod values from the file will be used. Missing pods will be created automatically.
+              </p>
+            )}
 
             {/* Column mapping */}
             <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 180ms forwards' }}>
@@ -699,12 +743,12 @@ export function ImportPanel() {
             {/* Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, opacity: 0, animation: 'import-stagger 0.35s ease-out 300ms forwards' }}>
               <button type="button" onClick={handleImport}
-                disabled={selectedPodIds.length === 0 || validCount === 0 || !hasNameMapping}
+                disabled={!canImport}
                 style={{
                   padding: '14px 32px', background: 'var(--color-brand)', color: '#fff',
                   border: 'none', borderRadius: 100, fontSize: 14, fontWeight: 600,
-                  cursor: selectedPodIds.length > 0 && validCount > 0 && hasNameMapping ? 'pointer' : 'not-allowed',
-                  opacity: selectedPodIds.length > 0 && validCount > 0 && hasNameMapping ? 1 : 0.5,
+                  cursor: canImport ? 'pointer' : 'not-allowed',
+                  opacity: canImport ? 1 : 0.5,
                   fontFamily: 'inherit', letterSpacing: '0.01em',
                   boxShadow: '0 4px 16px rgba(37,180,57,0.30)', transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.12s',
                 }}>

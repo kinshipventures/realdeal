@@ -269,19 +269,14 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
   )
 }
 
-export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): Promise<Contact> {
-  if (isDemoMode()) {
-    const c: Contact = { ...data, id: `demo-contact-${Date.now()}`, created_at: new Date().toISOString() }
-    DEMO_CONTACTS.push(c)
-    return c
-  }
-  const userId = await getUserId()
-  const wsId = getActiveWorkspaceId()
+type ContactInput = Omit<Contact, 'id' | 'created_at'>
+
+function buildContactInsert(data: ContactInput, userId: string, wsId: string): Record<string, unknown> {
   const customFields = {
     ...(data.custom_fields ?? {}),
     relationship_rings: data.ring_ids ?? [],
   }
-  const insert: Record<string, unknown> = {
+  return {
     user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,
     notes: data.notes, recommended_by: data.recommended_by, specialization: data.specialization,
@@ -305,10 +300,50 @@ export async function createContact(data: Omit<Contact, 'id' | 'created_at'>): P
     company_ids: data.company_ids?.length ? data.company_ids : (data.company_record_id ? [data.company_record_id] : []),
     category_ids: data.category_ids ?? [],
   }
+}
+
+export async function createContact(data: ContactInput): Promise<Contact> {
+  if (isDemoMode()) {
+    const c: Contact = { ...data, id: `demo-contact-${Date.now()}`, created_at: new Date().toISOString() }
+    DEMO_CONTACTS.push(c)
+    return c
+  }
+  const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
+  const insert = buildContactInsert(data, userId, wsId)
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
   _contactsCache = null
   return mapContact(row)
+}
+
+export async function createContactsBulk(records: ContactInput[], chunkSize = 100): Promise<Contact[]> {
+  if (records.length === 0) return []
+  if (isDemoMode()) {
+    const now = new Date().toISOString()
+    const created = records.map((record, idx) => ({
+      ...record,
+      id: `demo-contact-${Date.now()}-${idx}`,
+      created_at: now,
+    }))
+    DEMO_CONTACTS.push(...created)
+    return created
+  }
+
+  const userId = await getUserId()
+  const wsId = getActiveWorkspaceId()
+  const created: Contact[] = []
+
+  for (let i = 0; i < records.length; i += chunkSize) {
+    const chunk = records.slice(i, i + chunkSize)
+    const inserts = chunk.map(record => buildContactInsert(record, userId, wsId))
+    const { data, error } = await supabase.from('contacts').insert(inserts as any).select('*')
+    if (error) throw error
+    created.push(...((data ?? []) as any[]).map(mapContact))
+  }
+
+  _contactsCache = null
+  return created
 }
 
 export async function updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
