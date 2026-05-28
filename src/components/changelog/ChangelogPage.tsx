@@ -135,7 +135,7 @@ const releases: Release[] = [
     version: 'Alpha 0.1',
     date: 'April 6, 2025',
     title: 'Foundation',
-    summary: 'First alpha release. Core relationship management, visual network map, equity scoring, and the full data layer migrated from Airtable to Supabase.',
+    summary: 'First alpha release. Core relationship management, visual network map, equity scoring, and the full data layer migrated to Supabase.',
     spotlights: [
       {
         title: 'Visual Network Map',
@@ -179,7 +179,7 @@ const releases: Release[] = [
       },
       {
         title: 'Supabase Migration',
-        description: 'The entire data layer moved from Airtable to Supabase. Faster queries, real-time subscriptions, proper auth, and no more API rate limits.',
+        description: 'The entire data layer moved to Supabase. Faster queries, real-time subscriptions, proper auth, and no legacy API rate limits.',
         icon: 'M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z',
         gradient: ['#3ECF8E', '#1C8656'],
         area: 'Infrastructure',
@@ -223,7 +223,7 @@ const releases: Release[] = [
       { type: 'design', text: 'Dashboard heading hierarchy corrected' },
       { type: 'design', text: 'Typography - Playfair Display replaced with Fraunces' },
 
-      { type: 'infra', text: 'Airtable-to-Supabase migration script' },
+      { type: 'infra', text: 'Legacy data migration script' },
       { type: 'infra', text: 'Security hardening for alpha readiness' },
     ],
   },

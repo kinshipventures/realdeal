@@ -5,7 +5,7 @@ import { isDemoMode, DEMO_FIELD_CONFIGS } from './sampleData'
 export interface FieldConfig {
   id: string
   name: string
-  airtable_field_id: string
+  source_field_id: string
   field_type: 'text' | 'multiline' | 'number' | 'select' | 'date' | 'checkbox'
   scope_type: 'Contact' | 'Company' | 'Both'
   scope_pod_id: string | null
@@ -23,7 +23,7 @@ function mapFieldConfig(r: any): FieldConfig {
   return {
     id: r.id,
     name: r.name ?? '',
-    airtable_field_id: r.airtable_field_id ?? '',
+    source_field_id: r.airtable_field_id ?? '',
     field_type: (r.field_type as FieldConfig['field_type']) ?? 'text',
     scope_type: (r.scope_type as FieldConfig['scope_type']) ?? 'Both',
     scope_pod_id: r.scope_pod_id ?? null,

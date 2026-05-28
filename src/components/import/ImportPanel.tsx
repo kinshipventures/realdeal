@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, getContacts, getCategories, createCategory, createPod, invalidateContactsCache } from '../../lib/airtable'
+import { getPods, getContacts, getCategories, createCategory, createPod, invalidateContactsCache } from '../../lib/data'
 import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS, resolveMappedValue, splitMultiValue } from '../../lib/csvImport'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
@@ -26,11 +26,18 @@ const SOURCE_LABELS: Record<ImportSource, string> = {
   outlook: 'Outlook Contacts',
 }
 
-function generateTemplate() {
+async function generateTemplate() {
+  const response = await fetch('/templates/realdeal-contact-import-template.xlsx')
+  if (!response.ok) throw new Error('Template download failed.')
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = '/templates/realdeal-contact-import-template.xlsx'
+  a.href = url
   a.download = 'realdeal-contact-import-template.xlsx'
+  document.body.appendChild(a)
   a.click()
+  a.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 function StepIndicator({ current }: { current: number }) {
@@ -118,7 +125,7 @@ export function ImportPanel() {
       // For LinkedIn, verify it matched LinkedIn-specific fields
       if (importSource === 'linkedin') {
         const hasLinkedInFields = detected.some(m =>
-          m.airtableField === 'First Name' || m.airtableField === 'Last Name'
+          m.targetField === 'First Name' || m.targetField === 'Last Name'
         )
         if (!hasLinkedInFields) setImportSource('csv')
       }
@@ -247,7 +254,7 @@ export function ImportPanel() {
 
   // ---- Import ----
   async function handleImport() {
-    const hasPodMapping = safeColumnMapping.some(m => m.airtableField === 'Pod')
+    const hasPodMapping = safeColumnMapping.some(m => m.targetField === 'Pod')
     if (selectedPodIds.length === 0 && !hasPodMapping) return
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
@@ -262,7 +269,7 @@ export function ImportPanel() {
       podMap.set(normalize(pod.name), pod.id)
     }
 
-    const podCol = safeColumnMapping.find(m => m.airtableField === 'Pod')
+    const podCol = safeColumnMapping.find(m => m.targetField === 'Pod')
     if (podCol) {
       const distinctPodNames = new Set<string>()
       for (const row of parsedRows) {
@@ -290,7 +297,7 @@ export function ImportPanel() {
       categoryMap.set(normalize(cat.name), cat.id)
     }
 
-    const subPodCol = safeColumnMapping.find(m => m.airtableField === 'Sub-pod' || m.airtableField === '_category')
+    const subPodCol = safeColumnMapping.find(m => m.targetField === 'Sub-pod' || m.targetField === '_category')
     if (subPodCol) {
       for (const row of parsedRows) {
         const rowPodIds = splitMultiValue(resolveMappedValue(row, safeColumnMapping, 'Pod'))
@@ -374,17 +381,17 @@ export function ImportPanel() {
 
   function updateMapping(csvHeader: string, targetField: string | null) {
     setColumnMapping(prev => normalizeColumnMapping(prev).map(m =>
-      m.csvHeader === csvHeader ? { ...m, airtableField: targetField } : m
+      m.csvHeader === csvHeader ? { ...m, targetField } : m
     ))
   }
 
   const missingNameCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, safeColumnMapping) : 0
   const readyCount = parsedRows.length
-  const hasNameMapping = safeColumnMapping.some(m => m.airtableField === 'Name' || m.airtableField === 'First Name')
-  const hasPodMapping = safeColumnMapping.some(m => m.airtableField === 'Pod')
+  const hasNameMapping = safeColumnMapping.some(m => m.targetField === 'Name' || m.targetField === 'First Name')
+  const hasPodMapping = safeColumnMapping.some(m => m.targetField === 'Pod')
   const canImport = readyCount > 0 && (selectedPodIds.length > 0 || hasPodMapping)
 
-  const unmatchedColumns = safeColumnMapping.filter(m => m.airtableField === null)
+  const unmatchedColumns = safeColumnMapping.filter(m => m.targetField === null)
   const stepNumber = state === 'source' ? 1 : state === 'preview' ? 2 : 3
   const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
   const remaining = progress ? (progress.total - progress.current) : 0
@@ -442,7 +449,7 @@ export function ImportPanel() {
               onOutlookSelected={handleOutlook}
             />
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <button type="button" onClick={generateTemplate} style={{
+              <button type="button" onClick={() => { generateTemplate().catch(err => setFileError(err instanceof Error ? err.message : 'Template download failed.')) }} style={{
                 background: 'none', border: 'none', fontSize: 13, color: 'var(--color-brand)',
                 cursor: 'pointer', fontFamily: 'inherit', padding: '10px 0', minHeight: 44,
               }}>
@@ -547,7 +554,7 @@ export function ImportPanel() {
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 8px' }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>Column mapping</p>
                 <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
-                  {safeColumnMapping.filter(m => m.airtableField !== null).length} of {safeColumnMapping.length} mapped
+                  {safeColumnMapping.filter(m => m.targetField !== null).length} of {safeColumnMapping.length} mapped
                 </p>
               </div>
               <div style={{ background: 'var(--color-surface)', border: '1px solid var(--edge)', borderRadius: 8, overflow: 'hidden' }}>
@@ -558,10 +565,10 @@ export function ImportPanel() {
                 }}>
                   <span>Your column</span><span /><span>Maps to</span>
                 </div>
-                {safeColumnMapping.map(({ csvHeader, airtableField }, idx) => {
-                  const matched = !!airtableField
+                {safeColumnMapping.map(({ csvHeader, targetField }, idx) => {
+                  const matched = !!targetField
                   const preview = parsedRows[0]?.[csvHeader] ?? ''
-                  const usedTargets = new Set(safeColumnMapping.filter(m => m.csvHeader !== csvHeader && m.airtableField).map(m => m.airtableField))
+                  const usedTargets = new Set(safeColumnMapping.filter(m => m.csvHeader !== csvHeader && m.targetField).map(m => m.targetField))
                   return (
                     <div key={csvHeader} style={{
                       display: 'grid', gridTemplateColumns: '1fr 24px 1fr', alignItems: 'center',
@@ -574,7 +581,7 @@ export function ImportPanel() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={matched ? 'var(--color-brand)' : 'var(--color-text-tertiary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ justifySelf: 'center', opacity: 0.5 }}>
                         <line x1="5" y1="12" x2="19" y2="12"/><polyline points="15 6 19 12 15 18"/>
                       </svg>
-                      <select value={airtableField ?? ''} onChange={e => updateMapping(csvHeader, e.target.value || null)} style={{
+                      <select value={targetField ?? ''} onChange={e => updateMapping(csvHeader, e.target.value || null)} style={{
                         background: matched ? 'rgba(37,180,57,0.06)' : 'var(--tint)',
                         border: `1px solid ${matched ? 'rgba(37,180,57,0.2)' : 'var(--edge)'}`,
                         borderRadius: 6, padding: '5px 8px', fontSize: 12,

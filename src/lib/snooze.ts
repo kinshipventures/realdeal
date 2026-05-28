@@ -1,4 +1,4 @@
-import { updateContact } from './airtable'
+import { updateContact } from './data'
 
 export type SnoozeDuration = '1w' | '1m' | '3m'
 

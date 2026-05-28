@@ -8,7 +8,7 @@ import {
   updateInteraction,
   deleteInteraction,
   updateContact,
-} from '../../lib/airtable'
+} from '../../lib/data'
 import { formatRelativeTime } from '../../lib/utils'
 
 interface InteractionSectionProps {

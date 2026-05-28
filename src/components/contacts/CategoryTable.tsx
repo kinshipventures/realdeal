@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { getContacts, getCategories, getPods, getAllInteractions, isOverdue } from '../../lib/airtable'
+import { getContacts, getCategories, getPods, getAllInteractions, isOverdue } from '../../lib/data'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { Contact, Pod, Cadence } from '../../lib/types'
 import { formatRelativeTime } from '../../lib/utils'

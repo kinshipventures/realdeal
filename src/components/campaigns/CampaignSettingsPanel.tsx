@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, X, Calendar, Type, FileText } from 'lucide-react'
 import type { Campaign, CampaignType } from '../../lib/types'
-import { updateCampaign, invalidateCampaignsCache } from '../../lib/airtable'
+import { updateCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { useEscape } from '../../lib/escapeStack'

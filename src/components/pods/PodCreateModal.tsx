@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Pod, Cadence, Owner } from '../../lib/types'
-import { createPod } from '../../lib/airtable'
+import { createPod } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 

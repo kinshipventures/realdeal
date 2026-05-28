@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAllInteractions } from '../../lib/airtable'
+import { getAllInteractions } from '../../lib/data'
 import type { Interaction, Contact, CampaignStage } from '../../lib/types'
 import { formatRelativeTime } from './campaignUtils'
 import { Avatar } from '../ui'

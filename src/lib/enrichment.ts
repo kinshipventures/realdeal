@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
-import { updateContact } from './airtable'
+import { updateContact } from './data'
 import { logSystemEvent } from './timeline'
 import type { Contact, Pod } from './types'
 

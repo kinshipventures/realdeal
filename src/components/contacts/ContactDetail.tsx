@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
-import { getInteractions } from '../../lib/airtable'
+import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 
 function daysUntilBirthday(birthday: string | null): number | null {
@@ -13,7 +13,7 @@ function daysUntilBirthday(birthday: string | null): number | null {
   if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-import { updateContact, createContact, deleteContact, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/airtable'
+import { updateContact, createContact, deleteContact, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'

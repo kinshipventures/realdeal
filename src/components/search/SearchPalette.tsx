@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import type { Contact, Pod, Campaign, Project } from '../../lib/types'
-import { getContacts, getPods, getAllCampaigns, getProjects } from '../../lib/airtable'
+import { getContacts, getPods, getAllCampaigns, getProjects } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 
 export type SearchResultType = 'contact' | 'company' | 'pod' | 'pipeline' | 'project'

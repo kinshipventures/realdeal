@@ -1,11 +1,11 @@
 import * as Papa from 'papaparse'
 import { strFromU8, unzipSync } from 'fflate'
 import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
-import { createContactsBulk, getContacts } from './airtable'
+import { createContactsBulk, getContacts } from './data'
 
 export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
-export type ColumnMapping = { csvHeader: string; airtableField: string | null }[]
+export type ColumnMapping = { csvHeader: string; targetField: string | null }[]
 
 export type ImportProgress = { current: number; total: number; imported: number; skipped: number }
 
@@ -493,16 +493,16 @@ export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined
     const csvHeader = typeof rawHeader === 'string' ? rawHeader.trim() : String(rawHeader ?? '').trim()
     if (!csvHeader) return []
 
-    const rawField = (item as Partial<ColumnMapping[number]>).airtableField
-    const airtableField =
+    const rawField = (item as Partial<ColumnMapping[number]>).targetField
+    const targetField =
       typeof rawField === 'string'
       && TARGET_FIELD_SET.has(rawField)
       && !usedTargets.has(rawField)
         ? rawField
         : null
 
-    if (airtableField) usedTargets.add(airtableField)
-    return [{ csvHeader, airtableField }]
+    if (targetField) usedTargets.add(targetField)
+    return [{ csvHeader, targetField }]
   })
 }
 
@@ -516,7 +516,7 @@ const MIDDLE_NAME_ALIASES = new Set([
 ])
 
 function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string): string | null {
-  return normalizeColumnMapping(mapping).find(m => m.csvHeader === csvHeader)?.airtableField ?? null
+  return normalizeColumnMapping(mapping).find(m => m.csvHeader === csvHeader)?.targetField ?? null
 }
 
 function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): string {
@@ -570,15 +570,15 @@ export function detectColumns(headers: string[]): ColumnMapping {
     const norm = normalize(csvHeader)
     const match = KNOWN_ALIASES[norm] ?? null
     if (match && used.has(match)) {
-      return { csvHeader, airtableField: null }
+      return { csvHeader, targetField: null }
     }
     if (match) used.add(match)
-    return { csvHeader, airtableField: match }
+    return { csvHeader, targetField: match }
   })
 }
 
 function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
-  const col = normalizeColumnMapping(mapping).find(m => m.airtableField === target)
+  const col = normalizeColumnMapping(mapping).find(m => m.targetField === target)
   if (!col) return ''
   return (row[col.csvHeader] ?? '').trim()
 }
@@ -815,7 +815,8 @@ export async function importContacts(
       continue
     }
 
-    const firstName = mapping ? resolve(row, mapping, 'First Name') : null
+    const nameField = mapping ? resolve(row, mapping, 'Name') : ((row['Name'] ?? '') as string).trim()
+    const firstName = mapping ? resolve(row, mapping, 'First Name') : ((row['First Name'] ?? '') as string).trim()
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
     const rowPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
     const primaryPodId = rowPodIds[0] ?? null
@@ -855,7 +856,7 @@ export async function importContacts(
       list_ids: rowPodIds,
       category_ids: categoryIds,
       primary_list_id: primaryPodId,
-      first_name: firstName || null,
+      first_name: (firstName || (recordType === 'Contact' ? nameField : '')) || null,
       last_name: lastName || null,
       country: r(row, 'Country', 'Country') || null,
       global_region: null,

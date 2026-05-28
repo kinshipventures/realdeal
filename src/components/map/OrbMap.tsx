@@ -15,7 +15,7 @@ import {
   type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/airtable'
+import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/data'
 import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type ScoreLabel } from '../../lib/equity'
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import { POD_SHIFT_COLORS } from './SolidOrb'

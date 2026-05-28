@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact, Pod, CampaignContact, CampaignContactStatus } from '../../lib/types'
-import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign, updateCampaignNotes } from '../../lib/airtable'
+import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign, updateCampaignNotes } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton, Spinner } from '../ui'
 

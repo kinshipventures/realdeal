@@ -13,10 +13,6 @@
     "preview": "vite preview",
     "export:supabase-data": "tsx --env-file=.env.local scripts/export-supabase-data.ts",
     "import:supabase-data": "tsx --env-file=.env.local scripts/import-supabase-data.ts",
-    "seed:lists": "tsx --env-file=.env.local src/scripts/seedLists.ts",
-    "seed:csv": "tsx --env-file=.env.local src/scripts/importServiceProviders.ts",
-    "migrate:schema": "tsx --env-file=.env.local src/scripts/migrateSchema.ts",
-    "migrate:fieldconfig": "tsx --env-file=.env.local src/scripts/migrateFieldConfig.ts",
     "import:kinship-pipeline": "tsx --env-file=.env.local scripts/import-kinship-pipeline.ts"
   },
   "dependencies": {

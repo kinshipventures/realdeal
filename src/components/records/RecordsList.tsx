@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, UserPlus } from 'lucide-react'
-import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/airtable'
+import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -255,6 +255,7 @@ export function RecordsList() {
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
   const addToCampaignDialogRef = useRef<HTMLDivElement>(null)
   const archiveDialogRef = useRef<HTMLDivElement>(null)
+  const deleteDialogRef = useRef<HTMLDivElement>(null)
   const lastFocusedElementRef = useRef<HTMLElement | null>(null)
 
   // Saved views
@@ -280,6 +281,7 @@ export function RecordsList() {
 
   // Confirm archive modal
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const moreRef = useRef<HTMLDivElement>(null)
   const createMenuRef = useRef<HTMLDivElement>(null)
@@ -344,25 +346,33 @@ export function RecordsList() {
   }, [])
 
   useEffect(() => {
-    if (!showAddToCampaign && !showArchiveConfirm) return
+    if (!showAddToCampaign && !showArchiveConfirm && !showDeleteConfirm) return
     lastFocusedElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-  }, [showAddToCampaign, showArchiveConfirm])
+  }, [showAddToCampaign, showArchiveConfirm, showDeleteConfirm])
 
   useEffect(() => {
     if (!showAddToCampaign) {
-      if (!showArchiveConfirm) lastFocusedElementRef.current?.focus()
+      if (!showArchiveConfirm && !showDeleteConfirm) lastFocusedElementRef.current?.focus()
       return
     }
     addToCampaignDialogRef.current?.focus()
-  }, [showAddToCampaign, showArchiveConfirm])
+  }, [showAddToCampaign, showArchiveConfirm, showDeleteConfirm])
 
   useEffect(() => {
     if (!showArchiveConfirm) {
-      if (!showAddToCampaign) lastFocusedElementRef.current?.focus()
+      if (!showAddToCampaign && !showDeleteConfirm) lastFocusedElementRef.current?.focus()
       return
     }
     archiveDialogRef.current?.focus()
-  }, [showArchiveConfirm, showAddToCampaign])
+  }, [showArchiveConfirm, showAddToCampaign, showDeleteConfirm])
+
+  useEffect(() => {
+    if (!showDeleteConfirm) {
+      if (!showAddToCampaign && !showArchiveConfirm) lastFocusedElementRef.current?.focus()
+      return
+    }
+    deleteDialogRef.current?.focus()
+  }, [showDeleteConfirm, showAddToCampaign, showArchiveConfirm])
 
   // Pod map for lookups
   const podMap = useMemo<Record<string, Pod>>(() => {
@@ -633,11 +643,18 @@ export function RecordsList() {
     URL.revokeObjectURL(url)
   }
 
-  function downloadImportTemplate() {
+  async function downloadImportTemplate() {
+    const response = await fetch('/templates/realdeal-contact-import-template.xlsx')
+    if (!response.ok) throw new Error('Template download failed.')
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = '/templates/realdeal-contact-import-template.xlsx'
+    a.href = url
     a.download = 'realdeal-contact-import-template.xlsx'
+    document.body.appendChild(a)
     a.click()
+    a.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   async function handleCopyToClipboard(rows: Contact[]) {
@@ -689,6 +706,33 @@ export function RecordsList() {
       setContacts(await getContacts())
       showToast('Archive undone')
     })
+  }
+
+  async function handleBulkDelete() {
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    if (selected.length === 0) return
+
+    setBulkOperating(true)
+    const selectedIdSet = new Set(selected.map(contact => contact.id))
+
+    try {
+      for (const contact of selected) {
+        await deleteContact(contact.id)
+      }
+      invalidateContactsCache()
+      invalidateCampaignsCache()
+      setContacts(prev => prev.filter(contact => !selectedIdSet.has(contact.id)))
+      setSelectedIds(new Set())
+      setShowDeleteConfirm(false)
+      showToast(`Deleted ${selected.length} ${selected.length === 1 ? 'person' : 'people'}`)
+    } catch (err) {
+      console.error('Bulk delete failed:', err)
+      invalidateContactsCache()
+      setContacts(await getContacts())
+      showToast('Could not delete selected contacts. Try again.')
+    } finally {
+      setBulkOperating(false)
+    }
   }
 
   async function handleAddToCampaign() {
@@ -1220,6 +1264,15 @@ export function RecordsList() {
             <button
               className="delight-button"
               type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={bulkOperating}
+              style={{ ...bulkBtnStyle, color: 'var(--health-fading)' }}
+            >
+              Delete
+            </button>
+            <button
+              className="delight-button"
+              type="button"
               onClick={() => setShowAddToCampaign(true)}
               disabled={bulkOperating}
               style={bulkBtnStyle}
@@ -1617,6 +1670,45 @@ export function RecordsList() {
         </div>
       )}
 
+      {/* Delete confirm */}
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)' }} onClick={() => setShowDeleteConfirm(false)} />
+          <div
+            ref={deleteDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-people-title"
+            tabIndex={-1}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowDeleteConfirm(false) }}
+            style={{
+              position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(24px)',
+              borderRadius: 14, padding: '24px 28px', maxWidth: 360, width: '100%',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
+            }}
+          >
+            <p id="delete-people-title" style={{ margin: '0 0 4px', fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 700, color: 'var(--color-text-primary)' }}>
+              Delete {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}?
+            </p>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+              This permanently removes the selected contacts from Real Deal and Supabase.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={bulkOperating} style={{
+                padding: '7px 16px', borderRadius: 8, border: '1px solid var(--edge)',
+                background: 'transparent', fontSize: 13, fontWeight: 500,
+                cursor: bulkOperating ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: 'var(--color-text-secondary)',
+              }}>Cancel</button>
+              <button type="button" onClick={handleBulkDelete} disabled={bulkOperating} style={{
+                padding: '7px 16px', borderRadius: 8, border: 'none',
+                background: 'var(--health-fading)', color: 'var(--header-band-text)', fontSize: 13, fontWeight: 600,
+                cursor: bulkOperating ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: bulkOperating ? 0.7 : 1,
+              }}>{bulkOperating ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedContact && (
         <ContactDetail
           contact={selectedContact}
@@ -1651,7 +1743,14 @@ export function RecordsList() {
               </button>
               <button
                 type="button"
-                onClick={() => { downloadImportTemplate(); setShowCreateMenu(false) }}
+                onClick={() => {
+                  downloadImportTemplate()
+                    .catch(err => {
+                      console.error('Template download failed:', err)
+                      showToast('Template download failed. Try again.')
+                    })
+                  setShowCreateMenu(false)
+                }}
                 style={{ ...dropdownButtonStyle, gap: 10 }}
               >
                 <Download size={16} />

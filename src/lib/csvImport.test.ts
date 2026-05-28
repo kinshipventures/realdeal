@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { createContactsBulk, getContacts } from './airtable'
+import { createContactsBulk, getContacts } from './data'
 import {
   countInvalidRows,
   detectColumns,
@@ -12,7 +12,7 @@ import {
   parseWorkbookBuffer,
 } from './csvImport'
 
-vi.mock('./airtable', () => ({
+vi.mock('./data', () => ({
   getContacts: vi.fn(),
   createContactsBulk: vi.fn(),
 }))
@@ -66,7 +66,7 @@ describe('CSV and Excel import parsing', () => {
   it('detects human relationship columns from flexible headers', () => {
     const mapping = detectColumns(['Full Name', 'Relationship Pod', 'Sub Pod', 'Last Interaction', 'Cadence'])
 
-    expect(mapping.map(m => m.airtableField)).toEqual([
+    expect(mapping.map(m => m.targetField)).toEqual([
       'Name',
       'Pod',
       'Sub-pod',
@@ -78,7 +78,7 @@ describe('CSV and Excel import parsing', () => {
   it('maps company-oriented headers to the existing Company field', () => {
     const mapping = detectColumns(['First Name', 'Last Name', 'Company Name', 'Agency'])
 
-    expect(mapping.map(m => m.airtableField)).toEqual([
+    expect(mapping.map(m => m.targetField)).toEqual([
       'First Name',
       'Last Name',
       'Company',
@@ -90,18 +90,18 @@ describe('CSV and Excel import parsing', () => {
     const mapping = normalizeColumnMapping([
       undefined,
       null,
-      { csvHeader: 'Name', airtableField: 'Name' },
-      { csvHeader: 'Random Notes', airtableField: 'New Section' },
-      { csvHeader: 'Company Name', airtableField: 'Company' },
-      { csvHeader: 'Agency', airtableField: 'Company' },
-      { csvHeader: '', airtableField: 'Email' },
+      { csvHeader: 'Name', targetField: 'Name' },
+      { csvHeader: 'Random Notes', targetField: 'New Section' },
+      { csvHeader: 'Company Name', targetField: 'Company' },
+      { csvHeader: 'Agency', targetField: 'Company' },
+      { csvHeader: '', targetField: 'Email' },
     ] as any)
 
     expect(mapping).toEqual([
-      { csvHeader: 'Name', airtableField: 'Name' },
-      { csvHeader: 'Random Notes', airtableField: null },
-      { csvHeader: 'Company Name', airtableField: 'Company' },
-      { csvHeader: 'Agency', airtableField: null },
+      { csvHeader: 'Name', targetField: 'Name' },
+      { csvHeader: 'Random Notes', targetField: null },
+      { csvHeader: 'Company Name', targetField: 'Company' },
+      { csvHeader: 'Agency', targetField: null },
     ])
   })
 })
@@ -168,13 +168,36 @@ describe('bulk contact import', () => {
     expect(records[0].custom_fields).not.toHaveProperty('Nickname')
   })
 
+  it('stores Name-only spreadsheets in the existing First Name field', async () => {
+    const parsed = parseCSV('Name,Email,Pod\nTaylor Reed,taylor@example.com,LPs\n')
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Taylor Reed',
+      first_name: 'Taylor Reed',
+      last_name: null,
+      email: 'taylor@example.com',
+      list_ids: ['pod-lps'],
+    })
+  })
+
   it('imports with malformed mappings without creating fields or crashing', async () => {
     const parsed = parseCSV('Name,Email,Random Notes\nMorgan Lee,morgan@example.com,Met through the annual summit\n')
     const mapping = [
       undefined,
-      { csvHeader: 'Name', airtableField: 'Name' },
-      { csvHeader: 'Email', airtableField: 'Email' },
-      { csvHeader: 'Random Notes', airtableField: 'Invented Field' },
+      { csvHeader: 'Name', targetField: 'Name' },
+      { csvHeader: 'Email', targetField: 'Email' },
+      { csvHeader: 'Random Notes', targetField: 'Invented Field' },
     ] as any
 
     expect(countInvalidRows(parsed.rows, 'Contact', mapping)).toBe(0)

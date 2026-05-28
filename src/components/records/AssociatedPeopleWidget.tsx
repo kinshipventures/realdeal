@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import type { Contact } from '../../lib/types'
-import { getContacts, getContactsByType, updateContact } from '../../lib/airtable'
+import { getContacts, getContactsByType, updateContact } from '../../lib/data'
 import { WIDGET_STYLE } from './shared'
 
 interface Props {

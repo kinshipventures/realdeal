@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
-import { updateCampaignContact, addContactToCampaign } from '../../lib/airtable'
+import { updateCampaignContact, addContactToCampaign } from '../../lib/data'
 import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
 

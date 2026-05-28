@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Campaign, CampaignStage, CampaignType } from '../../lib/types'
-import { createCampaign, createCampaignStage } from '../../lib/airtable'
+import { createCampaign, createCampaignStage } from '../../lib/data'
 import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 

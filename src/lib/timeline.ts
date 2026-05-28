@@ -1,4 +1,4 @@
-import { createInteraction } from './airtable'
+import { createInteraction } from './data'
 import type { SystemEventType, Interaction, ISODate } from './types'
 
 interface SystemEventData {

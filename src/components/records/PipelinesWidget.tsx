@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Plus } from 'lucide-react'
-import { getCampaigns, getCampaignContactsForContact } from '../../lib/airtable'
+import { getCampaigns, getCampaignContactsForContact } from '../../lib/data'
 import type { Contact, Campaign } from '../../lib/types'
 import { WIDGET_STYLE } from './shared'
 

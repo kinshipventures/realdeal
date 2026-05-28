@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Contact, Pod } from '../../lib/types'
-import { createContact, getPods, getContactsByType } from '../../lib/airtable'
+import { createContact, getPods, getContactsByType } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 

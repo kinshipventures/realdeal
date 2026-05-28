@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { getCompanies } from '../../lib/airtable'
+import { getCompanies } from '../../lib/data'
 import { EmptyState } from '../empty/EmptyState'
 import type { Company } from '../../lib/types'
 

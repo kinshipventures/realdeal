@@ -26,7 +26,7 @@ export const RELATIONSHIP_RING_LABELS: Record<RelationshipRing, string> = {
 }
 
 export interface Pod {
-  id: string           // Airtable record ID
+  id: string
   name: string
   color: HexColor | null
   owner: Owner | null
@@ -35,7 +35,7 @@ export interface Pod {
   description: string | null
   capacity: number | null  // null = unlimited
   enrichment_opt_in: boolean
-  created_at: string   // Airtable createdTime
+  created_at: string
 }
 
 export interface Category {

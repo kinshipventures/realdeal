@@ -17,7 +17,7 @@ import {
   updateCampaignContact,
   updateCampaignStage,
   createInteraction,
-} from '../../lib/airtable'
+} from '../../lib/data'
 import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact, Interaction } from '../../lib/types'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'

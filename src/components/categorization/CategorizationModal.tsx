@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Pod, type RelationshipRing } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { updateContact, getActiveContacts, invalidateContactsCache } from '../../lib/airtable'
+import { updateContact, getActiveContacts, invalidateContactsCache } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { useEscape } from '../../lib/escapeStack'
 

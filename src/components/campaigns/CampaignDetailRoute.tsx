@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router'
-import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, getPods, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/airtable'
+import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, getPods, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/data'
 import type { Campaign, CampaignContact, CampaignStage, Contact, Interaction, Pod } from '../../lib/types'
 import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'

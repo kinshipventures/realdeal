@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { getAllCampaigns, getContacts } from '../../lib/airtable'
+import { getAllCampaigns, getContacts } from '../../lib/data'
 import type { Campaign, Contact } from '../../lib/types'
 import { CampaignCreate } from './CampaignCreate'
 import { CampaignTypeIcon } from './CampaignTypeIcon'

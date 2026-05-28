@@ -38,8 +38,8 @@ export function PodFieldsWidget({
     .sort((a, b) => a.display_order - b.display_order)
 
   function getFieldValue(fc: FieldConfig): unknown {
-    // Airtable returns field values by field name
-    return contact.custom_fields[fc.name] ?? contact.custom_fields[fc.airtable_field_id] ?? null
+    // Preserve values saved under previous field-id keys while standard fields remain fixed.
+    return contact.custom_fields[fc.name] ?? contact.custom_fields[fc.source_field_id] ?? null
   }
 
   function handleFieldSave(fc: FieldConfig, rawValue: string | boolean) {

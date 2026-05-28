@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Contact, Pod } from '../../lib/types'
-import { mergeRecords } from '../../lib/airtable'
+import { mergeRecords } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 
 interface MergeModalProps {

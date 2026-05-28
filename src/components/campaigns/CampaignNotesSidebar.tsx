@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Campaign, Contact, CampaignStage } from '../../lib/types'
-import { updateCampaign, invalidateCampaignsCache } from '../../lib/airtable'
+import { updateCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { CampaignActivityFeed } from './CampaignActivityFeed'
 
 interface Props {

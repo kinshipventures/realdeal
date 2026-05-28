@@ -274,13 +274,15 @@ type ContactInput = Omit<Contact, 'id' | 'created_at'>
 function buildContactInsert(data: ContactInput, userId: string, wsId: string): Record<string, unknown> {
   // New contacts must stay on the approved contact schema; relationship rings are the only internal custom payload.
   const customFields = { relationship_rings: data.ring_ids ?? [] }
+  const providedFirstName = typeof data.first_name === 'string' ? data.first_name.trim() : data.first_name
+  const firstName = providedFirstName || (data.type === 'Contact' ? data.name : null)
   return {
     user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,
     notes: data.notes, recommended_by: data.recommended_by, specialization: data.specialization,
     past_clients: data.past_clients, birthday: data.birthday, milestones: data.milestones,
     interests: data.interests, relationship_context: data.relationship_context,
-    last_contacted_at: data.last_contacted_at, first_name: data.first_name,
+    last_contacted_at: data.last_contacted_at, first_name: firstName,
     last_name: data.last_name, linkedin: data.linkedin, country: data.country,
     global_region: data.global_region, gender: data.gender, introduced_by: data.introduced_by,
     intel_notes: data.intel_notes, relationship_owner: data.relationship_owner,
@@ -404,7 +406,8 @@ export async function deleteContact(id: string): Promise<void> {
     if (idx !== -1) DEMO_CONTACTS.splice(idx, 1)
     return
   }
-  await supabase.from('contacts').delete().eq('id', id)
+  const { error } = await supabase.from('contacts').delete().eq('id', id)
+  if (error) throw error
   if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
 }
 

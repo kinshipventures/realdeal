@@ -165,7 +165,7 @@ export const DEMO_CONTACTS: Contact[] = [
   contact('18', 'Mia Chen', { email: 'mia@cooley.com', company: 'Cooley LLP', role: 'Partner', location: 'Palo Alto', podIds: ['service'], catIds: ['legal'], lastContacted: 30, milestones: 'Handled our Series A docs', first_name: 'Mia', last_name: 'Chen', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Go-to legal counsel. Handled Series A + Fund I docs.', contact_frequency: 'As Needed' }),
   // Friends
   contact('19', 'Gwyneth Paltrow', { email: 'gp@goop.com', company: 'Goop', role: 'Founder', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 2, birthday: futureDate(28), interests: 'Wellness, clean beauty, conscious business', context: 'Close friend. Exploring collab on relationship tools for Goop ecosystem.', first_name: 'Gwyneth', last_name: 'Paltrow', linkedin: 'https://linkedin.com/in/gwynethpaltrow', country: 'United States', global_region: 'AMER', gender: 'Female', intel_notes: 'Close friend. Exploring Goop x Kinship collab on relationship wellness tools.', contact_frequency: 'Weekly', next_follow_up_date: 5, next_action: 'Share app prototype', primary_pod: 'friends', cadence_override: 'weekly', ring_ids: ['trolley', 'global_freedoms'] }),
-  contact('20', 'Briell Santos', { email: 'briell@kinship.vc', company: 'Kinship Ventures', role: 'Operations', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 0, context: 'Right hand. Manages Airtable, contacts, day-to-day ops.', first_name: 'Briell', last_name: 'Santos', country: 'United States', global_region: 'AMER', gender: 'Female', relationship_owner: 'Moj', intel_notes: 'Right hand for everything ops. Manages Airtable and contact data.', contact_frequency: 'Weekly' }),
+  contact('20', 'Briell Santos', { email: 'briell@kinship.vc', company: 'Kinship Ventures', role: 'Operations', location: 'Los Angeles', podIds: ['friends'], catIds: ['inner'], lastContacted: 0, context: 'Right hand. Manages contact data and day-to-day ops.', first_name: 'Briell', last_name: 'Santos', country: 'United States', global_region: 'AMER', gender: 'Female', relationship_owner: 'Moj', intel_notes: 'Right hand for everything ops. Manages contact data.', contact_frequency: 'Weekly' }),
   contact('21', 'Deepak Chopra', { email: 'deepak@chopra.com', company: 'Chopra Global', role: 'Founder', location: 'San Diego', podIds: ['friends'], catIds: ['mentors'], lastContacted: 40, milestones: 'New book launching Q2', interests: 'Consciousness, meditation, quantum healing', first_name: 'Deepak', last_name: 'Chopra', linkedin: 'https://linkedin.com/in/deepakchopra', country: 'United States', global_region: 'AMER', gender: 'Male', intel_notes: 'Mentor figure. New book Q2 — send congrats when it drops.', contact_frequency: 'Quarterly', next_action: 'Reconnect — been too long', needs_review: true }),
   // Company records (type='Company')
   contact('company_1', 'Andreessen Horowitz', { podIds: ['companies'], catIds: ['brand'], type: 'Company', status: 'Active', industry: 'Venture Capital', stage: 'Growth', domain: 'a16z.com', lastContacted: null }),
@@ -230,7 +230,7 @@ export const DEMO_INTERACTIONS: Interaction[] = [
   ix('34', '19', 'call', 9, null!, { summary: 'Discussed wellness x relationships angle for Goop.', source: 'Manual' }),
   ix('35', '19', 'text', 14), ix('36', '19', 'intro', 18, 'Introduced to wellness brand founder', { summary: 'GP introduced us to a wellness brand founder — potential portfolio company.', source: 'Manual' }),
   // Briell — daily
-  ix('37', '20', 'text', 0), ix('38', '20', 'meeting', 1, null!, { summary: 'Daily sync — reviewed Airtable data cleanup progress.', source: 'Granola', granola_link: 'https://granola.ai/notes/demo-38' }),
+  ix('37', '20', 'text', 0), ix('38', '20', 'meeting', 1, null!, { summary: 'Daily sync - reviewed contact data cleanup progress.', source: 'Granola', granola_link: 'https://granola.ai/notes/demo-38' }),
   ix('39', '20', 'call', 2, null!, { summary: 'Quick call about import script issues.', source: 'Manual' }),
   ix('40', '20', 'text', 3),
   // Deepak — fading
@@ -374,7 +374,7 @@ export const DEMO_PROJECTS: Project[] = [
 interface FieldConfigShape {
   id: string
   name: string
-  airtable_field_id: string
+  source_field_id: string
   field_type: 'text' | 'multiline' | 'number' | 'select' | 'date' | 'checkbox'
   scope_type: 'Contact' | 'Company' | 'Both'
   scope_pod_id: string | null
@@ -395,8 +395,8 @@ export const DEMO_COMPANIES: Company[] = [
 ]
 
 export const DEMO_FIELD_CONFIGS: FieldConfigShape[] = [
-  { id: 'demo-fc-1', name: 'Commit Amount', airtable_field_id: 'fld_demo_1', field_type: 'number', scope_type: 'Both', scope_pod_id: 'demo-pod-lps', required: true, display_order: 1 },
-  { id: 'demo-fc-2', name: 'Fund Name', airtable_field_id: 'fld_demo_2', field_type: 'text', scope_type: 'Company', scope_pod_id: 'demo-pod-lps', required: false, display_order: 2 },
-  { id: 'demo-fc-3', name: 'Sector Focus', airtable_field_id: 'fld_demo_3', field_type: 'select', scope_type: 'Both', scope_pod_id: null, required: false, display_order: 3 },
-  { id: 'demo-fc-4', name: 'Notes on Intro', airtable_field_id: 'fld_demo_4', field_type: 'multiline', scope_type: 'Contact', scope_pod_id: null, required: false, display_order: 4 },
+  { id: 'demo-fc-1', name: 'Commit Amount', source_field_id: 'fld_demo_1', field_type: 'number', scope_type: 'Both', scope_pod_id: 'demo-pod-lps', required: true, display_order: 1 },
+  { id: 'demo-fc-2', name: 'Fund Name', source_field_id: 'fld_demo_2', field_type: 'text', scope_type: 'Company', scope_pod_id: 'demo-pod-lps', required: false, display_order: 2 },
+  { id: 'demo-fc-3', name: 'Sector Focus', source_field_id: 'fld_demo_3', field_type: 'select', scope_type: 'Both', scope_pod_id: null, required: false, display_order: 3 },
+  { id: 'demo-fc-4', name: 'Notes on Intro', source_field_id: 'fld_demo_4', field_type: 'multiline', scope_type: 'Contact', scope_pod_id: null, required: false, display_order: 4 },
 ]

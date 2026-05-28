@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, type RefObject } from 'react'
 import type { Contact, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import { getFieldConfigs } from '../../lib/fieldConfig'
-import { getPods, updateContact } from '../../lib/airtable'
+import { getPods, updateContact } from '../../lib/data'
 import { useEscape } from '../../lib/escapeStack'
 import { CategorizationModal } from './CategorizationModal'
 
