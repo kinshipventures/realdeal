@@ -272,10 +272,8 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 function buildContactInsert(data: ContactInput, userId: string, wsId: string): Record<string, unknown> {
-  const customFields = {
-    ...(data.custom_fields ?? {}),
-    relationship_rings: data.ring_ids ?? [],
-  }
+  // New contacts must stay on the approved contact schema; relationship rings are the only internal custom payload.
+  const customFields = { relationship_rings: data.ring_ids ?? [] }
   return {
     user_id: userId, workspace_id: wsId, name: data.name, email: data.email, phone: data.phone,
     company: data.company, role: data.role, location: data.location, website: data.website,

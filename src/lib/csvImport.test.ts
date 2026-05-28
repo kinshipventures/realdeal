@@ -71,6 +71,17 @@ describe('CSV and Excel import parsing', () => {
       'Contact Frequency',
     ])
   })
+
+  it('maps company-oriented headers to the existing Company field', () => {
+    const mapping = detectColumns(['First Name', 'Last Name', 'Company Name', 'Agency'])
+
+    expect(mapping.map(m => m.airtableField)).toEqual([
+      'First Name',
+      'Last Name',
+      'Company',
+      null,
+    ])
+  })
 })
 
 describe('bulk contact import', () => {
@@ -108,6 +119,73 @@ describe('bulk contact import', () => {
       next_action: 'Send LP update',
       import_batch_id: 'batch-test',
       import_source: 'csv',
+    })
+  })
+
+  it('keeps unmapped spreadsheet columns in Notes without creating custom fields', async () => {
+    const parsed = parseCSV('Name,Email,Company,Nickname,Pod\nAlex Rivera,alex@example.com,Rivera Capital,AR,LPs\n')
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Alex Rivera',
+      email: 'alex@example.com',
+      company: 'Rivera Capital',
+      notes: 'Nickname: AR',
+      custom_fields: {},
+    })
+    expect(records[0].custom_fields).not.toHaveProperty('Nickname')
+  })
+
+  it('imports vague rows with fallback names and preserves the source data in Notes', async () => {
+    const parsed = parseCSV('Vague Info,Pod\nMet at a founder dinner and asked for the LP update,LPs\n')
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Imported Contact Row 2',
+      notes: 'Vague Info: Met at a founder dinner and asked for the LP update',
+      list_ids: ['pod-lps'],
+    })
+  })
+
+  it('builds names from first, middle, and last name variants', async () => {
+    const parsed = parseCSV('First Name,Second Name,Last Name,Company Name,Pod\nAna Maria,Luisa,Gomez,Kinship Ventures,LPs\n')
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+
+    await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+    })
+
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Ana Maria Luisa Gomez',
+      first_name: 'Ana Maria',
+      last_name: 'Gomez',
+      company: 'Kinship Ventures',
+      notes: 'Second Name: Luisa',
     })
   })
 

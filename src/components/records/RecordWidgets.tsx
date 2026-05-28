@@ -54,12 +54,11 @@ interface RecordWidgetsProps {
   interactions: Interaction[]
   fieldConfigs: FieldConfig[]
   onUpdate: (data: Partial<Contact>) => void
-  onFieldConfigsRefresh?: (configs: FieldConfig[]) => void
   upcomingBirthday?: { daysUntil: number; date: string } | null
   missingFieldCount?: number
 }
 
-export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpdate, onFieldConfigsRefresh, upcomingBirthday, missingFieldCount }: RecordWidgetsProps) {
+export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpdate, upcomingBirthday, missingFieldCount }: RecordWidgetsProps) {
   const assignedPods = pods.filter(p => contact.list_ids.includes(p.id))
 
   const requiredFieldKeys = useMemo(() => {
@@ -84,7 +83,6 @@ export function RecordWidgets({ contact, pods, interactions, fieldConfigs, onUpd
           contact={contact}
           fieldConfigs={fieldConfigs}
           onUpdate={onUpdate}
-          onFieldConfigsRefresh={onFieldConfigsRefresh}
         />
       ))}
       {(contact.kv_fund_investor?.length || contact.spv_investor?.length) ? (

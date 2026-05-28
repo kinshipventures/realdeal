@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { Download, FileSpreadsheet, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/airtable'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
@@ -263,6 +264,7 @@ export function RecordsList() {
   const [showSaveInput, setShowSaveInput] = useState(false)
 
   const [showCreate, setShowCreate] = useState(false)
+  const [showCreateMenu, setShowCreateMenu] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
@@ -280,6 +282,7 @@ export function RecordsList() {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
 
   const moreRef = useRef<HTMLDivElement>(null)
+  const createMenuRef = useRef<HTMLDivElement>(null)
 
   // Load data
   useEffect(() => {
@@ -331,6 +334,9 @@ export function RecordsList() {
       }
       if (fieldUpdateRef.current && !fieldUpdateRef.current.contains(e.target as Node)) {
         setShowFieldUpdate(false)
+      }
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setShowCreateMenu(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -625,6 +631,13 @@ export function RecordsList() {
     a.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  function downloadImportTemplate() {
+    const a = document.createElement('a')
+    a.href = '/templates/realdeal-contact-import-template.xlsx'
+    a.download = 'realdeal-contact-import-template.xlsx'
+    a.click()
   }
 
   async function handleCopyToClipboard(rows: Contact[]) {
@@ -1617,21 +1630,53 @@ export function RecordsList() {
 
       {/* Create FAB */}
       {activeView === 'people' && (
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          aria-label="Add contact"
-          style={{
-            position: 'fixed', bottom: 88, right: 20, zIndex: 200,
-            width: 48, height: 48, borderRadius: '50%',
-            background: 'var(--color-brand)', border: 'none',
-            color: '#fff', fontSize: 24, fontWeight: 300,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.24)',
-          }}
-        >
-          +
-        </button>
+        <div ref={createMenuRef} style={{ position: 'fixed', bottom: 88, right: 20, zIndex: 200 }}>
+          {showCreateMenu && (
+            <div className="records-dropdown" style={{ ...dropdownStyle, position: 'absolute', top: 'auto', bottom: 56, right: 0, left: 'auto', minWidth: 230 }}>
+              <button
+                type="button"
+                onClick={() => { setShowCreate(true); setShowCreateMenu(false) }}
+                style={{ ...dropdownButtonStyle, gap: 10 }}
+              >
+                <UserPlus size={16} />
+                Add contact manually
+              </button>
+              <button
+                type="button"
+                onClick={() => { navigate('/import'); setShowCreateMenu(false) }}
+                style={{ ...dropdownButtonStyle, gap: 10 }}
+              >
+                <FileSpreadsheet size={16} />
+                Upload Excel or CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => { downloadImportTemplate(); setShowCreateMenu(false) }}
+                style={{ ...dropdownButtonStyle, gap: 10 }}
+              >
+                <Download size={16} />
+                Download Excel template
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowCreateMenu(v => !v)}
+            aria-label="Open contact actions"
+            aria-expanded={showCreateMenu}
+            style={{
+              width: 48, height: 48, borderRadius: '50%',
+              background: 'var(--color-brand)', border: 'none',
+              color: '#fff', fontSize: 24, fontWeight: 300,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.24)',
+              transform: showCreateMenu ? 'rotate(45deg)' : 'rotate(0deg)',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+          >
+            +
+          </button>
+        </div>
       )}
 
       <CreateRecordModal

@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client'
-import { getActiveWorkspaceId } from './workspace'
 import type { RelationshipType } from './types'
 import { isDemoMode, DEMO_FIELD_CONFIGS } from './sampleData'
 
@@ -78,12 +77,6 @@ export function invalidateFieldConfigCache() {
   _fieldConfigCache = null
 }
 
-async function getUserId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-  return user.id
-}
-
 export async function createCustomField(spec: {
   name: string
   field_type: FieldConfig['field_type']
@@ -92,18 +85,6 @@ export async function createCustomField(spec: {
   required: boolean
   display_order: number
 }): Promise<FieldConfig> {
-  const userId = await getUserId()
-  const { data: row, error } = await supabase.from('field_config').insert({
-    user_id: userId,
-    workspace_id: getActiveWorkspaceId(),
-    name: spec.name,
-    field_type: spec.field_type,
-    scope_type: spec.scope_type,
-    scope_pod_id: spec.scope_pod_id,
-    required: spec.required,
-    display_order: spec.display_order,
-  }).select().single()
-  if (error) throw error
-  invalidateFieldConfigCache()
-  return mapFieldConfig(row)
+  void spec
+  throw new Error('Custom field creation is disabled. Use an existing standard field or request an approved schema change.')
 }

@@ -238,7 +238,6 @@ export function RecordPage() {
             interactions={interactions}
             fieldConfigs={fieldConfigs}
             onUpdate={handleUpdate}
-            onFieldConfigsRefresh={setFieldConfigs}
             upcomingBirthday={upcomingBirthday}
             missingFieldCount={missingFieldCount}
           />

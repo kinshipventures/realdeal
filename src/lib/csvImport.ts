@@ -65,12 +65,14 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'contact name': 'Name',
   'person': 'Name',
   'relationship': 'Name',
-  'agency': 'Name',
-  'company name': 'Name',
+  'agency': 'Company',
+  'company name': 'Company',
   'first name': 'First Name',
   'given name': 'First Name',
   'first': 'First Name',
   'firstname': 'First Name',
+  'given': 'First Name',
+  'forename': 'First Name',
   'last name': 'Last Name',
   'family name': 'Last Name',
   'surname': 'Last Name',
@@ -82,6 +84,8 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'email address': 'Email',
   'e mail': 'Email',
   'e mail address': 'Email',
+  'mail': 'Email',
+  'primary mail': 'Email',
   'primary email': 'Email',
   'email 1': 'Email',
   'email 1 value': 'Email',
@@ -96,6 +100,8 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'mobile phone': 'Phone',
   'cell': 'Phone',
   'cell phone': 'Phone',
+  'whatsapp': 'Phone',
+  'whatsapp number': 'Phone',
   'telephone': 'Phone',
   'contact info': 'Phone',
   'phone 1 value': 'Phone',
@@ -105,15 +111,22 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   // Company and role
   'company': 'Company',
   'organization': 'Company',
+  'organisation': 'Company',
+  'org': 'Company',
   'organization 1 name': 'Company',
   'employer': 'Company',
   'firm': 'Company',
+  'business': 'Company',
+  'account': 'Company',
   'account name': 'Company',
   'company organization': 'Company',
   'role': 'Role',
   'title': 'Role',
   'job title': 'Role',
+  'job': 'Role',
+  'occupation': 'Role',
   'position': 'Role',
+  'function': 'Role',
   'organization 1 title': 'Role',
   'designation': 'Role',
 
@@ -121,6 +134,9 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'location': 'Location',
   'city': 'Location',
   'address': 'Location',
+  'region': 'Location',
+  'state': 'Location',
+  'province': 'Location',
   'city town': 'Location',
   'home city': 'Location',
   'work city': 'Location',
@@ -132,12 +148,16 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   // Web
   'website': 'Website',
   'url': 'Website',
+  'site': 'Website',
+  'web site': 'Website',
   'web page': 'Website',
+  'company website': 'Website',
   'website 1 value': 'Website',
   'personal website': 'Website',
   'blog': 'Website',
   'linkedin': 'LinkedIn',
   'linkedin url': 'LinkedIn',
+  'linkedin link': 'LinkedIn',
   'linkedin profile': 'LinkedIn',
   'linkedin profile url': 'LinkedIn',
 
@@ -146,12 +166,20 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'note': 'Notes',
   'description': 'Notes',
   'comments': 'Notes',
+  'details': 'Notes',
+  'background': 'Notes',
+  'summary': 'Notes',
+  'extra info': 'Notes',
   'bio': 'Notes',
   'relationship context': 'Relationship Context',
   'relationship notes': 'Relationship Context',
+  'relationship summary': 'Relationship Context',
+  'why they matter': 'Relationship Context',
   'context': 'Relationship Context',
   'intel notes': 'Intel Notes',
   'intel': 'Intel Notes',
+  'research': 'Intel Notes',
+  'signals': 'Intel Notes',
   'relationship owner': 'Relationship Owner',
   'owner': 'Relationship Owner',
   'introduced by': 'Introduced By',
@@ -170,14 +198,23 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'last contact': 'Last Contacted',
   'last touch': 'Last Contacted',
   'last interaction': 'Last Contacted',
+  'last meeting': 'Last Contacted',
+  'last talked': 'Last Contacted',
+  'last reached out': 'Last Contacted',
   'last contacted at': 'Last Contacted',
   'next follow up': 'Next Follow Up Date',
+  'next follow-up': 'Next Follow Up Date',
   'next follow up date': 'Next Follow Up Date',
+  'next follow-up date': 'Next Follow Up Date',
   'follow up date': 'Next Follow Up Date',
   'next action': 'Next Action',
   'recommended next action': 'Next Action',
+  'action': 'Next Action',
+  'todo': 'Next Action',
+  'to do': 'Next Action',
   'contact frequency': 'Contact Frequency',
   'frequency': 'Contact Frequency',
+  'rhythm': 'Contact Frequency',
   'cadence': 'Contact Frequency',
   'cadence override': 'Cadence Override',
 
@@ -444,6 +481,56 @@ export function normalize(s: string): string {
     .trim()
 }
 
+const MIDDLE_NAME_ALIASES = new Set([
+  'middle',
+  'middle name',
+  'second name',
+  'second given name',
+  'additional name',
+  'other name',
+])
+
+function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string): string | null {
+  return mapping?.find(m => m.csvHeader === csvHeader)?.airtableField ?? null
+}
+
+function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): string {
+  for (const [header, rawValue] of Object.entries(row)) {
+    if (mappingForHeader(mapping, header)) continue
+    if (!aliases.has(normalize(header))) continue
+    const value = rawValue.trim()
+    if (value) return value
+  }
+  return ''
+}
+
+function collectUnmappedNotes(row: Record<string, string>, mapping: ColumnMapping | undefined): string[] {
+  if (!mapping) return []
+  return Object.entries(row).flatMap(([header, rawValue]) => {
+    const value = rawValue.trim()
+    if (!value || mappingForHeader(mapping, header)) return []
+    return [`${header}: ${value}`]
+  })
+}
+
+function combineNotes(primary: string, extraLines: string[]): string | null {
+  const parts = [primary.trim(), ...extraLines].filter(Boolean)
+  return parts.length > 0 ? parts.join('\n') : null
+}
+
+function fallbackName(row: Record<string, string>, mapping: ColumnMapping | undefined, type: RelationshipType, rowNumber: number): string {
+  const email = mapping ? resolve(row, mapping, 'Email') : (row['Email'] ?? '').trim()
+  if (email) return email
+
+  const company = mapping ? resolve(row, mapping, 'Company') : ((row['Company'] ?? row['Company Name'] ?? row['Agency'] ?? '') as string).trim()
+  if (company) return type === 'Company' ? company : `Contact at ${company}`
+
+  const phone = mapping ? resolve(row, mapping, 'Phone') : ((row['Phone'] ?? row['Contact Info'] ?? '') as string).trim()
+  if (phone) return phone
+
+  return `${type === 'Company' ? 'Imported Company' : 'Imported Contact'} Row ${rowNumber}`
+}
+
 export function splitMultiValue(value: string): string[] {
   return value
     .split(/[;,|\n]+/)
@@ -482,8 +569,9 @@ function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: 
     if (companyName) return companyName
   }
   const first = resolve(row, mapping, 'First Name')
+  const middle = resolveUnmappedAlias(row, mapping, MIDDLE_NAME_ALIASES)
   const last = resolve(row, mapping, 'Last Name')
-  return [first, last].filter(Boolean).join(' ')
+  return [first, middle, last].filter(Boolean).join(' ')
 }
 
 function normalizeDate(value: string): string | null {
@@ -641,7 +729,6 @@ export async function importContacts(
     type?: RelationshipType
     podIds?: string[]
     mapping?: ColumnMapping
-    customFieldMap?: Record<string, string>
     categoryMap?: Map<string, string>
     podMap?: Map<string, string>
     batchId?: string
@@ -651,7 +738,6 @@ export async function importContacts(
   const recordType: RelationshipType = options?.type ?? 'Contact'
   const fallbackPodIds: string[] = options?.podIds?.length ? options.podIds : [podId].filter(Boolean)
   const mapping = options?.mapping
-  const customFieldMap = options?.customFieldMap ?? {}
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
   const podMap = options?.podMap ?? new Map<string, string>()
   const batchId = options?.batchId ?? null
@@ -681,24 +767,20 @@ export async function importContacts(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
-    const name = mapping
+    const resolvedName = mapping
       ? resolveName(row, mapping, recordType)
       : (recordType === 'Company'
         ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
         : (row['Name'] ?? row['Agency'] ?? '')
       ).trim()
-
-    if (!name) {
-      skipped++
-      onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
-      continue
-    }
+    const nameWasFallback = !resolvedName
+    const name = resolvedName || fallbackName(row, mapping, recordType, i + 2)
 
     const email = r(row, 'Email', 'Email')
     const nameLower = name.toLowerCase().trim()
     const emailLower = email.toLowerCase()
 
-    if ((emailLower && emailIndex.has(emailLower)) || nameIndex.has(nameLower)) {
+    if ((emailLower && emailIndex.has(emailLower)) || (!nameWasFallback && nameIndex.has(nameLower))) {
       skipped++
       onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
       continue
@@ -712,14 +794,7 @@ export async function importContacts(
     const birthday = normalizeDate(r(row, 'Birthday', 'Birthday'))
     const lastContacted = normalizeDate(r(row, 'Last Contacted', 'Last Contacted'))
     const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))
-
-    const customFields: Record<string, unknown> = {}
-    if (mapping) {
-      for (const [csvHeader, fieldId] of Object.entries(customFieldMap)) {
-        const value = (row[csvHeader] ?? '').trim()
-        if (value) customFields[fieldId] = value
-      }
-    }
+    const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping))
 
     const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
     const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
@@ -734,7 +809,7 @@ export async function importContacts(
       role: r(row, 'Role', 'Role') || null,
       location: r(row, 'Location', 'Location') || null,
       website: r(row, 'Website', 'Website') || null,
-      notes: r(row, 'Notes', 'Notes') || null,
+      notes,
       recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
       specialization: r(row, 'Specialization', 'Specialization') || null,
       past_clients: r(row, 'Past Clients', 'Past Clients') || null,
@@ -771,7 +846,7 @@ export async function importContacts(
       email_2: r(row, 'Email 2', 'Email 2') || null,
       email_3: r(row, 'Email 3', 'Email 3') || null,
       communication_preferences: null,
-      custom_fields: customFields,
+      custom_fields: {},
       ring_ids: [],
       photo_url: null,
       snoozed_until: null,
@@ -781,7 +856,7 @@ export async function importContacts(
 
     toCreate.push({ rowNumber: i + 2, name, email, contact })
     if (emailLower) emailIndex.set(emailLower, 'pending')
-    nameIndex.set(nameLower, 'pending')
+    if (!nameWasFallback) nameIndex.set(nameLower, 'pending')
   }
 
   const total = rows.length
