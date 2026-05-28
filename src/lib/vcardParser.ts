@@ -128,10 +128,9 @@ export function parseVCard(content: string): VCardContact[] {
 
 /** Convert vCard contacts to the CSV-like row format used by importContacts. */
 export function vcardToRows(contacts: VCardContact[]): { headers: string[]; rows: Record<string, string>[] } {
-  const headers = ['Name', 'First Name', 'Last Name', 'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Birthday', 'Notes', 'LinkedIn']
+  const headers = ['First Name', 'Last Name', 'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role', 'Location', 'Website', 'Birthday', 'Notes', 'LinkedIn']
   const rows = contacts.map(c => ({
-    'Name': c.name,
-    'First Name': c.firstName || '',
+    'First Name': c.firstName || c.name,
     'Last Name': c.lastName || '',
     'Email': c.email || '',
     'Email 2': c.email2 || '',

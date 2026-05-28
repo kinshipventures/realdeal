@@ -387,7 +387,7 @@ export function ImportPanel() {
 
   const missingNameCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, safeColumnMapping) : 0
   const readyCount = parsedRows.length
-  const hasNameMapping = safeColumnMapping.some(m => m.targetField === 'Name' || m.targetField === 'First Name')
+  const hasNameMapping = safeColumnMapping.some(m => m.targetField === 'First Name')
   const hasPodMapping = safeColumnMapping.some(m => m.targetField === 'Pod')
   const canImport = readyCount > 0 && (selectedPodIds.length > 0 || hasPodMapping)
 

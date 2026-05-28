@@ -50,7 +50,6 @@ describe('CSV and Excel import parsing', () => {
     const parsed = await parseWorkbookBuffer(buffer)
 
     expect(parsed.headers.slice(0, 10)).toEqual([
-      'Name',
       'First Name',
       'Last Name',
       'Email',
@@ -60,14 +59,16 @@ describe('CSV and Excel import parsing', () => {
       'Pod',
       'Sub-pod',
       'Contact Frequency',
+      'Last Contacted',
     ])
+    expect(parsed.headers).not.toContain('Name')
   })
 
   it('detects human relationship columns from flexible headers', () => {
     const mapping = detectColumns(['Full Name', 'Relationship Pod', 'Sub Pod', 'Last Interaction', 'Cadence'])
 
     expect(mapping.map(m => m.targetField)).toEqual([
-      'Name',
+      'First Name',
       'Pod',
       'Sub-pod',
       'Last Contacted',
@@ -86,6 +87,16 @@ describe('CSV and Excel import parsing', () => {
     ])
   })
 
+  it('prefers exact first-name columns over generic name aliases', () => {
+    const mapping = detectColumns(['Name', 'First Name', 'Company Name'])
+
+    expect(mapping.map(m => m.targetField)).toEqual([
+      null,
+      'First Name',
+      'Company',
+    ])
+  })
+
   it('normalizes malformed mappings to existing standard fields only', () => {
     const mapping = normalizeColumnMapping([
       undefined,
@@ -98,7 +109,7 @@ describe('CSV and Excel import parsing', () => {
     ] as any)
 
     expect(mapping).toEqual([
-      { csvHeader: 'Name', targetField: 'Name' },
+      { csvHeader: 'Name', targetField: 'First Name' },
       { csvHeader: 'Random Notes', targetField: null },
       { csvHeader: 'Company Name', targetField: 'Company' },
       { csvHeader: 'Agency', targetField: null },
@@ -213,6 +224,7 @@ describe('bulk contact import', () => {
     const [records] = mockedCreateContactsBulk.mock.calls[0]
     expect(records[0]).toMatchObject({
       name: 'Morgan Lee',
+      first_name: 'Morgan Lee',
       email: 'morgan@example.com',
       notes: 'Random Notes: Met through the annual summit',
       custom_fields: {},

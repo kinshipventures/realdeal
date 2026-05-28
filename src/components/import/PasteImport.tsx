@@ -45,7 +45,7 @@ export function PasteImport({ onParsed, onBack }: Props) {
       <textarea
         value={text}
         onChange={e => setText(e.target.value)}
-        placeholder={"Name\tEmail\tCompany\tRole\nJane Doe\tjane@example.com\tAcme Inc\tCEO\nJohn Smith\tjohn@example.com\tGlobex\tCTO"}
+        placeholder={"First Name\tLast Name\tEmail\tCompany\tRole\nJane\tDoe\tjane@example.com\tAcme Inc\tCEO\nJohn\tSmith\tjohn@example.com\tGlobex\tCTO"}
         style={{
           width: '100%', minHeight: 200, padding: '12px 14px', borderRadius: 8,
           border: '1px solid var(--edge-strong)', background: 'var(--color-surface)',

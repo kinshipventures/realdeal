@@ -19,7 +19,7 @@ export type RowWarning = {
 
 export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
-  'Name', 'First Name', 'Last Name',
+  'First Name', 'Last Name',
   'Email', 'Phone', 'Company', 'Role', 'Location',
   'Website', 'LinkedIn', 'Notes', 'Birthday',
   'Industry', 'Domain', 'Stage', 'Ticker',
@@ -60,12 +60,12 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'categories': 'Sub-pod',
 
   // Name
-  'name': 'Name',
-  'full name': 'Name',
-  'display name': 'Name',
-  'contact name': 'Name',
-  'person': 'Name',
-  'relationship': 'Name',
+  'name': 'First Name',
+  'full name': 'First Name',
+  'display name': 'First Name',
+  'contact name': 'First Name',
+  'person': 'First Name',
+  'relationship': 'First Name',
   'agency': 'Company',
   'company name': 'Company',
   'first name': 'First Name',
@@ -494,12 +494,8 @@ export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined
     if (!csvHeader) return []
 
     const rawField = (item as Partial<ColumnMapping[number]>).targetField
-    const targetField =
-      typeof rawField === 'string'
-      && TARGET_FIELD_SET.has(rawField)
-      && !usedTargets.has(rawField)
-        ? rawField
-        : null
+    const coercedField = coerceTargetField(rawField)
+    const targetField = coercedField && !usedTargets.has(coercedField) ? coercedField : null
 
     if (targetField) usedTargets.add(targetField)
     return [{ csvHeader, targetField }]
@@ -514,6 +510,13 @@ const MIDDLE_NAME_ALIASES = new Set([
   'additional name',
   'other name',
 ])
+
+function coerceTargetField(rawField: unknown): TargetField | null {
+  if (typeof rawField !== 'string') return null
+  const trimmed = rawField.trim()
+  if (trimmed === 'Name') return 'First Name'
+  return TARGET_FIELD_SET.has(trimmed) ? trimmed as TargetField : null
+}
 
 function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string): string | null {
   return normalizeColumnMapping(mapping).find(m => m.csvHeader === csvHeader)?.targetField ?? null
@@ -564,17 +567,28 @@ export function splitMultiValue(value: string): string[] {
 }
 
 export function detectColumns(headers: string[]): ColumnMapping {
-  const used = new Set<string>()
-  return headers.map(rawHeader => {
+  const candidates = headers.map(rawHeader => {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
     const norm = normalize(csvHeader)
     const match = KNOWN_ALIASES[norm] ?? null
-    if (match && used.has(match)) {
-      return { csvHeader, targetField: null }
-    }
-    if (match) used.add(match)
-    return { csvHeader, targetField: match }
+    const normalizedMatch = normalize(match)
+    const priority = norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0
+    return { csvHeader, targetField: match, priority }
   })
+
+  const chosen = new Map<TargetField, number>()
+  candidates.forEach((candidate, index) => {
+    if (!candidate.targetField) return
+    const existingIndex = chosen.get(candidate.targetField)
+    if (existingIndex === undefined || candidate.priority > candidates[existingIndex].priority) {
+      chosen.set(candidate.targetField, index)
+    }
+  })
+
+  return candidates.map((candidate, index) => ({
+    csvHeader: candidate.csvHeader,
+    targetField: candidate.targetField && chosen.get(candidate.targetField) === index ? candidate.targetField : null,
+  }))
 }
 
 function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
@@ -588,8 +602,6 @@ export function resolveMappedValue(row: Record<string, string>, mapping: ColumnM
 }
 
 function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: RelationshipType): string {
-  const direct = resolve(row, mapping, 'Name')
-  if (direct) return direct
   if (type === 'Company') {
     const companyName = resolve(row, mapping, 'Company')
     if (companyName) return companyName
@@ -815,8 +827,7 @@ export async function importContacts(
       continue
     }
 
-    const nameField = mapping ? resolve(row, mapping, 'Name') : ((row['Name'] ?? '') as string).trim()
-    const firstName = mapping ? resolve(row, mapping, 'First Name') : ((row['First Name'] ?? '') as string).trim()
+    const firstName = mapping ? resolve(row, mapping, 'First Name') : ((row['First Name'] ?? row['Name'] ?? '') as string).trim()
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
     const rowPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
     const primaryPodId = rowPodIds[0] ?? null
@@ -856,7 +867,7 @@ export async function importContacts(
       list_ids: rowPodIds,
       category_ids: categoryIds,
       primary_list_id: primaryPodId,
-      first_name: (firstName || (recordType === 'Contact' ? nameField : '')) || null,
+      first_name: firstName || null,
       last_name: lastName || null,
       country: r(row, 'Country', 'Country') || null,
       global_region: null,
