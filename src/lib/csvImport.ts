@@ -36,6 +36,7 @@ export const TARGET_FIELDS = [
 type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
+const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
 const BULK_INSERT_CHUNK_SIZE = 100
 
 const KNOWN_ALIASES: Record<string, TargetField> = {
@@ -472,13 +473,37 @@ export async function parseImportFile(file: File): Promise<ParsedCSV> {
   return parseCSV(await file.text())
 }
 
-export function normalize(s: string): string {
-  return s
+export function normalize(s: unknown): string {
+  return String(s ?? '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+}
+
+export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined): ColumnMapping {
+  if (!Array.isArray(mapping)) return []
+
+  const usedTargets = new Set<string>()
+  return mapping.flatMap(item => {
+    if (!item || typeof item !== 'object') return []
+
+    const rawHeader = (item as Partial<ColumnMapping[number]>).csvHeader
+    const csvHeader = typeof rawHeader === 'string' ? rawHeader.trim() : String(rawHeader ?? '').trim()
+    if (!csvHeader) return []
+
+    const rawField = (item as Partial<ColumnMapping[number]>).airtableField
+    const airtableField =
+      typeof rawField === 'string'
+      && TARGET_FIELD_SET.has(rawField)
+      && !usedTargets.has(rawField)
+        ? rawField
+        : null
+
+    if (airtableField) usedTargets.add(airtableField)
+    return [{ csvHeader, airtableField }]
+  })
 }
 
 const MIDDLE_NAME_ALIASES = new Set([
@@ -491,7 +516,7 @@ const MIDDLE_NAME_ALIASES = new Set([
 ])
 
 function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string): string | null {
-  return mapping?.find(m => m.csvHeader === csvHeader)?.airtableField ?? null
+  return normalizeColumnMapping(mapping).find(m => m.csvHeader === csvHeader)?.airtableField ?? null
 }
 
 function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): string {
@@ -540,7 +565,8 @@ export function splitMultiValue(value: string): string[] {
 
 export function detectColumns(headers: string[]): ColumnMapping {
   const used = new Set<string>()
-  return headers.map(csvHeader => {
+  return headers.map(rawHeader => {
+    const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
     const norm = normalize(csvHeader)
     const match = KNOWN_ALIASES[norm] ?? null
     if (match && used.has(match)) {
@@ -552,7 +578,7 @@ export function detectColumns(headers: string[]): ColumnMapping {
 }
 
 function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
-  const col = mapping.find(m => m.airtableField === target)
+  const col = normalizeColumnMapping(mapping).find(m => m.airtableField === target)
   if (!col) return ''
   return (row[col.csvHeader] ?? '').trim()
 }
@@ -633,16 +659,17 @@ export function getRowWarnings(
   const warnings: RowWarning[] = []
   const seenEmails = new Set<string>()
   const seenNames = new Set<string>()
+  const safeMapping = normalizeColumnMapping(mapping)
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
-    const name = resolveName(row, mapping, 'Contact')
+    const name = resolveName(row, safeMapping, 'Contact')
     if (!name) {
       warnings.push({ rowIndex: i, kind: 'missing_name' })
       continue
     }
 
-    const email = resolve(row, mapping, 'Email')
+    const email = resolve(row, safeMapping, 'Email')
     const nameLower = name.toLowerCase().trim()
     const emailLower = email.toLowerCase()
 
@@ -659,7 +686,7 @@ export function getRowWarnings(
     seenNames.add(nameLower)
 
     for (const dateField of ['Birthday', 'Last Contacted', 'Next Follow Up Date']) {
-      const dateValue = resolve(row, mapping, dateField)
+      const dateValue = resolve(row, safeMapping, dateField)
       if (dateValue && !normalizeDate(dateValue)) {
         warnings.push({ rowIndex: i, kind: 'bad_date', detail: `${dateField}: ${dateValue}` })
       }
@@ -673,13 +700,14 @@ export function countInvalidRows(
   type: RelationshipType,
   mapping?: ColumnMapping
 ): number {
-  if (!mapping) {
+  const safeMapping = normalizeColumnMapping(mapping)
+  if (safeMapping.length === 0) {
     return rows.filter(row => {
       const name = (row['Name'] ?? row['Agency'] ?? row['Company Name'] ?? '').trim()
       return !name
     }).length
   }
-  return rows.filter(row => !resolveName(row, mapping, type)).length
+  return rows.filter(row => !resolveName(row, safeMapping, type)).length
 }
 
 function unique(values: string[]): string[] {
@@ -692,7 +720,7 @@ function resolvePodIds(
   fallbackPodIds: string[],
   podMap: Map<string, string>,
 ): string[] {
-  if (!mapping) return fallbackPodIds
+  if (!mapping || mapping.length === 0) return fallbackPodIds
   const podValue = resolve(row, mapping, 'Pod')
   const mappedPodIds = splitMultiValue(podValue)
     .map(podName => podMap.get(normalize(podName)))
@@ -706,7 +734,7 @@ function resolveCategoryIds(
   primaryPodId: string | null,
   categoryMap: Map<string, string>,
 ): string[] {
-  if (!mapping || !primaryPodId) return []
+  if (!mapping || mapping.length === 0 || !primaryPodId) return []
   const categoryValue = resolve(row, mapping, 'Sub-pod') || resolve(row, mapping, '_category')
   return splitMultiValue(categoryValue)
     .map(categoryName =>
@@ -737,7 +765,8 @@ export async function importContacts(
 ): Promise<ImportResult> {
   const recordType: RelationshipType = options?.type ?? 'Contact'
   const fallbackPodIds: string[] = options?.podIds?.length ? options.podIds : [podId].filter(Boolean)
-  const mapping = options?.mapping
+  const safeMapping = normalizeColumnMapping(options?.mapping)
+  const mapping = safeMapping.length > 0 ? safeMapping : undefined
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
   const podMap = options?.podMap ?? new Map<string, string>()
   const batchId = options?.batchId ?? null

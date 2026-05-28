@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, getContacts, getCategories, createCategory, createPod, invalidateContactsCache } from '../../lib/airtable'
-import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, TARGET_FIELDS, resolveMappedValue, splitMultiValue } from '../../lib/csvImport'
+import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS, resolveMappedValue, splitMultiValue } from '../../lib/csvImport'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
@@ -98,6 +98,7 @@ export function ImportPanel() {
   const [existingContacts, setExistingContacts] = useState<Contact[]>([])
   const [rowWarnings, setRowWarnings] = useState<RowWarning[]>([])
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>([])
+  const safeColumnMapping = useMemo(() => normalizeColumnMapping(columnMapping), [columnMapping])
 
   // Batch undo state
   const [batchId, setBatchId] = useState<string | null>(null)
@@ -113,7 +114,7 @@ export function ImportPanel() {
 
   useEffect(() => {
     if (parsedHeaders.length > 0) {
-      const detected = detectColumns(parsedHeaders)
+      const detected = normalizeColumnMapping(detectColumns(parsedHeaders))
       // For LinkedIn, verify it matched LinkedIn-specific fields
       if (importSource === 'linkedin') {
         const hasLinkedInFields = detected.some(m =>
@@ -131,15 +132,15 @@ export function ImportPanel() {
   }, [])
 
   useEffect(() => {
-    if (parsedRows.length === 0 || columnMapping.length === 0) return
+    if (parsedRows.length === 0 || safeColumnMapping.length === 0) return
     const emailIdx = new Map<string, string>()
     const nameIdx = new Map<string, string>()
     for (const c of existingContacts) {
       if (c.email) emailIdx.set(c.email.toLowerCase(), c.id)
       if (c.name) nameIdx.set(c.name.toLowerCase().trim(), c.id)
     }
-    setRowWarnings(getRowWarnings(parsedRows, columnMapping, emailIdx, nameIdx))
-  }, [parsedRows, columnMapping, existingContacts])
+    setRowWarnings(getRowWarnings(parsedRows, safeColumnMapping, emailIdx, nameIdx))
+  }, [parsedRows, safeColumnMapping, existingContacts])
 
   function togglePod(id: string) {
     setSelectedPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
@@ -246,7 +247,7 @@ export function ImportPanel() {
 
   // ---- Import ----
   async function handleImport() {
-    const hasPodMapping = columnMapping.some(m => m.airtableField === 'Pod')
+    const hasPodMapping = safeColumnMapping.some(m => m.airtableField === 'Pod')
     if (selectedPodIds.length === 0 && !hasPodMapping) return
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
@@ -261,11 +262,11 @@ export function ImportPanel() {
       podMap.set(normalize(pod.name), pod.id)
     }
 
-    const podCol = columnMapping.find(m => m.airtableField === 'Pod')
+    const podCol = safeColumnMapping.find(m => m.airtableField === 'Pod')
     if (podCol) {
       const distinctPodNames = new Set<string>()
       for (const row of parsedRows) {
-        for (const podName of splitMultiValue(resolveMappedValue(row, columnMapping, 'Pod'))) {
+        for (const podName of splitMultiValue(resolveMappedValue(row, safeColumnMapping, 'Pod'))) {
           distinctPodNames.add(podName)
         }
       }
@@ -289,10 +290,10 @@ export function ImportPanel() {
       categoryMap.set(normalize(cat.name), cat.id)
     }
 
-    const subPodCol = columnMapping.find(m => m.airtableField === 'Sub-pod' || m.airtableField === '_category')
+    const subPodCol = safeColumnMapping.find(m => m.airtableField === 'Sub-pod' || m.airtableField === '_category')
     if (subPodCol) {
       for (const row of parsedRows) {
-        const rowPodIds = splitMultiValue(resolveMappedValue(row, columnMapping, 'Pod'))
+        const rowPodIds = splitMultiValue(resolveMappedValue(row, safeColumnMapping, 'Pod'))
           .map(podName => podMap.get(normalize(podName)))
           .filter(Boolean) as string[]
         const primaryPodId = rowPodIds[0] ?? selectedPodIds[0]
@@ -314,7 +315,7 @@ export function ImportPanel() {
     const res = await importContacts(
       parsedRows, selectedPodIds[0], (p) => setProgress(p),
       {
-        type: recordType, podIds: selectedPodIds, mapping: columnMapping,
+        type: recordType, podIds: selectedPodIds, mapping: safeColumnMapping,
         categoryMap, podMap,
         batchId: newBatchId, importSource,
       }
@@ -372,18 +373,18 @@ export function ImportPanel() {
   }
 
   function updateMapping(csvHeader: string, targetField: string | null) {
-    setColumnMapping(prev => prev.map(m =>
+    setColumnMapping(prev => normalizeColumnMapping(prev).map(m =>
       m.csvHeader === csvHeader ? { ...m, airtableField: targetField } : m
     ))
   }
 
-  const missingNameCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, columnMapping) : 0
+  const missingNameCount = parsedRows.length > 0 ? countInvalidRows(parsedRows, recordType, safeColumnMapping) : 0
   const readyCount = parsedRows.length
-  const hasNameMapping = columnMapping.some(m => m.airtableField === 'Name' || m.airtableField === 'First Name')
-  const hasPodMapping = columnMapping.some(m => m.airtableField === 'Pod')
+  const hasNameMapping = safeColumnMapping.some(m => m.airtableField === 'Name' || m.airtableField === 'First Name')
+  const hasPodMapping = safeColumnMapping.some(m => m.airtableField === 'Pod')
   const canImport = readyCount > 0 && (selectedPodIds.length > 0 || hasPodMapping)
 
-  const unmatchedColumns = columnMapping.filter(m => m.airtableField === null)
+  const unmatchedColumns = safeColumnMapping.filter(m => m.airtableField === null)
   const stepNumber = state === 'source' ? 1 : state === 'preview' ? 2 : 3
   const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
   const remaining = progress ? (progress.total - progress.current) : 0
@@ -546,7 +547,7 @@ export function ImportPanel() {
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 8px' }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>Column mapping</p>
                 <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
-                  {columnMapping.filter(m => m.airtableField !== null).length} of {columnMapping.length} mapped
+                  {safeColumnMapping.filter(m => m.airtableField !== null).length} of {safeColumnMapping.length} mapped
                 </p>
               </div>
               <div style={{ background: 'var(--color-surface)', border: '1px solid var(--edge)', borderRadius: 8, overflow: 'hidden' }}>
@@ -557,14 +558,14 @@ export function ImportPanel() {
                 }}>
                   <span>Your column</span><span /><span>Maps to</span>
                 </div>
-                {columnMapping.map(({ csvHeader, airtableField }, idx) => {
+                {safeColumnMapping.map(({ csvHeader, airtableField }, idx) => {
                   const matched = !!airtableField
                   const preview = parsedRows[0]?.[csvHeader] ?? ''
-                  const usedTargets = new Set(columnMapping.filter(m => m.csvHeader !== csvHeader && m.airtableField).map(m => m.airtableField))
+                  const usedTargets = new Set(safeColumnMapping.filter(m => m.csvHeader !== csvHeader && m.airtableField).map(m => m.airtableField))
                   return (
                     <div key={csvHeader} style={{
                       display: 'grid', gridTemplateColumns: '1fr 24px 1fr', alignItems: 'center',
-                      padding: '8px 12px', borderBottom: idx < columnMapping.length - 1 ? '1px solid var(--divider)' : 'none', fontSize: 13,
+                      padding: '8px 12px', borderBottom: idx < safeColumnMapping.length - 1 ? '1px solid var(--divider)' : 'none', fontSize: 13,
                     }}>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{csvHeader}</div>

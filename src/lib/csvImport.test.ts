@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { createContactsBulk, getContacts } from './airtable'
 import {
+  countInvalidRows,
   detectColumns,
+  getRowWarnings,
   importContacts,
   normalize,
+  normalizeColumnMapping,
   parseCSV,
   parseWorkbookBuffer,
 } from './csvImport'
@@ -82,6 +85,25 @@ describe('CSV and Excel import parsing', () => {
       null,
     ])
   })
+
+  it('normalizes malformed mappings to existing standard fields only', () => {
+    const mapping = normalizeColumnMapping([
+      undefined,
+      null,
+      { csvHeader: 'Name', airtableField: 'Name' },
+      { csvHeader: 'Random Notes', airtableField: 'New Section' },
+      { csvHeader: 'Company Name', airtableField: 'Company' },
+      { csvHeader: 'Agency', airtableField: 'Company' },
+      { csvHeader: '', airtableField: 'Email' },
+    ] as any)
+
+    expect(mapping).toEqual([
+      { csvHeader: 'Name', airtableField: 'Name' },
+      { csvHeader: 'Random Notes', airtableField: null },
+      { csvHeader: 'Company Name', airtableField: 'Company' },
+      { csvHeader: 'Agency', airtableField: null },
+    ])
+  })
 })
 
 describe('bulk contact import', () => {
@@ -144,6 +166,36 @@ describe('bulk contact import', () => {
       custom_fields: {},
     })
     expect(records[0].custom_fields).not.toHaveProperty('Nickname')
+  })
+
+  it('imports with malformed mappings without creating fields or crashing', async () => {
+    const parsed = parseCSV('Name,Email,Random Notes\nMorgan Lee,morgan@example.com,Met through the annual summit\n')
+    const mapping = [
+      undefined,
+      { csvHeader: 'Name', airtableField: 'Name' },
+      { csvHeader: 'Email', airtableField: 'Email' },
+      { csvHeader: 'Random Notes', airtableField: 'Invented Field' },
+    ] as any
+
+    expect(countInvalidRows(parsed.rows, 'Contact', mapping)).toBe(0)
+    expect(getRowWarnings(parsed.rows, mapping, new Map(), new Map())).toEqual([])
+
+    const result = await importContacts(parsed.rows, 'pod-default', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: ['pod-default'],
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Morgan Lee',
+      email: 'morgan@example.com',
+      notes: 'Random Notes: Met through the annual summit',
+      custom_fields: {},
+      list_ids: ['pod-default'],
+    })
+    expect(records[0]).not.toHaveProperty('invented_field')
   })
 
   it('imports vague rows with fallback names and preserves the source data in Notes', async () => {
