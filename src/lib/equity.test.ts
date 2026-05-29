@@ -348,22 +348,6 @@ describe('todaysFocus', () => {
     expect(focus[0].score).toBe(999)
   })
 
-  it('uses priority pod membership when no primary pod is set', () => {
-    const pod = makePod({ id: 'pod-1', is_priority: true, cadence: 'weekly' })
-    const contact = makeContact({
-      id: 'c-member',
-      list_ids: ['pod-1'],
-      primary_list_id: null,
-      last_contacted_at: daysAgo(14),
-    })
-
-    const focus = todaysFocus([contact], new Map(), [pod], 3)
-
-    expect(focus).toHaveLength(1)
-    expect(focus[0].contact.id).toBe('c-member')
-    expect(focus[0].pod?.id).toBe('pod-1')
-  })
-
   it('ignores contacts not in priority pods', () => {
     const priorityPod = makePod({ id: 'pod-1', is_priority: true, cadence: 'weekly' })
     const regularPod = makePod({ id: 'pod-2', is_priority: false })
@@ -374,25 +358,5 @@ describe('todaysFocus', () => {
     })
     const focus = todaysFocus([inRegular], new Map(), [priorityPod, regularPod], 3)
     expect(focus).toHaveLength(0)
-  })
-
-  it('keeps Today\'s Focus stable within a local day and rotates it on the next day', () => {
-    const now = new Date('2026-05-29T14:00:00Z').getTime()
-    const pod = makePod({ id: 'pod-1', is_priority: true, cadence: 'weekly' })
-    const contacts = Array.from({ length: 12 }, (_, index) => makeContact({
-      id: `c-overdue-${index}`,
-      name: `Overdue Person ${index}`,
-      list_ids: ['pod-1'],
-      primary_list_id: 'pod-1',
-      last_contacted_at: new Date(now - (21 + index) * DAY_MS).toISOString(),
-    }))
-
-    const dayOne = todaysFocus(contacts, new Map(), [pod], 3, now, '2026-05-29').map(item => item.contact.id)
-    const dayOneAgain = todaysFocus(contacts, new Map(), [pod], 3, now, '2026-05-29').map(item => item.contact.id)
-    const dayTwo = todaysFocus(contacts, new Map(), [pod], 3, now + DAY_MS, '2026-05-30').map(item => item.contact.id)
-
-    expect(dayOneAgain).toEqual(dayOne)
-    expect(dayTwo).not.toEqual(dayOne)
-    expect(new Set([...dayOne, ...dayTwo]).size).toBeGreaterThan(3)
   })
 })

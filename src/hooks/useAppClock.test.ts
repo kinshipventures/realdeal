@@ -1,23 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getLocalDateKey,
-  getLocalDayStart,
-  getMillisecondsUntilNextLocalDay,
-  getNextLocalDayStart,
+  getAppDateKey,
+  getAppDayStartMs,
+  getMillisecondsUntilNextAppDay,
 } from './useAppClock'
 
 describe('app clock date helpers', () => {
-  it('uses the local browser date as the app day key', () => {
-    const date = new Date(2026, 4, 29, 10, 30, 0)
+  it('uses the app timezone instead of the local machine date', () => {
+    const beforeNewYorkMidnight = new Date('2026-05-29T03:30:00.000Z')
+    const afterNewYorkMidnight = new Date('2026-05-29T04:30:00.000Z')
 
-    expect(getLocalDateKey(date)).toBe('2026-05-29')
-    expect(getLocalDayStart(date).getTime()).toBe(new Date(2026, 4, 29).getTime())
-    expect(getNextLocalDayStart(date).getTime()).toBe(new Date(2026, 4, 30).getTime())
+    expect(getAppDateKey(beforeNewYorkMidnight, 'America/New_York')).toBe('2026-05-28')
+    expect(getAppDateKey(afterNewYorkMidnight, 'America/New_York')).toBe('2026-05-29')
+    expect(getAppDayStartMs(afterNewYorkMidnight, 'America/New_York')).toBe(
+      new Date('2026-05-29T04:00:00.000Z').getTime(),
+    )
   })
 
-  it('schedules a refresh after local midnight', () => {
-    const date = new Date(2026, 4, 29, 23, 59, 59, 500)
+  it('schedules a refresh after the next app day starts', () => {
+    const date = new Date('2026-05-29T23:59:59.500Z')
 
-    expect(getMillisecondsUntilNextLocalDay(date)).toBeGreaterThanOrEqual(1_000)
+    expect(getMillisecondsUntilNextAppDay(date, 'UTC')).toBe(1_500)
   })
 })
