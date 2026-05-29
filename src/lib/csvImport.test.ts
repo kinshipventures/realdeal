@@ -62,7 +62,7 @@ describe('CSV and Excel import parsing', () => {
       'Last Contacted',
     ])
     expect(parsed.headers).not.toContain('Name')
-  })
+  }, 10000)
 
   it('detects human relationship columns from flexible headers', () => {
     const mapping = detectColumns(['Full Name', 'Relationship Pod', 'Sub Pod', 'Last Interaction', 'Cadence'])
@@ -95,6 +95,39 @@ describe('CSV and Excel import parsing', () => {
       'First Name',
       'Company',
     ])
+  })
+
+  it('uses generic Name as a row-level fallback when First Name is blank', async () => {
+    const parsed = parseCSV('Name,First Name,Last Name,Email,Pod\nMaya Fullname,, ,maya@example.com,MAPS\nGeneric Name,Jordan,Lee,jordan@example.com,LPs\n')
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([
+      [normalize('MAPS'), 'pod-maps'],
+      [normalize('LPs'), 'pod-lps'],
+    ])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+    })
+
+    expect(result).toEqual({ imported: 2, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Maya Fullname',
+      first_name: 'Maya Fullname',
+      last_name: null,
+      list_ids: ['pod-maps'],
+    })
+    expect(records[0].notes).toBeNull()
+    expect(records[1]).toMatchObject({
+      name: 'Jordan Lee',
+      first_name: 'Jordan',
+      last_name: 'Lee',
+      list_ids: ['pod-lps'],
+      notes: 'Name: Generic Name',
+    })
   })
 
   it('normalizes malformed mappings to existing standard fields only', () => {

@@ -511,6 +511,15 @@ const MIDDLE_NAME_ALIASES = new Set([
   'other name',
 ])
 
+const GENERIC_NAME_ALIASES = new Set([
+  'name',
+  'full name',
+  'display name',
+  'contact name',
+  'person',
+  'relationship',
+])
+
 function coerceTargetField(rawField: unknown): TargetField | null {
   if (typeof rawField !== 'string') return null
   const trimmed = rawField.trim()
@@ -522,21 +531,33 @@ function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string)
   return normalizeColumnMapping(mapping).find(m => m.csvHeader === csvHeader)?.targetField ?? null
 }
 
-function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): string {
+function findUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): { header: string; value: string } | null {
   for (const [header, rawValue] of Object.entries(row)) {
     if (mappingForHeader(mapping, header)) continue
     if (!aliases.has(normalize(header))) continue
     const value = rawValue.trim()
-    if (value) return value
+    if (value) return { header, value }
   }
-  return ''
+  return null
 }
 
-function collectUnmappedNotes(row: Record<string, string>, mapping: ColumnMapping | undefined): string[] {
+function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMapping | undefined, aliases: Set<string>): string {
+  return findUnmappedAlias(row, mapping, aliases)?.value ?? ''
+}
+
+function resolveFirstName(row: Record<string, string>, mapping: ColumnMapping | undefined): { value: string; consumedHeader: string | null } {
+  if (!mapping) return { value: (row['First Name'] ?? row['Name'] ?? '').trim(), consumedHeader: null }
+  const first = resolve(row, mapping, 'First Name')
+  if (first) return { value: first, consumedHeader: null }
+  const fallback = findUnmappedAlias(row, mapping, GENERIC_NAME_ALIASES)
+  return { value: fallback?.value ?? '', consumedHeader: fallback?.header ?? null }
+}
+
+function collectUnmappedNotes(row: Record<string, string>, mapping: ColumnMapping | undefined, consumedHeaders = new Set<string>()): string[] {
   if (!mapping) return []
   return Object.entries(row).flatMap(([header, rawValue]) => {
     const value = rawValue.trim()
-    if (!value || mappingForHeader(mapping, header)) return []
+    if (!value || consumedHeaders.has(header) || mappingForHeader(mapping, header)) return []
     return [`${header}: ${value}`]
   })
 }
@@ -606,7 +627,7 @@ function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: 
     const companyName = resolve(row, mapping, 'Company')
     if (companyName) return companyName
   }
-  const first = resolve(row, mapping, 'First Name')
+  const first = resolveFirstName(row, mapping).value
   const middle = resolveUnmappedAlias(row, mapping, MIDDLE_NAME_ALIASES)
   const last = resolve(row, mapping, 'Last Name')
   return [first, middle, last].filter(Boolean).join(' ')
@@ -761,6 +782,19 @@ function normalizedList(value: string): string[] | null {
   return items.length > 0 ? items : null
 }
 
+function importErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    if (message) return String(message)
+  }
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return String(error)
+  }
+}
+
 export async function importContacts(
   rows: Record<string, string>[],
   podId: string,
@@ -827,7 +861,7 @@ export async function importContacts(
       continue
     }
 
-    const firstName = mapping ? resolve(row, mapping, 'First Name') : ((row['First Name'] ?? row['Name'] ?? '') as string).trim()
+    const firstName = resolveFirstName(row, mapping)
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
     const rowPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
     const primaryPodId = rowPodIds[0] ?? null
@@ -835,7 +869,8 @@ export async function importContacts(
     const birthday = normalizeDate(r(row, 'Birthday', 'Birthday'))
     const lastContacted = normalizeDate(r(row, 'Last Contacted', 'Last Contacted'))
     const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))
-    const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping))
+    const consumedHeaders = firstName.consumedHeader ? new Set([firstName.consumedHeader]) : undefined
+    const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping, consumedHeaders))
 
     const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
     const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
@@ -867,7 +902,7 @@ export async function importContacts(
       list_ids: rowPodIds,
       category_ids: categoryIds,
       primary_list_id: primaryPodId,
-      first_name: firstName || null,
+      first_name: firstName.value || null,
       last_name: lastName || null,
       country: r(row, 'Country', 'Country') || null,
       global_region: null,
@@ -917,7 +952,7 @@ export async function importContacts(
           await createContactsBulk([item.contact], 1)
           imported++
         } catch (rowError) {
-          errors.push(`Row ${item.rowNumber} (${item.name}): ${rowError instanceof Error ? rowError.message : String(rowError)}`)
+          errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
         }
         processedForProgress++
         onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped })
