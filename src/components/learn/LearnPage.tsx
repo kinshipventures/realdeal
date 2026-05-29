@@ -496,10 +496,10 @@ function FocusSection() {
 
       <Card title="How picks are chosen">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <StepRow number={1} title="Priority pods only" description="Focus only looks at people in pods you've marked as priority." />
-          <StepRow number={2} title="Most overdue first" description="Ranked by how far past their cadence they are. Someone 30 days overdue on a weekly cadence ranks above someone 5 days overdue on monthly." />
-          <StepRow number={3} title="Never contacted = top priority" description="If someone's in a priority pod but you've never logged a touchpoint, they surface first." />
-          <StepRow number={4} title="Serendipity fills gaps" description="If fewer than 3 are overdue, random picks from priority pods rotate in. Keeps you reconnecting with people you wouldn't otherwise think of." />
+          <StepRow number={1} title="Priority pods only" description="Focus looks at people assigned to pods you've marked as priority, even when the pod is not their primary pod." />
+          <StepRow number={2} title="Due contacts first" description="It starts with people past their cadence, then rotates the eligible queue by local app day so the same backlog does not stay pinned forever." />
+          <StepRow number={3} title="Never contacted = high priority" description="If someone's in a priority pod but you've never logged a touchpoint, they enter the due queue immediately." />
+          <StepRow number={4} title="Serendipity fills gaps" description="If fewer than 3 are due, daily picks from priority pods rotate in. Keeps you reconnecting with people you wouldn't otherwise think of." />
         </div>
       </Card>
 

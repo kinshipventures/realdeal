@@ -176,7 +176,7 @@ export function daysSinceContact(contact: Contact, now = Date.now()): number | n
 }
 
 // ── Today's Focus ───────────────────────────────────────────────────────────
-// Ranked selection: most overdue in priority pods first, then serendipity.
+// Daily selection: overdue contacts in priority pods first, rotated by local app day.
 
 export function todaysFocus(
   contacts: Contact[],
@@ -189,15 +189,13 @@ export function todaysFocus(
   const priorityPodIds = new Set(pods.filter(p => p.is_priority).map(p => p.id))
   const podById = new Map(pods.map(p => [p.id, p]))
 
-  // Score each contact by overdue urgency in priority pods
+  // Score each contact by overdue urgency in priority pods.
   const candidates: FocusItem[] = []
 
   for (const contact of contacts) {
-    const primaryPod = contact.primary_list_id ? (podById.get(contact.primary_list_id) ?? null) : null
-    const inPriorityPod = !!primaryPod?.is_priority && priorityPodIds.has(primaryPod.id)
-    if (!inPriorityPod) continue
+    const pod = getFocusPriorityPod(contact, podById, priorityPodIds)
+    if (!pod) continue
 
-    const pod = primaryPod
     const thresholdDays = contactCadenceDays(contact, pod?.cadence ?? null)
     const thresholdMs = thresholdDays * DAY_MS
 
@@ -218,8 +216,14 @@ export function todaysFocus(
     }
   }
 
-  // Sort by score descending (most overdue first)
-  candidates.sort((a, b) => b.score - a.score)
+  // Rotate the overdue pool by day so a large backlog does not pin the same
+  // three people forever. The same local day stays stable; tomorrow recalculates.
+  candidates.sort((a, b) => {
+    const dailyDifference = dailyRank(a.contact.id, dateKey) - dailyRank(b.contact.id, dateKey)
+    if (dailyDifference !== 0) return dailyDifference
+    if (b.score !== a.score) return b.score - a.score
+    return a.contact.name.localeCompare(b.contact.name)
+  })
 
   // If we have enough overdue contacts, return those
   if (candidates.length >= limit) return candidates.slice(0, limit)
@@ -228,25 +232,45 @@ export function todaysFocus(
   const picked = new Set(candidates.map(c => c.contact.id))
   const serendipityCandidates = contacts.filter(c =>
     !picked.has(c.id) &&
-    !!c.primary_list_id &&
-    priorityPodIds.has(c.primary_list_id) &&
+    getFocusPriorityPod(c, podById, priorityPodIds) !== null &&
     c.last_contacted_at != null
   )
 
-  // Shuffle deterministically by day (same picks within a day)
+  // Shuffle deterministically by day (same picks within a day).
   const shuffled = serendipityCandidates.sort((a, b) => {
-    const ha = hashCode(a.id + dateKey)
-    const hb = hashCode(b.id + dateKey)
-    return ha - hb
+    const dailyDifference = dailyRank(a.id, dateKey) - dailyRank(b.id, dateKey)
+    if (dailyDifference !== 0) return dailyDifference
+    return a.name.localeCompare(b.name)
   })
 
   for (const contact of shuffled) {
     if (candidates.length >= limit) break
-    const pod = contact.primary_list_id ? (podById.get(contact.primary_list_id) ?? null) : null
+    const pod = getFocusPriorityPod(contact, podById, priorityPodIds)
     candidates.push({ contact, pod, reason: 'serendipity', score: 0 })
   }
 
   return candidates.slice(0, limit)
+}
+
+function getFocusPriorityPod(contact: Contact, podById: Map<string, Pod>, priorityPodIds: Set<string>): Pod | null {
+  if (contact.primary_list_id) {
+    const primaryPod = podById.get(contact.primary_list_id) ?? null
+    if (primaryPod?.is_priority && priorityPodIds.has(primaryPod.id)) return primaryPod
+  }
+
+  for (const podId of contact.list_ids ?? []) {
+    const pod = podById.get(podId) ?? null
+    if (pod?.is_priority && priorityPodIds.has(pod.id)) return pod
+  }
+
+  return null
+}
+
+function dailyRank(id: string, dateKey: string): number {
+  let seed = hashCode(id) ^ Math.imul(hashCode(dateKey), 0x9e3779b1)
+  seed = Math.imul(seed ^ (seed >>> 15), seed | 1)
+  seed ^= seed + Math.imul(seed ^ (seed >>> 7), seed | 61)
+  return (seed ^ (seed >>> 14)) >>> 0
 }
 
 function hashCode(s: string): number {
