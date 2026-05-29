@@ -586,12 +586,14 @@ export async function getStagesForCampaign(campaignId: string): Promise<Campaign
 
 export async function getCampaignContacts(campaignId: string): Promise<CampaignContact[]> {
   if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.campaign_id === campaignId)
+  if (!_campaignContactsCache) _campaignsCache = null
   await getCampaigns()
   return (_campaignContactsCache ?? []).filter(cc => cc.campaign_id === campaignId)
 }
 
 export async function getCampaignContactsForContact(contactId: string): Promise<CampaignContact[]> {
   if (isDemoMode()) return DEMO_CAMPAIGN_CONTACTS.filter(cc => cc.contact_id === contactId)
+  if (!_campaignContactsCache) _campaignsCache = null
   await getCampaigns()
   return (_campaignContactsCache ?? []).filter(cc => cc.contact_id === contactId)
 }
@@ -628,12 +630,55 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     return cc
   }
   const userId = await getUserId()
-  const insertData: any = { user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, contact_id: contactId }
+  const wsId = getActiveWorkspaceId()
+  const { data: existing, error: existingError } = await supabase
+    .from('campaign_contacts')
+    .select('*')
+    .eq('workspace_id', wsId)
+    .eq('campaign_id', campaignId)
+    .eq('contact_id', contactId)
+    .maybeSingle()
+  if (existingError) throw existingError
+  if (existing) {
+    if (!existing.stage_id && stageId) {
+      const { data: repaired, error: repairError } = await supabase
+        .from('campaign_contacts')
+        .update({ stage_id: stageId, moved_at: existing.moved_at ?? now })
+        .eq('id', existing.id)
+        .select()
+        .single()
+      if (repairError) throw repairError
+      _campaignsCache = null
+      _campaignContactsCache = null
+      return mapCampaignContact(repaired)
+    }
+    return mapCampaignContact(existing)
+  }
+
+  const insertData: any = { user_id: userId, workspace_id: wsId, campaign_id: campaignId, contact_id: contactId }
   if (stageId) insertData.stage_id = stageId
+  insertData.moved_at = now
   const { data: row, error } = await supabase.from('campaign_contacts').insert([insertData]).select().single()
   if (error) throw error
   _campaignsCache = null
+  _campaignContactsCache = null
   return mapCampaignContact(row)
+}
+
+export async function removeContactFromCampaign(id: string): Promise<void> {
+  if (isDemoMode()) {
+    const idx = DEMO_CAMPAIGN_CONTACTS.findIndex(cc => cc.id === id)
+    if (idx !== -1) {
+      const [removed] = DEMO_CAMPAIGN_CONTACTS.splice(idx, 1)
+      const camp = DEMO_CAMPAIGNS.find(c => c.id === removed.campaign_id)
+      if (camp) camp.contact_ids = camp.contact_ids.filter(contactId => contactId !== removed.contact_id)
+    }
+    return
+  }
+  const { error } = await supabase.from('campaign_contacts').delete().eq('id', id)
+  if (error) throw error
+  _campaignsCache = null
+  _campaignContactsCache = null
 }
 
 export async function updateCampaignContactStatus(id: string, status: CampaignContactStatus): Promise<CampaignContact> {

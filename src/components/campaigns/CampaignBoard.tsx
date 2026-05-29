@@ -206,6 +206,7 @@ export function CampaignBoard({
 
   async function handleAddContact(contactId: string, stageId: string) {
     const cc = await addContactToCampaign(campaign.id, contactId, stageId)
+    if (campaignContacts.some(existing => existing.id === cc.id || existing.contact_id === contactId)) return
     onContactsChange([...campaignContacts, cc])
   }
 

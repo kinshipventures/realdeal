@@ -95,7 +95,9 @@ export function CampaignDetail({
     setAddingContactId(contactId)
     try {
       const newCc = await addContactToCampaign(campaignId, contactId)
-      setCampaignContacts(prev => [...prev, newCc])
+      setCampaignContacts(prev =>
+        prev.some(cc => cc.id === newCc.id || cc.contact_id === contactId) ? prev : [...prev, newCc]
+      )
       setSearchQuery('')
       onUpdate()
     } finally {

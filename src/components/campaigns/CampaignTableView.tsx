@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
-import { updateCampaignContact, addContactToCampaign } from '../../lib/data'
+import { updateCampaignContact, removeContactFromCampaign } from '../../lib/data'
 import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
 
@@ -171,9 +171,15 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   }
 
   async function handleRemoveContact(ccId: string) {
-    // For now just remove from local state - could add DB delete later
-    onContactsChange(campaignContacts.filter(cc => cc.id !== ccId))
     setContextMenu(null)
+    const previous = [...campaignContacts]
+    onContactsChange(campaignContacts.filter(cc => cc.id !== ccId))
+    try {
+      await removeContactFromCampaign(ccId)
+    } catch (err) {
+      console.error('Remove from campaign failed:', err)
+      onContactsChange(previous)
+    }
   }
 
   return (

@@ -10,6 +10,7 @@ import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
 import { CompaniesPage } from '../companies/CompaniesPage'
+import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -249,6 +250,8 @@ export function RecordsList() {
   const [showAddToCampaign, setShowAddToCampaign] = useState(false)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [addingToCampaign, setAddingToCampaign] = useState(false)
+  const [campaignAddError, setCampaignAddError] = useState<string | null>(null)
   const [companyFilteredCount, setCompanyFilteredCount] = useState(0)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
@@ -380,6 +383,23 @@ export function RecordsList() {
     for (const p of pods) m[p.id] = p
     return m
   }, [pods])
+
+  const activeCampaigns = useMemo(
+    () => campaigns.filter(c => c.status === 'active'),
+    [campaigns],
+  )
+
+  const selectedCampaign = useMemo(
+    () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
+    [activeCampaigns, selectedCampaignId],
+  )
+
+  const campaignAddPlan = useMemo(
+    () => selectedCampaign
+      ? planCampaignContactAdd(selectedIds, selectedCampaign.contact_ids)
+      : { toAdd: Array.from(selectedIds), alreadyInCampaign: [] },
+    [selectedCampaign, selectedIds],
+  )
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
@@ -735,15 +755,55 @@ export function RecordsList() {
     }
   }
 
-  async function handleAddToCampaign() {
-    if (!selectedCampaignId) return
-    for (const id of selectedIds) {
-      await addContactToCampaign(selectedCampaignId, id)
-    }
-    invalidateCampaignsCache()
-    setSelectedIds(new Set())
+  function openAddToCampaign() {
+    setCampaignAddError(null)
+    setSelectedCampaignId(null)
+    setShowAddToCampaign(true)
+  }
+
+  function closeAddToCampaign() {
+    if (addingToCampaign) return
     setShowAddToCampaign(false)
     setSelectedCampaignId(null)
+    setCampaignAddError(null)
+  }
+
+  async function handleAddToCampaign() {
+    if (!selectedCampaign || addingToCampaign) return
+
+    if (campaignAddPlan.toAdd.length === 0) {
+      showToast(`${campaignAddPlan.alreadyInCampaign.length} ${campaignAddPlan.alreadyInCampaign.length === 1 ? 'person is' : 'people are'} already in ${selectedCampaign.name}.`)
+      setSelectedIds(new Set())
+      closeAddToCampaign()
+      return
+    }
+
+    setAddingToCampaign(true)
+    setCampaignAddError(null)
+    try {
+      for (const id of campaignAddPlan.toAdd) {
+        await addContactToCampaign(selectedCampaign.id, id)
+      }
+      invalidateCampaignsCache()
+      setCampaigns(await getCampaigns())
+      setSelectedIds(new Set())
+      setShowAddToCampaign(false)
+      setSelectedCampaignId(null)
+      const added = campaignAddPlan.toAdd.length
+      const already = campaignAddPlan.alreadyInCampaign.length
+      showToast(
+        already > 0
+          ? `Added ${added} ${added === 1 ? 'person' : 'people'} to ${selectedCampaign.name}. ${already} ${already === 1 ? 'was' : 'were'} already there.`
+          : `Added ${added} ${added === 1 ? 'person' : 'people'} to ${selectedCampaign.name}.`,
+      )
+    } catch (err) {
+      console.error('Add to campaign failed:', err)
+      invalidateCampaignsCache()
+      setCampaigns(await getCampaigns().catch(() => campaigns))
+      setCampaignAddError("Couldn't add the selected contacts. Check your connection and try again.")
+    } finally {
+      setAddingToCampaign(false)
+    }
   }
 
   const visibleCols = COLUMNS.filter(col => visibleColumns.has(col.id))
@@ -1273,7 +1333,7 @@ export function RecordsList() {
             <button
               className="delight-button"
               type="button"
-              onClick={() => setShowAddToCampaign(true)}
+              onClick={openAddToCampaign}
               disabled={bulkOperating}
               style={bulkBtnStyle}
             >
@@ -1313,49 +1373,73 @@ export function RecordsList() {
 
       {showAddToCampaign && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={() => setShowAddToCampaign(false)} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={closeAddToCampaign} />
           <div
             ref={addToCampaignDialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-to-campaign-title"
             tabIndex={-1}
-            onKeyDown={(e) => { if (e.key === 'Escape') setShowAddToCampaign(false) }}
+            onKeyDown={(e) => { if (e.key === 'Escape') closeAddToCampaign() }}
             style={{ position: 'relative', background: 'var(--surface-panel)', backdropFilter: 'blur(20px)', borderRadius: 12, padding: 24, minWidth: 320, maxHeight: '60vh', overflow: 'auto' }}
           >
             <h3 id="add-to-campaign-title" style={{ margin: '0 0 16px', fontFamily: 'var(--font-sans)', fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>Add to Campaign</h3>
-            {campaigns.filter(c => c.status === 'active').length === 0 ? (
+            {activeCampaigns.length === 0 ? (
               <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 12px' }}>No active campaigns.</p>
             ) : (
-              campaigns.filter(c => c.status === 'active').map(c => (
-                <div
+              activeCampaigns.map(c => (
+                <button
+                  type="button"
                   key={c.id}
-                  onClick={() => setSelectedCampaignId(c.id)}
+                  onClick={() => { setSelectedCampaignId(c.id); setCampaignAddError(null) }}
                   style={{
-                    padding: '8px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
+                    width: '100%',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                    padding: '8px 12px', borderRadius: 8, cursor: addingToCampaign ? 'not-allowed' : 'pointer', marginBottom: 4,
                     background: selectedCampaignId === c.id ? 'var(--tint)' : 'transparent',
+                    opacity: addingToCampaign ? 0.7 : 1,
                   }}
-                  onMouseEnter={e => { if (selectedCampaignId !== c.id) (e.currentTarget as HTMLDivElement).style.background = 'var(--tint)' }}
-                  onMouseLeave={e => { if (selectedCampaignId !== c.id) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+                  disabled={addingToCampaign}
+                  onMouseEnter={e => { if (selectedCampaignId !== c.id) e.currentTarget.style.background = 'var(--tint)' }}
+                  onMouseLeave={e => { if (selectedCampaignId !== c.id) e.currentTarget.style.background = 'transparent' }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>{c.name}</div>
                   <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{c.type} - {c.contact_ids.length} people</div>
-                </div>
+                </button>
               ))
             )}
+            {selectedCampaign && campaignAddPlan.alreadyInCampaign.length > 0 && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+                {campaignAddPlan.alreadyInCampaign.length} selected {campaignAddPlan.alreadyInCampaign.length === 1 ? 'person is' : 'people are'} already in this campaign.
+              </p>
+            )}
+            {campaignAddError && (
+              <p role="alert" style={{ margin: '8px 0 0', fontSize: 12, color: '#D93025', lineHeight: 1.4 }}>
+                {campaignAddError}
+              </p>
+            )}
             <button
-              disabled={!selectedCampaignId}
+              type="button"
+              disabled={!selectedCampaignId || addingToCampaign || campaignAddPlan.toAdd.length === 0}
               onClick={handleAddToCampaign}
               style={{
                 marginTop: 12, width: '100%', padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: selectedCampaignId ? 'var(--color-text-primary)' : 'var(--edge-strong)',
-                color: selectedCampaignId ? 'var(--header-band-text)' : 'var(--color-text-tertiary)',
-                cursor: selectedCampaignId ? 'pointer' : 'default',
+                background: selectedCampaignId && campaignAddPlan.toAdd.length > 0 ? 'var(--color-text-primary)' : 'var(--edge-strong)',
+                color: selectedCampaignId && campaignAddPlan.toAdd.length > 0 ? 'var(--header-band-text)' : 'var(--color-text-tertiary)',
+                cursor: selectedCampaignId && campaignAddPlan.toAdd.length > 0 && !addingToCampaign ? 'pointer' : 'default',
                 fontSize: 14, fontWeight: 500,
                 fontFamily: 'inherit',
+                opacity: addingToCampaign ? 0.75 : 1,
               }}
             >
-              Add {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'}
+              {addingToCampaign
+                ? 'Adding...'
+                : campaignAddPlan.toAdd.length === 0 && selectedCampaign
+                  ? 'Already in campaign'
+                  : `Add ${campaignAddPlan.toAdd.length || selectedIds.size} ${(campaignAddPlan.toAdd.length || selectedIds.size) === 1 ? 'person' : 'people'}`
+              }
             </button>
           </div>
         </div>
