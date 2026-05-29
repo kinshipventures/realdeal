@@ -5,7 +5,9 @@ const MINUTE_MS = 60 * SECOND_MS
 const SERVER_SYNC_MS = 15 * MINUTE_MS
 const MAX_TIMER_DELAY_MS = 2_147_483_647
 
-export const APP_TIME_ZONE = import.meta.env.VITE_APP_TIME_ZONE || 'America/New_York'
+const importMetaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+
+export const APP_TIME_ZONE = importMetaEnv?.VITE_APP_TIME_ZONE || 'America/New_York'
 
 interface ClockSync {
   serverNowMs: number
