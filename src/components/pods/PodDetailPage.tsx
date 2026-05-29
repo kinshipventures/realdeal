@@ -24,6 +24,7 @@ import { LucideIcon } from '../LucideIcon'
 import { IconPicker } from '../map/IconPicker'
 import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
 import { SharePopover } from '../sharing/SharePopover'
+import { isVisiblePodMember } from '../../lib/podMembership'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -228,6 +229,8 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
 
   // Add sub-pod state
   const [addingSubPod, setAddingSubPod] = useState(false)
+  const [savingSubPod, setSavingSubPod] = useState(false)
+  const [subPodError, setSubPodError] = useState<string | null>(null)
   const [newSubPodName, setNewSubPodName] = useState('')
   const newSubPodInputRef = useRef<HTMLInputElement>(null)
 
@@ -269,9 +272,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       const found = pods.find(p => p.id === podId)
       if (!found) { setNotFound(true); setLoading(false); return }
 
-      const podMembers = allContacts.filter(c =>
-        c.status === 'Active' && c.list_ids.includes(podId!)
-      )
+      const podMembers = allContacts.filter(c => isVisiblePodMember(c, podId!))
 
       const byContact = indexByContact(allInteractions)
       const eqMap: Record<string, number> = {}
@@ -317,12 +318,27 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }, [podId])
 
   const handleAddSubPod = useCallback(async () => {
-    if (!podId || !newSubPodName.trim()) return
-    const cat = await createCategory(newSubPodName.trim(), podId)
-    setCategories(prev => [...prev, cat])
-    setNewSubPodName('')
-    setAddingSubPod(false)
-  }, [podId, newSubPodName])
+    const name = newSubPodName.trim()
+    if (!podId || !name || savingSubPod) return
+    if (categories.some(cat => cat.name.trim().toLowerCase() === name.toLowerCase())) {
+      setSubPodError('A sub-pod with this name already exists.')
+      return
+    }
+
+    setSavingSubPod(true)
+    setSubPodError(null)
+    try {
+      const cat = await createCategory(name, podId)
+      const persisted = await getCategories(podId).catch(() => [...categories, cat])
+      setCategories(persisted)
+      setNewSubPodName('')
+      setAddingSubPod(false)
+    } catch {
+      setSubPodError("Couldn't create the sub-pod. Check your connection and try again.")
+    } finally {
+      setSavingSubPod(false)
+    }
+  }, [categories, podId, newSubPodName, savingSubPod])
 
   const handleIconChange = useCallback(async (catId: string, icon: string | null) => {
     await updateCategory(catId, { icon })
@@ -911,10 +927,10 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                   ref={newSubPodInputRef}
                   type="text"
                   value={newSubPodName}
-                  onChange={e => setNewSubPodName(e.target.value)}
+                  onChange={e => { setNewSubPodName(e.target.value); setSubPodError(null) }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') handleAddSubPod()
-                    if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName('') }
+                    if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }
                   }}
                   placeholder="Sub-pod name"
                   style={{ ...inputStyle, flex: 1 }}
@@ -922,20 +938,20 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                 <button
                   type="button"
                   onClick={handleAddSubPod}
-                  disabled={!newSubPodName.trim()}
+                  disabled={!newSubPodName.trim() || savingSubPod}
                   style={{
                     padding: '8px 14px', background: 'var(--color-brand)',
                     color: '#fff', border: 'none', borderRadius: 7,
                     fontSize: 13, fontFamily: 'inherit',
-                    cursor: newSubPodName.trim() ? 'pointer' : 'not-allowed',
-                    opacity: newSubPodName.trim() ? 1 : 0.5,
+                    cursor: newSubPodName.trim() && !savingSubPod ? 'pointer' : 'not-allowed',
+                    opacity: newSubPodName.trim() && !savingSubPod ? 1 : 0.5,
                   }}
                 >
-                  Add
+                  {savingSubPod ? 'Adding...' : 'Add'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setAddingSubPod(false); setNewSubPodName('') }}
+                  onClick={() => { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }}
                   style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
                 >
                   Cancel
@@ -944,7 +960,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
             ) : (
               <button
                 type="button"
-                onClick={() => setAddingSubPod(true)}
+                onClick={() => { setAddingSubPod(true); setSubPodError(null) }}
                 style={{
                   background: 'none', border: '1px dashed var(--edge-strong)',
                   borderRadius: 100, padding: '5px 14px', fontSize: 12,
@@ -953,6 +969,9 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               >
                 + Add Sub-pod
               </button>
+            )}
+            {subPodError && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{subPodError}</p>
             )}
           </section>
 

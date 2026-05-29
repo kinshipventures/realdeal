@@ -31,6 +31,7 @@ import { clearAllPositions } from '../../hooks/useNodePositions'
 import { PodCreateModal } from '../pods/PodCreateModal'
 import { PodDetailPage } from '../pods/PodDetailPage'
 import { useEscape } from '../../lib/escapeStack'
+import { groupVisibleContactsByPod } from '../../lib/podMembership'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => (
@@ -755,18 +756,14 @@ export function OrbMap() {
     const podById = new Map(allPods.map(pod => [pod.id, pod]))
     const countsByPod: Record<string, PodCounts> = {}
     const memberCountByPod: Record<string, number> = {}
-    const contactsByPod = new Map<string, Contact[]>()
-    for (const contact of allContacts) {
-      const primaryPodId = contact.primary_list_id
-      if (!primaryPodId) continue
-      if (!countsByPod[primaryPodId]) countsByPod[primaryPodId] = { total: 0, overdue: 0 }
-      countsByPod[primaryPodId].total++
-      const primaryPod = podById.get(primaryPodId)
-      if (isOverdue(contact, primaryPod?.cadence ?? 'monthly')) countsByPod[primaryPodId].overdue++
-      memberCountByPod[primaryPodId] = (memberCountByPod[primaryPodId] ?? 0) + 1
-      const podContacts = contactsByPod.get(primaryPodId)
-      if (podContacts) podContacts.push(contact)
-      else contactsByPod.set(primaryPodId, [contact])
+    const contactsByPod = groupVisibleContactsByPod(allContacts)
+    for (const [podId, podContacts] of contactsByPod.entries()) {
+      const pod = podById.get(podId)
+      countsByPod[podId] = { total: podContacts.length, overdue: 0 }
+      memberCountByPod[podId] = podContacts.length
+      for (const contact of podContacts) {
+        if (isOverdue(contact, pod?.cadence ?? 'monthly')) countsByPod[podId].overdue++
+      }
     }
 
     const byContact = indexByContact(allInteractions)
