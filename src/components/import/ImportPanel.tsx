@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, getContacts, getCategories, createCategory, createPod, invalidateContactsCache } from '../../lib/data'
-import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS, resolveMappedValue, splitMultiValue } from '../../lib/csvImport'
+import { getPods, getContacts, getCategories, invalidateContactsCache } from '../../lib/data'
+import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS } from '../../lib/csvImport'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { Pod, Contact } from '../../lib/types'
 import type { RelationshipType } from '../../lib/types'
 import type { ImportProgress, ImportResult, ColumnMapping, RowWarning } from '../../lib/csvImport'
-import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { ImportSourcePicker } from './ImportSourcePicker'
 import { PasteImport } from './PasteImport'
 
@@ -86,7 +85,6 @@ export function ImportPanel() {
   const { activeWorkspace } = useWorkspace()
 
   const [pods, setPods] = useState<Pod[]>([])
-  const [selectedPodIds, setSelectedPodIds] = useState<string[]>([])
   const [recordType, setRecordType] = useState<RelationshipType>('Contact')
   const [state, setState] = useState<ImportState>('source')
   const [importSource, setImportSource] = useState<ImportSource>('csv')
@@ -148,10 +146,6 @@ export function ImportPanel() {
     }
     setRowWarnings(getRowWarnings(parsedRows, safeColumnMapping, emailIdx, nameIdx))
   }, [parsedRows, safeColumnMapping, existingContacts])
-
-  function togglePod(id: string) {
-    setSelectedPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
-  }
 
   // ---- File processing with auto-format detection ----
   async function processFile(file: File, source: ImportSource) {
@@ -254,8 +248,7 @@ export function ImportPanel() {
 
   // ---- Import ----
   async function handleImport() {
-    const hasPodMapping = safeColumnMapping.some(m => m.targetField === 'Pod')
-    if (selectedPodIds.length === 0 && !hasPodMapping) return
+    if (readyCount === 0) return
     setState('importing')
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
@@ -263,67 +256,33 @@ export function ImportPanel() {
     const newBatchId = crypto.randomUUID()
     setBatchId(newBatchId)
 
-    let availablePods = pods
     const podMap = new Map<string, string>()
-    for (const pod of availablePods) {
+    for (const pod of pods) {
       podMap.set(normalize(pod.name), pod.id)
     }
 
-    const podCol = safeColumnMapping.find(m => m.targetField === 'Pod')
-    if (podCol) {
-      const distinctPodNames = new Set<string>()
-      for (const row of parsedRows) {
-        for (const podName of splitMultiValue(resolveMappedValue(row, safeColumnMapping, 'Pod'))) {
-          distinctPodNames.add(podName)
-        }
-      }
-      for (const podName of distinctPodNames) {
-        const key = normalize(podName)
-        if (!podMap.has(key)) {
-          try {
-            const pod = await createPod({ name: podName, cadence: null })
-            availablePods = [...availablePods, pod]
-            podMap.set(key, pod.id)
-          } catch (err) { console.error(`Failed to create pod "${podName}":`, err) }
-        }
-      }
-      if (availablePods.length !== pods.length) setPods(availablePods)
-    }
-
-    const categoryMap = new Map<string, string>()
     const categories = await getCategories()
+    const categoryNameCounts = new Map<string, number>()
     for (const cat of categories) {
-      categoryMap.set(`${cat.list_id}:${normalize(cat.name)}`, cat.id)
-      categoryMap.set(normalize(cat.name), cat.id)
+      const key = normalize(cat.name)
+      categoryNameCounts.set(key, (categoryNameCounts.get(key) ?? 0) + 1)
     }
-
-    const subPodCol = safeColumnMapping.find(m => m.targetField === 'Sub-pod' || m.targetField === '_category')
-    if (subPodCol) {
-      for (const row of parsedRows) {
-        const rowPodIds = splitMultiValue(resolveMappedValue(row, safeColumnMapping, 'Pod'))
-          .map(podName => podMap.get(normalize(podName)))
-          .filter(Boolean) as string[]
-        const primaryPodId = rowPodIds[0] ?? selectedPodIds[0]
-        if (!primaryPodId) continue
-
-        for (const value of splitMultiValue(row[subPodCol.csvHeader] ?? '')) {
-          const key = `${primaryPodId}:${normalize(value)}`
-          if (!categoryMap.has(key)) {
-            try {
-              const cat = await createCategory(value, primaryPodId)
-              categoryMap.set(key, cat.id)
-              categoryMap.set(normalize(value), cat.id)
-            } catch (err) { console.error(`Failed to create sub-pod "${value}":`, err) }
-          }
-        }
+    const categoryMap = new Map<string, string>()
+    const categoryPodMap = new Map<string, string>()
+    for (const cat of categories) {
+      const normalizedName = normalize(cat.name)
+      categoryMap.set(`${cat.list_id}:${normalizedName}`, cat.id)
+      if (categoryNameCounts.get(normalizedName) === 1) {
+        categoryMap.set(normalizedName, cat.id)
       }
+      categoryPodMap.set(cat.id, cat.list_id)
     }
 
     const res = await importContacts(
-      parsedRows, selectedPodIds[0], (p) => setProgress(p),
+      parsedRows, '', (p) => setProgress(p),
       {
-        type: recordType, podIds: selectedPodIds, mapping: safeColumnMapping,
-        categoryMap, podMap,
+        type: recordType, podIds: [], mapping: safeColumnMapping,
+        categoryMap, categoryPodMap, podMap,
         batchId: newBatchId, importSource,
       }
     )
@@ -365,7 +324,6 @@ export function ImportPanel() {
     setColumnMapping([])
     setProgress(null)
     setResult(null)
-    setSelectedPodIds([])
     setShowPreview(false)
     setShowErrors(false)
     setRowWarnings([])
@@ -389,7 +347,8 @@ export function ImportPanel() {
   const readyCount = parsedRows.length
   const hasNameMapping = safeColumnMapping.some(m => m.targetField === 'First Name')
   const hasPodMapping = safeColumnMapping.some(m => m.targetField === 'Pod')
-  const canImport = readyCount > 0 && (selectedPodIds.length > 0 || hasPodMapping)
+  const hasSubPodMapping = safeColumnMapping.some(m => m.targetField === 'Sub-pod')
+  const canImport = readyCount > 0
 
   const unmatchedColumns = safeColumnMapping.filter(m => m.targetField === null)
   const stepNumber = state === 'source' ? 1 : state === 'preview' ? 2 : 3
@@ -400,7 +359,7 @@ export function ImportPanel() {
   // ---- Google sync sub-views ----
   if (googleState !== 'idle' && state === 'source') {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 80px' }}>
+      <div style={{ minHeight: '100%', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 80px', boxSizing: 'border-box' }}>
         <div style={{ width: '100%', maxWidth: 640 }}>
           <StepIndicator current={1} />
           <GoogleSyncView
@@ -420,7 +379,7 @@ export function ImportPanel() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 80px' }}>
+    <div style={{ minHeight: '100%', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 80px', boxSizing: 'border-box' }}>
       <div style={{ width: '100%', maxWidth: 640 }}>
         <h1 style={{
           fontFamily: 'var(--font-sans)', fontWeight: 800,
@@ -514,40 +473,42 @@ export function ImportPanel() {
               </div>
             </div>
 
-            {/* Pod selector */}
+            {/* Pod and sub-pod assignment */}
             <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 120ms forwards' }}>
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', margin: '0 0 8px' }}>
-                Import into pod(s) <span style={{ color: '#25B439' }}>*</span>
-              </p>
-              {pods.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', padding: '12px 14px', background: 'var(--tint)', borderRadius: 8, margin: 0 }}>
-                  No pods yet. Create a pod first to import people into it.
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: 8,
+                border: '1px solid var(--edge)',
+                background: 'var(--color-surface)',
+              }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>
+                  Pod and sub-pod assignment comes from the spreadsheet
                 </p>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {pods.map(p => {
-                    const isSelected = selectedPodIds.includes(p.id)
-                    const shift = p.color ? (POD_SHIFT_COLORS[p.color] ?? p.color) : '#25B439'
-                    return (
-                      <button key={p.id} type="button" onClick={() => togglePod(p.id)} style={{
-                        padding: '8px 16px', borderRadius: 100, border: '1px solid',
-                        borderColor: isSelected ? (p.color ?? '#25B439') : 'var(--edge-strong)',
-                        background: isSelected ? shift : 'transparent',
-                        color: isSelected ? '#fff' : 'var(--color-text-secondary)',
-                        fontSize: 12, fontWeight: isSelected ? 600 : 400, minHeight: 44,
-                        cursor: 'pointer', fontFamily: 'inherit',
-                        transition: 'background 0.12s, border-color 0.12s, color 0.12s',
-                      }}>{p.name}</button>
-                    )
-                  })}
+                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.55, margin: 0 }}>
+                  Map columns to Pod and Sub-pod when the file includes them. Existing pods and sub-pods will be assigned automatically; unknown values stay blank and the contact still imports.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', minHeight: 26,
+                    padding: '4px 9px', borderRadius: 100, border: '1px solid var(--edge)',
+                    background: hasPodMapping ? 'rgba(37,180,57,0.08)' : 'var(--tint)',
+                    color: hasPodMapping ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                    fontSize: 11, fontWeight: 600,
+                  }}>
+                    {hasPodMapping ? 'Pod column mapped' : 'No Pod column mapped'}
+                  </span>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', minHeight: 26,
+                    padding: '4px 9px', borderRadius: 100, border: '1px solid var(--edge)',
+                    background: hasSubPodMapping ? 'rgba(37,180,57,0.08)' : 'var(--tint)',
+                    color: hasSubPodMapping ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                    fontSize: 11, fontWeight: 600,
+                  }}>
+                    {hasSubPodMapping ? 'Sub-pod column mapped' : 'No Sub-pod column mapped'}
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
-            {hasPodMapping && selectedPodIds.length === 0 && (
-              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '-12px 0 0' }}>
-                Pod values from the file will be used. Missing pods will be created automatically.
-              </p>
-            )}
 
             {/* Column mapping */}
             <div style={{ opacity: 0, animation: 'import-stagger 0.35s ease-out 180ms forwards' }}>

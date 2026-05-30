@@ -767,13 +767,14 @@ function resolveCategoryIds(
   primaryPodId: string | null,
   categoryMap: Map<string, string>,
 ): string[] {
-  if (!mapping || mapping.length === 0 || !primaryPodId) return []
+  if (!mapping || mapping.length === 0) return []
   const categoryValue = resolve(row, mapping, 'Sub-pod') || resolve(row, mapping, '_category')
   return splitMultiValue(categoryValue)
-    .map(categoryName =>
-      categoryMap.get(`${primaryPodId}:${normalize(categoryName)}`)
-      ?? categoryMap.get(normalize(categoryName))
-    )
+    .map(categoryName => {
+      const normalizedName = normalize(categoryName)
+      return (primaryPodId ? categoryMap.get(`${primaryPodId}:${normalizedName}`) : undefined)
+        ?? categoryMap.get(normalizedName)
+    })
     .filter(Boolean) as string[]
 }
 
@@ -804,6 +805,7 @@ export async function importContacts(
     podIds?: string[]
     mapping?: ColumnMapping
     categoryMap?: Map<string, string>
+    categoryPodMap?: Map<string, string>
     podMap?: Map<string, string>
     batchId?: string
     importSource?: string
@@ -814,6 +816,7 @@ export async function importContacts(
   const safeMapping = normalizeColumnMapping(options?.mapping)
   const mapping = safeMapping.length > 0 ? safeMapping : undefined
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
+  const categoryPodMap = options?.categoryPodMap ?? new Map<string, string>()
   const podMap = options?.podMap ?? new Map<string, string>()
   const batchId = options?.batchId ?? null
   const importSrc = options?.importSource ?? null
@@ -863,9 +866,13 @@ export async function importContacts(
 
     const firstName = resolveFirstName(row, mapping)
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
-    const rowPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
+    const mappedPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
+    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap)
+    const categoryPodIds = categoryIds
+      .map(categoryId => categoryPodMap.get(categoryId))
+      .filter(Boolean) as string[]
+    const rowPodIds = unique([...mappedPodIds, ...categoryPodIds])
     const primaryPodId = rowPodIds[0] ?? null
-    const categoryIds = resolveCategoryIds(row, mapping, primaryPodId, categoryMap)
     const birthday = normalizeDate(r(row, 'Birthday', 'Birthday'))
     const lastContacted = normalizeDate(r(row, 'Last Contacted', 'Last Contacted'))
     const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))

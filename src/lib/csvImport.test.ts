@@ -188,6 +188,62 @@ describe('bulk contact import', () => {
     })
   })
 
+  it('assigns an existing sub-pod from the spreadsheet and inherits its parent pod', async () => {
+    const parsed = parseCSV([
+      'First Name,Email,Sub-pod',
+      'Maya,maya@example.com,LP Internal',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const categoryMap = new Map([[normalize('LP Internal'), 'cat-lp-internal']])
+    const categoryPodMap = new Map([['cat-lp-internal', 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap: new Map(),
+      categoryMap,
+      categoryPodMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Maya',
+      email: 'maya@example.com',
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal'],
+    })
+  })
+
+  it('keeps importing when a spreadsheet pod or sub-pod does not exist', async () => {
+    const parsed = parseCSV([
+      'First Name,Email,Pod,Sub-pod',
+      'Noah,noah@example.com,Unknown Pod,Unknown Sub-pod',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap: new Map([[normalize('LPs'), 'pod-lps']]),
+      categoryMap: new Map([[`pod-lps:${normalize('LP Internal')}`, 'cat-lp-internal']]),
+      categoryPodMap: new Map([['cat-lp-internal', 'pod-lps']]),
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Noah',
+      email: 'noah@example.com',
+      list_ids: [],
+      primary_list_id: null,
+      category_ids: [],
+    })
+  })
+
   it('keeps unmapped spreadsheet columns in Notes without creating custom fields', async () => {
     const parsed = parseCSV('Name,Email,Company,Nickname,Pod\nAlex Rivera,alex@example.com,Rivera Capital,AR,LPs\n')
     const mapping = detectColumns(parsed.headers)
