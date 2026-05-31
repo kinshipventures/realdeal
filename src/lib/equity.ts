@@ -218,8 +218,14 @@ export function todaysFocus(
     }
   }
 
-  // Sort by score descending (most overdue first)
-  candidates.sort((a, b) => b.score - a.score)
+  // Sort by score descending; use the app day key only to rotate equal-urgency ties.
+  candidates.sort((a, b) => {
+    const scoreDiff = b.score - a.score
+    if (scoreDiff !== 0) return scoreDiff
+    const hashA = hashCode(`${a.contact.id}|${dateKey}`)
+    const hashB = hashCode(`${b.contact.id}|${dateKey}`)
+    return hashA - hashB
+  })
 
   // If we have enough overdue contacts, return those
   if (candidates.length >= limit) return candidates.slice(0, limit)
@@ -235,8 +241,8 @@ export function todaysFocus(
 
   // Shuffle deterministically by day (same picks within a day)
   const shuffled = serendipityCandidates.sort((a, b) => {
-    const ha = hashCode(a.id + dateKey)
-    const hb = hashCode(b.id + dateKey)
+    const ha = hashCode(`${a.id}|${dateKey}`)
+    const hb = hashCode(`${b.id}|${dateKey}`)
     return ha - hb
   })
 
@@ -250,9 +256,10 @@ export function todaysFocus(
 }
 
 function hashCode(s: string): number {
-  let h = 0
+  let h = 2_166_136_261
   for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h + s.charCodeAt(i)) | 0
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16_777_619)
   }
-  return h
+  return h >>> 0
 }

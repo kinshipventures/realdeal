@@ -554,7 +554,7 @@ function SharingSection() {
           <StepRow number={1} title="Prepare a CSV or Excel file" description="Columns for name, email, phone, company, pod, cadence - whatever you have. The importer maps them." />
           <StepRow number={2} title="Go to Import" description="In the sidebar under More, or navigate to /import directly." />
           <StepRow number={3} title="Map your columns" description="The wizard walks you through matching file columns to contact fields." />
-          <StepRow number={4} title="Assign to pods" description="Choose a fallback pod or include a Pod column. Missing pods and sub-pods can be created during import." />
+          <StepRow number={4} title="Assign to pods" description="Include Pod and Sub-pod columns when you want the importer to assign existing pods and sub-pods automatically." />
         </div>
       </Card>
 

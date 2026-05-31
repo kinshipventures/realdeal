@@ -56,6 +56,8 @@ export function Dashboard() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [pendingContacts, setPendingContacts] = useState<Contact[]>([])
   const [showQueue, setShowQueue] = useState(false)
+  const [focusRefreshSeed, setFocusRefreshSeed] = useState(0)
+  const [focusRefreshing, setFocusRefreshing] = useState(false)
   const dashboardNow = appClock.now
 
   // Graduated loading — each section loads independently
@@ -210,10 +212,14 @@ export function Dashboard() {
     return result.sort((a, b) => b.overdueDays - a.overdueDays)
   }, [contacts, pods, dashboardNow])
 
+  const focusDateKey = focusRefreshSeed === 0
+    ? appClock.todayKey
+    : `${appClock.todayKey}:manual:${focusRefreshSeed}`
+
   // Today's Focus
   const focusItems = useMemo(
-    () => todaysFocus(contacts, byContact, pods, 3, dashboardNow, appClock.todayKey),
-    [contacts, byContact, pods, dashboardNow, appClock.todayKey]
+    () => todaysFocus(contacts, byContact, pods, 3, dashboardNow, focusDateKey),
+    [contacts, byContact, pods, dashboardNow, focusDateKey]
   )
 
   // Upcoming birthdays
@@ -385,6 +391,29 @@ export function Dashboard() {
     setCampaigns(updated)
     const allCc = await Promise.all(updated.map(c => getCampaignContacts(c.id)))
     setCampaignContacts(allCc.flat())
+  }
+
+  async function refreshTodaysFocus() {
+    if (focusRefreshing) return
+    setFocusRefreshing(true)
+    setError(null)
+    try {
+      invalidateContactsCache()
+      await appClock.refresh().catch(() => undefined)
+      const [updatedContacts, updatedPods, updatedInteractions] = await Promise.all([
+        getContacts(),
+        getPods(),
+        getAllInteractions(),
+      ])
+      setContacts(updatedContacts)
+      setPods(updatedPods)
+      setAllInteractions(updatedInteractions)
+      setFocusRefreshSeed(seed => seed + 1)
+    } catch {
+      setError('Something hiccupped. Refresh to try again.')
+    } finally {
+      setFocusRefreshing(false)
+    }
   }
 
   const handleContactClick = useCallback((contact: Contact) => setSelectedContact(contact), [])
@@ -578,7 +607,12 @@ export function Dashboard() {
           <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
             {isVisible('todays-focus') && (
               <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                <TodaysFocusWidget items={focusItems} onContactClick={handleContactClick} />
+                <TodaysFocusWidget
+                  items={focusItems}
+                  onContactClick={handleContactClick}
+                  onRefresh={refreshTodaysFocus}
+                  refreshing={focusRefreshing}
+                />
               </div>
             )}
             {isVisible('needs-attention') && (

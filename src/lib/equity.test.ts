@@ -348,6 +348,22 @@ describe('todaysFocus', () => {
     expect(focus[0].score).toBe(999)
   })
 
+  it('rotates equal-urgency contacts by app day without changing score priority', () => {
+    const pod = makePod({ id: 'pod-1', is_priority: true })
+    const contacts = ['c-a', 'c-b', 'c-c', 'c-d', 'c-e'].map(id => makeContact({
+      id,
+      list_ids: ['pod-1'],
+      primary_list_id: 'pod-1',
+      last_contacted_at: null,
+    }))
+
+    const firstDay = todaysFocus(contacts, new Map(), [pod], 3, Date.now(), '2026-05-29').map(item => item.contact.id)
+    const nextDay = todaysFocus(contacts, new Map(), [pod], 3, Date.now(), '2026-06-02').map(item => item.contact.id)
+
+    expect(firstDay).not.toEqual(nextDay)
+    expect(todaysFocus(contacts, new Map(), [pod], 3, Date.now(), '2026-05-29').map(item => item.contact.id)).toEqual(firstDay)
+  })
+
   it('ignores contacts not in priority pods', () => {
     const priorityPod = makePod({ id: 'pod-1', is_priority: true, cadence: 'weekly' })
     const regularPod = makePod({ id: 'pod-2', is_priority: false })

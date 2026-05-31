@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react'
 import type { Contact, FocusItem } from '../../../lib/types'
 import { daysSinceContact } from '../../../lib/equity'
 import { Avatar } from '../../ui'
@@ -209,9 +210,11 @@ function FocusRow({ item, onClick }: { item: FocusItem; onClick: () => void }) {
 interface TodaysFocusWidgetProps {
   items: FocusItem[]
   onContactClick: (contact: Contact) => void
+  onRefresh?: () => void
+  refreshing?: boolean
 }
 
-export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetProps) {
+export function TodaysFocusWidget({ items, onContactClick, onRefresh, refreshing = false }: TodaysFocusWidgetProps) {
   if (items.length === 0) return null
 
   const [lead, ...rest] = items
@@ -219,10 +222,51 @@ export function TodaysFocusWidget({ items, onContactClick }: TodaysFocusWidgetPr
   return (
     <div style={{ marginBottom: 0 }}>
       <SectionDivider title="Today's Focus" />
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
           {items.length} people worth your attention
         </span>
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={refreshing}
+            aria-label="Refresh contacts"
+            title="Refresh contacts"
+            style={{
+              minHeight: 30,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: '1px solid var(--edge)',
+              background: refreshing ? 'var(--tint)' : 'rgba(37,180,57,0.06)',
+              color: refreshing ? 'var(--color-text-tertiary)' : 'var(--color-brand)',
+              cursor: refreshing ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0,
+              transition: 'background 0.12s, border-color 0.12s, color 0.12s, transform 0.12s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              if (refreshing) return
+              e.currentTarget.style.background = 'rgba(37,180,57,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(37,180,57,0.28)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = refreshing ? 'var(--tint)' : 'rgba(37,180,57,0.06)'
+              e.currentTarget.style.borderColor = 'var(--edge)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            <RefreshCw size={13} strokeWidth={2.2} style={{ animation: refreshing ? 'rd-focus-refresh-spin 0.8s linear infinite' : undefined }} />
+            {refreshing ? 'Refreshing' : 'Refresh contacts'}
+          </button>
+        )}
       </div>
       <div style={{ ...PANEL, overflow: 'hidden' }}>
         <FocusLead item={lead} onClick={() => onContactClick(lead.contact)} />

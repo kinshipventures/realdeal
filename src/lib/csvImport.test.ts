@@ -76,6 +76,19 @@ describe('CSV and Excel import parsing', () => {
     ])
   })
 
+  it('detects client-style pod and sub-pod headers from random spreadsheets', () => {
+    const mapping = detectColumns(['Name', 'Primary Pod', 'LP Sub-Pod', 'Company Name', 'E-mail Address', 'Job Title'])
+
+    expect(mapping.map(m => m.targetField)).toEqual([
+      'First Name',
+      'Pod',
+      'Sub-pod',
+      'Company',
+      'Email',
+      'Role',
+    ])
+  })
+
   it('maps company-oriented headers to the existing Company field', () => {
     const mapping = detectColumns(['First Name', 'Last Name', 'Company Name', 'Agency'])
 

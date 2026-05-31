@@ -15,6 +15,10 @@
 }
 .badge-pulse { animation: badge-pulse 2s ease-in-out infinite; }
 
+@keyframes rd-focus-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Z-index scale
    20   — breadcrumb navigation
    50   — contact panel

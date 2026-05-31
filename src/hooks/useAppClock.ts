@@ -4,6 +4,7 @@ const SECOND_MS = 1_000
 const MINUTE_MS = 60 * SECOND_MS
 const SERVER_SYNC_MS = 15 * MINUTE_MS
 const MAX_TIMER_DELAY_MS = 2_147_483_647
+export const APP_DAY_START_HOUR = 5
 
 const importMetaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env
 
@@ -35,6 +36,7 @@ export interface AppClock {
   todayKey: string
   todayStartMs: number
   timeZone: string
+  refresh: () => Promise<void>
 }
 
 function getPerformanceNow(): number {
@@ -78,8 +80,8 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
   return asUtc - date.getTime()
 }
 
-function getZonedDayStartMsForParts(year: number, month: number, day: number, timeZone: string): number {
-  const utcGuess = Date.UTC(year, month - 1, day, 0, 0, 0)
+function getZonedTimeMsForParts(year: number, month: number, day: number, hour: number, minute: number, second: number, timeZone: string): number {
+  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second)
   let offset = getTimeZoneOffsetMs(new Date(utcGuess), timeZone)
   let startMs = utcGuess - offset
   offset = getTimeZoneOffsetMs(new Date(startMs), timeZone)
@@ -87,8 +89,16 @@ function getZonedDayStartMsForParts(year: number, month: number, day: number, ti
   return startMs
 }
 
-export function getAppDateKey(date: Date = new Date(), timeZone = APP_TIME_ZONE): string {
+function getOperationalDayParts(date: Date, timeZone: string): ZonedDateParts {
   const parts = getZonedDateParts(date, timeZone)
+  const dayStartMs = getZonedTimeMsForParts(parts.year, parts.month, parts.day, APP_DAY_START_HOUR, 0, 0, timeZone)
+  if (date.getTime() >= dayStartMs) return parts
+  const previousDayStartMs = getZonedTimeMsForParts(parts.year, parts.month, parts.day - 1, APP_DAY_START_HOUR, 0, 0, timeZone)
+  return getZonedDateParts(new Date(previousDayStartMs), timeZone)
+}
+
+export function getAppDateKey(date: Date = new Date(), timeZone = APP_TIME_ZONE): string {
+  const parts = getOperationalDayParts(date, timeZone)
   return [
     String(parts.year).padStart(4, '0'),
     String(parts.month).padStart(2, '0'),
@@ -97,21 +107,40 @@ export function getAppDateKey(date: Date = new Date(), timeZone = APP_TIME_ZONE)
 }
 
 export function getAppDayStartMs(date: Date = new Date(), timeZone = APP_TIME_ZONE): number {
-  const parts = getZonedDateParts(date, timeZone)
-  return getZonedDayStartMsForParts(parts.year, parts.month, parts.day, timeZone)
+  const parts = getOperationalDayParts(date, timeZone)
+  return getZonedTimeMsForParts(parts.year, parts.month, parts.day, APP_DAY_START_HOUR, 0, 0, timeZone)
 }
 
 export function getNextAppDayStartMs(date: Date = new Date(), timeZone = APP_TIME_ZONE): number {
   const parts = getZonedDateParts(date, timeZone)
-  return getZonedDayStartMsForParts(parts.year, parts.month, parts.day + 1, timeZone)
+  const todayStartMs = getZonedTimeMsForParts(parts.year, parts.month, parts.day, APP_DAY_START_HOUR, 0, 0, timeZone)
+  if (date.getTime() < todayStartMs) return todayStartMs
+  return getZonedTimeMsForParts(parts.year, parts.month, parts.day + 1, APP_DAY_START_HOUR, 0, 0, timeZone)
 }
 
 export function getMillisecondsUntilNextAppDay(date: Date = new Date(), timeZone = APP_TIME_ZONE): number {
   return Math.max(SECOND_MS, getNextAppDayStartMs(date, timeZone) - date.getTime() + SECOND_MS)
 }
 
-async function fetchServerClock(signal?: AbortSignal): Promise<ServerClockResponse> {
-  const response = await fetch('/api/app-clock', { cache: 'no-store', signal })
+function isValidTimeZone(timeZone: string | undefined): timeZone is string {
+  if (!timeZone) return false
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone }).format(new Date())
+    return true
+  } catch {
+    return false
+  }
+}
+
+function getClientTimeZone(): string {
+  if (typeof Intl === 'undefined') return APP_TIME_ZONE
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  return isValidTimeZone(timeZone) ? timeZone : APP_TIME_ZONE
+}
+
+async function fetchServerClock(timeZone: string, signal?: AbortSignal): Promise<ServerClockResponse> {
+  const query = new URLSearchParams({ timeZone })
+  const response = await fetch(`/api/app-clock?${query.toString()}`, { cache: 'no-store', signal })
   if (!response.ok) throw new Error('Unable to sync app clock')
   return response.json()
 }
@@ -122,14 +151,15 @@ export function useAppClock(): AppClock {
   const [now, setNow] = useState(() => Date.now())
 
   const refreshFromServer = useCallback(async (signal?: AbortSignal) => {
-    const payload = await fetchServerClock(signal)
+    const requestedTimeZone = getClientTimeZone()
+    const payload = await fetchServerClock(requestedTimeZone, signal)
     const serverNowMs = Number.isFinite(payload.now) ? payload.now : Date.parse(payload.iso)
     if (!Number.isFinite(serverNowMs)) throw new Error('Invalid app clock response')
 
     const nextSync: ClockSync = {
       serverNowMs,
       performanceNowMs: getPerformanceNow(),
-      timeZone: payload.timeZone || APP_TIME_ZONE,
+      timeZone: isValidTimeZone(payload.timeZone) ? payload.timeZone : requestedTimeZone,
     }
     syncRef.current = nextSync
     setSync(nextSync)
@@ -187,6 +217,10 @@ export function useAppClock(): AppClock {
     return () => window.clearTimeout(dayTimeoutId)
   }, [refreshFromServer, sync])
 
+  const refresh = useCallback(async () => {
+    await refreshFromServer()
+  }, [refreshFromServer])
+
   return useMemo(() => {
     const timeZone = sync?.timeZone || APP_TIME_ZONE
     const date = new Date(now)
@@ -195,6 +229,7 @@ export function useAppClock(): AppClock {
       todayKey: getAppDateKey(date, timeZone),
       todayStartMs: getAppDayStartMs(date, timeZone),
       timeZone,
+      refresh,
     }
-  }, [now, sync])
+  }, [now, refresh, sync])
 }
