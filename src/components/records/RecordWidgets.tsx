@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getContactSubPods } from '../../lib/subPodVisibility'
+import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
+import { SubPodSelector } from '../subpods/SubPodSelector'
 import { DetailsWidget } from './DetailsWidget'
 import { HealthWidget } from './HealthWidget'
 import { AssociatedPeopleWidget } from './AssociatedPeopleWidget'
@@ -49,51 +50,38 @@ function FundTagsWidget({ contact }: { contact: Contact }) {
   )
 }
 
-function SubPodsWidget({ contact, categories, pods }: { contact: Contact; categories: Category[]; pods: Pod[] }) {
-  const assignedSubPods = getContactSubPods(contact, categories)
-  if (assignedSubPods.length === 0) return null
+function SubPodsWidget({
+  contact,
+  categories,
+  pods,
+  onUpdate,
+}: {
+  contact: Contact
+  categories: Category[]
+  pods: Pod[]
+  onUpdate: (data: Partial<Contact>) => void
+}) {
+  const hasAvailableSubPods = categories.some(category => contact.list_ids.includes(category.list_id))
+  if (!hasAvailableSubPods) return null
+
+  function selectSubPod(subPod: Category) {
+    onUpdate(planMoveToSubPod(contact, subPod, categories))
+  }
+
+  function clearSubPod(podId: string) {
+    onUpdate(planClearSubPodForPod(contact, podId, categories))
+  }
 
   return (
     <div style={WIDGET_STYLE}>
-      <div style={{
-        fontFamily: 'var(--font-sans)',
-        fontSize: 16,
-        fontWeight: 700,
-        color: 'var(--color-text-primary)',
-        marginBottom: 12,
-      }}>
-        Sub-pods
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {assignedSubPods.map(subPod => {
-          const parentPod = pods.find(pod => pod.id === subPod.list_id)
-          return (
-            <span
-              key={subPod.id}
-              title={parentPod ? `${subPod.name} in ${parentPod.name}` : subPod.name}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '5px 10px',
-                borderRadius: 999,
-                border: '1px solid var(--edge)',
-                background: parentPod?.color
-                  ? `color-mix(in srgb, ${parentPod.color} 12%, var(--surface-panel) 88%)`
-                  : 'var(--tint)',
-                color: 'var(--color-text-secondary)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              {parentPod?.color && (
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: parentPod.color, flexShrink: 0 }} />
-              )}
-              {subPod.name}
-            </span>
-          )
-        })}
-      </div>
+      <SubPodSelector
+        pods={pods}
+        categories={categories}
+        selectedPodIds={contact.list_ids}
+        selectedCategoryIds={contact.category_ids}
+        onSelect={selectSubPod}
+        onClear={clearSubPod}
+      />
     </div>
   )
 }
@@ -126,7 +114,7 @@ export function RecordWidgets({ contact, pods, categories = [], interactions, fi
       ) : (
         <HealthWidget contact={contact} interactions={interactions} pods={pods} upcomingBirthday={upcomingBirthday} missingFieldCount={missingFieldCount} />
       )}
-      <SubPodsWidget contact={contact} categories={categories} pods={pods} />
+      <SubPodsWidget contact={contact} categories={categories} pods={pods} onUpdate={onUpdate} />
       <DetailsWidget contact={contact} onUpdate={onUpdate} requiredFieldKeys={requiredFieldKeys} />
       {assignedPods.map(pod => (
         <PodFieldsWidget

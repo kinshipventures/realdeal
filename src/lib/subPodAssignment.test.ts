@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planMoveToSubPod } from './subPodAssignment'
+import { planClearSubPodForPod, planMoveToSubPod } from './subPodAssignment'
 
 describe('planMoveToSubPod', () => {
   it('assigns the selected sub-pod and keeps the parent pod available', () => {
@@ -53,6 +53,28 @@ describe('planMoveToSubPod', () => {
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-lp-pr'],
+    })
+  })
+
+  it('clears only the sub-pod for the selected parent pod', () => {
+    const update = planClearSubPodForPod(
+      {
+        list_ids: ['pod-lps', 'pod-services'],
+        primary_list_id: 'pod-lps',
+        category_ids: ['cat-lp-internal', 'cat-founder-services'],
+      },
+      'pod-lps',
+      [
+        { id: 'cat-lp-internal', list_id: 'pod-lps' },
+        { id: 'cat-lp-pr', list_id: 'pod-lps' },
+        { id: 'cat-founder-services', list_id: 'pod-services' },
+      ],
+    )
+
+    expect(update).toEqual({
+      list_ids: ['pod-lps', 'pod-services'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-founder-services'],
     })
   })
 })

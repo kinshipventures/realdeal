@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import type { Contact, Pod } from '../../lib/types'
-import { createContact, getPods, getContactsByType } from '../../lib/data'
+import type { Category, Contact, Pod } from '../../lib/types'
+import { createContact, getCategories, getPods, getContactsByType } from '../../lib/data'
+import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { useEscape } from '../../lib/escapeStack'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
+import { SubPodSelector } from '../subpods/SubPodSelector'
 
 type Step = 'type' | 'form'
 type RecordType = 'Contact' | 'Company'
@@ -25,6 +27,7 @@ interface Props {
   onClose: () => void
   onCreated: (contact: Contact) => void
   initialType?: 'Contact' | 'Company' | null
+  categories?: Category[]
 }
 
 const inputStyle: React.CSSProperties = {
@@ -71,12 +74,17 @@ function newRow(): MultiRow {
   return { id: ++_rowCounter, firstName: '', lastName: '', email: '', companyName: '', industry: '', domain: '' }
 }
 
-export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: Props) {
+function uniqueIds(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))]
+}
+
+export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, categories: providedCategories }: Props) {
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>(initialType ? 'form' : 'type')
   const [recordType, setRecordType] = useState<RecordType>(initialType ?? 'Contact')
   const [formMode, setFormMode] = useState<FormMode>('single')
   const [pods, setPods] = useState<Pod[]>([])
+  const [categories, setCategories] = useState<Category[]>(providedCategories ?? [])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [multiProgress, setMultiProgress] = useState<string | null>(null)
@@ -86,6 +94,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [selectedPodIds, setSelectedPodIds] = useState<string[]>([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
   const [braindump, setBraindump] = useState(false)
   const [dumpText, setDumpText] = useState('')
 
@@ -106,6 +115,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   // Multi mode
   const [multiRows, setMultiRows] = useState<MultiRow[]>([newRow()])
   const [multiPodIds, setMultiPodIds] = useState<string[]>([])
+  const [multiCategoryIds, setMultiCategoryIds] = useState<string[]>([])
 
   const stableClose = useCallback(() => onClose(), [onClose])
   useEscape(stableClose)
@@ -113,11 +123,16 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   useEffect(() => {
     if (!isOpen) return
     getPods().then(p => setPods(p.filter(pod => pod.name !== 'Unsorted')))
+    if (providedCategories) {
+      setCategories(providedCategories)
+    } else {
+      getCategories().then(setCategories).catch(() => setCategories([]))
+    }
     if (initialType) {
       setRecordType(initialType)
       setStep('form')
     }
-  }, [isOpen, initialType])
+  }, [isOpen, initialType, providedCategories])
 
   // Company typeahead debounce
   useEffect(() => {
@@ -149,6 +164,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     setFormMode('single')
     setFirstName(''); setLastName(''); setEmail(''); setNotes('')
     setSelectedPodIds([])
+    setSelectedCategoryIds([])
     setBraindump(false); setDumpText('')
     setCompanyQuery(''); setCompanyResults([])
     setSelectedCompany(null); setShowCompanyDrop(false)
@@ -158,6 +174,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     setMultiProgress(null)
     setMultiRows([newRow()])
     setMultiPodIds([])
+    setMultiCategoryIds([])
   }
 
   function handleClose() {
@@ -166,11 +183,79 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
   }
 
   function togglePod(id: string) {
-    setSelectedPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
+    setSelectedPodIds(prev => {
+      if (!prev.includes(id)) return [...prev, id]
+      setSelectedCategoryIds(current =>
+        current.filter(categoryId => categories.find(category => category.id === categoryId)?.list_id !== id),
+      )
+      return prev.filter(p => p !== id)
+    })
   }
 
   function toggleMultiPod(id: string) {
-    setMultiPodIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
+    setMultiPodIds(prev => {
+      if (!prev.includes(id)) return [...prev, id]
+      setMultiCategoryIds(current =>
+        current.filter(categoryId => categories.find(category => category.id === categoryId)?.list_id !== id),
+      )
+      return prev.filter(p => p !== id)
+    })
+  }
+
+  function selectSubPod(subPod: Category) {
+    const update = planMoveToSubPod(
+      {
+        list_ids: selectedPodIds,
+        primary_list_id: selectedPodIds[0] ?? null,
+        category_ids: selectedCategoryIds,
+      },
+      subPod,
+      categories,
+    )
+    setSelectedPodIds(update.list_ids)
+    setSelectedCategoryIds(update.category_ids)
+  }
+
+  function clearSubPod(podId: string) {
+    const update = planClearSubPodForPod(
+      {
+        list_ids: selectedPodIds,
+        primary_list_id: selectedPodIds[0] ?? null,
+        category_ids: selectedCategoryIds,
+      },
+      podId,
+      categories,
+    )
+    setSelectedPodIds(update.list_ids)
+    setSelectedCategoryIds(update.category_ids)
+  }
+
+  function selectMultiSubPod(subPod: Category) {
+    const update = planMoveToSubPod(
+      {
+        list_ids: multiPodIds,
+        primary_list_id: multiPodIds[0] ?? null,
+        category_ids: multiCategoryIds,
+      },
+      subPod,
+      categories,
+    )
+    setMultiPodIds(update.list_ids)
+    setMultiCategoryIds(update.category_ids)
+  }
+
+  function clearMultiSubPod(podId: string) {
+    const update = planClearSubPodForPod(
+      {
+        list_ids: multiPodIds,
+        primary_list_id: multiPodIds[0] ?? null,
+        category_ids: multiCategoryIds,
+      },
+      podId,
+      categories,
+    )
+    setMultiPodIds(update.list_ids)
+    setMultiCategoryIds(update.category_ids)
   }
 
   function selectCompany(c: Contact) {
@@ -215,6 +300,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
     setError(null)
     try {
       let created: Contact
+      const podIds = uniqueIds(selectedPodIds)
+      const categoryIds = uniqueIds(selectedCategoryIds)
+      const primaryPodId = podIds[0] ?? null
 
       if (recordType === 'Contact') {
         const companyName = selectedCompany?.name ?? companyQuery.trim()
@@ -224,7 +312,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             ...baseContact,
             name: 'Brain Dump',
             intel_notes: dumpText.trim(),
-            list_ids: selectedPodIds,
+            list_ids: podIds,
+            category_ids: categoryIds,
+            primary_list_id: primaryPodId,
             needs_review: true,
             status: 'Pending',
           })
@@ -236,7 +326,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             last_name: lastName.trim(),
             email: email.trim() || null,
             notes: notes.trim() || null,
-            list_ids: selectedPodIds,
+            list_ids: podIds,
+            category_ids: categoryIds,
+            primary_list_id: primaryPodId,
             type: 'Contact',
             company_record_id: null,
             company_ids: [],
@@ -249,7 +341,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
           name: companyName.trim(),
           type: 'Company',
           status: 'Active',
-          list_ids: selectedPodIds,
+          list_ids: podIds,
+          category_ids: categoryIds,
+          primary_list_id: primaryPodId,
           industry: industry.trim() || null,
           domain: domain.trim() || null,
         })
@@ -280,6 +374,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
 
     let lastCreated: Contact | null = null
     let failed = 0
+    const podIds = uniqueIds(multiPodIds)
+    const categoryIds = uniqueIds(multiCategoryIds)
+    const primaryPodId = podIds[0] ?? null
 
     for (let i = 0; i < validRows.length; i++) {
       const row = validRows[i]
@@ -293,7 +390,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             first_name: row.firstName.trim(),
             last_name: row.lastName.trim(),
             email: row.email.trim() || null,
-            list_ids: multiPodIds,
+            list_ids: podIds,
+            category_ids: categoryIds,
+            primary_list_id: primaryPodId,
             type: 'Contact',
           })
         } else {
@@ -302,7 +401,9 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
             name: row.companyName.trim(),
             type: 'Company',
             status: 'Active',
-            list_ids: multiPodIds,
+            list_ids: podIds,
+            category_ids: categoryIds,
+            primary_list_id: primaryPodId,
             industry: row.industry.trim() || null,
             domain: row.domain.trim() || null,
           })
@@ -544,6 +645,15 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                 </div>
 
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
+                <SubPodSelector
+                  pods={pods}
+                  categories={categories}
+                  selectedPodIds={selectedPodIds}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onSelect={selectSubPod}
+                  onClear={clearSubPod}
+                  compact
+                />
                 {!braindump && firstName.trim() && lastName.trim() && selectedPodIds.length === 0 && (
                   <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
                     Select at least one pod to create this contact.
@@ -581,9 +691,18 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                   Saved as Pending for review
                 </p>
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
-                {companyName.trim() && selectedPodIds.length === 0 && (
+                <SubPodSelector
+                  pods={pods}
+                  categories={categories}
+                  selectedPodIds={selectedPodIds}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onSelect={selectSubPod}
+                  onClear={clearSubPod}
+                  compact
+                />
+                {dumpText.trim() && selectedPodIds.length === 0 && (
                   <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
-                    Select at least one pod to create this company.
+                    Select at least one pod to create this contact.
                   </p>
                 )}
                 <button type="button" onClick={() => setBraindump(false)} style={{
@@ -630,6 +749,15 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
                   <input type="text" value={domain} onChange={e => setDomain(e.target.value)} placeholder="example.com" style={inputStyle} />
                 </div>
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
+                <SubPodSelector
+                  pods={pods}
+                  categories={categories}
+                  selectedPodIds={selectedPodIds}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onSelect={selectSubPod}
+                  onClear={clearSubPod}
+                  compact
+                />
                 <button type="button" onClick={() => setFormMode('multi')} style={{
                   background: 'none', border: 'none', padding: 0,
                   fontSize: 11, color: 'var(--color-text-secondary)', cursor: 'pointer',
@@ -675,6 +803,15 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType }: P
         {step === 'form' && formMode === 'multi' && (
           <>
             <PodPicker pods={pods} selectedPodIds={multiPodIds} onToggle={toggleMultiPod} />
+            <SubPodSelector
+              pods={pods}
+              categories={categories}
+              selectedPodIds={multiPodIds}
+              selectedCategoryIds={multiCategoryIds}
+              onSelect={selectMultiSubPod}
+              onClear={clearMultiSubPod}
+              compact
+            />
             {validMultiCount > 0 && multiPodIds.length === 0 && (
               <p style={{ margin: '-4px 0 12px', fontSize: 11, color: '#D93025' }}>
                 Select at least one pod before creating records.

@@ -35,3 +35,21 @@ export function planMoveToSubPod(
     category_ids: categoryIds,
   }
 }
+
+export function planClearSubPodForPod(
+  contact: Pick<Contact, 'list_ids' | 'primary_list_id' | 'category_ids'>,
+  podId: string,
+  allSubPods: Array<Pick<Category, 'id' | 'list_id'>>,
+): SubPodAssignmentUpdate {
+  const siblingSubPodIds = new Set(
+    allSubPods
+      .filter(subPod => subPod.list_id === podId)
+      .map(subPod => subPod.id),
+  )
+
+  return {
+    list_ids: unique(contact.list_ids),
+    primary_list_id: contact.primary_list_id,
+    category_ids: unique(contact.category_ids.filter(categoryId => !siblingSubPodIds.has(categoryId))),
+  }
+}

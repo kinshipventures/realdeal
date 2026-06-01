@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Category, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
 import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
-import { getContactSubPods } from '../../lib/subPodVisibility'
+import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 
 function daysUntilBirthday(birthday: string | null): number | null {
   if (!birthday) return null
@@ -24,6 +24,7 @@ import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
+import { SubPodSelector } from '../subpods/SubPodSelector'
 
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
@@ -104,6 +105,15 @@ type ShellBounds = {
   height: number
 }
 
+function uniqueIds(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))]
+}
+
+function parentPodIdsForCategories(categoryIds: string[], categories: Category[]): string[] {
+  const categoryById = new Map(categories.map(category => [category.id, category]))
+  return uniqueIds(categoryIds.map(categoryId => categoryById.get(categoryId)?.list_id ?? ''))
+}
+
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated }: Props) {
   const isNew = contact === null
 
@@ -163,6 +173,23 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }, [providedCategories])
 
   useEffect(() => {
+    if (!isNew || availableCategories.length === 0) return
+    const categoryIds = draft.category_ids ?? []
+    if (categoryIds.length === 0) return
+    const inferredPodIds = parentPodIdsForCategories(categoryIds, availableCategories)
+    if (inferredPodIds.length === 0) return
+
+    setDraft(prev => {
+      const listIds = uniqueIds([...(prev.list_ids ?? []), ...inferredPodIds])
+      return {
+        ...prev,
+        list_ids: listIds,
+        primary_list_id: prev.primary_list_id ?? listIds[0] ?? null,
+      }
+    })
+  }, [availableCategories, draft.category_ids, isNew])
+
+  useEffect(() => {
     if (!contact) return
     getCampaignContactsForContact(contact.id).then(async (links) => {
       setContactCampaignLinks(links)
@@ -201,7 +228,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const equityScore = contactEquityScore(interactions)
   const equityBreakdown = contactEquityBreakdown(interactions)
-  const assignedSubPods = getContactSubPods({ category_ids: draft.category_ids ?? [] }, availableCategories)
   const totalCommitmentAmount = contactCampaignLinks.reduce(
     (sum, link) => sum + (getCampaignContactCommitmentAmount(link) ?? 0),
     0,
@@ -425,20 +451,24 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null) {
+  async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null, nextCategoryIds = draft.category_ids ?? []) {
     if (isNew || !contact) return
     const previousListIds = contact.list_ids
     const previousPrimaryId = contact.primary_list_id
+    const previousCategoryIds = contact.category_ids
     const updated = await updateContact(contact.id, {
       list_ids: nextListIds,
       primary_list_id: nextPrimaryId,
+      category_ids: nextCategoryIds,
     } as Partial<Contact>)
     onSaved(updated)
 
     const changedPods =
       previousPrimaryId !== nextPrimaryId ||
       previousListIds.length !== nextListIds.length ||
-      previousListIds.some(id => !nextListIds.includes(id))
+      previousListIds.some(id => !nextListIds.includes(id)) ||
+      previousCategoryIds.length !== nextCategoryIds.length ||
+      previousCategoryIds.some(id => !nextCategoryIds.includes(id))
 
     if (changedPods) {
       await logSystemEvent({
@@ -449,9 +479,43 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           nextPods: nextListIds,
           previousPrimaryPod: previousPrimaryId,
           nextPrimaryPod: nextPrimaryId,
+          previousSubPods: previousCategoryIds,
+          nextSubPods: nextCategoryIds,
         },
         notes: 'Updated pod ownership and context.',
       })
+    }
+  }
+
+  function handleSelectSubPod(subPod: Category) {
+    const update = planMoveToSubPod(
+      {
+        list_ids: draft.list_ids ?? [],
+        primary_list_id: draft.primary_list_id ?? null,
+        category_ids: draft.category_ids ?? [],
+      },
+      subPod,
+      availableCategories,
+    )
+    setDraft(prev => ({ ...prev, ...update }))
+    if (!isNew && contact) {
+      persistPodAssignment(update.list_ids, update.primary_list_id, update.category_ids)
+    }
+  }
+
+  function handleClearSubPod(podId: string) {
+    const update = planClearSubPodForPod(
+      {
+        list_ids: draft.list_ids ?? [],
+        primary_list_id: draft.primary_list_id ?? null,
+        category_ids: draft.category_ids ?? [],
+      },
+      podId,
+      availableCategories,
+    )
+    setDraft(prev => ({ ...prev, ...update }))
+    if (!isNew && contact) {
+      persistPodAssignment(update.list_ids, update.primary_list_id, update.category_ids)
     }
   }
 
@@ -473,6 +537,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setCreating(true)
     setCreateError(false)
     try {
+      const categoryIds = uniqueIds(draft.category_ids ?? (categoryId ? [categoryId] : []))
+      const listIds = uniqueIds([
+        ...(draft.list_ids ?? []),
+        ...parentPodIdsForCategories(categoryIds, availableCategories),
+      ])
       const created = await createContact({
         name: draft.name,
         email: draft.email ?? null,
@@ -490,9 +559,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         interests: draft.interests ?? null,
         relationship_context: draft.relationship_context ?? null,
         last_contacted_at: null,
-        list_ids: [],
-        category_ids: categoryId ? [categoryId] : [],
-        primary_list_id: null, cadence_override: null,
+        list_ids: listIds,
+        category_ids: categoryIds,
+        primary_list_id: draft.primary_list_id ?? listIds[0] ?? null, cadence_override: null,
         ring_ids: draft.ring_ids ?? [],
         first_name: null, last_name: null, linkedin: null,
         country: null, global_region: null, gender: null,
@@ -1172,18 +1241,24 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             type="button"
                             onClick={() => {
                               const currentIds = draft.list_ids ?? []
+                              const currentCategoryIds = draft.category_ids ?? []
                               let nextIds: string[]
                               let nextPrimary = draft.primary_list_id
+                              let nextCategoryIds = currentCategoryIds
                               if (isIn) {
                                 nextIds = currentIds.filter(id => id !== pod.id)
+                                nextCategoryIds = currentCategoryIds.filter(categoryId => {
+                                  const category = availableCategories.find(item => item.id === categoryId)
+                                  return category?.list_id !== pod.id
+                                })
                                 if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
                               } else {
                                 nextIds = [...currentIds, pod.id]
                                 if (!nextPrimary) nextPrimary = pod.id
                               }
-                              setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary }))
+                              setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary, category_ids: nextCategoryIds }))
                               if (!isNew && contact) {
-                                persistPodAssignment(nextIds, nextPrimary)
+                                persistPodAssignment(nextIds, nextPrimary, nextCategoryIds)
                               }
                             }}
                             style={{
@@ -1242,42 +1317,14 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         </div>
                       </div>
                     )}
-                    {assignedSubPods.length > 0 && (
-                      <div style={{ marginTop: 14 }}>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>sub-pods</div>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {assignedSubPods.map(subPod => {
-                            const parentPod = pods.find(pod => pod.id === subPod.list_id)
-                            return (
-                              <span
-                                key={subPod.id}
-                                title={parentPod ? `${subPod.name} in ${parentPod.name}` : subPod.name}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 6,
-                                  padding: '5px 11px',
-                                  borderRadius: 999,
-                                  border: '1px solid var(--edge)',
-                                  background: parentPod?.color
-                                    ? `color-mix(in srgb, ${parentPod.color} 12%, var(--surface-panel) 88%)`
-                                    : 'var(--tint)',
-                                  color: 'var(--color-text-primary)',
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  lineHeight: 1.2,
-                                }}
-                              >
-                                {parentPod?.color && (
-                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: parentPod.color, flexShrink: 0 }} />
-                                )}
-                                {subPod.name}
-                              </span>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
+                    <SubPodSelector
+                      pods={pods}
+                      categories={availableCategories}
+                      selectedPodIds={draft.list_ids ?? []}
+                      selectedCategoryIds={draft.category_ids ?? []}
+                      onSelect={handleSelectSubPod}
+                      onClear={handleClearSubPod}
+                    />
                   </div>
                 </div>
               )}

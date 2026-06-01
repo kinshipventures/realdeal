@@ -1312,7 +1312,7 @@ export function RecordsList() {
                     Move to sub-pod
                   </div>
                   {subPodsByPod.map(({ pod, subPods }) => (
-                    <div key={pod.id}>
+                    <div key={pod.id} className="records-dropdown-group">
                       <div style={{ padding: '8px 8px 4px', fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                         {pod.color && <span style={{ width: 7, height: 7, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
                         {pod.name}
@@ -2033,6 +2033,7 @@ export function RecordsList() {
         onClose={() => setShowCreate(false)}
         onCreated={() => { setShowCreate(false); setRefreshKey(k => k + 1) }}
         initialType="Contact"
+        categories={categories}
       />
 
       {/* Toast */}
@@ -2142,6 +2143,9 @@ export function RecordsList() {
         }
         .records-dropdown > div:hover {
           background: var(--tint);
+        }
+        .records-dropdown > div.records-dropdown-group:hover {
+          background: transparent;
         }
         .records-dropdown > label:hover {
           background: var(--tint);
