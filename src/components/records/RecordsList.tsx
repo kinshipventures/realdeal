@@ -12,11 +12,12 @@ import { logSystemEvent } from '../../lib/timeline'
 import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
+import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
 
-type ColumnId = 'name' | 'company' | 'pod' | 'equity' | 'type' | 'status' | 'last_contact' | 'cadence' | 'location' | 'follow_up'
+type ColumnId = 'name' | 'company' | 'pod' | 'sub_pod' | 'equity' | 'type' | 'status' | 'last_contact' | 'cadence' | 'location' | 'follow_up'
 
 interface ColumnDef {
   id: ColumnId
@@ -28,6 +29,7 @@ const COLUMNS: ColumnDef[] = [
   { id: 'name',         label: 'Name',         defaultVisible: true },
   { id: 'company',      label: 'Company',       defaultVisible: true },
   { id: 'pod',          label: 'Pod',           defaultVisible: true },
+  { id: 'sub_pod',      label: 'Sub-pod',       defaultVisible: true },
   { id: 'equity',       label: 'Health',        defaultVisible: true },
   { id: 'type',         label: 'Type',          defaultVisible: false },
   { id: 'status',       label: 'Status',        defaultVisible: false },
@@ -213,7 +215,7 @@ export function RecordsList() {
   const [sort, setSort] = useState<{ col: ColumnId; dir: SortDir }>(() => {
     const col = searchParams.get('sort_col') as ColumnId | null
     const dir = searchParams.get('sort_dir') as SortDir | null
-    const validCols: ColumnId[] = ['name', 'company', 'pod', 'equity', 'type', 'status', 'last_contact', 'cadence', 'location', 'follow_up']
+    const validCols: ColumnId[] = ['name', 'company', 'pod', 'sub_pod', 'equity', 'type', 'status', 'last_contact', 'cadence', 'location', 'follow_up']
     if (col && validCols.includes(col) && (dir === 'asc' || dir === 'desc')) return { col, dir }
     return { col: 'equity', dir: 'desc' }
   })
@@ -452,6 +454,8 @@ export function RecordsList() {
           const bPod = b.primary_list_id ? (podMap[b.primary_list_id]?.name ?? '') : ''
           return dir * aPod.localeCompare(bPod)
         }
+        case 'sub_pod':
+          return dir * formatContactSubPods(a, categories).localeCompare(formatContactSubPods(b, categories))
         case 'equity':
           return dir * ((equityMap[a.id] ?? 0) - (equityMap[b.id] ?? 0))
         case 'type':
@@ -476,7 +480,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [contacts, filters, sort, equityMap, podMap])
+  }, [contacts, filters, sort, equityMap, podMap, categories])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -711,6 +715,7 @@ export function RecordsList() {
       case 'name': return contact.name
       case 'company': return contact.company ?? ''
       case 'pod': { const p = contact.primary_list_id ? podMap[contact.primary_list_id] : null; return p?.name ?? '' }
+      case 'sub_pod': return formatContactSubPods(contact, categories)
       case 'equity': return String(equityMap[contact.id] ?? 0)
       case 'type': return contact.type
       case 'status': return contact.status
@@ -1756,6 +1761,44 @@ export function RecordsList() {
                             </span>
                           )
                         })()}
+                        {col.id === 'sub_pod' && (() => {
+                          const contactSubPods = getContactSubPods(contact, categories)
+                          if (contactSubPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
+                          return (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', maxWidth: 'clamp(140px, 18vw, 280px)' }}>
+                              {contactSubPods.map(subPod => {
+                                const parentPod = pods.find(pod => pod.id === subPod.list_id)
+                                return (
+                                  <span
+                                    key={subPod.id}
+                                    title={parentPod ? `${subPod.name} in ${parentPod.name}` : subPod.name}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                      maxWidth: 150,
+                                      padding: '3px 8px',
+                                      borderRadius: 999,
+                                      border: '1px solid var(--edge)',
+                                      background: parentPod?.color
+                                        ? `color-mix(in srgb, ${parentPod.color} 12%, var(--surface-panel) 88%)`
+                                        : 'var(--tint)',
+                                      color: 'var(--color-text-secondary)',
+                                      fontSize: 11,
+                                      fontWeight: 600,
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {parentPod?.color && (
+                                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: parentPod.color, flexShrink: 0 }} />
+                                    )}
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{subPod.name}</span>
+                                  </span>
+                                )
+                              })}
+                            </span>
+                          )
+                        })()}
                         {col.id === 'equity' && (
                           <span className="health-badge" style={{
                             display: 'inline-flex',
@@ -1923,6 +1966,7 @@ export function RecordsList() {
           onSaved={handleContactSaved}
           onDeleted={handleContactDeleted}
           pods={pods}
+          categories={categories}
         />
       )}
 

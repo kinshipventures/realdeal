@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'react-router'
-import type { Campaign, Contact, Interaction, Pod } from '../../lib/types'
+import type { Campaign, Category, Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
-import { getContacts, getPods, getInteractions, updateContact, isOverdue, isInGracePeriod, getCampaigns, getCampaignContactsForContact } from '../../lib/data'
+import { getContacts, getPods, getCategories, getInteractions, updateContact, isOverdue, isInGracePeriod, getCampaigns, getCampaignContactsForContact } from '../../lib/data'
 import { getFieldConfigs } from '../../lib/fieldConfig'
 import { isDormant, daysSinceContact } from '../../lib/equity'
 import { getUpcomingBirthdays } from '../../lib/birthdays'
@@ -30,6 +30,7 @@ export function RecordPage() {
 
   const [contact, setContact] = useState<Contact | null>(null)
   const [pods, setPods] = useState<Pod[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([])
@@ -48,15 +49,17 @@ export function RecordPage() {
     Promise.all([
       getContacts().then(all => all.find(c => c.id === id) ?? null),
       getPods(),
+      getCategories(),
       getFieldConfigs(),
       getInteractions(id),
       getCampaignContactsForContact(id),
       getCampaigns(),
-    ]).then(([found, fetchedPods, fetchedConfigs, fetchedInteractions, campaignLinks, campaigns]) => {
+    ]).then(([found, fetchedPods, fetchedCategories, fetchedConfigs, fetchedInteractions, campaignLinks, campaigns]) => {
       if (canceled) return
       if (!found) { setNotFound(true); setLoading(false); return }
       setContact(found)
       setPods(fetchedPods)
+      setCategories(fetchedCategories)
       setFieldConfigs(fetchedConfigs)
       setInteractions(fetchedInteractions)
       const campaignIds = new Set(campaignLinks.map(link => link.campaign_id))
@@ -235,6 +238,7 @@ export function RecordPage() {
           <RecordWidgets
             contact={contact}
             pods={pods}
+            categories={categories}
             interactions={interactions}
             fieldConfigs={fieldConfigs}
             onUpdate={handleUpdate}

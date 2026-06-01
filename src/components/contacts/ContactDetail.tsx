@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
+import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Category, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
 import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
+import { getContactSubPods } from '../../lib/subPodVisibility'
 
 function daysUntilBirthday(birthday: string | null): number | null {
   if (!birthday) return null
@@ -13,7 +14,7 @@ function daysUntilBirthday(birthday: string | null): number | null {
   if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-import { updateContact, createContact, deleteContact, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/data'
+import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
@@ -88,6 +89,7 @@ interface Props {
   onSaved: (contact: Contact) => void
   onDeleted?: () => void
   pods?: Pod[]  // optional -- enrichment features disabled when not provided
+  categories?: Category[]
 }
 
 type SaveError = { field: keyof Contact; value: string | null } | null
@@ -99,7 +101,7 @@ type ShellBounds = {
   height: number
 }
 
-export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [] }: Props) {
+export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories }: Props) {
   const isNew = contact === null
 
   const [draft, setDraft] = useState<Partial<Contact>>(
@@ -122,6 +124,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [contactCampaignLinks, setContactCampaignLinks] = useState<CampaignContact[]>([])
   const [campaignStagesMap, setCampaignStagesMap] = useState<Record<string, CampaignStage[]>>({})
+  const [availableCategories, setAvailableCategories] = useState<Category[]>(providedCategories ?? [])
   const [showCampaignPicker, setShowCampaignPicker] = useState(false)
   const [addingToCampaign, setAddingToCampaign] = useState(false)
   const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
@@ -143,6 +146,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   useEffect(() => {
     getCampaigns().then(all => setCampaigns(all.filter(c => c.status === 'active')))
   }, [])
+
+  useEffect(() => {
+    if (providedCategories) {
+      setAvailableCategories(providedCategories)
+      return
+    }
+    let canceled = false
+    getCategories()
+      .then(fetched => { if (!canceled) setAvailableCategories(fetched) })
+      .catch(() => {})
+    return () => { canceled = true }
+  }, [providedCategories])
 
   useEffect(() => {
     if (!contact) return
@@ -175,6 +190,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const equityScore = contactEquityScore(interactions)
   const equityBreakdown = contactEquityBreakdown(interactions)
+  const assignedSubPods = getContactSubPods({ category_ids: draft.category_ids ?? [] }, availableCategories)
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -1206,6 +1222,42 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                               >
                                 {pod.name}
                               </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {assignedSubPods.length > 0 && (
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>sub-pods</div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {assignedSubPods.map(subPod => {
+                            const parentPod = pods.find(pod => pod.id === subPod.list_id)
+                            return (
+                              <span
+                                key={subPod.id}
+                                title={parentPod ? `${subPod.name} in ${parentPod.name}` : subPod.name}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '5px 11px',
+                                  borderRadius: 999,
+                                  border: '1px solid var(--edge)',
+                                  background: parentPod?.color
+                                    ? `color-mix(in srgb, ${parentPod.color} 12%, var(--surface-panel) 88%)`
+                                    : 'var(--tint)',
+                                  color: 'var(--color-text-primary)',
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  lineHeight: 1.2,
+                                }}
+                              >
+                                {parentPod?.color && (
+                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: parentPod.color, flexShrink: 0 }} />
+                                )}
+                                {subPod.name}
+                              </span>
                             )
                           })}
                         </div>
