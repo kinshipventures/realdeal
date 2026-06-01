@@ -11,6 +11,7 @@ import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
 import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
+import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -242,6 +243,7 @@ export function RecordsList() {
 
   // Bulk actions
   const [showPodPicker, setShowPodPicker] = useState(false)
+  const [showSubPodPicker, setShowSubPodPicker] = useState(false)
   const [showFieldUpdate, setShowFieldUpdate] = useState(false)
   const [updateField, setUpdateField] = useState('')
   const [updateValue, setUpdateValue] = useState('')
@@ -255,6 +257,7 @@ export function RecordsList() {
   const [companyFilteredCount, setCompanyFilteredCount] = useState(0)
 
   const podPickerRef = useRef<HTMLDivElement>(null)
+  const subPodPickerRef = useRef<HTMLDivElement>(null)
   const fieldUpdateRef = useRef<HTMLDivElement>(null)
   const addToCampaignDialogRef = useRef<HTMLDivElement>(null)
   const archiveDialogRef = useRef<HTMLDivElement>(null)
@@ -337,6 +340,9 @@ export function RecordsList() {
       if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
         setShowPodPicker(false)
       }
+      if (subPodPickerRef.current && !subPodPickerRef.current.contains(e.target as Node)) {
+        setShowSubPodPicker(false)
+      }
       if (fieldUpdateRef.current && !fieldUpdateRef.current.contains(e.target as Node)) {
         setShowFieldUpdate(false)
       }
@@ -383,6 +389,16 @@ export function RecordsList() {
     for (const p of pods) m[p.id] = p
     return m
   }, [pods])
+
+  const subPodsByPod = useMemo(
+    () => pods
+      .map(pod => ({
+        pod,
+        subPods: categories.filter(category => category.list_id === pod.id),
+      }))
+      .filter(group => group.subPods.length > 0),
+    [pods, categories],
+  )
 
   const activeCampaigns = useMemo(
     () => campaigns.filter(c => c.status === 'active'),
@@ -593,6 +609,68 @@ export function RecordsList() {
       setContacts(await getContacts())
       showToast('Pod change undone')
     })
+  }
+
+  async function handleBulkSubPodAction(categoryId: string) {
+    setShowSubPodPicker(false)
+    setBulkOperating(true)
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    const subPod = categories.find(category => category.id === categoryId)
+    const parentPod = subPod ? pods.find(pod => pod.id === subPod.list_id) : null
+
+    if (!subPod) {
+      setBulkOperating(false)
+      showToast('Sub-pod not found. Refresh and try again.')
+      return
+    }
+
+    const previousState = selected.map(contact => ({
+      id: contact.id,
+      list_ids: [...contact.list_ids],
+      primary_list_id: contact.primary_list_id,
+      category_ids: [...contact.category_ids],
+    }))
+
+    try {
+      for (const contact of selected) {
+        const update = planMoveToSubPod(contact, subPod, categories)
+        await updateContact(contact.id, update)
+        await logSystemEvent({
+          contactId: contact.id,
+          type: 'pod_change',
+          detail: {
+            action: 'moved_to_sub_pod',
+            pod: parentPod?.name ?? subPod.list_id,
+            podId: subPod.list_id,
+            subPod: subPod.name,
+            subPodId: subPod.id,
+          },
+          notes: `Moved to ${subPod.name}${parentPod ? ` in ${parentPod.name}` : ''}`,
+        })
+      }
+      invalidateContactsCache()
+      setContacts(await getContacts())
+      setSelectedIds(new Set())
+      showToast(`Moved ${selected.length} ${selected.length === 1 ? 'person' : 'people'} to ${subPod.name}`, async () => {
+        for (const previous of previousState) {
+          await updateContact(previous.id, {
+            list_ids: previous.list_ids,
+            primary_list_id: previous.primary_list_id,
+            category_ids: previous.category_ids,
+          })
+        }
+        invalidateContactsCache()
+        setContacts(await getContacts())
+        showToast('Sub-pod change undone')
+      })
+    } catch (err) {
+      console.error('Bulk sub-pod update failed:', err)
+      invalidateContactsCache()
+      setContacts(await getContacts().catch(() => contacts))
+      showToast("Couldn't move selected contacts to that sub-pod. Try again.")
+    } finally {
+      setBulkOperating(false)
+    }
   }
 
   async function handleBulkFieldUpdate() {
@@ -1160,13 +1238,13 @@ export function RecordsList() {
           <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>
             {bulkOperating ? 'Working...' : `${selectedIds.size} selected`}
           </span>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {/* Pod actions */}
             <div ref={podPickerRef} style={{ position: 'relative' }}>
               <button
                 className="delight-button"
                 type="button"
-                onClick={() => { setShowPodPicker(v => !v); setShowFieldUpdate(false) }}
+                onClick={() => { setShowPodPicker(v => !v); setShowSubPodPicker(false); setShowFieldUpdate(false) }}
                 disabled={bulkOperating}
                 style={bulkBtnStyle}
               >
@@ -1211,12 +1289,56 @@ export function RecordsList() {
               )}
             </div>
 
+            {/* Sub-pod actions */}
+            <div ref={subPodPickerRef} style={{ position: 'relative' }}>
+              <button
+                className="delight-button"
+                type="button"
+                onClick={() => { setShowSubPodPicker(v => !v); setShowPodPicker(false); setShowFieldUpdate(false) }}
+                disabled={bulkOperating}
+                style={bulkBtnStyle}
+              >
+                Sub-pod
+                <span style={{ marginLeft: 4, opacity: 0.5 }}>&#9662;</span>
+              </button>
+              {showSubPodPicker && (
+                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 240, maxHeight: 360, overflowY: 'auto' }}>
+                  <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Move to sub-pod
+                  </div>
+                  {subPodsByPod.map(({ pod, subPods }) => (
+                    <div key={pod.id}>
+                      <div style={{ padding: '8px 8px 4px', fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {pod.color && <span style={{ width: 7, height: 7, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
+                        {pod.name}
+                      </div>
+                      {subPods.map(subPod => (
+                        <button
+                          key={subPod.id}
+                          type="button"
+                          onClick={() => handleBulkSubPodAction(subPod.id)}
+                          style={{ ...dropdownButtonStyle, paddingLeft: 18 }}
+                        >
+                          {subPod.name}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                  {subPodsByPod.length === 0 && (
+                    <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)', whiteSpace: 'normal' }}>
+                      No sub-pods yet. Add sub-pods from a pod page.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Field update */}
             <div ref={fieldUpdateRef} style={{ position: 'relative' }}>
               <button
                 className="delight-button"
                 type="button"
-                onClick={() => { setShowFieldUpdate(v => !v); setShowPodPicker(false) }}
+                onClick={() => { setShowFieldUpdate(v => !v); setShowPodPicker(false); setShowSubPodPicker(false) }}
                 disabled={bulkOperating}
                 style={bulkBtnStyle}
               >
