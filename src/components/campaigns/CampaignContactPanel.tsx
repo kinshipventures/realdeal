@@ -5,9 +5,11 @@ import { HUMAN_TYPES } from '../../lib/types'
 import { updateCampaignContact, logInteraction } from '../../lib/data'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton } from '../ui'
 import { ChevronDown, ChevronRight, Phone, Mail, MessageSquare, Users } from 'lucide-react'
+import { CampaignCommitmentInput } from './CampaignCommitmentInput'
 
 interface Props {
   cc: CampaignContact
@@ -130,6 +132,22 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
       setSaveStatus('error')
       clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
+    }
+  }
+
+  async function handleCommitmentSave(amount: number | null) {
+    setSaveStatus('saving')
+    try {
+      const updated = await updateCampaignContact(cc.id, {
+        custom_fields: withMoneyField(cc.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
+      })
+      onUpdate(updated)
+      flashSaved()
+    } catch {
+      setSaveStatus('error')
+      clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
+      throw new Error('Commitment amount save failed')
     }
   }
 
@@ -413,6 +431,15 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
                 </span>
               </FieldRow>
             )}
+
+            <FieldRow label="Commitment Amount" mobile={isMobile}>
+              <CampaignCommitmentInput
+                value={getCampaignContactCommitmentAmount(cc)}
+                onSave={handleCommitmentSave}
+                placeholder="$0"
+                style={isMobile ? { minHeight: 44 } : undefined}
+              />
+            </FieldRow>
 
             <FieldRow label="Owner" mobile={isMobile}>
               <input

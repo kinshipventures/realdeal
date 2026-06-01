@@ -14,14 +14,16 @@ function daysUntilBirthday(birthday: string | null): number | null {
   if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
   return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign } from '../../lib/data'
+import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
+import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
 
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
@@ -90,6 +92,7 @@ interface Props {
   onDeleted?: () => void
   pods?: Pod[]  // optional -- enrichment features disabled when not provided
   categories?: Category[]
+  onCampaignContactUpdated?: (updated: CampaignContact) => void
 }
 
 type SaveError = { field: keyof Contact; value: string | null } | null
@@ -101,7 +104,7 @@ type ShellBounds = {
   height: number
 }
 
-export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories }: Props) {
+export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated }: Props) {
   const isNew = contact === null
 
   const [draft, setDraft] = useState<Partial<Contact>>(
@@ -144,7 +147,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }, [contact?.id])
 
   useEffect(() => {
-    getCampaigns().then(all => setCampaigns(all.filter(c => c.status === 'active')))
+    getCampaigns().then(setCampaigns)
   }, [])
 
   useEffect(() => {
@@ -188,9 +191,21 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }
 
+  async function handleCommitmentAmountSave(link: CampaignContact, amount: number | null) {
+    const updated = await updateCampaignContact(link.id, {
+      custom_fields: withMoneyField(link.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
+    })
+    setContactCampaignLinks(prev => prev.map(item => item.id === updated.id ? updated : item))
+    onCampaignContactUpdated?.(updated)
+  }
+
   const equityScore = contactEquityScore(interactions)
   const equityBreakdown = contactEquityBreakdown(interactions)
   const assignedSubPods = getContactSubPods({ category_ids: draft.category_ids ?? [] }, availableCategories)
+  const totalCommitmentAmount = contactCampaignLinks.reduce(
+    (sum, link) => sum + (getCampaignContactCommitmentAmount(link) ?? 0),
+    0,
+  )
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -1274,6 +1289,26 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </div>
                   <div style={{ padding: '16px 18px' }}>
                     {contactCampaignLinks.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: 'rgba(37,180,57,0.07)',
+                        border: '1px solid rgba(37,180,57,0.14)',
+                        marginBottom: 10,
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Total commitment amount
+                        </span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                          {formatMoney(totalCommitmentAmount)}
+                        </span>
+                      </div>
+                    )}
+                    {contactCampaignLinks.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
                         {[...contactCampaignLinks]
                           .sort((a, b) => {
@@ -1321,6 +1356,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                                     {stage.name}
                                   </span>
                                 )}
+                                <CampaignCommitmentInput
+                                  value={getCampaignContactCommitmentAmount(link)}
+                                  onSave={(amount) => handleCommitmentAmountSave(link, amount)}
+                                  compact
+                                  placeholder="$0"
+                                />
                                 {camp && (
                                   <span style={{ fontSize: 11, color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                                     {isActive ? camp.type : 'completed'}

@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Contact, Pod, CampaignContact, CampaignContactStatus } from '../../lib/types'
-import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign, updateCampaignNotes } from '../../lib/data'
+import { getCampaignContacts, updateCampaignContactStatus, addContactToCampaign, completeCampaign, updateCampaignNotes, updateCampaignContact } from '../../lib/data'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton, Spinner } from '../ui'
+import { CampaignCommitmentInput } from './CampaignCommitmentInput'
 
 const STATUS_ORDER: CampaignContactStatus[] = ['pending', 'reached', 'responded', 'confirmed']
 
@@ -133,6 +135,15 @@ export function CampaignDetail({
 
   const contacted = campaignContacts.filter(cc => cc.status !== 'pending').length
   const total = campaignContacts.length
+  const totalCommitted = campaignContacts.reduce((sum, cc) => sum + (getCampaignContactCommitmentAmount(cc) ?? 0), 0)
+
+  async function handleCommitmentSave(cc: CampaignContact, amount: number | null) {
+    const updated = await updateCampaignContact(cc.id, {
+      custom_fields: withMoneyField(cc.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
+    })
+    setCampaignContacts(prev => prev.map(item => item.id === updated.id ? updated : item))
+    onUpdate()
+  }
 
   function getPodName(contact: Contact): string {
     const podId = contact.list_ids[0]
@@ -181,6 +192,9 @@ export function CampaignDetail({
               </span>
               <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
                 {contacted}/{total} contacted
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                {formatMoney(totalCommitted)} committed
               </span>
               {campaignDeadline && (
                 <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
@@ -300,6 +314,12 @@ export function CampaignDetail({
                     </span>
                   </div>
                 </div>
+                <CampaignCommitmentInput
+                  value={getCampaignContactCommitmentAmount(cc)}
+                  onSave={(amount) => handleCommitmentSave(cc, amount)}
+                  compact
+                  placeholder="$0"
+                />
                 <button
                   type="button"
                   onClick={() => handleStatusToggle(cc)}

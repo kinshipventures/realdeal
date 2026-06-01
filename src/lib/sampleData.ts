@@ -245,16 +245,17 @@ export const DEMO_INTERACTIONS: Interaction[] = [
 
 // ── Campaigns ──
 
-const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], extra?: { deadline?: number; description?: string }): Campaign => ({
+const campaign = (id: string, name: string, type: CampaignType, status: 'active' | 'completed', contactIds: string[], extra?: { deadline?: number; description?: string; goal?: number }): Campaign => ({
   id: `demo-campaign-${id}`, name, type, status, notes: null,
   description: extra?.description ?? null,
   deadline: extra?.deadline !== undefined ? futureDate(extra.deadline) : null,
+  custom_fields: extra?.goal ? { fundraisingGoal: extra.goal } : {},
   contact_ids: contactIds.map(c => `demo-contact-${c}`),
   created_at: daysAgo(14),
 })
 
 const cc = (id: string, campaignId: string, contactId: string, status: CampaignContactStatus, stageId: string, extra?: {
-  moved?: number; owner?: string; next_step?: string; next_step_due?: number; priority?: boolean; notes?: string
+  moved?: number; owner?: string; next_step?: string; next_step_due?: number; priority?: boolean; notes?: string; commitment?: number
 }): CampaignContact => ({
   id: `demo-cc-${id}`, campaign_id: `demo-campaign-${campaignId}`, contact_id: `demo-contact-${contactId}`,
   status, stage_id: `demo-cs-${stageId}`,
@@ -264,13 +265,14 @@ const cc = (id: string, campaignId: string, contactId: string, status: CampaignC
   next_step_due: extra?.next_step_due !== undefined ? futureDate(extra.next_step_due) : null,
   moved_at: daysAgo(extra?.moved ?? 3),
   is_priority: extra?.priority ?? false,
+  custom_fields: extra?.commitment ? { commitmentAmount: extra.commitment } : {},
   created_at: daysAgo(10),
 })
 
 export const DEMO_CAMPAIGNS: Campaign[] = [
   campaign('1', 'Fund III Launch Dinner', 'event', 'active', ['1', '4', '7', '8', '9'], { deadline: 18, description: 'Intimate dinner for prospective and existing LPs at Nobu Malibu' }),
   campaign('2', 'Brand Partnership Outreach', 'outreach', 'active', ['11', '13', '14', '12'], { deadline: 30, description: 'Q2 brand collab pipeline for portfolio companies' }),
-  campaign('3', 'Fund III Fundraise', 'fundraise', 'active', ['7', '8', '9', '10'], { deadline: 60, description: 'Target $50M close by end of Q2' }),
+  campaign('3', 'Fund III Fundraise', 'fundraise', 'active', ['7', '8', '9', '10'], { deadline: 60, description: 'Target $50M close by end of Q2', goal: 50_000_000 }),
   campaign('4', 'Consumer Social Deal Flow', 'deal_flow', 'active', ['1', '3', '5', '6'], { description: 'Tracking Series A/B consumer social opportunities' }),
   campaign('5', 'Creator Economy Talent', 'talent', 'active', ['14', '15', '19'], { description: 'Building creator partnerships for portfolio brands' }),
   campaign('6', 'Q1 LP Check-ins', 'investment', 'completed', ['7', '8', '9', '10']),
@@ -330,8 +332,8 @@ export const DEMO_CAMPAIGN_CONTACTS: CampaignContact[] = [
   cc('9', '2', '12', 'reached', '2b', { moved: 4, owner: 'Moj', next_step: 'Pitch design tool partnership', next_step_due: 10 }),
 
   // Campaign 3: Fund III Fundraise
-  cc('10', '3', '7', 'confirmed', '3d', { moved: 5, priority: true, owner: 'Moj', notes: 'Committed $2M - verbal' }),
-  cc('11', '3', '9', 'responded', '3c', { moved: 3, priority: true, owner: 'Moj', next_step: 'Send data room access', next_step_due: 2 }),
+  cc('10', '3', '7', 'confirmed', '3d', { moved: 5, priority: true, owner: 'Moj', notes: 'Committed $2M - verbal', commitment: 2_000_000 }),
+  cc('11', '3', '9', 'responded', '3c', { moved: 3, priority: true, owner: 'Moj', next_step: 'Send data room access', next_step_due: 2, commitment: 500_000 }),
   cc('12', '3', '8', 'reached', '3b', { moved: 12, owner: 'Moj', next_step: 'Schedule diligence call', next_step_due: 4, notes: 'Slow mover - needs patience' }),
   cc('13', '3', '10', 'pending', '3a', { moved: 8, owner: 'Briell', next_step: 'Initial outreach email', next_step_due: 3 }),
 

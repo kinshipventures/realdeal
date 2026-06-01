@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { Star } from 'lucide-react'
 import type { CampaignContact, Contact } from '../../lib/types'
 import type { ScoreLabel } from '../../lib/equity'
+import { formatMoneyCompact, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
 
 interface Props {
@@ -79,8 +80,10 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
   }
 
   const dueSoon = isDueSoon(cc.next_step_due)
+  const commitmentAmount = getCampaignContactCommitmentAmount(cc)
 
   const extras: Array<{ label: string; value: string; type: string }> = []
+  if (show('commitment_amount') && commitmentAmount !== null) extras.push({ label: 'Commitment Amount', value: formatMoneyCompact(commitmentAmount), type: 'money' })
   if (show('email') && contact.email) extras.push({ label: 'Email', value: contact.email, type: 'email' })
   if (show('role') && contact.role) extras.push({ label: 'Role', value: contact.role, type: 'text' })
   if (show('owner') && cc.owner) extras.push({ label: 'Owner', value: cc.owner, type: 'text' })
@@ -193,6 +196,15 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
                 opacity: 0.7,
               } : type === 'due' ? {
                 display: 'inline-flex', alignItems: 'center', gap: 4,
+              } : type === 'money' ? {
+                display: 'inline-flex',
+                width: 'fit-content',
+                color: 'var(--color-text-primary)',
+                background: 'rgba(37,180,57,0.08)',
+                border: '1px solid rgba(37,180,57,0.16)',
+                borderRadius: 999,
+                padding: '2px 7px',
+                fontWeight: 700,
               } : type === 'notes' ? {
                 color: 'var(--color-text-tertiary)',
                 fontStyle: 'italic',

@@ -1,14 +1,19 @@
-import type { CampaignContact, CampaignStage } from '../../lib/types'
+import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
+import { formatMoneyCompact, getCampaignContactCommitmentAmount, getCampaignFundraisingGoal } from '../../lib/campaignCommitments'
 
 interface Props {
+  campaign: Campaign
   stages: CampaignStage[]
   campaignContacts: CampaignContact[]
 }
 
-export function CampaignStatsBar({ stages, campaignContacts }: Props) {
+export function CampaignStatsBar({ campaign, stages, campaignContacts }: Props) {
   const sorted = [...stages].sort((a, b) => a.order - b.order)
   const total = campaignContacts.length
   const lastStage = sorted[sorted.length - 1]
+  const totalCommitted = campaignContacts.reduce((sum, cc) => sum + (getCampaignContactCommitmentAmount(cc) ?? 0), 0)
+  const goal = getCampaignFundraisingGoal(campaign)
+  const remaining = goal !== null ? Math.max(goal - totalCommitted, 0) : null
 
   const converted = lastStage ? campaignContacts.filter(cc => cc.stage_id === lastStage.id).length : 0
   const conversionRate = total > 0 ? Math.round((converted / total) * 100) : 0
@@ -25,6 +30,9 @@ export function CampaignStatsBar({ stages, campaignContacts }: Props) {
     }}>
       <Stat label="Contacts" value={String(total)} primary />
       <Stat label="Converted" value={`${conversionRate}%`} accent={conversionRate > 50} />
+      <Stat label="Committed" value={formatMoneyCompact(totalCommitted)} accent={totalCommitted > 0} />
+      {goal !== null && <Stat label="Goal" value={formatMoneyCompact(goal)} muted={totalCommitted < goal} accent={totalCommitted >= goal} />}
+      {remaining !== null && <Stat label="Remaining" value={formatMoneyCompact(remaining)} warn={remaining > 0} accent={remaining === 0} />}
     </div>
   )
 }

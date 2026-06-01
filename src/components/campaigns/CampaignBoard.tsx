@@ -19,6 +19,7 @@ import {
   createInteraction,
 } from '../../lib/data'
 import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact, Interaction } from '../../lib/types'
+import { getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
 
@@ -93,6 +94,10 @@ export function CampaignBoard({
         const sa = stages.find(s => s.id === a.stage_id)
         const sb = stages.find(s => s.id === b.stage_id)
         av = String(sa?.order ?? 0); bv = String(sb?.order ?? 0)
+      }
+      else if (sortKey === 'commitment_amount') {
+        const cmp = (getCampaignContactCommitmentAmount(a) ?? 0) - (getCampaignContactCommitmentAmount(b) ?? 0)
+        return sortAsc ? cmp : -cmp
       }
       else if (sortKey === 'owner') { av = a.owner ?? ''; bv = b.owner ?? '' }
       else if (sortKey === 'next_step') { av = a.next_step ?? ''; bv = b.next_step ?? '' }

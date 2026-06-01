@@ -526,13 +526,13 @@ export async function logInteraction(contactId: string, data: Omit<Interaction, 
 // ── Campaigns ─────────────────────────────────────────────────────────────────
 
 function mapCampaign(r: any, contactIds: string[] = []): Campaign {
-  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, contact_ids: contactIds, created_at: r.created_at }
+  return { id: r.id, name: r.name, type: r.type ?? 'other', deadline: r.deadline ?? null, status: r.status ?? 'active', notes: r.notes ?? null, description: r.description ?? null, custom_fields: r.custom_fields ?? {}, contact_ids: contactIds, created_at: r.created_at }
 }
 
 // pipelineStageToCampaignStage no longer needed - campaign_stages table uses campaign_id directly
 
 function mapCampaignContact(r: any): CampaignContact {
-  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, is_priority: r.is_priority ?? false, created_at: r.created_at }
+  return { id: r.id, campaign_id: r.campaign_id, contact_id: r.contact_id, status: r.status ?? 'pending', stage_id: r.stage_id ?? null, notes: r.notes ?? null, owner: r.owner ?? null, next_step: r.next_step ?? null, next_step_due: r.next_step_due ?? null, moved_at: r.moved_at ?? r.created_at, is_priority: r.is_priority ?? false, custom_fields: r.custom_fields ?? {}, created_at: r.created_at }
 }
 
 function mapCampaignStage(r: any): CampaignStage {
@@ -600,7 +600,7 @@ export async function getCampaignContactsForContact(contactId: string): Promise<
 
 export async function createCampaign(data: { name: string; type: CampaignType; deadline?: string | null }): Promise<Campaign> {
   if (isDemoMode()) {
-    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, contact_ids: [], created_at: new Date().toISOString() }
+    const c: Campaign = { id: `demo-camp-${Date.now()}`, name: data.name, type: data.type, deadline: data.deadline ?? null, status: 'active', notes: null, description: null, custom_fields: {}, contact_ids: [], created_at: new Date().toISOString() }
     DEMO_CAMPAIGNS.push(c)
     return c
   }
@@ -623,7 +623,7 @@ export async function addContactToCampaign(campaignId: string, contactId: string
     }
   }
   if (isDemoMode()) {
-    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, is_priority: false, created_at: now }
+    const cc: CampaignContact = { id: `demo-cc-${Date.now()}`, campaign_id: campaignId, contact_id: contactId, status: 'pending', stage_id: stageId, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: now, is_priority: false, custom_fields: {}, created_at: now }
     DEMO_CAMPAIGN_CONTACTS.push(cc)
     const camp = DEMO_CAMPAIGNS.find(c => c.id === campaignId)
     if (camp && !camp.contact_ids.includes(contactId)) camp.contact_ids.push(contactId)
@@ -685,7 +685,7 @@ export async function updateCampaignContactStatus(id: string, status: CampaignCo
   if (isDemoMode()) {
     const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
     if (cc) cc.status = status
-    return cc ?? { id, campaign_id: '', contact_id: '', status, stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, created_at: '' }
+    return cc ?? { id, campaign_id: '', contact_id: '', status, stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, custom_fields: {}, created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaign_contacts').update({ status }).eq('id', id).select().single()
   if (error) throw error
@@ -700,7 +700,7 @@ export async function completeCampaign(id: string): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
     if (c) c.status = 'completed'
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, contact_ids: [], created_at: '' }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'completed', notes: null, description: null, custom_fields: {}, contact_ids: [], created_at: '' }
   }
   const { data: row, error } = await supabase.from('campaigns').update({ status: 'completed' as any }).eq('id', id).select().single()
   if (error) throw error
@@ -726,11 +726,14 @@ export async function updateCampaignNotes(id: string, notes: string | null): Pro
 }
 
 
-export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'name' | 'type' | 'deadline' | 'description' | 'notes'>>): Promise<Campaign> {
+export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'name' | 'type' | 'deadline' | 'description' | 'notes' | 'custom_fields'>>): Promise<Campaign> {
   if (isDemoMode()) {
     const c = DEMO_CAMPAIGNS.find(c => c.id === id)
-    if (c) Object.assign(c, data)
-    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, contact_ids: [], created_at: '' }
+    if (c) {
+      if (data.custom_fields !== undefined) c.custom_fields = data.custom_fields
+      Object.assign(c, { ...data, custom_fields: c.custom_fields })
+    }
+    return c ?? { id, name: '', type: 'other', deadline: null, status: 'active', notes: null, description: null, custom_fields: {}, contact_ids: [], created_at: '' }
   }
   const dbData: any = {}
   if (data.name !== undefined) dbData.name = data.name
@@ -738,6 +741,9 @@ export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'n
   if (data.description !== undefined) dbData.description = data.description
   if (data.notes !== undefined) dbData.notes = data.notes
   if (data.type !== undefined) dbData.type = data.type
+  if (data.custom_fields !== undefined) {
+    dbData.custom_fields = data.custom_fields
+  }
   const { data: row, error } = await supabase.from('campaigns').update(dbData).eq('id', id).select().single()
   if (error) throw error
   const updated = mapCampaign(row)
@@ -792,11 +798,14 @@ export async function deleteCampaignStage(id: string): Promise<void> {
   invalidateCampaignStagesDBCache()
 }
 
-export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at' | 'is_priority'>>): Promise<CampaignContact> {
+export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at' | 'is_priority' | 'custom_fields'>>): Promise<CampaignContact> {
   if (isDemoMode()) {
     const cc = DEMO_CAMPAIGN_CONTACTS.find(c => c.id === id)
-    if (cc) Object.assign(cc, data)
-    return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, created_at: '' }
+    if (cc) {
+      if (data.custom_fields !== undefined) cc.custom_fields = data.custom_fields
+      Object.assign(cc, { ...data, custom_fields: cc.custom_fields })
+    }
+    return cc ?? { id, campaign_id: '', contact_id: '', status: 'pending', stage_id: null, notes: null, owner: null, next_step: null, next_step_due: null, moved_at: null, is_priority: false, custom_fields: {}, created_at: '' }
   }
   const dbData: any = {}
   if (data.stage_id !== undefined) dbData.stage_id = data.stage_id
@@ -806,6 +815,9 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
   if (data.next_step_due !== undefined) dbData.next_step_due = data.next_step_due
   if (data.moved_at !== undefined) dbData.moved_at = data.moved_at
   if (data.is_priority !== undefined) dbData.is_priority = data.is_priority
+  if (data.custom_fields !== undefined) {
+    dbData.custom_fields = data.custom_fields
+  }
   const { data: row, error } = await supabase.from('campaign_contacts').update(dbData).eq('id', id).select().single()
   if (error) throw error
   if (_campaignContactsCache) {

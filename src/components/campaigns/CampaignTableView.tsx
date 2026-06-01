@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
 import { updateCampaignContact, removeContactFromCampaign } from '../../lib/data'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCommitmentAmount, parseMoneyInput, withMoneyField } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
 
@@ -18,7 +19,7 @@ interface Props {
   visibleColumns?: Set<string>
 }
 
-type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
+type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'commitment_amount' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: 'name', label: 'Name' },
@@ -26,6 +27,7 @@ const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: 'email', label: 'Email' },
   { key: 'role', label: 'Role' },
   { key: 'stage', label: 'Stage' },
+  { key: 'commitment_amount', label: 'Commitment Amount' },
   { key: 'owner', label: 'Owner' },
   { key: 'next_step', label: 'Next Step' },
   { key: 'next_step_due', label: 'Due' },
@@ -77,6 +79,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
       case 'email': return contact?.email ?? ''
       case 'role': return contact?.role ?? ''
       case 'stage': return stages.find(s => s.id === cc.stage_id)?.name ?? ''
+      case 'commitment_amount': return formatMoney(getCampaignContactCommitmentAmount(cc))
       case 'owner': return cc.owner ?? ''
       case 'next_step': return cc.next_step ?? ''
       case 'next_step_due': return cc.next_step_due ?? ''
@@ -99,6 +102,10 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   if (sortKey && sortKey !== 'default' && ALL_COLUMNS.some(c => c.key === sortKey)) {
     const col = sortKey as ColumnKey
     rows.sort((a, b) => {
+      if (col === 'commitment_amount') {
+        const cmp = (getCampaignContactCommitmentAmount(a.cc) ?? 0) - (getCampaignContactCommitmentAmount(b.cc) ?? 0)
+        return sortAsc ? cmp : -cmp
+      }
       const av = getCellValue(a.cc, a.contact, col)
       const bv = getCellValue(b.cc, b.contact, col)
       const cmp = av.localeCompare(bv)
@@ -112,19 +119,37 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
     if (col === 'name' || col === 'moved_at') return // not editable inline
     const row = rows.find(r => r.cc.id === rowId)
     if (!row) return
-    setEditValue(getCellValue(row.cc, row.contact, col))
+    setEditValue(col === 'commitment_amount'
+      ? (getCampaignContactCommitmentAmount(row.cc) !== null ? formatMoney(getCampaignContactCommitmentAmount(row.cc)) : '')
+      : getCellValue(row.cc, row.contact, col)
+    )
     setEditingCell({ rowId, col })
   }
 
   async function commitEdit() {
     if (!editingCell) return
     const { rowId, col } = editingCell
-    setEditingCell(null)
 
     if (col === 'stage') {
       // handled by dropdown
+      setEditingCell(null)
       return
     }
+
+    if (col === 'commitment_amount') {
+      const row = rows.find(r => r.cc.id === rowId)
+      if (!row) return
+      const amount = parseMoneyInput(editValue)
+      if (Number.isNaN(amount)) return
+      setEditingCell(null)
+      const updated = await updateCampaignContact(rowId, {
+        custom_fields: withMoneyField(row.cc.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
+      })
+      onContactsChange(campaignContacts.map(cc => cc.id === rowId ? updated : cc))
+      return
+    }
+
+    setEditingCell(null)
 
     const data: any = {}
     if (col === 'owner') data.owner = editValue || null

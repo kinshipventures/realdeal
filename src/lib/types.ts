@@ -159,6 +159,7 @@ export interface Campaign {
   status: CampaignStatus
   notes: string | null
   description: string | null
+  custom_fields: Record<string, unknown>
   contact_ids: string[]      // linked Contact record IDs from junction
   created_at: string
 }
@@ -185,6 +186,7 @@ export interface CampaignContact {
   next_step_due: ISODate | null
   moved_at: string | null    // when contact last changed stage
   is_priority: boolean
+  custom_fields: Record<string, unknown>
   created_at: string
 }
 

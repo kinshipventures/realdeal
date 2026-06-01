@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, X, Calendar, Type, FileText } from 'lucide-react'
+import { Settings, X, Calendar, Type, FileText, DollarSign } from 'lucide-react'
 import type { Campaign, CampaignType } from '../../lib/types'
 import { updateCampaign, invalidateCampaignsCache } from '../../lib/data'
+import { CAMPAIGN_FUNDRAISING_GOAL_FIELD, formatMoneyInput, getCampaignFundraisingGoal, parseMoneyInput, withMoneyField } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS } from './campaignUtils'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { useEscape } from '../../lib/escapeStack'
@@ -18,6 +19,8 @@ export function CampaignSettingsPanel({ campaign, onUpdate, onClose }: Props) {
   const [name, setName] = useState(campaign.name)
   const [type, setType] = useState(campaign.type)
   const [deadline, setDeadline] = useState(campaign.deadline ?? '')
+  const [fundraisingGoal, setFundraisingGoal] = useState(formatMoneyInput(getCampaignFundraisingGoal(campaign)))
+  const [goalError, setGoalError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
 
@@ -28,17 +31,26 @@ export function CampaignSettingsPanel({ campaign, onUpdate, onClose }: Props) {
     setName(campaign.name)
     setType(campaign.type)
     setDeadline(campaign.deadline ?? '')
+    setFundraisingGoal(formatMoneyInput(getCampaignFundraisingGoal(campaign)))
+    setGoalError(false)
     setDirty(false)
   }, [campaign.id])
 
   function markDirty() { setDirty(true) }
 
   async function handleSave() {
+    const parsedGoal = parseMoneyInput(fundraisingGoal)
+    if (Number.isNaN(parsedGoal)) {
+      setGoalError(true)
+      return
+    }
+    setGoalError(false)
     setSaving(true)
     try {
       const updated = await updateCampaign(campaign.id, {
         name, type,
         deadline: deadline || null,
+        custom_fields: withMoneyField(campaign.custom_fields, CAMPAIGN_FUNDRAISING_GOAL_FIELD, parsedGoal),
       })
       invalidateCampaignsCache()
       onUpdate({ ...campaign, ...updated })
@@ -167,6 +179,28 @@ export function CampaignSettingsPanel({ campaign, onUpdate, onClose }: Props) {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Fundraising goal */}
+        <div>
+          <div style={fieldLabel}><DollarSign size={11} /> Fundraising Goal</div>
+          <input
+            type="text"
+            value={fundraisingGoal}
+            onChange={e => { setFundraisingGoal(e.target.value); setGoalError(false); markDirty() }}
+            placeholder="$50M"
+            style={{
+              ...inputStyle,
+              borderColor: goalError ? 'var(--health-fading)' : 'var(--edge)',
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = goalError ? 'var(--health-fading)' : 'var(--edge-strong)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = goalError ? 'var(--health-fading)' : 'var(--edge)' }}
+          />
+          {goalError && (
+            <div style={{ marginTop: 5, fontSize: 11, color: 'var(--health-fading)' }}>
+              Enter a valid amount, like $50M or 100000.
+            </div>
+          )}
         </div>
 
       </div>
