@@ -25,6 +25,7 @@ import { IconPicker } from '../map/IconPicker'
 import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
 import { SharePopover } from '../sharing/SharePopover'
 import { isVisiblePodMember } from '../../lib/podMembership'
+import { ContactDetail } from '../contacts/ContactDetail'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -205,6 +206,8 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const [allPods, setAllPods] = useState<Pod[]>([])
   const [members, setMembers] = useState<Contact[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [allCategories, setAllCategories] = useState<Category[]>([])
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [interactionMap, setInteractionMap] = useState<Map<string, Interaction[]>>(new Map())
@@ -262,7 +265,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       const [pods, allContacts, cats, configs, allInteractions, activeLinks] = await Promise.all([
         getPods(),
         getContacts(),
-        getCategories(podId),
+        getCategories(),
         getFieldConfigs(),
         getAllInteractions() as Promise<Interaction[]>,
         getActiveShareLinks(podId).catch(() => [] as ShareLink[]),
@@ -290,7 +293,8 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       setOwner(found.owner ?? '')
       setIsPriority(found.is_priority)
       setMembers(podMembers.sort((a, b) => (eqMap[b.id] ?? 0) - (eqMap[a.id] ?? 0)))
-      setCategories(cats)
+      setAllCategories(cats)
+      setCategories(cats.filter(cat => cat.list_id === podId))
       setFieldConfigs(configs.filter(fc => fc.scope_pod_id === podId))
       setEquityMap(eqMap)
       setInteractionMap(byContact)
@@ -331,6 +335,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       const cat = await createCategory(name, podId)
       const persisted = await getCategories(podId).catch(() => [...categories, cat])
       setCategories(persisted)
+      setAllCategories(prev => prev.some(item => item.id === cat.id) ? prev : [...prev, cat])
       setNewSubPodName('')
       setAddingSubPod(false)
     } catch {
@@ -440,6 +445,16 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     toastTimerRef.current = setTimeout(() => setDndToast(null), 4000)
 
     await updateContact(contactId, { list_ids: newListIds }).catch(console.error)
+  }
+
+  function handleContactSaved(updated: Contact) {
+    setMembers(prev => prev.map(member => member.id === updated.id ? updated : member))
+    setSelectedContact(updated)
+  }
+
+  function handleContactDeleted(deletedId: string) {
+    setMembers(prev => prev.filter(member => member.id !== deletedId))
+    setSelectedContact(null)
   }
 
   if (loading) {
@@ -738,7 +753,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                   <DraggableMemberRow key={m.id} contact={m}>
                     <button
                       type="button"
-                      onClick={() => navigate(`/contact/${m.id}`)}
+                      onClick={() => setSelectedContact(m)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12,
                         padding: '10px 12px', background: 'transparent',
@@ -1212,7 +1227,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                   Manage fields from a{' '}
                   <button
                     type="button"
-                    onClick={() => navigate(`/contact/${members[0].id}`)}
+                    onClick={() => setSelectedContact(members[0])}
                     style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                   >
                     member's record
@@ -1223,6 +1238,17 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           )}
         </section>
       </div>
+      {selectedContact && (
+        <ContactDetail
+          contact={selectedContact}
+          categoryId={selectedContact.category_ids[0]}
+          onClose={() => setSelectedContact(null)}
+          onSaved={handleContactSaved}
+          onDeleted={handleContactDeleted}
+          pods={allPods}
+          categories={allCategories}
+        />
+      )}
     </div>
   )
 }

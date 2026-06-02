@@ -9,7 +9,7 @@ import { CampaignTableView } from './CampaignTableView'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
-import { formatMoney, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
+import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check } from 'lucide-react'
 
@@ -24,6 +24,7 @@ const SORT_OPTIONS = [
   { key: 'company', label: 'Company' },
   { key: 'stage', label: 'Stage' },
   { key: 'commitment_amount', label: 'Commitment Amount' },
+  { key: 'campaign_status', label: 'Campaign Status' },
   { key: 'owner', label: 'Owner' },
   { key: 'next_step_due', label: 'Next step due' },
   { key: 'moved_at', label: 'Last moved' },
@@ -33,6 +34,7 @@ const CARD_FIELD_OPTIONS = [
   { key: 'company', label: 'Company' },
   { key: 'email', label: 'Email' },
   { key: 'role', label: 'Role' },
+  { key: 'campaign_status', label: 'Campaign Status' },
   { key: 'owner', label: 'Owner' },
   { key: 'next_step', label: 'Next Step' },
   { key: 'next_step_due', label: 'Due Date' },
@@ -46,6 +48,7 @@ const TABLE_FIELD_OPTIONS = [
   { key: 'role', label: 'Role' },
   { key: 'stage', label: 'Stage' },
   { key: 'commitment_amount', label: 'Commitment Amount' },
+  { key: 'campaign_status', label: 'Campaign Status' },
   { key: 'owner', label: 'Owner' },
   { key: 'next_step', label: 'Next Step' },
   { key: 'next_step_due', label: 'Due' },
@@ -58,7 +61,7 @@ function loadCardFields(id: string): Set<string> {
     const saved = localStorage.getItem(CARD_FIELDS_KEY_PREFIX + id)
     if (saved) return new Set(JSON.parse(saved))
   } catch {}
-  return new Set(['company', 'commitment_amount', 'next_step'])
+  return new Set(['company', 'commitment_amount', 'campaign_status', 'next_step'])
 }
 
 function loadTableFields(id: string): Set<string> {
@@ -215,7 +218,7 @@ export function CampaignDetailRoute() {
 
   function handleExport() {
     if (!campaign) return
-    const rows: string[] = ['Name,Company,Stage,Status,Commitment Amount,Added,Last Moved,Next Step']
+    const rows: string[] = ['Name,Company,Stage,Campaign Status,Commitment Amount,Added,Last Moved,Next Step']
     for (const cc of campaignContacts) {
       const contact = contacts.find(c => c.id === cc.contact_id)
       const stage = stages.find(s => s.id === cc.stage_id)
@@ -223,7 +226,7 @@ export function CampaignDetailRoute() {
         contact?.name ?? '',
         contact?.company ?? '',
         stage?.name ?? '',
-        cc.status,
+        getCampaignContactCampaignStatus(cc) ?? '',
         formatMoney(getCampaignContactCommitmentAmount(cc)),
         cc.created_at ? new Date(cc.created_at).toLocaleDateString() : '',
         cc.moved_at ? new Date(cc.moved_at).toLocaleDateString() : '',

@@ -19,7 +19,7 @@ import {
   createInteraction,
 } from '../../lib/data'
 import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact, Interaction } from '../../lib/types'
-import { getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
+import { getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
 
@@ -99,6 +99,7 @@ export function CampaignBoard({
         const cmp = (getCampaignContactCommitmentAmount(a) ?? 0) - (getCampaignContactCommitmentAmount(b) ?? 0)
         return sortAsc ? cmp : -cmp
       }
+      else if (sortKey === 'campaign_status') { av = getCampaignContactCampaignStatus(a) ?? ''; bv = getCampaignContactCampaignStatus(b) ?? '' }
       else if (sortKey === 'owner') { av = a.owner ?? ''; bv = b.owner ?? '' }
       else if (sortKey === 'next_step') { av = a.next_step ?? ''; bv = b.next_step ?? '' }
       else if (sortKey === 'moved_at') { av = a.moved_at ?? ''; bv = b.moved_at ?? '' }

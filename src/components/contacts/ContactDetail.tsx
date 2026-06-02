@@ -18,7 +18,7 @@ import { updateContact, createContact, deleteContact, getCategories, getCampaign
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
-import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { CloseButton } from '../ui'
@@ -1371,6 +1371,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             const stage = stages.find(s => s.id === link.stage_id)
                             const name = camp?.name ?? 'Campaign'
                             const isActive = camp?.status === 'active'
+                            const campaignStatus = getCampaignContactCampaignStatus(link)
 
                             return (
                               <div key={link.id} style={{
@@ -1401,6 +1402,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                                     whiteSpace: 'nowrap',
                                   }}>
                                     {stage.name}
+                                  </span>
+                                )}
+                                {campaignStatus && (
+                                  <span style={{
+                                    fontSize: 11, fontWeight: 600,
+                                    padding: '2px 7px', borderRadius: 100,
+                                    background: 'rgba(66,153,225,0.08)',
+                                    color: 'var(--color-text-secondary)',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {campaignStatus}
                                   </span>
                                 )}
                                 <CampaignCommitmentInput

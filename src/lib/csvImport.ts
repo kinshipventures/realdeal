@@ -1,15 +1,16 @@
 import * as Papa from 'papaparse'
 import { strFromU8, unzipSync } from 'fflate'
 import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
-import { createContactsBulk, getContacts } from './data'
+import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, parseMoneyInput, withMoneyField, withTextField } from './campaignCommitments'
 
 export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
 export type ColumnMapping = { csvHeader: string; targetField: string | null }[]
 
-export type ImportProgress = { current: number; total: number; imported: number; skipped: number }
+export type ImportProgress = { current: number; total: number; imported: number; skipped: number; updated?: number }
 
-export type ImportResult = { imported: number; skipped: number; errors: string[] }
+export type ImportResult = { imported: number; skipped: number; errors: string[]; updated?: number; campaignLinked?: number }
 
 export type RowWarning = {
   rowIndex: number
@@ -19,6 +20,7 @@ export type RowWarning = {
 
 export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
+  'Campaign', 'Campaign Status', 'Commitment Amount',
   'First Name', 'Last Name',
   'Email', 'Phone', 'Company', 'Role', 'Location',
   'Website', 'LinkedIn', 'Notes', 'Birthday',
@@ -65,6 +67,27 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'lp subpod': 'Sub-pod',
   'category': 'Sub-pod',
   'categories': 'Sub-pod',
+  'campaign': 'Campaign',
+  'campaign name': 'Campaign',
+  'campaign pod': 'Campaign',
+  'campaign and pod': 'Campaign',
+  'campaign sub pod': 'Campaign',
+  'campaign subpod': 'Campaign',
+  'pipeline': 'Campaign',
+  'pipeline name': 'Campaign',
+  'campaign status': 'Campaign Status',
+  'status campaign field': 'Campaign Status',
+  'status campaign': 'Campaign Status',
+  'campaign field status': 'Campaign Status',
+  'campaign stage': 'Campaign Status',
+  'target commitment': 'Commitment Amount',
+  'target commitment campaign specific': 'Commitment Amount',
+  'target commitment campign specific': 'Commitment Amount',
+  'commitment': 'Commitment Amount',
+  'commitment amount': 'Commitment Amount',
+  'committed amount': 'Commitment Amount',
+  'campaign commitment': 'Commitment Amount',
+  'campaign commitment amount': 'Commitment Amount',
 
   // Name
   'name': 'First Name',
@@ -625,6 +648,32 @@ function resolve(row: Record<string, string>, mapping: ColumnMapping, target: st
   return (row[col.csvHeader] ?? '').trim()
 }
 
+type CampaignImportFields = {
+  name: string
+  subPodNames: string[]
+  status: string | null
+  commitmentAmount: number | null
+}
+
+function splitCampaignPodValue(value: string): { campaignName: string; subPodNames: string[] } {
+  const parts = value.split('|').map(part => part.trim()).filter(Boolean)
+  if (parts.length === 0) return { campaignName: '', subPodNames: [] }
+  return { campaignName: parts[0], subPodNames: parts.slice(1) }
+}
+
+function resolveCampaignImportFields(row: Record<string, string>, mapping: ColumnMapping | undefined): CampaignImportFields | null {
+  if (!mapping || mapping.length === 0) return null
+  const rawCampaign = resolve(row, mapping, 'Campaign')
+  const { campaignName, subPodNames } = splitCampaignPodValue(rawCampaign)
+  const status = resolve(row, mapping, 'Campaign Status') || null
+  const amountRaw = resolve(row, mapping, 'Commitment Amount')
+  const parsedAmount = amountRaw ? parseMoneyInput(amountRaw) : null
+  const commitmentAmount = typeof parsedAmount === 'number' && Number.isFinite(parsedAmount) ? parsedAmount : null
+
+  if (!campaignName && subPodNames.length === 0 && !status && commitmentAmount === null) return null
+  return { name: campaignName, subPodNames, status, commitmentAmount }
+}
+
 export function resolveMappedValue(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
   return resolve(row, mapping, target)
 }
@@ -773,10 +822,11 @@ function resolveCategoryIds(
   mapping: ColumnMapping | undefined,
   primaryPodId: string | null,
   categoryMap: Map<string, string>,
+  extraSubPodNames: string[] = [],
 ): string[] {
   if (!mapping || mapping.length === 0) return []
   const categoryValue = resolve(row, mapping, 'Sub-pod') || resolve(row, mapping, '_category')
-  return splitMultiValue(categoryValue)
+  return unique([...splitMultiValue(categoryValue), ...extraSubPodNames.flatMap(splitMultiValue)])
     .map(categoryName => {
       const normalizedName = normalize(categoryName)
       return (primaryPodId ? categoryMap.get(`${primaryPodId}:${normalizedName}`) : undefined)
@@ -803,6 +853,139 @@ function importErrorMessage(error: unknown): string {
   }
 }
 
+function hasContactValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') return value.trim().length > 0
+  return value !== null && value !== undefined
+}
+
+function mergeStringNotes(existing: string | null, incoming: string | null): string | null {
+  if (!incoming?.trim()) return existing ?? null
+  if (!existing?.trim()) return incoming.trim()
+  const existingLines = new Set(existing.split('\n').map(line => line.trim()).filter(Boolean))
+  const missingLines = incoming.split('\n').map(line => line.trim()).filter(Boolean).filter(line => !existingLines.has(line))
+  return missingLines.length > 0 ? `${existing.trim()}\n${missingLines.join('\n')}` : existing
+}
+
+function mergeArrayValues<T>(existing: T[] | null | undefined, incoming: T[] | null | undefined): T[] {
+  return [...new Set([...(existing ?? []), ...(incoming ?? [])])]
+}
+
+function buildExistingContactPatch(existing: Contact, incoming: ContactInput): Partial<ContactInput> {
+  const patch: Partial<ContactInput> = {}
+  const scalarFields: Array<keyof ContactInput> = [
+    'email', 'phone', 'company', 'role', 'location', 'website',
+    'recommended_by', 'specialization', 'past_clients', 'industry', 'domain',
+    'stage', 'ticker', 'linkedin', 'birthday', 'milestones', 'interests',
+    'relationship_context', 'last_contacted_at', 'first_name', 'last_name',
+    'country', 'global_region', 'gender', 'introduced_by', 'intel_notes',
+    'relationship_owner', 'contact_frequency', 'cadence_override',
+    'next_follow_up_date', 'next_action', 'email_2', 'email_3',
+    'communication_preferences', 'snoozed_until',
+  ]
+
+  for (const field of scalarFields) {
+    const current = existing[field as keyof Contact]
+    const next = incoming[field]
+    if (!hasContactValue(current) && hasContactValue(next)) {
+      ;(patch as any)[field] = next
+    }
+  }
+
+  const mergedNotes = mergeStringNotes(existing.notes, incoming.notes)
+  if (mergedNotes !== existing.notes) patch.notes = mergedNotes
+
+  const listIds = mergeArrayValues(existing.list_ids, incoming.list_ids)
+  if (listIds.length !== existing.list_ids.length) patch.list_ids = listIds
+
+  const categoryIds = mergeArrayValues(existing.category_ids, incoming.category_ids)
+  if (categoryIds.length !== existing.category_ids.length) patch.category_ids = categoryIds
+
+  const companyIds = mergeArrayValues(existing.company_ids, incoming.company_ids)
+  if (companyIds.length !== existing.company_ids.length) patch.company_ids = companyIds
+
+  const kvFundInvestor = mergeArrayValues(existing.kv_fund_investor, incoming.kv_fund_investor)
+  if (kvFundInvestor.length !== (existing.kv_fund_investor ?? []).length) patch.kv_fund_investor = kvFundInvestor
+
+  const spvInvestor = mergeArrayValues(existing.spv_investor, incoming.spv_investor)
+  if (spvInvestor.length !== (existing.spv_investor ?? []).length) patch.spv_investor = spvInvestor
+
+  if (!existing.primary_list_id && incoming.primary_list_id) patch.primary_list_id = incoming.primary_list_id
+  if (!existing.company_record_id && incoming.company_record_id) patch.company_record_id = incoming.company_record_id
+
+  const incomingCustomFields = incoming.custom_fields ?? {}
+  const missingCustomFields = Object.fromEntries(
+    Object.entries(incomingCustomFields).filter(([key, value]) => hasContactValue(value) && !hasContactValue(existing.custom_fields?.[key]))
+  )
+  if (Object.keys(missingCustomFields).length > 0) {
+    patch.custom_fields = { ...(existing.custom_fields ?? {}), ...missingCustomFields }
+  }
+
+  return patch
+}
+
+function inferCampaignType(name: string): 'event' | 'investment' | 'outreach' | 'deal_flow' | 'fundraise' | 'talent' | 'partnerships' | 'other' {
+  const norm = normalize(name)
+  if (/\b(fund|fundraise|lp|investor|pipeline|capital)\b/.test(norm)) return 'fundraise'
+  if (/\b(event|dinner|summit|conference)\b/.test(norm)) return 'event'
+  if (/\b(deal|flow|pipeline)\b/.test(norm)) return 'deal_flow'
+  if (/\b(talent|creator)\b/.test(norm)) return 'talent'
+  if (/\b(partner|partnership|brand)\b/.test(norm)) return 'partnerships'
+  if (/\b(outreach|check in|checkins)\b/.test(norm)) return 'outreach'
+  return 'other'
+}
+
+async function resolveCampaignId(
+  name: string,
+  campaignMap: Map<string, string>,
+  campaignAliases: Map<string, string>,
+  createMissingCampaigns: boolean,
+): Promise<string | null> {
+  const normalizedName = normalize(name)
+  if (!normalizedName) return null
+
+  const aliased = campaignAliases.get(normalizedName)
+  if (aliased) return aliased
+
+  const exact = campaignMap.get(normalizedName)
+  if (exact) return exact
+
+  if (!createMissingCampaigns) return null
+
+  const campaign = await createCampaign({ name: name.trim(), type: inferCampaignType(name) })
+  campaignMap.set(normalizedName, campaign.id)
+  return campaign.id
+}
+
+async function syncCampaignImportFields(
+  contactId: string,
+  campaignFields: CampaignImportFields | null,
+  campaignMap: Map<string, string>,
+  campaignAliases: Map<string, string>,
+  createMissingCampaigns: boolean,
+): Promise<boolean> {
+  if (!campaignFields?.name) return false
+  const campaignId = await resolveCampaignId(campaignFields.name, campaignMap, campaignAliases, createMissingCampaigns)
+  if (!campaignId) return false
+
+  const link = await addContactToCampaign(campaignId, contactId)
+  let nextCustomFields = link.custom_fields ?? {}
+
+  if (campaignFields.commitmentAmount !== null && !hasContactValue(nextCustomFields[CAMPAIGN_COMMITMENT_AMOUNT_FIELD])) {
+    nextCustomFields = withMoneyField(nextCustomFields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, campaignFields.commitmentAmount)
+  }
+
+  if (campaignFields.status && !hasContactValue(nextCustomFields[CAMPAIGN_SOURCE_STATUS_FIELD])) {
+    nextCustomFields = withTextField(nextCustomFields, CAMPAIGN_SOURCE_STATUS_FIELD, campaignFields.status)
+  }
+
+  if (nextCustomFields !== link.custom_fields) {
+    await updateCampaignContact(link.id, { custom_fields: nextCustomFields })
+  }
+
+  return true
+}
+
 export async function importContacts(
   rows: Record<string, string>[],
   podId: string,
@@ -814,6 +997,9 @@ export async function importContacts(
     categoryMap?: Map<string, string>
     categoryPodMap?: Map<string, string>
     podMap?: Map<string, string>
+    campaignMap?: Map<string, string>
+    campaignAliases?: Map<string, string>
+    createMissingCampaigns?: boolean
     batchId?: string
     importSource?: string
   }
@@ -825,21 +1011,35 @@ export async function importContacts(
   const categoryMap = options?.categoryMap ?? new Map<string, string>()
   const categoryPodMap = options?.categoryPodMap ?? new Map<string, string>()
   const podMap = options?.podMap ?? new Map<string, string>()
+  const campaignMap = options?.campaignMap ?? new Map<string, string>()
+  const campaignAliases = options?.campaignAliases ?? new Map<string, string>()
+  const createMissingCampaigns = options?.createMissingCampaigns ?? false
   const batchId = options?.batchId ?? null
   const importSrc = options?.importSource ?? null
+  if (campaignMap.size === 0 && safeMapping.some(m => m.targetField === 'Campaign')) {
+    const campaigns = await getCampaigns()
+    for (const campaign of campaigns) {
+      campaignMap.set(normalize(campaign.name), campaign.id)
+    }
+  }
   const existing = await getContacts()
 
   const emailIndex = new Map<string, string>()
   const nameIndex = new Map<string, string>()
+  const contactIndex = new Map<string, Contact>()
   for (const c of existing) {
     if (c.email) emailIndex.set(c.email.toLowerCase(), c.id)
     if (c.name) nameIndex.set(c.name.toLowerCase().trim(), c.id)
+    contactIndex.set(c.id, c)
   }
 
   let imported = 0
+  let updated = 0
+  let campaignLinked = 0
   let skipped = 0
   const errors: string[] = []
-  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput }> = []
+  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields | null }> = []
+  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields | null }> = []
 
   const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
     if (mapping) return resolve(row, mapping, target)
@@ -865,16 +1065,11 @@ export async function importContacts(
     const nameLower = name.toLowerCase().trim()
     const emailLower = email.toLowerCase()
 
-    if ((emailLower && emailIndex.has(emailLower)) || (!nameWasFallback && nameIndex.has(nameLower))) {
-      skipped++
-      onProgress?.({ current: i + 1, total: rows.length, imported, skipped })
-      continue
-    }
-
     const firstName = resolveFirstName(row, mapping)
     const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
+    const campaignFields = resolveCampaignImportFields(row, mapping)
     const mappedPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
-    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap)
+    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, campaignFields?.subPodNames ?? [])
     const categoryPodIds = categoryIds
       .map(categoryId => categoryPodMap.get(categoryId))
       .filter(Boolean) as string[]
@@ -944,35 +1139,101 @@ export async function importContacts(
       import_source: importSrc,
     } as ContactInput
 
-    toCreate.push({ rowNumber: i + 2, name, email, contact })
+    const existingId = (emailLower && emailIndex.get(emailLower)) || (!nameWasFallback ? nameIndex.get(nameLower) : undefined)
+    if (existingId === 'pending') {
+      skipped++
+      onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
+      continue
+    }
+    const existingContact = existingId ? contactIndex.get(existingId) : null
+
+    if (existingContact) {
+      const patch = buildExistingContactPatch(existingContact, contact)
+      if (Object.keys(patch).length > 0 || campaignFields?.name) {
+        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields })
+      } else {
+        skipped++
+        onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
+      }
+      continue
+    }
+
+    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields })
     if (emailLower) emailIndex.set(emailLower, 'pending')
     if (!nameWasFallback) nameIndex.set(nameLower, 'pending')
   }
 
   const total = rows.length
   let processedForProgress = skipped
-  onProgress?.({ current: processedForProgress, total, imported, skipped })
+  onProgress?.({ current: processedForProgress, total, imported, skipped, updated })
+
+  for (const item of toUpdate) {
+    try {
+      if (Object.keys(item.patch).length > 0) {
+        await updateContact(item.contactId, item.patch)
+        updated++
+      }
+      const linked = await syncCampaignImportFields(
+        item.contactId,
+        item.campaignFields,
+        campaignMap,
+        campaignAliases,
+        createMissingCampaigns,
+      )
+      if (linked) campaignLinked++
+    } catch (rowError) {
+      errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
+    }
+    processedForProgress++
+    onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
+  }
 
   for (let i = 0; i < toCreate.length; i += BULK_INSERT_CHUNK_SIZE) {
     const chunk = toCreate.slice(i, i + BULK_INSERT_CHUNK_SIZE)
     try {
       const created = await createContactsBulk(chunk.map(item => item.contact), BULK_INSERT_CHUNK_SIZE)
+      for (let j = 0; j < created.length; j++) {
+        const linked = await syncCampaignImportFields(
+          created[j].id,
+          chunk[j]?.campaignFields ?? null,
+          campaignMap,
+          campaignAliases,
+          createMissingCampaigns,
+        )
+        if (linked) campaignLinked++
+      }
       imported += created.length
       processedForProgress += chunk.length
-      onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped })
+      onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
     } catch (chunkError) {
       for (const item of chunk) {
         try {
-          await createContactsBulk([item.contact], 1)
+          const [created] = await createContactsBulk([item.contact], 1)
+          if (created) {
+            const linked = await syncCampaignImportFields(
+              created.id,
+              item.campaignFields,
+              campaignMap,
+              campaignAliases,
+              createMissingCampaigns,
+            )
+            if (linked) campaignLinked++
+          }
           imported++
         } catch (rowError) {
           errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
         }
         processedForProgress++
-        onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped })
+        onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
       }
     }
   }
 
-  return { imported, skipped, errors }
+  return {
+    imported,
+    skipped,
+    errors,
+    ...(updated > 0 ? { updated } : {}),
+    ...(campaignLinked > 0 ? { campaignLinked } : {}),
+  }
 }

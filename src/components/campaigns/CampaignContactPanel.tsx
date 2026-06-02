@@ -5,7 +5,7 @@ import { HUMAN_TYPES } from '../../lib/types'
 import { updateCampaignContact, logInteraction } from '../../lib/data'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
-import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField, withTextField } from '../../lib/campaignCommitments'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton } from '../ui'
 import { ChevronDown, ChevronRight, Phone, Mail, MessageSquare, Users } from 'lucide-react'
@@ -79,6 +79,7 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
   const [nextStep, setNextStep] = useState(cc.next_step ?? '')
   const [nextStepDue, setNextStepDue] = useState(cc.next_step_due ?? '')
   const [notes, setNotes] = useState(cc.notes ?? '')
+  const [campaignStatus, setCampaignStatus] = useState(getCampaignContactCampaignStatus(cc) ?? '')
   const [stageOpen, setStageOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [closing, setClosing] = useState(false)
@@ -97,6 +98,10 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
     .slice(0, 3)
 
   const lastContactDate = humanInteractions.find(i => i.type !== 'note')?.date
+
+  useEffect(() => {
+    setCampaignStatus(getCampaignContactCampaignStatus(cc) ?? '')
+  }, [cc.id, cc.custom_fields])
 
   const daysInStage = cc.moved_at
     ? Math.floor((Date.now() - new Date(cc.moved_at).getTime()) / DAY_MS)
@@ -148,6 +153,21 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
       clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
       throw new Error('Commitment amount save failed')
+    }
+  }
+
+  async function handleCampaignStatusSave(value: string | null) {
+    setSaveStatus('saving')
+    try {
+      const updated = await updateCampaignContact(cc.id, {
+        custom_fields: withTextField(cc.custom_fields, CAMPAIGN_SOURCE_STATUS_FIELD, value),
+      })
+      onUpdate(updated)
+      flashSaved()
+    } catch {
+      setSaveStatus('error')
+      clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
     }
   }
 
@@ -438,6 +458,18 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
                 onSave={handleCommitmentSave}
                 placeholder="$0"
                 style={isMobile ? { minHeight: 44 } : undefined}
+              />
+            </FieldRow>
+
+            <FieldRow label="Campaign Status" mobile={isMobile}>
+              <input
+                type="text"
+                value={campaignStatus}
+                onChange={e => setCampaignStatus(e.target.value)}
+                onBlur={() => handleCampaignStatusSave(campaignStatus)}
+                placeholder="Add campaign status..."
+                className="ccp-input"
+                style={isMobile ? mobileInputStyle : inputStyle}
               />
             </FieldRow>
 

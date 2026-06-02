@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, getContacts, getCategories, invalidateContactsCache } from '../../lib/data'
+import { getPods, getContacts, getCategories, getCampaigns, invalidateContactsCache } from '../../lib/data'
 import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS } from '../../lib/csvImport'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
@@ -278,11 +278,23 @@ export function ImportPanel() {
       categoryPodMap.set(cat.id, cat.list_id)
     }
 
+    const campaigns = await getCampaigns()
+    const campaignMap = new Map<string, string>()
+    for (const campaign of campaigns) {
+      campaignMap.set(normalize(campaign.name), campaign.id)
+    }
+    const campaignAliases = new Map<string, string>()
+    const kinshipFundCampaign = campaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
+    if (kinshipFundCampaign) {
+      campaignAliases.set(normalize('Kinship Fund Pipeline'), kinshipFundCampaign.id)
+    }
+
     const res = await importContacts(
       parsedRows, '', (p) => setProgress(p),
       {
         type: recordType, podIds: [], mapping: safeColumnMapping,
         categoryMap, categoryPodMap, podMap,
+        campaignMap, campaignAliases, createMissingCampaigns: true,
         batchId: newBatchId, importSource,
       }
     )
@@ -697,6 +709,12 @@ export function ImportPanel() {
             </div>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', fontSize: 13, color: 'var(--color-text-secondary)' }}>
               <span>{progress.imported} imported</span>
+              {(progress.updated ?? 0) > 0 && (
+                <>
+                  <span style={{ color: 'var(--edge-strong)' }}>|</span>
+                  <span>{progress.updated} updated</span>
+                </>
+              )}
               <span style={{ color: 'var(--edge-strong)' }}>|</span>
               <span>{progress.skipped} skipped</span>
             </div>
@@ -713,6 +731,8 @@ export function ImportPanel() {
               <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Import complete</p>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
                 {result.imported} {recordType === 'Company' ? 'companies' : 'people'} imported via {SOURCE_LABELS[importSource]}
+                {(result.updated ?? 0) > 0 && ` - ${result.updated} updated`}
+                {(result.campaignLinked ?? 0) > 0 && ` - ${result.campaignLinked} campaign link${result.campaignLinked === 1 ? '' : 's'} synced`}
                 {result.skipped > 0 && ` - ${result.skipped} skipped`}
               </p>
 

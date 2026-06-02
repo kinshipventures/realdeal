@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { createContactsBulk, getContacts } from './data'
+import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
 import {
   countInvalidRows,
   detectColumns,
@@ -14,15 +14,70 @@ import {
 
 vi.mock('./data', () => ({
   getContacts: vi.fn(),
+  updateContact: vi.fn(),
   createContactsBulk: vi.fn(),
+  getCampaigns: vi.fn(),
+  createCampaign: vi.fn(),
+  addContactToCampaign: vi.fn(),
+  updateCampaignContact: vi.fn(),
 }))
 
 const mockedGetContacts = vi.mocked(getContacts)
+const mockedUpdateContact = vi.mocked(updateContact)
 const mockedCreateContactsBulk = vi.mocked(createContactsBulk)
+const mockedGetCampaigns = vi.mocked(getCampaigns)
+const mockedCreateCampaign = vi.mocked(createCampaign)
+const mockedAddContactToCampaign = vi.mocked(addContactToCampaign)
+const mockedUpdateCampaignContact = vi.mocked(updateCampaignContact)
 
 beforeEach(() => {
   vi.clearAllMocks()
   mockedGetContacts.mockResolvedValue([])
+  mockedUpdateContact.mockImplementation(async (id, data) => ({ id, name: 'Updated', created_at: '2026-05-28T00:00:00.000Z', ...data } as any))
+  mockedGetCampaigns.mockResolvedValue([])
+  mockedCreateCampaign.mockImplementation(async data => ({
+    id: `campaign-${String(data.name).toLowerCase().replace(/\s+/g, '-')}`,
+    name: data.name,
+    type: data.type,
+    deadline: data.deadline ?? null,
+    status: 'active',
+    notes: null,
+    description: null,
+    custom_fields: {},
+    contact_ids: [],
+    created_at: '2026-05-28T00:00:00.000Z',
+  } as any))
+  mockedAddContactToCampaign.mockImplementation(async (campaignId, contactId) => ({
+    id: `cc-${campaignId}-${contactId}`,
+    campaign_id: campaignId,
+    contact_id: contactId,
+    status: 'pending',
+    stage_id: null,
+    notes: null,
+    owner: null,
+    next_step: null,
+    next_step_due: null,
+    moved_at: '2026-05-28T00:00:00.000Z',
+    is_priority: false,
+    custom_fields: {},
+    created_at: '2026-05-28T00:00:00.000Z',
+  } as any))
+  mockedUpdateCampaignContact.mockImplementation(async (id, data) => ({
+    id,
+    campaign_id: 'campaign',
+    contact_id: 'contact',
+    status: 'pending',
+    stage_id: null,
+    notes: null,
+    owner: null,
+    next_step: null,
+    next_step_due: null,
+    moved_at: '2026-05-28T00:00:00.000Z',
+    is_priority: false,
+    custom_fields: {},
+    created_at: '2026-05-28T00:00:00.000Z',
+    ...data,
+  } as any))
   mockedCreateContactsBulk.mockImplementation(async records =>
     records.map((record, index) => ({
       ...record,
@@ -58,8 +113,8 @@ describe('CSV and Excel import parsing', () => {
       'Role',
       'Pod',
       'Sub-pod',
-      'Contact Frequency',
-      'Last Contacted',
+      'Campaign',
+      'Campaign Status',
     ])
     expect(parsed.headers).not.toContain('Name')
   }, 10000)
@@ -228,6 +283,102 @@ describe('bulk contact import', () => {
       primary_list_id: 'pod-lps',
       category_ids: ['cat-lp-internal'],
     })
+  })
+
+  it('digests campaign-pod client sheets without creating extra contact fields', async () => {
+    const parsed = parseCSV([
+      'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',
+      'Ivan Soto-Wright,MoonPay,ivan@moonpay.com,Mark Suster,Advisor to MoonPay,Kinship Fund Pipeline | LP Internal | SPV Investor,Closed/Won,500000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const categoryMap = new Map([
+      [normalize('LP Internal'), 'cat-lp-internal'],
+      [normalize('SPV Investor'), 'cat-spv-investor'],
+    ])
+    const categoryPodMap = new Map([
+      ['cat-lp-internal', 'pod-lps'],
+      ['cat-spv-investor', 'pod-lps'],
+    ])
+    const campaignMap = new Map([[normalize('Kinship Fund Pipeline'), 'campaign-fund']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      categoryMap,
+      categoryPodMap,
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 1 })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Ivan Soto-Wright',
+      first_name: 'Ivan Soto-Wright',
+      company: 'MoonPay',
+      recommended_by: 'Mark Suster',
+      intel_notes: 'Advisor to MoonPay',
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal', 'cat-spv-investor'],
+      custom_fields: {},
+    })
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'created-0')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      'cc-campaign-fund-created-0',
+      { custom_fields: { commitmentAmount: 500000, campaignStatus: 'Closed/Won' } },
+    )
+  })
+
+  it('updates existing contacts with missing spreadsheet data instead of duplicating them', async () => {
+    mockedGetContacts.mockResolvedValue([
+      {
+        id: 'contact-ivan',
+        name: 'Ivan Soto-Wright',
+        email: 'ivan@moonpay.com',
+        company: null,
+        recommended_by: null,
+        intel_notes: null,
+        notes: null,
+        list_ids: [],
+        category_ids: [],
+        primary_list_id: null,
+        company_ids: [],
+        kv_fund_investor: null,
+        spv_investor: null,
+        custom_fields: {},
+      } as any,
+    ])
+
+    const parsed = parseCSV([
+      'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',
+      'Ivan Soto-Wright,MoonPay,ivan@moonpay.com,Mark Suster,Advisor to MoonPay,Kinship Fund Pipeline | LP Internal,Closed/Won,500000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const categoryMap = new Map([[normalize('LP Internal'), 'cat-lp-internal']])
+    const categoryPodMap = new Map([['cat-lp-internal', 'pod-lps']])
+    const campaignMap = new Map([[normalize('Kinship Fund Pipeline'), 'campaign-fund']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      categoryMap,
+      categoryPodMap,
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1, campaignLinked: 1 })
+    expect(mockedCreateContactsBulk).not.toHaveBeenCalled()
+    expect(mockedUpdateContact).toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
+      company: 'MoonPay',
+      recommended_by: 'Mark Suster',
+      intel_notes: 'Advisor to MoonPay',
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal'],
+    }))
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-ivan')
   })
 
   it('keeps importing when a spreadsheet pod or sub-pod does not exist', async () => {

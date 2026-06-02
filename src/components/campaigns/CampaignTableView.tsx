@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Campaign, CampaignContact, CampaignStage, Contact } from '../../lib/types'
 import { updateCampaignContact, removeContactFromCampaign } from '../../lib/data'
-import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCommitmentAmount, parseMoneyInput, withMoneyField } from '../../lib/campaignCommitments'
+import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, parseMoneyInput, withMoneyField, withTextField } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
 
@@ -19,7 +19,7 @@ interface Props {
   visibleColumns?: Set<string>
 }
 
-type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'commitment_amount' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
+type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'commitment_amount' | 'campaign_status' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: 'name', label: 'Name' },
@@ -28,6 +28,7 @@ const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: 'role', label: 'Role' },
   { key: 'stage', label: 'Stage' },
   { key: 'commitment_amount', label: 'Commitment Amount' },
+  { key: 'campaign_status', label: 'Campaign Status' },
   { key: 'owner', label: 'Owner' },
   { key: 'next_step', label: 'Next Step' },
   { key: 'next_step_due', label: 'Due' },
@@ -80,6 +81,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
       case 'role': return contact?.role ?? ''
       case 'stage': return stages.find(s => s.id === cc.stage_id)?.name ?? ''
       case 'commitment_amount': return formatMoney(getCampaignContactCommitmentAmount(cc))
+      case 'campaign_status': return getCampaignContactCampaignStatus(cc) ?? ''
       case 'owner': return cc.owner ?? ''
       case 'next_step': return cc.next_step ?? ''
       case 'next_step_due': return cc.next_step_due ?? ''
@@ -144,6 +146,17 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
       setEditingCell(null)
       const updated = await updateCampaignContact(rowId, {
         custom_fields: withMoneyField(row.cc.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
+      })
+      onContactsChange(campaignContacts.map(cc => cc.id === rowId ? updated : cc))
+      return
+    }
+
+    if (col === 'campaign_status') {
+      const row = rows.find(r => r.cc.id === rowId)
+      if (!row) return
+      setEditingCell(null)
+      const updated = await updateCampaignContact(rowId, {
+        custom_fields: withTextField(row.cc.custom_fields, CAMPAIGN_SOURCE_STATUS_FIELD, editValue),
       })
       onContactsChange(campaignContacts.map(cc => cc.id === rowId ? updated : cc))
       return

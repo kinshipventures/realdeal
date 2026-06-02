@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router'
 import { Star } from 'lucide-react'
 import type { CampaignContact, Contact } from '../../lib/types'
 import type { ScoreLabel } from '../../lib/equity'
-import { formatMoneyCompact, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
+import { formatMoneyCompact, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
 
 interface Props {
@@ -81,9 +81,11 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
 
   const dueSoon = isDueSoon(cc.next_step_due)
   const commitmentAmount = getCampaignContactCommitmentAmount(cc)
+  const campaignStatus = getCampaignContactCampaignStatus(cc)
 
   const extras: Array<{ label: string; value: string; type: string }> = []
   if (show('commitment_amount') && commitmentAmount !== null) extras.push({ label: 'Commitment Amount', value: formatMoneyCompact(commitmentAmount), type: 'money' })
+  if (show('campaign_status') && campaignStatus) extras.push({ label: 'Campaign Status', value: campaignStatus, type: 'text' })
   if (show('email') && contact.email) extras.push({ label: 'Email', value: contact.email, type: 'email' })
   if (show('role') && contact.role) extras.push({ label: 'Role', value: contact.role, type: 'text' })
   if (show('owner') && cc.owner) extras.push({ label: 'Owner', value: cc.owner, type: 'text' })

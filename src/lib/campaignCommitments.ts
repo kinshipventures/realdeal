@@ -1,5 +1,6 @@
 export const CAMPAIGN_COMMITMENT_AMOUNT_FIELD = 'commitmentAmount'
 export const CAMPAIGN_FUNDRAISING_GOAL_FIELD = 'fundraisingGoal'
+export const CAMPAIGN_SOURCE_STATUS_FIELD = 'campaignStatus'
 
 type CustomFieldCarrier = {
   custom_fields?: Record<string, unknown> | null
@@ -50,6 +51,17 @@ export function getCampaignFundraisingGoal(record: CustomFieldCarrier): number |
   return readMoneyField(record, CAMPAIGN_FUNDRAISING_GOAL_FIELD)
 }
 
+export function readTextField(record: CustomFieldCarrier, field: string): string | null {
+  const value = record.custom_fields?.[field]
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
+
+export function getCampaignContactCampaignStatus(record: CustomFieldCarrier): string | null {
+  return readTextField(record, CAMPAIGN_SOURCE_STATUS_FIELD)
+}
+
 export function withMoneyField(
   existing: Record<string, unknown> | null | undefined,
   field: string,
@@ -58,6 +70,18 @@ export function withMoneyField(
   const next = { ...(existing ?? {}) }
   if (amount === null) delete next[field]
   else next[field] = amount
+  return next
+}
+
+export function withTextField(
+  existing: Record<string, unknown> | null | undefined,
+  field: string,
+  value: string | null,
+): Record<string, unknown> {
+  const next = { ...(existing ?? {}) }
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) delete next[field]
+  else next[field] = trimmed
   return next
 }
 
