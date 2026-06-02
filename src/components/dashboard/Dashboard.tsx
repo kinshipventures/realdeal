@@ -35,6 +35,7 @@ import { ThisWeekWidget } from './widgets/ThisWeekWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { RadarWidget } from './widgets/RadarWidget'
 import { AiInsightsWidget } from './widgets/AiInsightsWidget'
+import { LogInteractionModal } from '../interactions/LogInteractionModal'
 
 export function Dashboard() {
   const { config, isVisible, toggleWidget, applyPreset, reorderWidgets, setEquityPods } = useDashboardConfig()
@@ -58,6 +59,7 @@ export function Dashboard() {
   const [showQueue, setShowQueue] = useState(false)
   const [focusRefreshSeed, setFocusRefreshSeed] = useState(0)
   const [focusRefreshing, setFocusRefreshing] = useState(false)
+  const [showLogInteraction, setShowLogInteraction] = useState(false)
   const dashboardNow = appClock.now
 
   // Graduated loading — each section loads independently
@@ -367,6 +369,27 @@ export function Dashboard() {
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
   }
 
+  function upsertContact(updated: Contact) {
+    setContacts(prev => {
+      const exists = prev.some(c => c.id === updated.id)
+      return exists ? prev.map(c => c.id === updated.id ? updated : c) : [updated, ...prev]
+    })
+  }
+
+  function handleLogContactCreated(created: Contact) {
+    upsertContact(created)
+    if (created.needs_review) {
+      setPendingContacts(prev => prev.some(c => c.id === created.id) ? prev : [created, ...prev])
+    }
+  }
+
+  function handleInteractionLogged(updated: Contact, interaction: Interaction) {
+    upsertContact(updated)
+    setPendingContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
+    setAllInteractions(prev => [interaction, ...prev.filter(ix => ix.id !== interaction.id)])
+    invalidateContactsCache()
+  }
+
   function handleContactDeleted() {
     if (!selectedContact) return
     setContacts(prev => prev.filter(c => c.id !== selectedContact.id))
@@ -470,6 +493,15 @@ export function Dashboard() {
         />
       )}
 
+      {showLogInteraction && (
+        <LogInteractionModal
+          contacts={contacts}
+          onClose={() => setShowLogInteraction(false)}
+          onContactCreated={handleLogContactCreated}
+          onLogged={handleInteractionLogged}
+        />
+      )}
+
       <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
@@ -487,10 +519,7 @@ export function Dashboard() {
                 heading="No pulse yet"
                 subtext="Log your first interaction to start building your network health score."
                 ctaLabel="Log interaction"
-                onCta={() => {
-                  const first = focusItems[0]
-                  if (first) setSelectedContact(first.contact)
-                }}
+                onCta={() => setShowLogInteraction(true)}
                 orbColor="#25B439"
                 ghosts={2}
               />
@@ -549,20 +578,19 @@ export function Dashboard() {
             </div>
             <button
               type="button"
-              onClick={() => { const first = focusItems[0]; if (first) setSelectedContact(first.contact) }}
-              disabled={focusItems.length === 0}
+              onClick={() => setShowLogInteraction(true)}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '13px 26px', borderRadius: 8,
                 background: 'var(--color-brand)', color: '#FFFFFF',
-                border: 'none', cursor: focusItems.length === 0 ? 'default' : 'pointer',
+                border: 'none', cursor: 'pointer',
                 fontSize: 14, fontWeight: 700, letterSpacing: '0',
-                opacity: focusItems.length === 0 ? 0.5 : 1,
+                opacity: 1,
                 boxShadow: '0 12px 30px rgba(0,61,165,0.22)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 marginTop: 4,
               }}
-              onMouseEnter={e => { if (focusItems.length > 0) e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
