@@ -285,6 +285,50 @@ describe('bulk contact import', () => {
     })
   })
 
+  it('stores approved LP tracker fields in controlled contact custom fields', async () => {
+    const parsed = parseCSV([
+      'Name,Company,Status,Commitment Amount,Email,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
+      'Ivan Soto-Wright,MoonPay,Closed/Won,$500000,ivan@navihold.vc,LP Internal,Advisor notes,"Navihold Ventures, LLC",TeraWulf,Financial technology,"MoonPay CEO",Yes,No,"Committed through Navihold","Complete onboarding"',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const categoryMap = new Map([[normalize('LP Internal'), 'cat-lp-internal']])
+    const categoryPodMap = new Map([['cat-lp-internal', 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap: new Map(),
+      categoryMap,
+      categoryPodMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Ivan Soto-Wright',
+      first_name: 'Ivan Soto-Wright',
+      company: 'MoonPay',
+      email: 'ivan@navihold.vc',
+      notes: 'Advisor notes',
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal'],
+      spv_investor: ['TeraWulf'],
+      custom_fields: {
+        fundraiseStatus: 'Closed/Won',
+        investmentAmount: '$500000',
+        investmentEntity: 'Navihold Ventures, LLC',
+        companyType: 'Financial technology',
+        jobDescription: 'MoonPay CEO',
+        kinshipInvestor: true,
+        spvDistributionList: false,
+        summary: 'Committed through Navihold',
+        nextStep: 'Complete onboarding',
+      },
+    })
+  })
+
   it('digests campaign-pod client sheets without creating extra contact fields', async () => {
     const parsed = parseCSV([
       'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',

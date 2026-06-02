@@ -4,6 +4,7 @@ import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Category, type Conta
 import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
+import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeLpTrackerFieldValue, type LpTrackerFieldDefinition } from '../../lib/lpTrackerFields'
 
 function daysUntilBirthday(birthday: string | null): number | null {
   if (!birthday) return null
@@ -123,15 +124,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       location: null, website: null, notes: null, recommended_by: null,
       specialization: null, past_clients: null,
       birthday: null, milestones: null, interests: null, relationship_context: null,
-      category_ids: categoryId ? [categoryId] : [], list_ids: [], ring_ids: [],
+      category_ids: categoryId ? [categoryId] : [], list_ids: [], ring_ids: [], custom_fields: {},
     }
   )
   const [editingField, setEditingField] = useState<keyof Contact | null>(isNew ? 'name' : null)
+  const [editingCustomField, setEditingCustomField] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [saveError, setSaveError] = useState<SaveError>(null)
+  const [customFieldSaveError, setCustomFieldSaveError] = useState<string | null>(null)
   const saveGenRef = useRef(0)
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -451,6 +454,179 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
+  function getDraftCustomFields(): Record<string, unknown> {
+    const fields = draft.custom_fields
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
+    return fields as Record<string, unknown>
+  }
+
+  async function handleCustomFieldSave(field: LpTrackerFieldDefinition, rawValue: string | boolean) {
+    const value = typeof rawValue === 'boolean'
+      ? rawValue
+      : normalizeLpTrackerFieldValue(field, rawValue)
+    const nextCustomFields = { ...getDraftCustomFields() }
+    if (hasLpTrackerValue(value)) {
+      nextCustomFields[field.key] = value
+    } else {
+      delete nextCustomFields[field.key]
+    }
+
+    setDraft(prev => ({ ...prev, custom_fields: nextCustomFields }))
+    setEditingCustomField(null)
+
+    if (!isNew && contact) {
+      try {
+        const updated = await updateContact(contact.id, { custom_fields: nextCustomFields } as Partial<Contact>)
+        setCustomFieldSaveError(null)
+        onSaved(updated)
+      } catch {
+        setCustomFieldSaveError(field.key)
+      }
+    }
+  }
+
+  function customField(fieldDef: LpTrackerFieldDefinition) {
+    const customFields = getDraftCustomFields()
+    const rawValue = customFields[fieldDef.key]
+    const value = lpTrackerDisplayValue(rawValue)
+    const editing = editingCustomField === fieldDef.key
+    const hasSaveError = customFieldSaveError === fieldDef.key
+    const multi = fieldDef.type === 'long_text' || fieldDef.type === 'multi_select'
+
+    const inputStyle = {
+      width: '100%',
+      background: 'var(--tint)',
+      border: '1px solid var(--edge-strong)',
+      borderRadius: 6,
+      color: 'var(--color-text-primary)',
+      fontSize: 14,
+      lineHeight: 1.45,
+      padding: '7px 10px',
+      outline: 'none',
+      fontFamily: 'inherit',
+    }
+
+    function onKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      const tag = e.currentTarget.tagName
+      if (e.key === 'Enter' && tag === 'INPUT') {
+        e.currentTarget.blur()
+      }
+      if (e.key === 'Enter' && tag === 'TEXTAREA' && (e.metaKey || e.ctrlKey)) {
+        e.currentTarget.blur()
+      }
+      if (e.key === 'Escape') {
+        e.currentTarget.value = value
+        e.currentTarget.blur()
+        e.stopPropagation()
+      }
+    }
+
+    return (
+      <div
+        key={fieldDef.key}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '132px minmax(0, 1fr)',
+          gap: 14,
+          alignItems: multi || editing ? 'start' : 'center',
+          padding: '13px 18px',
+          borderBottom: '1px solid var(--divider)',
+        }}
+      >
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>{fieldDef.label}</div>
+          {hasSaveError && (
+            <button
+              type="button"
+              onClick={() => handleCustomFieldSave(fieldDef, value)}
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#D93025',
+                letterSpacing: '0.01em',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              Could not save. Try again.
+            </button>
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          {fieldDef.type === 'checkbox' ? (
+            <label style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 14,
+              color: 'var(--color-text-primary)',
+              cursor: 'pointer',
+              minHeight: 28,
+            }}>
+              <input
+                type="checkbox"
+                checked={rawValue === true}
+                onChange={event => handleCustomFieldSave(fieldDef, event.target.checked)}
+              />
+              {rawValue === true ? 'Yes' : 'No'}
+            </label>
+          ) : editing ? (
+            multi ? (
+              <textarea
+                autoFocus
+                defaultValue={value}
+                onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
+                onKeyDown={onKeyDown}
+                rows={fieldDef.type === 'multi_select' ? 2 : 4}
+                style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                autoFocus
+                type="text"
+                defaultValue={value}
+                onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
+                onKeyDown={onKeyDown}
+                style={inputStyle}
+              />
+            )
+          ) : (
+            <div
+              onClick={() => setEditingCustomField(fieldDef.key)}
+              style={{
+                fontSize: 14,
+                color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'text',
+                minHeight: 22,
+                whiteSpace: multi ? 'pre-wrap' : 'nowrap',
+                overflow: 'hidden',
+                textOverflow: multi ? undefined : 'ellipsis',
+                lineHeight: multi ? 1.6 : 1.45,
+                padding: multi ? '2px 0' : '0',
+              }}
+            >
+              {value || `add ${fieldDef.label.toLowerCase()}`}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  function customFieldSection(section: LpTrackerFieldDefinition['section']) {
+    const fields = LP_TRACKER_FIELDS.filter(fieldDef => fieldDef.section === section)
+    return (
+      <div style={sectionShell}>
+        <div style={sectionHeader}>
+          <div style={sectionLabel}>{section.toLowerCase()}</div>
+        </div>
+        {fields.map(fieldDef => customField(fieldDef))}
+      </div>
+    )
+  }
+
   async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null, nextCategoryIds = draft.category_ids ?? []) {
     if (isNew || !contact) return
     const previousListIds = contact.list_ids
@@ -571,7 +747,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         type: 'Contact', status: 'Pending',
         company_record_id: null, company_ids: [], industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
-        communication_preferences: null, custom_fields: {},
+        communication_preferences: null, custom_fields: draft.custom_fields ?? {},
       })
       onSaved(created)
       onClose()
@@ -1224,6 +1400,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </div>
                 )}
               </div>
+
+              {customFieldSection('Investor Profile')}
+              {customFieldSection('Fund Details')}
+              {customFieldSection('Operations')}
 
               {pods.length > 0 && (
                 <div style={sectionShell}>

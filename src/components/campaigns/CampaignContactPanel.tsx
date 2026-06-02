@@ -6,6 +6,7 @@ import { updateCampaignContact, logInteraction } from '../../lib/data'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField, withTextField } from '../../lib/campaignCommitments'
+import { lpTrackerDisplayValue } from '../../lib/lpTrackerFields'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton } from '../ui'
 import { ChevronDown, ChevronRight, Phone, Mail, MessageSquare, Users } from 'lucide-react'
@@ -87,6 +88,13 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
+  const contactCustomFields =
+    contact.custom_fields && typeof contact.custom_fields === 'object' && !Array.isArray(contact.custom_fields)
+      ? contact.custom_fields as Record<string, unknown>
+      : {}
+  const customField = (key: string) => lpTrackerDisplayValue(contactCustomFields[key])
+  const hasCustomField = (key: string) =>
+    Object.prototype.hasOwnProperty.call(contactCustomFields, key) && customField(key).trim().length > 0
 
   const equityScore = contactEquityScore(interactions)
   const label = scoreLabel(equityScore)
@@ -527,6 +535,16 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
             {contact.phone && <ReadonlyRow label="Phone" value={contact.phone} mobile={isMobile} />}
             {contact.location && <ReadonlyRow label="Location" value={contact.location} mobile={isMobile} />}
             {contact.linkedin && <ReadonlyRow label="LinkedIn" value={contact.linkedin} link mobile={isMobile} />}
+            {hasCustomField('investmentAmount') && <ReadonlyRow label="Investment Amount" value={customField('investmentAmount')} mobile={isMobile} />}
+            {hasCustomField('investmentEntity') && <ReadonlyRow label="Investment Entity" value={customField('investmentEntity')} mobile={isMobile} />}
+            {hasCustomField('capitalCall') && <ReadonlyRow label="Capital Call" value={customField('capitalCall')} mobile={isMobile} />}
+            {hasCustomField('fundraiseStatus') && <ReadonlyRow label="Fundraise Status" value={customField('fundraiseStatus')} mobile={isMobile} />}
+            {contact.spv_investor && contact.spv_investor.length > 0 && <ReadonlyRow label="SPV Investor" value={contact.spv_investor.join(', ')} mobile={isMobile} />}
+            {hasCustomField('kinshipInvestor') && <ReadonlyRow label="Kinship Investor" value={customField('kinshipInvestor')} mobile={isMobile} />}
+            {hasCustomField('companyType') && <ReadonlyRow label="Company Type" value={customField('companyType')} mobile={isMobile} />}
+            {hasCustomField('likelihood') && <ReadonlyRow label="Likelihood" value={customField('likelihood')} mobile={isMobile} />}
+            {hasCustomField('summary') && <ReadonlyRow label="Summary" value={customField('summary')} mobile={isMobile} />}
+            {hasCustomField('nextStep') && <ReadonlyRow label="Next Step" value={customField('nextStep')} mobile={isMobile} />}
 
             <button
               type="button"

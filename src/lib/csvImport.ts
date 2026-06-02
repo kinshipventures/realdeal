@@ -3,6 +3,7 @@ import { strFromU8, unzipSync } from 'fflate'
 import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
 import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, parseMoneyInput, withMoneyField, withTextField } from './campaignCommitments'
+import { LP_TRACKER_ALIAS_ENTRIES, LP_TRACKER_FIELDS, LP_TRACKER_TARGET_FIELDS, normalizeLpTrackerFieldValue } from './lpTrackerFields'
 
 export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
@@ -33,6 +34,7 @@ export const TARGET_FIELDS = [
   'Contact Frequency', 'Cadence Override',
   'Last Contacted', 'Next Follow Up Date', 'Next Action',
   'KV Fund Investor', 'SPV Investor',
+  ...LP_TRACKER_TARGET_FIELDS,
 ] as const
 
 type TargetField = typeof TARGET_FIELDS[number]
@@ -40,6 +42,7 @@ type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
 const BULK_INSERT_CHUNK_SIZE = 100
+const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 
 const KNOWN_ALIASES: Record<string, TargetField> = {
   // App structure
@@ -183,6 +186,10 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'web site': 'Website',
   'web page': 'Website',
   'company website': 'Website',
+  'website url': 'Website',
+  'website url main company associated': 'Website',
+  'main company website': 'Website',
+  'main company associated website': 'Website',
   'website 1 value': 'Website',
   'personal website': 'Website',
   'blog': 'Website',
@@ -281,6 +288,9 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'kinship fund investor': 'KV Fund Investor',
   'fund investor': 'KV Fund Investor',
   'spv investor': 'SPV Investor',
+
+  // Approved LP tracker fields
+  ...LP_TRACKER_ALIAS_MAP,
 }
 
 function cellToString(value: unknown): string {
@@ -672,6 +682,26 @@ function resolveCampaignImportFields(row: Record<string, string>, mapping: Colum
 
   if (!campaignName && subPodNames.length === 0 && !status && commitmentAmount === null) return null
   return { name: campaignName, subPodNames, status, commitmentAmount }
+}
+
+function resolveLpTrackerCustomFields(
+  row: Record<string, string>,
+  mapping: ColumnMapping | undefined,
+  campaignFields: CampaignImportFields | null,
+): Record<string, unknown> {
+  if (!mapping || mapping.length === 0) return {}
+
+  const customFields: Record<string, unknown> = {}
+  for (const field of LP_TRACKER_FIELDS) {
+    let rawValue = resolve(row, mapping, field.target)
+    if (!rawValue && field.key === 'investmentAmount' && !campaignFields?.name) {
+      rawValue = resolve(row, mapping, 'Commitment Amount')
+    }
+
+    const value = normalizeLpTrackerFieldValue(field, rawValue)
+    if (hasContactValue(value)) customFields[field.key] = value
+  }
+  return customFields
 }
 
 export function resolveMappedValue(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
@@ -1080,6 +1110,7 @@ export async function importContacts(
     const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))
     const consumedHeaders = firstName.consumedHeader ? new Set([firstName.consumedHeader]) : undefined
     const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping, consumedHeaders))
+    const customFields = resolveLpTrackerCustomFields(row, mapping, campaignFields)
 
     const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
     const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
@@ -1131,7 +1162,7 @@ export async function importContacts(
       email_2: r(row, 'Email 2', 'Email 2') || null,
       email_3: r(row, 'Email 3', 'Email 3') || null,
       communication_preferences: null,
-      custom_fields: {},
+      custom_fields: customFields,
       ring_ids: [],
       photo_url: null,
       snoozed_until: null,

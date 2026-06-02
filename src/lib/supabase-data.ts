@@ -272,8 +272,15 @@ export function getContacts(categoryId?: string): Promise<Contact[]> {
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 function buildContactInsert(data: ContactInput, userId: string, wsId: string): Record<string, unknown> {
-  // New contacts must stay on the approved contact schema; relationship rings are the only internal custom payload.
-  const customFields = { relationship_rings: data.ring_ids ?? [] }
+  // Keep new contacts on the approved schema while preserving approved JSON payloads such as LP tracker fields.
+  const incomingCustomFields =
+    data.custom_fields && typeof data.custom_fields === 'object' && !Array.isArray(data.custom_fields)
+      ? data.custom_fields as Record<string, unknown>
+      : {}
+  const customFields = {
+    ...incomingCustomFields,
+    relationship_rings: data.ring_ids ?? incomingCustomFields.relationship_rings ?? [],
+  }
   const providedFirstName = typeof data.first_name === 'string' ? data.first_name.trim() : data.first_name
   const firstName = providedFirstName || (data.type === 'Contact' ? data.name : null)
   return {
