@@ -51,6 +51,22 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['company type', 'org type', 'organization type', 'company category'],
   },
   {
+    key: 'companyLinkedIn',
+    target: 'Company LinkedIn',
+    label: 'Company LinkedIn',
+    section: 'Investor Profile',
+    type: 'text',
+    aliases: ['company linkedin', 'company linkedin url', 'company linkedin profile', 'organization linkedin', 'org linkedin'],
+  },
+  {
+    key: 'companyOverview',
+    target: 'Company Overview',
+    label: 'Company Overview',
+    section: 'Investor Profile',
+    type: 'long_text',
+    aliases: ['company overview', 'organization overview', 'company description', 'company notes', 'business overview'],
+  },
+  {
     key: 'jobDescription',
     target: 'Job Description',
     label: 'Job Description',
@@ -108,11 +124,11 @@ export const LP_TRACKER_FIELDS = [
   },
   {
     key: 'fundraiseStatus',
-    target: 'Fundraise Status',
-    label: 'Fundraise Status',
+    target: 'KV Status',
+    label: 'KV Status',
     section: 'Fund Details',
     type: 'text',
-    aliases: ['status', 'fundraise status', 'fundraising status', 'kv lp status', 'lp status'],
+    aliases: ['status', 'kv status', 'kv_status', 'kv pipeline status', 'kv lp status', 'lp status', 'fundraise status', 'fundraising status'],
   },
   {
     key: 'investmentAmount',
@@ -161,6 +177,25 @@ export const LP_TRACKER_FIELDS = [
     section: 'Fund Details',
     type: 'checkbox',
     aliases: ['spv investor flag', 'spv investor checkbox', 'spv investor boolean'],
+  },
+  {
+    key: 'contactSource',
+    target: 'Contact Source',
+    label: 'Contact Source',
+    section: 'Operations',
+    type: 'text',
+    aliases: [
+      'contact source',
+      'relationship source',
+      'source type',
+      'met via',
+      'met through source',
+      'contact origin',
+      'source category',
+      'business card source',
+      'whatsapp source',
+      'by association source',
+    ],
   },
   {
     key: 'summary',
@@ -347,6 +382,18 @@ export function normalizeLpTrackerFieldValue(field: LpTrackerFieldDefinition, va
   if (field.type === 'multi_select') {
     const items = trimmed.split(/[;,|\n]+/).map(item => item.trim()).filter(Boolean)
     return items.length > 0 ? items : null
+  }
+  if (field.key === 'contactSource') {
+    const normalized = trimmed.toLowerCase().replace(/[\s_-]+/g, ' ')
+    if (['business card', 'bc', 'card', 'business card given in person', 'bc was given in person'].includes(normalized)) {
+      return 'Business Card'
+    }
+    if (['whatsapp', 'whats app', 'met in person and exchanged numbers', 'exchanged numbers'].includes(normalized)) {
+      return 'WhatsApp'
+    }
+    if (['by association', 'association', 'introduced by another person', 'introduced', 'intro', 'referral'].includes(normalized)) {
+      return 'By Association'
+    }
   }
   return trimmed
 }

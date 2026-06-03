@@ -155,6 +155,17 @@ describe('CSV and Excel import parsing', () => {
     ])
   })
 
+  it('detects required LP tracker fields from client exports', () => {
+    const mapping = detectColumns(['KV Status', 'Contact Source', 'Company LinkedIn', 'Company Overview'])
+
+    expect(mapping.map(m => m.targetField)).toEqual([
+      'KV Status',
+      'Contact Source',
+      'Company LinkedIn',
+      'Company Overview',
+    ])
+  })
+
   it('prefers exact first-name columns over generic name aliases', () => {
     const mapping = detectColumns(['Name', 'First Name', 'Company Name'])
 
@@ -287,8 +298,8 @@ describe('bulk contact import', () => {
 
   it('stores approved LP tracker fields in controlled contact custom fields', async () => {
     const parsed = parseCSV([
-      'Name,Company,Status,Commitment Amount,Email,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
-      'Ivan Soto-Wright,MoonPay,Closed/Won,$500000,ivan@navihold.vc,LP Internal,Advisor notes,"Navihold Ventures, LLC",TeraWulf,Financial technology,"MoonPay CEO",Yes,No,"Committed through Navihold","Complete onboarding"',
+      'Name,Company,Status,Commitment Amount,Email,Contact Source,Company LinkedIn,Company Overview,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
+      'Ivan Soto-Wright,MoonPay,Closed/Won,$500000,ivan@navihold.vc,Business card,https://linkedin.com/company/moonpay,"MoonPay public overview",LP Internal,Advisor notes,"Navihold Ventures, LLC",TeraWulf,Financial technology,"MoonPay CEO",Yes,No,"Committed through Navihold","Complete onboarding"',
     ].join('\n'))
     const mapping = detectColumns(parsed.headers)
     const categoryMap = new Map([[normalize('LP Internal'), 'cat-lp-internal']])
@@ -319,6 +330,9 @@ describe('bulk contact import', () => {
         fundraiseStatus: 'Closed/Won',
         investmentAmount: '$500000',
         investmentEntity: 'Navihold Ventures, LLC',
+        contactSource: 'Business Card',
+        companyLinkedIn: 'https://linkedin.com/company/moonpay',
+        companyOverview: 'MoonPay public overview',
         companyType: 'Financial technology',
         jobDescription: 'MoonPay CEO',
         kinshipInvestor: true,

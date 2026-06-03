@@ -538,10 +538,13 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
             {hasCustomField('investmentAmount') && <ReadonlyRow label="Investment Amount" value={customField('investmentAmount')} mobile={isMobile} />}
             {hasCustomField('investmentEntity') && <ReadonlyRow label="Investment Entity" value={customField('investmentEntity')} mobile={isMobile} />}
             {hasCustomField('capitalCall') && <ReadonlyRow label="Capital Call" value={customField('capitalCall')} mobile={isMobile} />}
-            {hasCustomField('fundraiseStatus') && <ReadonlyRow label="Fundraise Status" value={customField('fundraiseStatus')} mobile={isMobile} />}
+            {hasCustomField('fundraiseStatus') && <ReadonlyRow label="KV Status" value={customField('fundraiseStatus')} mobile={isMobile} />}
+            {hasCustomField('contactSource') && <ReadonlyRow label="Contact Source" value={customField('contactSource')} mobile={isMobile} />}
             {contact.spv_investor && contact.spv_investor.length > 0 && <ReadonlyRow label="SPV Investor" value={contact.spv_investor.join(', ')} mobile={isMobile} />}
             {hasCustomField('kinshipInvestor') && <ReadonlyRow label="Kinship Investor" value={customField('kinshipInvestor')} mobile={isMobile} />}
             {hasCustomField('companyType') && <ReadonlyRow label="Company Type" value={customField('companyType')} mobile={isMobile} />}
+            {hasCustomField('companyLinkedIn') && <ReadonlyRow label="Company LinkedIn" value={customField('companyLinkedIn')} link mobile={isMobile} />}
+            {hasCustomField('companyOverview') && <ReadonlyRow label="Company Overview" value={customField('companyOverview')} mobile={isMobile} />}
             {hasCustomField('likelihood') && <ReadonlyRow label="Likelihood" value={customField('likelihood')} mobile={isMobile} />}
             {hasCustomField('summary') && <ReadonlyRow label="Summary" value={customField('summary')} mobile={isMobile} />}
             {hasCustomField('nextStep') && <ReadonlyRow label="Next Step" value={customField('nextStep')} mobile={isMobile} />}
