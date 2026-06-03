@@ -298,7 +298,7 @@ describe('bulk contact import', () => {
 
   it('stores approved LP tracker fields in controlled contact custom fields', async () => {
     const parsed = parseCSV([
-      'Name,Company,Status,Commitment Amount,Email,Contact Source,Company LinkedIn,Company Overview,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
+      'Name,Company,KV Status,Commitment Amount,Email,Contact Source,Company LinkedIn,Company Overview,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
       'Ivan Soto-Wright,MoonPay,Closed/Won,$500000,ivan@navihold.vc,Business card,https://linkedin.com/company/moonpay,"MoonPay public overview",LP Internal,Advisor notes,"Navihold Ventures, LLC",TeraWulf,Financial technology,"MoonPay CEO",Yes,No,"Committed through Navihold","Complete onboarding"',
     ].join('\n'))
     const mapping = detectColumns(parsed.headers)
@@ -339,6 +339,120 @@ describe('bulk contact import', () => {
         spvDistributionList: false,
         summary: 'Committed through Navihold',
         nextStep: 'Complete onboarding',
+      },
+    })
+  })
+
+  it('digests ClickUp LP export headers into controlled contact fields', async () => {
+    const parsed = parseCSV([
+      [
+        'Task Type',
+        'Task ID',
+        'Name',
+        'Status',
+        'Task Content',
+        'List',
+        'Lists',
+        'FIRST NAME (short text)',
+        'LAST NAME (short text)',
+        '💌 Email (email)',
+        '📞 Phone (phone)',
+        '🏢 Company (short text)',
+        'LinkedIn (url)',
+        'LinkedIn (labels)',
+        'Fundraise Status (drop down)',
+        'KV LP Status (drop down)',
+        'Investment Entity (text)',
+        'SPV Investor (labels)',
+        'SPV INVESTOR (checkbox)',
+        '✍️ Noteables (text)',
+        '🌐 Website (url)',
+        '🏢 Address (short text)',
+        '👍 Likelihood (drop down)',
+        'CITY (drop down)',
+        'COUNTRY (drop down)',
+        'Category (drop down)',
+        'Summary (text)',
+        'TLDR (text)',
+      ].join(','),
+      [
+        'Person',
+        'abc123',
+        'Ivan Soto-Wright',
+        'FOR CONNECTING',
+        'Long task body',
+        'LP Internal',
+        '[LPs]',
+        'Ivan',
+        'Soto-Wright',
+        'ivan@navihold.vc',
+        '+1 555 0100',
+        'MoonPay',
+        'https://linkedin.com/in/isotowright',
+        'Founder; Investor',
+        'Closed',
+        'First Close Committed',
+        'Navihold Ventures LLC',
+        'TeraWulf',
+        'TRUE',
+        'Important note',
+        'https://moonpay.com',
+        'Miami HQ',
+        'Medium-High',
+        'Miami',
+        'United States',
+        'Capital Investor',
+        'Summary text',
+        'TLDR text',
+      ].join(','),
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+    const categoryMap = new Map([[`pod-lps:${normalize('LP Internal')}`, 'cat-lp-internal']])
+    const categoryPodMap = new Map([['cat-lp-internal', 'pod-lps']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap,
+      categoryMap,
+      categoryPodMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Ivan Soto-Wright',
+      first_name: 'Ivan',
+      last_name: 'Soto-Wright',
+      email: 'ivan@navihold.vc',
+      phone: '+1 555 0100',
+      company: 'MoonPay',
+      linkedin: 'https://linkedin.com/in/isotowright',
+      website: 'https://moonpay.com',
+      country: 'United States',
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal'],
+      spv_investor: ['TeraWulf'],
+      custom_fields: {
+        clickupTaskType: 'Person',
+        clickupTaskId: 'abc123',
+        clickupStatus: 'FOR CONNECTING',
+        clickupTaskContent: 'Long task body',
+        linkedInLabels: ['Founder', 'Investor'],
+        fundraiseStatus: 'Closed',
+        kvLpStatus: 'First Close Committed',
+        investmentEntity: 'Navihold Ventures LLC',
+        spvInvestorFlag: true,
+        notables: 'Important note',
+        address: 'Miami HQ',
+        likelihood: 'Medium-High',
+        city: 'Miami',
+        category: 'Capital Investor',
+        summary: 'Summary text',
+        tldr: 'TLDR text',
       },
     })
   })

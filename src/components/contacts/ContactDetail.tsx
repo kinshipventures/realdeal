@@ -615,8 +615,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  function customFieldSection(section: LpTrackerFieldDefinition['section']) {
-    const fields = LP_TRACKER_FIELDS.filter(fieldDef => fieldDef.section === section)
+  function customFieldSection(section: LpTrackerFieldDefinition['section'], showEmptyFields = true) {
+    const customFields = getDraftCustomFields()
+    const fields = LP_TRACKER_FIELDS
+      .filter(fieldDef => fieldDef.section === section)
+      .filter(fieldDef => showEmptyFields || hasLpTrackerValue(customFields[fieldDef.key]))
+    if (fields.length === 0) return null
     return (
       <div style={sectionShell}>
         <div style={sectionHeader}>
@@ -1404,6 +1408,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {customFieldSection('Investor Profile')}
               {customFieldSection('Fund Details')}
               {customFieldSection('Operations')}
+              {customFieldSection('ClickUp Source', false)}
 
               {pods.length > 0 && (
                 <div style={sectionShell}>
@@ -1675,6 +1680,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <div style={sectionLabel}>relationship</div>
                 </div>
                 {field('introduced_by', 'Met through')}
+                {field('recommended_by', 'Referred by')}
                 {field('relationship_owner', 'Relationship Owner')}
                 <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'start', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
                   <div style={rowLabelWrap}><div style={rowLabel}>Rings</div></div>
@@ -1733,6 +1739,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <div style={sectionLabel}>context</div>
                 </div>
                 {field('specialization', 'Focus area')}
+                {field('stage', 'Stage')}
                 {field('interests', 'Interests', true)}
                 {field('relationship_context', 'Context', true)}
               </div>

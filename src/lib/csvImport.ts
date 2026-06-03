@@ -3,7 +3,7 @@ import { strFromU8, unzipSync } from 'fflate'
 import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
 import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, parseMoneyInput, withMoneyField, withTextField } from './campaignCommitments'
-import { LP_TRACKER_ALIAS_ENTRIES, LP_TRACKER_FIELDS, LP_TRACKER_TARGET_FIELDS, normalizeLpTrackerFieldValue } from './lpTrackerFields'
+import { LP_TRACKER_ALIAS_ENTRIES, LP_TRACKER_FIELDS, LP_TRACKER_TARGET_FIELDS, normalizeLpTrackerFieldValue, trimImportListItem } from './lpTrackerFields'
 
 export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
@@ -55,7 +55,7 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'pod name': 'Pod',
   'group': 'Pod',
   'groups': 'Pod',
-  'list': 'Pod',
+  'list': 'Sub-pod',
   'lists': 'Pod',
   'segment': 'Pod',
   'segments': 'Pod',
@@ -522,6 +522,16 @@ export function normalize(s: unknown): string {
     .trim()
 }
 
+function normalizeHeaderCandidates(header: string): string[] {
+  const normalized = normalize(header)
+  const withoutParentheticalType = normalize(header.replace(/\s*\([^)]*\)\s*$/g, ''))
+  const strippedClickUpType = normalized
+    .replace(/\b(short text|long text|drop down|url|email|phone|date|checkbox|labels|users|automatic progress|text)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return [...new Set([normalized, withoutParentheticalType, strippedClickUpType].filter(Boolean))]
+}
+
 export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined): ColumnMapping {
   if (!Array.isArray(mapping)) return []
 
@@ -623,14 +633,15 @@ function fallbackName(row: Record<string, string>, mapping: ColumnMapping | unde
 export function splitMultiValue(value: string): string[] {
   return value
     .split(/[;,|\n]+/)
-    .map(item => item.trim())
+    .map(trimImportListItem)
     .filter(Boolean)
 }
 
 export function detectColumns(headers: string[]): ColumnMapping {
   const candidates = headers.map(rawHeader => {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
-    const norm = normalize(csvHeader)
+    const aliasCandidates = normalizeHeaderCandidates(csvHeader)
+    const norm = aliasCandidates.find(candidate => KNOWN_ALIASES[candidate]) ?? aliasCandidates[0] ?? ''
     const match = KNOWN_ALIASES[norm] ?? null
     const normalizedMatch = normalize(match)
     const priority = norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0

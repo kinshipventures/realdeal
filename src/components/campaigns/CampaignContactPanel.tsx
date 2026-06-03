@@ -6,7 +6,7 @@ import { updateCampaignContact, logInteraction } from '../../lib/data'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import type { ScoreLabel } from '../../lib/equity'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField, withTextField } from '../../lib/campaignCommitments'
-import { lpTrackerDisplayValue } from '../../lib/lpTrackerFields'
+import { LP_TRACKER_FIELDS, lpTrackerDisplayValue } from '../../lib/lpTrackerFields'
 import { useEscape } from '../../lib/escapeStack'
 import { Avatar, CloseButton } from '../ui'
 import { ChevronDown, ChevronRight, Phone, Mail, MessageSquare, Users } from 'lucide-react'
@@ -46,6 +46,7 @@ const INTERACTION_COLORS: Record<string, string> = {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+const LINK_CUSTOM_FIELD_KEYS = new Set(['companyLinkedIn', 'upworkLink'])
 
 function relativeDate(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / DAY_MS)
@@ -535,19 +536,16 @@ export function CampaignContactPanel({ cc, contact, stages, campaign, interactio
             {contact.phone && <ReadonlyRow label="Phone" value={contact.phone} mobile={isMobile} />}
             {contact.location && <ReadonlyRow label="Location" value={contact.location} mobile={isMobile} />}
             {contact.linkedin && <ReadonlyRow label="LinkedIn" value={contact.linkedin} link mobile={isMobile} />}
-            {hasCustomField('investmentAmount') && <ReadonlyRow label="Investment Amount" value={customField('investmentAmount')} mobile={isMobile} />}
-            {hasCustomField('investmentEntity') && <ReadonlyRow label="Investment Entity" value={customField('investmentEntity')} mobile={isMobile} />}
-            {hasCustomField('capitalCall') && <ReadonlyRow label="Capital Call" value={customField('capitalCall')} mobile={isMobile} />}
-            {hasCustomField('fundraiseStatus') && <ReadonlyRow label="KV Status" value={customField('fundraiseStatus')} mobile={isMobile} />}
-            {hasCustomField('contactSource') && <ReadonlyRow label="Contact Source" value={customField('contactSource')} mobile={isMobile} />}
             {contact.spv_investor && contact.spv_investor.length > 0 && <ReadonlyRow label="SPV Investor" value={contact.spv_investor.join(', ')} mobile={isMobile} />}
-            {hasCustomField('kinshipInvestor') && <ReadonlyRow label="Kinship Investor" value={customField('kinshipInvestor')} mobile={isMobile} />}
-            {hasCustomField('companyType') && <ReadonlyRow label="Company Type" value={customField('companyType')} mobile={isMobile} />}
-            {hasCustomField('companyLinkedIn') && <ReadonlyRow label="Company LinkedIn" value={customField('companyLinkedIn')} link mobile={isMobile} />}
-            {hasCustomField('companyOverview') && <ReadonlyRow label="Company Overview" value={customField('companyOverview')} mobile={isMobile} />}
-            {hasCustomField('likelihood') && <ReadonlyRow label="Likelihood" value={customField('likelihood')} mobile={isMobile} />}
-            {hasCustomField('summary') && <ReadonlyRow label="Summary" value={customField('summary')} mobile={isMobile} />}
-            {hasCustomField('nextStep') && <ReadonlyRow label="Next Step" value={customField('nextStep')} mobile={isMobile} />}
+            {LP_TRACKER_FIELDS.filter(field => hasCustomField(field.key)).map(field => (
+              <ReadonlyRow
+                key={field.key}
+                label={field.label}
+                value={customField(field.key)}
+                link={LINK_CUSTOM_FIELD_KEYS.has(field.key)}
+                mobile={isMobile}
+              />
+            ))}
 
             <button
               type="button"

@@ -4,7 +4,7 @@ export type LpTrackerFieldDefinition = {
   key: string
   target: string
   label: string
-  section: 'Investor Profile' | 'Fund Details' | 'Operations'
+  section: 'Investor Profile' | 'Fund Details' | 'Operations' | 'ClickUp Source'
   type: LpTrackerFieldType
   aliases: readonly string[]
 }
@@ -75,6 +75,14 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['job description', 'role description', 'professional bio'],
   },
   {
+    key: 'linkedInLabels',
+    target: 'LinkedIn Labels',
+    label: 'LinkedIn Labels',
+    section: 'Investor Profile',
+    type: 'multi_select',
+    aliases: ['linkedin labels', 'linkedin label', 'linkedin tags'],
+  },
+  {
     key: 'likelihood',
     target: 'Likelihood',
     label: 'Likelihood',
@@ -97,6 +105,14 @@ export const LP_TRACKER_FIELDS = [
     section: 'Investor Profile',
     type: 'text',
     aliases: ['talent category'],
+  },
+  {
+    key: 'category',
+    target: 'Category',
+    label: 'Category',
+    section: 'Investor Profile',
+    type: 'text',
+    aliases: ['category', 'categories'],
   },
   {
     key: 'globalRegionDetail',
@@ -128,7 +144,15 @@ export const LP_TRACKER_FIELDS = [
     label: 'KV Status',
     section: 'Fund Details',
     type: 'text',
-    aliases: ['status', 'kv status', 'kv_status', 'kv pipeline status', 'kv lp status', 'lp status', 'fundraise status', 'fundraising status'],
+    aliases: ['kv status', 'kv_status', 'kv pipeline status', 'fundraise status', 'fundraising status'],
+  },
+  {
+    key: 'kvLpStatus',
+    target: 'KV LP Status',
+    label: 'KV LP Status',
+    section: 'Fund Details',
+    type: 'text',
+    aliases: ['kv lp status', 'lp status'],
   },
   {
     key: 'investmentAmount',
@@ -235,7 +259,7 @@ export const LP_TRACKER_FIELDS = [
     label: 'Notables',
     section: 'Operations',
     type: 'long_text',
-    aliases: ['notables', 'notable notes'],
+    aliases: ['notables', 'noteables', 'notable notes'],
   },
   {
     key: 'mainList',
@@ -357,6 +381,246 @@ export const LP_TRACKER_FIELDS = [
     type: 'long_text',
     aliases: ['comments'],
   },
+  {
+    key: 'clickupTaskType',
+    target: 'ClickUp Task Type',
+    label: 'ClickUp Task Type',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['task type', 'clickup task type'],
+  },
+  {
+    key: 'clickupTaskId',
+    target: 'ClickUp Task ID',
+    label: 'ClickUp Task ID',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['task id', 'clickup task id'],
+  },
+  {
+    key: 'clickupStatus',
+    target: 'ClickUp Status',
+    label: 'ClickUp Status',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['status', 'task status', 'clickup status'],
+  },
+  {
+    key: 'clickupTaskContent',
+    target: 'ClickUp Task Content',
+    label: 'ClickUp Task Content',
+    section: 'ClickUp Source',
+    type: 'long_text',
+    aliases: ['task content', 'task description', 'clickup task content'],
+  },
+  {
+    key: 'assignee',
+    target: 'Assignee',
+    label: 'Assignee',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['assignee', 'assignees'],
+  },
+  {
+    key: 'priority',
+    target: 'Priority',
+    label: 'Priority',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['priority'],
+  },
+  {
+    key: 'latestComment',
+    target: 'Latest Comment',
+    label: 'Latest Comment',
+    section: 'ClickUp Source',
+    type: 'long_text',
+    aliases: ['latest comment', 'last comment'],
+  },
+  {
+    key: 'commentCount',
+    target: 'Comment Count',
+    label: 'Comment Count',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['comment count'],
+  },
+  {
+    key: 'assignedCommentCount',
+    target: 'Assigned Comment Count',
+    label: 'Assigned Comment Count',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['assigned comment count'],
+  },
+  {
+    key: 'dueDate',
+    target: 'Due Date',
+    label: 'Due Date',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['due date'],
+  },
+  {
+    key: 'startDate',
+    target: 'Start Date',
+    label: 'Start Date',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['start date'],
+  },
+  {
+    key: 'dateCreated',
+    target: 'Date Created',
+    label: 'Date Created',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['date created', 'created date'],
+  },
+  {
+    key: 'dateUpdated',
+    target: 'Date Updated',
+    label: 'Date Updated',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['date updated', 'updated date'],
+  },
+  {
+    key: 'dateClosed',
+    target: 'Date Closed',
+    label: 'Date Closed',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['date closed', 'closed date'],
+  },
+  {
+    key: 'dateDone',
+    target: 'Date Done',
+    label: 'Date Done',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['date done', 'done date'],
+  },
+  {
+    key: 'createdBy',
+    target: 'Created By',
+    label: 'Created By',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['created by'],
+  },
+  {
+    key: 'space',
+    target: 'Space',
+    label: 'Space',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['space'],
+  },
+  {
+    key: 'folder',
+    target: 'Folder',
+    label: 'Folder',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['folder'],
+  },
+  {
+    key: 'subtaskIds',
+    target: 'Subtask IDs',
+    label: 'Subtask IDs',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['subtask ids', 'subtask id', 'subtask ids'],
+  },
+  {
+    key: 'subtaskUrls',
+    target: 'Subtask URLs',
+    label: 'Subtask URLs',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['subtask urls', 'subtask url'],
+  },
+  {
+    key: 'tags',
+    target: 'Tags',
+    label: 'Tags',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['tags', 'tag'],
+  },
+  {
+    key: 'sprints',
+    target: 'Sprints',
+    label: 'Sprints',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['sprints', 'sprint'],
+  },
+  {
+    key: 'linkedTasks',
+    target: 'Linked Tasks',
+    label: 'Linked Tasks',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['linked tasks', 'linked task'],
+  },
+  {
+    key: 'linkedDocs',
+    target: 'Linked Docs',
+    label: 'Linked Docs',
+    section: 'ClickUp Source',
+    type: 'multi_select',
+    aliases: ['linked docs', 'linked doc'],
+  },
+  {
+    key: 'timeLogged',
+    target: 'Time Logged',
+    label: 'Time Logged',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['time logged'],
+  },
+  {
+    key: 'timeEstimate',
+    target: 'Time Estimate',
+    label: 'Time Estimate',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['time estimate'],
+  },
+  {
+    key: 'timeEstimateRolledUp',
+    target: 'Time Estimate Rolled Up',
+    label: 'Time Estimate Rolled Up',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['time estimate rolled up'],
+  },
+  {
+    key: 'timeInStatus',
+    target: 'Time In Status',
+    label: 'Time In Status',
+    section: 'ClickUp Source',
+    type: 'long_text',
+    aliases: ['time in status'],
+  },
+  {
+    key: 'pointsEstimate',
+    target: 'Points Estimate',
+    label: 'Points Estimate',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['points estimate'],
+  },
+  {
+    key: 'pointsEstimateRolledUp',
+    target: 'Points Estimate Rolled Up',
+    label: 'Points Estimate Rolled Up',
+    section: 'ClickUp Source',
+    type: 'text',
+    aliases: ['points estimate rolled up'],
+  },
 ] as const satisfies readonly LpTrackerFieldDefinition[]
 
 export type LpTrackerTargetField = typeof LP_TRACKER_FIELDS[number]['target']
@@ -366,6 +630,15 @@ export const LP_TRACKER_TARGET_FIELDS: readonly LpTrackerTargetField[] = LP_TRAC
 export const LP_TRACKER_ALIAS_ENTRIES = LP_TRACKER_FIELDS.flatMap(field =>
   field.aliases.map(alias => [alias, field.target] as const),
 )
+
+export function trimImportListItem(value: string): string {
+  let trimmed = value.trim()
+  const leading = new Set(['[', '(', '{', '"', "'"])
+  const trailing = new Set([']', ')', '}', '"', "'"])
+  while (trimmed && leading.has(trimmed[0])) trimmed = trimmed.slice(1).trimStart()
+  while (trimmed && trailing.has(trimmed[trimmed.length - 1])) trimmed = trimmed.slice(0, -1).trimEnd()
+  return trimmed.trim()
+}
 
 export function parseCheckboxImportValue(value: string): boolean | null {
   const normalized = value.trim().toLowerCase()
@@ -380,7 +653,10 @@ export function normalizeLpTrackerFieldValue(field: LpTrackerFieldDefinition, va
   if (!trimmed) return null
   if (field.type === 'checkbox') return parseCheckboxImportValue(trimmed)
   if (field.type === 'multi_select') {
-    const items = trimmed.split(/[;,|\n]+/).map(item => item.trim()).filter(Boolean)
+    const items = trimmed
+      .split(/[;,|\n]+/)
+      .map(trimImportListItem)
+      .filter(Boolean)
     return items.length > 0 ? items : null
   }
   if (field.key === 'contactSource') {
