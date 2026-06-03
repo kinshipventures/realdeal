@@ -1,7 +1,7 @@
 import * as Papa from 'papaparse'
 import { strFromU8, unzipSync } from 'fflate'
-import type { Cadence, Contact, ContactFrequency, Gender, RelationshipType } from './types'
-import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
+import type { Cadence, Contact, ContactFrequency, Gender, Interaction, InteractionSource, InteractionType, RelationshipType } from './types'
+import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, getInteractions, logInteraction, updateCampaignContact, updateContact } from './data'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, parseMoneyInput, withMoneyField, withTextField } from './campaignCommitments'
 import { LP_TRACKER_ALIAS_ENTRIES, LP_TRACKER_FIELDS, LP_TRACKER_TARGET_FIELDS, normalizeLpTrackerFieldValue, trimImportListItem } from './lpTrackerFields'
 
@@ -11,7 +11,7 @@ export type ColumnMapping = { csvHeader: string; targetField: string | null }[]
 
 export type ImportProgress = { current: number; total: number; imported: number; skipped: number; updated?: number }
 
-export type ImportResult = { imported: number; skipped: number; errors: string[]; updated?: number; campaignLinked?: number }
+export type ImportResult = { imported: number; skipped: number; errors: string[]; updated?: number; campaignLinked?: number; interactionsImported?: number }
 
 export type RowWarning = {
   rowIndex: number
@@ -676,6 +676,191 @@ type CampaignImportFields = {
   commitmentAmount: number | null
 }
 
+type ImportedTouchpoint = Omit<Interaction, 'id' | 'created_at' | 'contact_id'>
+
+const IMPORTED_TOUCHPOINT_SOURCE: InteractionSource = 'Manual'
+const IMPORTED_TOUCHPOINT_EVENT_DETAIL = JSON.stringify({ import_source: 'clickup_task_content' })
+const MONTH_INDEX: Record<string, number> = {
+  jan: 1,
+  january: 1,
+  feb: 2,
+  february: 2,
+  mar: 3,
+  march: 3,
+  apr: 4,
+  april: 4,
+  may: 5,
+  jun: 6,
+  june: 6,
+  jul: 7,
+  july: 7,
+  aug: 8,
+  august: 8,
+  sep: 9,
+  sept: 9,
+  september: 9,
+  oct: 10,
+  october: 10,
+  nov: 11,
+  november: 11,
+  dec: 12,
+  december: 12,
+}
+
+function normalizeUpdateYear(rawYear: string | undefined, fallbackYear: number): number | null {
+  if (!rawYear) return fallbackYear
+  let year = Number(rawYear)
+  if (!Number.isFinite(year)) return null
+  if (year < 100) year += 2000
+  const text = String(rawYear)
+  if (year > 2100 && text.length === 4 && text.startsWith('29')) {
+    year = Number(`20${text.slice(2)}`)
+  }
+  return year >= 1900 && year <= 2100 ? year : null
+}
+
+function extractUpdateYear(line: string): number | null {
+  const prefix = line.match(/^(?:updates?|update)\s+(\d{2,4})\b/i)
+  const suffix = line.match(/^(\d{2,4})\s+(?:updates?|update)s?\b/i)
+  const rawYear = prefix?.[1] ?? suffix?.[1]
+  return rawYear ? normalizeUpdateYear(rawYear, new Date().getFullYear()) : null
+}
+
+function shouldStopUpdateParsing(line: string): boolean {
+  return /^(email draft|materials?|about our team|overview|notes?|bio|background|introduction)\b/i.test(line)
+}
+
+function toIsoUpdateDate(month: number, day: number, year: number): string | null {
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null
+  if (!Number.isInteger(day) || day < 1 || day > 31) return null
+  const date = new Date(Date.UTC(year, month - 1, day))
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
+  return date.toISOString().slice(0, 10)
+}
+
+function monthNumber(value: string): number | null {
+  return MONTH_INDEX[normalize(value).replace(/\s+/g, '')] ?? null
+}
+
+function inferImportedInteractionType(notes: string): InteractionType {
+  const norm = normalize(notes)
+  if (/\b(intro|introduced|introduction)\b/.test(norm)) return 'intro'
+  if (/\b(call|called|zoom|phone)\b/.test(norm)) return 'call'
+  if (/\b(meeting|met|dinner|lunch|coffee|summit)\b/.test(norm)) return 'meeting'
+  if (/\b(text|whatsapp|sms)\b/.test(norm)) return 'text'
+  if (/\b(email|sent|deck|follow up|ff up|response|respond|scheduling|schedule)\b/.test(norm)) return 'email'
+  return 'note'
+}
+
+function compactSummary(notes: string): string {
+  return notes.length > 160 ? `${notes.slice(0, 157).trim()}...` : notes
+}
+
+function parseUpdateLine(line: string, activeYear: number): ImportedTouchpoint | null {
+  const prefix = line.match(/^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*(\d{2,4}))?\s*[-:\u2013\u2014]\s*(.+)$/i)
+  if (prefix) {
+    const month = monthNumber(prefix[1])
+    const year = normalizeUpdateYear(prefix[3], activeYear)
+    const day = Number(prefix[2])
+    const notes = prefix[4].trim()
+    const date = month && year ? toIsoUpdateDate(month, day, year) : null
+    if (date && notes) return buildImportedTouchpoint(date, notes)
+  }
+
+  const numeric = line.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[-:\u2013\u2014]\s*(.+)$/)
+  if (numeric) {
+    const month = Number(numeric[1])
+    const day = Number(numeric[2])
+    const year = normalizeUpdateYear(numeric[3], activeYear)
+    const notes = numeric[4].trim()
+    const date = year ? toIsoUpdateDate(month, day, year) : null
+    if (date && notes) return buildImportedTouchpoint(date, notes)
+  }
+
+  const suffix = line.match(/^(.+?)\s+([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*(\d{2,4}))?$/i)
+  if (suffix) {
+    const notes = suffix[1].trim()
+    const month = monthNumber(suffix[2])
+    const day = Number(suffix[3])
+    const year = normalizeUpdateYear(suffix[4], activeYear)
+    const date = month && year ? toIsoUpdateDate(month, day, year) : null
+    if (date && notes) return buildImportedTouchpoint(date, notes)
+  }
+
+  return null
+}
+
+function buildImportedTouchpoint(date: string, notes: string): ImportedTouchpoint {
+  return {
+    type: inferImportedInteractionType(notes),
+    date,
+    notes,
+    summary: compactSummary(notes),
+    source: IMPORTED_TOUCHPOINT_SOURCE,
+    email_link: null,
+    granola_link: null,
+    event_detail: IMPORTED_TOUCHPOINT_EVENT_DETAIL,
+    actor: null,
+  }
+}
+
+function importedTouchpointKey(touchpoint: Pick<Interaction, 'date' | 'type' | 'notes'>): string {
+  return [touchpoint.date.slice(0, 10), touchpoint.type, normalize(touchpoint.notes)].join('|')
+}
+
+export function parseTaskContentInteractions(taskContent: string): ImportedTouchpoint[] {
+  if (!taskContent.trim()) return []
+
+  const parsed: ImportedTouchpoint[] = []
+  const seen = new Set<string>()
+  let activeYear: number | null = null
+
+  for (const rawLine of taskContent.split(/\r?\n/g)) {
+    const line = rawLine.trim()
+    if (!line) continue
+
+    const headingYear = extractUpdateYear(line)
+    if (headingYear) {
+      activeYear = headingYear
+      continue
+    }
+
+    if (!activeYear) continue
+    if (shouldStopUpdateParsing(line)) {
+      activeYear = null
+      continue
+    }
+
+    const touchpoint = parseUpdateLine(line, activeYear)
+    if (!touchpoint) continue
+
+    const key = importedTouchpointKey(touchpoint)
+    if (seen.has(key)) continue
+    seen.add(key)
+    parsed.push(touchpoint)
+  }
+
+  return parsed
+}
+
+async function syncImportedTouchpoints(contactId: string, touchpoints: ImportedTouchpoint[]): Promise<number> {
+  if (touchpoints.length === 0) return 0
+
+  const existing = await getInteractions(contactId)
+  const existingKeys = new Set(existing.map(importedTouchpointKey))
+  let created = 0
+
+  for (const touchpoint of [...touchpoints].sort((a, b) => a.date.localeCompare(b.date))) {
+    const key = importedTouchpointKey(touchpoint)
+    if (existingKeys.has(key)) continue
+    await logInteraction(contactId, touchpoint)
+    existingKeys.add(key)
+    created++
+  }
+
+  return created
+}
+
 function splitCampaignPodValue(value: string): { campaignName: string; subPodNames: string[] } {
   const parts = value.split('|').map(part => part.trim()).filter(Boolean)
   if (parts.length === 0) return { campaignName: '', subPodNames: [] }
@@ -1077,10 +1262,11 @@ export async function importContacts(
   let imported = 0
   let updated = 0
   let campaignLinked = 0
+  let interactionsImported = 0
   let skipped = 0
   const errors: string[] = []
-  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields | null }> = []
-  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields | null }> = []
+  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields | null; touchpoints: ImportedTouchpoint[] }> = []
+  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields | null; touchpoints: ImportedTouchpoint[] }> = []
 
   const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
     if (mapping) return resolve(row, mapping, target)
@@ -1122,6 +1308,9 @@ export async function importContacts(
     const consumedHeaders = firstName.consumedHeader ? new Set([firstName.consumedHeader]) : undefined
     const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping, consumedHeaders))
     const customFields = resolveLpTrackerCustomFields(row, mapping, campaignFields)
+    const importedTouchpoints = parseTaskContentInteractions(
+      typeof customFields.clickupTaskContent === 'string' ? customFields.clickupTaskContent : '',
+    )
 
     const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
     const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
@@ -1191,8 +1380,8 @@ export async function importContacts(
 
     if (existingContact) {
       const patch = buildExistingContactPatch(existingContact, contact)
-      if (Object.keys(patch).length > 0 || campaignFields?.name) {
-        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields })
+      if (Object.keys(patch).length > 0 || campaignFields?.name || importedTouchpoints.length > 0) {
+        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields, touchpoints: importedTouchpoints })
       } else {
         skipped++
         onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
@@ -1200,7 +1389,7 @@ export async function importContacts(
       continue
     }
 
-    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields })
+    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields, touchpoints: importedTouchpoints })
     if (emailLower) emailIndex.set(emailLower, 'pending')
     if (!nameWasFallback) nameIndex.set(nameLower, 'pending')
   }
@@ -1223,6 +1412,9 @@ export async function importContacts(
         createMissingCampaigns,
       )
       if (linked) campaignLinked++
+      const syncedTouchpoints = await syncImportedTouchpoints(item.contactId, item.touchpoints)
+      interactionsImported += syncedTouchpoints
+      if (syncedTouchpoints > 0 && Object.keys(item.patch).length === 0) updated++
     } catch (rowError) {
       errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
     }
@@ -1243,6 +1435,7 @@ export async function importContacts(
           createMissingCampaigns,
         )
         if (linked) campaignLinked++
+        interactionsImported += await syncImportedTouchpoints(created[j].id, chunk[j]?.touchpoints ?? [])
       }
       imported += created.length
       processedForProgress += chunk.length
@@ -1260,6 +1453,7 @@ export async function importContacts(
               createMissingCampaigns,
             )
             if (linked) campaignLinked++
+            interactionsImported += await syncImportedTouchpoints(created.id, item.touchpoints)
           }
           imported++
         } catch (rowError) {
@@ -1277,5 +1471,6 @@ export async function importContacts(
     errors,
     ...(updated > 0 ? { updated } : {}),
     ...(campaignLinked > 0 ? { campaignLinked } : {}),
+    ...(interactionsImported > 0 ? { interactionsImported } : {}),
   }
 }

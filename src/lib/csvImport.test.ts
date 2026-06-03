@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, updateCampaignContact, updateContact } from './data'
+import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, getInteractions, logInteraction, updateCampaignContact, updateContact } from './data'
 import {
   countInvalidRows,
   detectColumns,
@@ -9,6 +9,7 @@ import {
   normalize,
   normalizeColumnMapping,
   parseCSV,
+  parseTaskContentInteractions,
   parseWorkbookBuffer,
 } from './csvImport'
 
@@ -17,6 +18,8 @@ vi.mock('./data', () => ({
   updateContact: vi.fn(),
   createContactsBulk: vi.fn(),
   getCampaigns: vi.fn(),
+  getInteractions: vi.fn(),
+  logInteraction: vi.fn(),
   createCampaign: vi.fn(),
   addContactToCampaign: vi.fn(),
   updateCampaignContact: vi.fn(),
@@ -26,6 +29,8 @@ const mockedGetContacts = vi.mocked(getContacts)
 const mockedUpdateContact = vi.mocked(updateContact)
 const mockedCreateContactsBulk = vi.mocked(createContactsBulk)
 const mockedGetCampaigns = vi.mocked(getCampaigns)
+const mockedGetInteractions = vi.mocked(getInteractions)
+const mockedLogInteraction = vi.mocked(logInteraction)
 const mockedCreateCampaign = vi.mocked(createCampaign)
 const mockedAddContactToCampaign = vi.mocked(addContactToCampaign)
 const mockedUpdateCampaignContact = vi.mocked(updateCampaignContact)
@@ -35,6 +40,13 @@ beforeEach(() => {
   mockedGetContacts.mockResolvedValue([])
   mockedUpdateContact.mockImplementation(async (id, data) => ({ id, name: 'Updated', created_at: '2026-05-28T00:00:00.000Z', ...data } as any))
   mockedGetCampaigns.mockResolvedValue([])
+  mockedGetInteractions.mockResolvedValue([])
+  mockedLogInteraction.mockImplementation(async (contactId, data) => ({
+    ...data,
+    id: `interaction-${contactId}-${data.date}`,
+    contact_id: contactId,
+    created_at: '2026-05-28T00:00:00.000Z',
+  } as any))
   mockedCreateCampaign.mockImplementation(async data => ({
     id: `campaign-${String(data.name).toLowerCase().replace(/\s+/g, '-')}`,
     name: data.name,
@@ -343,6 +355,32 @@ describe('bulk contact import', () => {
     })
   })
 
+  it('parses ClickUp update blocks into dated recent activity touchpoints', () => {
+    const touchpoints = parseTaskContentInteractions([
+      'Overview',
+      'HRH is a Kaufman Fellow.',
+      '',
+      'Updates 2924',
+      'Jul 19 - Sent deck',
+      'Jul 30 - Looking for a call after Aug 2',
+      'Aug 1 - Scheduling Aug 2 or next week',
+      'Aug 9 - had a call, will give an answer by September',
+      'Oct 9 - no response',
+      '',
+      'EMAIL DRAFT',
+      'Sultanfsa@gmail.com',
+    ].join('\n'))
+
+    expect(touchpoints.map(t => ({ date: t.date, type: t.type, notes: t.notes }))).toEqual([
+      { date: '2024-07-19', type: 'email', notes: 'Sent deck' },
+      { date: '2024-07-30', type: 'call', notes: 'Looking for a call after Aug 2' },
+      { date: '2024-08-01', type: 'email', notes: 'Scheduling Aug 2 or next week' },
+      { date: '2024-08-09', type: 'call', notes: 'had a call, will give an answer by September' },
+      { date: '2024-10-09', type: 'email', notes: 'no response' },
+    ])
+    expect(touchpoints.every(t => t.source === 'Manual')).toBe(true)
+  })
+
   it('digests ClickUp LP export headers into controlled contact fields', async () => {
     const parsed = parseCSV([
       [
@@ -455,6 +493,45 @@ describe('bulk contact import', () => {
         tldr: 'TLDR text',
       },
     })
+  })
+
+  it('imports ClickUp update blocks into Supabase-backed recent activity', async () => {
+    const taskContent = [
+      'Overview',
+      'HRH is a Kaufman Fellow.',
+      '',
+      'Updates 2924',
+      'Jul 19 - Sent deck',
+      'Jul 30 - Looking for a call after Aug 2',
+      'Aug 1 - Scheduling Aug 2 or next week',
+      'Aug 9 - had a call, will give an answer by September',
+      'Oct 9 - no response',
+      '',
+      'EMAIL DRAFT',
+      'Sultanfsa@gmail.com',
+    ].join('\n')
+    const parsed = parseCSV([
+      'Name,Email,Task Content',
+      `"Sultan Fahad Salman",sultanfsa@gmail.com,"${taskContent.replace(/"/g, '""')}"`,
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], interactionsImported: 5 })
+    expect(mockedGetInteractions).toHaveBeenCalledWith('created-0')
+    expect(mockedLogInteraction).toHaveBeenCalledTimes(5)
+    expect(mockedLogInteraction.mock.calls.map(call => [call[0], call[1].date, call[1].type, call[1].notes])).toEqual([
+      ['created-0', '2024-07-19', 'email', 'Sent deck'],
+      ['created-0', '2024-07-30', 'call', 'Looking for a call after Aug 2'],
+      ['created-0', '2024-08-01', 'email', 'Scheduling Aug 2 or next week'],
+      ['created-0', '2024-08-09', 'call', 'had a call, will give an answer by September'],
+      ['created-0', '2024-10-09', 'email', 'no response'],
+    ])
   })
 
   it('digests campaign-pod client sheets without creating extra contact fields', async () => {
