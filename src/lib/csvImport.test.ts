@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { strToU8, zipSync } from 'fflate'
 import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, getInteractions, logInteraction, updateCampaignContact, updateContact } from './data'
 import {
   countInvalidRows,
@@ -34,6 +35,57 @@ const mockedLogInteraction = vi.mocked(logInteraction)
 const mockedCreateCampaign = vi.mocked(createCampaign)
 const mockedAddContactToCampaign = vi.mocked(addContactToCampaign)
 const mockedUpdateCampaignContact = vi.mocked(updateCampaignContact)
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function columnName(index: number): string {
+  let n = index + 1
+  let name = ''
+  while (n > 0) {
+    const rem = (n - 1) % 26
+    name = String.fromCharCode(65 + rem) + name
+    n = Math.floor((n - 1) / 26)
+  }
+  return name
+}
+
+function worksheetXml(rows: string[][]): string {
+  const sheetRows = rows.map((row, rowIndex) => {
+    const cells = row.map((value, colIndex) => {
+      if (!value) return ''
+      const ref = `${columnName(colIndex)}${rowIndex + 1}`
+      return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`
+    }).join('')
+    return `<row r="${rowIndex + 1}">${cells}</row>`
+  }).join('')
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`
+}
+
+function workbookBuffer(sheets: Array<{ name: string; rows: string[][] }>): ArrayBuffer {
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_, index) => `<Override PartName="/xl/worksheets/sheet${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((sheet, index) => `<sheet name="${escapeXml(sheet.name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`).join('')}</sheets></workbook>`
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, index) => `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index + 1}.xml"/>`).join('')}</Relationships>`
+  const files: Record<string, Uint8Array> = {
+    '[Content_Types].xml': strToU8(contentTypes),
+    '_rels/.rels': strToU8(rootRels),
+    'xl/workbook.xml': strToU8(workbook),
+    'xl/_rels/workbook.xml.rels': strToU8(workbookRels),
+  }
+  sheets.forEach((sheet, index) => {
+    files[`xl/worksheets/sheet${index + 1}.xml`] = strToU8(worksheetXml(sheet.rows))
+  })
+
+  const zipped = zipSync(files)
+  return zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength)
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -131,6 +183,40 @@ describe('CSV and Excel import parsing', () => {
     expect(parsed.headers).not.toContain('Name')
   }, 10000)
 
+  it('parses all visible Excel worksheets into one import table', async () => {
+    const parsed = await parseWorkbookBuffer(workbookBuffer([
+      {
+        name: 'All LPs',
+        rows: [
+          ['Name', 'Email', 'Task Content'],
+          ['Sultan Fahad Salman', 'sultanfsa@gmail.com', 'Updates 2024\nJul 19 - Sent deck'],
+        ],
+      },
+      {
+        name: 'LP Investments',
+        rows: [
+          ['LP Name', 'Investments'],
+          ['Sultan Fahad Salman', 'Goop; Figs'],
+        ],
+      },
+    ]))
+
+    expect(parsed.headers).toEqual(['Name', 'Email', 'Task Content', 'LP Name', 'Investments', 'Source Sheet'])
+    expect(parsed.rows).toEqual([
+      {
+        Name: 'Sultan Fahad Salman',
+        Email: 'sultanfsa@gmail.com',
+        'Task Content': 'Updates 2024\nJul 19 - Sent deck',
+        'Source Sheet': 'All LPs',
+      },
+      {
+        'LP Name': 'Sultan Fahad Salman',
+        Investments: 'Goop; Figs',
+        'Source Sheet': 'LP Investments',
+      },
+    ])
+  })
+
   it('detects human relationship columns from flexible headers', () => {
     const mapping = detectColumns(['Full Name', 'Relationship Pod', 'Sub Pod', 'Last Interaction', 'Cadence'])
 
@@ -168,13 +254,14 @@ describe('CSV and Excel import parsing', () => {
   })
 
   it('detects required LP tracker fields from client exports', () => {
-    const mapping = detectColumns(['KV Status', 'Contact Source', 'Company LinkedIn', 'Company Overview'])
+    const mapping = detectColumns(['KV Status', 'Contact Source', 'Company LinkedIn', 'Company Overview', 'Investments'])
 
     expect(mapping.map(m => m.targetField)).toEqual([
       'KV Status',
       'Contact Source',
       'Company LinkedIn',
       'Company Overview',
+      'Corresponding Investments',
     ])
   })
 
@@ -532,6 +619,52 @@ describe('bulk contact import', () => {
       ['created-0', '2024-08-09', 'call', 'had a call, will give an answer by September'],
       ['created-0', '2024-10-09', 'email', 'no response'],
     ])
+  })
+
+  it('merges duplicate LP rows from separate Excel tabs before creating contacts', async () => {
+    const parsed = await parseWorkbookBuffer(workbookBuffer([
+      {
+        name: 'All LPs',
+        rows: [
+          ['Name', 'Email', 'Task Content'],
+          ['Sultan Fahad Salman', 'sultanfsa@gmail.com', 'Updates 2024\nJul 19 - Sent deck'],
+        ],
+      },
+      {
+        name: 'LP Investments',
+        rows: [
+          ['LP Name', 'Investments'],
+          ['Sultan Fahad Salman', 'Goop; Figs'],
+        ],
+      },
+    ]))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], interactionsImported: 1 })
+    expect(mockedCreateContactsBulk).toHaveBeenCalledTimes(1)
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records).toHaveLength(1)
+    expect(records[0]).toMatchObject({
+      name: 'Sultan Fahad Salman',
+      email: 'sultanfsa@gmail.com',
+      custom_fields: {
+        clickupTaskContent: 'Updates 2024\nJul 19 - Sent deck',
+        correspondingInvestments: ['Goop', 'Figs'],
+      },
+    })
+    expect(records[0].notes).toContain('Source Sheet: All LPs')
+    expect(records[0].notes).toContain('Source Sheet: LP Investments')
+    expect(mockedLogInteraction).toHaveBeenCalledWith('created-0', expect.objectContaining({
+      date: '2024-07-19',
+      type: 'email',
+      notes: 'Sent deck',
+    }))
   })
 
   it('digests campaign-pod client sheets without creating extra contact fields', async () => {

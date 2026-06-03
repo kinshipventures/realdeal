@@ -733,6 +733,7 @@ export function ImportPanel() {
                 {result.imported} {recordType === 'Company' ? 'companies' : 'people'} imported via {SOURCE_LABELS[importSource]}
                 {(result.updated ?? 0) > 0 && ` - ${result.updated} updated`}
                 {(result.campaignLinked ?? 0) > 0 && ` - ${result.campaignLinked} campaign link${result.campaignLinked === 1 ? '' : 's'} synced`}
+                {(result.interactionsImported ?? 0) > 0 && ` - ${result.interactionsImported} touchpoint${result.interactionsImported === 1 ? '' : 's'} imported`}
                 {result.skipped > 0 && ` - ${result.skipped} skipped`}
               </p>
 

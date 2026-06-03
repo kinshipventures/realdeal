@@ -171,6 +171,23 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['investment entity', 'investing entity', 'investor entity', 'investor k1 name', 'k1 name'],
   },
   {
+    key: 'correspondingInvestments',
+    target: 'Corresponding Investments',
+    label: 'Corresponding Investments',
+    section: 'Fund Details',
+    type: 'multi_select',
+    aliases: [
+      'corresponding investments',
+      'related investments',
+      'lp investments',
+      'investments',
+      'investment names',
+      'portfolio investments',
+      'pipeline investments',
+      'pipeline overlap',
+    ],
+  },
+  {
     key: 'capitalCall',
     target: 'Capital Call',
     label: 'Capital Call',

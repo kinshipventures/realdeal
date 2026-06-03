@@ -43,6 +43,12 @@ type ContactInput = Omit<Contact, 'id' | 'created_at'>
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
+const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
+  'First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role',
+  'Pod', 'Sub-pod', 'Campaign', 'Campaign Status',
+  'ClickUp Task Content', 'Corresponding Investments', 'SPV Investor', 'KV Fund Investor',
+  'Investment Amount', 'Investment Entity',
+])
 
 const KNOWN_ALIASES: Record<string, TargetField> = {
   // App structure
@@ -97,6 +103,8 @@ const KNOWN_ALIASES: Record<string, TargetField> = {
   'full name': 'First Name',
   'display name': 'First Name',
   'contact name': 'First Name',
+  'lp name': 'First Name',
+  'investor name': 'First Name',
   'person': 'First Name',
   'relationship': 'First Name',
   'agency': 'Company',
@@ -370,30 +378,46 @@ function resolveXlsxPartPath(target: string): string {
   return normalizeXlsxPath(`xl/${target}`)
 }
 
-function getFirstWorksheetPath(files: Record<string, Uint8Array>): string {
+type XlsxWorksheetInfo = {
+  name: string
+  path: string
+}
+
+function getWorksheetInfos(files: Record<string, Uint8Array>): XlsxWorksheetInfo[] {
   const workbookXml = getZipText(files, 'xl/workbook.xml')
   const relationshipsXml = getZipText(files, 'xl/_rels/workbook.xml.rels')
 
   if (workbookXml && relationshipsXml) {
     const workbook = parseXml(workbookXml)
     const relationships = parseXml(relationshipsXml)
-    const firstSheet = elementsByLocalName(workbook, 'sheet')[0]
-    const relId = firstSheet?.getAttribute('r:id') ?? firstSheet?.getAttribute('id')
+    const rels = elementsByLocalName(relationships, 'Relationship')
+    const sheets = elementsByLocalName(workbook, 'sheet')
+      .flatMap((sheet, index) => {
+        const state = (sheet.getAttribute('state') ?? 'visible').toLowerCase()
+        if (state === 'hidden' || state === 'veryhidden') return []
 
-    if (relId) {
-      const rel = elementsByLocalName(relationships, 'Relationship')
-        .find(item => item.getAttribute('Id') === relId)
-      const target = rel?.getAttribute('Target')
-      if (target) return resolveXlsxPartPath(target)
-    }
+        const relId = sheet.getAttribute('r:id') ?? sheet.getAttribute('id')
+        const rel = rels.find(item => item.getAttribute('Id') === relId)
+        const target = rel?.getAttribute('Target')
+        if (!target) return []
+
+        return [{
+          name: sheet.getAttribute('name') || `Sheet ${index + 1}`,
+          path: resolveXlsxPartPath(target),
+        }]
+      })
+      .filter(sheet => files[sheet.path])
+
+    if (sheets.length > 0) return sheets
   }
 
-  const fallback = Object.keys(files)
+  const fallbackPaths = Object.keys(files)
     .filter(path => /^xl\/worksheets\/sheet\d+\.xml$/i.test(path))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))[0]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  const fallbackSheets = fallbackPaths.map((path, index) => ({ name: `Sheet ${index + 1}`, path }))
 
-  if (!fallback) throw new Error('No worksheet was found in the Excel file.')
-  return fallback
+  if (fallbackSheets.length === 0) throw new Error('No worksheet was found in the Excel file.')
+  return fallbackSheets
 }
 
 function getNodeText(node: Element): string {
@@ -476,14 +500,10 @@ function getCellValue(cell: Element, sharedStrings: string[], dateStyleIds: Set<
   return value
 }
 
-function parseXlsxRows(buffer: ArrayBuffer): unknown[][] {
-  const files = unzipSync(new Uint8Array(buffer))
-  const worksheetPath = getFirstWorksheetPath(files)
+function parseXlsxRows(files: Record<string, Uint8Array>, worksheetPath: string, sharedStrings: string[], dateStyleIds: Set<string>): unknown[][] {
   const worksheetXml = getZipText(files, worksheetPath)
-  if (!worksheetXml) throw new Error('The first worksheet could not be read.')
+  if (!worksheetXml) throw new Error('A worksheet could not be read.')
 
-  const sharedStrings = readSharedStrings(files)
-  const dateStyleIds = readDateStyleIds(files)
   const worksheet = parseXml(worksheetXml)
   const sheetData = elementsByLocalName(worksheet, 'sheetData')[0]
   if (!sheetData) return []
@@ -498,8 +518,41 @@ function parseXlsxRows(buffer: ArrayBuffer): unknown[][] {
   })
 }
 
+function isImportableWorksheet(parsed: ParsedCSV): boolean {
+  if (parsed.rows.length === 0) return false
+  return detectColumns(parsed.headers).some(mapping =>
+    mapping.targetField !== null && IMPORTABLE_WORKSHEET_TARGETS.has(mapping.targetField)
+  )
+}
+
 export async function parseWorkbookBuffer(buffer: ArrayBuffer): Promise<ParsedCSV> {
-  return tableToRows(parseXlsxRows(buffer))
+  const files = unzipSync(new Uint8Array(buffer))
+  const sharedStrings = readSharedStrings(files)
+  const dateStyleIds = readDateStyleIds(files)
+  const parsedSheets = getWorksheetInfos(files).map(sheet => ({
+    name: sheet.name,
+    parsed: tableToRows(parseXlsxRows(files, sheet.path, sharedStrings, dateStyleIds)),
+  }))
+  const sheetsWithRows = parsedSheets.filter(sheet => isImportableWorksheet(sheet.parsed))
+
+  if (sheetsWithRows.length === 0) {
+    return parsedSheets.find(sheet => sheet.parsed.headers.length > 0)?.parsed ?? { headers: [], rows: [] }
+  }
+
+  if (sheetsWithRows.length === 1) return sheetsWithRows[0].parsed
+
+  const headers: string[] = []
+  const addHeader = (header: string) => {
+    if (!headers.includes(header)) headers.push(header)
+  }
+  sheetsWithRows.forEach(sheet => sheet.parsed.headers.forEach(addHeader))
+  addHeader('Source Sheet')
+
+  const rows = sheetsWithRows.flatMap(sheet =>
+    sheet.parsed.rows.map(row => ({ ...row, 'Source Sheet': sheet.name }))
+  )
+
+  return { headers, rows }
 }
 
 export async function parseImportFile(file: File): Promise<ParsedCSV> {
@@ -566,6 +619,8 @@ const GENERIC_NAME_ALIASES = new Set([
   'full name',
   'display name',
   'contact name',
+  'lp name',
+  'investor name',
   'person',
   'relationship',
 ])
@@ -1097,20 +1152,69 @@ function mergeArrayValues<T>(existing: T[] | null | undefined, incoming: T[] | n
   return [...new Set([...(existing ?? []), ...(incoming ?? [])])]
 }
 
+const CONTACT_SCALAR_FIELDS: Array<keyof ContactInput> = [
+  'email', 'phone', 'company', 'role', 'location', 'website',
+  'recommended_by', 'specialization', 'past_clients', 'industry', 'domain',
+  'stage', 'ticker', 'linkedin', 'birthday', 'milestones', 'interests',
+  'relationship_context', 'last_contacted_at', 'first_name', 'last_name',
+  'country', 'global_region', 'gender', 'introduced_by', 'intel_notes',
+  'relationship_owner', 'contact_frequency', 'cadence_override',
+  'next_follow_up_date', 'next_action', 'email_2', 'email_3',
+  'communication_preferences', 'snoozed_until',
+]
+
+function mergeCustomFieldValue(existing: unknown, incoming: unknown): unknown {
+  if (!hasContactValue(incoming)) return existing
+  if (!hasContactValue(existing)) return incoming
+  if (Array.isArray(existing) || Array.isArray(incoming)) {
+    return mergeArrayValues(
+      Array.isArray(existing) ? existing : [existing],
+      Array.isArray(incoming) ? incoming : [incoming],
+    )
+  }
+  if (typeof existing === 'string' && typeof incoming === 'string') {
+    return mergeStringNotes(existing, incoming)
+  }
+  return existing
+}
+
+function mergeCustomFields(existing: Record<string, unknown> | null | undefined, incoming: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const merged = { ...(existing ?? {}) }
+  for (const [key, value] of Object.entries(incoming ?? {})) {
+    if (!hasContactValue(value)) continue
+    merged[key] = mergeCustomFieldValue(merged[key], value)
+  }
+  return merged
+}
+
+function mergeContactInputs(existing: ContactInput, incoming: ContactInput): ContactInput {
+  const merged: ContactInput = { ...existing }
+
+  for (const field of CONTACT_SCALAR_FIELDS) {
+    const current = merged[field]
+    const next = incoming[field]
+    if (!hasContactValue(current) && hasContactValue(next)) {
+      ;(merged as any)[field] = next
+    }
+  }
+
+  merged.notes = mergeStringNotes(existing.notes, incoming.notes)
+  merged.list_ids = mergeArrayValues(existing.list_ids, incoming.list_ids)
+  merged.category_ids = mergeArrayValues(existing.category_ids, incoming.category_ids)
+  merged.company_ids = mergeArrayValues(existing.company_ids, incoming.company_ids)
+  merged.kv_fund_investor = mergeArrayValues(existing.kv_fund_investor, incoming.kv_fund_investor)
+  merged.spv_investor = mergeArrayValues(existing.spv_investor, incoming.spv_investor)
+  merged.primary_list_id = existing.primary_list_id ?? incoming.primary_list_id
+  merged.company_record_id = existing.company_record_id ?? incoming.company_record_id
+  merged.custom_fields = mergeCustomFields(existing.custom_fields, incoming.custom_fields)
+
+  return merged
+}
+
 function buildExistingContactPatch(existing: Contact, incoming: ContactInput): Partial<ContactInput> {
   const patch: Partial<ContactInput> = {}
-  const scalarFields: Array<keyof ContactInput> = [
-    'email', 'phone', 'company', 'role', 'location', 'website',
-    'recommended_by', 'specialization', 'past_clients', 'industry', 'domain',
-    'stage', 'ticker', 'linkedin', 'birthday', 'milestones', 'interests',
-    'relationship_context', 'last_contacted_at', 'first_name', 'last_name',
-    'country', 'global_region', 'gender', 'introduced_by', 'intel_notes',
-    'relationship_owner', 'contact_frequency', 'cadence_override',
-    'next_follow_up_date', 'next_action', 'email_2', 'email_3',
-    'communication_preferences', 'snoozed_until',
-  ]
 
-  for (const field of scalarFields) {
+  for (const field of CONTACT_SCALAR_FIELDS) {
     const current = existing[field as keyof Contact]
     const next = incoming[field]
     if (!hasContactValue(current) && hasContactValue(next)) {
@@ -1139,12 +1243,9 @@ function buildExistingContactPatch(existing: Contact, incoming: ContactInput): P
   if (!existing.primary_list_id && incoming.primary_list_id) patch.primary_list_id = incoming.primary_list_id
   if (!existing.company_record_id && incoming.company_record_id) patch.company_record_id = incoming.company_record_id
 
-  const incomingCustomFields = incoming.custom_fields ?? {}
-  const missingCustomFields = Object.fromEntries(
-    Object.entries(incomingCustomFields).filter(([key, value]) => hasContactValue(value) && !hasContactValue(existing.custom_fields?.[key]))
-  )
-  if (Object.keys(missingCustomFields).length > 0) {
-    patch.custom_fields = { ...(existing.custom_fields ?? {}), ...missingCustomFields }
+  const mergedCustomFields = mergeCustomFields(existing.custom_fields, incoming.custom_fields)
+  if (JSON.stringify(mergedCustomFields) !== JSON.stringify(existing.custom_fields ?? {})) {
+    patch.custom_fields = mergedCustomFields
   }
 
   return patch
@@ -1212,6 +1313,50 @@ async function syncCampaignImportFields(
   return true
 }
 
+async function syncCampaignImportFieldList(
+  contactId: string,
+  campaignFields: CampaignImportFields[],
+  campaignMap: Map<string, string>,
+  campaignAliases: Map<string, string>,
+  createMissingCampaigns: boolean,
+): Promise<number> {
+  let linked = 0
+  for (const fields of campaignFields) {
+    if (await syncCampaignImportFields(contactId, fields, campaignMap, campaignAliases, createMissingCampaigns)) {
+      linked++
+    }
+  }
+  return linked
+}
+
+function campaignFieldsKey(fields: CampaignImportFields): string {
+  return [
+    normalize(fields.name),
+    fields.status ?? '',
+    fields.commitmentAmount ?? '',
+    ...fields.subPodNames.map(normalize),
+  ].join('|')
+}
+
+function mergeCampaignFields(existing: CampaignImportFields[], incoming: CampaignImportFields | null): CampaignImportFields[] {
+  if (!incoming) return existing
+  const seen = new Set(existing.map(campaignFieldsKey))
+  const key = campaignFieldsKey(incoming)
+  return seen.has(key) ? existing : [...existing, incoming]
+}
+
+function mergeImportedTouchpoints(existing: ImportedTouchpoint[], incoming: ImportedTouchpoint[]): ImportedTouchpoint[] {
+  const seen = new Set(existing.map(importedTouchpointKey))
+  const merged = [...existing]
+  for (const touchpoint of incoming) {
+    const key = importedTouchpointKey(touchpoint)
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(touchpoint)
+  }
+  return merged
+}
+
 export async function importContacts(
   rows: Record<string, string>[],
   podId: string,
@@ -1264,9 +1409,11 @@ export async function importContacts(
   let campaignLinked = 0
   let interactionsImported = 0
   let skipped = 0
+  let mergedRows = 0
   const errors: string[] = []
-  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields | null; touchpoints: ImportedTouchpoint[] }> = []
-  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields | null; touchpoints: ImportedTouchpoint[] }> = []
+  const pendingCreateIndex = new Map<string, number>()
+  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[] }> = []
+  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[] }> = []
 
   const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
     if (mapping) return resolve(row, mapping, target)
@@ -1370,18 +1517,31 @@ export async function importContacts(
       import_source: importSrc,
     } as ContactInput
 
-    const existingId = (emailLower && emailIndex.get(emailLower)) || (!nameWasFallback ? nameIndex.get(nameLower) : undefined)
-    if (existingId === 'pending') {
-      skipped++
-      onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
+    const pendingKeys = [
+      emailLower ? `email:${emailLower}` : '',
+      !nameWasFallback ? `name:${nameLower}` : '',
+    ].filter(Boolean)
+    const pendingIndex = pendingKeys
+      .map(key => pendingCreateIndex.get(key))
+      .find(index => index !== undefined)
+
+    if (pendingIndex !== undefined) {
+      const pending = toCreate[pendingIndex]
+      pending.contact = mergeContactInputs(pending.contact, contact)
+      pending.campaignFields = mergeCampaignFields(pending.campaignFields, campaignFields)
+      pending.touchpoints = mergeImportedTouchpoints(pending.touchpoints, importedTouchpoints)
+      pendingKeys.forEach(key => pendingCreateIndex.set(key, pendingIndex))
+      mergedRows++
       continue
     }
+
+    const existingId = (emailLower && emailIndex.get(emailLower)) || (!nameWasFallback ? nameIndex.get(nameLower) : undefined)
     const existingContact = existingId ? contactIndex.get(existingId) : null
 
     if (existingContact) {
       const patch = buildExistingContactPatch(existingContact, contact)
       if (Object.keys(patch).length > 0 || campaignFields?.name || importedTouchpoints.length > 0) {
-        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields, touchpoints: importedTouchpoints })
+        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints })
       } else {
         skipped++
         onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
@@ -1389,13 +1549,13 @@ export async function importContacts(
       continue
     }
 
-    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields, touchpoints: importedTouchpoints })
-    if (emailLower) emailIndex.set(emailLower, 'pending')
-    if (!nameWasFallback) nameIndex.set(nameLower, 'pending')
+    const createIndex = toCreate.length
+    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints })
+    pendingKeys.forEach(key => pendingCreateIndex.set(key, createIndex))
   }
 
   const total = rows.length
-  let processedForProgress = skipped
+  let processedForProgress = skipped + mergedRows
   onProgress?.({ current: processedForProgress, total, imported, skipped, updated })
 
   for (const item of toUpdate) {
@@ -1404,14 +1564,14 @@ export async function importContacts(
         await updateContact(item.contactId, item.patch)
         updated++
       }
-      const linked = await syncCampaignImportFields(
+      const linked = await syncCampaignImportFieldList(
         item.contactId,
         item.campaignFields,
         campaignMap,
         campaignAliases,
         createMissingCampaigns,
       )
-      if (linked) campaignLinked++
+      campaignLinked += linked
       const syncedTouchpoints = await syncImportedTouchpoints(item.contactId, item.touchpoints)
       interactionsImported += syncedTouchpoints
       if (syncedTouchpoints > 0 && Object.keys(item.patch).length === 0) updated++
@@ -1427,14 +1587,14 @@ export async function importContacts(
     try {
       const created = await createContactsBulk(chunk.map(item => item.contact), BULK_INSERT_CHUNK_SIZE)
       for (let j = 0; j < created.length; j++) {
-        const linked = await syncCampaignImportFields(
+        const linked = await syncCampaignImportFieldList(
           created[j].id,
-          chunk[j]?.campaignFields ?? null,
+          chunk[j]?.campaignFields ?? [],
           campaignMap,
           campaignAliases,
           createMissingCampaigns,
         )
-        if (linked) campaignLinked++
+        campaignLinked += linked
         interactionsImported += await syncImportedTouchpoints(created[j].id, chunk[j]?.touchpoints ?? [])
       }
       imported += created.length
@@ -1445,14 +1605,14 @@ export async function importContacts(
         try {
           const [created] = await createContactsBulk([item.contact], 1)
           if (created) {
-            const linked = await syncCampaignImportFields(
+            const linked = await syncCampaignImportFieldList(
               created.id,
               item.campaignFields,
               campaignMap,
               campaignAliases,
               createMissingCampaigns,
             )
-            if (linked) campaignLinked++
+            campaignLinked += linked
             interactionsImported += await syncImportedTouchpoints(created.id, item.touchpoints)
           }
           imported++
