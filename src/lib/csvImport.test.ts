@@ -170,9 +170,9 @@ describe('CSV and Excel import parsing', () => {
 
     expect(parsed.headers.slice(0, 10)).toEqual([
       'Name',
-      'Task Content',
-      'List',
-      'Lists',
+      'Notes',
+      'Pods',
+      'Sub-pods',
       'Assistant Info (text)',
       'CITY (drop down)',
       'COUNTRY (drop down)',
@@ -180,7 +180,7 @@ describe('CSV and Excel import parsing', () => {
       'FUND TYPE (drop down)',
       'GENDER (drop down)',
     ])
-    expect(parsed.headers).toContain('💌 Email (email)')
+    expect(parsed.headers).toContain('Email (email)')
   }, 10000)
 
   it('parses all visible Excel worksheets into one import table', async () => {
@@ -261,7 +261,7 @@ describe('CSV and Excel import parsing', () => {
       'Assistant Info',
       'Global Region',
       'Upwork Link',
-      'Task Content',
+      'Notes',
     ])
   })
 
@@ -432,10 +432,10 @@ describe('bulk contact import', () => {
         address: 'Miami HQ',
         upworkLink: 'https://upwork.example/ivan',
         spvInvestorFlag: true,
-        linkedInLabels: ['Founder', 'Investor'],
-        clickupTaskContent: 'Updates 2024\nJul 19 - Sent deck',
+        notes: 'Updates 2024\nJul 19 - Sent deck',
       },
     })
+    expect(records[0].custom_fields).not.toHaveProperty('linkedInLabels')
   })
 
   it('parses ClickUp update blocks into dated recent activity touchpoints', () => {
@@ -502,7 +502,7 @@ describe('bulk contact import', () => {
         'Ivan Soto-Wright',
         'FOR CONNECTING',
         'Long task body',
-        'LP Internal',
+        'MAPS',
         '[LPs]',
         'Ivan',
         'Soto-Wright',
@@ -528,7 +528,10 @@ describe('bulk contact import', () => {
       ].join(','),
     ].join('\n'))
     const mapping = detectColumns(parsed.headers)
-    const podMap = new Map([[normalize('LPs'), 'pod-lps']])
+    const podMap = new Map([
+      [normalize('MAPS'), 'pod-maps'],
+      [normalize('LPs'), 'pod-lps'],
+    ])
     const categoryMap = new Map([[`pod-lps:${normalize('LP Internal')}`, 'cat-lp-internal']])
     const categoryPodMap = new Map([['cat-lp-internal', 'pod-lps']])
 
@@ -553,13 +556,12 @@ describe('bulk contact import', () => {
       linkedin: 'https://linkedin.com/in/isotowright',
       website: 'https://moonpay.com',
       country: 'United States',
-      list_ids: ['pod-lps'],
-      primary_list_id: 'pod-lps',
-      category_ids: ['cat-lp-internal'],
+      list_ids: ['pod-maps', 'pod-lps'],
+      primary_list_id: 'pod-maps',
+      category_ids: [],
       spv_investor: ['TeraWulf'],
       custom_fields: {
-        clickupTaskContent: 'Long task body',
-        linkedInLabels: ['Founder', 'Investor'],
+        notes: 'Long task body',
         spvInvestorFlag: true,
         notables: 'Important note',
         address: 'Miami HQ',
@@ -568,6 +570,7 @@ describe('bulk contact import', () => {
       },
     })
     expect(records[0].custom_fields).not.toHaveProperty('clickupTaskId')
+    expect(records[0].custom_fields).not.toHaveProperty('linkedInLabels')
     expect(records[0].custom_fields).not.toHaveProperty('summary')
   })
 
@@ -643,7 +646,7 @@ describe('bulk contact import', () => {
       name: 'Sultan Fahad Salman',
       email: 'sultanfsa@gmail.com',
       custom_fields: {
-        clickupTaskContent: 'Updates 2024\nJul 19 - Sent deck',
+        notes: 'Updates 2024\nJul 19 - Sent deck',
       },
     })
     expect(records[0].notes).toBeNull()

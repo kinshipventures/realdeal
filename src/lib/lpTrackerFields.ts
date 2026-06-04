@@ -2,9 +2,10 @@ export type LpTrackerFieldType = 'text' | 'long_text' | 'checkbox' | 'multi_sele
 
 export type LpTrackerFieldDefinition = {
   key: string
+  legacyKeys?: readonly string[]
   target: string
   label: string
-  section: 'Investor Profile' | 'Fund Details' | 'Operations' | 'ClickUp Source'
+  section: 'Investor Profile' | 'Fund Details' | 'Operations' | 'Notes'
   type: LpTrackerFieldType
   aliases: readonly string[]
 }
@@ -25,14 +26,6 @@ export const LP_TRACKER_FIELDS = [
     section: 'Investor Profile',
     type: 'select',
     aliases: ['city', 'city dropdown', 'home city', 'work city', 'town', 'metro'],
-  },
-  {
-    key: 'linkedInLabels',
-    target: 'LinkedIn Labels',
-    label: 'LinkedIn Labels',
-    section: 'Investor Profile',
-    type: 'multi_select',
-    aliases: ['linkedin labels', 'linkedin label', 'linkedin tags'],
   },
   {
     key: 'category',
@@ -91,12 +84,13 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['upwork link'],
   },
   {
-    key: 'clickupTaskContent',
-    target: 'Task Content',
-    label: 'Task Content',
-    section: 'ClickUp Source',
+    key: 'notes',
+    legacyKeys: ['clickupTaskContent'],
+    target: 'Notes',
+    label: 'Notes',
+    section: 'Notes',
     type: 'long_text',
-    aliases: ['task content', 'task description', 'clickup task content', 'updates', 'recent activity', 'activity log', 'touchpoints'],
+    aliases: ['notes', 'note', 'task content', 'task description', 'clickup task content', 'updates', 'recent activity', 'activity log', 'touchpoints'],
   },
 ] as const satisfies readonly LpTrackerFieldDefinition[]
 

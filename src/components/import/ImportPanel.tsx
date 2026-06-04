@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, getContacts, getCategories, getCampaigns, invalidateContactsCache } from '../../lib/data'
-import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, TARGET_FIELDS } from '../../lib/csvImport'
+import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, targetAllowsMultipleMapping, TARGET_FIELDS } from '../../lib/csvImport'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
@@ -541,7 +541,9 @@ export function ImportPanel() {
                 {safeColumnMapping.map(({ csvHeader, targetField }, idx) => {
                   const matched = !!targetField
                   const preview = parsedRows[0]?.[csvHeader] ?? ''
-                  const usedTargets = new Set(safeColumnMapping.filter(m => m.csvHeader !== csvHeader && m.targetField).map(m => m.targetField))
+                  const usedTargets = new Set(safeColumnMapping
+                    .filter(m => m.csvHeader !== csvHeader && m.targetField && !targetAllowsMultipleMapping(m.targetField))
+                    .map(m => m.targetField))
                   return (
                     <div key={csvHeader} style={{
                       display: 'grid', gridTemplateColumns: '1fr 24px 1fr', alignItems: 'center',

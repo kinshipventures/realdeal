@@ -34,12 +34,13 @@ type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
+const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes'])
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
   'First Name', 'Last Name', 'Email', 'Phone', 'Company',
   'Pod', 'Sub-pod',
-  'Task Content', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
+  'Notes', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
 ])
 
 const KNOWN_ALIASES: Record<string, string> = {
@@ -53,7 +54,7 @@ const KNOWN_ALIASES: Record<string, string> = {
   'pod name': 'Pod',
   'group': 'Pod',
   'groups': 'Pod',
-  'list': 'Sub-pod',
+  'list': 'Pod',
   'lists': 'Pod',
   'segment': 'Pod',
   'segments': 'Pod',
@@ -202,13 +203,6 @@ const KNOWN_ALIASES: Record<string, string> = {
   // Context
   'notes': 'Notes',
   'note': 'Notes',
-  'description': 'Notes',
-  'comments': 'Notes',
-  'details': 'Notes',
-  'background': 'Notes',
-  'summary': 'Notes',
-  'extra info': 'Notes',
-  'bio': 'Notes',
   'relationship context': 'Relationship Context',
   'relationship notes': 'Relationship Context',
   'relationship summary': 'Relationship Context',
@@ -590,9 +584,9 @@ export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined
 
     const rawField = (item as Partial<ColumnMapping[number]>).targetField
     const coercedField = coerceTargetField(rawField)
-    const targetField = coercedField && !usedTargets.has(coercedField) ? coercedField : null
+    const targetField = coercedField && (targetAllowsMultipleMapping(coercedField) || !usedTargets.has(coercedField)) ? coercedField : null
 
-    if (targetField) usedTargets.add(targetField)
+    if (targetField && !targetAllowsMultipleMapping(targetField)) usedTargets.add(targetField)
     return [{ csvHeader, targetField }]
   })
 }
@@ -617,11 +611,21 @@ const GENERIC_NAME_ALIASES = new Set([
   'relationship',
 ])
 
+const REMOVED_COLUMN_ALIASES = new Set([
+  'linkedin labels',
+  'linkedin label',
+  'linkedin tags',
+])
+
 function coerceTargetField(rawField: unknown): TargetField | null {
   if (typeof rawField !== 'string') return null
   const trimmed = rawField.trim()
   if (trimmed === 'Name') return 'First Name'
   return TARGET_FIELD_SET.has(trimmed) ? trimmed as TargetField : null
+}
+
+export function targetAllowsMultipleMapping(targetField: string | null | undefined): boolean {
+  return !!targetField && MULTI_COLUMN_TARGETS.has(targetField)
 }
 
 function mappingForHeader(mapping: ColumnMapping | undefined, csvHeader: string): string | null {
@@ -690,6 +694,9 @@ export function detectColumns(headers: string[]): ColumnMapping {
   const candidates = headers.map(rawHeader => {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
     const aliasCandidates = normalizeHeaderCandidates(csvHeader)
+    if (aliasCandidates.some(candidate => REMOVED_COLUMN_ALIASES.has(candidate))) {
+      return { csvHeader, targetField: null, priority: 0 }
+    }
     const norm = aliasCandidates.find(candidate => KNOWN_ALIASES[candidate]) ?? aliasCandidates[0] ?? ''
     const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? null
     const normalizedMatch = normalize(match)
@@ -701,6 +708,7 @@ export function detectColumns(headers: string[]): ColumnMapping {
   const chosen = new Map<TargetField, number>()
   candidates.forEach((candidate, index) => {
     if (!candidate.targetField) return
+    if (targetAllowsMultipleMapping(candidate.targetField)) return
     const existingIndex = chosen.get(candidate.targetField)
     if (existingIndex === undefined || candidate.priority > candidates[existingIndex].priority) {
       chosen.set(candidate.targetField, index)
@@ -709,7 +717,9 @@ export function detectColumns(headers: string[]): ColumnMapping {
 
   return candidates.map((candidate, index) => ({
     csvHeader: candidate.csvHeader,
-    targetField: candidate.targetField && chosen.get(candidate.targetField) === index ? candidate.targetField : null,
+    targetField: candidate.targetField && (
+      targetAllowsMultipleMapping(candidate.targetField) || chosen.get(candidate.targetField) === index
+    ) ? candidate.targetField : null,
   }))
 }
 
@@ -717,6 +727,13 @@ function resolve(row: Record<string, string>, mapping: ColumnMapping, target: st
   const col = normalizeColumnMapping(mapping).find(m => m.targetField === target)
   if (!col) return ''
   return (row[col.csvHeader] ?? '').trim()
+}
+
+function resolveValues(row: Record<string, string>, mapping: ColumnMapping, target: string): string[] {
+  return normalizeColumnMapping(mapping)
+    .filter(m => m.targetField === target)
+    .map(col => (row[col.csvHeader] ?? '').trim())
+    .filter(Boolean)
 }
 
 type CampaignImportFields = {
@@ -939,7 +956,9 @@ function resolveLpTrackerCustomFields(
 
   const customFields: Record<string, unknown> = {}
   for (const field of LP_TRACKER_FIELDS) {
-    let rawValue = resolve(row, mapping, field.target)
+    let rawValue = field.target === 'Notes'
+      ? resolveValues(row, mapping, field.target).join('\n')
+      : resolve(row, mapping, field.target)
     if (!rawValue && field.key === 'investmentAmount' && !campaignFields?.name) {
       rawValue = resolve(row, mapping, 'Commitment Amount')
     }
@@ -1087,8 +1106,8 @@ function resolvePodIds(
   podMap: Map<string, string>,
 ): string[] {
   if (!mapping || mapping.length === 0) return fallbackPodIds
-  const podValue = resolve(row, mapping, 'Pod')
-  const mappedPodIds = splitMultiValue(podValue)
+  const mappedPodIds = resolveValues(row, mapping, 'Pod')
+    .flatMap(splitMultiValue)
     .map(podName => podMap.get(normalize(podName)))
     .filter(Boolean) as string[]
   return mappedPodIds.length > 0 ? unique(mappedPodIds) : fallbackPodIds
@@ -1174,9 +1193,35 @@ function mergeCustomFieldValue(existing: unknown, incoming: unknown): unknown {
   return existing
 }
 
+function sanitizeImportCustomFields(fields: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
+
+  const allowedKeys = new Set(LP_TRACKER_FIELDS.map(field => field.key))
+  const sanitized: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (allowedKeys.has(key) && hasContactValue(value)) {
+      sanitized[key] = value
+    }
+  }
+
+  for (const field of LP_TRACKER_FIELDS) {
+    if (hasContactValue(sanitized[field.key])) continue
+    for (const legacyKey of field.legacyKeys ?? []) {
+      const value = fields[legacyKey]
+      if (hasContactValue(value)) {
+        sanitized[field.key] = value
+        break
+      }
+    }
+  }
+
+  return sanitized
+}
+
 function mergeCustomFields(existing: Record<string, unknown> | null | undefined, incoming: Record<string, unknown> | null | undefined): Record<string, unknown> {
-  const merged = { ...(existing ?? {}) }
-  for (const [key, value] of Object.entries(incoming ?? {})) {
+  const merged = sanitizeImportCustomFields(existing)
+  for (const [key, value] of Object.entries(sanitizeImportCustomFields(incoming))) {
     if (!hasContactValue(value)) continue
     merged[key] = mergeCustomFieldValue(merged[key], value)
   }
@@ -1449,7 +1494,7 @@ export async function importContacts(
     const notes = combineNotes('', collectUnmappedNotes(row, mapping, consumedHeaders))
     const customFields = resolveLpTrackerCustomFields(row, mapping, campaignFields)
     const importedTouchpoints = parseTaskContentInteractions(
-      typeof customFields.clickupTaskContent === 'string' ? customFields.clickupTaskContent : '',
+      typeof customFields.notes === 'string' ? customFields.notes : '',
     )
 
     const contact: ContactInput = {

@@ -123,6 +123,33 @@ function parentPodIdsForCategories(categoryIds: string[], categories: Category[]
   return uniqueIds(categoryIds.map(categoryId => categoryById.get(categoryId)?.list_id ?? ''))
 }
 
+function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
+
+  const rawFields = fields as Record<string, unknown>
+  const allowedKeys = new Set(LP_TRACKER_FIELDS.map(field => field.key))
+  const nextFields: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(rawFields)) {
+    if (allowedKeys.has(key) && hasLpTrackerValue(value)) {
+      nextFields[key] = value
+    }
+  }
+
+  for (const field of LP_TRACKER_FIELDS) {
+    if (hasLpTrackerValue(nextFields[field.key])) continue
+    for (const legacyKey of field.legacyKeys ?? []) {
+      const legacyValue = rawFields[legacyKey]
+      if (hasLpTrackerValue(legacyValue)) {
+        nextFields[field.key] = legacyValue
+        break
+      }
+    }
+  }
+
+  return nextFields
+}
+
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated }: Props) {
   const isNew = contact === null
 
@@ -406,16 +433,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       contactsForOptions.map(optionContact => optionContact[key]),
       [draft[key], ...extras],
     )
-  }
-
-  function selectedPodNames(): string[] {
-    return (draft.list_ids ?? [])
-      .map(podId => pods.find(pod => pod.id === podId)?.name ?? '')
-      .filter(Boolean)
-  }
-
-  function selectedPrimaryPodName(): string {
-    return pods.find(pod => pod.id === draft.primary_list_id)?.name ?? selectedPodNames()[0] ?? ''
   }
 
   function beginAddingOption(targetId: string) {
@@ -764,34 +781,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  function displayRow(label: string, value: string | null) {
-    return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '132px minmax(0, 1fr)',
-        gap: 14,
-        alignItems: 'center',
-        padding: '13px 18px',
-        borderBottom: '1px solid var(--divider)',
-      }}>
-        <div style={rowLabelWrap}>
-          <div style={rowLabel}>{label}</div>
-        </div>
-        <div style={{
-          fontSize: 14,
-          color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-          minHeight: 22,
-          lineHeight: 1.45,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {value || `add ${label.toLowerCase()}`}
-        </div>
-      </div>
-    )
-  }
-
   function arrayField(key: keyof Contact, label: string, options: string[] = []) {
     const rawValue = draft[key]
     const values = Array.isArray(rawValue) ? rawValue.map(String) : []
@@ -987,9 +976,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function getDraftCustomFields(): Record<string, unknown> {
-    const fields = draft.custom_fields
-    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
-    return fields as Record<string, unknown>
+    return sanitizeCustomFields(draft.custom_fields)
   }
 
   function handleCustomFieldSave(field: LpTrackerFieldDefinition, rawValue: string | boolean | string[]) {
@@ -1300,7 +1287,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return (
       <div style={sectionShell}>
         <div style={sectionHeader}>
-          <div style={sectionLabel}>{section === 'ClickUp Source' ? 'task content' : section.toLowerCase()}</div>
+          <div style={sectionLabel}>{section.toLowerCase()}</div>
         </div>
         {fields.map(fieldDef => customField(fieldDef))}
         {section === 'Fund Details' && arrayField('spv_investor', 'SPV Investor', contactFieldOptions('spv_investor'))}
@@ -2015,16 +2002,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {customFieldSection('Investor Profile')}
               {customFieldSection('Fund Details')}
               {customFieldSection('Operations')}
-              {customFieldSection('ClickUp Source')}
+              {customFieldSection('Notes')}
 
               {pods.length > 0 && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
-                    <div style={sectionLabel}>lists</div>
+                    <div style={sectionLabel}>pods</div>
                   </div>
-                  {displayRow('List', selectedPrimaryPodName())}
-                  {displayRow('Lists', selectedPodNames().join(', '))}
                   <div style={{ padding: '16px 18px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {pods.map(pod => {
                         const isIn = (draft.list_ids ?? []).includes(pod.id)
@@ -2076,7 +2062,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                     {(draft.list_ids ?? []).length > 1 && (
                       <div style={{ marginTop: 12 }}>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>list</div>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>primary pod</div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {(draft.list_ids ?? []).map(podId => {
                             const pod = pods.find(p => p.id === podId)
