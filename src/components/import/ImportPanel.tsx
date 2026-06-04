@@ -584,7 +584,7 @@ export function ImportPanel() {
             {unmatchedColumns.length > 0 && (
               <div style={{ background: 'var(--tint)', borderRadius: 8, padding: '10px 12px', opacity: 0, animation: 'import-stagger 0.35s ease-out 200ms forwards' }}>
                 <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', margin: '0 0 8px' }}>
-                  {unmatchedColumns.length} unmatched column{unmatchedColumns.length !== 1 ? 's' : ''} will be saved to Notes unless mapped to a standard field
+                  {unmatchedColumns.length} unmatched column{unmatchedColumns.length !== 1 ? 's' : ''} will be skipped unless mapped to an approved field
                 </p>
                 {unmatchedColumns.map(({ csvHeader }) => {
                   const preview = parsedRows[0]?.[csvHeader] ?? ''
@@ -594,7 +594,7 @@ export function ImportPanel() {
                         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>{csvHeader}</span>
                         {preview && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 8 }}>{preview.slice(0, 30)}{preview.length > 30 ? '...' : ''}</span>}
                       </div>
-                      <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>Notes</span>
+                      <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>Skipped</span>
                     </div>
                   )
                 })}

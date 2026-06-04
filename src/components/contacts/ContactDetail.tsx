@@ -1,20 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { RELATIONSHIP_RING_LABELS, RELATIONSHIP_RINGS, type Category, type Contact, type Interaction, type Pod, type RelationshipRing } from '../../lib/types'
+import { type Category, type Contact, type Interaction, type Pod } from '../../lib/types'
 import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeLpTrackerFieldValue, type LpTrackerFieldDefinition } from '../../lib/lpTrackerFields'
 
-function daysUntilBirthday(birthday: string | null): number | null {
-  if (!birthday) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const [, month, day] = birthday.split('-').map(Number)
-  const thisYear = new Date(today.getFullYear(), month - 1, day)
-  if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1)
-  return Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-}
 import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
@@ -699,19 +690,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }
 
-  async function persistRingSelection(nextRingIds: RelationshipRing[]) {
-    setDraft(prev => ({ ...prev, ring_ids: nextRingIds }))
-    if (isNew || !contact) return
-    const updated = await updateContact(contact.id, { ring_ids: nextRingIds } as Partial<Contact>)
-    onSaved(updated)
-    await logSystemEvent({
-      contactId: contact.id,
-      type: 'field_update',
-      detail: { field: 'ring_ids', rings: nextRingIds },
-      notes: `Updated rings: ${nextRingIds.map(ring => RELATIONSHIP_RING_LABELS[ring]).join(', ') || 'none'}.`,
-    })
-  }
-
   async function handleCreate() {
     if (!draft.name) return
     setCreating(true)
@@ -970,67 +948,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  function birthdayField() {
-    const val = (draft.birthday as string | null) ?? null
-    const editing = editingField === 'birthday'
-    const countdown = daysUntilBirthday(val)
-
-    return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '132px minmax(0, 1fr)',
-        gap: 14,
-        alignItems: 'center',
-        padding: '12px 18px',
-        borderBottom: '1px solid var(--divider)',
-      }}>
-        <div style={rowLabelWrap}>
-          <div style={rowLabel}>Birthday</div>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          {editing ? (
-            <input
-              autoFocus
-              type="date"
-              defaultValue={val ?? ''}
-              onBlur={e => handleBlur('birthday', e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Escape') { e.currentTarget.value = val ?? ''; e.currentTarget.blur(); e.stopPropagation() }
-              }}
-              style={{
-                width: '100%',
-                background: 'var(--tint)',
-                border: '1px solid var(--edge-strong)',
-                borderRadius: 6,
-                color: 'var(--color-text-primary)',
-                fontSize: 14,
-                lineHeight: 1.45,
-                padding: '7px 10px',
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
-            />
-          ) : (
-            <div
-              onClick={() => setEditingField('birthday')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'text', minHeight: 20, flexWrap: 'wrap' }}
-            >
-              <span style={{ fontSize: 14, color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
-                {val ?? 'add birthday'}
-              </span>
-              {countdown !== null && countdown <= 30 && (
-                <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
-                  {countdown === 0 ? 'today' : `in ${countdown} day${countdown === 1 ? '' : 's'}`}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const hasFundTags = (draft.kv_fund_investor && draft.kv_fund_investor.length > 0) || (draft.spv_investor && draft.spv_investor.length > 0)
+  const hasFundTags = !!(draft.spv_investor && draft.spv_investor.length > 0)
 
   const bounds = shellBounds ?? {
     left: 0,
@@ -1388,15 +1306,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 {field('phone', 'Phone')}
                 {linkedinField()}
                 {field('website', 'Website')}
-                {field('location', 'Location')}
-                {field('country', 'City / country')}
-                {birthdayField()}
-                {draft.global_region && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
-                    <div style={rowLabelWrap}><div style={rowLabel}>Region</div></div>
-                    <div style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.45 }}>{draft.global_region}</div>
-                  </div>
-                )}
+                {field('country', 'Country')}
                 {draft.gender && (
                   <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px' }}>
                     <div style={rowLabelWrap}><div style={rowLabel}>Gender</div></div>
@@ -1679,69 +1589,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 <div style={sectionHeader}>
                   <div style={sectionLabel}>relationship</div>
                 </div>
-                {field('introduced_by', 'Met through')}
                 {field('recommended_by', 'Referred by')}
-                {field('relationship_owner', 'Relationship Owner')}
-                <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'start', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
-                  <div style={rowLabelWrap}><div style={rowLabel}>Rings</div></div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {RELATIONSHIP_RINGS.map(ring => {
-                      const isSelected = (draft.ring_ids ?? []).includes(ring)
-                      return (
-                        <button
-                          key={ring}
-                          type="button"
-                          onClick={() => {
-                            const nextRings = isSelected
-                              ? (draft.ring_ids ?? []).filter(id => id !== ring)
-                              : [...(draft.ring_ids ?? []), ring]
-                            void persistRingSelection(nextRings)
-                          }}
-                          style={{
-                            padding: '4px 12px',
-                            borderRadius: 100,
-                            fontSize: 12,
-                            fontWeight: isSelected ? 600 : 400,
-                            border: '1px solid',
-                            borderColor: isSelected ? 'var(--color-brand)' : 'var(--edge)',
-                            background: isSelected ? 'rgba(37,180,57,0.12)' : 'transparent',
-                            color: isSelected ? 'var(--color-brand)' : 'var(--color-text-secondary)',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          {RELATIONSHIP_RING_LABELS[ring]}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-                {draft.contact_frequency && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid var(--divider)' }}>
-                    <div style={rowLabelWrap}><div style={rowLabel}>Contact Frequency</div></div>
-                    <div>
-                      <span style={{
-                        fontSize: 13, fontWeight: 500,
-                        padding: '4px 10px', borderRadius: 100,
-                        background: 'rgba(37,180,57,0.08)',
-                        color: 'var(--color-brand)',
-                      }}>
-                        {draft.contact_frequency}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {field('intel_notes', 'Notes', true)}
-              </div>
-
-              <div style={sectionShell}>
-                <div style={sectionHeader}>
-                  <div style={sectionLabel}>context</div>
-                </div>
-                {field('specialization', 'Focus area')}
-                {field('stage', 'Stage')}
-                {field('interests', 'Interests', true)}
-                {field('relationship_context', 'Context', true)}
               </div>
 
               {hasFundTags && (
@@ -1750,16 +1598,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     <div style={sectionLabel}>fund connections</div>
                   </div>
                   <div style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {draft.kv_fund_investor?.map(tag => (
-                      <span key={tag} style={{
-                        fontSize: 12, fontWeight: 500,
-                        padding: '4px 10px', borderRadius: 100,
-                        background: 'hsla(150, 60%, 40%, 0.08)',
-                        color: 'hsla(150, 60%, 30%, 0.80)',
-                      }}>
-                        KV: {tag}
-                      </span>
-                    ))}
                     {draft.spv_investor?.map(tag => (
                       <span key={tag} style={{
                         fontSize: 12, fontWeight: 500,

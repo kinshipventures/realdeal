@@ -21,19 +21,12 @@ export type RowWarning = {
 
 export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
-  'Campaign', 'Campaign Status', 'Commitment Amount',
   'First Name', 'Last Name',
-  'Email', 'Phone', 'Company', 'Role', 'Location',
-  'Website', 'LinkedIn', 'Notes', 'Birthday',
-  'Industry', 'Domain', 'Stage', 'Ticker',
-  'Specialization', 'Recommended By', 'Past Clients',
+  'Email', 'Phone', 'Company',
+  'Website', 'LinkedIn',
+  'Recommended By',
   'Country', 'Gender',
-  'Interests', 'Relationship Context',
-  'Email 2', 'Email 3',
-  'Introduced By', 'Intel Notes', 'Relationship Owner',
-  'Contact Frequency', 'Cadence Override',
-  'Last Contacted', 'Next Follow Up Date', 'Next Action',
-  'KV Fund Investor', 'SPV Investor',
+  'SPV Investor',
   ...LP_TRACKER_TARGET_FIELDS,
 ] as const
 
@@ -44,13 +37,12 @@ const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
-  'First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role',
-  'Pod', 'Sub-pod', 'Campaign', 'Campaign Status',
-  'ClickUp Task Content', 'Corresponding Investments', 'SPV Investor', 'KV Fund Investor',
-  'Investment Amount', 'Investment Entity',
+  'First Name', 'Last Name', 'Email', 'Phone', 'Company',
+  'Pod', 'Sub-pod',
+  'ClickUp Task Content', 'SPV Investor', 'Fund Type',
 ])
 
-const KNOWN_ALIASES: Record<string, TargetField> = {
+const KNOWN_ALIASES: Record<string, string> = {
   // App structure
   'pod': 'Pod',
   'pods': 'Pod',
@@ -652,19 +644,21 @@ function resolveUnmappedAlias(row: Record<string, string>, mapping: ColumnMappin
 
 function resolveFirstName(row: Record<string, string>, mapping: ColumnMapping | undefined): { value: string; consumedHeader: string | null } {
   if (!mapping) return { value: (row['First Name'] ?? row['Name'] ?? '').trim(), consumedHeader: null }
-  const first = resolve(row, mapping, 'First Name')
-  if (first) return { value: first, consumedHeader: null }
+  const firstColumn = normalizeColumnMapping(mapping).find(m => m.targetField === 'First Name')
+  const first = firstColumn ? (row[firstColumn.csvHeader] ?? '').trim() : ''
+  if (first) {
+    const isGenericNameHeader = normalizeHeaderCandidates(firstColumn.csvHeader).some(candidate => GENERIC_NAME_ALIASES.has(candidate))
+    return { value: first, consumedHeader: isGenericNameHeader ? firstColumn.csvHeader : null }
+  }
   const fallback = findUnmappedAlias(row, mapping, GENERIC_NAME_ALIASES)
   return { value: fallback?.value ?? '', consumedHeader: fallback?.header ?? null }
 }
 
 function collectUnmappedNotes(row: Record<string, string>, mapping: ColumnMapping | undefined, consumedHeaders = new Set<string>()): string[] {
-  if (!mapping) return []
-  return Object.entries(row).flatMap(([header, rawValue]) => {
-    const value = rawValue.trim()
-    if (!value || consumedHeaders.has(header) || mappingForHeader(mapping, header)) return []
-    return [`${header}: ${value}`]
-  })
+  void row
+  void mapping
+  void consumedHeaders
+  return []
 }
 
 function combineNotes(primary: string, extraLines: string[]): string | null {
@@ -697,9 +691,10 @@ export function detectColumns(headers: string[]): ColumnMapping {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
     const aliasCandidates = normalizeHeaderCandidates(csvHeader)
     const norm = aliasCandidates.find(candidate => KNOWN_ALIASES[candidate]) ?? aliasCandidates[0] ?? ''
-    const match = KNOWN_ALIASES[norm] ?? null
+    const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? null
     const normalizedMatch = normalize(match)
-    const priority = norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0
+    const isGenericName = match === 'First Name' && aliasCandidates.some(candidate => GENERIC_NAME_ALIASES.has(candidate))
+    const priority = isGenericName ? 4 : norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0
     return { csvHeader, targetField: match, priority }
   })
 
@@ -964,9 +959,10 @@ function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: 
     const companyName = resolve(row, mapping, 'Company')
     if (companyName) return companyName
   }
-  const first = resolveFirstName(row, mapping).value
-  const middle = resolveUnmappedAlias(row, mapping, MIDDLE_NAME_ALIASES)
-  const last = resolve(row, mapping, 'Last Name')
+  const firstName = resolveFirstName(row, mapping)
+  const first = firstName.value
+  const middle = firstName.consumedHeader ? '' : resolveUnmappedAlias(row, mapping, MIDDLE_NAME_ALIASES)
+  const last = firstName.consumedHeader ? '' : resolve(row, mapping, 'Last Name')
   return [first, middle, last].filter(Boolean).join(' ')
 }
 
@@ -1440,7 +1436,7 @@ export async function importContacts(
     const emailLower = email.toLowerCase()
 
     const firstName = resolveFirstName(row, mapping)
-    const lastName = mapping ? resolve(row, mapping, 'Last Name') : null
+    const lastName = firstName.consumedHeader ? null : mapping ? resolve(row, mapping, 'Last Name') : null
     const campaignFields = resolveCampaignImportFields(row, mapping)
     const mappedPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
     const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, campaignFields?.subPodNames ?? [])
@@ -1449,18 +1445,12 @@ export async function importContacts(
       .filter(Boolean) as string[]
     const rowPodIds = unique([...mappedPodIds, ...categoryPodIds])
     const primaryPodId = rowPodIds[0] ?? null
-    const birthday = normalizeDate(r(row, 'Birthday', 'Birthday'))
-    const lastContacted = normalizeDate(r(row, 'Last Contacted', 'Last Contacted'))
-    const nextFollowUp = normalizeDate(r(row, 'Next Follow Up Date', 'Next Follow Up Date'))
     const consumedHeaders = firstName.consumedHeader ? new Set([firstName.consumedHeader]) : undefined
-    const notes = combineNotes(r(row, 'Notes', 'Notes'), collectUnmappedNotes(row, mapping, consumedHeaders))
+    const notes = combineNotes('', collectUnmappedNotes(row, mapping, consumedHeaders))
     const customFields = resolveLpTrackerCustomFields(row, mapping, campaignFields)
     const importedTouchpoints = parseTaskContentInteractions(
       typeof customFields.clickupTaskContent === 'string' ? customFields.clickupTaskContent : '',
     )
-
-    const contactFrequency = normalizeFrequency(r(row, 'Contact Frequency', 'Contact Frequency'))
-    const cadenceOverride = normalizeCadence(r(row, 'Cadence Override', 'Cadence Override'))
 
     const contact: ContactInput = {
       name,
@@ -1469,23 +1459,23 @@ export async function importContacts(
       email: email || null,
       phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
       company: r(row, 'Company', 'Company') || null,
-      role: r(row, 'Role', 'Role') || null,
-      location: r(row, 'Location', 'Location') || null,
+      role: null,
+      location: null,
       website: r(row, 'Website', 'Website') || null,
       notes,
       recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
-      specialization: r(row, 'Specialization', 'Specialization') || null,
-      past_clients: r(row, 'Past Clients', 'Past Clients') || null,
-      industry: r(row, 'Industry', 'Industry') || null,
-      domain: r(row, 'Domain', 'Domain') || null,
-      stage: r(row, 'Stage', 'Stage') || null,
-      ticker: r(row, 'Ticker', 'Ticker') || null,
+      specialization: null,
+      past_clients: null,
+      industry: null,
+      domain: null,
+      stage: null,
+      ticker: null,
       linkedin: r(row, 'LinkedIn', 'LinkedIn', 'Linkedin') || null,
-      birthday,
+      birthday: null,
       milestones: null,
-      interests: r(row, 'Interests', 'Interests') || null,
-      relationship_context: r(row, 'Relationship Context', 'Relationship Context') || null,
-      last_contacted_at: lastContacted,
+      interests: null,
+      relationship_context: null,
+      last_contacted_at: null,
       list_ids: rowPodIds,
       category_ids: categoryIds,
       primary_list_id: primaryPodId,
@@ -1494,20 +1484,20 @@ export async function importContacts(
       country: r(row, 'Country', 'Country') || null,
       global_region: null,
       gender: normalizeGender(r(row, 'Gender', 'Gender')),
-      introduced_by: r(row, 'Introduced By', 'Introduced By') || null,
-      intel_notes: r(row, 'Intel Notes', 'Intel Notes') || null,
-      relationship_owner: r(row, 'Relationship Owner', 'Relationship Owner') || null,
-      contact_frequency: contactFrequency,
-      cadence_override: cadenceOverride,
-      next_follow_up_date: nextFollowUp,
-      next_action: r(row, 'Next Action', 'Next Action') || null,
-      kv_fund_investor: normalizedList(r(row, 'KV Fund Investor', 'KV Fund Investor')),
+      introduced_by: null,
+      intel_notes: null,
+      relationship_owner: null,
+      contact_frequency: null,
+      cadence_override: null,
+      next_follow_up_date: null,
+      next_action: null,
+      kv_fund_investor: null,
       spv_investor: normalizedList(r(row, 'SPV Investor', 'SPV Investor')),
       needs_review: false,
       company_record_id: null,
       company_ids: [],
-      email_2: r(row, 'Email 2', 'Email 2') || null,
-      email_3: r(row, 'Email 3', 'Email 3') || null,
+      email_2: null,
+      email_3: null,
       communication_preferences: null,
       custom_fields: customFields,
       ring_ids: [],

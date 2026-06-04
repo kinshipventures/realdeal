@@ -169,18 +169,18 @@ describe('CSV and Excel import parsing', () => {
     const parsed = await parseWorkbookBuffer(buffer)
 
     expect(parsed.headers.slice(0, 10)).toEqual([
-      'First Name',
-      'Last Name',
-      'Email',
-      'Phone',
-      'Company',
-      'Role',
-      'Pod',
-      'Sub-pod',
-      'Campaign',
-      'Campaign Status',
+      'Name',
+      'Task Content',
+      'List',
+      'Lists',
+      'Assistant Info (text)',
+      'CITY (drop down)',
+      'COUNTRY (drop down)',
+      'Category (drop down)',
+      'FUND TYPE (drop down)',
+      'GENDER (drop down)',
     ])
-    expect(parsed.headers).not.toContain('Name')
+    expect(parsed.headers).toContain('💌 Email (email)')
   }, 10000)
 
   it('parses all visible Excel worksheets into one import table', async () => {
@@ -224,8 +224,8 @@ describe('CSV and Excel import parsing', () => {
       'First Name',
       'Pod',
       'Sub-pod',
-      'Last Contacted',
-      'Contact Frequency',
+      null,
+      null,
     ])
   })
 
@@ -238,7 +238,7 @@ describe('CSV and Excel import parsing', () => {
       'Sub-pod',
       'Company',
       'Email',
-      'Role',
+      null,
     ])
   })
 
@@ -253,29 +253,29 @@ describe('CSV and Excel import parsing', () => {
     ])
   })
 
-  it('detects required LP tracker fields from client exports', () => {
-    const mapping = detectColumns(['KV Status', 'Contact Source', 'Company LinkedIn', 'Company Overview', 'Investments'])
+  it('detects selected LP tracker fields from client exports', () => {
+    const mapping = detectColumns(['Fund Type', 'Assistant Info', 'Global Region', 'Upwork Link', 'Task Content'])
 
     expect(mapping.map(m => m.targetField)).toEqual([
-      'KV Status',
-      'Contact Source',
-      'Company LinkedIn',
-      'Company Overview',
-      'Corresponding Investments',
+      'Fund Type',
+      'Assistant Info',
+      'Global Region',
+      'Upwork Link',
+      'ClickUp Task Content',
     ])
   })
 
-  it('prefers exact first-name columns over generic name aliases', () => {
+  it('prefers full-name columns over separate first-name aliases when both exist', () => {
     const mapping = detectColumns(['Name', 'First Name', 'Company Name'])
 
     expect(mapping.map(m => m.targetField)).toEqual([
-      null,
       'First Name',
+      null,
       'Company',
     ])
   })
 
-  it('uses generic Name as a row-level fallback when First Name is blank', async () => {
+  it('uses generic Name as the full-name source even when First Name columns are present', async () => {
     const parsed = parseCSV('Name,First Name,Last Name,Email,Pod\nMaya Fullname,, ,maya@example.com,MAPS\nGeneric Name,Jordan,Lee,jordan@example.com,LPs\n')
     const mapping = detectColumns(parsed.headers)
     const podMap = new Map([
@@ -300,11 +300,11 @@ describe('CSV and Excel import parsing', () => {
     })
     expect(records[0].notes).toBeNull()
     expect(records[1]).toMatchObject({
-      name: 'Jordan Lee',
-      first_name: 'Jordan',
-      last_name: 'Lee',
+      name: 'Generic Name',
+      first_name: 'Generic Name',
+      last_name: null,
       list_ids: ['pod-lps'],
-      notes: 'Name: Generic Name',
+      notes: null,
     })
   })
 
@@ -358,9 +358,9 @@ describe('bulk contact import', () => {
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-family-offices'],
-      last_contacted_at: '2026-05-01',
-      contact_frequency: 'Monthly',
-      next_action: 'Send LP update',
+      last_contacted_at: null,
+      contact_frequency: null,
+      next_action: null,
       import_batch_id: 'batch-test',
       import_source: 'csv',
     })
@@ -395,10 +395,10 @@ describe('bulk contact import', () => {
     })
   })
 
-  it('stores approved LP tracker fields in controlled contact custom fields', async () => {
+  it('stores selected LP tracker fields in controlled contact custom fields', async () => {
     const parsed = parseCSV([
-      'Name,Company,KV Status,Commitment Amount,Email,Contact Source,Company LinkedIn,Company Overview,Sub Pod,Notes,Investment Entity,SPV Investor,Company Type,Job Description,Kinship Investor,SPV Distribution List,Summary,Next Step',
-      'Ivan Soto-Wright,MoonPay,Closed/Won,$500000,ivan@navihold.vc,Business card,https://linkedin.com/company/moonpay,"MoonPay public overview",LP Internal,Advisor notes,"Navihold Ventures, LLC",TeraWulf,Financial technology,"MoonPay CEO",Yes,No,"Committed through Navihold","Complete onboarding"',
+      'Name,Company,Email,Sub Pod,Fund Type,Assistant Info,Global Region,Address,Upwork Link,SPV Investor,SPV Investor Flag,LinkedIn Labels,Task Content',
+      'Ivan Soto-Wright,MoonPay,ivan@navihold.vc,LP Internal,Fund I,"Assistant notes",ME,"Miami HQ",https://upwork.example/ivan,TeraWulf,Yes,"Founder; Investor","Updates 2024\nJul 19 - Sent deck"',
     ].join('\n'))
     const mapping = detectColumns(parsed.headers)
     const categoryMap = new Map([[normalize('LP Internal'), 'cat-lp-internal']])
@@ -413,31 +413,27 @@ describe('bulk contact import', () => {
       categoryPodMap,
     })
 
-    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], interactionsImported: 1 })
     const [records] = mockedCreateContactsBulk.mock.calls[0]
     expect(records[0]).toMatchObject({
       name: 'Ivan Soto-Wright',
       first_name: 'Ivan Soto-Wright',
       company: 'MoonPay',
       email: 'ivan@navihold.vc',
-      notes: 'Advisor notes',
+      notes: null,
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-lp-internal'],
       spv_investor: ['TeraWulf'],
       custom_fields: {
-        fundraiseStatus: 'Closed/Won',
-        investmentAmount: '$500000',
-        investmentEntity: 'Navihold Ventures, LLC',
-        contactSource: 'Business Card',
-        companyLinkedIn: 'https://linkedin.com/company/moonpay',
-        companyOverview: 'MoonPay public overview',
-        companyType: 'Financial technology',
-        jobDescription: 'MoonPay CEO',
-        kinshipInvestor: true,
-        spvDistributionList: false,
-        summary: 'Committed through Navihold',
-        nextStep: 'Complete onboarding',
+        fundType: 'Fund I',
+        assistantInfo: 'Assistant notes',
+        globalRegionDetail: 'ME',
+        address: 'Miami HQ',
+        upworkLink: 'https://upwork.example/ivan',
+        spvInvestorFlag: true,
+        linkedInLabels: ['Founder', 'Investor'],
+        clickupTaskContent: 'Updates 2024\nJul 19 - Sent deck',
       },
     })
   })
@@ -468,7 +464,7 @@ describe('bulk contact import', () => {
     expect(touchpoints.every(t => t.source === 'Manual')).toBe(true)
   })
 
-  it('digests ClickUp LP export headers into controlled contact fields', async () => {
+  it('digests selected ClickUp LP export headers and skips unselected columns', async () => {
     const parsed = parseCSV([
       [
         'Task Type',
@@ -549,8 +545,8 @@ describe('bulk contact import', () => {
     const [records] = mockedCreateContactsBulk.mock.calls[0]
     expect(records[0]).toMatchObject({
       name: 'Ivan Soto-Wright',
-      first_name: 'Ivan',
-      last_name: 'Soto-Wright',
+      first_name: 'Ivan Soto-Wright',
+      last_name: null,
       email: 'ivan@navihold.vc',
       phone: '+1 555 0100',
       company: 'MoonPay',
@@ -562,24 +558,17 @@ describe('bulk contact import', () => {
       category_ids: ['cat-lp-internal'],
       spv_investor: ['TeraWulf'],
       custom_fields: {
-        clickupTaskType: 'Person',
-        clickupTaskId: 'abc123',
-        clickupStatus: 'FOR CONNECTING',
         clickupTaskContent: 'Long task body',
         linkedInLabels: ['Founder', 'Investor'],
-        fundraiseStatus: 'Closed',
-        kvLpStatus: 'First Close Committed',
-        investmentEntity: 'Navihold Ventures LLC',
         spvInvestorFlag: true,
         notables: 'Important note',
         address: 'Miami HQ',
-        likelihood: 'Medium-High',
         city: 'Miami',
         category: 'Capital Investor',
-        summary: 'Summary text',
-        tldr: 'TLDR text',
       },
     })
+    expect(records[0].custom_fields).not.toHaveProperty('clickupTaskId')
+    expect(records[0].custom_fields).not.toHaveProperty('summary')
   })
 
   it('imports ClickUp update blocks into Supabase-backed recent activity', async () => {
@@ -655,11 +644,10 @@ describe('bulk contact import', () => {
       email: 'sultanfsa@gmail.com',
       custom_fields: {
         clickupTaskContent: 'Updates 2024\nJul 19 - Sent deck',
-        correspondingInvestments: ['Goop', 'Figs'],
       },
     })
-    expect(records[0].notes).toContain('Source Sheet: All LPs')
-    expect(records[0].notes).toContain('Source Sheet: LP Investments')
+    expect(records[0].notes).toBeNull()
+    expect(records[0].custom_fields).not.toHaveProperty('correspondingInvestments')
     expect(mockedLogInteraction).toHaveBeenCalledWith('created-0', expect.objectContaining({
       date: '2024-07-19',
       type: 'email',
@@ -667,7 +655,7 @@ describe('bulk contact import', () => {
     }))
   })
 
-  it('digests campaign-pod client sheets without creating extra contact fields', async () => {
+  it('skips campaign-specific client sheet columns that are outside the approved field list', async () => {
     const parsed = parseCSV([
       'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',
       'Ivan Soto-Wright,MoonPay,ivan@moonpay.com,Mark Suster,Advisor to MoonPay,Kinship Fund Pipeline | LP Internal | SPV Investor,Closed/Won,500000',
@@ -692,24 +680,21 @@ describe('bulk contact import', () => {
       campaignMap,
     })
 
-    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 1 })
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
     const [records] = mockedCreateContactsBulk.mock.calls[0]
     expect(records[0]).toMatchObject({
       name: 'Ivan Soto-Wright',
       first_name: 'Ivan Soto-Wright',
       company: 'MoonPay',
       recommended_by: 'Mark Suster',
-      intel_notes: 'Advisor to MoonPay',
-      list_ids: ['pod-lps'],
-      primary_list_id: 'pod-lps',
-      category_ids: ['cat-lp-internal', 'cat-spv-investor'],
+      intel_notes: null,
+      list_ids: [],
+      primary_list_id: null,
+      category_ids: [],
       custom_fields: {},
     })
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'created-0')
-    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
-      'cc-campaign-fund-created-0',
-      { custom_fields: { commitmentAmount: 500000, campaignStatus: 'Closed/Won' } },
-    )
+    expect(mockedAddContactToCampaign).not.toHaveBeenCalled()
+    expect(mockedUpdateCampaignContact).not.toHaveBeenCalled()
   })
 
   it('updates existing contacts with missing spreadsheet data instead of duplicating them', async () => {
@@ -750,17 +735,19 @@ describe('bulk contact import', () => {
       campaignMap,
     })
 
-    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1, campaignLinked: 1 })
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1 })
     expect(mockedCreateContactsBulk).not.toHaveBeenCalled()
     expect(mockedUpdateContact).toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
       company: 'MoonPay',
       recommended_by: 'Mark Suster',
+    }))
+    expect(mockedUpdateContact).not.toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
       intel_notes: 'Advisor to MoonPay',
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-lp-internal'],
     }))
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-ivan')
+    expect(mockedAddContactToCampaign).not.toHaveBeenCalled()
   })
 
   it('keeps importing when a spreadsheet pod or sub-pod does not exist', async () => {
@@ -790,7 +777,7 @@ describe('bulk contact import', () => {
     })
   })
 
-  it('keeps unmapped spreadsheet columns in Notes without creating custom fields', async () => {
+  it('skips unmapped spreadsheet columns without creating notes or custom fields', async () => {
     const parsed = parseCSV('Name,Email,Company,Nickname,Pod\nAlex Rivera,alex@example.com,Rivera Capital,AR,LPs\n')
     const mapping = detectColumns(parsed.headers)
     const podMap = new Map([[normalize('LPs'), 'pod-lps']])
@@ -808,7 +795,7 @@ describe('bulk contact import', () => {
       name: 'Alex Rivera',
       email: 'alex@example.com',
       company: 'Rivera Capital',
-      notes: 'Nickname: AR',
+      notes: null,
       custom_fields: {},
     })
     expect(records[0].custom_fields).not.toHaveProperty('Nickname')
@@ -861,14 +848,14 @@ describe('bulk contact import', () => {
       name: 'Morgan Lee',
       first_name: 'Morgan Lee',
       email: 'morgan@example.com',
-      notes: 'Random Notes: Met through the annual summit',
+      notes: null,
       custom_fields: {},
       list_ids: ['pod-default'],
     })
     expect(records[0]).not.toHaveProperty('invented_field')
   })
 
-  it('imports vague rows with fallback names and preserves the source data in Notes', async () => {
+  it('imports vague rows with fallback names while skipping unapproved source data', async () => {
     const parsed = parseCSV('Vague Info,Pod\nMet at a founder dinner and asked for the LP update,LPs\n')
     const mapping = detectColumns(parsed.headers)
     const podMap = new Map([[normalize('LPs'), 'pod-lps']])
@@ -884,7 +871,7 @@ describe('bulk contact import', () => {
     const [records] = mockedCreateContactsBulk.mock.calls[0]
     expect(records[0]).toMatchObject({
       name: 'Imported Contact Row 2',
-      notes: 'Vague Info: Met at a founder dinner and asked for the LP update',
+      notes: null,
       list_ids: ['pod-lps'],
     })
   })
@@ -907,7 +894,7 @@ describe('bulk contact import', () => {
       first_name: 'Ana Maria',
       last_name: 'Gomez',
       company: 'Kinship Ventures',
-      notes: 'Second Name: Luisa',
+      notes: null,
     })
   })
 
