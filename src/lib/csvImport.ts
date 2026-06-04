@@ -39,7 +39,7 @@ const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Rec
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
   'First Name', 'Last Name', 'Email', 'Phone', 'Company',
   'Pod', 'Sub-pod',
-  'ClickUp Task Content', 'SPV Investor', 'Fund Type',
+  'Task Content', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
 ])
 
 const KNOWN_ALIASES: Record<string, string> = {

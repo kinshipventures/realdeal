@@ -261,7 +261,7 @@ describe('CSV and Excel import parsing', () => {
       'Assistant Info',
       'Global Region',
       'Upwork Link',
-      'ClickUp Task Content',
+      'Task Content',
     ])
   })
 
@@ -397,7 +397,7 @@ describe('bulk contact import', () => {
 
   it('stores selected LP tracker fields in controlled contact custom fields', async () => {
     const parsed = parseCSV([
-      'Name,Company,Email,Sub Pod,Fund Type,Assistant Info,Global Region,Address,Upwork Link,SPV Investor,SPV Investor Flag,LinkedIn Labels,Task Content',
+      'Name,Company,Email,Sub Pod,Fund Type,Assistant Info,Global Region,Address,Upwork Link,SPV Investor,SPV INVESTOR (checkbox),LinkedIn Labels,Task Content',
       'Ivan Soto-Wright,MoonPay,ivan@navihold.vc,LP Internal,Fund I,"Assistant notes",ME,"Miami HQ",https://upwork.example/ivan,TeraWulf,Yes,"Founder; Investor","Updates 2024\nJul 19 - Sent deck"',
     ].join('\n'))
     const mapping = detectColumns(parsed.headers)

@@ -1,4 +1,4 @@
-export type LpTrackerFieldType = 'text' | 'long_text' | 'checkbox' | 'multi_select'
+export type LpTrackerFieldType = 'text' | 'long_text' | 'checkbox' | 'multi_select' | 'select' | 'url'
 
 export type LpTrackerFieldDefinition = {
   key: string
@@ -23,7 +23,7 @@ export const LP_TRACKER_FIELDS = [
     target: 'City',
     label: 'City',
     section: 'Investor Profile',
-    type: 'text',
+    type: 'select',
     aliases: ['city', 'city dropdown', 'home city', 'work city', 'town', 'metro'],
   },
   {
@@ -39,7 +39,7 @@ export const LP_TRACKER_FIELDS = [
     target: 'Category',
     label: 'Category',
     section: 'Investor Profile',
-    type: 'text',
+    type: 'select',
     aliases: ['category', 'categories', 'contact category', 'lp category'],
   },
   {
@@ -47,7 +47,7 @@ export const LP_TRACKER_FIELDS = [
     target: 'Global Region',
     label: 'Global Region',
     section: 'Investor Profile',
-    type: 'text',
+    type: 'select',
     aliases: ['global region', 'global region detail', 'region detail', 'region'],
   },
   {
@@ -55,13 +55,13 @@ export const LP_TRACKER_FIELDS = [
     target: 'Fund Type',
     label: 'Fund Type',
     section: 'Fund Details',
-    type: 'text',
+    type: 'select',
     aliases: ['fund type', 'fund', 'fund category'],
   },
   {
     key: 'spvInvestorFlag',
-    target: 'SPV Investor Flag',
-    label: 'SPV Investor Flag',
+    target: 'SPV Investor (checkbox)',
+    label: 'SPV Investor',
     section: 'Fund Details',
     type: 'checkbox',
     aliases: ['spv investor flag', 'spv investor checkbox', 'spv investor boolean'],
@@ -87,13 +87,13 @@ export const LP_TRACKER_FIELDS = [
     target: 'Upwork Link',
     label: 'Upwork Link',
     section: 'Operations',
-    type: 'text',
+    type: 'url',
     aliases: ['upwork link'],
   },
   {
     key: 'clickupTaskContent',
-    target: 'ClickUp Task Content',
-    label: 'ClickUp Task Content',
+    target: 'Task Content',
+    label: 'Task Content',
     section: 'ClickUp Source',
     type: 'long_text',
     aliases: ['task content', 'task description', 'clickup task content', 'updates', 'recent activity', 'activity log', 'touchpoints'],

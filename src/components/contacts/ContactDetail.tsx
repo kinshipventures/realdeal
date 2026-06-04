@@ -4,9 +4,9 @@ import { type Category, type Contact, type Interaction, type Pod } from '../../l
 import { getInteractions } from '../../lib/data'
 import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBreakdown } from '../../lib/equity'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
-import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeLpTrackerFieldValue, type LpTrackerFieldDefinition } from '../../lib/lpTrackerFields'
+import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeLpTrackerFieldValue, trimImportListItem, type LpTrackerFieldDefinition } from '../../lib/lpTrackerFields'
 
-import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact } from '../../lib/data'
+import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact, getContacts } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
@@ -88,7 +88,13 @@ interface Props {
   onCampaignContactUpdated?: (updated: CampaignContact) => void
 }
 
-type SaveError = { field: keyof Contact; value: string | null } | null
+type SaveError = { field: keyof Contact; value: string | string[] | null } | null
+
+type FieldRenderOptions = {
+  multi?: boolean
+  inputType?: 'text' | 'email' | 'tel' | 'url'
+  options?: string[]
+}
 
 type ShellBounds = {
   left: number
@@ -99,6 +105,15 @@ type ShellBounds = {
 
 function uniqueIds(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))]
+}
+
+function uniqueContactsById(values: Contact[]): Contact[] {
+  const seen = new Set<string>()
+  return values.filter(contact => {
+    if (seen.has(contact.id)) return false
+    seen.add(contact.id)
+    return true
+  })
 }
 
 function parentPodIdsForCategories(categoryIds: string[], categories: Category[]): string[] {
@@ -132,6 +147,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [contactCampaignLinks, setContactCampaignLinks] = useState<CampaignContact[]>([])
   const [campaignStagesMap, setCampaignStagesMap] = useState<Record<string, CampaignStage[]>>({})
   const [availableCategories, setAvailableCategories] = useState<Category[]>(providedCategories ?? [])
+  const [contactsForOptions, setContactsForOptions] = useState<Contact[]>(contact ? [contact] : [])
   const [showCampaignPicker, setShowCampaignPicker] = useState(false)
   const [addingToCampaign, setAddingToCampaign] = useState(false)
   const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
@@ -153,6 +169,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   useEffect(() => {
     getCampaigns().then(setCampaigns)
   }, [])
+
+  useEffect(() => {
+    let canceled = false
+    getContacts()
+      .then(fetched => {
+        if (canceled) return
+        setContactsForOptions(contact ? uniqueContactsById([contact, ...fetched]) : fetched)
+      })
+      .catch(() => {
+        if (!canceled && contact) setContactsForOptions([contact])
+      })
+    return () => { canceled = true }
+  }, [contact?.id])
 
   useEffect(() => {
     if (providedCategories) {
@@ -263,7 +292,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }, [])
 
-  // Auto-save on blur for existing contacts — generation counter prevents stale responses from overwriting
+  // Auto-save on blur for existing contacts; generation counter prevents stale responses from overwriting
   function handleBlur(key: keyof Contact, value: string) {
     const v = value.trim() || null
     setDraft(prev => ({ ...prev, [key]: v }))
@@ -290,13 +319,80 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       .catch(() => {})  // error state persists, user can retry again
   }
 
-  // Field renderer — label + display/input based on editingField
-  function field(key: keyof Contact, label: string, multi = false) {
+  // Field renderer: label plus display/input based on editingField
+  function splitLabelInput(value: string): string[] {
+    return value
+      .split(/[;,|\n]+/)
+      .map(trimImportListItem)
+      .filter(Boolean)
+  }
+
+  function mergeOptions(values: unknown[], extras: unknown[] = []): string[] {
+    const options = [...values, ...extras].flatMap(value => Array.isArray(value) ? value : [value])
+      .map(value => String(value ?? '').trim())
+      .filter(Boolean)
+    return [...new Set(options)].sort((a, b) => a.localeCompare(b))
+  }
+
+  function customFieldOptions(field: LpTrackerFieldDefinition): string[] {
+    const current = getDraftCustomFields()[field.key]
+    return mergeOptions(
+      contactsForOptions.map(optionContact => {
+        const fields = optionContact.custom_fields
+        if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return null
+        return (fields as Record<string, unknown>)[field.key]
+      }),
+      [current],
+    )
+  }
+
+  function contactFieldOptions(key: keyof Contact, extras: unknown[] = []): string[] {
+    return mergeOptions(
+      contactsForOptions.map(optionContact => optionContact[key]),
+      [draft[key], ...extras],
+    )
+  }
+
+  function selectedPodNames(): string[] {
+    return (draft.list_ids ?? [])
+      .map(podId => pods.find(pod => pod.id === podId)?.name ?? '')
+      .filter(Boolean)
+  }
+
+  function selectedPrimaryPodName(): string {
+    return pods.find(pod => pod.id === draft.primary_list_id)?.name ?? selectedPodNames()[0] ?? ''
+  }
+
+  async function handleArrayBlur(key: keyof Contact, value: string) {
+    const nextValue = splitLabelInput(value)
+    const persistedValue = nextValue.length > 0 ? nextValue : null
+    setDraft(prev => ({ ...prev, [key]: persistedValue }))
+    setEditingField(null)
+    if (!isNew && contact) {
+      const gen = ++saveGenRef.current
+      updateContact(contact.id, { [key]: persistedValue } as Partial<Contact>)
+        .then(updated => {
+          if (gen !== saveGenRef.current) return
+          if (saveError?.field === key) setSaveError(null)
+          onSaved(updated)
+        })
+        .catch(() => {
+          if (gen !== saveGenRef.current) return
+          setSaveError({ field: key, value: persistedValue })
+        })
+    }
+  }
+
+  function field(key: keyof Contact, label: string, renderOptions: FieldRenderOptions | boolean = {}) {
+    const options = typeof renderOptions === 'boolean' ? { multi: renderOptions } : renderOptions
+    const multi = options.multi ?? false
     const val = (draft[key] as string | null | undefined) ?? null
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
     const isEnriched = enrichedFields.has(key)
     const fieldKey = key as string
+    const selectOptions = options.options ?? []
+    const isSelect = selectOptions.length > 0
 
     const inputStyle = {
       width: '100%',
@@ -371,7 +467,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         </div>
         <div style={{ minWidth: 0 }}>
           {editing ? (
-            multi ? (
+            isSelect ? (
+              <select
+                autoFocus
+                defaultValue={val ?? ''}
+                onChange={e => handleBlur(key, e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">{`add ${label.toLowerCase()}`}</option>
+                {selectOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            ) : multi ? (
               <textarea
                 autoFocus
                 defaultValue={val ?? ''}
@@ -383,7 +491,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) : (
               <input
                 autoFocus
-                type="text"
+                type={options.inputType ?? 'text'}
                 defaultValue={val ?? ''}
                 onBlur={e => handleBlur(key, e.target.value)}
                 onKeyDown={onKeyDown}
@@ -445,6 +553,133 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
+  function displayRow(label: string, value: string | null) {
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: 'center',
+        padding: '13px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>{label}</div>
+        </div>
+        <div style={{
+          fontSize: 14,
+          color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+          minHeight: 22,
+          lineHeight: 1.45,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {value || `add ${label.toLowerCase()}`}
+        </div>
+      </div>
+    )
+  }
+
+  function arrayField(key: keyof Contact, label: string, options: string[] = []) {
+    const rawValue = draft[key]
+    const values = Array.isArray(rawValue) ? rawValue.map(String) : []
+    const value = values.join(', ')
+    const editing = editingField === key
+    const hasSaveError = saveError?.field === key
+    const datalistId = `${String(key)}-options`
+    const inputStyle = {
+      width: '100%',
+      background: 'var(--tint)',
+      border: '1px solid var(--edge-strong)',
+      borderRadius: 6,
+      color: 'var(--color-text-primary)',
+      fontSize: 14,
+      lineHeight: 1.45,
+      padding: '7px 10px',
+      outline: 'none',
+      fontFamily: 'inherit',
+    }
+
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: editing ? 'start' : 'center',
+        padding: '13px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>{label}</div>
+          {hasSaveError && (
+            <button
+              type="button"
+              onClick={handleRetrySave}
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: '#D93025',
+                letterSpacing: '0.01em',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              Could not save. Try again.
+            </button>
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          {editing ? (
+            <>
+              <input
+                autoFocus
+                type="text"
+                defaultValue={value}
+                list={options.length > 0 ? datalistId : undefined}
+                onBlur={event => handleArrayBlur(key, event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Escape') {
+                    event.currentTarget.value = value
+                    event.currentTarget.blur()
+                    event.stopPropagation()
+                  }
+                }}
+                style={inputStyle}
+              />
+              {options.length > 0 && (
+                <datalist id={datalistId}>
+                  {options.map(option => (
+                    <option key={option} value={option} />
+                  ))}
+                </datalist>
+              )}
+            </>
+          ) : (
+            <div
+              onClick={() => setEditingField(key)}
+              style={{
+                fontSize: 14,
+                color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'text',
+                minHeight: 22,
+                lineHeight: 1.45,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {value || `add ${label.toLowerCase()}`}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   function getDraftCustomFields(): Record<string, unknown> {
     const fields = draft.custom_fields
     if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
@@ -483,6 +718,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const editing = editingCustomField === fieldDef.key
     const hasSaveError = customFieldSaveError === fieldDef.key
     const multi = fieldDef.type === 'long_text' || fieldDef.type === 'multi_select'
+    const selectOptions = fieldDef.type === 'select' ? customFieldOptions(fieldDef) : []
 
     const inputStyle = {
       width: '100%',
@@ -564,6 +800,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {rawValue === true ? 'Yes' : 'No'}
             </label>
           ) : editing ? (
+            fieldDef.type === 'select' ? (
+              <select
+                autoFocus
+                defaultValue={value}
+                onChange={event => handleCustomFieldSave(fieldDef, event.target.value)}
+                style={inputStyle}
+              >
+                <option value="">{`add ${fieldDef.label.toLowerCase()}`}</option>
+                {selectOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            ) :
             multi ? (
               <textarea
                 autoFocus
@@ -576,7 +825,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) : (
               <input
                 autoFocus
-                type="text"
+                type={fieldDef.type === 'url' ? 'url' : 'text'}
                 defaultValue={value}
                 onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
                 onKeyDown={onKeyDown}
@@ -615,9 +864,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return (
       <div style={sectionShell}>
         <div style={sectionHeader}>
-          <div style={sectionLabel}>{section.toLowerCase()}</div>
+          <div style={sectionLabel}>{section === 'ClickUp Source' ? 'task content' : section.toLowerCase()}</div>
         </div>
         {fields.map(fieldDef => customField(fieldDef))}
+        {section === 'Fund Details' && arrayField('spv_investor', 'SPV Investor Labels', contactFieldOptions('spv_investor'))}
       </div>
     )
   }
@@ -721,11 +971,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         category_ids: categoryIds,
         primary_list_id: draft.primary_list_id ?? listIds[0] ?? null, cadence_override: null,
         ring_ids: draft.ring_ids ?? [],
-        first_name: null, last_name: null, linkedin: null,
-        country: null, global_region: null, gender: null,
+        first_name: null, last_name: null, linkedin: draft.linkedin ?? null,
+        country: draft.country ?? null, global_region: null, gender: draft.gender ?? null,
         introduced_by: null, intel_notes: null, relationship_owner: null,
         contact_frequency: null, next_follow_up_date: null, next_action: null,
-        kv_fund_investor: null, spv_investor: null, needs_review: false,
+        kv_fund_investor: null, spv_investor: draft.spv_investor ?? null, needs_review: false,
         type: 'Contact', status: 'Pending',
         company_record_id: null, company_ids: [], industry: null, stage: null,
         ticker: null, domain: null, email_2: null, email_3: null,
@@ -859,7 +1109,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           {editing ? (
             <input
               autoFocus
-              type="text"
+              type="url"
               defaultValue={val ?? ''}
               placeholder="https://linkedin.com/in/..."
               onBlur={e => handleBlur('linkedin', e.target.value)}
@@ -947,8 +1197,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       </div>
     )
   }
-
-  const hasFundTags = !!(draft.spv_investor && draft.spv_investor.length > 0)
 
   const bounds = shellBounds ?? {
     left: 0,
@@ -1260,7 +1508,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )}
             </div>
 
-            {/* Equity score in header — existing contacts only */}
+            {/* Equity score in header for existing contacts only */}
             {!isNew && (
               <div style={{
                 display: 'flex',
@@ -1300,31 +1548,36 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={sectionShell}>
                 <div style={sectionHeader}>
+                  <div style={sectionLabel}>contact information</div>
+                </div>
+                {field('name', 'Name')}
+                {field('company', 'Company')}
+              </div>
+
+              <div style={sectionShell}>
+                <div style={sectionHeader}>
                   <div style={sectionLabel}>ways to reach them</div>
                 </div>
-                {field('email', 'Email')}
-                {field('phone', 'Phone')}
+                {field('email', 'Email', { inputType: 'email' })}
+                {field('phone', 'Phone', { inputType: 'tel' })}
                 {linkedinField()}
-                {field('website', 'Website')}
-                {field('country', 'Country')}
-                {draft.gender && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '132px minmax(0, 1fr)', gap: 14, alignItems: 'center', padding: '12px 18px' }}>
-                    <div style={rowLabelWrap}><div style={rowLabel}>Gender</div></div>
-                    <div style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.45 }}>{draft.gender}</div>
-                  </div>
-                )}
+                {field('website', 'Website', { inputType: 'url' })}
+                {field('country', 'Country', { options: contactFieldOptions('country') })}
+                {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
               </div>
 
               {customFieldSection('Investor Profile')}
               {customFieldSection('Fund Details')}
               {customFieldSection('Operations')}
-              {customFieldSection('ClickUp Source', false)}
+              {customFieldSection('ClickUp Source')}
 
               {pods.length > 0 && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
-                    <div style={sectionLabel}>circles</div>
+                    <div style={sectionLabel}>lists</div>
                   </div>
+                  {displayRow('List', selectedPrimaryPodName())}
+                  {displayRow('Lists', selectedPodNames().join(', '))}
                   <div style={{ padding: '16px 18px' }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {pods.map(pod => {
@@ -1377,7 +1630,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                     {(draft.list_ids ?? []).length > 1 && (
                       <div style={{ marginTop: 12 }}>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>main circle</div>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>list</div>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {(draft.list_ids ?? []).map(podId => {
                             const pod = pods.find(p => p.id === podId)
@@ -1592,25 +1845,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 {field('recommended_by', 'Referred by')}
               </div>
 
-              {hasFundTags && (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>fund connections</div>
-                  </div>
-                  <div style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {draft.spv_investor?.map(tag => (
-                      <span key={tag} style={{
-                        fontSize: 12, fontWeight: 500,
-                        padding: '4px 10px', borderRadius: 100,
-                        background: 'hsla(210, 60%, 50%, 0.08)',
-                        color: 'hsla(210, 60%, 40%, 0.80)',
-                      }}>
-                        SPV: {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -1655,7 +1889,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           </div>
         </div>
 
-        {/* Next Follow-Up bar — pinned at bottom */}
+        {/* Next Follow-Up bar pinned at bottom */}
         {!isNew && contact && (
           <div style={{
             padding: '14px 28px 15px',
@@ -1747,7 +1981,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               </div>
             ) : contact.next_follow_up_date ? (
-              /* Read mode — follow-up exists */
+              /* Read mode: follow-up exists */
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <div
                   style={{ cursor: 'pointer' }}
@@ -1830,7 +2064,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               </div>
             ) : (
-              /* Empty state — no follow-up set */
+              /* Empty state: no follow-up set */
               <button
                 type="button"
                 onClick={() => {
