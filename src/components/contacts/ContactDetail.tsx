@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { type Category, type Contact, type Interaction, type Pod } from '../../lib/types'
 import { getInteractions } from '../../lib/data'
@@ -25,6 +25,8 @@ const RING_COLORS: Record<string, string> = {
   text: '#7B1FA2',
   email: '#1565C0',
 }
+
+const ADD_NEW_OPTION_VALUE = '__realdeal_add_new_option__'
 
 function SegmentedEquityRing({ breakdown, score, size = 72 }: {
   breakdown: EquityBreakdown[]
@@ -141,7 +143,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [deleting, setDeleting] = useState(false)
   const [saveError, setSaveError] = useState<SaveError>(null)
   const [customFieldSaveError, setCustomFieldSaveError] = useState<string | null>(null)
-  const saveGenRef = useRef(0)
+  const [hasPendingContactChanges, setHasPendingContactChanges] = useState(false)
+  const [savingContactInfo, setSavingContactInfo] = useState(false)
+  const [contactSaveError, setContactSaveError] = useState<string | null>(null)
+  const [newOptionTarget, setNewOptionTarget] = useState<string | null>(null)
+  const [newOptionValue, setNewOptionValue] = useState('')
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [contactCampaignLinks, setContactCampaignLinks] = useState<CampaignContact[]>([])
@@ -160,6 +166,20 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [suggestedUpdates, setSuggestedUpdates] = useState<Record<string, { current: string; suggested: string }>>({})
   const [acceptingField, setAcceptingField] = useState<string | null>(null)
   const [shellBounds, setShellBounds] = useState<ShellBounds | null>(null)
+
+  useEffect(() => {
+    if (!contact) return
+    setDraft(contact)
+    setEditingField(null)
+    setEditingCustomField(null)
+    setHasPendingContactChanges(false)
+    setSavingContactInfo(false)
+    setContactSaveError(null)
+    setSaveError(null)
+    setCustomFieldSaveError(null)
+    setNewOptionTarget(null)
+    setNewOptionValue('')
+  }, [contact?.id])
 
   useEffect(() => {
     if (!contact) return
@@ -292,39 +312,74 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }, [])
 
-  // Auto-save on blur for existing contacts; generation counter prevents stale responses from overwriting
+  function markContactInfoChanged() {
+    setHasPendingContactChanges(true)
+    setContactSaveError(null)
+    setSaveError(null)
+    setCustomFieldSaveError(null)
+  }
+
   function handleBlur(key: keyof Contact, value: string) {
     const v = value.trim() || null
     setDraft(prev => ({ ...prev, [key]: v }))
     setEditingField(null)
-    if (!isNew && contact) {
-      const gen = ++saveGenRef.current
-      updateContact(contact.id, { [key]: v } as Partial<Contact>)
-        .then(updated => {
-          if (gen !== saveGenRef.current) return
-          if (saveError?.field === key) setSaveError(null)
-          onSaved(updated)
-        })
-        .catch(() => {
-          if (gen !== saveGenRef.current) return
-          setSaveError({ field: key, value: v })
-        })
-    }
+    setNewOptionTarget(null)
+    setNewOptionValue('')
+    markContactInfoChanged()
   }
 
   function handleRetrySave() {
-    if (!saveError || !contact) return
-    updateContact(contact.id, { [saveError.field]: saveError.value } as Partial<Contact>)
-      .then(updated => { setSaveError(null); onSaved(updated) })
-      .catch(() => {})  // error state persists, user can retry again
+    void handleSaveContactInfo()
+  }
+
+  async function handleSaveContactInfo() {
+    if (!contact || isNew || !hasPendingContactChanges) return
+
+    const nextName = String(draft.name ?? contact.name ?? '').trim()
+    const spvInvestor = Array.isArray(draft.spv_investor)
+      ? draft.spv_investor.map(value => String(value).trim()).filter(Boolean)
+      : []
+
+    setSavingContactInfo(true)
+    setContactSaveError(null)
+    try {
+      const updated = await updateContact(contact.id, {
+        name: nextName || contact.name,
+        email: draft.email ?? null,
+        phone: draft.phone ?? null,
+        company: draft.company ?? null,
+        linkedin: draft.linkedin ?? null,
+        website: draft.website ?? null,
+        country: draft.country ?? null,
+        gender: draft.gender ?? null,
+        recommended_by: draft.recommended_by ?? null,
+        spv_investor: spvInvestor.length > 0 ? spvInvestor : null,
+        custom_fields: getDraftCustomFields(),
+      } as Partial<Contact>)
+      setDraft(updated)
+      setHasPendingContactChanges(false)
+      setSaveError(null)
+      setCustomFieldSaveError(null)
+      setNewOptionTarget(null)
+      setNewOptionValue('')
+      onSaved(updated)
+    } catch {
+      setContactSaveError('Could not save. Try again.')
+    } finally {
+      setSavingContactInfo(false)
+    }
   }
 
   // Field renderer: label plus display/input based on editingField
   function splitLabelInput(value: string): string[] {
-    return value
+    return normalizeLabelValues(value
       .split(/[;,|\n]+/)
       .map(trimImportListItem)
-      .filter(Boolean)
+      .filter(Boolean))
+  }
+
+  function normalizeLabelValues(values: string[]): string[] {
+    return [...new Set(values.map(value => trimImportListItem(String(value))).filter(Boolean))]
   }
 
   function mergeOptions(values: unknown[], extras: unknown[] = []): string[] {
@@ -363,24 +418,183 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return pods.find(pod => pod.id === draft.primary_list_id)?.name ?? selectedPodNames()[0] ?? ''
   }
 
-  async function handleArrayBlur(key: keyof Contact, value: string) {
-    const nextValue = splitLabelInput(value)
+  function beginAddingOption(targetId: string) {
+    setNewOptionTarget(targetId)
+    setNewOptionValue('')
+  }
+
+  function renderAddOptionControl(targetId: string, onAdd: (value: string) => void, placeholder = 'New option') {
+    if (newOptionTarget !== targetId) return null
+
+    function commitNewOption() {
+      const value = newOptionValue.trim()
+      if (!value) return
+      onAdd(value)
+      setNewOptionTarget(null)
+      setNewOptionValue('')
+    }
+
+    return (
+      <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+        <input
+          autoFocus
+          type="text"
+          value={newOptionValue}
+          placeholder={placeholder}
+          onChange={event => setNewOptionValue(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              commitNewOption()
+            }
+            if (event.key === 'Escape') {
+              setNewOptionTarget(null)
+              setNewOptionValue('')
+              event.stopPropagation()
+            }
+          }}
+          style={{
+            flex: '1 1 180px',
+            minWidth: 0,
+            background: 'color-mix(in srgb, var(--surface-panel) 88%, var(--tint) 12%)',
+            border: '1px solid var(--edge-strong)',
+            borderRadius: 8,
+            color: 'var(--color-text-primary)',
+            fontSize: 13,
+            lineHeight: 1.4,
+            padding: '7px 10px',
+            outline: 'none',
+            fontFamily: 'inherit',
+          }}
+        />
+        <button
+          type="button"
+          onClick={commitNewOption}
+          disabled={!newOptionValue.trim()}
+          style={{
+            padding: '7px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--edge-strong)',
+            background: newOptionValue.trim() ? 'var(--color-brand)' : 'var(--tint)',
+            color: newOptionValue.trim() ? '#fff' : 'var(--color-text-tertiary)',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: newOptionValue.trim() ? 'pointer' : 'default',
+            fontFamily: 'inherit',
+          }}
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setNewOptionTarget(null)
+            setNewOptionValue('')
+          }}
+          style={{
+            padding: '7px 10px',
+            borderRadius: 8,
+            border: '1px solid var(--edge)',
+            background: 'transparent',
+            color: 'var(--color-text-secondary)',
+            fontSize: 13,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    )
+  }
+
+  function brandedSelect({
+    value,
+    placeholder,
+    options,
+    targetId,
+    onSelect,
+    onAdd,
+  }: {
+    value: string
+    placeholder: string
+    options: string[]
+    targetId: string
+    onSelect: (value: string) => void
+    onAdd: (value: string) => void
+  }) {
+    return (
+      <>
+        <div style={{ position: 'relative' }}>
+          <select
+            autoFocus
+            value={value}
+            onChange={event => {
+              if (event.target.value === ADD_NEW_OPTION_VALUE) {
+                beginAddingOption(targetId)
+                return
+              }
+              onSelect(event.target.value)
+            }}
+            style={{
+              width: '100%',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              MozAppearance: 'none',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 94%, var(--tint) 6%), color-mix(in srgb, var(--surface-panel) 82%, var(--tint) 18%))',
+              border: '1px solid color-mix(in srgb, var(--edge-strong) 82%, var(--color-brand) 18%)',
+              borderRadius: 9,
+              color: 'var(--color-text-primary)',
+              fontSize: 14,
+              lineHeight: 1.45,
+              padding: '8px 36px 8px 11px',
+              outline: 'none',
+              fontFamily: 'inherit',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.55)',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="">{placeholder}</option>
+            {options.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+            <option value={ADD_NEW_OPTION_VALUE}>+ Add new option...</option>
+          </select>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--color-text-secondary)',
+              pointerEvents: 'none',
+            }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+        {renderAddOptionControl(targetId, onAdd)}
+      </>
+    )
+  }
+
+  function setArrayDraftValue(key: keyof Contact, values: string[], closeEditor = false) {
+    const nextValue = normalizeLabelValues(values)
     const persistedValue = nextValue.length > 0 ? nextValue : null
     setDraft(prev => ({ ...prev, [key]: persistedValue }))
-    setEditingField(null)
-    if (!isNew && contact) {
-      const gen = ++saveGenRef.current
-      updateContact(contact.id, { [key]: persistedValue } as Partial<Contact>)
-        .then(updated => {
-          if (gen !== saveGenRef.current) return
-          if (saveError?.field === key) setSaveError(null)
-          onSaved(updated)
-        })
-        .catch(() => {
-          if (gen !== saveGenRef.current) return
-          setSaveError({ field: key, value: persistedValue })
-        })
-    }
+    if (closeEditor) setEditingField(null)
+    setNewOptionTarget(null)
+    setNewOptionValue('')
+    markContactInfoChanged()
   }
 
   function field(key: keyof Contact, label: string, renderOptions: FieldRenderOptions | boolean = {}) {
@@ -392,7 +606,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const isEnriched = enrichedFields.has(key)
     const fieldKey = key as string
     const selectOptions = options.options ?? []
-    const isSelect = selectOptions.length > 0
+    const isSelect = options.options !== undefined
 
     const inputStyle = {
       width: '100%',
@@ -468,17 +682,14 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         <div style={{ minWidth: 0 }}>
           {editing ? (
             isSelect ? (
-              <select
-                autoFocus
-                defaultValue={val ?? ''}
-                onChange={e => handleBlur(key, e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">{`add ${label.toLowerCase()}`}</option>
-                {selectOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+              brandedSelect({
+                value: val ?? '',
+                placeholder: `add ${label.toLowerCase()}`,
+                options: selectOptions,
+                targetId: `contact:${String(key)}`,
+                onSelect: value => handleBlur(key, value),
+                onAdd: value => handleBlur(key, value),
+              })
             ) : multi ? (
               <textarea
                 autoFocus
@@ -587,7 +798,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const value = values.join(', ')
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
-    const datalistId = `${String(key)}-options`
+    const labelTargetId = `labels:${String(key)}`
+    const labelOptions = mergeOptions(options, values)
     const inputStyle = {
       width: '100%',
       background: 'var(--tint)',
@@ -599,6 +811,46 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       padding: '7px 10px',
       outline: 'none',
       fontFamily: 'inherit',
+    }
+
+    function toggleLabel(option: string) {
+      const nextValues = values.includes(option)
+        ? values.filter(valueItem => valueItem !== option)
+        : [...values, option]
+      setArrayDraftValue(key, nextValues)
+    }
+
+    function renderLabelChip(option: string, selected = true) {
+      return (
+        <button
+          key={option}
+          type="button"
+          onClick={() => editing && toggleLabel(option)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            maxWidth: '100%',
+            padding: '5px 9px',
+            borderRadius: 999,
+            border: selected
+              ? '1px solid color-mix(in srgb, var(--color-brand) 55%, var(--edge) 45%)'
+              : '1px dashed var(--edge)',
+            background: selected
+              ? 'color-mix(in srgb, var(--color-brand) 11%, var(--surface-panel) 89%)'
+              : 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+            color: selected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+            fontSize: 12,
+            fontWeight: selected ? 600 : 500,
+            lineHeight: 1.3,
+            cursor: editing ? 'pointer' : 'default',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{option}</span>
+          {editing && selected && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
+        </button>
+      )
     }
 
     return (
@@ -633,37 +885,91 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         </div>
         <div style={{ minWidth: 0 }}>
           {editing ? (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {labelOptions.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {labelOptions.map(option => renderLabelChip(option, values.includes(option)))}
+                </div>
+              )}
               <input
-                autoFocus
                 type="text"
-                defaultValue={value}
-                list={options.length > 0 ? datalistId : undefined}
-                onBlur={event => handleArrayBlur(key, event.target.value)}
+                placeholder={`Add ${label.toLowerCase()} separated by commas`}
+                onBlur={event => {
+                  if (!event.target.value.trim()) return
+                  setArrayDraftValue(key, [...values, ...splitLabelInput(event.target.value)])
+                  event.target.value = ''
+                }}
                 onKeyDown={event => {
-                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    if (event.currentTarget.value.trim()) {
+                      setArrayDraftValue(key, [...values, ...splitLabelInput(event.currentTarget.value)])
+                      event.currentTarget.value = ''
+                    }
+                  }
                   if (event.key === 'Escape') {
-                    event.currentTarget.value = value
-                    event.currentTarget.blur()
+                    setEditingField(null)
                     event.stopPropagation()
                   }
                 }}
                 style={inputStyle}
               />
-              {options.length > 0 && (
-                <datalist id={datalistId}>
-                  {options.map(option => (
-                    <option key={option} value={option} />
-                  ))}
-                </datalist>
-              )}
-            </>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => beginAddingOption(labelTargetId)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 999,
+                    border: '1px dashed var(--edge-strong)',
+                    background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Add label
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingField(null)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 999,
+                    border: '1px solid var(--edge)',
+                    background: 'transparent',
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+              {renderAddOptionControl(labelTargetId, option => setArrayDraftValue(key, [...values, option]), 'New label')}
+            </div>
+          ) : value ? (
+            <div
+              onClick={() => setEditingField(key)}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 6,
+                minHeight: 22,
+                cursor: 'text',
+              }}
+            >
+              {values.map(option => renderLabelChip(option))}
+            </div>
           ) : (
             <div
               onClick={() => setEditingField(key)}
               style={{
                 fontSize: 14,
-                color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                color: 'var(--color-text-tertiary)',
                 cursor: 'text',
                 minHeight: 22,
                 lineHeight: 1.45,
@@ -672,7 +978,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 whiteSpace: 'nowrap',
               }}
             >
-              {value || `add ${label.toLowerCase()}`}
+              {`add ${label.toLowerCase()}`}
             </div>
           )}
         </div>
@@ -686,10 +992,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return fields as Record<string, unknown>
   }
 
-  async function handleCustomFieldSave(field: LpTrackerFieldDefinition, rawValue: string | boolean) {
-    const value = typeof rawValue === 'boolean'
-      ? rawValue
-      : normalizeLpTrackerFieldValue(field, rawValue)
+  function handleCustomFieldSave(field: LpTrackerFieldDefinition, rawValue: string | boolean | string[]) {
+    const value = Array.isArray(rawValue)
+      ? normalizeLabelValues(rawValue)
+      : typeof rawValue === 'boolean'
+        ? rawValue
+        : normalizeLpTrackerFieldValue(field, rawValue)
     const nextCustomFields = { ...getDraftCustomFields() }
     if (hasLpTrackerValue(value)) {
       nextCustomFields[field.key] = value
@@ -699,16 +1007,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
     setDraft(prev => ({ ...prev, custom_fields: nextCustomFields }))
     setEditingCustomField(null)
-
-    if (!isNew && contact) {
-      try {
-        const updated = await updateContact(contact.id, { custom_fields: nextCustomFields } as Partial<Contact>)
-        setCustomFieldSaveError(null)
-        onSaved(updated)
-      } catch {
-        setCustomFieldSaveError(field.key)
-      }
-    }
+    setNewOptionTarget(null)
+    setNewOptionValue('')
+    markContactInfoChanged()
   }
 
   function customField(fieldDef: LpTrackerFieldDefinition) {
@@ -719,6 +1020,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const hasSaveError = customFieldSaveError === fieldDef.key
     const multi = fieldDef.type === 'long_text' || fieldDef.type === 'multi_select'
     const selectOptions = fieldDef.type === 'select' ? customFieldOptions(fieldDef) : []
+    const multiSelectValues = fieldDef.type === 'multi_select'
+      ? Array.isArray(rawValue)
+        ? rawValue.map(String)
+        : splitLabelInput(value)
+      : []
+    const multiSelectOptions = fieldDef.type === 'multi_select' ? mergeOptions(customFieldOptions(fieldDef), multiSelectValues) : []
+    const multiSelectTargetId = `custom-labels:${fieldDef.key}`
 
     const inputStyle = {
       width: '100%',
@@ -748,6 +1056,51 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       }
     }
 
+    function setCustomLabelValues(values: string[]) {
+      handleCustomFieldSave(fieldDef, normalizeLabelValues(values))
+    }
+
+    function toggleCustomLabel(option: string) {
+      const nextValues = multiSelectValues.includes(option)
+        ? multiSelectValues.filter(valueItem => valueItem !== option)
+        : [...multiSelectValues, option]
+      setCustomLabelValues(nextValues)
+      setEditingCustomField(fieldDef.key)
+    }
+
+    function renderCustomLabelChip(option: string, selected = true) {
+      return (
+        <button
+          key={option}
+          type="button"
+          onClick={() => editing && toggleCustomLabel(option)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            maxWidth: '100%',
+            padding: '5px 9px',
+            borderRadius: 999,
+            border: selected
+              ? '1px solid color-mix(in srgb, var(--color-brand) 55%, var(--edge) 45%)'
+              : '1px dashed var(--edge)',
+            background: selected
+              ? 'color-mix(in srgb, var(--color-brand) 11%, var(--surface-panel) 89%)'
+              : 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+            color: selected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+            fontSize: 12,
+            fontWeight: selected ? 600 : 500,
+            lineHeight: 1.3,
+            cursor: editing ? 'pointer' : 'default',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{option}</span>
+          {editing && selected && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
+        </button>
+      )
+    }
+
     return (
       <div
         key={fieldDef.key}
@@ -765,7 +1118,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           {hasSaveError && (
             <button
               type="button"
-              onClick={() => handleCustomFieldSave(fieldDef, value)}
+              onClick={handleRetrySave}
               style={{
                 fontSize: 11,
                 fontWeight: 400,
@@ -801,17 +1154,87 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </label>
           ) : editing ? (
             fieldDef.type === 'select' ? (
-              <select
-                autoFocus
-                defaultValue={value}
-                onChange={event => handleCustomFieldSave(fieldDef, event.target.value)}
-                style={inputStyle}
-              >
-                <option value="">{`add ${fieldDef.label.toLowerCase()}`}</option>
-                {selectOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+              brandedSelect({
+                value,
+                placeholder: `add ${fieldDef.label.toLowerCase()}`,
+                options: selectOptions,
+                targetId: `custom:${fieldDef.key}`,
+                onSelect: nextValue => handleCustomFieldSave(fieldDef, nextValue),
+                onAdd: nextValue => handleCustomFieldSave(fieldDef, nextValue),
+              })
+            ) :
+            fieldDef.type === 'multi_select' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {multiSelectOptions.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {multiSelectOptions.map(option => renderCustomLabelChip(option, multiSelectValues.includes(option)))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder={`Add ${fieldDef.label.toLowerCase()} separated by commas`}
+                  onBlur={event => {
+                    if (!event.target.value.trim()) return
+                    setCustomLabelValues([...multiSelectValues, ...splitLabelInput(event.target.value)])
+                    setEditingCustomField(fieldDef.key)
+                    event.target.value = ''
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      if (event.currentTarget.value.trim()) {
+                        setCustomLabelValues([...multiSelectValues, ...splitLabelInput(event.currentTarget.value)])
+                        setEditingCustomField(fieldDef.key)
+                        event.currentTarget.value = ''
+                      }
+                    }
+                    if (event.key === 'Escape') {
+                      setEditingCustomField(null)
+                      event.stopPropagation()
+                    }
+                  }}
+                  style={inputStyle}
+                />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => beginAddingOption(multiSelectTargetId)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px dashed var(--edge-strong)',
+                      background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Add label
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCustomField(null)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px solid var(--edge)',
+                      background: 'transparent',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Done
+                  </button>
+                </div>
+                {renderAddOptionControl(multiSelectTargetId, option => {
+                  setCustomLabelValues([...multiSelectValues, option])
+                  setEditingCustomField(fieldDef.key)
+                }, 'New label')}
+              </div>
             ) :
             multi ? (
               <textarea
@@ -832,6 +1255,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 style={inputStyle}
               />
             )
+          ) : fieldDef.type === 'multi_select' && multiSelectValues.length > 0 ? (
+            <div
+              onClick={() => setEditingCustomField(fieldDef.key)}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 6,
+                minHeight: 22,
+                cursor: 'text',
+              }}
+            >
+              {multiSelectValues.map(option => renderCustomLabelChip(option))}
+            </div>
           ) : (
             <div
               onClick={() => setEditingCustomField(fieldDef.key)}
@@ -867,7 +1303,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           <div style={sectionLabel}>{section === 'ClickUp Source' ? 'task content' : section.toLowerCase()}</div>
         </div>
         {fields.map(fieldDef => customField(fieldDef))}
-        {section === 'Fund Details' && arrayField('spv_investor', 'SPV Investor Labels', contactFieldOptions('spv_investor'))}
+        {section === 'Fund Details' && arrayField('spv_investor', 'SPV Investor', contactFieldOptions('spv_investor'))}
       </div>
     )
   }
@@ -1300,6 +1736,33 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) : <div />}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {!isNew && contact && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <button
+                    type="button"
+                    disabled={!hasPendingContactChanges || savingContactInfo}
+                    onClick={handleSaveContactInfo}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: '6px 13px',
+                      background: hasPendingContactChanges ? 'var(--color-brand)' : 'var(--tint)',
+                      border: hasPendingContactChanges ? '1px solid var(--color-brand)' : '1px solid var(--edge)',
+                      borderRadius: 8,
+                      color: hasPendingContactChanges ? '#fff' : 'var(--color-text-tertiary)',
+                      cursor: hasPendingContactChanges && !savingContactInfo ? 'pointer' : 'default',
+                      fontFamily: 'inherit',
+                      opacity: savingContactInfo ? 0.72 : 1,
+                      boxShadow: hasPendingContactChanges ? '0 8px 18px rgba(0,0,0,0.12)' : 'none',
+                    }}
+                  >
+                    {savingContactInfo ? 'Saving...' : 'Save'}
+                  </button>
+                  {contactSaveError && (
+                    <div style={{ fontSize: 10, color: '#D93025' }}>{contactSaveError}</div>
+                  )}
+                </div>
+              )}
               {/* Enrich button -- only for existing contacts */}
               {!isNew && contact && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -1431,30 +1894,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
-                {editingField === 'role' ? (
-                  <input
-                    autoFocus
-                    defaultValue={draft.role ?? ''}
-                    placeholder="Role"
-                    onBlur={e => handleBlur('role', e.target.value)}
-                    style={{ ...smallInputStyle, width: '45%' }}
-                  />
-                ) : (
-                  <span
-                    onClick={() => setEditingField('role')}
-                    style={{ fontSize: 14, color: draft.role ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text', lineHeight: 1.45 }}
-                  >
-                    {draft.role ?? 'Title or role'}
-                  </span>
-                )}
-                <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>at</span>
                 {editingField === 'company' ? (
                   <input
                     autoFocus
                     defaultValue={draft.company ?? ''}
                     placeholder="Company"
                     onBlur={e => handleBlur('company', e.target.value)}
-                    style={{ ...smallInputStyle, flex: 1 }}
+                    style={{ ...smallInputStyle, minWidth: 220 }}
                   />
                 ) : (
                   <span

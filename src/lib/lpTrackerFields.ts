@@ -61,7 +61,7 @@ export const LP_TRACKER_FIELDS = [
   {
     key: 'spvInvestorFlag',
     target: 'SPV Investor (checkbox)',
-    label: 'SPV Investor',
+    label: 'SPV Investor Checkbox',
     section: 'Fund Details',
     type: 'checkbox',
     aliases: ['spv investor flag', 'spv investor checkbox', 'spv investor boolean'],
