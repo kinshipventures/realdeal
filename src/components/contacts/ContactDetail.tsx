@@ -96,6 +96,7 @@ type FieldRenderOptions = {
   multi?: boolean
   inputType?: 'text' | 'email' | 'tel' | 'url'
   options?: string[]
+  alwaysInput?: boolean
 }
 
 type ShellBounds = {
@@ -231,7 +232,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }, [contact?.id])
 
   useEffect(() => {
-    if (providedCategories) {
+    if (providedCategories && providedCategories.length > 0) {
       setAvailableCategories(providedCategories)
       return
     }
@@ -624,6 +625,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const fieldKey = key as string
     const selectOptions = options.options ?? []
     const isSelect = options.options !== undefined
+    const alwaysInput = options.alwaysInput ?? false
 
     const inputStyle = {
       width: '100%',
@@ -697,7 +699,22 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           )}
         </div>
         <div style={{ minWidth: 0 }}>
-          {editing ? (
+          {alwaysInput ? (
+            <input
+              type={options.inputType ?? 'text'}
+              value={val ?? ''}
+              placeholder={`Add ${label.toLowerCase()}`}
+              onChange={event => {
+                const value = event.target.value
+                setDraft(prev => ({ ...prev, [key]: value || null }))
+                markContactInfoChanged()
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Enter') event.currentTarget.blur()
+              }}
+              style={inputStyle}
+            />
+          ) : editing ? (
             isSelect ? (
               brandedSelect({
                 value: val ?? '',
@@ -1984,7 +2001,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <div style={sectionLabel}>contact information</div>
                 </div>
                 {field('name', 'Name')}
-                {field('company', 'Company')}
+                {field('company', 'Company', { inputType: 'text', alwaysInput: true })}
               </div>
 
               <div style={sectionShell}>
@@ -2060,43 +2077,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         )
                       })}
                     </div>
-                    {(draft.list_ids ?? []).length > 1 && (
-                      <div style={{ marginTop: 12 }}>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>primary pod</div>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {(draft.list_ids ?? []).map(podId => {
-                            const pod = pods.find(p => p.id === podId)
-                            if (!pod) return null
-                            const isPrimary = draft.primary_list_id === podId
-                            return (
-                              <button
-                                key={podId}
-                                type="button"
-                                onClick={() => {
-                                  setDraft(prev => ({ ...prev, primary_list_id: podId }))
-                                  if (!isNew && contact) {
-                                    persistPodAssignment(draft.list_ids ?? [], podId)
-                                  }
-                                }}
-                                style={{
-                                  padding: '5px 10px',
-                                  borderRadius: 999,
-                                  fontSize: 11,
-                                  fontWeight: isPrimary ? 600 : 400,
-                                  border: 'none',
-                                  background: isPrimary ? `linear-gradient(180deg, ${pod.color ?? 'var(--edge)'}, color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 80%, #000 20%))` : 'var(--tint)',
-                                  color: isPrimary ? '#fff' : 'var(--color-text-secondary)',
-                                  cursor: 'pointer',
-                                  fontFamily: 'inherit',
-                                }}
-                              >
-                                {pod.name}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
                     <SubPodSelector
                       pods={pods}
                       categories={availableCategories}

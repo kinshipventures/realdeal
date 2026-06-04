@@ -26,9 +26,6 @@ export function SubPodSelector({
       pod,
       subPods: categories.filter(category => category.list_id === pod.id),
     }))
-    .filter(group => group.subPods.length > 0)
-
-  if (groups.length === 0) return null
 
   return (
     <div style={{ marginTop: compact ? 8 : 14 }}>
@@ -41,6 +38,15 @@ export function SubPodSelector({
       }}>
         Sub-pods
       </div>
+      {groups.length === 0 ? (
+        <div style={{
+          color: 'var(--color-text-tertiary)',
+          fontSize: 12,
+          lineHeight: 1.45,
+        }}>
+          Select a pod to view its sub-pods.
+        </div>
+      ) : (
       <div style={{ display: 'grid', gap: compact ? 8 : 10 }}>
         {groups.map(({ pod, subPods }) => {
           const assignedInPod = subPods.find(subPod => selectedCategoryIds.includes(subPod.id))
@@ -53,7 +59,11 @@ export function SubPodSelector({
                 </div>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {subPods.map(subPod => {
+                {subPods.length === 0 ? (
+                  <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12, lineHeight: 1.45 }}>
+                    No sub-pods available.
+                  </span>
+                ) : subPods.map(subPod => {
                   const selected = selectedCategoryIds.includes(subPod.id)
                   return (
                     <button
@@ -83,6 +93,7 @@ export function SubPodSelector({
           )
         })}
       </div>
+      )}
     </div>
   )
 }
