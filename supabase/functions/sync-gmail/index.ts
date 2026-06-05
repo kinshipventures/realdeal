@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userEmail = String(claimsData.claims.email || "").toLowerCase();
 
     const { google_access_token } = await req.json();
     if (!google_access_token) {
@@ -113,12 +113,16 @@ Deno.serve(async (req) => {
     // Get existing email_links to avoid duplicates
     const { data: existingInteractions } = await supabaseAdmin
       .from("interactions")
-      .select("email_link")
+      .select("contact_id, email_link")
       .eq("source", "Gmail")
       .in("workspace_id", workspaceIds)
       .not("email_link", "is", null);
 
-    const existingLinks = new Set((existingInteractions || []).map((i: { email_link: string }) => i.email_link));
+    const existingKeys = new Set(
+      (existingInteractions || []).map((interaction: { contact_id: string; email_link: string }) =>
+        `${interaction.contact_id}:${interaction.email_link}`
+      )
+    );
 
     // Fetch message details in batches of 10
     let synced = 0;
@@ -141,7 +145,6 @@ Deno.serve(async (req) => {
         if (!msg) continue;
 
         const gmailId = `gmail:${msg.id}`;
-        if (existingLinks.has(gmailId)) continue;
 
         const headers = msg.payload?.headers || [];
         const from = headers.find((h: { name: string }) => h.name === "From")?.value || "";
@@ -151,36 +154,59 @@ Deno.serve(async (req) => {
 
         // Extract emails from From and To
         const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
-        const allEmails = [...(from.match(emailRegex) || []), ...(to.match(emailRegex) || [])];
+        const fromEmails = (from.match(emailRegex) || []).map((email: string) => email.toLowerCase());
+        const toEmails = (to.match(emailRegex) || []).map((email: string) => email.toLowerCase());
+        const direction = fromEmails.includes(userEmail) ? "sent" : "received";
+        const counterpartEmails = (direction === "sent" ? toEmails : fromEmails)
+          .filter((email: string) => email !== userEmail);
+        const fallbackEmails = [...fromEmails, ...toEmails]
+          .filter((email: string) => email !== userEmail);
+        const candidateEmails = [...new Set([...counterpartEmails, ...fallbackEmails])];
 
-        // Match to contacts
-        for (const addr of allEmails) {
-          const contact = emailToContact.get(addr.toLowerCase());
-          if (contact) {
-            const date = dateStr ? new Date(dateStr).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
-
-            await supabaseAdmin.from("interactions").insert({
-              contact_id: contact.id,
-              user_id: userId,
-              workspace_id: contact.workspace_id,
-              type: "email",
-              source: "Gmail",
-              date,
-              email_link: gmailId,
-              summary: subject || null,
-              notes: null,
-            });
-
-            // Update last_contacted_at
-            await supabaseAdmin
-              .from("contacts")
-              .update({ last_contacted_at: date })
-              .eq("id", contact.id)
-              .lt("last_contacted_at", date);
-
-            matched++;
-            break; // one interaction per message
+        // Match every unique contact represented by the message.
+        const matchedContacts = new Map<string, { id: string; workspace_id: string; address: string }>();
+        for (const addr of candidateEmails) {
+          const contact = emailToContact.get(addr);
+          if (contact && !matchedContacts.has(contact.id)) {
+            matchedContacts.set(contact.id, { ...contact, address: addr });
           }
+        }
+
+        for (const contact of matchedContacts.values()) {
+          const interactionKey = `${contact.id}:${gmailId}`;
+          if (existingKeys.has(interactionKey)) continue;
+          const date = dateStr ? new Date(dateStr).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+
+          await supabaseAdmin.from("interactions").insert({
+            contact_id: contact.id,
+            user_id: userId,
+            workspace_id: contact.workspace_id,
+            type: "email",
+            source: "Gmail",
+            date,
+            email_link: gmailId,
+            summary: subject || null,
+            notes: direction === "sent"
+              ? `Sent email to ${contact.address}`
+              : `Received email from ${contact.address}`,
+            event_detail: JSON.stringify({
+              direction,
+              from,
+              to,
+              messageId: msg.id,
+              threadId: msg.threadId || msg.id,
+            }),
+          });
+
+          // Update last_contacted_at
+          await supabaseAdmin
+            .from("contacts")
+            .update({ last_contacted_at: date })
+            .eq("id", contact.id)
+            .lt("last_contacted_at", date);
+
+          existingKeys.add(interactionKey);
+          matched++;
         }
         synced++;
       }

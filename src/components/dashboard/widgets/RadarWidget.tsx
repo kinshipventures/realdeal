@@ -308,7 +308,7 @@ export function RadarWidget({ dimensions, loading, overallScore, overallLabel = 
   if (loading || dimensions.length === 0) {
     return (
       <div>
-        <div style={{
+        <div className="radar-widget-layout" style={{
           background: 'var(--surface-panel)',
           backdropFilter: 'var(--panel-blur)',
           WebkitBackdropFilter: 'var(--panel-blur)',
@@ -330,7 +330,7 @@ export function RadarWidget({ dimensions, loading, overallScore, overallLabel = 
 
   return (
     <div>
-      <div style={{
+      <div className="radar-widget-layout" style={{
         background: 'var(--surface-panel)',
         backdropFilter: 'var(--panel-blur)',
         WebkitBackdropFilter: 'var(--panel-blur)',

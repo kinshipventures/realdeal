@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react'
+import { Mail, RefreshCw } from 'lucide-react'
+import { useAuth } from '../../../contexts/AuthContext'
+import { signInWithGoogle } from '../../../lib/auth'
 import { syncGmail, getLastSyncTime } from '../../../lib/gmail'
 import { WidgetHeading } from './WidgetHeading'
 
-export function GmailSyncWidget() {
+interface GmailSyncWidgetProps {
+  onSynced?: () => void | Promise<void>
+}
+
+export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
+  const { session } = useAuth()
   const [syncing, setSyncing] = useState(false)
+  const [connecting, setConnecting] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(null)
   const [result, setResult] = useState<{ synced: number; matched: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const connected = Boolean(session?.provider_token)
 
   useEffect(() => {
     getLastSyncTime().then(setLastSync).catch(() => {})
@@ -20,10 +30,21 @@ export function GmailSyncWidget() {
       const res = await syncGmail()
       setResult({ synced: res.synced, matched: res.matched })
       setLastSync(new Date().toISOString())
+      await onSynced?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sync failed')
     } finally {
       setSyncing(false)
+    }
+  }
+
+  async function handleConnect() {
+    setConnecting(true)
+    setError(null)
+    const result = await signInWithGoogle()
+    if (result.error) {
+      setError('Could not connect Google. Try again.')
+      setConnecting(false)
     }
   }
 
@@ -40,50 +61,52 @@ export function GmailSyncWidget() {
         className="widget-card"
         style={{
           background: 'var(--surface-panel)',
-          border: '1px solid var(--edge)',
+          border: 'var(--surface-panel-border)',
           borderRadius: 'var(--panel-radius)',
           padding: '16px 18px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#EA4335"/>
-              </svg>
+              <Mail size={16} color="#EA4335" aria-hidden />
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>Gmail</span>
             </div>
             <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
-              {lastSyncLabel}
+              {connected ? lastSyncLabel : 'Connect Google to match email with contacts.'}
             </p>
           </div>
           <button
             type="button"
-            onClick={handleSync}
-            disabled={syncing}
+            onClick={connected ? handleSync : handleConnect}
+            disabled={syncing || connecting}
             style={{
-              background: syncing ? 'var(--tint)' : 'var(--color-brand)',
+              background: syncing || connecting ? 'var(--tint)' : 'var(--color-brand)',
               border: 'none',
               borderRadius: 8,
-              color: syncing ? 'var(--color-text-secondary)' : '#fff',
+              color: syncing || connecting ? 'var(--color-text-secondary)' : '#fff',
               fontSize: 12,
               fontWeight: 600,
               padding: '8px 16px',
               minHeight: 44,
-              cursor: syncing ? 'wait' : 'pointer',
+              cursor: syncing || connecting ? 'wait' : 'pointer',
               fontFamily: 'inherit',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
             }}
           >
-            {syncing ? 'Syncing...' : 'Sync emails'}
+            {connected && <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : undefined }} aria-hidden />}
+            {connecting ? 'Connecting...' : syncing ? 'Syncing...' : connected ? 'Sync emails' : 'Connect Google'}
           </button>
         </div>
 
         {result && (
           <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '10px 0 0' }}>
-            {result.synced === 0
-              ? 'No new emails to sync.'
-              : `Synced ${result.synced} email${result.synced !== 1 ? 's' : ''} across ${result.matched} contact${result.matched !== 1 ? 's' : ''}.`}
+            {result.matched === 0
+              ? `Checked ${result.synced} new email${result.synced !== 1 ? 's' : ''}. No contact matches found.`
+              : `Added ${result.matched} email${result.matched !== 1 ? 's' : ''} to recent activity.`}
           </p>
         )}
 

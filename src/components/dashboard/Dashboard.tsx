@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache, invalidateContactsCache, getPendingContacts } from '../../lib/data'
+import { getContacts, getPods, isOverdue, isInGracePeriod, getAllInteractions, deleteContact, getCampaigns, getCampaignContacts, invalidateCampaignsCache, invalidateContactsCache, invalidateInteractionsCache, getPendingContacts } from '../../lib/data'
 import { daysOverdue } from '../../lib/utils'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import {
@@ -35,6 +35,8 @@ import { ThisWeekWidget } from './widgets/ThisWeekWidget'
 import { CampaignProgressWidget } from './widgets/CampaignProgressWidget'
 import { RadarWidget } from './widgets/RadarWidget'
 import { AiInsightsWidget } from './widgets/AiInsightsWidget'
+import { CalendarWidget } from './widgets/CalendarWidget'
+import { GmailSyncWidget } from './widgets/GmailSyncWidget'
 import { LogInteractionModal } from '../interactions/LogInteractionModal'
 
 export function Dashboard() {
@@ -416,6 +418,17 @@ export function Dashboard() {
     setCampaignContacts(allCc.flat())
   }
 
+  async function refreshConnectedActivity() {
+    invalidateInteractionsCache()
+    invalidateContactsCache()
+    const [updatedInteractions, updatedContacts] = await Promise.all([
+      getAllInteractions(),
+      getContacts(),
+    ])
+    setAllInteractions(updatedInteractions)
+    setContacts(updatedContacts)
+  }
+
   async function refreshTodaysFocus() {
     if (focusRefreshing) return
     setFocusRefreshing(true)
@@ -628,6 +641,24 @@ export function Dashboard() {
                 }}
               />
             </div>
+          )}
+
+          {(isVisible('calendar') || isVisible('gmail-sync')) && (
+            <>
+              <ChapterHeader title="Connected Activity" />
+              <div className="connected-activity-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 0.75fr)', gap: 24, alignItems: 'start' }}>
+                {isVisible('calendar') && (
+                  <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                    <CalendarWidget />
+                  </div>
+                )}
+                {isVisible('gmail-sync') && (
+                  <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                    <GmailSyncWidget onSynced={refreshConnectedActivity} />
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {/* ─── Chapter 2: Who Needs Attention ─── */}

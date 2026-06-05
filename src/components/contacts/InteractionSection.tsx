@@ -55,6 +55,28 @@ function typePill(type: InteractionType): React.CSSProperties {
 }
 
 // Summary bar icons — module-level to avoid re-creating on every render
+interface GmailEventDetail {
+  direction?: 'sent' | 'received'
+  from?: string
+  to?: string
+  messageId?: string
+  threadId?: string
+}
+
+function gmailEventDetail(interaction: Interaction): GmailEventDetail | null {
+  if (interaction.source !== 'Gmail' || !interaction.event_detail) return null
+  try {
+    return JSON.parse(interaction.event_detail) as GmailEventDetail
+  } catch {
+    return null
+  }
+}
+
+function emailHref(link: string): string {
+  if (!link.startsWith('gmail:')) return link
+  return `https://mail.google.com/mail/u/0/#all/${encodeURIComponent(link.slice('gmail:'.length))}`
+}
+
 const svgProps = { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const }
 export const TYPE_ICONS: Record<string, React.ReactElement> = {
   call: <svg {...svgProps}><path d="M6 3H4a1 1 0 0 0-1 1c0 5 4 9 9 9a1 1 0 0 0 1-1v-2l-3-1-1.5 1.5A7 7 0 0 1 5.5 6.5L7 5 6 3z" /></svg>,
@@ -482,6 +504,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
         }
 
         // Human interaction card
+        const gmailDetail = gmailEventDetail(interaction)
         return (
         <div
           key={interaction.id}
@@ -575,6 +598,19 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                       {interaction.source}
                     </span>
                   )}
+                  {gmailDetail?.direction && (
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '3px 6px',
+                      borderRadius: 6,
+                      background: 'var(--tint)',
+                      color: 'var(--color-text-tertiary)',
+                      textTransform: 'capitalize',
+                    }}>
+                      {gmailDetail.direction}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <button
@@ -653,7 +689,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
               {(interaction.email_link || interaction.granola_link || interaction.meeting_link) && (
                 <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
                   {interaction.email_link && (
-                    <a href={interaction.email_link} target="_blank" rel="noopener noreferrer"
+                    <a href={emailHref(interaction.email_link)} target="_blank" rel="noopener noreferrer"
                       style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textDecoration: 'none', letterSpacing: '0.02em' }}>
                       view email
                     </a>

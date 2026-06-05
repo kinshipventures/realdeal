@@ -11,6 +11,7 @@ export type WidgetId =
   | 'quick-links'
   | 'campaign-progress'
   | 'pending-tray'
+  | 'calendar'
   | 'gmail-sync'
   | 'meeting-notes'
 
@@ -27,12 +28,13 @@ export const ALL_WIDGETS: { id: WidgetId; label: string }[] = [
   { id: 'quick-links', label: 'Quick Links' },
   { id: 'campaign-progress', label: 'Campaign Progress' },
   { id: 'pending-tray', label: 'Pending Tray' },
+  { id: 'calendar', label: 'Calendar' },
   { id: 'gmail-sync', label: 'Email Sync' },
   { id: 'meeting-notes', label: 'Meeting Notes' },
 ]
 
 export const PRESET_CONFIGS: Record<Preset, WidgetId[]> = {
-  full: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'pod-health', 'recent-activity'],
+  full: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up', 'campaign-progress', 'pod-health', 'recent-activity', 'calendar', 'gmail-sync'],
   focus: ['equity', 'pending-tray', 'todays-focus', 'needs-attention', 'coming-up'],
 }
 
@@ -45,6 +47,8 @@ const DEFAULT_ORDER: WidgetId[] = [
   'campaign-progress',
   'pod-health',
   'recent-activity',
+  'calendar',
+  'gmail-sync',
   'wrapped',
 ]
 

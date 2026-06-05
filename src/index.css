@@ -1997,4 +1997,37 @@ body::after {
   .dashboard-hero h1 {
     max-width: 10ch;
   }
+
+  .chapter-2up,
+  .chapter-3up {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .radar-widget-layout {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 24px !important;
+    padding: 24px 16px !important;
+  }
+
+  .radar-widget-layout > :first-child {
+    align-self: center;
+  }
+}
+
+@media (max-width: 1100px) {
+  .connected-activity-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .google-calendar-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .google-calendar-layout > :first-child {
+    border-right: none !important;
+    border-bottom: 1px solid var(--divider);
+  }
 }

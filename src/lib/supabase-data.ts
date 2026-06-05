@@ -454,7 +454,7 @@ export function getAllInteractions(): Promise<Interaction[]> {
   )
 }
 
-function invalidateInteractionsCache(): void { _interactionsCache = null }
+export function invalidateInteractionsCache(): void { _interactionsCache = null }
 export function invalidateContactsCache(): void { _contactsCache = null }
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
