@@ -960,7 +960,23 @@ export function RecordsList() {
             {viewToggle}
           </div>
         </div>
-        <CompaniesPage embedded hideInlineCount onFilteredCountChange={setCompanyFilteredCount} />
+        <CompaniesPage
+          embedded
+          hideInlineCount
+          onFilteredCountChange={setCompanyFilteredCount}
+          onOpenCompany={setSelectedContact}
+        />
+        {selectedContact && (
+          <ContactDetail
+            contact={selectedContact}
+            categoryId={selectedContact.category_ids[0]}
+            onClose={() => setSelectedContact(null)}
+            onSaved={handleContactSaved}
+            onDeleted={handleContactDeleted}
+            pods={pods}
+            categories={categories}
+          />
+        )}
       </div>
     )
   }

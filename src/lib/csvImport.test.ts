@@ -35,6 +35,8 @@ const mockedLogInteraction = vi.mocked(logInteraction)
 const mockedCreateCampaign = vi.mocked(createCampaign)
 const mockedAddContactToCampaign = vi.mocked(addContactToCampaign)
 const mockedUpdateCampaignContact = vi.mocked(updateCampaignContact)
+let createdRecordCounter = 0
+let createdRecordOutputs: any[] = []
 
 function escapeXml(value: string): string {
   return value
@@ -89,6 +91,8 @@ function workbookBuffer(sheets: Array<{ name: string; rows: string[][] }>): Arra
 
 beforeEach(() => {
   vi.clearAllMocks()
+  createdRecordCounter = 0
+  createdRecordOutputs = []
   mockedGetContacts.mockResolvedValue([])
   mockedUpdateContact.mockImplementation(async (id, data) => ({ id, name: 'Updated', created_at: '2026-05-28T00:00:00.000Z', ...data } as any))
   mockedGetCampaigns.mockResolvedValue([])
@@ -142,14 +146,26 @@ beforeEach(() => {
     created_at: '2026-05-28T00:00:00.000Z',
     ...data,
   } as any))
-  mockedCreateContactsBulk.mockImplementation(async records =>
-    records.map((record, index) => ({
+  mockedCreateContactsBulk.mockImplementation(async records => {
+    const created = records.map(record => ({
       ...record,
-      id: `created-${index}`,
+      id: `created-${createdRecordCounter++}`,
       created_at: '2026-05-28T00:00:00.000Z',
     }))
-  )
+    createdRecordOutputs.push(...created)
+    return created
+  })
 })
+
+function createdRecords() {
+  return createdRecordOutputs
+}
+
+function createdRecordNamed(name: string) {
+  const record = createdRecords().find(record => record.name === name)
+  expect(record, `Expected a created record named ${name}`).toBeTruthy()
+  return record!
+}
 
 describe('CSV and Excel import parsing', () => {
   it('parses quoted CSV values without splitting embedded commas', () => {
@@ -238,7 +254,7 @@ describe('CSV and Excel import parsing', () => {
       'Sub-pod',
       'Company',
       'Email',
-      null,
+      'Role',
     ])
   })
 
@@ -260,7 +276,7 @@ describe('CSV and Excel import parsing', () => {
       'Fund Type',
       'Assistant Info',
       'Global Region',
-      'Upwork Link',
+      'LinkedIn',
       'Notes',
     ])
   })
@@ -349,12 +365,19 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
-    expect(mockedCreateContactsBulk).toHaveBeenCalledTimes(1)
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    expect(mockedCreateContactsBulk).toHaveBeenCalledTimes(2)
+    const companyRecord = createdRecordNamed('Tran Family Office')
+    const contactRecord = createdRecordNamed('Emily Tran')
+    expect(companyRecord).toMatchObject({
+      name: 'Tran Family Office',
+      type: 'Company',
+    })
+    expect(contactRecord).toMatchObject({
       name: 'Emily Tran',
       email: 'emily@example.com',
       company: 'Tran Family Office',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-family-offices'],
@@ -414,12 +437,17 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [], interactionsImported: 1 })
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    const companyRecord = createdRecordNamed('MoonPay')
+    const contactRecord = createdRecordNamed('Ivan Soto-Wright')
+    expect(contactRecord).toMatchObject({
       name: 'Ivan Soto-Wright',
       first_name: 'Ivan Soto-Wright',
       company: 'MoonPay',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       email: 'ivan@navihold.vc',
+      linkedin: 'https://upwork.example/ivan',
+      global_region: 'ME',
       notes: null,
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
@@ -427,15 +455,13 @@ describe('bulk contact import', () => {
       spv_investor: ['TeraWulf'],
       custom_fields: {
         fundType: 'Fund I',
-        assistantInfo: 'Assistant notes',
-        globalRegionDetail: 'ME',
         address: 'Miami HQ',
-        upworkLink: 'https://upwork.example/ivan',
         spvInvestorFlag: true,
         notes: 'Updates 2024\nJul 19 - Sent deck',
       },
     })
-    expect(records[0].custom_fields).not.toHaveProperty('linkedInLabels')
+    expect(contactRecord.custom_fields).not.toHaveProperty('assistantInfo')
+    expect(contactRecord.custom_fields).not.toHaveProperty('linkedInLabels')
   })
 
   it('parses ClickUp update blocks into dated recent activity touchpoints', () => {
@@ -545,14 +571,30 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    const companyRecord = createdRecordNamed('MoonPay')
+    const contactRecord = createdRecordNamed('Ivan Soto-Wright')
+    expect(companyRecord).toMatchObject({
+      name: 'MoonPay',
+      type: 'Company',
+      website: 'https://moonpay.com',
+      linkedin: 'https://linkedin.com/in/isotowright',
+      industry: null,
+      country: 'United States',
+      custom_fields: expect.objectContaining({
+        address: 'Miami HQ',
+        city: 'Miami',
+        category: 'Capital Investor',
+      }),
+    })
+    expect(contactRecord).toMatchObject({
       name: 'Ivan Soto-Wright',
       first_name: 'Ivan Soto-Wright',
       last_name: null,
       email: 'ivan@navihold.vc',
       phone: '+1 555 0100',
       company: 'MoonPay',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       linkedin: 'https://linkedin.com/in/isotowright',
       website: 'https://moonpay.com',
       country: 'United States',
@@ -569,9 +611,9 @@ describe('bulk contact import', () => {
         category: 'Capital Investor',
       },
     })
-    expect(records[0].custom_fields).not.toHaveProperty('clickupTaskId')
-    expect(records[0].custom_fields).not.toHaveProperty('linkedInLabels')
-    expect(records[0].custom_fields).not.toHaveProperty('summary')
+    expect(contactRecord.custom_fields).not.toHaveProperty('clickupTaskId')
+    expect(contactRecord.custom_fields).not.toHaveProperty('linkedInLabels')
+    expect(contactRecord.custom_fields).not.toHaveProperty('summary')
   })
 
   it('imports ClickUp update blocks into Supabase-backed recent activity', async () => {
@@ -658,6 +700,60 @@ describe('bulk contact import', () => {
     }))
   })
 
+  it('uses the real header row when an Excel sheet starts with a title row', async () => {
+    const parsed = await parseWorkbookBuffer(workbookBuffer([
+      {
+        name: 'SPV Investors',
+        rows: [
+          ['Last Updated: 6/4/26', '', '', ''],
+          ['Name', 'Email', 'Investment 1', 'Investment 2'],
+          ['Afshin Shahidi', 'afshin@example.com', 'Applyboard', 'Moonpay'],
+        ],
+      },
+    ]))
+    const mapping = detectColumns(parsed.headers)
+
+    expect(parsed.headers.slice(0, 4)).toEqual(['Name', 'Email', 'Investment 1', 'Investment 2'])
+    expect(mapping.map(item => item.targetField).slice(0, 4)).toEqual(['First Name', 'Email', 'SPV Investor', 'SPV Investor'])
+  })
+
+  it('imports numbered investment columns as SPV Investor tags without duplicating matching names', async () => {
+    mockedGetContacts.mockResolvedValue([
+      {
+        id: 'contact-addison',
+        name: 'Addison Rae',
+        email: null,
+        company: null,
+        recommended_by: null,
+        notes: null,
+        list_ids: [],
+        category_ids: [],
+        primary_list_id: null,
+        company_ids: [],
+        kv_fund_investor: null,
+        spv_investor: null,
+        custom_fields: {},
+      } as any,
+    ])
+    const parsed = parseCSV([
+      'Name,Investment 1,Investment 2,Investment 3',
+      'Addison Rae (Addison Rae Easterling),Goop Series A,,',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+    })
+
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1 })
+    expect(mockedCreateContactsBulk).not.toHaveBeenCalled()
+    expect(mockedUpdateContact).toHaveBeenCalledWith('contact-addison', expect.objectContaining({
+      spv_investor: ['Goop Series A'],
+    }))
+  })
+
   it('skips campaign-specific client sheet columns that are outside the approved field list', async () => {
     const parsed = parseCSV([
       'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',
@@ -684,11 +780,14 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    const companyRecord = createdRecordNamed('MoonPay')
+    const contactRecord = createdRecordNamed('Ivan Soto-Wright')
+    expect(contactRecord).toMatchObject({
       name: 'Ivan Soto-Wright',
       first_name: 'Ivan Soto-Wright',
       company: 'MoonPay',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       recommended_by: 'Mark Suster',
       intel_notes: null,
       list_ids: [],
@@ -739,9 +838,12 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1 })
-    expect(mockedCreateContactsBulk).not.toHaveBeenCalled()
+    const companyRecord = createdRecordNamed('MoonPay')
+    expect(companyRecord).toMatchObject({ name: 'MoonPay', type: 'Company' })
     expect(mockedUpdateContact).toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
       company: 'MoonPay',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       recommended_by: 'Mark Suster',
     }))
     expect(mockedUpdateContact).not.toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
@@ -793,15 +895,18 @@ describe('bulk contact import', () => {
     })
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    const companyRecord = createdRecordNamed('Rivera Capital')
+    const contactRecord = createdRecordNamed('Alex Rivera')
+    expect(contactRecord).toMatchObject({
       name: 'Alex Rivera',
       email: 'alex@example.com',
       company: 'Rivera Capital',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       notes: null,
       custom_fields: {},
     })
-    expect(records[0].custom_fields).not.toHaveProperty('Nickname')
+    expect(contactRecord.custom_fields).not.toHaveProperty('Nickname')
   })
 
   it('stores Name-only spreadsheets in the existing First Name field', async () => {
@@ -891,12 +996,15 @@ describe('bulk contact import', () => {
       podMap,
     })
 
-    const [records] = mockedCreateContactsBulk.mock.calls[0]
-    expect(records[0]).toMatchObject({
+    const companyRecord = createdRecordNamed('Kinship Ventures')
+    const contactRecord = createdRecordNamed('Ana Maria Luisa Gomez')
+    expect(contactRecord).toMatchObject({
       name: 'Ana Maria Luisa Gomez',
       first_name: 'Ana Maria',
       last_name: 'Gomez',
       company: 'Kinship Ventures',
+      company_record_id: companyRecord.id,
+      company_ids: [companyRecord.id],
       notes: null,
     })
   })

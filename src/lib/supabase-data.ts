@@ -240,7 +240,7 @@ function mapContact(r: any, catIds?: string[]): Contact {
     kv_fund_investor: r.kv_fund_investor ?? null, spv_investor: r.spv_investor ?? null,
     needs_review: r.needs_review ?? false, type: r.type ?? 'Contact', status: r.status ?? 'Active',
     ring_ids: ringIds as RelationshipRing[],
-    company_record_id: r.company_id ?? null,
+    company_record_id: companyIds[0] ?? r.company_id ?? null,
     company_ids: companyIds,
     industry: r.industry ?? null, stage: r.stage ?? null,
     ticker: r.ticker ?? null, domain: r.domain ?? null, email_2: r.email_2 ?? null,
@@ -296,7 +296,7 @@ function buildContactInsert(data: ContactInput, userId: string, wsId: string): R
     contact_frequency: data.contact_frequency, next_follow_up_date: data.next_follow_up_date,
     next_action: data.next_action, kv_fund_investor: data.kv_fund_investor,
     spv_investor: data.spv_investor, needs_review: data.needs_review, type: data.type,
-    status: data.status, company_id: data.company_record_id, industry: data.industry,
+    status: data.status, industry: data.industry,
     stage: data.stage, ticker: data.ticker, domain: data.domain,
     cadence_override: data.cadence_override, email_2: data.email_2, email_3: data.email_3,
     custom_fields: customFields,
@@ -382,7 +382,9 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
       relationship_rings: data.ring_ids,
     }
   }
-  if (data.company_record_id !== undefined) update.company_id = data.company_record_id
+  if (data.company_record_id !== undefined && data.company_ids === undefined) {
+    update.company_ids = data.company_record_id ? [data.company_record_id] : []
+  }
   if (data.list_ids !== undefined) {
     update.pod_ids = data.list_ids
   }

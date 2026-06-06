@@ -22,11 +22,11 @@ export type RowWarning = {
 export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
   'First Name', 'Last Name',
-  'Email', 'Phone', 'Company',
+  'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role',
   'Website', 'LinkedIn',
-  'Recommended By',
-  'Country', 'Gender',
-  'SPV Investor',
+  'Recommended By', 'Birthday',
+  'Country', 'Global Region', 'Gender',
+  'Industry', 'KV Fund Investor', 'SPV Investor',
   ...LP_TRACKER_TARGET_FIELDS,
 ] as const
 
@@ -34,13 +34,15 @@ type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
-const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes'])
+const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor'])
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
-  'First Name', 'Last Name', 'Email', 'Phone', 'Company',
+  'First Name', 'Last Name', 'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role',
+  'Website', 'LinkedIn', 'Recommended By', 'Birthday', 'Country', 'Global Region', 'Gender', 'Industry',
   'Pod', 'Sub-pod',
-  'Notes', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
+  'Notes', 'KV Fund Investor', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
+  'Address', 'City', 'State', 'Investment Entity', 'Investment Email', 'Company Type',
 ])
 
 const KNOWN_ALIASES: Record<string, string> = {
@@ -167,15 +169,18 @@ const KNOWN_ALIASES: Record<string, string> = {
 
   // Location
   'location': 'Location',
-  'city': 'Location',
-  'address': 'Location',
-  'region': 'Location',
-  'state': 'Location',
-  'province': 'Location',
-  'city town': 'Location',
-  'home city': 'Location',
-  'work city': 'Location',
-  'address 1 formatted': 'Location',
+  'city': 'City',
+  'address': 'Address',
+  'region': 'Global Region',
+  'global region': 'Global Region',
+  'global region detail': 'Global Region',
+  'state': 'State',
+  'province': 'State',
+  'state region': 'State',
+  'city town': 'City',
+  'home city': 'City',
+  'work city': 'City',
+  'address 1 formatted': 'Address',
   'country': 'Country',
   'country region': 'Country',
   'nation': 'Country',
@@ -199,6 +204,7 @@ const KNOWN_ALIASES: Record<string, string> = {
   'linkedin link': 'LinkedIn',
   'linkedin profile': 'LinkedIn',
   'linkedin profile url': 'LinkedIn',
+  'upwork link': 'LinkedIn',
 
   // Context
   'notes': 'Notes',
@@ -253,6 +259,9 @@ const KNOWN_ALIASES: Record<string, string> = {
   // Other contact fields
   'industry': 'Industry',
   'sector': 'Industry',
+  'company type': 'Company Type',
+  'organization type': 'Company Type',
+  'organisation type': 'Company Type',
   'domain': 'Domain',
   'company domain': 'Domain',
   'website domain': 'Domain',
@@ -280,8 +289,14 @@ const KNOWN_ALIASES: Record<string, string> = {
   'email 3 value': 'Email 3',
   'kv fund investor': 'KV Fund Investor',
   'kinship fund investor': 'KV Fund Investor',
+  'kinship investments': 'KV Fund Investor',
+  'kinship investment': 'KV Fund Investor',
   'fund investor': 'KV Fund Investor',
   'spv investor': 'SPV Investor',
+  'spv investments': 'SPV Investor',
+  'spv investment': 'SPV Investor',
+  'investment': 'SPV Investor',
+  'investments': 'SPV Investor',
 
   // Approved LP tracker fields
   ...LP_TRACKER_ALIAS_MAP,
@@ -303,14 +318,36 @@ function uniqueHeaders(rawHeaders: unknown[]): string[] {
   })
 }
 
+function importHeaderScore(row: unknown[]): number {
+  const headers = uniqueHeaders(row)
+  return detectColumns(headers).filter(mapping => mapping.targetField !== null).length
+}
+
+function findHeaderRowIndex(rows: unknown[][]): number {
+  const maxIndex = Math.min(rows.length, 12)
+  let bestIndex = 0
+  let bestScore = importHeaderScore(rows[0] ?? [])
+
+  for (let index = 1; index < maxIndex; index++) {
+    const score = importHeaderScore(rows[index] ?? [])
+    if (score > bestScore) {
+      bestIndex = index
+      bestScore = score
+    }
+  }
+
+  return bestScore > 0 ? bestIndex : 0
+}
+
 function tableToRows(table: unknown[][]): ParsedCSV {
   const usableRows = table.filter(row => row.some(cell => cellToString(cell)))
   if (usableRows.length === 0) return { headers: [], rows: [] }
 
-  const headers = uniqueHeaders(usableRows[0])
-  if (usableRows.length < 2) return { headers, rows: [] }
+  const headerRowIndex = findHeaderRowIndex(usableRows)
+  const headers = uniqueHeaders(usableRows[headerRowIndex])
+  if (usableRows.length <= headerRowIndex + 1) return { headers, rows: [] }
 
-  const rows = usableRows.slice(1)
+  const rows = usableRows.slice(headerRowIndex + 1)
     .map(values => {
       const row: Record<string, string> = {}
       headers.forEach((header, index) => {
@@ -561,6 +598,24 @@ export function normalize(s: unknown): string {
     .trim()
 }
 
+function normalizedNameVariants(name: string): string[] {
+  const variants = new Set<string>()
+  const add = (value: string) => {
+    const normalized = normalize(value)
+    if (normalized) variants.add(normalized)
+  }
+
+  add(name)
+  add(name.replace(/\([^)]*\)/g, ' '))
+
+  const parentheticalMatches = name.match(/\(([^)]*)\)/g) ?? []
+  parentheticalMatches
+    .map(match => match.slice(1, -1))
+    .forEach(add)
+
+  return [...variants]
+}
+
 function normalizeHeaderCandidates(header: string): string[] {
   const normalized = normalize(header)
   const withoutParentheticalType = normalize(header.replace(/\s*\([^)]*\)\s*$/g, ''))
@@ -569,6 +624,18 @@ function normalizeHeaderCandidates(header: string): string[] {
     .replace(/\s+/g, ' ')
     .trim()
   return [...new Set([normalized, withoutParentheticalType, strippedClickUpType].filter(Boolean))]
+}
+
+function lpTrackerFieldForStoredKey(key: string) {
+  const normalizedKey = normalizeHeaderCandidates(key)[0] ?? normalize(key)
+  return LP_TRACKER_FIELDS.find(field =>
+    field.key === key ||
+    normalize(field.key) === normalizedKey ||
+    normalize(field.label) === normalizedKey ||
+    normalize(field.target) === normalizedKey ||
+    field.aliases.some(alias => normalize(alias) === normalizedKey) ||
+    (field.legacyKeys ?? []).some(legacyKey => normalize(legacyKey) === normalizedKey)
+  ) ?? null
 }
 
 export function normalizeColumnMapping(mapping: ColumnMapping | null | undefined): ColumnMapping {
@@ -690,6 +757,16 @@ export function splitMultiValue(value: string): string[] {
     .filter(Boolean)
 }
 
+function inferredTargetFromHeader(candidates: string[]): TargetField | null {
+  if (candidates.some(candidate => /^investment(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'SPV Investor'
+  }
+  if (candidates.some(candidate => /^spv investment(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'SPV Investor'
+  }
+  return null
+}
+
 export function detectColumns(headers: string[]): ColumnMapping {
   const candidates = headers.map(rawHeader => {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
@@ -698,7 +775,7 @@ export function detectColumns(headers: string[]): ColumnMapping {
       return { csvHeader, targetField: null, priority: 0 }
     }
     const norm = aliasCandidates.find(candidate => KNOWN_ALIASES[candidate]) ?? aliasCandidates[0] ?? ''
-    const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? null
+    const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? inferredTargetFromHeader(aliasCandidates) ?? null
     const normalizedMatch = normalize(match)
     const isGenericName = match === 'First Name' && aliasCandidates.some(candidate => GENERIC_NAME_ALIASES.has(candidate))
     const priority = isGenericName ? 4 : norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0
@@ -1136,6 +1213,99 @@ function normalizedList(value: string): string[] | null {
   return items.length > 0 ? items : null
 }
 
+function normalizeInvestmentLabel(value: string): string {
+  return trimImportListItem(value)
+    .replace(/\s+/g, ' ')
+    .replace(/[.]+$/g, '')
+    .trim()
+}
+
+function normalizedInvestmentList(values: string[]): string[] | null {
+  const items = values
+    .flatMap(splitMultiValue)
+    .map(normalizeInvestmentLabel)
+    .filter(Boolean)
+  const uniqueItems = [...new Set(items)]
+  return uniqueItems.length > 0 ? uniqueItems : null
+}
+
+function linkedRecordNames(values: string[]): string[] {
+  return [...new Set(values
+    .flatMap(splitMultiValue)
+    .map(value => value.replace(/\s+/g, ' ').trim())
+    .filter(value => value.length > 0 && value.length <= 120 && !/^[-–—]+$/.test(value))
+  )]
+}
+
+function looksLikePersonName(value: string): boolean {
+  if (!value || /https?:\/\//i.test(value) || value.includes('@')) return false
+  if (/\b(note|notes|info|assistant)\b/i.test(value)) return false
+  const words = value.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 5
+}
+
+function baseRelationshipInput(
+  name: string,
+  type: RelationshipType,
+  batchId: string | null,
+  importSrc: string | null,
+): ContactInput {
+  return {
+    name,
+    type,
+    status: 'Pending',
+    email: null,
+    phone: null,
+    company: null,
+    role: null,
+    location: null,
+    website: null,
+    notes: null,
+    recommended_by: null,
+    specialization: null,
+    past_clients: null,
+    industry: null,
+    domain: null,
+    stage: null,
+    ticker: null,
+    linkedin: null,
+    birthday: null,
+    milestones: null,
+    interests: null,
+    relationship_context: null,
+    last_contacted_at: null,
+    list_ids: [],
+    category_ids: [],
+    primary_list_id: null,
+    first_name: type === 'Contact' ? name : null,
+    last_name: null,
+    country: null,
+    global_region: null,
+    gender: null,
+    introduced_by: null,
+    intel_notes: null,
+    relationship_owner: null,
+    contact_frequency: null,
+    cadence_override: null,
+    next_follow_up_date: null,
+    next_action: null,
+    kv_fund_investor: null,
+    spv_investor: null,
+    needs_review: false,
+    company_record_id: null,
+    company_ids: [],
+    email_2: null,
+    email_3: null,
+    communication_preferences: null,
+    custom_fields: {},
+    ring_ids: [],
+    photo_url: null,
+    snoozed_until: null,
+    import_batch_id: batchId,
+    import_source: importSrc,
+  } as ContactInput
+}
+
 function importErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   if (error && typeof error === 'object' && 'message' in error) {
@@ -1202,6 +1372,11 @@ function sanitizeImportCustomFields(fields: Record<string, unknown> | null | und
   for (const [key, value] of Object.entries(fields)) {
     if (allowedKeys.has(key) && hasContactValue(value)) {
       sanitized[key] = value
+      continue
+    }
+    const field = lpTrackerFieldForStoredKey(key)
+    if (field && hasContactValue(value)) {
+      sanitized[field.key] = value
     }
   }
 
@@ -1438,11 +1613,75 @@ export async function importContacts(
 
   const emailIndex = new Map<string, string>()
   const nameIndex = new Map<string, string>()
+  const companyRecordIndex = new Map<string, string>()
+  const peopleRecordIndex = new Map<string, string>()
   const contactIndex = new Map<string, Contact>()
   for (const c of existing) {
     if (c.email) emailIndex.set(c.email.toLowerCase(), c.id)
-    if (c.name) nameIndex.set(c.name.toLowerCase().trim(), c.id)
+    if (c.email_2) emailIndex.set(c.email_2.toLowerCase(), c.id)
+    if (c.email_3) emailIndex.set(c.email_3.toLowerCase(), c.id)
+    for (const nameVariant of normalizedNameVariants(c.name)) {
+      nameIndex.set(nameVariant, c.id)
+      if (c.type === 'Company') companyRecordIndex.set(nameVariant, c.id)
+      if (c.type === 'Contact') peopleRecordIndex.set(nameVariant, c.id)
+    }
     contactIndex.set(c.id, c)
+  }
+
+  async function createLinkedRecord(input: ContactInput): Promise<Contact | null> {
+    const [created] = await createContactsBulk([input], 1)
+    if (!created?.id) return null
+
+    contactIndex.set(created.id, created)
+    for (const nameVariant of normalizedNameVariants(created.name)) {
+      nameIndex.set(nameVariant, created.id)
+      if (created.type === 'Company') companyRecordIndex.set(nameVariant, created.id)
+      if (created.type === 'Contact') peopleRecordIndex.set(nameVariant, created.id)
+    }
+    return created
+  }
+
+  async function ensureCompanyRecord(name: string, row: Record<string, string>): Promise<Contact | null> {
+    const companyName = name.trim()
+    if (!companyName) return null
+    const existingCompanyId = normalizedNameVariants(companyName)
+      .map(nameVariant => companyRecordIndex.get(nameVariant))
+      .find(Boolean)
+    if (existingCompanyId) return contactIndex.get(existingCompanyId) ?? null
+
+    const companyInput = baseRelationshipInput(companyName, 'Company', batchId, importSrc)
+    const companyCustomFields = resolveLpTrackerCustomFields(row, mapping, null)
+    const companyLinkedIn = r(row, 'LinkedIn', 'LinkedIn', 'Linkedin')
+      || (typeof companyCustomFields.upworkLink === 'string' ? companyCustomFields.upworkLink : '')
+    const companyGlobalRegion = r(row, 'Global Region', 'Global Region')
+      || (typeof companyCustomFields.globalRegionDetail === 'string' ? companyCustomFields.globalRegionDetail : '')
+    delete companyCustomFields.upworkLink
+    delete companyCustomFields.globalRegionDetail
+    delete companyCustomFields.assistantInfo
+    delete companyCustomFields.assistantContactIds
+
+    companyInput.website = r(row, 'Website', 'Website') || null
+    companyInput.linkedin = companyLinkedIn || null
+    companyInput.industry = r(row, 'Industry', 'Industry') || null
+    companyInput.email = r(row, 'Email', 'Email') || null
+    companyInput.phone = r(row, 'Phone', 'Phone', 'Contact Info') || null
+    companyInput.country = r(row, 'Country', 'Country') || null
+    companyInput.global_region = (companyGlobalRegion || null) as ContactInput['global_region']
+    companyInput.custom_fields = companyCustomFields
+
+    return createLinkedRecord(companyInput)
+  }
+
+  async function ensureLinkedPersonRecord(name: string): Promise<Contact | null> {
+    const personName = name.trim()
+    if (!personName) return null
+    const existingPersonId = normalizedNameVariants(personName)
+      .map(nameVariant => peopleRecordIndex.get(nameVariant))
+      .find(Boolean)
+    if (existingPersonId) return contactIndex.get(existingPersonId) ?? null
+    if (!looksLikePersonName(personName)) return null
+
+    return createLinkedRecord(baseRelationshipInput(personName, 'Contact', batchId, importSrc))
   }
 
   let imported = 0
@@ -1476,8 +1715,12 @@ export async function importContacts(
     const nameWasFallback = !resolvedName
     const name = resolvedName || fallbackName(row, mapping, recordType, i + 2)
 
-    const email = r(row, 'Email', 'Email')
-    const nameLower = name.toLowerCase().trim()
+    const rawEmail = r(row, 'Email', 'Email')
+    const emailValues = splitMultiValue(rawEmail).filter(hasLikelyEmail)
+    const email = emailValues[0] ?? rawEmail
+    const secondaryEmail = r(row, 'Email 2', 'Email 2') || emailValues[1] || ''
+    const tertiaryEmail = r(row, 'Email 3', 'Email 3') || emailValues[2] || ''
+    const nameKeys = normalizedNameVariants(name)
     const emailLower = email.toLowerCase()
 
     const firstName = resolveFirstName(row, mapping)
@@ -1493,6 +1736,29 @@ export async function importContacts(
     const consumedHeaders = firstName.consumedHeader ? new Set([firstName.consumedHeader]) : undefined
     const notes = combineNotes('', collectUnmappedNotes(row, mapping, consumedHeaders))
     const customFields = resolveLpTrackerCustomFields(row, mapping, campaignFields)
+    const linkedInValue = r(row, 'LinkedIn', 'LinkedIn', 'Linkedin')
+      || (typeof customFields.upworkLink === 'string' ? customFields.upworkLink : '')
+    if (customFields.upworkLink) delete customFields.upworkLink
+    const globalRegionValue = r(row, 'Global Region', 'Global Region')
+      || (typeof customFields.globalRegionDetail === 'string' ? customFields.globalRegionDetail : '')
+    if (customFields.globalRegionDetail) delete customFields.globalRegionDetail
+    const spvInvestor = mapping
+      ? normalizedInvestmentList(resolveValues(row, mapping, 'SPV Investor'))
+      : normalizedInvestmentList([r(row, 'SPV Investor', 'SPV Investor')])
+    const companyName = r(row, 'Company', 'Company')
+    const linkedCompany = recordType === 'Contact' && companyName
+      ? await ensureCompanyRecord(companyName, row)
+      : null
+    const assistantNames = mapping ? linkedRecordNames(resolveValues(row, mapping, 'Assistant Info')) : []
+    const assistantRecords: Contact[] = []
+    for (const assistantName of assistantNames) {
+      const assistantRecord = await ensureLinkedPersonRecord(assistantName)
+      if (assistantRecord) assistantRecords.push(assistantRecord)
+    }
+    if (assistantRecords.length > 0) {
+      customFields.assistantContactIds = unique(assistantRecords.map(record => record.id))
+    }
+    delete customFields.assistantInfo
     const importedTouchpoints = parseTaskContentInteractions(
       typeof customFields.notes === 'string' ? customFields.notes : '',
     )
@@ -1503,20 +1769,20 @@ export async function importContacts(
       status: 'Pending',
       email: email || null,
       phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
-      company: r(row, 'Company', 'Company') || null,
-      role: null,
+      company: companyName || null,
+      role: r(row, 'Role', 'Role', 'Job Title', 'Title') || null,
       location: null,
       website: r(row, 'Website', 'Website') || null,
       notes,
       recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
       specialization: null,
       past_clients: null,
-      industry: null,
+      industry: r(row, 'Industry', 'Industry') || null,
       domain: null,
       stage: null,
       ticker: null,
-      linkedin: r(row, 'LinkedIn', 'LinkedIn', 'Linkedin') || null,
-      birthday: null,
+      linkedin: linkedInValue || null,
+      birthday: normalizeDate(r(row, 'Birthday', 'Birthday')) || null,
       milestones: null,
       interests: null,
       relationship_context: null,
@@ -1527,7 +1793,7 @@ export async function importContacts(
       first_name: firstName.value || null,
       last_name: lastName || null,
       country: r(row, 'Country', 'Country') || null,
-      global_region: null,
+      global_region: (globalRegionValue || null) as ContactInput['global_region'],
       gender: normalizeGender(r(row, 'Gender', 'Gender')),
       introduced_by: null,
       intel_notes: null,
@@ -1536,13 +1802,13 @@ export async function importContacts(
       cadence_override: null,
       next_follow_up_date: null,
       next_action: null,
-      kv_fund_investor: null,
-      spv_investor: normalizedList(r(row, 'SPV Investor', 'SPV Investor')),
+      kv_fund_investor: normalizedList(r(row, 'KV Fund Investor', 'KV Fund Investor')),
+      spv_investor: spvInvestor,
       needs_review: false,
-      company_record_id: null,
-      company_ids: [],
-      email_2: null,
-      email_3: null,
+      company_record_id: linkedCompany?.id ?? null,
+      company_ids: linkedCompany?.id ? [linkedCompany.id] : [],
+      email_2: secondaryEmail || null,
+      email_3: tertiaryEmail || null,
       communication_preferences: null,
       custom_fields: customFields,
       ring_ids: [],
@@ -1554,7 +1820,7 @@ export async function importContacts(
 
     const pendingKeys = [
       emailLower ? `email:${emailLower}` : '',
-      !nameWasFallback ? `name:${nameLower}` : '',
+      ...(!nameWasFallback ? nameKeys.map(nameKey => `name:${nameKey}`) : []),
     ].filter(Boolean)
     const pendingIndex = pendingKeys
       .map(key => pendingCreateIndex.get(key))
@@ -1570,7 +1836,7 @@ export async function importContacts(
       continue
     }
 
-    const existingId = (emailLower && emailIndex.get(emailLower)) || (!nameWasFallback ? nameIndex.get(nameLower) : undefined)
+    const existingId = (emailLower && emailIndex.get(emailLower)) || (!nameWasFallback ? nameKeys.map(nameKey => nameIndex.get(nameKey)).find(Boolean) : undefined)
     const existingContact = existingId ? contactIndex.get(existingId) : null
 
     if (existingContact) {
@@ -1635,7 +1901,7 @@ export async function importContacts(
       imported += created.length
       processedForProgress += chunk.length
       onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
-    } catch (chunkError) {
+    } catch {
       for (const item of chunk) {
         try {
           const [created] = await createContactsBulk([item.contact], 1)

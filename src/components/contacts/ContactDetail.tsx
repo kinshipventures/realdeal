@@ -8,7 +8,7 @@ import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeL
 
 import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact, getContacts } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
-import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment, ENRICHABLE_FIELDS } from '../../lib/enrichment'
+import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { avatarHue, initials } from '../../lib/utils'
@@ -94,7 +94,7 @@ type SaveError = { field: keyof Contact; value: string | string[] | null } | nul
 
 type FieldRenderOptions = {
   multi?: boolean
-  inputType?: 'text' | 'email' | 'tel' | 'url'
+  inputType?: 'text' | 'email' | 'tel' | 'url' | 'date'
   options?: string[]
   alwaysInput?: boolean
 }
@@ -124,6 +124,28 @@ function parentPodIdsForCategories(categoryIds: string[], categories: Category[]
   return uniqueIds(categoryIds.map(categoryId => categoryById.get(categoryId)?.list_id ?? ''))
 }
 
+function normalizeStoredFieldKey(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function lpFieldForStoredKey(key: string): LpTrackerFieldDefinition | null {
+  const normalized = normalizeStoredFieldKey(key)
+  return LP_TRACKER_FIELDS.find(field =>
+    field.key === key ||
+    normalizeStoredFieldKey(field.key) === normalized ||
+    normalizeStoredFieldKey(field.label) === normalized ||
+    normalizeStoredFieldKey(field.target) === normalized ||
+    field.aliases.some(alias => normalizeStoredFieldKey(alias) === normalized) ||
+    (field.legacyKeys ?? []).some(legacyKey => normalizeStoredFieldKey(legacyKey) === normalized)
+  ) ?? null
+}
+
 function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
   if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return {}
 
@@ -132,8 +154,14 @@ function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
   const nextFields: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(rawFields)) {
-    if (allowedKeys.has(key) && hasLpTrackerValue(value)) {
+    if (!hasLpTrackerValue(value)) continue
+    if (allowedKeys.has(key)) {
       nextFields[key] = value
+      continue
+    }
+    const field = lpFieldForStoredKey(key)
+    if (field) {
+      nextFields[field.key] = value
     }
   }
 
@@ -197,7 +225,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   useEffect(() => {
     if (!contact) return
-    setDraft(contact)
+    const customFields = sanitizeCustomFields(contact.custom_fields)
+    const legacyLinkedIn = typeof customFields.upworkLink === 'string' ? customFields.upworkLink : null
+    const legacyGlobalRegion = typeof customFields.globalRegionDetail === 'string' ? customFields.globalRegionDetail : null
+    setDraft({
+      ...contact,
+      custom_fields: customFields,
+      linkedin: contact.linkedin ?? legacyLinkedIn,
+      global_region: (contact.global_region ?? legacyGlobalRegion ?? null) as Contact['global_region'] | null,
+    })
     setEditingField(null)
     setEditingCustomField(null)
     setHasPendingContactChanges(false)
@@ -367,6 +403,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const spvInvestor = Array.isArray(draft.spv_investor)
       ? draft.spv_investor.map(value => String(value).trim()).filter(Boolean)
       : []
+    const kvFundInvestor = Array.isArray(draft.kv_fund_investor)
+      ? draft.kv_fund_investor.map(value => String(value).trim()).filter(Boolean)
+      : []
+    const companyIds = Array.isArray(draft.company_ids)
+      ? uniqueIds(draft.company_ids.map(value => String(value).trim()))
+      : []
+    const customFields = getDraftCustomFields()
+    const legacyLinkedIn = typeof customFields.upworkLink === 'string' ? customFields.upworkLink : null
+    const legacyGlobalRegion = typeof customFields.globalRegionDetail === 'string' ? customFields.globalRegionDetail : null
+    const nextGlobalRegion = (draft.global_region ?? legacyGlobalRegion ?? null) as Contact['global_region'] | null
+    if ((draft.linkedin ?? legacyLinkedIn) && customFields.upworkLink) delete customFields.upworkLink
+    if (nextGlobalRegion && customFields.globalRegionDetail) delete customFields.globalRegionDetail
 
     setSavingContactInfo(true)
     setContactSaveError(null)
@@ -374,15 +422,25 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       const updated = await updateContact(contact.id, {
         name: nextName || contact.name,
         email: draft.email ?? null,
+        email_2: draft.email_2 ?? null,
+        email_3: draft.email_3 ?? null,
         phone: draft.phone ?? null,
         company: draft.company ?? null,
-        linkedin: draft.linkedin ?? null,
+        role: draft.role ?? null,
+        linkedin: draft.linkedin ?? legacyLinkedIn ?? null,
         website: draft.website ?? null,
+        industry: draft.industry ?? null,
+        notes: draft.notes ?? null,
+        birthday: draft.birthday ?? null,
         country: draft.country ?? null,
+        global_region: nextGlobalRegion,
         gender: draft.gender ?? null,
         recommended_by: draft.recommended_by ?? null,
+        company_record_id: draft.company_record_id ?? companyIds[0] ?? null,
+        company_ids: companyIds,
+        kv_fund_investor: kvFundInvestor.length > 0 ? kvFundInvestor : null,
         spv_investor: spvInvestor.length > 0 ? spvInvestor : null,
-        custom_fields: getDraftCustomFields(),
+        custom_fields: customFields,
       } as Partial<Contact>)
       setDraft(updated)
       setHasPendingContactChanges(false)
@@ -1252,7 +1310,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) : (
               <input
                 autoFocus
-                type={fieldDef.type === 'url' ? 'url' : 'text'}
+                type={fieldDef.type === 'url' ? 'url' : fieldDef.type === 'email' ? 'email' : 'text'}
                 defaultValue={value}
                 onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
                 onKeyDown={onKeyDown}
@@ -1295,21 +1353,285 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  function customFieldSection(section: LpTrackerFieldDefinition['section'], showEmptyFields = true) {
-    const customFields = getDraftCustomFields()
-    const fields = LP_TRACKER_FIELDS
-      .filter(fieldDef => fieldDef.section === section)
-      .filter(fieldDef => showEmptyFields || hasLpTrackerValue(customFields[fieldDef.key]))
-    if (fields.length === 0) return null
+  function customFieldByKey(key: string) {
+    const fieldDef = LP_TRACKER_FIELDS.find(field => field.key === key)
+    return fieldDef ? customField(fieldDef) : null
+  }
+
+  function setCustomFieldDraftValue(key: string, value: unknown) {
+    const nextCustomFields = { ...getDraftCustomFields() }
+    if (hasLpTrackerValue(value)) {
+      nextCustomFields[key] = value
+    } else {
+      delete nextCustomFields[key]
+    }
+    setDraft(prev => ({ ...prev, custom_fields: nextCustomFields }))
+    markContactInfoChanged()
+  }
+
+  function customFieldIds(key: string): string[] {
+    const value = getDraftCustomFields()[key]
+    return Array.isArray(value) ? value.map(String).filter(Boolean) : []
+  }
+
+  function recordChip(record: Contact, onRemove?: () => void) {
     return (
-      <div style={sectionShell}>
-        <div style={sectionHeader}>
-          <div style={sectionLabel}>{section.toLowerCase()}</div>
+      <span
+        key={record.id}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          maxWidth: '100%',
+          padding: '5px 9px',
+          borderRadius: 999,
+          border: '1px solid color-mix(in srgb, var(--color-brand) 45%, var(--edge) 55%)',
+          background: 'color-mix(in srgb, var(--color-brand) 10%, var(--surface-panel) 90%)',
+          color: 'var(--color-text-primary)',
+          fontSize: 12,
+          fontWeight: 600,
+          lineHeight: 1.3,
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${record.name}`}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              fontSize: 13,
+              lineHeight: '16px',
+              padding: 0,
+              fontFamily: 'inherit',
+            }}
+          >
+            x
+          </button>
+        )}
+      </span>
+    )
+  }
+
+  function linkedRecordsField({
+    label,
+    records,
+    selectedIds,
+    placeholder,
+    onChange,
+    multi = true,
+  }: {
+    label: string
+    records: Contact[]
+    selectedIds: string[]
+    placeholder: string
+    onChange: (ids: string[]) => void
+    multi?: boolean
+  }) {
+    const normalizedSelectedIds = uniqueIds(selectedIds)
+    const selectedRecords = normalizedSelectedIds
+      .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
+      .filter(Boolean) as Contact[]
+    const availableRecords = records.filter(record => !normalizedSelectedIds.includes(record.id))
+
+    function addRecord(id: string) {
+      if (!id) return
+      onChange(multi ? uniqueIds([...normalizedSelectedIds, id]) : [id])
+    }
+
+    function removeRecord(id: string) {
+      onChange(normalizedSelectedIds.filter(selectedId => selectedId !== id))
+    }
+
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '132px minmax(0, 1fr)',
+        gap: 14,
+        alignItems: 'start',
+        padding: '13px 18px',
+        borderBottom: '1px solid var(--divider)',
+      }}>
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>{label}</div>
         </div>
-        {fields.map(fieldDef => customField(fieldDef))}
-        {section === 'Fund Details' && arrayField('spv_investor', 'SPV Investor', contactFieldOptions('spv_investor'))}
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {selectedRecords.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {selectedRecords.map(record => recordChip(record, () => removeRecord(record.id)))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 14, color: 'var(--color-text-tertiary)', minHeight: 22, lineHeight: 1.45 }}>
+              {placeholder}
+            </div>
+          )}
+          {availableRecords.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <select
+                value=""
+                onChange={event => addRecord(event.target.value)}
+                style={{
+                  width: '100%',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 94%, var(--tint) 6%), color-mix(in srgb, var(--surface-panel) 82%, var(--tint) 18%))',
+                  border: '1px solid color-mix(in srgb, var(--edge-strong) 82%, var(--color-brand) 18%)',
+                  borderRadius: 9,
+                  color: 'var(--color-text-primary)',
+                  fontSize: 14,
+                  lineHeight: 1.45,
+                  padding: '8px 36px 8px 11px',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.55)',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">{multi ? 'Add linked record...' : 'Select linked record...'}</option>
+                {availableRecords.map(record => (
+                  <option key={record.id} value={record.id}>{record.name}</option>
+                ))}
+              </select>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  right: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--color-text-secondary)',
+                  pointerEvents: 'none',
+                }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
     )
+  }
+
+  function setLinkedCompanyIds(ids: string[]) {
+    const normalizedIds = uniqueIds(ids)
+    const primaryCompany = normalizedIds.length > 0
+      ? contactsForOptions.find(record => record.id === normalizedIds[0] && record.type === 'Company')
+      : null
+    setDraft(prev => ({
+      ...prev,
+      company_record_id: normalizedIds[0] ?? null,
+      company_ids: normalizedIds,
+      company: primaryCompany?.name ?? null,
+    }))
+    markContactInfoChanged()
+  }
+
+  function currentPrimaryCompanyName(): string | null {
+    const primaryId = draft.company_record_id ?? draft.company_ids?.[0] ?? null
+    if (!primaryId) return null
+    return contactsForOptions.find(record => record.id === primaryId && record.type === 'Company')?.name ?? null
+  }
+
+  function primaryCompanyField() {
+    const companyRecords = contactsForOptions.filter(record => record.type === 'Company')
+    const selectedIds = uniqueIds([
+      draft.company_record_id ?? '',
+      ...(draft.company_ids ?? []),
+    ]).filter(Boolean)
+    return linkedRecordsField({
+      label: 'Company',
+      records: companyRecords,
+      selectedIds: selectedIds.slice(0, 1),
+      placeholder: 'add company',
+      multi: false,
+      onChange: ids => setLinkedCompanyIds(ids.length > 0 ? uniqueIds([...ids, ...selectedIds.filter(id => id !== ids[0])]) : []),
+    })
+  }
+
+  function companiesAssociationField() {
+    const companyRecords = contactsForOptions.filter(record => record.type === 'Company')
+    const selectedIds = uniqueIds([
+      ...(draft.company_ids ?? []),
+      draft.company_record_id ?? '',
+    ]).filter(Boolean)
+    return linkedRecordsField({
+      label: 'Companies',
+      records: companyRecords,
+      selectedIds,
+      placeholder: 'add companies',
+      onChange: setLinkedCompanyIds,
+    })
+  }
+
+  function assistantInfoField() {
+    const peopleRecords = contactsForOptions.filter(record => record.type === 'Contact' && record.id !== contact?.id)
+    return linkedRecordsField({
+      label: 'Assistant Info',
+      records: peopleRecords,
+      selectedIds: customFieldIds('assistantContactIds'),
+      placeholder: 'add assistant records',
+      onChange: ids => setCustomFieldDraftValue('assistantContactIds', uniqueIds(ids)),
+    })
+  }
+
+  function companyPeopleField(label: string) {
+    const companyId = contact?.id
+    const peopleRecords = contactsForOptions.filter(record => record.type === 'Contact' && record.id !== companyId)
+    const selectedIds = companyId
+      ? peopleRecords
+          .filter(record => record.company_record_id === companyId || (record.company_ids ?? []).includes(companyId))
+          .map(record => record.id)
+      : []
+
+    async function updateLinkedPeople(ids: string[]) {
+      if (!companyId || isNew) return
+      const normalizedIds = uniqueIds(ids)
+      const previousIds = new Set(selectedIds)
+      const nextIds = new Set(normalizedIds)
+
+      for (const person of peopleRecords) {
+        const wasLinked = previousIds.has(person.id)
+        const shouldLink = nextIds.has(person.id)
+        if (wasLinked === shouldLink) continue
+
+        const nextCompanyIds = shouldLink
+          ? uniqueIds([...(person.company_ids ?? []), companyId])
+          : (person.company_ids ?? []).filter(id => id !== companyId)
+        const primaryCompanyId = shouldLink
+          ? (person.company_record_id ?? companyId)
+          : (person.company_record_id === companyId ? nextCompanyIds[0] ?? null : person.company_record_id)
+        const updatedPerson = await updateContact(person.id, {
+          company_record_id: primaryCompanyId,
+          company_ids: nextCompanyIds,
+          company: primaryCompanyId === companyId ? (draft.name ?? contact?.name ?? null) : person.company,
+        } as Partial<Contact>)
+        setContactsForOptions(prev => prev.map(record => record.id === updatedPerson.id ? updatedPerson : record))
+      }
+    }
+
+    return linkedRecordsField({
+      label,
+      records: peopleRecords,
+      selectedIds,
+      placeholder: isNew ? 'save this company first' : 'add people',
+      onChange: ids => { void updateLinkedPeople(ids) },
+    })
   }
 
   async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null, nextCategoryIds = draft.category_ids ?? []) {
@@ -1412,13 +1734,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         primary_list_id: draft.primary_list_id ?? listIds[0] ?? null, cadence_override: null,
         ring_ids: draft.ring_ids ?? [],
         first_name: null, last_name: null, linkedin: draft.linkedin ?? null,
-        country: draft.country ?? null, global_region: null, gender: draft.gender ?? null,
+        country: draft.country ?? null, global_region: draft.global_region ?? null, gender: draft.gender ?? null,
         introduced_by: null, intel_notes: null, relationship_owner: null,
         contact_frequency: null, next_follow_up_date: null, next_action: null,
-        kv_fund_investor: null, spv_investor: draft.spv_investor ?? null, needs_review: false,
-        type: 'Contact', status: 'Pending',
-        company_record_id: null, company_ids: [], industry: null, stage: null,
-        ticker: null, domain: null, email_2: null, email_3: null,
+        kv_fund_investor: draft.kv_fund_investor ?? null, spv_investor: draft.spv_investor ?? null, needs_review: false,
+        type: draft.type ?? 'Contact', status: 'Pending',
+        company_record_id: draft.company_record_id ?? null, company_ids: draft.company_ids ?? [], industry: draft.industry ?? null, stage: null,
+        ticker: null, domain: null, email_2: draft.email_2 ?? null, email_3: draft.email_3 ?? null,
         communication_preferences: null, custom_fields: draft.custom_fields ?? {},
       })
       onSaved(created)
@@ -1445,18 +1767,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const hue = avatarHue(draft.name ?? '')
   const nameInitials = initials(draft.name ?? '')
-
-  const smallInputStyle: React.CSSProperties = {
-    fontSize: 14,
-    lineHeight: 1.4,
-    color: 'var(--color-text-secondary)',
-    background: 'var(--tint)',
-    border: '1px solid var(--edge-strong)',
-    borderRadius: 6,
-    padding: '6px 8px',
-    outline: 'none',
-    fontFamily: 'inherit',
-  }
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 13,
@@ -1898,22 +2208,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
-                {editingField === 'company' ? (
-                  <input
-                    autoFocus
-                    defaultValue={draft.company ?? ''}
-                    placeholder="Company"
-                    onBlur={e => handleBlur('company', e.target.value)}
-                    style={{ ...smallInputStyle, minWidth: 220 }}
-                  />
-                ) : (
-                  <span
-                    onClick={() => setEditingField('company')}
-                    style={{ fontSize: 14, color: draft.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', cursor: 'text', lineHeight: 1.45 }}
-                  >
-                    {draft.company ?? 'Company or org'}
-                  </span>
-                )}
+                <span style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
+                  {(draft.type ?? contact?.type ?? 'Contact') === 'Company'
+                    ? (draft.industry ?? 'Company record')
+                    : [draft.role, currentPrimaryCompanyName()].filter(Boolean).join(' at ') || 'Title or role'}
+                </span>
               </div>
 
               {!isNew && contactCampaignLinks.length > 0 && (
@@ -1996,30 +2295,100 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         >
           <div className="contact-lightbox-main" style={{ overflowY: 'auto', padding: '24px 28px 28px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={sectionShell}>
-                <div style={sectionHeader}>
-                  <div style={sectionLabel}>contact information</div>
-                </div>
-                {field('name', 'Name')}
-                {field('company', 'Company', { inputType: 'text', alwaysInput: true })}
-              </div>
+              {(draft.type ?? contact?.type ?? 'Contact') === 'Company' ? (
+                <>
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>identity</div>
+                    </div>
+                    {field('name', 'Company Name')}
+                    {companyPeopleField('Contacts')}
+                    {field('website', 'Website', { inputType: 'url' })}
+                    {customFieldByKey('companyType')}
+                    {linkedinField()}
+                    {field('industry', 'Industry')}
+                    {customFieldByKey('fundType')}
+                  </div>
 
-              <div style={sectionShell}>
-                <div style={sectionHeader}>
-                  <div style={sectionLabel}>ways to reach them</div>
-                </div>
-                {field('email', 'Email', { inputType: 'email' })}
-                {field('phone', 'Phone', { inputType: 'tel' })}
-                {linkedinField()}
-                {field('website', 'Website', { inputType: 'url' })}
-                {field('country', 'Country', { options: contactFieldOptions('country') })}
-                {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
-              </div>
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>location</div>
+                    </div>
+                    {customFieldByKey('address')}
+                    {customFieldByKey('city')}
+                    {customFieldByKey('state')}
+                    {field('country', 'Country', { options: contactFieldOptions('country') })}
+                    {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
+                  </div>
 
-              {customFieldSection('Investor Profile')}
-              {customFieldSection('Fund Details')}
-              {customFieldSection('Operations')}
-              {customFieldSection('Notes')}
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>contact</div>
+                    </div>
+                    {field('email', 'Email', { inputType: 'email' })}
+                    {field('phone', 'Phone', { inputType: 'tel' })}
+                  </div>
+
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>internal</div>
+                    </div>
+                    {field('notes', 'Notes', { multi: true })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>contact information</div>
+                    </div>
+                    {field('name', 'Name')}
+                    {primaryCompanyField()}
+                    {field('role', 'Job Title')}
+                    {linkedinField()}
+                    {field('recommended_by', 'Referred By')}
+                    {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
+                    {field('birthday', 'Birthday', { inputType: 'date' })}
+                  </div>
+
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>ways to contact</div>
+                    </div>
+                    {field('email', 'Email', { inputType: 'email' })}
+                    {field('email_2', 'Email 2', { inputType: 'email' })}
+                    {field('email_3', 'Email 3', { inputType: 'email' })}
+                    {field('phone', 'Phone', { inputType: 'tel' })}
+                    {customFieldByKey('address')}
+                    {customFieldByKey('city')}
+                    {customFieldByKey('state')}
+                    {field('country', 'Country', { options: contactFieldOptions('country') })}
+                    {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
+                    {assistantInfoField()}
+                  </div>
+
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>investor profile</div>
+                    </div>
+                    {arrayField('kv_fund_investor', 'Kinship Investments', contactFieldOptions('kv_fund_investor'))}
+                    {customFieldByKey('investmentEntity')}
+                    {customFieldByKey('fundType')}
+                    {customFieldByKey('spvInvestorFlag')}
+                    {arrayField('spv_investor', 'SPV Investor', contactFieldOptions('spv_investor'))}
+                    {customFieldByKey('investmentEmail')}
+                  </div>
+
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>internal</div>
+                    </div>
+                    {customFieldByKey('notables')}
+                    {customFieldByKey('category')}
+                    {customFieldByKey('notes')}
+                  </div>
+                </>
+              )}
 
               {pods.length > 0 && (
                 <div style={sectionShell}>
@@ -2250,12 +2619,21 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
-              <div style={sectionShell}>
-                <div style={sectionHeader}>
-                  <div style={sectionLabel}>relationship</div>
+              {(draft.type ?? contact?.type ?? 'Contact') === 'Company' ? (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>people</div>
+                  </div>
+                  {companyPeopleField('People')}
                 </div>
-                {field('recommended_by', 'Referred by')}
-              </div>
+              ) : (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>companies</div>
+                  </div>
+                  {companiesAssociationField()}
+                </div>
+              )}
 
             </div>
           </div>

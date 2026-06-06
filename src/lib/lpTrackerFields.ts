@@ -1,8 +1,9 @@
-export type LpTrackerFieldType = 'text' | 'long_text' | 'checkbox' | 'multi_select' | 'select' | 'url'
+export type LpTrackerFieldType = 'text' | 'long_text' | 'checkbox' | 'multi_select' | 'select' | 'url' | 'email'
 
 export type LpTrackerFieldDefinition = {
   key: string
   legacyKeys?: readonly string[]
+  hidden?: boolean
   target: string
   label: string
   section: 'Investor Profile' | 'Fund Details' | 'Operations' | 'Notes'
@@ -28,6 +29,14 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['city', 'city dropdown', 'home city', 'work city', 'town', 'metro'],
   },
   {
+    key: 'state',
+    target: 'State',
+    label: 'State',
+    section: 'Investor Profile',
+    type: 'text',
+    aliases: ['state', 'state region', 'province'],
+  },
+  {
     key: 'category',
     target: 'Category',
     label: 'Category',
@@ -41,7 +50,16 @@ export const LP_TRACKER_FIELDS = [
     label: 'Global Region',
     section: 'Investor Profile',
     type: 'select',
-    aliases: ['global region', 'global region detail', 'region detail', 'region'],
+    hidden: true,
+    aliases: ['global region detail', 'region detail'],
+  },
+  {
+    key: 'investmentEntity',
+    target: 'Investment Entity',
+    label: 'Investment Entity',
+    section: 'Fund Details',
+    type: 'text',
+    aliases: ['investment entity', 'investment entity text', 'entity'],
   },
   {
     key: 'fundType',
@@ -60,12 +78,30 @@ export const LP_TRACKER_FIELDS = [
     aliases: ['spv investor flag', 'spv investor checkbox', 'spv investor boolean'],
   },
   {
+    key: 'investmentEmail',
+    target: 'Investment Email',
+    label: 'Investment Email',
+    section: 'Fund Details',
+    type: 'email',
+    aliases: ['investment email', 'investment email address', 'legal email'],
+  },
+  {
     key: 'assistantInfo',
     target: 'Assistant Info',
     label: 'Assistant Info',
     section: 'Operations',
     type: 'long_text',
+    hidden: true,
     aliases: ['assistant info', 'assistant notes'],
+  },
+  {
+    key: 'assistantContactIds',
+    target: 'Assistant Records',
+    label: 'Assistant Info',
+    section: 'Operations',
+    type: 'multi_select',
+    hidden: true,
+    aliases: [],
   },
   {
     key: 'notables',
@@ -81,7 +117,16 @@ export const LP_TRACKER_FIELDS = [
     label: 'Upwork Link',
     section: 'Operations',
     type: 'url',
-    aliases: ['upwork link'],
+    hidden: true,
+    aliases: [],
+  },
+  {
+    key: 'companyType',
+    target: 'Company Type',
+    label: 'Company Type',
+    section: 'Operations',
+    type: 'select',
+    aliases: ['company type', 'organization type', 'organisation type'],
   },
   {
     key: 'notes',

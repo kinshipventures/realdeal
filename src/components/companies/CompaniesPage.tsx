@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { getCompanies } from '../../lib/data'
+import { getContactsByType } from '../../lib/data'
 import { EmptyState } from '../empty/EmptyState'
-import type { Company } from '../../lib/types'
+import type { Contact } from '../../lib/types'
 
 type SortCol = 'name' | 'industry' | 'stage' | 'domain' | 'location'
 type SortDir = 'asc' | 'desc'
@@ -24,17 +24,27 @@ function useIsMobile() {
   return mobile
 }
 
-export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange }: { embedded?: boolean; hideInlineCount?: boolean; onFilteredCountChange?: (count: number) => void } = {}) {
+export function CompaniesPage({
+  embedded,
+  hideInlineCount,
+  onFilteredCountChange,
+  onOpenCompany,
+}: {
+  embedded?: boolean
+  hideInlineCount?: boolean
+  onFilteredCountChange?: (count: number) => void
+  onOpenCompany?: (company: Contact) => void
+} = {}) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
-  const [companies, setCompanies] = useState<Company[]>([])
+  const [companies, setCompanies] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir }>({ col: 'name', dir: 'asc' })
 
   useEffect(() => {
     let cancelled = false
-    getCompanies().then(data => {
+    getContactsByType('Company').then(data => {
       if (!cancelled) { setCompanies(data); setLoading(false) }
     })
     return () => { cancelled = true }
@@ -44,6 +54,14 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' })
   }, [])
 
+  const openCompany = useCallback((company: Contact) => {
+    if (onOpenCompany) {
+      onOpenCompany(company)
+      return
+    }
+    navigate(`/contact/${company.id}`)
+  }, [navigate, onOpenCompany])
+
   const filtered = useMemo(() => {
     let list = companies
     if (search) {
@@ -51,7 +69,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
       list = list.filter(c =>
         c.name.toLowerCase().includes(q) ||
         (c.industry ?? '').toLowerCase().includes(q) ||
-        (c.domain ?? '').toLowerCase().includes(q) ||
+        (c.domain ?? c.website ?? '').toLowerCase().includes(q) ||
         (c.location ?? '').toLowerCase().includes(q)
       )
     }
@@ -61,7 +79,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
         case 'name': return dir * a.name.localeCompare(b.name)
         case 'industry': return dir * (a.industry ?? '').localeCompare(b.industry ?? '')
         case 'stage': return dir * (a.stage ?? '').localeCompare(b.stage ?? '')
-        case 'domain': return dir * (a.domain ?? '').localeCompare(b.domain ?? '')
+        case 'domain': return dir * (a.domain ?? a.website ?? '').localeCompare(b.domain ?? b.website ?? '')
         case 'location': return dir * (a.location ?? '').localeCompare(b.location ?? '')
         default: return 0
       }
@@ -176,7 +194,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
               <button
                 key={c.id}
                 type="button"
-                onClick={() => navigate(`/contact/${c.id}`)}
+                onClick={() => openCompany(c)}
                 style={{
                   display: 'grid',
                   gap: 8,
@@ -196,7 +214,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
                 <div style={{ display: 'grid', gap: 6, color: 'var(--color-text-secondary)', fontSize: 13 }}>
                   <span>{c.industry ?? 'No industry yet'}</span>
                   <span>{c.stage ?? 'No stage yet'}</span>
-                  <span>{c.location ?? c.domain ?? 'No location or domain yet'}</span>
+                  <span>{c.location ?? c.domain ?? c.website ?? 'No location or domain yet'}</span>
                 </div>
               </button>
             ))}
@@ -218,11 +236,11 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
                   key={c.id}
                   style={{ cursor: 'pointer', transition: 'background 0.1s' }}
                   tabIndex={0}
-                  onClick={() => navigate(`/contact/${c.id}`)}
+                  onClick={() => openCompany(c)}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      navigate(`/contact/${c.id}`)
+                      openCompany(c)
                     }
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--tint-hover)')}
@@ -231,7 +249,7 @@ export function CompaniesPage({ embedded, hideInlineCount, onFilteredCountChange
                   <td style={{ ...tdStyle, fontWeight: 500 }}>{c.name}</td>
                   <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.industry ?? '-'}</td>
                   <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.stage ?? '-'}</td>
-                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.domain ?? '-'}</td>
+                  <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.domain ?? c.website ?? '-'}</td>
                   <td style={{ ...tdStyle, color: 'var(--color-text-secondary)' }}>{c.location ?? '-'}</td>
                 </tr>
               ))}
