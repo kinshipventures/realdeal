@@ -499,13 +499,91 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setNewOptionValue('')
   }
 
-  function renderAddOptionControl(targetId: string, onAdd: (value: string) => void, placeholder = 'New option') {
+  function blankRelationshipInput(
+    name: string,
+    type: Contact['type'],
+    patch: Partial<Omit<Contact, 'id' | 'created_at'>> = {},
+  ): Omit<Contact, 'id' | 'created_at'> {
+    return {
+      name,
+      email: null,
+      phone: null,
+      company: null,
+      role: null,
+      location: null,
+      website: null,
+      notes: null,
+      recommended_by: null,
+      specialization: null,
+      past_clients: null,
+      birthday: null,
+      milestones: null,
+      interests: null,
+      relationship_context: null,
+      last_contacted_at: null,
+      list_ids: [],
+      category_ids: [],
+      primary_list_id: null,
+      cadence_override: null,
+      first_name: type === 'Contact' ? name : null,
+      last_name: null,
+      linkedin: null,
+      country: null,
+      global_region: null,
+      gender: null,
+      introduced_by: null,
+      intel_notes: null,
+      relationship_owner: null,
+      contact_frequency: null,
+      communication_preferences: null,
+      next_follow_up_date: null,
+      next_action: null,
+      kv_fund_investor: null,
+      spv_investor: null,
+      needs_review: false,
+      type,
+      status: type === 'Company' ? 'Active' : 'Pending',
+      ring_ids: [],
+      company_record_id: null,
+      company_ids: [],
+      industry: null,
+      stage: null,
+      ticker: null,
+      domain: null,
+      email_2: null,
+      email_3: null,
+      photo_url: null,
+      custom_fields: {},
+      snoozed_until: null,
+      ...patch,
+    }
+  }
+
+  async function createLinkedRelationshipRecord(
+    rawName: string,
+    type: Contact['type'],
+    patch: Partial<Omit<Contact, 'id' | 'created_at'>> = {},
+  ): Promise<Contact | null> {
+    const name = rawName.trim()
+    if (!name) return null
+    const normalizedName = normalizeStoredFieldKey(name)
+    const existing = contactsForOptions.find(record =>
+      record.type === type && normalizeStoredFieldKey(record.name) === normalizedName
+    )
+    if (existing) return existing
+
+    const created = await createContact(blankRelationshipInput(name, type, patch))
+    setContactsForOptions(prev => uniqueContactsById([created, ...prev]))
+    return created
+  }
+
+  function renderAddOptionControl(targetId: string, onAdd: (value: string) => void | Promise<void>, placeholder = 'New option') {
     if (newOptionTarget !== targetId) return null
 
-    function commitNewOption() {
+    async function commitNewOption() {
       const value = newOptionValue.trim()
       if (!value) return
-      onAdd(value)
+      await onAdd(value)
       setNewOptionTarget(null)
       setNewOptionValue('')
     }
@@ -521,7 +599,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           onKeyDown={event => {
             if (event.key === 'Enter') {
               event.preventDefault()
-              commitNewOption()
+              void commitNewOption()
             }
             if (event.key === 'Escape') {
               setNewOptionTarget(null)
@@ -545,7 +623,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         />
         <button
           type="button"
-          onClick={commitNewOption}
+          onClick={() => { void commitNewOption() }}
           disabled={!newOptionValue.trim()}
           style={{
             padding: '7px 12px',
@@ -1427,6 +1505,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     placeholder,
     onChange,
     multi = true,
+    createOptionLabel,
+    createPlaceholder,
+    onCreateRecord,
   }: {
     label: string
     records: Contact[]
@@ -1434,12 +1515,16 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     placeholder: string
     onChange: (ids: string[]) => void
     multi?: boolean
+    createOptionLabel?: string
+    createPlaceholder?: string
+    onCreateRecord?: (name: string) => Promise<Contact | null> | Contact | null
   }) {
     const normalizedSelectedIds = uniqueIds(selectedIds)
     const selectedRecords = normalizedSelectedIds
       .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
       .filter(Boolean) as Contact[]
     const availableRecords = records.filter(record => !normalizedSelectedIds.includes(record.id))
+    const targetId = `linked:${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 
     function addRecord(id: string) {
       if (!id) return
@@ -1448,6 +1533,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
     function removeRecord(id: string) {
       onChange(normalizedSelectedIds.filter(selectedId => selectedId !== id))
+    }
+
+    async function createAndAddRecord(name: string) {
+      if (!onCreateRecord) return
+      const created = await onCreateRecord(name)
+      if (created?.id) addRecord(created.id)
     }
 
     return (
@@ -1472,11 +1563,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {placeholder}
             </div>
           )}
-          {availableRecords.length > 0 && (
+          {(availableRecords.length > 0 || onCreateRecord) && (
             <div style={{ position: 'relative' }}>
               <select
                 value=""
-                onChange={event => addRecord(event.target.value)}
+                onChange={event => {
+                  if (event.target.value === ADD_NEW_OPTION_VALUE) {
+                    beginAddingOption(targetId)
+                    return
+                  }
+                  addRecord(event.target.value)
+                }}
                 style={{
                   width: '100%',
                   appearance: 'none',
@@ -1499,6 +1596,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 {availableRecords.map(record => (
                   <option key={record.id} value={record.id}>{record.name}</option>
                 ))}
+                {onCreateRecord && (
+                  <option value={ADD_NEW_OPTION_VALUE}>{createOptionLabel ?? '+ Create new record...'}</option>
+                )}
               </select>
               <svg
                 width="14"
@@ -1522,6 +1622,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
+          )}
+          {onCreateRecord && renderAddOptionControl(
+            targetId,
+            createAndAddRecord,
+            createPlaceholder ?? 'New record name',
           )}
         </div>
       </div>
@@ -1560,6 +1665,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       selectedIds: selectedIds.slice(0, 1),
       placeholder: 'add company',
       multi: false,
+      createOptionLabel: '+ Create new company...',
+      createPlaceholder: 'New company name',
+      onCreateRecord: name => createLinkedRelationshipRecord(name, 'Company'),
       onChange: ids => setLinkedCompanyIds(ids.length > 0 ? uniqueIds([...ids, ...selectedIds.filter(id => id !== ids[0])]) : []),
     })
   }
@@ -1575,6 +1683,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       records: companyRecords,
       selectedIds,
       placeholder: 'add companies',
+      createOptionLabel: '+ Create new company...',
+      createPlaceholder: 'New company name',
+      onCreateRecord: name => createLinkedRelationshipRecord(name, 'Company'),
       onChange: setLinkedCompanyIds,
     })
   }
@@ -1586,6 +1697,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       records: peopleRecords,
       selectedIds: customFieldIds('assistantContactIds'),
       placeholder: 'add assistant records',
+      createOptionLabel: '+ Create new person...',
+      createPlaceholder: 'New person name',
+      onCreateRecord: name => createLinkedRelationshipRecord(name, 'Contact'),
       onChange: ids => setCustomFieldDraftValue('assistantContactIds', uniqueIds(ids)),
     })
   }
@@ -1616,10 +1730,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         const primaryCompanyId = shouldLink
           ? (person.company_record_id ?? companyId)
           : (person.company_record_id === companyId ? nextCompanyIds[0] ?? null : person.company_record_id)
+        const primaryCompany = primaryCompanyId
+          ? contactsForOptions.find(record => record.id === primaryCompanyId && record.type === 'Company')
+          : null
         const updatedPerson = await updateContact(person.id, {
           company_record_id: primaryCompanyId,
           company_ids: nextCompanyIds,
-          company: primaryCompanyId === companyId ? (draft.name ?? contact?.name ?? null) : person.company,
+          company: primaryCompany?.name ?? null,
         } as Partial<Contact>)
         setContactsForOptions(prev => prev.map(record => record.id === updatedPerson.id ? updatedPerson : record))
       }
@@ -1630,6 +1747,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       records: peopleRecords,
       selectedIds,
       placeholder: isNew ? 'save this company first' : 'add people',
+      createOptionLabel: '+ Create new person...',
+      createPlaceholder: 'New person name',
+      onCreateRecord: name => createLinkedRelationshipRecord(name, 'Contact', companyId ? {
+        company: draft.name ?? contact?.name ?? null,
+        company_record_id: companyId,
+        company_ids: [companyId],
+      } : {}),
       onChange: ids => { void updateLinkedPeople(ids) },
     })
   }
@@ -2299,41 +2423,29 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 <>
                   <div style={sectionShell}>
                     <div style={sectionHeader}>
-                      <div style={sectionLabel}>identity</div>
+                      <div style={sectionLabel}>company information</div>
                     </div>
                     {field('name', 'Company Name')}
                     {companyPeopleField('Contacts')}
                     {field('website', 'Website', { inputType: 'url' })}
-                    {customFieldByKey('companyType')}
                     {linkedinField()}
+                    {customFieldByKey('companyType')}
                     {field('industry', 'Industry')}
                     {customFieldByKey('fundType')}
+                    {field('notes', 'Notes', { multi: true })}
                   </div>
 
                   <div style={sectionShell}>
                     <div style={sectionHeader}>
-                      <div style={sectionLabel}>location</div>
+                      <div style={sectionLabel}>ways to contact</div>
                     </div>
+                    {field('email', 'Email', { inputType: 'email' })}
+                    {field('phone', 'Phone', { inputType: 'tel' })}
                     {customFieldByKey('address')}
                     {customFieldByKey('city')}
                     {customFieldByKey('state')}
                     {field('country', 'Country', { options: contactFieldOptions('country') })}
                     {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
-                  </div>
-
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>contact</div>
-                    </div>
-                    {field('email', 'Email', { inputType: 'email' })}
-                    {field('phone', 'Phone', { inputType: 'tel' })}
-                  </div>
-
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>internal</div>
-                    </div>
-                    {field('notes', 'Notes', { multi: true })}
                   </div>
                 </>
               ) : (
@@ -2619,14 +2731,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
-              {(draft.type ?? contact?.type ?? 'Contact') === 'Company' ? (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>people</div>
-                  </div>
-                  {companyPeopleField('People')}
-                </div>
-              ) : (
+              {(draft.type ?? contact?.type ?? 'Contact') !== 'Company' && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>companies</div>

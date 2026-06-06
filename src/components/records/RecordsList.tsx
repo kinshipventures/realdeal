@@ -274,6 +274,7 @@ export function RecordsList() {
 
   const [showCreate, setShowCreate] = useState(false)
   const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const [createInitialType, setCreateInitialType] = useState<'Contact' | 'Company'>('Contact')
   const [copyFeedback, setCopyFeedback] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
@@ -908,6 +909,12 @@ export function RecordsList() {
     setSelectedContact(null)
   }
 
+  function openCreateRecord(type: 'Contact' | 'Company') {
+    setCreateInitialType(type)
+    setShowCreate(true)
+    setShowCreateMenu(false)
+  }
+
   if (loading) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', overflow: 'hidden' }}>
@@ -957,7 +964,31 @@ export function RecordsList() {
                 {companyFilteredCount} {companyFilteredCount === 1 ? 'company' : 'companies'}
               </span>
             </div>
-            {viewToggle}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => openCreateRecord('Company')}
+                aria-label="Add company"
+                title="Add company"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'var(--color-brand)',
+                  color: '#fff',
+                  fontSize: 22,
+                  lineHeight: 1,
+                  fontWeight: 400,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                  fontFamily: 'inherit',
+                }}
+              >
+                +
+              </button>
+              {viewToggle}
+            </div>
           </div>
         </div>
         <CompaniesPage
@@ -977,6 +1008,13 @@ export function RecordsList() {
             categories={categories}
           />
         )}
+        <CreateRecordModal
+          isOpen={showCreate}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); setRefreshKey(k => k + 1) }}
+          initialType={createInitialType}
+          categories={categories}
+        />
       </div>
     )
   }
@@ -1993,7 +2031,7 @@ export function RecordsList() {
             <div className="records-dropdown" style={{ ...dropdownStyle, position: 'absolute', top: 'auto', bottom: 56, right: 0, left: 'auto', minWidth: 230 }}>
               <button
                 type="button"
-                onClick={() => { setShowCreate(true); setShowCreateMenu(false) }}
+                onClick={() => openCreateRecord('Contact')}
                 style={{ ...dropdownButtonStyle, gap: 10 }}
               >
                 <UserPlus size={16} />
@@ -2048,7 +2086,7 @@ export function RecordsList() {
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
         onCreated={() => { setShowCreate(false); setRefreshKey(k => k + 1) }}
-        initialType="Contact"
+        initialType={createInitialType}
         categories={categories}
       />
 

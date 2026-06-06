@@ -23,6 +23,7 @@ export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
   'First Name', 'Last Name',
   'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role',
+  'Companies', 'Contacts',
   'Website', 'LinkedIn',
   'Recommended By', 'Birthday',
   'Country', 'Global Region', 'Gender',
@@ -34,7 +35,7 @@ type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
-const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor'])
+const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor', 'Companies', 'Contacts'])
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
@@ -43,6 +44,7 @@ const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
   'Pod', 'Sub-pod',
   'Notes', 'KV Fund Investor', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
   'Address', 'City', 'State', 'Investment Entity', 'Investment Email', 'Company Type',
+  'Companies', 'Contacts',
 ])
 
 const KNOWN_ALIASES: Record<string, string> = {
@@ -147,6 +149,11 @@ const KNOWN_ALIASES: Record<string, string> = {
 
   // Company and role
   'company': 'Company',
+  'companies': 'Companies',
+  'linked companies': 'Companies',
+  'associated companies': 'Companies',
+  'company associations': 'Companies',
+  'company records': 'Companies',
   'organization': 'Company',
   'organisation': 'Company',
   'org': 'Company',
@@ -166,6 +173,12 @@ const KNOWN_ALIASES: Record<string, string> = {
   'function': 'Role',
   'organization 1 title': 'Role',
   'designation': 'Role',
+  'contacts': 'Contacts',
+  'associated contacts': 'Contacts',
+  'linked contacts': 'Contacts',
+  'people': 'Contacts',
+  'linked people': 'Contacts',
+  'associated people': 'Contacts',
 
   // Location
   'location': 'Location',
@@ -801,9 +814,12 @@ export function detectColumns(headers: string[]): ColumnMapping {
 }
 
 function resolve(row: Record<string, string>, mapping: ColumnMapping, target: string): string {
-  const col = normalizeColumnMapping(mapping).find(m => m.targetField === target)
-  if (!col) return ''
-  return (row[col.csvHeader] ?? '').trim()
+  const cols = normalizeColumnMapping(mapping).filter(m => m.targetField === target)
+  for (const col of cols) {
+    const value = (row[col.csvHeader] ?? '').trim()
+    if (value) return value
+  }
+  return ''
 }
 
 function resolveValues(row: Record<string, string>, mapping: ColumnMapping, target: string): string[] {
@@ -1062,6 +1078,25 @@ function resolveName(row: Record<string, string>, mapping: ColumnMapping, type: 
   return [first, middle, last].filter(Boolean).join(' ')
 }
 
+function inferRowRecordType(row: Record<string, string>, mapping: ColumnMapping | undefined, fallback: RelationshipType): RelationshipType {
+  const sourceSheet = (row['Source Sheet'] ?? '').trim()
+  if (/\b(companies|company card|company records|organizations|organisations)\b/i.test(sourceSheet)) {
+    return 'Company'
+  }
+  if (/\b(contacts|people|person card|all lps|all lp|lps)\b/i.test(sourceSheet)) {
+    return 'Contact'
+  }
+  if (!mapping || mapping.length === 0) return fallback
+
+  const hasCompanyName = !!resolve(row, mapping, 'Company')
+  const hasPersonName = !!resolveName(row, mapping, 'Contact')
+  const hasAssociatedContacts = resolveValues(row, mapping, 'Contacts').length > 0
+  if (fallback === 'Contact' && hasCompanyName && !hasPersonName && hasAssociatedContacts) {
+    return 'Company'
+  }
+  return fallback
+}
+
 function normalizeDate(value: string): string | null {
   const trimmed = value.trim()
   if (!trimmed) return null
@@ -1125,7 +1160,8 @@ export function getRowWarnings(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
-    const name = resolveName(row, safeMapping, 'Contact')
+    const rowType = inferRowRecordType(row, safeMapping, 'Contact')
+    const name = resolveName(row, safeMapping, rowType)
     if (!name) {
       warnings.push({ rowIndex: i, kind: 'missing_name' })
       continue
@@ -1169,7 +1205,7 @@ export function countInvalidRows(
       return !name
     }).length
   }
-  return rows.filter(row => !resolveName(row, safeMapping, type)).length
+  return rows.filter(row => !resolveName(row, safeMapping, inferRowRecordType(row, safeMapping, type))).length
 }
 
 function unique(values: string[]): string[] {
@@ -1616,38 +1652,32 @@ export async function importContacts(
   const companyRecordIndex = new Map<string, string>()
   const peopleRecordIndex = new Map<string, string>()
   const contactIndex = new Map<string, Contact>()
-  for (const c of existing) {
-    if (c.email) emailIndex.set(c.email.toLowerCase(), c.id)
-    if (c.email_2) emailIndex.set(c.email_2.toLowerCase(), c.id)
-    if (c.email_3) emailIndex.set(c.email_3.toLowerCase(), c.id)
-    for (const nameVariant of normalizedNameVariants(c.name)) {
-      nameIndex.set(nameVariant, c.id)
-      if (c.type === 'Company') companyRecordIndex.set(nameVariant, c.id)
-      if (c.type === 'Contact') peopleRecordIndex.set(nameVariant, c.id)
+  function indexContactRecord(record: Contact) {
+    if (record.email) emailIndex.set(record.email.toLowerCase(), record.id)
+    if (record.email_2) emailIndex.set(record.email_2.toLowerCase(), record.id)
+    if (record.email_3) emailIndex.set(record.email_3.toLowerCase(), record.id)
+    for (const nameVariant of normalizedNameVariants(record.name)) {
+      nameIndex.set(nameVariant, record.id)
+      if (record.type === 'Company') companyRecordIndex.set(nameVariant, record.id)
+      if (record.type === 'Contact') peopleRecordIndex.set(nameVariant, record.id)
     }
-    contactIndex.set(c.id, c)
+    contactIndex.set(record.id, record)
+  }
+  for (const c of existing) {
+    indexContactRecord(c)
   }
 
   async function createLinkedRecord(input: ContactInput): Promise<Contact | null> {
     const [created] = await createContactsBulk([input], 1)
     if (!created?.id) return null
 
-    contactIndex.set(created.id, created)
-    for (const nameVariant of normalizedNameVariants(created.name)) {
-      nameIndex.set(nameVariant, created.id)
-      if (created.type === 'Company') companyRecordIndex.set(nameVariant, created.id)
-      if (created.type === 'Contact') peopleRecordIndex.set(nameVariant, created.id)
-    }
+    indexContactRecord(created)
     return created
   }
 
-  async function ensureCompanyRecord(name: string, row: Record<string, string>): Promise<Contact | null> {
+  async function ensureCompanyRecord(name: string, row: Record<string, string>, sourceRecordType: RelationshipType): Promise<Contact | null> {
     const companyName = name.trim()
     if (!companyName) return null
-    const existingCompanyId = normalizedNameVariants(companyName)
-      .map(nameVariant => companyRecordIndex.get(nameVariant))
-      .find(Boolean)
-    if (existingCompanyId) return contactIndex.get(existingCompanyId) ?? null
 
     const companyInput = baseRelationshipInput(companyName, 'Company', batchId, importSrc)
     const companyCustomFields = resolveLpTrackerCustomFields(row, mapping, null)
@@ -1660,14 +1690,37 @@ export async function importContacts(
     delete companyCustomFields.assistantInfo
     delete companyCustomFields.assistantContactIds
 
+    const isCompanySource = sourceRecordType === 'Company'
+    const companyNotes = typeof companyCustomFields.notes === 'string' ? companyCustomFields.notes : ''
+    const companyLevelCustomFields = isCompanySource
+      ? companyCustomFields
+      : Object.fromEntries(
+        Object.entries(companyCustomFields).filter(([key]) =>
+          ['address', 'city', 'state', 'category', 'companyType', 'fundType'].includes(key)
+        )
+      )
     companyInput.website = r(row, 'Website', 'Website') || null
     companyInput.linkedin = companyLinkedIn || null
     companyInput.industry = r(row, 'Industry', 'Industry') || null
-    companyInput.email = r(row, 'Email', 'Email') || null
-    companyInput.phone = r(row, 'Phone', 'Phone', 'Contact Info') || null
+    companyInput.email = isCompanySource ? r(row, 'Email', 'Email') || null : null
+    companyInput.phone = isCompanySource ? r(row, 'Phone', 'Phone', 'Contact Info') || null : null
     companyInput.country = r(row, 'Country', 'Country') || null
     companyInput.global_region = (companyGlobalRegion || null) as ContactInput['global_region']
-    companyInput.custom_fields = companyCustomFields
+    companyInput.notes = isCompanySource ? companyNotes || null : null
+    companyInput.custom_fields = companyLevelCustomFields
+
+    const existingCompanyId = normalizedNameVariants(companyName)
+      .map(nameVariant => companyRecordIndex.get(nameVariant))
+      .find(Boolean)
+    if (existingCompanyId) {
+      const existingCompany = contactIndex.get(existingCompanyId)
+      if (!existingCompany) return null
+      const patch = buildExistingContactPatch(existingCompany, companyInput)
+      if (Object.keys(patch).length === 0) return existingCompany
+      const updatedCompany = await updateContact(existingCompany.id, patch)
+      indexContactRecord(updatedCompany)
+      return updatedCompany
+    }
 
     return createLinkedRecord(companyInput)
   }
@@ -1684,6 +1737,26 @@ export async function importContacts(
     return createLinkedRecord(baseRelationshipInput(personName, 'Contact', batchId, importSrc))
   }
 
+  async function syncCompanyPeople(companyId: string, companyName: string, personIds: string[]): Promise<void> {
+    for (const personId of unique(personIds)) {
+      const person = contactIndex.get(personId)
+      if (!person || person.type !== 'Contact') continue
+      if ((person.company_ids ?? []).includes(companyId)) continue
+
+      const nextCompanyIds = mergeArrayValues(person.company_ids, [companyId])
+      const primaryCompanyId = person.company_record_id ?? companyId
+      const primaryCompanyName = primaryCompanyId === companyId
+        ? companyName
+        : contactIndex.get(primaryCompanyId)?.name ?? person.company
+      const updatedPerson = await updateContact(person.id, {
+        company_record_id: primaryCompanyId,
+        company_ids: nextCompanyIds,
+        company: primaryCompanyName ?? null,
+      } as Partial<ContactInput>)
+      indexContactRecord(updatedPerson)
+    }
+  }
+
   let imported = 0
   let updated = 0
   let campaignLinked = 0
@@ -1692,8 +1765,8 @@ export async function importContacts(
   let mergedRows = 0
   const errors: string[] = []
   const pendingCreateIndex = new Map<string, number>()
-  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[] }> = []
-  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[] }> = []
+  const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[]; linkedPeopleIds: string[] }> = []
+  const toUpdate: Array<{ rowNumber: number; name: string; contactId: string; patch: Partial<ContactInput>; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[]; linkedPeopleIds: string[] }> = []
 
   const r = (row: Record<string, string>, target: TargetField, ...legacyKeys: string[]): string => {
     if (mapping) return resolve(row, mapping, target)
@@ -1706,14 +1779,15 @@ export async function importContacts(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
+    const rowRecordType = inferRowRecordType(row, mapping, recordType)
     const resolvedName = mapping
-      ? resolveName(row, mapping, recordType)
-      : (recordType === 'Company'
+      ? resolveName(row, mapping, rowRecordType)
+      : (rowRecordType === 'Company'
         ? (row['Name'] ?? row['Company Name'] ?? row['Agency'] ?? '')
         : (row['Name'] ?? row['Agency'] ?? '')
       ).trim()
     const nameWasFallback = !resolvedName
-    const name = resolvedName || fallbackName(row, mapping, recordType, i + 2)
+    const name = resolvedName || fallbackName(row, mapping, rowRecordType, i + 2)
 
     const rawEmail = r(row, 'Email', 'Email')
     const emailValues = splitMultiValue(rawEmail).filter(hasLikelyEmail)
@@ -1745,10 +1819,29 @@ export async function importContacts(
     const spvInvestor = mapping
       ? normalizedInvestmentList(resolveValues(row, mapping, 'SPV Investor'))
       : normalizedInvestmentList([r(row, 'SPV Investor', 'SPV Investor')])
-    const companyName = r(row, 'Company', 'Company')
-    const linkedCompany = recordType === 'Contact' && companyName
-      ? await ensureCompanyRecord(companyName, row)
-      : null
+    const companyNames = rowRecordType === 'Contact'
+      ? linkedRecordNames([
+          ...(mapping ? resolveValues(row, safeMapping, 'Company') : [r(row, 'Company', 'Company')]),
+          ...(mapping ? resolveValues(row, safeMapping, 'Companies') : [row.Companies ?? '']),
+        ])
+      : []
+    const linkedCompanies: Contact[] = []
+    for (const linkedCompanyName of companyNames) {
+      const linkedCompany = await ensureCompanyRecord(linkedCompanyName, row, rowRecordType)
+      if (linkedCompany) linkedCompanies.push(linkedCompany)
+    }
+    const linkedCompanyIds = unique(linkedCompanies.map(record => record.id))
+    const primaryLinkedCompany = linkedCompanies[0] ?? null
+    const companyName = primaryLinkedCompany?.name ?? companyNames[0] ?? ''
+
+    const associatedPeopleIds: string[] = []
+    if (rowRecordType === 'Company') {
+      const associatedPeopleNames = linkedRecordNames(resolveValues(row, safeMapping, 'Contacts'))
+      for (const personName of associatedPeopleNames) {
+        const personRecord = await ensureLinkedPersonRecord(personName)
+        if (personRecord) associatedPeopleIds.push(personRecord.id)
+      }
+    }
     const assistantNames = mapping ? linkedRecordNames(resolveValues(row, mapping, 'Assistant Info')) : []
     const assistantRecords: Contact[] = []
     for (const assistantName of assistantNames) {
@@ -1762,18 +1855,21 @@ export async function importContacts(
     const importedTouchpoints = parseTaskContentInteractions(
       typeof customFields.notes === 'string' ? customFields.notes : '',
     )
+    const directNotes = rowRecordType === 'Company' && typeof customFields.notes === 'string'
+      ? customFields.notes
+      : notes
 
     const contact: ContactInput = {
       name,
-      type: recordType,
-      status: 'Pending',
+      type: rowRecordType,
+      status: rowRecordType === 'Company' ? 'Active' : 'Pending',
       email: email || null,
       phone: r(row, 'Phone', 'Phone', 'Contact Info') || null,
       company: companyName || null,
       role: r(row, 'Role', 'Role', 'Job Title', 'Title') || null,
       location: null,
       website: r(row, 'Website', 'Website') || null,
-      notes,
+      notes: directNotes,
       recommended_by: r(row, 'Recommended By', 'Recommended By') || null,
       specialization: null,
       past_clients: null,
@@ -1790,8 +1886,8 @@ export async function importContacts(
       list_ids: rowPodIds,
       category_ids: categoryIds,
       primary_list_id: primaryPodId,
-      first_name: firstName.value || null,
-      last_name: lastName || null,
+      first_name: rowRecordType === 'Contact' ? firstName.value || null : null,
+      last_name: rowRecordType === 'Contact' ? lastName || null : null,
       country: r(row, 'Country', 'Country') || null,
       global_region: (globalRegionValue || null) as ContactInput['global_region'],
       gender: normalizeGender(r(row, 'Gender', 'Gender')),
@@ -1805,8 +1901,8 @@ export async function importContacts(
       kv_fund_investor: normalizedList(r(row, 'KV Fund Investor', 'KV Fund Investor')),
       spv_investor: spvInvestor,
       needs_review: false,
-      company_record_id: linkedCompany?.id ?? null,
-      company_ids: linkedCompany?.id ? [linkedCompany.id] : [],
+      company_record_id: primaryLinkedCompany?.id ?? null,
+      company_ids: linkedCompanyIds,
       email_2: secondaryEmail || null,
       email_3: tertiaryEmail || null,
       communication_preferences: null,
@@ -1831,6 +1927,7 @@ export async function importContacts(
       pending.contact = mergeContactInputs(pending.contact, contact)
       pending.campaignFields = mergeCampaignFields(pending.campaignFields, campaignFields)
       pending.touchpoints = mergeImportedTouchpoints(pending.touchpoints, importedTouchpoints)
+      pending.linkedPeopleIds = unique([...pending.linkedPeopleIds, ...associatedPeopleIds])
       pendingKeys.forEach(key => pendingCreateIndex.set(key, pendingIndex))
       mergedRows++
       continue
@@ -1841,8 +1938,8 @@ export async function importContacts(
 
     if (existingContact) {
       const patch = buildExistingContactPatch(existingContact, contact)
-      if (Object.keys(patch).length > 0 || campaignFields?.name || importedTouchpoints.length > 0) {
-        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints })
+      if (Object.keys(patch).length > 0 || campaignFields?.name || importedTouchpoints.length > 0 || associatedPeopleIds.length > 0) {
+        toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints, linkedPeopleIds: associatedPeopleIds })
       } else {
         skipped++
         onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
@@ -1851,7 +1948,7 @@ export async function importContacts(
     }
 
     const createIndex = toCreate.length
-    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints })
+    toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints, linkedPeopleIds: associatedPeopleIds })
     pendingKeys.forEach(key => pendingCreateIndex.set(key, createIndex))
   }
 
@@ -1861,9 +1958,15 @@ export async function importContacts(
 
   for (const item of toUpdate) {
     try {
+      let currentRecord = contactIndex.get(item.contactId) ?? null
       if (Object.keys(item.patch).length > 0) {
-        await updateContact(item.contactId, item.patch)
+        currentRecord = await updateContact(item.contactId, item.patch)
+        indexContactRecord(currentRecord)
         updated++
+      }
+      if (currentRecord?.type === 'Company' && item.linkedPeopleIds.length > 0) {
+        await syncCompanyPeople(currentRecord.id, currentRecord.name, item.linkedPeopleIds)
+        if (Object.keys(item.patch).length === 0) updated++
       }
       const linked = await syncCampaignImportFieldList(
         item.contactId,
@@ -1888,6 +1991,7 @@ export async function importContacts(
     try {
       const created = await createContactsBulk(chunk.map(item => item.contact), BULK_INSERT_CHUNK_SIZE)
       for (let j = 0; j < created.length; j++) {
+        indexContactRecord(created[j])
         const linked = await syncCampaignImportFieldList(
           created[j].id,
           chunk[j]?.campaignFields ?? [],
@@ -1896,6 +2000,9 @@ export async function importContacts(
           createMissingCampaigns,
         )
         campaignLinked += linked
+        if (created[j].type === 'Company' && (chunk[j]?.linkedPeopleIds ?? []).length > 0) {
+          await syncCompanyPeople(created[j].id, created[j].name, chunk[j]?.linkedPeopleIds ?? [])
+        }
         interactionsImported += await syncImportedTouchpoints(created[j].id, chunk[j]?.touchpoints ?? [])
       }
       imported += created.length
@@ -1906,6 +2013,7 @@ export async function importContacts(
         try {
           const [created] = await createContactsBulk([item.contact], 1)
           if (created) {
+            indexContactRecord(created)
             const linked = await syncCampaignImportFieldList(
               created.id,
               item.campaignFields,
@@ -1914,6 +2022,9 @@ export async function importContacts(
               createMissingCampaigns,
             )
             campaignLinked += linked
+            if (created.type === 'Company' && item.linkedPeopleIds.length > 0) {
+              await syncCompanyPeople(created.id, created.name, item.linkedPeopleIds)
+            }
             interactionsImported += await syncImportedTouchpoints(created.id, item.touchpoints)
           }
           imported++

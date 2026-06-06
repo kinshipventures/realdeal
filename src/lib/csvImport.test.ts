@@ -186,17 +186,19 @@ describe('CSV and Excel import parsing', () => {
 
     expect(parsed.headers.slice(0, 10)).toEqual([
       'Name',
-      'Notes',
-      'Pods',
-      'Sub-pods',
-      'Assistant Info (text)',
-      'CITY (drop down)',
-      'COUNTRY (drop down)',
-      'Category (drop down)',
-      'FUND TYPE (drop down)',
-      'GENDER (drop down)',
+      'Company',
+      'Job Title',
+      'LinkedIn',
+      'Referred By',
+      'Gender',
+      'Birthday',
+      'Email',
+      'Email 2',
+      'Email 3',
     ])
-    expect(parsed.headers).toContain('Email (email)')
+    expect(parsed.headers).toContain('Contacts')
+    expect(parsed.headers).toContain('Companies')
+    expect(parsed.headers).toContain('Source Sheet')
   }, 10000)
 
   it('parses all visible Excel worksheets into one import table', async () => {

@@ -295,6 +295,32 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
     communication_preferences: null, custom_fields: {},
   }
 
+  async function ensureCompanyRecord(
+    rawName: string,
+    podIds: string[],
+    categoryIds: string[],
+    primaryPodId: string | null,
+  ): Promise<Contact | null> {
+    const name = rawName.trim()
+    if (!name) return null
+    if (selectedCompany?.name.toLowerCase().trim() === name.toLowerCase()) return selectedCompany
+
+    const companies = await getContactsByType('Company')
+    const existing = companies.find(company => company.name.toLowerCase().trim() === name.toLowerCase())
+    if (existing) return existing
+
+    return createContact({
+      ...baseContact,
+      name,
+      first_name: null,
+      type: 'Company',
+      status: 'Active',
+      list_ids: podIds,
+      category_ids: categoryIds,
+      primary_list_id: primaryPodId,
+    })
+  }
+
   async function handleSubmit() {
     setSaving(true)
     setError(null)
@@ -305,7 +331,8 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
       const primaryPodId = podIds[0] ?? null
 
       if (recordType === 'Contact') {
-        const companyName = selectedCompany?.name ?? companyQuery.trim()
+        const linkedCompany = await ensureCompanyRecord(companyQuery, podIds, categoryIds, primaryPodId)
+        const companyName = linkedCompany?.name ?? companyQuery.trim()
 
         if (braindump) {
           created = await createContact({
@@ -330,8 +357,8 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
             category_ids: categoryIds,
             primary_list_id: primaryPodId,
             type: 'Contact',
-            company_record_id: null,
-            company_ids: [],
+            company_record_id: linkedCompany?.id ?? null,
+            company_ids: linkedCompany?.id ? [linkedCompany.id] : [],
             company: companyName || null,
           })
         }
