@@ -1347,47 +1347,48 @@ export function OrbMap() {
             />
           </ReactFlow>
 
-          {/* FAB: Add Pod */}
-          {mapView === 'hub' && podsLoaded && (
-            <button
-              type="button"
-              onClick={() => setShowCreatePod(true)}
-              title="Create new pod"
-              style={{
-                position: 'absolute',
-                bottom: 24,
-                right: 24,
-                zIndex: 20,
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                border: 'none',
-                background: 'var(--color-brand)',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(52,177,93,0.35)',
-                transition: 'transform 0.15s, box-shadow 0.15s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'scale(1.1)'
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(52,177,93,0.45)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)'
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,180,57,0.35)'
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-          )}
-
         </>
+      )}
+
+      {podsLoaded && mapView === 'hub' && (
+        <div style={{ position: 'fixed', bottom: 88, right: 20, zIndex: 1200 }}>
+          <button
+            type="button"
+            onClick={() => setShowCreatePod(true)}
+            aria-label="Create new pod"
+            aria-expanded={showCreatePod}
+            title="Create new pod"
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              background: 'var(--color-brand)',
+              border: 'none',
+              color: '#fff',
+              fontSize: 24,
+              fontWeight: 300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.24)',
+              fontFamily: 'inherit',
+              lineHeight: 1,
+              transform: showCreatePod ? 'rotate(45deg)' : 'rotate(0deg)',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+            onMouseEnter={event => {
+              event.currentTarget.style.transform = showCreatePod ? 'rotate(45deg) scale(1.08)' : 'scale(1.08)'
+              event.currentTarget.style.boxShadow = '0 8px 22px rgba(0,0,0,0.28)'
+            }}
+            onMouseLeave={event => {
+              event.currentTarget.style.transform = showCreatePod ? 'rotate(45deg)' : 'scale(1)'
+              event.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.24)'
+            }}
+          >
+            +
+          </button>
+        </div>
       )}
 
       <PodCreateModal

@@ -701,6 +701,312 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           )}
         </div>
 
+        {/* ── Sub-pods ── */}
+        <section style={{ marginBottom: 32 }}>
+          <div style={sectionHeadStyle}>
+            Sub-pods <Badge label={String(categories.length)} />
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {categories.map(cat => (
+                <div key={cat.id} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  {editingCatId === cat.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editCatName}
+                      onChange={e => setEditCatName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleRenameCategory(cat.id)
+                        if (e.key === 'Escape') setEditingCatId(null)
+                      }}
+                      onBlur={() => handleRenameCategory(cat.id)}
+                      style={{
+                        padding: '6px 12px', background: 'var(--tint)',
+                        border: '1px solid var(--color-brand)', borderRadius: 100,
+                        fontSize: 13, color: 'var(--color-text-primary)',
+                        fontFamily: 'inherit', outline: 'none', width: 140,
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/category/${cat.id}`)}
+                      onDoubleClick={e => {
+                        e.preventDefault()
+                        setEditingCatId(cat.id)
+                        setEditCatName(cat.name)
+                      }}
+                      className="subpod-pill"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '6px 12px', background: 'var(--tint)',
+                        border: '1px solid var(--edge)', borderRadius: 100,
+                        cursor: 'pointer', fontSize: 13,
+                        color: 'var(--color-text-primary)', fontFamily: 'inherit',
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      {cat.icon ? (
+                        <span
+                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                          style={{ lineHeight: 0, cursor: 'pointer' }}
+                        >
+                          <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
+                        </span>
+                      ) : (
+                        <span
+                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
+                          style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
+                          title="Set icon"
+                        />
+                      )}
+                      {cat.name}
+                      <span
+                        onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
+                        style={{
+                          marginLeft: 2, width: 16, height: 16, borderRadius: '50%',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, color: 'var(--color-text-tertiary)',
+                          opacity: 0, transition: 'opacity 0.15s',
+                        }}
+                        className="subpod-delete"
+                        title="Remove sub-pod"
+                      >
+                        x
+                      </span>
+                    </button>
+                  )}
+                </div>
+              ))}
+              {iconPickerCatId && (
+                <IconPicker
+                  value={categories.find(c => c.id === iconPickerCatId)?.icon ?? null}
+                  onChange={icon => handleIconChange(iconPickerCatId, icon)}
+                  anchorEl={iconPickerAnchor}
+                  onClose={() => { setIconPickerCatId(null); setIconPickerAnchor(null) }}
+                />
+              )}
+            </div>
+            {addingSubPod ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  ref={newSubPodInputRef}
+                  type="text"
+                  value={newSubPodName}
+                  onChange={e => { setNewSubPodName(e.target.value); setSubPodError(null) }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleAddSubPod()
+                    if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }
+                  }}
+                  placeholder="Sub-pod name"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddSubPod}
+                  disabled={!newSubPodName.trim() || savingSubPod}
+                  style={{
+                    padding: '8px 14px', background: 'var(--color-brand)',
+                    color: '#fff', border: 'none', borderRadius: 7,
+                    fontSize: 13, fontFamily: 'inherit',
+                    cursor: newSubPodName.trim() && !savingSubPod ? 'pointer' : 'not-allowed',
+                    opacity: newSubPodName.trim() && !savingSubPod ? 1 : 0.5,
+                  }}
+                >
+                  {savingSubPod ? 'Adding...' : 'Add'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setAddingSubPod(true); setSubPodError(null) }}
+                style={{
+                  background: 'none', border: '1px dashed var(--edge-strong)',
+                  borderRadius: 100, padding: '5px 14px', fontSize: 12,
+                  color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                + Add Sub-pod
+              </button>
+            )}
+            {subPodError && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{subPodError}</p>
+            )}
+          </section>
+
+        {/* ── Pod Settings (collapsible) ── */}
+        <section style={{ marginBottom: 32 }}>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(v => !v)}
+            style={{
+              ...sectionHeadStyle,
+              background: 'none', border: 'none', padding: 0,
+              cursor: 'pointer', width: '100%',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Pod Settings
+            </span>
+            <svg
+              width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--color-text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: settingsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {settingsOpen && (
+            <div style={{ paddingTop: 8 }}>
+              <div style={{ marginBottom: 24 }}>
+                <label style={labelStyle}>Description</label>
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  onBlur={() => save({ description: description || null })}
+                  placeholder="What is this pod for?"
+                  rows={2}
+                  style={{ ...inputStyle, width: '100%', resize: 'vertical', lineHeight: 1.5 }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
+                <div>
+                  <label style={labelStyle}>Cadence</label>
+                  <select
+                    value={cadence}
+                    onChange={e => {
+                      const val = e.target.value as Cadence | ''
+                      setCadence(val)
+                      save({ cadence: val || null })
+                    }}
+                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
+                  >
+                    <option value="">None</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Biweekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Capacity
+                    {capacityNum != null && (
+                      <span style={{ fontWeight: 400, marginLeft: 6, color: capacityColor }}>
+                        {members.length}/{capacityNum}
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    value={capacity}
+                    min={1}
+                    onChange={e => setCapacity(e.target.value)}
+                    onBlur={() => {
+                      const num = capacity ? parseInt(capacity, 10) : null
+                      save({ capacity: num })
+                    }}
+                    placeholder="Unlimited"
+                    style={{ ...inputStyle, width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Owner</label>
+                  <select
+                    value={owner}
+                    onChange={e => {
+                      const val = e.target.value as Owner | ''
+                      setOwner(val)
+                      save({ owner: val || null })
+                    }}
+                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
+                  >
+                    <option value="">None</option>
+                    <option value="moj_mahdara">Moj Mahdara</option>
+                    <option value="kinship_ventures">Kinship Ventures</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}>
+                  <input
+                    type="checkbox"
+                    id="is-priority"
+                    checked={isPriority}
+                    onChange={e => {
+                      setIsPriority(e.target.checked)
+                      save({ is_priority: e.target.checked })
+                    }}
+                    style={{ width: 14, height: 14, cursor: 'pointer' }}
+                  />
+                  <label htmlFor="is-priority" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Priority pod</label>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      id="enrichment-opt-in"
+                      checked={pod.enrichment_opt_in}
+                      onChange={e => save({ enrichment_opt_in: e.target.checked })}
+                      style={{ width: 14, height: 14, cursor: 'pointer' }}
+                    />
+                    <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
+                </div>
+              </div>
+
+              {fieldConfigs.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ ...sectionHeadStyle, fontSize: 14 }}>
+                    Required Questions <Badge label={String(fieldConfigs.length)} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {fieldConfigs.map(fc => (
+                      <div key={fc.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 14px', background: 'var(--tint)',
+                        borderRadius: 8, border: '1px solid var(--edge)',
+                      }}>
+                        {fc.required && (
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} />
+                        )}
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{fc.name}</span>
+                        <TypeBadge type={fc.field_type} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {members.length > 0 && fieldConfigs.length > 0 && (
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+                  Manage fields from a{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedContact(members[0])}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                  >
+                    member's record
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* ── Members (primary content) ── */}
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <section style={{ marginBottom: 32 }}>
@@ -850,146 +1156,6 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           </div>
         )}
 
-        {/* ── Sub-pods ── */}
-        <section style={{ marginBottom: 32 }}>
-          <div style={sectionHeadStyle}>
-            Sub-pods <Badge label={String(categories.length)} />
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {categories.map(cat => (
-                <div key={cat.id} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                  {editingCatId === cat.id ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={editCatName}
-                      onChange={e => setEditCatName(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleRenameCategory(cat.id)
-                        if (e.key === 'Escape') setEditingCatId(null)
-                      }}
-                      onBlur={() => handleRenameCategory(cat.id)}
-                      style={{
-                        padding: '6px 12px', background: 'var(--tint)',
-                        border: '1px solid var(--color-brand)', borderRadius: 100,
-                        fontSize: 13, color: 'var(--color-text-primary)',
-                        fontFamily: 'inherit', outline: 'none', width: 140,
-                      }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/category/${cat.id}`)}
-                      onDoubleClick={e => {
-                        e.preventDefault()
-                        setEditingCatId(cat.id)
-                        setEditCatName(cat.name)
-                      }}
-                      className="subpod-pill"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '6px 12px', background: 'var(--tint)',
-                        border: '1px solid var(--edge)', borderRadius: 100,
-                        cursor: 'pointer', fontSize: 13,
-                        color: 'var(--color-text-primary)', fontFamily: 'inherit',
-                        transition: 'background 0.15s',
-                      }}
-                    >
-                      {cat.icon ? (
-                        <span
-                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                          style={{ lineHeight: 0, cursor: 'pointer' }}
-                        >
-                          <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
-                        </span>
-                      ) : (
-                        <span
-                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                          style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
-                          title="Set icon"
-                        />
-                      )}
-                      {cat.name}
-                      <span
-                        onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
-                        style={{
-                          marginLeft: 2, width: 16, height: 16, borderRadius: '50%',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 11, color: 'var(--color-text-tertiary)',
-                          opacity: 0, transition: 'opacity 0.15s',
-                        }}
-                        className="subpod-delete"
-                        title="Remove sub-pod"
-                      >
-                        x
-                      </span>
-                    </button>
-                  )}
-                </div>
-              ))}
-              {iconPickerCatId && (
-                <IconPicker
-                  value={categories.find(c => c.id === iconPickerCatId)?.icon ?? null}
-                  onChange={icon => handleIconChange(iconPickerCatId, icon)}
-                  anchorEl={iconPickerAnchor}
-                  onClose={() => { setIconPickerCatId(null); setIconPickerAnchor(null) }}
-                />
-              )}
-            </div>
-            {addingSubPod ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  ref={newSubPodInputRef}
-                  type="text"
-                  value={newSubPodName}
-                  onChange={e => { setNewSubPodName(e.target.value); setSubPodError(null) }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleAddSubPod()
-                    if (e.key === 'Escape') { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }
-                  }}
-                  placeholder="Sub-pod name"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddSubPod}
-                  disabled={!newSubPodName.trim() || savingSubPod}
-                  style={{
-                    padding: '8px 14px', background: 'var(--color-brand)',
-                    color: '#fff', border: 'none', borderRadius: 7,
-                    fontSize: 13, fontFamily: 'inherit',
-                    cursor: newSubPodName.trim() && !savingSubPod ? 'pointer' : 'not-allowed',
-                    opacity: newSubPodName.trim() && !savingSubPod ? 1 : 0.5,
-                  }}
-                >
-                  {savingSubPod ? 'Adding...' : 'Add'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setAddingSubPod(false); setNewSubPodName(''); setSubPodError(null) }}
-                  style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setAddingSubPod(true); setSubPodError(null) }}
-                style={{
-                  background: 'none', border: '1px dashed var(--edge-strong)',
-                  borderRadius: 100, padding: '5px 14px', fontSize: 12,
-                  color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                + Add Sub-pod
-              </button>
-            )}
-            {subPodError && (
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{subPodError}</p>
-            )}
-          </section>
-
         {/* ── Shared links (if any) ── */}
         {shareLinks.length > 0 && (
           <>
@@ -1069,174 +1235,6 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           </>
         )}
 
-        {/* ── Pod Settings (collapsible) ── */}
-        <section style={{ marginBottom: 32 }}>
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(v => !v)}
-            style={{
-              ...sectionHeadStyle,
-              background: 'none', border: 'none', padding: 0,
-              cursor: 'pointer', width: '100%',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              Pod Settings
-            </span>
-            <svg
-              width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="var(--color-text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transform: settingsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-
-          {settingsOpen && (
-            <div style={{ paddingTop: 8 }}>
-              {/* Description */}
-              <div style={{ marginBottom: 24 }}>
-                <label style={labelStyle}>Description</label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  onBlur={() => save({ description: description || null })}
-                  placeholder="What is this pod for?"
-                  rows={2}
-                  style={{ ...inputStyle, width: '100%', resize: 'vertical', lineHeight: 1.5 }}
-                />
-              </div>
-
-              {/* Settings grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
-                <div>
-                  <label style={labelStyle}>Cadence</label>
-                  <select
-                    value={cadence}
-                    onChange={e => {
-                      const val = e.target.value as Cadence | ''
-                      setCadence(val)
-                      save({ cadence: val || null })
-                    }}
-                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
-                  >
-                    <option value="">None</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="biweekly">Biweekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>
-                    Capacity
-                    {capacityNum != null && (
-                      <span style={{ fontWeight: 400, marginLeft: 6, color: capacityColor }}>
-                        {members.length}/{capacityNum}
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    value={capacity}
-                    min={1}
-                    onChange={e => setCapacity(e.target.value)}
-                    onBlur={() => {
-                      const num = capacity ? parseInt(capacity, 10) : null
-                      save({ capacity: num })
-                    }}
-                    placeholder="Unlimited"
-                    style={{ ...inputStyle, width: '100%' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Owner</label>
-                  <select
-                    value={owner}
-                    onChange={e => {
-                      const val = e.target.value as Owner | ''
-                      setOwner(val)
-                      save({ owner: val || null })
-                    }}
-                    style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
-                  >
-                    <option value="">None</option>
-                    <option value="moj_mahdara">Moj Mahdara</option>
-                    <option value="kinship_ventures">Kinship Ventures</option>
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}>
-                  <input
-                    type="checkbox"
-                    id="is-priority"
-                    checked={isPriority}
-                    onChange={e => {
-                      setIsPriority(e.target.checked)
-                      save({ is_priority: e.target.checked })
-                    }}
-                    style={{ width: 14, height: 14, cursor: 'pointer' }}
-                  />
-                  <label htmlFor="is-priority" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Priority pod</label>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                      type="checkbox"
-                      id="enrichment-opt-in"
-                      checked={pod.enrichment_opt_in}
-                      onChange={e => save({ enrichment_opt_in: e.target.checked })}
-                      style={{ width: 14, height: 14, cursor: 'pointer' }}
-                    />
-                    <label htmlFor="enrichment-opt-in" style={{ ...labelStyle, margin: 0, cursor: 'pointer' }}>Enrichment opt-in</label>
-                  </div>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', paddingLeft: 22 }}>Auto-enrich all pod members when enrichment ships</span>
-                </div>
-              </div>
-
-              {/* Required fields (only shown when there are some) */}
-              {fieldConfigs.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ ...sectionHeadStyle, fontSize: 14 }}>
-                    Required Questions <Badge label={String(fieldConfigs.length)} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {fieldConfigs.map(fc => (
-                      <div key={fc.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '10px 14px', background: 'var(--tint)',
-                        borderRadius: 8, border: '1px solid var(--edge)',
-                      }}>
-                        {fc.required && (
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} />
-                        )}
-                        <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{fc.name}</span>
-                        <TypeBadge type={fc.field_type} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {members.length > 0 && fieldConfigs.length > 0 && (
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
-                  Manage fields from a{' '}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedContact(members[0])}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-brand)', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-                  >
-                    member's record
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
-        </section>
       </div>
       {selectedContact && (
         <ContactDetail

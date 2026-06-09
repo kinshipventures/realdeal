@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { Category, Pod } from '../../lib/types'
 
 interface SubPodSelectorProps {
@@ -8,6 +8,7 @@ interface SubPodSelectorProps {
   selectedCategoryIds: string[]
   onSelect: (subPod: Category) => void
   onClear: (podId: string) => void
+  onCreateSubPod?: (podId: string, name: string) => Promise<void> | void
   compact?: boolean
 }
 
@@ -18,14 +19,43 @@ export function SubPodSelector({
   selectedCategoryIds,
   onSelect,
   onClear,
+  onCreateSubPod,
   compact = false,
 }: SubPodSelectorProps) {
+  const [creatingForPodId, setCreatingForPodId] = useState<string | null>(null)
+  const [newSubPodName, setNewSubPodName] = useState('')
+  const [savingSubPod, setSavingSubPod] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+
   const groups = pods
     .filter(pod => selectedPodIds.includes(pod.id))
     .map(pod => ({
       pod,
       subPods: categories.filter(category => category.list_id === pod.id),
     }))
+
+  function resetCreateState() {
+    setCreatingForPodId(null)
+    setNewSubPodName('')
+    setSavingSubPod(false)
+    setCreateError(null)
+  }
+
+  async function handleCreateSubPod(podId: string) {
+    if (!onCreateSubPod || savingSubPod) return
+    const name = newSubPodName.trim()
+    if (!name) return
+
+    setSavingSubPod(true)
+    setCreateError(null)
+    try {
+      await onCreateSubPod(podId, name)
+      resetCreateState()
+    } catch (error) {
+      setSavingSubPod(false)
+      setCreateError(error instanceof Error ? error.message : 'Could not create the sub-pod.')
+    }
+  }
 
   return (
     <div style={{ marginTop: compact ? 8 : 14 }}>
@@ -89,6 +119,71 @@ export function SubPodSelector({
                   </button>
                 )}
               </div>
+              {onCreateSubPod && (
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {creatingForPodId === pod.id ? (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newSubPodName}
+                        placeholder="New sub-pod"
+                        onChange={event => {
+                          setNewSubPodName(event.target.value)
+                          if (createError) setCreateError(null)
+                        }}
+                        onKeyDown={event => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            void handleCreateSubPod(pod.id)
+                          }
+                          if (event.key === 'Escape') {
+                            resetCreateState()
+                            event.stopPropagation()
+                          }
+                        }}
+                        style={createInputStyle}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { void handleCreateSubPod(pod.id) }}
+                        disabled={!newSubPodName.trim() || savingSubPod}
+                        style={{
+                          ...confirmButtonStyle,
+                          opacity: !newSubPodName.trim() || savingSubPod ? 0.5 : 1,
+                          cursor: !newSubPodName.trim() || savingSubPod ? 'default' : 'pointer',
+                        }}
+                      >
+                        {savingSubPod ? 'Adding...' : 'Add'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetCreateState}
+                        style={cancelButtonStyle}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreatingForPodId(pod.id)
+                        setNewSubPodName('')
+                        setCreateError(null)
+                      }}
+                      style={addButtonStyle}
+                    >
+                      + Add sub-pod
+                    </button>
+                  )}
+                  {creatingForPodId === pod.id && createError && (
+                    <span style={{ color: '#dc2626', fontSize: 12, lineHeight: 1.4 }}>
+                      {createError}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
@@ -133,6 +228,58 @@ const clearButtonStyle: CSSProperties = {
   fontSize: 12,
   fontWeight: 500,
   lineHeight: 1.2,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+}
+
+const addButtonStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '5px 12px',
+  borderRadius: 999,
+  border: '1px dashed var(--edge-strong)',
+  background: 'transparent',
+  color: 'var(--color-text-secondary)',
+  fontSize: 12,
+  fontWeight: 500,
+  lineHeight: 1.2,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+}
+
+const createInputStyle: CSSProperties = {
+  flex: '1 1 180px',
+  minWidth: 0,
+  background: 'color-mix(in srgb, var(--surface-panel) 88%, var(--tint) 12%)',
+  border: '1px solid var(--edge-strong)',
+  borderRadius: 8,
+  color: 'var(--color-text-primary)',
+  fontSize: 13,
+  lineHeight: 1.4,
+  padding: '7px 10px',
+  outline: 'none',
+  fontFamily: 'inherit',
+}
+
+const confirmButtonStyle: CSSProperties = {
+  padding: '7px 12px',
+  borderRadius: 8,
+  border: '1px solid var(--edge-strong)',
+  background: 'var(--color-brand)',
+  color: '#fff',
+  fontSize: 13,
+  fontWeight: 600,
+  fontFamily: 'inherit',
+}
+
+const cancelButtonStyle: CSSProperties = {
+  padding: '7px 10px',
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'transparent',
+  color: 'var(--color-text-secondary)',
+  fontSize: 13,
   cursor: 'pointer',
   fontFamily: 'inherit',
 }

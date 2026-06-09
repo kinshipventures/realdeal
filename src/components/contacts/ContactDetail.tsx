@@ -6,7 +6,7 @@ import { contactEquityScore, contactEquityBreakdown, scoreLabel, type EquityBrea
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { hasLpTrackerValue, LP_TRACKER_FIELDS, lpTrackerDisplayValue, normalizeLpTrackerFieldValue, trimImportListItem, type LpTrackerFieldDefinition } from '../../lib/lpTrackerFields'
 
-import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact, getContacts } from '../../lib/data'
+import { updateContact, createContact, deleteContact, getCategories, getCampaigns, getCampaignContactsForContact, getCampaignStages, addContactToCampaign, updateCampaignContact, getContacts, createCategory, createPod } from '../../lib/data'
 import { logSystemEvent } from '../../lib/timeline'
 import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrichment } from '../../lib/enrichment'
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
@@ -222,6 +222,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [suggestedUpdates, setSuggestedUpdates] = useState<Record<string, { current: string; suggested: string }>>({})
   const [acceptingField, setAcceptingField] = useState<string | null>(null)
   const [shellBounds, setShellBounds] = useState<ShellBounds | null>(null)
+  const [availablePods, setAvailablePods] = useState<Pod[]>(pods)
 
   useEffect(() => {
     if (!contact) return
@@ -244,6 +245,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setNewOptionTarget(null)
     setNewOptionValue('')
   }, [contact?.id])
+
+  useEffect(() => {
+    setAvailablePods(pods)
+  }, [pods])
 
   useEffect(() => {
     if (!contact) return
@@ -1826,6 +1831,60 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }
 
+  async function handleCreatePodAssignment(name: string) {
+    const trimmed = trimImportListItem(name)
+    if (!trimmed) return
+
+    const normalized = normalizeStoredFieldKey(trimmed)
+    const existing = availablePods.find(pod => normalizeStoredFieldKey(pod.name) === normalized)
+    const pod = existing ?? await createPod({ name: trimmed })
+
+    if (!existing) {
+      setAvailablePods(prev => [...prev, pod].sort((a, b) => a.name.localeCompare(b.name)))
+    }
+
+    const nextListIds = uniqueIds([...(draft.list_ids ?? []), pod.id])
+    const nextPrimaryId = draft.primary_list_id ?? pod.id
+    setDraft(prev => ({ ...prev, list_ids: nextListIds, primary_list_id: nextPrimaryId }))
+
+    if (!isNew && contact) {
+      await persistPodAssignment(nextListIds, nextPrimaryId, draft.category_ids ?? [])
+    }
+  }
+
+  async function handleCreateSubPodAssignment(podId: string, name: string) {
+    const trimmed = trimImportListItem(name)
+    if (!trimmed) throw new Error('Enter a sub-pod name.')
+
+    const normalized = normalizeStoredFieldKey(trimmed)
+    const existing = availableCategories.find(category =>
+      category.list_id === podId && normalizeStoredFieldKey(category.name) === normalized,
+    )
+    const category = existing ?? await createCategory(trimmed, podId)
+    const nextCategories = existing
+      ? availableCategories
+      : [...availableCategories, category].sort((a, b) => a.name.localeCompare(b.name))
+
+    if (!existing) {
+      setAvailableCategories(nextCategories)
+    }
+
+    const update = planMoveToSubPod(
+      {
+        list_ids: draft.list_ids ?? [],
+        primary_list_id: draft.primary_list_id ?? null,
+        category_ids: draft.category_ids ?? [],
+      },
+      category,
+      nextCategories,
+    )
+
+    setDraft(prev => ({ ...prev, ...update }))
+    if (!isNew && contact) {
+      await persistPodAssignment(update.list_ids, update.primary_list_id, update.category_ids)
+    }
+  }
+
   async function handleCreate() {
     if (!draft.name) return
     setCreating(true)
@@ -2206,8 +2265,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <button
                     type="button"
-                    disabled={enriching || !isEnrichmentAllowed(contact, pods)}
-                    title={!isEnrichmentAllowed(contact, pods) ? 'Turn on enrichment for at least one pod to use this.' : 'Fill in missing details for this contact.'}
+                    disabled={enriching || !isEnrichmentAllowed(contact, availablePods)}
+                    title={!isEnrichmentAllowed(contact, availablePods) ? 'Turn on enrichment for at least one pod to use this.' : 'Fill in missing details for this contact.'}
                     onClick={async () => {
                       setEnriching(true)
                       setEnrichError(null)
@@ -2236,11 +2295,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       display: 'flex', alignItems: 'center', gap: 5,
                       fontSize: 11, fontWeight: 500,
                       padding: '4px 10px',
-                      background: isEnrichmentAllowed(contact, pods) ? 'rgba(99,102,241,0.08)' : 'var(--tint)',
-                      border: '1px solid ' + (isEnrichmentAllowed(contact, pods) ? 'rgba(99,102,241,0.2)' : 'var(--edge)'),
+                      background: isEnrichmentAllowed(contact, availablePods) ? 'rgba(99,102,241,0.08)' : 'var(--tint)',
+                      border: '1px solid ' + (isEnrichmentAllowed(contact, availablePods) ? 'rgba(99,102,241,0.2)' : 'var(--edge)'),
                       borderRadius: 6,
-                      color: isEnrichmentAllowed(contact, pods) ? '#6366F1' : 'var(--color-text-tertiary)',
-                      cursor: (enriching || !isEnrichmentAllowed(contact, pods)) ? 'default' : 'pointer',
+                      color: isEnrichmentAllowed(contact, availablePods) ? '#6366F1' : 'var(--color-text-tertiary)',
+                      cursor: (enriching || !isEnrichmentAllowed(contact, availablePods)) ? 'default' : 'pointer',
                       fontFamily: 'inherit',
                       opacity: enriching ? 0.6 : 1,
                       transition: 'all 0.15s',
@@ -2502,73 +2561,90 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </>
               )}
 
-              {pods.length > 0 && (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>pods</div>
-                  </div>
-                  <div style={{ padding: '16px 18px' }}>
-                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {pods.map(pod => {
-                        const isIn = (draft.list_ids ?? []).includes(pod.id)
-                        const isPrimary = draft.primary_list_id === pod.id
-                        return (
-                          <button
-                            key={pod.id}
-                            type="button"
-                            onClick={() => {
-                              const currentIds = draft.list_ids ?? []
-                              const currentCategoryIds = draft.category_ids ?? []
-                              let nextIds: string[]
-                              let nextPrimary = draft.primary_list_id
-                              let nextCategoryIds = currentCategoryIds
-                              if (isIn) {
-                                nextIds = currentIds.filter(id => id !== pod.id)
-                                nextCategoryIds = currentCategoryIds.filter(categoryId => {
-                                  const category = availableCategories.find(item => item.id === categoryId)
-                                  return category?.list_id !== pod.id
-                                })
-                                if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
-                              } else {
-                                nextIds = [...currentIds, pod.id]
-                                if (!nextPrimary) nextPrimary = pod.id
-                              }
-                              setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary, category_ids: nextCategoryIds }))
-                              if (!isNew && contact) {
-                                persistPodAssignment(nextIds, nextPrimary, nextCategoryIds)
-                              }
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              borderRadius: 999,
-                              fontSize: 12,
-                              fontWeight: isIn ? 600 : 400,
-                              border: '1px solid',
-                              borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
-                              background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
-                              color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                              transition: 'all 0.12s',
-                            }}
-                          >
-                            {pod.name}{isPrimary ? ' *' : ''}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <SubPodSelector
-                      pods={pods}
-                      categories={availableCategories}
-                      selectedPodIds={draft.list_ids ?? []}
-                      selectedCategoryIds={draft.category_ids ?? []}
-                      onSelect={handleSelectSubPod}
-                      onClear={handleClearSubPod}
-                    />
-                  </div>
+              <div style={sectionShell}>
+                <div style={sectionHeader}>
+                  <div style={sectionLabel}>pods</div>
                 </div>
-              )}
+                <div style={{ padding: '16px 18px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {availablePods.map(pod => {
+                      const isIn = (draft.list_ids ?? []).includes(pod.id)
+                      const isPrimary = draft.primary_list_id === pod.id
+                      return (
+                        <button
+                          key={pod.id}
+                          type="button"
+                          onClick={() => {
+                            const currentIds = draft.list_ids ?? []
+                            const currentCategoryIds = draft.category_ids ?? []
+                            let nextIds: string[]
+                            let nextPrimary = draft.primary_list_id
+                            let nextCategoryIds = currentCategoryIds
+                            if (isIn) {
+                              nextIds = currentIds.filter(id => id !== pod.id)
+                              nextCategoryIds = currentCategoryIds.filter(categoryId => {
+                                const category = availableCategories.find(item => item.id === categoryId)
+                                return category?.list_id !== pod.id
+                              })
+                              if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
+                            } else {
+                              nextIds = [...currentIds, pod.id]
+                              if (!nextPrimary) nextPrimary = pod.id
+                            }
+                            setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary, category_ids: nextCategoryIds }))
+                            if (!isNew && contact) {
+                              persistPodAssignment(nextIds, nextPrimary, nextCategoryIds)
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: isIn ? 600 : 400,
+                            border: '1px solid',
+                            borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
+                            background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
+                            color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            transition: 'all 0.12s',
+                          }}
+                        >
+                          {pod.name}{isPrimary ? ' *' : ''}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => beginAddingOption('pods-create-pod')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        border: '1px dashed var(--edge-strong)',
+                        background: 'transparent',
+                        color: 'var(--color-text-secondary)',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      + Add pod
+                    </button>
+                  </div>
+                  {renderAddOptionControl('pods-create-pod', value => handleCreatePodAssignment(value), 'New pod')}
+                  <SubPodSelector
+                    pods={availablePods}
+                    categories={availableCategories}
+                    selectedPodIds={draft.list_ids ?? []}
+                    selectedCategoryIds={draft.category_ids ?? []}
+                    onSelect={handleSelectSubPod}
+                    onClear={handleClearSubPod}
+                    onCreateSubPod={handleCreateSubPodAssignment}
+                  />
+                </div>
+              </div>
 
               {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
                 <div style={sectionShell}>
