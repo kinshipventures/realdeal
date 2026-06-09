@@ -280,11 +280,17 @@ export function ImportPanel() {
 
     const campaigns = await getCampaigns()
     const campaignMap = new Map<string, string>()
-    for (const campaign of campaigns) {
+    const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active')
+    for (const campaign of activeCampaigns) {
       campaignMap.set(normalize(campaign.name), campaign.id)
     }
+    for (const campaign of campaigns) {
+      const key = normalize(campaign.name)
+      if (!campaignMap.has(key)) campaignMap.set(key, campaign.id)
+    }
     const campaignAliases = new Map<string, string>()
-    const kinshipFundCampaign = campaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
+    const kinshipFundCampaign = activeCampaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
+      ?? campaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
     if (kinshipFundCampaign) {
       campaignAliases.set(normalize('Kinship Fund Pipeline'), kinshipFundCampaign.id)
     }

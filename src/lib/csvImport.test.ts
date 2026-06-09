@@ -283,6 +283,28 @@ describe('CSV and Excel import parsing', () => {
     ])
   })
 
+  it('detects campaign import columns from template and client spreadsheets', () => {
+    const mapping = detectColumns([
+      'Name',
+      'Campaign 1',
+      'Campaign 1 Status',
+      'Campaign 1 Target Commitment',
+      'Campaign 2',
+      'Status 2',
+      'Target Commitment 2',
+    ])
+
+    expect(mapping.map(m => m.targetField)).toEqual([
+      'First Name',
+      'Campaign',
+      'Campaign Status',
+      'Commitment Amount',
+      'Campaign',
+      'Campaign Status',
+      'Commitment Amount',
+    ])
+  })
+
   it('prefers full-name columns over separate first-name aliases when both exist', () => {
     const mapping = detectColumns(['Name', 'First Name', 'Company Name'])
 
@@ -756,7 +778,7 @@ describe('bulk contact import', () => {
     }))
   })
 
-  it('skips campaign-specific client sheet columns that are outside the approved field list', async () => {
+  it('links imported contacts to campaigns with source status and target commitment', async () => {
     const parsed = parseCSV([
       'Name,Company,Email,Referred By,Intel Notes,Campaign | Pod,Status (Campaign Field),Target Commitment (Campign Specific)',
       'Ivan Soto-Wright,MoonPay,ivan@moonpay.com,Mark Suster,Advisor to MoonPay,Kinship Fund Pipeline | LP Internal | SPV Investor,Closed/Won,500000',
@@ -781,7 +803,7 @@ describe('bulk contact import', () => {
       campaignMap,
     })
 
-    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 1 })
     const companyRecord = createdRecordNamed('MoonPay')
     const contactRecord = createdRecordNamed('Ivan Soto-Wright')
     expect(contactRecord).toMatchObject({
@@ -792,13 +814,53 @@ describe('bulk contact import', () => {
       company_ids: [companyRecord.id],
       recommended_by: 'Mark Suster',
       intel_notes: null,
-      list_ids: [],
-      primary_list_id: null,
-      category_ids: [],
+      list_ids: ['pod-lps'],
+      primary_list_id: 'pod-lps',
+      category_ids: ['cat-lp-internal', 'cat-spv-investor'],
       custom_fields: {},
     })
-    expect(mockedAddContactToCampaign).not.toHaveBeenCalled()
-    expect(mockedUpdateCampaignContact).not.toHaveBeenCalled()
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id)
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      `cc-campaign-fund-${contactRecord.id}`,
+      {
+        custom_fields: {
+          commitmentAmount: 500000,
+          campaignStatus: 'Closed/Won',
+        },
+      },
+    )
+  })
+
+  it('imports up to four campaign columns for the same contact', async () => {
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status,Campaign 1 Target Commitment,Campaign 2,Campaign 2 Status,Campaign 2 Target Commitment',
+      'Jordan Lee,jordan@example.com,Kinship Fund Pipeline,Open,250000,Founder Dinner,Invited,100000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([
+      [normalize('Kinship Fund Pipeline'), 'campaign-fund'],
+      [normalize('Founder Dinner'), 'campaign-dinner'],
+    ])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 2 })
+    const contactRecord = createdRecordNamed('Jordan Lee')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-dinner', contactRecord.id)
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      `cc-campaign-fund-${contactRecord.id}`,
+      { custom_fields: { commitmentAmount: 250000, campaignStatus: 'Open' } },
+    )
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      `cc-campaign-dinner-${contactRecord.id}`,
+      { custom_fields: { commitmentAmount: 100000, campaignStatus: 'Invited' } },
+    )
   })
 
   it('updates existing contacts with missing spreadsheet data instead of duplicating them', async () => {
@@ -839,7 +901,7 @@ describe('bulk contact import', () => {
       campaignMap,
     })
 
-    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1 })
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1, campaignLinked: 1 })
     const companyRecord = createdRecordNamed('MoonPay')
     expect(companyRecord).toMatchObject({ name: 'MoonPay', type: 'Company' })
     expect(mockedUpdateContact).toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
@@ -847,14 +909,18 @@ describe('bulk contact import', () => {
       company_record_id: companyRecord.id,
       company_ids: [companyRecord.id],
       recommended_by: 'Mark Suster',
-    }))
-    expect(mockedUpdateContact).not.toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
-      intel_notes: 'Advisor to MoonPay',
       list_ids: ['pod-lps'],
       primary_list_id: 'pod-lps',
       category_ids: ['cat-lp-internal'],
     }))
-    expect(mockedAddContactToCampaign).not.toHaveBeenCalled()
+    expect(mockedUpdateContact).not.toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
+      intel_notes: 'Advisor to MoonPay',
+    }))
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-ivan')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      'cc-campaign-fund-contact-ivan',
+      { custom_fields: { commitmentAmount: 500000, campaignStatus: 'Closed/Won' } },
+    )
   })
 
   it('keeps importing when a spreadsheet pod or sub-pod does not exist', async () => {

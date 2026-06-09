@@ -21,6 +21,7 @@ export type RowWarning = {
 
 export const TARGET_FIELDS = [
   'Pod', 'Sub-pod',
+  'Campaign', 'Campaign Status', 'Commitment Amount',
   'First Name', 'Last Name',
   'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role',
   'Companies', 'Contacts',
@@ -35,13 +36,13 @@ type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
-const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor', 'Companies', 'Contacts'])
+const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor', 'Companies', 'Contacts', 'Campaign', 'Campaign Status', 'Commitment Amount'])
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
   'First Name', 'Last Name', 'Email', 'Email 2', 'Email 3', 'Phone', 'Company', 'Role',
   'Website', 'LinkedIn', 'Recommended By', 'Birthday', 'Country', 'Global Region', 'Gender', 'Industry',
-  'Pod', 'Sub-pod',
+  'Pod', 'Sub-pod', 'Campaign', 'Campaign Status', 'Commitment Amount',
   'Notes', 'KV Fund Investor', 'SPV Investor', 'SPV Investor (checkbox)', 'Fund Type',
   'Address', 'City', 'State', 'Investment Entity', 'Investment Email', 'Company Type',
   'Companies', 'Contacts',
@@ -74,6 +75,7 @@ const KNOWN_ALIASES: Record<string, string> = {
   'category': 'Sub-pod',
   'categories': 'Sub-pod',
   'campaign': 'Campaign',
+  'campaigns': 'Campaign',
   'campaign name': 'Campaign',
   'campaign pod': 'Campaign',
   'campaign and pod': 'Campaign',
@@ -770,25 +772,108 @@ export function splitMultiValue(value: string): string[] {
     .filter(Boolean)
 }
 
-function inferredTargetFromHeader(candidates: string[]): TargetField | null {
+const CAMPAIGN_TARGET_FIELDS = new Set<string>(['Campaign', 'Campaign Status', 'Commitment Amount'])
+const CAMPAIGN_NUMBER_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+}
+
+function stripCampaignColumnIndex(candidate: string): string {
+  return candidate
+    .replace(/\b#?\d+\b/g, ' ')
+    .replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function isCampaignNameHeader(candidates: string[]): boolean {
+  return candidates.some(candidate => {
+    const direct = coerceTargetField(KNOWN_ALIASES[candidate])
+    if (direct === 'Campaign') return true
+    const stripped = stripCampaignColumnIndex(candidate)
+    return ['campaign', 'campaigns', 'campaign name', 'pipeline', 'pipeline name'].includes(stripped)
+  })
+}
+
+function campaignIndexFromHeader(header: string): number | null {
+  for (const candidate of normalizeHeaderCandidates(header)) {
+    const numberMatch = candidate.match(/\b#?\s*(\d{1,2})\b/)
+    if (numberMatch) {
+      const index = Number(numberMatch[1])
+      if (Number.isInteger(index) && index > 0) return index - 1
+    }
+
+    const wordMatch = candidate.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/)
+    if (wordMatch) return CAMPAIGN_NUMBER_WORDS[wordMatch[1]] - 1
+  }
+  return null
+}
+
+function inferredTargetFromHeader(candidates: string[], hasCampaignContext = false): TargetField | null {
   if (candidates.some(candidate => /^investment(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
     return 'SPV Investor'
   }
   if (candidates.some(candidate => /^spv investment(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
     return 'SPV Investor'
   }
+  if (isCampaignNameHeader(candidates)) {
+    return 'Campaign'
+  }
+  if (candidates.some(candidate => {
+    const stripped = stripCampaignColumnIndex(candidate)
+    return [
+      'campaign status',
+      'status campaign',
+      'status campaign field',
+      'campaign field status',
+      'campaign stage',
+    ].includes(stripped) || (hasCampaignContext && ['status', 'stage'].includes(stripped))
+  })) {
+    return 'Campaign Status'
+  }
+  if (candidates.some(candidate => {
+    const stripped = stripCampaignColumnIndex(candidate)
+    return [
+      'target commitment',
+      'target commitment campaign specific',
+      'target commitment campign specific',
+      'commitment',
+      'commitment amount',
+      'committed amount',
+      'campaign commitment',
+      'campaign commitment amount',
+      'campaign target commitment',
+      'campaign target commitment amount',
+      'campaign target amount',
+      'target amount',
+    ].includes(stripped)
+  })) {
+    return 'Commitment Amount'
+  }
   return null
 }
 
 export function detectColumns(headers: string[]): ColumnMapping {
-  const candidates = headers.map(rawHeader => {
+  const headerCandidates = headers.map(rawHeader =>
+    normalizeHeaderCandidates(typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? ''))
+  )
+  const hasCampaignContext = headerCandidates.some(isCampaignNameHeader)
+  const candidates = headers.map((rawHeader, index) => {
     const csvHeader = typeof rawHeader === 'string' ? rawHeader : String(rawHeader ?? '')
-    const aliasCandidates = normalizeHeaderCandidates(csvHeader)
+    const aliasCandidates = headerCandidates[index]
     if (aliasCandidates.some(candidate => REMOVED_COLUMN_ALIASES.has(candidate))) {
       return { csvHeader, targetField: null, priority: 0 }
     }
     const norm = aliasCandidates.find(candidate => KNOWN_ALIASES[candidate]) ?? aliasCandidates[0] ?? ''
-    const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? inferredTargetFromHeader(aliasCandidates) ?? null
+    const match = coerceTargetField(KNOWN_ALIASES[norm]) ?? inferredTargetFromHeader(aliasCandidates, hasCampaignContext) ?? null
     const normalizedMatch = normalize(match)
     const isGenericName = match === 'First Name' && aliasCandidates.some(candidate => GENERIC_NAME_ALIASES.has(candidate))
     const priority = isGenericName ? 4 : norm === normalizedMatch || norm === `${normalizedMatch} name` ? 3 : match ? 1 : 0
@@ -1027,32 +1112,82 @@ function splitCampaignPodValue(value: string): { campaignName: string; subPodNam
   return { campaignName: parts[0], subPodNames: parts.slice(1) }
 }
 
-function resolveCampaignImportFields(row: Record<string, string>, mapping: ColumnMapping | undefined): CampaignImportFields | null {
-  if (!mapping || mapping.length === 0) return null
-  const rawCampaign = resolve(row, mapping, 'Campaign')
-  const { campaignName, subPodNames } = splitCampaignPodValue(rawCampaign)
-  const status = resolve(row, mapping, 'Campaign Status') || null
-  const amountRaw = resolve(row, mapping, 'Commitment Amount')
-  const parsedAmount = amountRaw ? parseMoneyInput(amountRaw) : null
-  const commitmentAmount = typeof parsedAmount === 'number' && Number.isFinite(parsedAmount) ? parsedAmount : null
+function emptyCampaignImportFields(): CampaignImportFields {
+  return { name: '', subPodNames: [], status: null, commitmentAmount: null }
+}
 
-  if (!campaignName && subPodNames.length === 0 && !status && commitmentAmount === null) return null
-  return { name: campaignName, subPodNames, status, commitmentAmount }
+function resolveCampaignImportFields(row: Record<string, string>, mapping: ColumnMapping | undefined): CampaignImportFields[] {
+  if (!mapping || mapping.length === 0) return []
+
+  const groups = new Map<number, CampaignImportFields>()
+  const sequentialIndexes = new Map<string, number>()
+  const getGroup = (index: number): CampaignImportFields => {
+    const safeIndex = Math.max(0, index)
+    const existing = groups.get(safeIndex)
+    if (existing) return existing
+    const next = emptyCampaignImportFields()
+    groups.set(safeIndex, next)
+    return next
+  }
+  const nextSequentialIndex = (targetField: string): number => {
+    const index = sequentialIndexes.get(targetField) ?? 0
+    sequentialIndexes.set(targetField, index + 1)
+    return index
+  }
+
+  for (const item of normalizeColumnMapping(mapping)) {
+    const targetField = item.targetField
+    if (!CAMPAIGN_TARGET_FIELDS.has(targetField ?? '')) continue
+
+    const rawValue = (row[item.csvHeader] ?? '').trim()
+    if (!rawValue) continue
+
+    const explicitIndex = campaignIndexFromHeader(item.csvHeader)
+    const index = explicitIndex ?? (targetField === 'Campaign' ? nextSequentialIndex(targetField) : 0)
+
+    if (targetField === 'Campaign') {
+      const campaignValues = rawValue.includes('|') ? [rawValue] : splitMultiValue(rawValue)
+      campaignValues.forEach((campaignValue, offset) => {
+        const fields = getGroup(index + offset)
+        const { campaignName, subPodNames } = splitCampaignPodValue(campaignValue)
+        if (campaignName && !fields.name) fields.name = campaignName
+        fields.subPodNames = unique([...fields.subPodNames, ...subPodNames])
+      })
+      continue
+    }
+
+    const fields = getGroup(index)
+    if (targetField === 'Campaign Status') {
+      if (!fields.status) fields.status = rawValue
+      continue
+    }
+
+    const parsedAmount = parseMoneyInput(rawValue)
+    if (typeof parsedAmount === 'number' && Number.isFinite(parsedAmount) && fields.commitmentAmount === null) {
+      fields.commitmentAmount = parsedAmount
+    }
+  }
+
+  return [...groups.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, fields]) => fields)
+    .filter(fields => fields.name || fields.subPodNames.length > 0)
 }
 
 function resolveLpTrackerCustomFields(
   row: Record<string, string>,
   mapping: ColumnMapping | undefined,
-  campaignFields: CampaignImportFields | null,
+  campaignFields: CampaignImportFields[] | null,
 ): Record<string, unknown> {
   if (!mapping || mapping.length === 0) return {}
 
+  const hasCampaignName = (campaignFields ?? []).some(fields => fields.name)
   const customFields: Record<string, unknown> = {}
   for (const field of LP_TRACKER_FIELDS) {
     let rawValue = field.target === 'Notes'
       ? resolveValues(row, mapping, field.target).join('\n')
       : resolve(row, mapping, field.target)
-    if (!rawValue && field.key === 'investmentAmount' && !campaignFields?.name) {
+    if (!rawValue && field.key === 'investmentAmount' && !hasCampaignName) {
       rawValue = resolve(row, mapping, 'Commitment Amount')
     }
 
@@ -1590,11 +1725,18 @@ function campaignFieldsKey(fields: CampaignImportFields): string {
   ].join('|')
 }
 
-function mergeCampaignFields(existing: CampaignImportFields[], incoming: CampaignImportFields | null): CampaignImportFields[] {
+function mergeCampaignFields(existing: CampaignImportFields[], incoming: CampaignImportFields[] | CampaignImportFields | null): CampaignImportFields[] {
   if (!incoming) return existing
+  const incomingItems = Array.isArray(incoming) ? incoming : [incoming]
   const seen = new Set(existing.map(campaignFieldsKey))
-  const key = campaignFieldsKey(incoming)
-  return seen.has(key) ? existing : [...existing, incoming]
+  const merged = [...existing]
+  for (const item of incomingItems) {
+    const key = campaignFieldsKey(item)
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(item)
+  }
+  return merged
 }
 
 function mergeImportedTouchpoints(existing: ImportedTouchpoint[], incoming: ImportedTouchpoint[]): ImportedTouchpoint[] {
@@ -1800,8 +1942,9 @@ export async function importContacts(
     const firstName = resolveFirstName(row, mapping)
     const lastName = firstName.consumedHeader ? null : mapping ? resolve(row, mapping, 'Last Name') : null
     const campaignFields = resolveCampaignImportFields(row, mapping)
+    const campaignSubPodNames = campaignFields.flatMap(fields => fields.subPodNames)
     const mappedPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
-    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, campaignFields?.subPodNames ?? [])
+    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, campaignSubPodNames)
     const categoryPodIds = categoryIds
       .map(categoryId => categoryPodMap.get(categoryId))
       .filter(Boolean) as string[]
@@ -1938,7 +2081,7 @@ export async function importContacts(
 
     if (existingContact) {
       const patch = buildExistingContactPatch(existingContact, contact)
-      if (Object.keys(patch).length > 0 || campaignFields?.name || importedTouchpoints.length > 0 || associatedPeopleIds.length > 0) {
+      if (Object.keys(patch).length > 0 || campaignFields.length > 0 || importedTouchpoints.length > 0 || associatedPeopleIds.length > 0) {
         toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints, linkedPeopleIds: associatedPeopleIds })
       } else {
         skipped++
