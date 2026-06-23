@@ -5,16 +5,19 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import { PreferencesTab } from './PreferencesTab'
+import { GoogleIntegrationSettings } from './GoogleIntegrationSettings'
+import { PropertiesTab } from './PropertiesTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, updateMemberRole, invalidateAllCaches,
   type WorkspaceMember, type WorkspaceInvite,
 } from '@/lib/supabase-data'
 
-type SettingsTab = 'profile' | 'preferences' | 'integrations' | 'team'
+type SettingsTab = 'profile' | 'preferences' | 'properties' | 'integrations' | 'team'
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'preferences', label: 'Preferences' },
+  { id: 'properties', label: 'Properties' },
   { id: 'integrations', label: 'Integrations' },
   { id: 'team', label: 'Team' },
 ]
@@ -194,7 +197,7 @@ export function AccountPage() {
   )
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ maxWidth: tab === 'properties' ? 980 : 480, margin: '0 auto', padding: '48px 24px 80px' }}>
       <h1 style={{
         fontSize: 24, fontWeight: 800, marginBottom: 24,
         fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
@@ -260,9 +263,16 @@ export function AccountPage() {
       {/* ── Preferences tab ───────────────────────────────────── */}
       {tab === 'preferences' && <PreferencesTab />}
 
+      {tab === 'properties' && <PropertiesTab />}
+
       {/* ── Integrations tab ──────────────────────────────────── */}
       {tab === 'integrations' && (
         <section>
+          {sectionHeading('Google Workspace')}
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
+            Connect and manage Google for Gmail activity sync, Calendar visibility, and daily Today Focus emails.
+          </p>
+          <GoogleIntegrationSettings />
           {sectionHeading('Meeting Notes')}
           <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 16px', lineHeight: 1.5 }}>
             Connect AI meeting note apps to automatically log meetings on each person's timeline.

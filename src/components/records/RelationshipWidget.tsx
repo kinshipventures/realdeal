@@ -34,9 +34,10 @@ interface Props {
   interactions: Interaction[]
   pods: Pod[]
   onUpdate: (data: Partial<Contact>) => void
+  hiddenFieldIds?: Set<string>
 }
 
-export function RelationshipWidget({ contact, interactions, pods, onUpdate }: Props) {
+export function RelationshipWidget({ contact, interactions, pods, onUpdate, hiddenFieldIds }: Props) {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [showScoreTooltip, setShowScoreTooltip] = useState(false)
 
@@ -73,6 +74,8 @@ export function RelationshipWidget({ contact, interactions, pods, onUpdate }: Pr
   }
 
   function textField(key: keyof Contact, label: string, placeholder: string) {
+    if (hiddenFieldIds?.has(key as string)) return null
+
     const val = (contact[key] as string | null) ?? ''
     const editing = editingField === key
 

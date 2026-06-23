@@ -11,6 +11,8 @@ import { EmptyState } from '../empty/EmptyState'
 import { RecordHeader } from './RecordHeader'
 import { RecordTimeline } from './RecordTimeline'
 import { RecordWidgets } from './RecordWidgets'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { useContactDisplaySettings } from '@/hooks/useContactDisplaySettings'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false)
@@ -27,6 +29,8 @@ function useIsMobile() {
 export function RecordPage() {
   const { id } = useParams<{ id: string }>()
   const isMobile = useIsMobile()
+  const { activeWorkspace } = useWorkspace()
+  const [displaySettings] = useContactDisplaySettings(activeWorkspace?.id)
 
   const [contact, setContact] = useState<Contact | null>(null)
   const [pods, setPods] = useState<Pod[]>([])
@@ -244,6 +248,7 @@ export function RecordPage() {
             onUpdate={handleUpdate}
             upcomingBirthday={upcomingBirthday}
             missingFieldCount={missingFieldCount}
+            displaySettings={displaySettings}
           />
         </div>
 

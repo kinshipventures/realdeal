@@ -7,13 +7,25 @@ interface DetailsWidgetProps {
   contact: Contact
   onUpdate: (data: Partial<Contact>) => void
   requiredFieldKeys?: Set<string>
+  hiddenFieldIds?: Set<string>
 }
 
 const SECONDARY_CONTACT_FIELDS: (keyof Contact)[] = ['gender', 'country', 'global_region', 'contact_frequency', 'email_2', 'email_3', 'website']
 
-export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsWidgetProps) {
+const FIELD_LABELS: Partial<Record<keyof Contact, string>> = {
+  gender: 'Gender',
+  country: 'Country',
+  global_region: 'Region',
+  contact_frequency: 'Contact Frequency',
+  email_2: 'Email 2',
+  email_3: 'Email 3',
+  website: 'Website',
+}
+
+export function DetailsWidget({ contact, onUpdate, requiredFieldKeys, hiddenFieldIds }: DetailsWidgetProps) {
   const [editingField, setEditingField] = useState<keyof Contact | null>(null)
-  const hasSecondaryData = contact.type === 'Contact' && SECONDARY_CONTACT_FIELDS.some(k => contact[k])
+  const visibleSecondaryFields = SECONDARY_CONTACT_FIELDS.filter(k => !hiddenFieldIds?.has(k as string))
+  const hasSecondaryData = contact.type === 'Contact' && visibleSecondaryFields.some(k => contact[k])
   const [showAll, setShowAll] = useState(hasSecondaryData)
 
   const inputStyle: React.CSSProperties = {
@@ -54,6 +66,8 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
   }
 
   function field(key: keyof Contact, label: string, multi = false) {
+    if (hiddenFieldIds?.has(key as string)) return null
+
     const val = (contact[key] as string | null | undefined) ?? null
     const editing = editingField === key
     const isRequired = requiredFieldKeys?.has(key as string) ?? false
@@ -82,7 +96,7 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
     }
 
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 2, padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
+      <div key={key as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 2, padding: '8px 0', borderBottom: '1px solid var(--divider)' }}>
         <span
           onClick={() => { if (key !== 'website' || !val) setEditingField(key) }}
           style={{
@@ -148,27 +162,22 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys }: DetailsW
           {field('notes', 'Notes', true)}
           {showAll && (
             <>
-              {field('gender', 'Gender')}
-              {field('country', 'Country')}
-              {field('global_region', 'Region')}
-              {field('contact_frequency', 'Contact Frequency')}
-
-              {field('email_2', 'Email 2')}
-              {field('email_3', 'Email 3')}
-              {field('website', 'Website')}
+              {visibleSecondaryFields.map(key => field(key, FIELD_LABELS[key] ?? String(key)))}
             </>
           )}
-          <button
-            type="button"
-            onClick={() => setShowAll(v => !v)}
-            style={{
-              background: 'none', border: 'none', padding: 0,
-              fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            {showAll ? 'Show less' : `Show all fields (${SECONDARY_CONTACT_FIELDS.length} more)`}
-          </button>
+          {visibleSecondaryFields.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(v => !v)}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {showAll ? 'Show less' : `Show all fields (${visibleSecondaryFields.length} more)`}
+            </button>
+          )}
         </>
       ) : (
         <>

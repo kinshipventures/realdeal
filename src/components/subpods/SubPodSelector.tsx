@@ -10,6 +10,7 @@ interface SubPodSelectorProps {
   onClear: (podId: string) => void
   onCreateSubPod?: (podId: string, name: string) => Promise<void> | void
   compact?: boolean
+  readOnlyCategoryIds?: string[]
 }
 
 export function SubPodSelector({
@@ -21,6 +22,7 @@ export function SubPodSelector({
   onClear,
   onCreateSubPod,
   compact = false,
+  readOnlyCategoryIds = [],
 }: SubPodSelectorProps) {
   const [creatingForPodId, setCreatingForPodId] = useState<string | null>(null)
   const [newSubPodName, setNewSubPodName] = useState('')
@@ -95,17 +97,20 @@ export function SubPodSelector({
                   </span>
                 ) : subPods.map(subPod => {
                   const selected = selectedCategoryIds.includes(subPod.id)
+                  const readOnly = readOnlyCategoryIds.includes(subPod.id)
                   return (
                     <button
                       key={subPod.id}
                       type="button"
-                      onClick={() => onSelect(subPod)}
+                      onClick={() => { if (!readOnly) onSelect(subPod) }}
                       aria-pressed={selected}
-                      title={`${subPod.name} in ${pod.name}`}
-                      style={subPodButtonStyle(selected, pod.color)}
+                      aria-disabled={readOnly}
+                      title={readOnly ? `${subPod.name} is available in ${pod.name}` : `${subPod.name} in ${pod.name}`}
+                      style={subPodButtonStyle(selected, pod.color, readOnly)}
                     >
                       {pod.color && <span style={{ width: 7, height: 7, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
                       {subPod.name}
+                      {readOnly && <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>Available</span>}
                     </button>
                   )
                 })}
@@ -193,7 +198,7 @@ export function SubPodSelector({
   )
 }
 
-function subPodButtonStyle(selected: boolean, color: string | null): CSSProperties {
+function subPodButtonStyle(selected: boolean, color: string | null, readOnly = false): CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
@@ -211,7 +216,8 @@ function subPodButtonStyle(selected: boolean, color: string | null): CSSProperti
     fontSize: 12,
     fontWeight: selected ? 700 : 500,
     lineHeight: 1.2,
-    cursor: 'pointer',
+    cursor: readOnly ? 'default' : 'pointer',
+    opacity: readOnly ? 0.72 : 1,
     fontFamily: 'inherit',
     transition: 'border-color 0.12s, background 0.12s, color 0.12s',
   }

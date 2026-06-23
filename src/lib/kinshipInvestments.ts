@@ -1,0 +1,17 @@
+export const DEFAULT_KINSHIP_INVESTMENTS = [
+  'Applyboard',
+  'Carta',
+  'Clubhouse',
+  'Clubhouse 21',
+  'Gemini',
+  'Goop Series A',
+  'Goop Series B',
+  'Kinship Fund I',
+  'Lovable',
+  'Lovable2',
+  'Moonpay',
+  'Olipop',
+  'Open AI',
+  'Starface',
+  'TeraWulf',
+]

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Plus } from 'lucide-react'
 import { getCampaigns, getCampaignContactsForContact } from '../../lib/data'
 import type { Contact, Campaign } from '../../lib/types'
 import { WIDGET_STYLE } from './shared'
 
 interface PipelinesWidgetProps {
   contact: Contact
+  pinnedCampaignIds?: string[]
 }
 
-export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
+export function PipelinesWidget({ contact, pinnedCampaignIds = [] }: PipelinesWidgetProps) {
   const navigate = useNavigate()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [linkedCampaignIds, setLinkedCampaignIds] = useState<string[]>([])
@@ -20,9 +20,10 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
       getCampaignContactsForContact(contact.id),
     ])
     const ids = myLinks.map(cc => cc.campaign_id)
+    const visibleIds = new Set([...ids, ...pinnedCampaignIds])
     setLinkedCampaignIds(ids)
-    setCampaigns(allCampaigns.filter(c => ids.includes(c.id) && c.status !== 'hidden'))
-  }, [contact.id])
+    setCampaigns(allCampaigns.filter(c => visibleIds.has(c.id) && c.status !== 'hidden'))
+  }, [contact.id, pinnedCampaignIds])
 
   useEffect(() => { load() }, [load])
 
@@ -64,7 +65,7 @@ export function PipelinesWidget({ contact }: PipelinesWidgetProps) {
                 {c.name}
               </div>
               <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--color-text-secondary)', marginTop: 1 }}>
-                {c.type}
+                {linkedCampaignIds.includes(c.id) ? c.type : `${c.type} · Available`}
               </div>
             </div>
           ))}

@@ -7,6 +7,7 @@ interface PodFieldsWidgetProps {
   contact: Contact
   fieldConfigs: FieldConfig[]
   onUpdate: (data: Partial<Contact>) => void
+  hiddenFieldConfigIds?: Set<string>
 }
 
 const inputStyle: React.CSSProperties = {
@@ -27,13 +28,15 @@ export function PodFieldsWidget({
   contact,
   fieldConfigs,
   onUpdate,
+  hiddenFieldConfigIds,
 }: PodFieldsWidgetProps) {
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
 
   const podFields = fieldConfigs
     .filter(fc =>
       fc.scope_pod_id === pod.id &&
-      (fc.scope_type === contact.type || fc.scope_type === 'Both')
+      (fc.scope_type === contact.type || fc.scope_type === 'Both') &&
+      !hiddenFieldConfigIds?.has(fc.id)
     )
     .sort((a, b) => a.display_order - b.display_order)
 

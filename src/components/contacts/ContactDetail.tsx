@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { type Category, type Contact, type Interaction, type Pod } from '../../lib/types'
 import { getInteractions } from '../../lib/data'
@@ -13,6 +13,9 @@ import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
+import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
+import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
+import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
@@ -181,6 +184,8 @@ function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
 
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated }: Props) {
   const isNew = contact === null
+  const { activeWorkspace } = useWorkspace()
+  const [displaySettings] = useContactDisplaySettings(activeWorkspace?.id, contact?.id)
 
   const [draft, setDraft] = useState<Partial<Contact>>(
     contact ?? {
@@ -223,6 +228,48 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [acceptingField, setAcceptingField] = useState<string | null>(null)
   const [shellBounds, setShellBounds] = useState<ShellBounds | null>(null)
   const [availablePods, setAvailablePods] = useState<Pod[]>(pods)
+  const pinnedSubPodParentIds = useMemo(() => {
+    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
+    return availableCategories
+      .filter(category => pinnedSubPodIds.has(category.id))
+      .map(category => category.list_id)
+  }, [availableCategories, displaySettings.pinnedSubPodIds])
+  const visibleSubPodIds = useMemo(() => {
+    return uniqueIds([
+      ...(draft.list_ids ?? []),
+      ...displaySettings.pinnedPodIds,
+      ...pinnedSubPodParentIds,
+    ])
+  }, [draft.list_ids, displaySettings.pinnedPodIds, pinnedSubPodParentIds])
+  const visibleSubPodPods = useMemo(
+    () => availablePods.filter(pod => visibleSubPodIds.includes(pod.id)),
+    [availablePods, visibleSubPodIds],
+  )
+  const visibleSubPodCategories = useMemo(() => {
+    const assignedPodIds = new Set(draft.list_ids ?? [])
+    const pinnedPodIds = new Set(displaySettings.pinnedPodIds)
+    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
+
+    return availableCategories.filter(category =>
+      assignedPodIds.has(category.list_id) ||
+      pinnedPodIds.has(category.list_id) ||
+      pinnedSubPodIds.has(category.id)
+    )
+  }, [availableCategories, draft.list_ids, displaySettings.pinnedPodIds, displaySettings.pinnedSubPodIds])
+  const readOnlySubPodCategoryIds = useMemo(() => {
+    const assignedPodIds = new Set(draft.list_ids ?? [])
+    return visibleSubPodCategories
+      .filter(category => !assignedPodIds.has(category.list_id))
+      .map(category => category.id)
+  }, [draft.list_ids, visibleSubPodCategories])
+
+  function sectionVisible(sectionId: ContactDisplaySectionId): boolean {
+    return isSectionVisible(displaySettings, sectionId)
+  }
+
+  function standardFieldVisible(fieldId: string): boolean {
+    return isStandardFieldVisible(displaySettings, fieldId)
+  }
 
   useEffect(() => {
     if (!contact) return
@@ -344,6 +391,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     (sum, link) => sum + (getCampaignContactCommitmentAmount(link) ?? 0),
     0,
   )
+  const pinnedCampaignOptions = useMemo(() => {
+    const linkedCampaignIds = new Set(contactCampaignLinks.map(link => link.campaign_id))
+    return campaigns.filter(campaign =>
+      displaySettings.pinnedCampaignIds.includes(campaign.id) &&
+      !linkedCampaignIds.has(campaign.id)
+    )
+  }, [campaigns, contactCampaignLinks, displaySettings.pinnedCampaignIds])
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -757,6 +811,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function field(key: keyof Contact, label: string, renderOptions: FieldRenderOptions | boolean = {}) {
+    if (!standardFieldVisible(key as string)) return null
+
     const options = typeof renderOptions === 'boolean' ? { multi: renderOptions } : renderOptions
     const multi = options.multi ?? false
     const val = (draft[key] as string | null | undefined) ?? null
@@ -939,14 +995,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     )
   }
 
-  function arrayField(key: keyof Contact, label: string, options: string[] = []) {
+  function arrayField(key: keyof Contact, label: string, options: string[] = [], config: { allowCustom?: boolean } = {}) {
+    if (!standardFieldVisible(key as string)) return null
+
+    const allowCustom = config.allowCustom ?? true
     const rawValue = draft[key]
     const values = Array.isArray(rawValue) ? rawValue.map(String) : []
-    const value = values.join(', ')
+    const pinnedValues = displaySettings.pinnedFieldOptionValues[String(key)] ?? []
+    const displayValues = mergeOptions(values, pinnedValues)
+    const hasDisplayedValues = displayValues.length > 0
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
     const labelTargetId = `labels:${String(key)}`
-    const labelOptions = mergeOptions(options, values)
+    const labelOptions = mergeOptions(options, displayValues)
     const inputStyle = {
       width: '100%',
       background: 'var(--tint)',
@@ -967,12 +1028,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       setArrayDraftValue(key, nextValues)
     }
 
-    function renderLabelChip(option: string, selected = true) {
+    function renderLabelChip(option: string, selected = true, readOnly = false) {
       return (
         <button
           key={option}
           type="button"
-          onClick={() => editing && toggleLabel(option)}
+          onClick={() => editing && !readOnly && toggleLabel(option)}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -990,12 +1051,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             fontSize: 12,
             fontWeight: selected ? 600 : 500,
             lineHeight: 1.3,
-            cursor: editing ? 'pointer' : 'default',
+            cursor: editing && !readOnly ? 'pointer' : 'default',
             fontFamily: 'inherit',
           }}
         >
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{option}</span>
-          {editing && selected && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
+          {readOnly && <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>Available</span>}
+          {editing && selected && !readOnly && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
         </button>
       )
     }
@@ -1038,47 +1100,51 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   {labelOptions.map(option => renderLabelChip(option, values.includes(option)))}
                 </div>
               )}
-              <input
-                type="text"
-                placeholder={`Add ${label.toLowerCase()} separated by commas`}
-                onBlur={event => {
-                  if (!event.target.value.trim()) return
-                  setArrayDraftValue(key, [...values, ...splitLabelInput(event.target.value)])
-                  event.target.value = ''
-                }}
-                onKeyDown={event => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    if (event.currentTarget.value.trim()) {
-                      setArrayDraftValue(key, [...values, ...splitLabelInput(event.currentTarget.value)])
-                      event.currentTarget.value = ''
-                    }
-                  }
-                  if (event.key === 'Escape') {
-                    setEditingField(null)
-                    event.stopPropagation()
-                  }
-                }}
-                style={inputStyle}
-              />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => beginAddingOption(labelTargetId)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 999,
-                    border: '1px dashed var(--edge-strong)',
-                    background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
-                    color: 'var(--color-text-secondary)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
+              {allowCustom && (
+                <input
+                  type="text"
+                  placeholder={`Add ${label.toLowerCase()} separated by commas`}
+                  onBlur={event => {
+                    if (!event.target.value.trim()) return
+                    setArrayDraftValue(key, [...values, ...splitLabelInput(event.target.value)])
+                    event.target.value = ''
                   }}
-                >
-                  Add label
-                </button>
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      if (event.currentTarget.value.trim()) {
+                        setArrayDraftValue(key, [...values, ...splitLabelInput(event.currentTarget.value)])
+                        event.currentTarget.value = ''
+                      }
+                    }
+                    if (event.key === 'Escape') {
+                      setEditingField(null)
+                      event.stopPropagation()
+                    }
+                  }}
+                  style={inputStyle}
+                />
+              )}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {allowCustom && (
+                  <button
+                    type="button"
+                    onClick={() => beginAddingOption(labelTargetId)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px dashed var(--edge-strong)',
+                      background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Add label
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setEditingField(null)}
@@ -1096,9 +1162,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   Done
                 </button>
               </div>
-              {renderAddOptionControl(labelTargetId, option => setArrayDraftValue(key, [...values, option]), 'New label')}
+              {allowCustom && renderAddOptionControl(labelTargetId, option => setArrayDraftValue(key, [...values, option]), 'New label')}
             </div>
-          ) : value ? (
+          ) : hasDisplayedValues ? (
             <div
               onClick={() => setEditingField(key)}
               style={{
@@ -1109,7 +1175,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 cursor: 'text',
               }}
             >
-              {values.map(option => renderLabelChip(option))}
+              {displayValues.map(option => {
+                const selected = values.includes(option)
+                return renderLabelChip(option, selected, !selected)
+              })}
             </div>
           ) : (
             <div
@@ -1158,6 +1227,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function customField(fieldDef: LpTrackerFieldDefinition) {
+    if (!standardFieldVisible(fieldDef.key)) return null
+
     const customFields = getDraftCustomFields()
     const rawValue = customFields[fieldDef.key]
     const value = lpTrackerDisplayValue(rawValue)
@@ -1507,6 +1578,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     label,
     records,
     selectedIds,
+    displayOnlyIds = [],
     placeholder,
     onChange,
     multi = true,
@@ -1517,6 +1589,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     label: string
     records: Contact[]
     selectedIds: string[]
+    displayOnlyIds?: string[]
     placeholder: string
     onChange: (ids: string[]) => void
     multi?: boolean
@@ -1526,6 +1599,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }) {
     const normalizedSelectedIds = uniqueIds(selectedIds)
     const selectedRecords = normalizedSelectedIds
+      .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
+      .filter(Boolean) as Contact[]
+    const displayOnlyRecords = uniqueIds(displayOnlyIds)
+      .filter(id => !normalizedSelectedIds.includes(id))
       .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
       .filter(Boolean) as Contact[]
     const availableRecords = records.filter(record => !normalizedSelectedIds.includes(record.id))
@@ -1559,9 +1636,31 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           <div style={rowLabel}>{label}</div>
         </div>
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {selectedRecords.length > 0 ? (
+          {selectedRecords.length > 0 || displayOnlyRecords.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {selectedRecords.map(record => recordChip(record, () => removeRecord(record.id)))}
+              {displayOnlyRecords.map(record => (
+                <span
+                  key={`display-only:${record.id}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    maxWidth: '100%',
+                    padding: '5px 9px',
+                    borderRadius: 999,
+                    border: '1px dashed var(--edge)',
+                    background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</span>
+                  <span style={{ color: 'var(--color-text-tertiary)' }}>Available</span>
+                </span>
+              ))}
             </div>
           ) : (
             <div style={{ fontSize: 14, color: 'var(--color-text-tertiary)', minHeight: 22, lineHeight: 1.45 }}>
@@ -1687,6 +1786,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       label: 'Companies',
       records: companyRecords,
       selectedIds,
+      displayOnlyIds: displaySettings.pinnedCompanyIds,
       placeholder: 'add companies',
       createOptionLabel: '+ Create new company...',
       createPlaceholder: 'New company name',
@@ -1993,6 +2093,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function linkedinField() {
+    if (!standardFieldVisible('linkedin')) return null
+
     const val = (draft.linkedin as string | null) ?? null
     const editing = editingField === 'linkedin'
     const hasSaveError = saveError?.field === 'linkedin'
@@ -2398,7 +2500,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </span>
               </div>
 
-              {!isNew && contactCampaignLinks.length > 0 && (
+              {sectionVisible('campaigns') && !isNew && contactCampaignLinks.length > 0 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
                   {contactCampaignLinks.map(link => {
                     const campaign = campaigns.find(c => c.id === link.campaign_id)
@@ -2441,7 +2543,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
 
             {/* Equity score in header for existing contacts only */}
-            {!isNew && (
+            {sectionVisible('relationship_overview') && !isNew && (
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -2480,173 +2582,193 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {(draft.type ?? contact?.type ?? 'Contact') === 'Company' ? (
                 <>
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>company information</div>
+                  {sectionVisible('details') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>company information</div>
+                      </div>
+                      {field('name', 'Company Name')}
+                      {sectionVisible('associated_people') && companyPeopleField('Contacts')}
+                      {field('website', 'Website', { inputType: 'url' })}
+                      {linkedinField()}
+                      {customFieldByKey('companyType')}
+                      {field('industry', 'Industry')}
+                      {customFieldByKey('fundType')}
+                      {field('notes', 'Notes', { multi: true })}
                     </div>
-                    {field('name', 'Company Name')}
-                    {companyPeopleField('Contacts')}
-                    {field('website', 'Website', { inputType: 'url' })}
-                    {linkedinField()}
-                    {customFieldByKey('companyType')}
-                    {field('industry', 'Industry')}
-                    {customFieldByKey('fundType')}
-                    {field('notes', 'Notes', { multi: true })}
-                  </div>
+                  )}
 
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>ways to contact</div>
+                  {sectionVisible('details') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>ways to contact</div>
+                      </div>
+                      {field('email', 'Email', { inputType: 'email' })}
+                      {field('phone', 'Phone', { inputType: 'tel' })}
+                      {customFieldByKey('address')}
+                      {customFieldByKey('city')}
+                      {customFieldByKey('state')}
+                      {field('country', 'Country', { options: contactFieldOptions('country') })}
+                      {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
                     </div>
-                    {field('email', 'Email', { inputType: 'email' })}
-                    {field('phone', 'Phone', { inputType: 'tel' })}
-                    {customFieldByKey('address')}
-                    {customFieldByKey('city')}
-                    {customFieldByKey('state')}
-                    {field('country', 'Country', { options: contactFieldOptions('country') })}
-                    {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
-                  </div>
+                  )}
                 </>
               ) : (
                 <>
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>contact information</div>
+                  {sectionVisible('details') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>contact information</div>
+                      </div>
+                      {field('name', 'Name')}
+                      {primaryCompanyField()}
+                      {field('role', 'Job Title')}
+                      {linkedinField()}
+                      {field('recommended_by', 'Referred By')}
+                      {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
+                      {field('birthday', 'Birthday', { inputType: 'date' })}
                     </div>
-                    {field('name', 'Name')}
-                    {primaryCompanyField()}
-                    {field('role', 'Job Title')}
-                    {linkedinField()}
-                    {field('recommended_by', 'Referred By')}
-                    {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
-                    {field('birthday', 'Birthday', { inputType: 'date' })}
-                  </div>
+                  )}
 
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>ways to contact</div>
+                  {sectionVisible('details') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>ways to contact</div>
+                      </div>
+                      {field('email', 'Email', { inputType: 'email' })}
+                      {field('email_2', 'Email 2', { inputType: 'email' })}
+                      {field('email_3', 'Email 3', { inputType: 'email' })}
+                      {field('phone', 'Phone', { inputType: 'tel' })}
+                      {customFieldByKey('address')}
+                      {customFieldByKey('city')}
+                      {customFieldByKey('state')}
+                      {field('country', 'Country', { options: contactFieldOptions('country') })}
+                      {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
+                      {assistantInfoField()}
                     </div>
-                    {field('email', 'Email', { inputType: 'email' })}
-                    {field('email_2', 'Email 2', { inputType: 'email' })}
-                    {field('email_3', 'Email 3', { inputType: 'email' })}
-                    {field('phone', 'Phone', { inputType: 'tel' })}
-                    {customFieldByKey('address')}
-                    {customFieldByKey('city')}
-                    {customFieldByKey('state')}
-                    {field('country', 'Country', { options: contactFieldOptions('country') })}
-                    {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
-                    {assistantInfoField()}
-                  </div>
+                  )}
 
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>investor profile</div>
+                  {sectionVisible('fund_activity') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>investor profile</div>
+                      </div>
+                      {arrayField('kv_fund_investor', 'Kinship Investments', contactFieldOptions('kv_fund_investor'), { allowCustom: false })}
+                      {customFieldByKey('investmentEntity')}
+                      {customFieldByKey('spvInvestorFlag')}
+                      {customFieldByKey('investmentEmail')}
                     </div>
-                    {arrayField('kv_fund_investor', 'Kinship Investments', contactFieldOptions('kv_fund_investor'))}
-                    {customFieldByKey('investmentEntity')}
-                    {customFieldByKey('fundType')}
-                    {customFieldByKey('spvInvestorFlag')}
-                    {arrayField('spv_investor', 'SPV Investor', contactFieldOptions('spv_investor'))}
-                    {customFieldByKey('investmentEmail')}
-                  </div>
+                  )}
 
-                  <div style={sectionShell}>
-                    <div style={sectionHeader}>
-                      <div style={sectionLabel}>internal</div>
+                  {sectionVisible('details') && (
+                    <div style={sectionShell}>
+                      <div style={sectionHeader}>
+                        <div style={sectionLabel}>internal</div>
+                      </div>
+                      {customFieldByKey('notables')}
+                      {customFieldByKey('notes')}
                     </div>
-                    {customFieldByKey('notables')}
-                    {customFieldByKey('category')}
-                    {customFieldByKey('notes')}
-                  </div>
+                  )}
                 </>
               )}
 
-              <div style={sectionShell}>
-                <div style={sectionHeader}>
-                  <div style={sectionLabel}>pods</div>
-                </div>
-                <div style={{ padding: '16px 18px' }}>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {availablePods.map(pod => {
-                      const isIn = (draft.list_ids ?? []).includes(pod.id)
-                      const isPrimary = draft.primary_list_id === pod.id
-                      return (
-                        <button
-                          key={pod.id}
-                          type="button"
-                          onClick={() => {
-                            const currentIds = draft.list_ids ?? []
-                            const currentCategoryIds = draft.category_ids ?? []
-                            let nextIds: string[]
-                            let nextPrimary = draft.primary_list_id
-                            let nextCategoryIds = currentCategoryIds
-                            if (isIn) {
-                              nextIds = currentIds.filter(id => id !== pod.id)
-                              nextCategoryIds = currentCategoryIds.filter(categoryId => {
-                                const category = availableCategories.find(item => item.id === categoryId)
-                                return category?.list_id !== pod.id
-                              })
-                              if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
-                            } else {
-                              nextIds = [...currentIds, pod.id]
-                              if (!nextPrimary) nextPrimary = pod.id
-                            }
-                            setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary, category_ids: nextCategoryIds }))
-                            if (!isNew && contact) {
-                              persistPodAssignment(nextIds, nextPrimary, nextCategoryIds)
-                            }
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: 999,
-                            fontSize: 12,
-                            fontWeight: isIn ? 600 : 400,
-                            border: '1px solid',
-                            borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
-                            background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
-                            color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                            transition: 'all 0.12s',
-                          }}
-                        >
-                          {pod.name}{isPrimary ? ' *' : ''}
-                        </button>
-                      )
-                    })}
-                    <button
-                      type="button"
-                      onClick={() => beginAddingOption('pods-create-pod')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        border: '1px dashed var(--edge-strong)',
-                        background: 'transparent',
-                        color: 'var(--color-text-secondary)',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      + Add pod
-                    </button>
+              {sectionVisible('pods') && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>pods</div>
                   </div>
-                  {renderAddOptionControl('pods-create-pod', value => handleCreatePodAssignment(value), 'New pod')}
-                  <SubPodSelector
-                    pods={availablePods}
-                    categories={availableCategories}
-                    selectedPodIds={draft.list_ids ?? []}
-                    selectedCategoryIds={draft.category_ids ?? []}
-                    onSelect={handleSelectSubPod}
-                    onClear={handleClearSubPod}
-                    onCreateSubPod={handleCreateSubPodAssignment}
-                  />
+                  <div style={{ padding: '16px 18px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {availablePods.map(pod => {
+                        const isIn = (draft.list_ids ?? []).includes(pod.id)
+                        const isPrimary = draft.primary_list_id === pod.id
+                        return (
+                          <button
+                            key={pod.id}
+                            type="button"
+                            onClick={() => {
+                              const currentIds = draft.list_ids ?? []
+                              const currentCategoryIds = draft.category_ids ?? []
+                              let nextIds: string[]
+                              let nextPrimary = draft.primary_list_id
+                              let nextCategoryIds = currentCategoryIds
+                              if (isIn) {
+                                nextIds = currentIds.filter(id => id !== pod.id)
+                                nextCategoryIds = currentCategoryIds.filter(categoryId => {
+                                  const category = availableCategories.find(item => item.id === categoryId)
+                                  return category?.list_id !== pod.id
+                                })
+                                if (nextPrimary === pod.id) nextPrimary = nextIds[0] ?? null
+                              } else {
+                                nextIds = [...currentIds, pod.id]
+                                if (!nextPrimary) nextPrimary = pod.id
+                              }
+                              setDraft(prev => ({ ...prev, list_ids: nextIds, primary_list_id: nextPrimary, category_ids: nextCategoryIds }))
+                              if (!isNew && contact) {
+                                persistPodAssignment(nextIds, nextPrimary, nextCategoryIds)
+                              }
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: 999,
+                              fontSize: 12,
+                              fontWeight: isIn ? 600 : 400,
+                              border: '1px solid',
+                              borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
+                              background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
+                              color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                              transition: 'all 0.12s',
+                            }}
+                          >
+                            {pod.name}{isPrimary ? ' *' : ''}
+                          </button>
+                        )
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => beginAddingOption('pods-create-pod')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 500,
+                          border: '1px dashed var(--edge-strong)',
+                          background: 'transparent',
+                          color: 'var(--color-text-secondary)',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        + Add pod
+                      </button>
+                    </div>
+                    {renderAddOptionControl('pods-create-pod', value => handleCreatePodAssignment(value), 'New pod')}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {!isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
+              {sectionVisible('sub_pods') && (
+                <div style={sectionShell}>
+                  <div style={{ padding: '16px 18px' }}>
+                    <SubPodSelector
+                      pods={visibleSubPodPods}
+                      categories={visibleSubPodCategories}
+                      selectedPodIds={visibleSubPodIds}
+                      selectedCategoryIds={draft.category_ids ?? []}
+                      onSelect={handleSelectSubPod}
+                      onClear={handleClearSubPod}
+                      onCreateSubPod={handleCreateSubPodAssignment}
+                      compact
+                      readOnlyCategoryIds={readOnlySubPodCategoryIds}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {sectionVisible('campaigns') && !isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>campaigns</div>
@@ -2748,6 +2870,43 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                           })}
                       </div>
                     )}
+                    {pinnedCampaignOptions.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                        {pinnedCampaignOptions.map(campaign => (
+                          <div key={`pinned-campaign:${campaign.id}`} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '7px 10px',
+                            borderRadius: 10,
+                            background: 'color-mix(in srgb, var(--surface-panel) 92%, var(--tint) 8%)',
+                            border: '1px dashed var(--edge)',
+                          }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                              <line x1="4" y1="22" x2="4" y2="15"/>
+                            </svg>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+                              {campaign.name}
+                            </span>
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              padding: '2px 7px',
+                              borderRadius: 100,
+                              background: 'var(--tint)',
+                              color: 'var(--color-text-tertiary)',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              Available
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+                              {campaign.type}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {addedCampaignId ? (
                       <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
                         Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
@@ -2807,7 +2966,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
-              {(draft.type ?? contact?.type ?? 'Contact') !== 'Company' && (
+              {sectionVisible('associated_company') && (draft.type ?? contact?.type ?? 'Contact') !== 'Company' && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>companies</div>
