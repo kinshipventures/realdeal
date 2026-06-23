@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, getContacts, getCategories, getCampaigns, invalidateContactsCache } from '../../lib/data'
 import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, targetAllowsMultipleMapping, TARGET_FIELDS } from '../../lib/csvImport'
+import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
@@ -23,20 +24,6 @@ const SOURCE_LABELS: Record<ImportSource, string> = {
   paste: 'Pasted Data',
   google: 'Google Contacts',
   outlook: 'Outlook Contacts',
-}
-
-async function generateTemplate() {
-  const response = await fetch('/templates/realdeal-contact-import-template.xlsx')
-  if (!response.ok) throw new Error('Template download failed.')
-  const blob = await response.blob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'realdeal-contact-import-template.xlsx'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 function StepIndicator({ current }: { current: number }) {
@@ -426,7 +413,7 @@ export function ImportPanel() {
               onOutlookSelected={handleOutlook}
             />
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <button type="button" onClick={() => { generateTemplate().catch(err => setFileError(err instanceof Error ? err.message : 'Template download failed.')) }} style={{
+              <button type="button" onClick={() => { downloadWorkspaceImportTemplate(activeWorkspace?.slug).catch(err => setFileError(err instanceof Error ? err.message : 'Template download failed.')) }} style={{
                 background: 'none', border: 'none', fontSize: 13, color: 'var(--color-brand)',
                 cursor: 'pointer', fontFamily: 'inherit', padding: '10px 0', minHeight: 44,
               }}>

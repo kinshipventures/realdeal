@@ -36,7 +36,7 @@ type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
-const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Notes', 'SPV Investor', 'Companies', 'Contacts', 'Campaign', 'Campaign Status', 'Commitment Amount'])
+const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Sub-pod', 'Notes', 'KV Fund Investor', 'SPV Investor', 'Companies', 'Contacts', 'Campaign', 'Campaign Status', 'Commitment Amount'])
 const BULK_INSERT_CHUNK_SIZE = 100
 const LP_TRACKER_ALIAS_MAP = Object.fromEntries(LP_TRACKER_ALIAS_ENTRIES) as Record<string, TargetField>
 const IMPORTABLE_WORKSHEET_TARGETS = new Set<TargetField>([
@@ -818,6 +818,18 @@ function campaignIndexFromHeader(header: string): number | null {
 }
 
 function inferredTargetFromHeader(candidates: string[], hasCampaignContext = false): TargetField | null {
+  if (candidates.some(candidate => /^pods?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'Pod'
+  }
+  if (candidates.some(candidate => /^sub[\s-]*pods?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'Sub-pod'
+  }
+  if (candidates.some(candidate => /^kinship investments?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'KV Fund Investor'
+  }
+  if (candidates.some(candidate => /^spv investor(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
+    return 'SPV Investor'
+  }
   if (candidates.some(candidate => /^investment(?:s)?(?:\s*#?\s*\d+)?$/.test(candidate))) {
     return 'SPV Investor'
   }

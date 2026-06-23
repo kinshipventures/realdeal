@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
+import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail } from '../contacts/ContactDetail'
@@ -13,6 +14,7 @@ import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -187,6 +189,7 @@ function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onCh
 export function RecordsList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { activeWorkspace } = useWorkspace()
   const activeView = searchParams.get('view') === 'companies' ? 'companies' : 'people'
 
   // Data
@@ -748,17 +751,7 @@ export function RecordsList() {
   }
 
   async function downloadImportTemplate() {
-    const response = await fetch('/templates/realdeal-contact-import-template.xlsx')
-    if (!response.ok) throw new Error('Template download failed.')
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'realdeal-contact-import-template.xlsx'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    await downloadWorkspaceImportTemplate(activeWorkspace?.slug)
   }
 
   async function handleCopyToClipboard(rows: Contact[]) {

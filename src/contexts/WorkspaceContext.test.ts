@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { bootstrapWorkspaceForUser, deriveWorkspaceName, resolveActiveWorkspace, type Workspace } from './WorkspaceContext'
 import { supabase } from '@/integrations/supabase/client'
+import { ensureWorkspaceBaseline } from '@/lib/defaultWorkspace'
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(),
   },
+}))
+
+vi.mock('@/lib/defaultWorkspace', () => ({
+  ensureWorkspaceBaseline: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('Workspace helpers', () => {
@@ -56,6 +61,7 @@ describe('Workspace helpers', () => {
       user_id: 'user-123',
       role: 'owner',
     })
+    expect(ensureWorkspaceBaseline).toHaveBeenCalledWith('user-123', 'ws-123')
     expect(workspace).toEqual({
       id: 'ws-123',
       name: "Systemsstrategist's Team",

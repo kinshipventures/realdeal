@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './AuthContext'
 import { setActiveWorkspaceId, clearActiveWorkspaceId } from '@/lib/workspace'
 import { invalidateAllCaches } from '@/lib/supabase-data'
+import { ensureWorkspaceBaseline } from '@/lib/defaultWorkspace'
 
 export interface Workspace {
   id: string
@@ -73,6 +74,8 @@ export async function bootstrapWorkspaceForUser(userId: string, email?: string |
   })
   if (memErr) throw memErr
 
+  await ensureWorkspaceBaseline(userId, ws.id)
+
   return { id: ws.id, name: ws.name, slug: ws.slug, role: 'owner', created_at: ws.created_at }
 }
 
@@ -102,6 +105,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     const hydrated = mapped.length > 0
       ? mapped
       : [await bootstrapWorkspaceForUser(session.user.id, session.user.email)]
+
+    await Promise.all(hydrated.map(workspace =>
+      ensureWorkspaceBaseline(session.user.id, workspace.id).catch(error => {
+        console.error('Failed to seed workspace baseline:', error)
+      })
+    ))
+    invalidateAllCaches()
 
     setWorkspaces(hydrated)
 
