@@ -1758,6 +1758,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function primaryCompanyField() {
+    if (!standardFieldVisible('primary_company')) return null
+
     const companyRecords = contactsForOptions.filter(record => record.type === 'Company')
     const selectedIds = uniqueIds([
       draft.company_record_id ?? '',
@@ -1796,6 +1798,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function assistantInfoField() {
+    if (!standardFieldVisible('assistantContactIds')) return null
+
     const peopleRecords = contactsForOptions.filter(record => record.type === 'Contact' && record.id !== contact?.id)
     return linkedRecordsField({
       label: 'Assistant Info',
@@ -2598,7 +2602,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                   )}
 
-                  {sectionVisible('details') && (
+                  {sectionVisible('ways_to_contact') && (
                     <div style={sectionShell}>
                       <div style={sectionHeader}>
                         <div style={sectionLabel}>ways to contact</div>
@@ -2630,7 +2634,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                   )}
 
-                  {sectionVisible('details') && (
+                  {sectionVisible('ways_to_contact') && (
                     <div style={sectionShell}>
                       <div style={sectionHeader}>
                         <div style={sectionLabel}>ways to contact</div>
@@ -2660,7 +2664,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                   )}
 
-                  {sectionVisible('details') && (
+                  {sectionVisible('internal') && (
                     <div style={sectionShell}>
                       <div style={sectionHeader}>
                         <div style={sectionLabel}>internal</div>
@@ -2991,28 +2995,30 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {!isNew && contact ? (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>recent activity</div>
+              {sectionVisible('recent_activity') && (
+                !isNew && contact ? (
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>recent activity</div>
+                    </div>
+                    <div style={{ padding: '0 16px 16px' }}>
+                      <InteractionSection
+                        contact={contact}
+                        onContactUpdated={onSaved}
+                        embedded
+                      />
+                    </div>
                   </div>
-                  <div style={{ padding: '0 16px 16px' }}>
-                    <InteractionSection
-                      contact={contact}
-                      onContactUpdated={onSaved}
-                      embedded
-                    />
+                ) : (
+                  <div style={sectionShell}>
+                    <div style={sectionHeader}>
+                      <div style={sectionLabel}>recent activity</div>
+                    </div>
+                    <div style={{ padding: '18px', color: 'var(--color-text-tertiary)', fontSize: 14, lineHeight: 1.55 }}>
+                      Save this person first, then you can log touchpoints.
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div style={sectionShell}>
-                  <div style={sectionHeader}>
-                    <div style={sectionLabel}>recent activity</div>
-                  </div>
-                  <div style={{ padding: '18px', color: 'var(--color-text-tertiary)', fontSize: 14, lineHeight: 1.55 }}>
-                    Save this person first, then you can log touchpoints.
-                  </div>
-                </div>
+                )
               )}
 
             </div>
@@ -3020,7 +3026,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         </div>
 
         {/* Next Follow-Up bar pinned at bottom */}
-        {!isNew && contact && (
+        {sectionVisible('next_touchpoint') && !isNew && contact && (
           <div style={{
             padding: '14px 28px 15px',
             borderTop: '1px solid var(--divider)',

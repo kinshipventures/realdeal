@@ -8,11 +8,15 @@ export type ContactDisplaySectionId =
   | 'pods'
   | 'sub_pods'
   | 'details'
+  | 'ways_to_contact'
   | 'pod_fields'
   | 'fund_activity'
+  | 'internal'
   | 'associated_company'
   | 'associated_people'
   | 'campaigns'
+  | 'recent_activity'
+  | 'next_touchpoint'
 
 export interface PropertyOption {
   id: string
@@ -119,10 +123,28 @@ export const CONTACT_DISPLAY_SECTION_OPTIONS: ContactDisplaySectionOption[] = [
     appliesTo: 'Both',
   },
   {
+    id: 'ways_to_contact',
+    label: 'Ways to contact',
+    fieldType: 'Section',
+    group: 'Contact information',
+    objectType: 'Contact',
+    ownerLabel: 'Real Deal',
+    appliesTo: 'Both',
+  },
+  {
     id: 'fund_activity',
-    label: 'Fund activity',
+    label: 'Investor profile',
     fieldType: 'Section',
     group: 'Investment information',
+    objectType: 'Contact',
+    ownerLabel: 'Real Deal',
+    appliesTo: 'Contact',
+  },
+  {
+    id: 'internal',
+    label: 'Internal',
+    fieldType: 'Section',
+    group: 'Contact activity',
     objectType: 'Contact',
     ownerLabel: 'Real Deal',
     appliesTo: 'Contact',
@@ -154,13 +176,39 @@ export const CONTACT_DISPLAY_SECTION_OPTIONS: ContactDisplaySectionOption[] = [
     ownerLabel: 'Real Deal',
     appliesTo: 'Both',
   },
+  {
+    id: 'recent_activity',
+    label: 'Recent activity',
+    fieldType: 'Section',
+    group: 'Contact activity',
+    objectType: 'Contact',
+    ownerLabel: 'Real Deal',
+    appliesTo: 'Both',
+  },
+  {
+    id: 'next_touchpoint',
+    label: 'Next touchpoint',
+    fieldType: 'Section',
+    group: 'Contact activity',
+    objectType: 'Contact',
+    ownerLabel: 'Real Deal',
+    appliesTo: 'Both',
+  },
 ]
 
 export const CONTACT_STANDARD_PROPERTY_OPTIONS: PropertyOption[] = [
+  { id: 'name', label: 'Name', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'primary_company', label: 'Company', fieldType: 'Linked record', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'role', label: 'Job Title', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'recommended_by', label: 'Referred By', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'relationship_context', label: 'Context', fieldType: 'Multi-line text', group: 'Contact activity', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'intel_notes', label: 'Intel', fieldType: 'Multi-line text', group: 'Contact activity', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'communication_preferences', label: 'Reach', fieldType: 'Multi-line text', group: 'Contact activity', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'email', label: 'Email', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'phone', label: 'Phone', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'address', label: 'Address', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'city', label: 'City', fieldType: 'Single select', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'state', label: 'State', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'birthday', label: 'Birthday', fieldType: 'Date', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'location', label: 'Location', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'linkedin', label: 'LinkedIn', fieldType: 'URL', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
@@ -170,16 +218,32 @@ export const CONTACT_STANDARD_PROPERTY_OPTIONS: PropertyOption[] = [
   { id: 'global_region', label: 'Region', fieldType: 'Single select', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'contact_frequency', label: 'Contact Frequency', fieldType: 'Single select', group: 'Contact activity', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'kv_fund_investor', label: 'Kinship Investments', fieldType: 'Multiple checkboxes', group: 'Investment information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'investmentEntity', label: 'Investment Entity', fieldType: 'Single-line text', group: 'Investment information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'spvInvestorFlag', label: 'SPV Investor Checkbox', fieldType: 'Checkbox', group: 'Investment information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'investmentEmail', label: 'Investment Email', fieldType: 'Email', group: 'Investment information', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'notables', label: 'Notables', fieldType: 'Multi-line text', group: 'Contact activity', objectType: 'Contact', ownerLabel: 'Real Deal' },
+  { id: 'assistantContactIds', label: 'Assistant Info', fieldType: 'Linked records', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'email_2', label: 'Email 2', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'email_3', label: 'Email 3', fieldType: 'Single-line text', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
   { id: 'website', label: 'Website', fieldType: 'URL', group: 'Contact information', objectType: 'Contact', ownerLabel: 'Real Deal' },
 ]
 
 export const COMPANY_STANDARD_PROPERTY_OPTIONS: PropertyOption[] = [
+  { id: 'name', label: 'Company Name', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'email', label: 'Email', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'phone', label: 'Phone', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'address', label: 'Address', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'city', label: 'City', fieldType: 'Single select', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'state', label: 'State', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'country', label: 'Country', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'global_region', label: 'Region', fieldType: 'Single select', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'email_2', label: 'Email 2', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'email_3', label: 'Email 3', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'website', label: 'Website', fieldType: 'URL', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'linkedin', label: 'LinkedIn', fieldType: 'URL', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'companyType', label: 'Company Type', fieldType: 'Single select', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'industry', label: 'Industry', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'fundType', label: 'Fund Type', fieldType: 'Single select', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'notes', label: 'Notes', fieldType: 'Multi-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
 ]
 

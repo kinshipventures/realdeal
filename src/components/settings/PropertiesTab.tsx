@@ -628,7 +628,15 @@ export function PropertiesTab() {
           if (section.id === 'details') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['email', 'email_2', 'email_3', 'birthday', 'location', 'linkedin', 'notes', 'gender', 'country', 'global_region', 'website'],
+              ['name', 'primary_company', 'role', 'linkedin', 'recommended_by', 'gender', 'birthday'],
+              1,
+            ))
+          }
+
+          if (section.id === 'ways_to_contact') {
+            rowsForSection.push(...standardFieldRows(
+              standardOptions,
+              ['email', 'email_2', 'email_3', 'phone', 'address', 'city', 'state', 'country', 'global_region', 'assistantContactIds'],
               1,
             ))
           }
@@ -639,8 +647,16 @@ export function PropertiesTab() {
           if (section.id === 'associated_company') rowsForSection.push(...companyRows(1))
 
           if (section.id === 'fund_activity') {
-            rowsForSection.push(...standardFieldRows(standardOptions, ['kv_fund_investor'], 1))
+            rowsForSection.push(...standardFieldRows(
+              standardOptions,
+              ['kv_fund_investor', 'investmentEntity', 'spvInvestorFlag', 'investmentEmail'],
+              1,
+            ))
             rowsForSection.push(...kinshipInvestmentRows(1))
+          }
+
+          if (section.id === 'internal') {
+            rowsForSection.push(...standardFieldRows(standardOptions, ['notables', 'notes'], 1))
           }
         }
 
@@ -648,7 +664,15 @@ export function PropertiesTab() {
           if (section.id === 'details') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['email', 'email_2', 'email_3', 'website', 'notes'],
+              ['name', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'notes'],
+              1,
+            ))
+          }
+
+          if (section.id === 'ways_to_contact') {
+            rowsForSection.push(...standardFieldRows(
+              standardOptions,
+              ['email', 'phone', 'address', 'city', 'state', 'country', 'global_region'],
               1,
             ))
           }
