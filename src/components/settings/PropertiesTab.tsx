@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RotateCcw, Search, X } from 'lucide-react'
+import { ChevronDown, RotateCcw, Search, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { useContactDisplaySettings } from '@/hooks/useContactDisplaySettings'
 import {
@@ -22,6 +22,14 @@ type PropertyRow = PropertyOption & {
   onToggle: () => void
   depth?: number
 }
+
+type PropertyRowGroup = {
+  row: PropertyRow
+  children: PropertyRow[]
+}
+
+const TABLE_GRID_COLUMNS = '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px'
+const CHILD_GRID_COLUMNS = '36px minmax(170px, 1.4fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr) 86px'
 
 const OBJECT_OPTIONS: { value: PropertyObjectType; label: string }[] = [
   { value: 'Contact', label: 'Contact properties' },
@@ -84,7 +92,135 @@ function StatusPill({ active, label }: { active: boolean; label: string }) {
   )
 }
 
+function buildPropertyRowGroups(rows: PropertyRow[]): PropertyRowGroup[] {
+  return rows.reduce<PropertyRowGroup[]>((groups, row) => {
+    if (row.depth && groups.length > 0) {
+      groups[groups.length - 1].children.push(row)
+      return groups
+    }
+
+    groups.push({ row, children: [] })
+    return groups
+  }, [])
+}
+
+function groupChildrenBySection(rows: PropertyRow[]): Array<{ label: string; rows: PropertyRow[] }> {
+  const groups = new Map<string, PropertyRow[]>()
+
+  rows.forEach(row => {
+    const label = row.group || 'Options'
+    groups.set(label, [...(groups.get(label) ?? []), row])
+  })
+
+  return Array.from(groups.entries()).map(([label, groupedRows]) => ({ label, rows: groupedRows }))
+}
+
+function PropertyCheckbox({ row }: { row: PropertyRow }) {
+  return (
+    <input
+      type="checkbox"
+      checked={row.checked}
+      onChange={row.onToggle}
+      style={checkboxStyle(row.checked)}
+      aria-label={`Toggle ${row.label}`}
+    />
+  )
+}
+
+function PropertyOptionPanel({ rows }: { rows: PropertyRow[] }) {
+  const groupedRows = groupChildrenBySection(rows)
+
+  return (
+    <div style={{
+      background: 'rgba(248,250,252,0.55)',
+      borderTop: '1px solid var(--divider)',
+      borderBottom: '1px solid var(--divider)',
+      padding: '10px 14px 12px 42px',
+    }}>
+      <div style={{
+        display: 'grid',
+        gap: 10,
+        maxWidth: '100%',
+      }}>
+        {groupedRows.map(group => (
+          <div key={group.label} style={{
+            border: '1px solid var(--edge)',
+            borderRadius: 8,
+            background: 'var(--surface-panel)',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              minHeight: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              padding: '0 10px',
+              borderBottom: '1px solid var(--divider)',
+              background: 'var(--tint)',
+            }}>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: 'var(--color-text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {group.label}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+                {group.rows.length} options
+              </span>
+            </div>
+
+            {group.rows.map(row => (
+              <label
+                key={`${row.objectType}:${row.id}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: CHILD_GRID_COLUMNS,
+                  alignItems: 'center',
+                  minHeight: 42,
+                  borderBottom: '1px solid var(--divider)',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <PropertyCheckbox row={row} />
+                </div>
+                <div style={{ padding: '7px 10px', minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 650,
+                    color: 'var(--color-text-secondary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {row.label}
+                  </div>
+                </div>
+                <div style={{ padding: '7px 10px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
+                <div style={{ padding: '7px 10px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
+                <div style={{ padding: '7px 10px' }}>
+                  <StatusPill active={row.checked} label={row.statusLabel} />
+                </div>
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel: string }) {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set())
+  const rowGroups = useMemo(() => buildPropertyRowGroups(rows), [rows])
+
   if (rows.length === 0) {
     return (
       <div style={{
@@ -103,7 +239,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
     <div style={{ border: '1px solid var(--edge)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px',
+        gridTemplateColumns: TABLE_GRID_COLUMNS,
         gap: 0,
         alignItems: 'center',
         minHeight: 38,
@@ -123,47 +259,104 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
         <div style={{ padding: '0 12px' }}>Status</div>
       </div>
 
-      {rows.map(row => (
-        <label
-          key={`${row.objectType}:${row.id}`}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px',
-            alignItems: 'center',
-            minHeight: 52,
-            borderBottom: '1px solid var(--divider)',
-            cursor: 'pointer',
-            background: 'transparent',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <input
-              type="checkbox"
-              checked={row.checked}
-              onChange={row.onToggle}
-              style={checkboxStyle(row.checked)}
-            />
-          </div>
-          <div style={{ padding: '8px 12px', paddingLeft: row.depth ? 24 : 12, minWidth: 0 }}>
-            <div style={{
-              fontSize: row.depth ? 12 : 13,
-              fontWeight: row.depth ? 600 : 700,
-              color: row.depth ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {row.label}
+      {rowGroups.map(({ row, children }) => {
+        const hasChildren = children.length > 0
+        const rowKey = `${row.objectType}:${row.id}`
+        const isExpanded = expandedRows.has(rowKey)
+        const selectedChildren = children.filter(child => child.checked).length
+
+        return (
+          <div key={rowKey}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: TABLE_GRID_COLUMNS,
+                alignItems: 'center',
+                minHeight: 52,
+                borderBottom: hasChildren && isExpanded ? 'none' : '1px solid var(--divider)',
+                background: 'transparent',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PropertyCheckbox row={row} />
+              </div>
+              <div style={{ padding: '8px 12px', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${row.label} options`}
+                      aria-expanded={isExpanded}
+                      onClick={() => {
+                        setExpandedRows(current => {
+                          const next = new Set(current)
+                          if (next.has(rowKey)) next.delete(rowKey)
+                          else next.add(rowKey)
+                          return next
+                        })
+                      }}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 6,
+                        border: '1px solid var(--edge)',
+                        background: 'var(--surface-panel)',
+                        color: 'var(--color-text-secondary)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ChevronDown
+                        size={14}
+                        style={{
+                          transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                          transition: 'transform 0.15s ease',
+                        }}
+                      />
+                    </button>
+                  ) : (
+                    <span style={{ width: 26, flexShrink: 0 }} />
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: 'var(--color-text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {row.label}
+                    </div>
+                    {hasChildren && (
+                      <div style={{
+                        marginTop: 3,
+                        fontSize: 11,
+                        color: 'var(--color-text-tertiary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {selectedChildren > 0 ? `${selectedChildren} selected · ` : ''}{children.length} options
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.fieldType}</div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.group}</div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
+              <div style={{ padding: '8px 12px' }}>
+                <StatusPill active={row.checked} label={row.statusLabel} />
+              </div>
             </div>
+            {hasChildren && isExpanded && <PropertyOptionPanel rows={children} />}
           </div>
-          <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.fieldType}</div>
-          <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.group}</div>
-          <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
-          <div style={{ padding: '8px 12px' }}>
-            <StatusPill active={row.checked} label={row.statusLabel} />
-          </div>
-        </label>
-      ))}
+        )
+      })}
     </div>
   )
 }
