@@ -53,16 +53,6 @@ function FundTagsWidget({ contact, pinnedLabels = [] }: { contact: Contact; pinn
           </span>
           )
         })}
-        {contact.spv_investor?.map(tag => (
-          <span key={tag} style={{
-            fontSize: 11, fontWeight: 500,
-            padding: '3px 10px', borderRadius: 100,
-            background: 'hsla(210, 60%, 50%, 0.08)',
-            color: 'hsla(210, 60%, 40%, 0.80)',
-          }}>
-            SPV: {tag}
-          </span>
-        ))}
       </div>
     </div>
   )
@@ -228,7 +218,7 @@ export function RecordWidgets({
           hiddenFieldConfigIds={hiddenFieldConfigIds}
         />
       ))}
-      {sectionVisible('fund_activity') && (contact.kv_fund_investor?.length || contact.spv_investor?.length || displaySettings.pinnedFieldOptionValues.kv_fund_investor?.length) ? (
+      {sectionVisible('fund_activity') && (contact.kv_fund_investor?.length || displaySettings.pinnedFieldOptionValues.kv_fund_investor?.length) ? (
         <FundTagsWidget contact={contact} pinnedLabels={displaySettings.pinnedFieldOptionValues.kv_fund_investor} />
       ) : null}
       {sectionVisible('associated_company') && contact.type === 'Contact' && contact.company_record_id && (

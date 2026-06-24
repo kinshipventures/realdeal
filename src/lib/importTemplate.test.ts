@@ -50,7 +50,7 @@ describe('workspace import template', () => {
       campaignStages,
       contacts,
       companies,
-      customFieldNames: ['Favorite Coffee'],
+      customFieldNames: ['Favorite Coffee', 'SPV Investor', 'SPV Investor (checkbox)', 'Category', 'Notes'],
     })
 
     const parsed = await parseWorkbookBuffer(bufferFromBytes(bytes))
@@ -71,8 +71,13 @@ describe('workspace import template', () => {
     expect(parsed.headers).toContain('Sub-pod 1')
     expect(parsed.headers).toContain('Campaign 1')
     expect(parsed.headers).toContain('Kinship Investments 1')
-    expect(parsed.headers).toContain('SPV Investor 1')
     expect(parsed.headers).toContain('Favorite Coffee')
+    expect(parsed.headers).not.toContain('SPV Investor 1')
+    expect(parsed.headers).not.toContain('SPV Investor Checkbox')
+    expect(parsed.headers).not.toContain('SPV Investor (checkbox)')
+    expect(parsed.headers).not.toContain('Fund Type')
+    expect(parsed.headers).not.toContain('Category')
+    expect(parsed.headers).not.toContain('Notes')
 
     const mapping = detectColumns(parsed.headers)
     const targetByHeader = new Map(mapping.map(item => [item.csvHeader, item.targetField]))
@@ -82,6 +87,5 @@ describe('workspace import template', () => {
     expect(targetByHeader.get('Campaign 1')).toBe('Campaign')
     expect(targetByHeader.get('Campaign 1 Status')).toBe('Campaign Status')
     expect(targetByHeader.get('Kinship Investments 1')).toBe('KV Fund Investor')
-    expect(targetByHeader.get('SPV Investor 1')).toBe('SPV Investor')
   })
 })

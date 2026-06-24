@@ -2631,6 +2631,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {field('recommended_by', 'Referred By')}
                       {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
                       {field('birthday', 'Birthday', { inputType: 'date' })}
+                      {customFieldByKey('notables')}
                     </div>
                   )}
 
@@ -2659,18 +2660,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       </div>
                       {arrayField('kv_fund_investor', 'Kinship Investments', contactFieldOptions('kv_fund_investor'), { allowCustom: false })}
                       {customFieldByKey('investmentEntity')}
-                      {customFieldByKey('spvInvestorFlag')}
                       {customFieldByKey('investmentEmail')}
-                    </div>
-                  )}
-
-                  {sectionVisible('internal') && (
-                    <div style={sectionShell}>
-                      <div style={sectionHeader}>
-                        <div style={sectionLabel}>internal</div>
-                      </div>
-                      {customFieldByKey('notables')}
-                      {customFieldByKey('notes')}
                     </div>
                   )}
                 </>
@@ -2750,11 +2740,26 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       </button>
                     </div>
                     {renderAddOptionControl('pods-create-pod', value => handleCreatePodAssignment(value), 'New pod')}
+                    {sectionVisible('sub_pods') && (
+                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--divider)' }}>
+                        <SubPodSelector
+                          pods={visibleSubPodPods}
+                          categories={visibleSubPodCategories}
+                          selectedPodIds={visibleSubPodIds}
+                          selectedCategoryIds={draft.category_ids ?? []}
+                          onSelect={handleSelectSubPod}
+                          onClear={handleClearSubPod}
+                          onCreateSubPod={handleCreateSubPodAssignment}
+                          compact
+                          readOnlyCategoryIds={readOnlySubPodCategoryIds}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {sectionVisible('sub_pods') && (
+              {!sectionVisible('pods') && sectionVisible('sub_pods') && (
                 <div style={sectionShell}>
                   <div style={{ padding: '16px 18px' }}>
                     <SubPodSelector

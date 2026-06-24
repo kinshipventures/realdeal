@@ -48,13 +48,6 @@ const TEMPLATE_HEADERS = [
   'Kinship Investments 3',
   'Kinship Investments 4',
   'Kinship Investments 5',
-  'SPV Investor 1',
-  'SPV Investor 2',
-  'SPV Investor 3',
-  'SPV Investor 4',
-  'SPV Investor 5',
-  'SPV Investor Checkbox',
-  'Fund Type',
   'Investment Entity',
   'Investment Email',
   'Pod 1',
@@ -76,7 +69,6 @@ const TEMPLATE_HEADERS = [
   'Campaign 3 Target Commitment',
   'Companies',
   'Contacts',
-  'Notes',
 ]
 
 const BASE_VALIDATIONS: TemplateValidation[] = [
@@ -87,13 +79,6 @@ const BASE_VALIDATIONS: TemplateValidation[] = [
   { header: 'Kinship Investments 3', optionKey: 'kinshipInvestments' },
   { header: 'Kinship Investments 4', optionKey: 'kinshipInvestments' },
   { header: 'Kinship Investments 5', optionKey: 'kinshipInvestments' },
-  { header: 'SPV Investor 1', optionKey: 'spvInvestors' },
-  { header: 'SPV Investor 2', optionKey: 'spvInvestors' },
-  { header: 'SPV Investor 3', optionKey: 'spvInvestors' },
-  { header: 'SPV Investor 4', optionKey: 'spvInvestors' },
-  { header: 'SPV Investor 5', optionKey: 'spvInvestors' },
-  { header: 'SPV Investor Checkbox', optionKey: 'yesNo' },
-  { header: 'Fund Type', optionKey: 'fundTypes' },
   { header: 'Pod 1', optionKey: 'pods' },
   { header: 'Pod 2', optionKey: 'pods' },
   { header: 'Pod 3', optionKey: 'pods' },
@@ -112,8 +97,22 @@ const BASE_VALIDATIONS: TemplateValidation[] = [
   { header: 'Contacts', optionKey: 'contacts' },
 ]
 
-const DEFAULT_FUND_TYPES = ['Fund I', 'Fund II', 'Fund III', 'SPV', 'Other']
 const DEFAULT_CAMPAIGN_STATUSES = ['Pending', 'Reached', 'Responded', 'Confirmed']
+const REMOVED_TEMPLATE_FIELD_NAMES = new Set([
+  'category',
+  'fund type',
+  'notes',
+  'spv investor',
+  'spv investor checkbox',
+])
+
+function normalizeRemovedTemplateFieldName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/\s+/g, ' ')
+}
 
 function uniqueSorted(values: Iterable<string>): string[] {
   const seen = new Map<string, string>()
@@ -144,7 +143,6 @@ function investmentOptionNames(contacts: Contact[], companies: Company[]): strin
   return uniqueSorted([
     ...companyOptionNames(contacts, companies),
     ...contacts.flatMap(contact => splitOptionValues(contact.kv_fund_investor)),
-    ...contacts.flatMap(contact => splitOptionValues(contact.spv_investor)),
   ])
 }
 
@@ -165,11 +163,8 @@ function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
     { key: 'companies', label: 'Companies', values: companyNames },
     { key: 'contacts', label: 'Contacts', values: contactNames },
     { key: 'kinshipInvestments', label: 'Kinship Investments', values: investmentNames },
-    { key: 'spvInvestors', label: 'SPV Investors', values: investmentNames },
     { key: 'gender', label: 'Gender', values: ['Female', 'Male', 'Non-binary', 'Other'] },
     { key: 'globalRegion', label: 'Global Region', values: ['AMER', 'APAC', 'EU', 'LATAM', 'ME'] },
-    { key: 'fundTypes', label: 'Fund Types', values: DEFAULT_FUND_TYPES },
-    { key: 'yesNo', label: 'Yes / No', values: ['Yes', 'No'] },
   ]
 }
 
@@ -177,8 +172,8 @@ function templateHeaders(customFieldNames: string[]): string[] {
   const standard = new Set(TEMPLATE_HEADERS.map(header => header.toLowerCase()))
   const lpTracker = new Set(LP_TRACKER_FIELDS.map(field => field.target.toLowerCase()))
   const custom = customFieldNames.filter(name => {
-    const key = name.trim().toLowerCase()
-    return key && !standard.has(key) && !lpTracker.has(key)
+    const key = normalizeRemovedTemplateFieldName(name)
+    return key && !standard.has(key) && !lpTracker.has(key) && !REMOVED_TEMPLATE_FIELD_NAMES.has(key)
   })
   return [...TEMPLATE_HEADERS, ...custom]
 }

@@ -39,6 +39,22 @@ const OBJECT_OPTIONS: { value: PropertyObjectType; label: string }[] = [
   { value: 'Campaign', label: 'Campaign properties' },
 ]
 
+const REMOVED_CONTACT_PROPERTY_NAMES = new Set([
+  'category',
+  'fund type',
+  'notes',
+  'spv investor',
+  'spv investor checkbox',
+])
+
+function normalizeRemovedPropertyName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/\s+/g, ' ')
+}
+
 const FIELD_TYPE_LABELS: Record<FieldConfig['field_type'], string> = {
   text: 'Single-line text',
   multiline: 'Multi-line text',
@@ -659,7 +675,7 @@ export function PropertiesTab() {
           if (section.id === 'details') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['name', 'primary_company', 'role', 'linkedin', 'recommended_by', 'gender', 'birthday'],
+              ['name', 'primary_company', 'role', 'linkedin', 'recommended_by', 'gender', 'birthday', 'notables'],
               1,
             ))
           }
@@ -680,14 +696,10 @@ export function PropertiesTab() {
           if (section.id === 'fund_activity') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['kv_fund_investor', 'investmentEntity', 'spvInvestorFlag', 'investmentEmail'],
+              ['kv_fund_investor', 'investmentEntity', 'investmentEmail'],
               1,
             ))
             rowsForSection.push(...kinshipInvestmentRows(1))
-          }
-
-          if (section.id === 'internal') {
-            rowsForSection.push(...standardFieldRows(standardOptions, ['notables', 'notes'], 1))
           }
         }
 
@@ -714,6 +726,7 @@ export function PropertiesTab() {
 
     const customRows = fieldConfigs
       .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => objectType !== 'Contact' || !REMOVED_CONTACT_PROPERTY_NAMES.has(normalizeRemovedPropertyName(config.name)))
       .sort((a, b) => a.display_order - b.display_order)
       .map(config => {
         const checked = !settings.hiddenFieldConfigIds.includes(config.id)

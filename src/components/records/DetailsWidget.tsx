@@ -159,7 +159,6 @@ export function DetailsWidget({ contact, onUpdate, requiredFieldKeys, hiddenFiel
           {field('birthday', 'Birthday')}
           {field('location', 'Location')}
           {field('linkedin', 'LinkedIn')}
-          {field('notes', 'Notes', true)}
           {showAll && (
             <>
               {visibleSecondaryFields.map(key => field(key, FIELD_LABELS[key] ?? String(key)))}
