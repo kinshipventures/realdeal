@@ -127,6 +127,14 @@ function PropertyCheckbox({ row }: { row: PropertyRow }) {
   )
 }
 
+function contactDetailSectionLabel(id: string, fallback: string, objectType: PropertyObjectType): string {
+  if (id === 'details') return objectType === 'Company' ? 'Company information' : 'Contact information'
+  if (id === 'associated_company') return 'Companies'
+  if (id === 'associated_people') return 'Contacts'
+  if (id === 'fund_activity') return 'Investor profile'
+  return fallback
+}
+
 function PropertyOptionPanel({ rows }: { rows: PropertyRow[] }) {
   const groupedRows = groupChildrenBySection(rows)
 
@@ -220,6 +228,28 @@ function PropertyOptionPanel({ rows }: { rows: PropertyRow[] }) {
 function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel: string }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set())
   const rowGroups = useMemo(() => buildPropertyRowGroups(rows), [rows])
+  const expandableRowKeys = useMemo(
+    () => rowGroups
+      .filter(group => group.children.length > 0)
+      .map(group => `${group.row.objectType}:${group.row.id}`),
+    [rowGroups],
+  )
+
+  useEffect(() => {
+    setExpandedRows(current => {
+      const next = new Set(current)
+      let changed = false
+
+      expandableRowKeys.forEach(rowKey => {
+        if (!next.has(rowKey)) {
+          next.add(rowKey)
+          changed = true
+        }
+      })
+
+      return changed ? next : current
+    })
+  }, [expandableRowKeys])
 
   if (rows.length === 0) {
     return (
@@ -611,6 +641,7 @@ export function PropertiesTab() {
         const checked = !settings.hiddenSectionIds.includes(section.id)
         const rowsForSection: PropertyRow[] = [{
           ...section,
+          label: contactDetailSectionLabel(section.id, section.label, objectType),
           checked,
           statusLabel: checked ? 'Shown' : (selectedContact ? 'Hidden here' : 'Hidden'),
           onToggle: () => toggleSection(section.id),
