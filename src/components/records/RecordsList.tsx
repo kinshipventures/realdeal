@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { Download, FileSpreadsheet, UserPlus } from 'lucide-react'
+import { Download, FileSpreadsheet, ListFilter, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { EmptyState } from '../empty/EmptyState'
@@ -272,6 +272,7 @@ export function RecordsList() {
   // Saved views
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadViews)
   const [showMoreDropdown, setShowMoreDropdown] = useState(false)
+  const [showColumnFilter, setShowColumnFilter] = useState(false)
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
@@ -296,6 +297,7 @@ export function RecordsList() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const moreRef = useRef<HTMLDivElement>(null)
+  const columnFilterRef = useRef<HTMLDivElement>(null)
   const createMenuRef = useRef<HTMLDivElement>(null)
 
   // Load data
@@ -342,6 +344,9 @@ export function RecordsList() {
     function handleClick(e: MouseEvent) {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
         setShowMoreDropdown(false)
+      }
+      if (columnFilterRef.current && !columnFilterRef.current.contains(e.target as Node)) {
+        setShowColumnFilter(false)
       }
       if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
         setShowPodPicker(false)
@@ -556,6 +561,7 @@ export function RecordsList() {
       setSort(view.sort)
     }
     setShowMoreDropdown(false)
+    setShowColumnFilter(false)
   }, [])
 
   // Delete saved view
@@ -1126,6 +1132,58 @@ export function RecordsList() {
             <option value="never">Never contacted</option>
           </select>
 
+          <div ref={columnFilterRef} style={{ position: 'relative' }}>
+            <button
+              className="records-toolbar-button"
+              type="button"
+              aria-label="Show visible sections filter"
+              aria-expanded={showColumnFilter}
+              title="Visible sections"
+              onClick={() => {
+                setShowColumnFilter(v => !v)
+                setShowMoreDropdown(false)
+              }}
+              style={{ ...utilityBtnStyle(showColumnFilter), minWidth: 44, width: 44, padding: 0 }}
+            >
+              <ListFilter size={16} />
+            </button>
+            {showColumnFilter && (
+              <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 220 }}>
+                <div style={menuLabelStyle}>Visible sections</div>
+                {COLUMNS.map(col => (
+                  <label
+                    key={col.id}
+                    style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns.has(col.id)}
+                      onChange={() => toggleColumn(col.id)}
+                      style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                    />
+                    <span style={{ fontSize: 13 }}>{col.label}</span>
+                  </label>
+                ))}
+                <div className="records-dropdown-group" style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleColumns(new Set(COLUMNS.map(col => col.id)))}
+                    style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
+                  >
+                    Show all sections
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleColumns(new Set(COLUMNS.filter(col => col.defaultVisible).map(col => col.id)))}
+                    style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
+                  >
+                    Restore default
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {activeFilterCount > 0 && (
             <span style={{
               display: 'inline-flex',
@@ -1158,7 +1216,10 @@ export function RecordsList() {
             <button
               className="delight-button"
               type="button"
-              onClick={() => setShowMoreDropdown(v => !v)}
+              onClick={() => {
+                setShowMoreDropdown(v => !v)
+                setShowColumnFilter(false)
+              }}
               style={utilityBtnStyle(showMoreDropdown)}
             >
               More
@@ -1221,24 +1282,6 @@ export function RecordsList() {
                       + Save current view
                     </button>
                   )}
-                </div>
-
-                <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
-                  <div style={menuLabelStyle}>Columns</div>
-                {COLUMNS.map(col => (
-                  <label
-                    key={col.id}
-                    style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.has(col.id)}
-                      onChange={() => toggleColumn(col.id)}
-                      style={{ margin: 0 }}
-                    />
-                    <span style={{ fontSize: 13 }}>{col.label}</span>
-                  </label>
-                ))}
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
