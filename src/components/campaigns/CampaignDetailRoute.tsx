@@ -8,10 +8,11 @@ import { CampaignNotesSidebar } from './CampaignNotesSidebar'
 import { CampaignTableView } from './CampaignTableView'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
+import { CampaignPermissionsPanel } from './CampaignPermissionsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
-import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check } from 'lucide-react'
+import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
 
 const VIEW_KEY_PREFIX = 'realdeal:campaign-view:'
 const SORT_KEY_PREFIX = 'realdeal:campaign-sort:'
@@ -95,6 +96,7 @@ export function CampaignDetailRoute() {
   const [confirmingComplete, setConfirmingComplete] = useState(false)
   const [showStalledOnly, setShowStalledOnly] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showPermissions, setShowPermissions] = useState(false)
 
   // Panel state
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
@@ -521,6 +523,23 @@ export function CampaignDetailRoute() {
             <Settings size={11} />
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowPermissions(prev => !prev)}
+            title="Campaign permissions"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '5px 10px', borderRadius: 7,
+              border: showPermissions ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+              background: showPermissions ? 'var(--tint)' : 'transparent',
+              fontSize: 11, fontWeight: 500,
+              color: showPermissions ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <KeyRound size={11} />
+          </button>
+
           {campaign.status === 'active' && !confirmingComplete && (
             <button
               type="button"
@@ -591,6 +610,15 @@ export function CampaignDetailRoute() {
           campaign={campaign}
           onUpdate={(updated) => setCampaign(updated)}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showPermissions && (
+        <CampaignPermissionsPanel
+          campaign={campaign}
+          campaignContacts={campaignContacts}
+          contacts={contacts}
+          onClose={() => setShowPermissions(false)}
         />
       )}
 

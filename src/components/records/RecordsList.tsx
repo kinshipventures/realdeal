@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { Download, FileSpreadsheet, ListFilter, UserPlus } from 'lucide-react'
+import { Download, FileSpreadsheet, ListFilter, Share2, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { CreateRecordModal } from './CreateRecordModal'
+import { CollaborationQuickAccessModal, type CollaborationResourceOption } from '../collaboration/CollaborationQuickAccessModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
@@ -15,6 +16,7 @@ import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -245,6 +247,9 @@ export function RecordsList() {
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showShareAccess, setShowShareAccess] = useState(false)
+  const [shareAccessLoading, setShareAccessLoading] = useState(false)
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([])
 
   // Bulk actions
   const [showPodPicker, setShowPodPicker] = useState(false)
@@ -844,6 +849,23 @@ export function RecordsList() {
     setShowAddToCampaign(true)
   }
 
+  async function openShareAccess() {
+    if (!activeWorkspace?.id) {
+      showToast('Choose a workspace before sharing access.')
+      return
+    }
+    setShareAccessLoading(true)
+    try {
+      setWorkspaceMembers(await fetchWorkspaceMembers(activeWorkspace.id))
+      setShowShareAccess(true)
+    } catch (err) {
+      console.error('Load workspace members failed:', err)
+      showToast('Could not load workspace users. Try again.')
+    } finally {
+      setShareAccessLoading(false)
+    }
+  }
+
   function closeAddToCampaign() {
     if (addingToCampaign) return
     setShowAddToCampaign(false)
@@ -890,6 +912,14 @@ export function RecordsList() {
   }
 
   const visibleCols = COLUMNS.filter(col => visibleColumns.has(col.id))
+  const selectedShareResources: CollaborationResourceOption[] = contacts
+    .filter(contact => selectedIds.has(contact.id))
+    .map(contact => ({
+      id: contact.id,
+      label: contact.name,
+      type: contact.type === 'Company' ? 'company' : 'contact',
+      description: [contact.company, contact.email].filter(Boolean).join(' - '),
+    }))
 
   function handleContactSaved(updated: Contact) {
     setContacts(prev => prev.map(contact => contact.id === updated.id ? updated : contact))
@@ -1556,6 +1586,16 @@ export function RecordsList() {
             >
               Add to Campaign
             </button>
+            <button
+              className="delight-button"
+              type="button"
+              onClick={openShareAccess}
+              disabled={bulkOperating || shareAccessLoading}
+              style={{ ...bulkBtnStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Share2 size={12} />
+              {shareAccessLoading ? 'Loading...' : 'Share Access'}
+            </button>
           </div>
           <button
             type="button"
@@ -1587,6 +1627,22 @@ export function RecordsList() {
           />
         )
       })()}
+
+      {showShareAccess && activeWorkspace?.id && (
+        <CollaborationQuickAccessModal
+          workspaceId={activeWorkspace.id}
+          members={workspaceMembers}
+          resources={selectedShareResources}
+          title="Share selected contacts"
+          detail="Grant access to the selected people or companies without duplicating records or changing the contact database."
+          onClose={() => setShowShareAccess(false)}
+          onCreated={(count) => {
+            setShowShareAccess(false)
+            setSelectedIds(new Set())
+            showToast(`Shared access for ${count} ${count === 1 ? 'record' : 'records'}.`)
+          }}
+        />
+      )}
 
       {showAddToCampaign && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
