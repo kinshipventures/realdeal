@@ -7,17 +7,19 @@ import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import { PreferencesTab } from './PreferencesTab'
 import { GoogleIntegrationSettings } from './GoogleIntegrationSettings'
 import { PropertiesTab } from './PropertiesTab'
+import { SharingPermissionsTab } from './SharingPermissionsTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, updateMemberRole, invalidateAllCaches,
   type WorkspaceMember, type WorkspaceInvite,
 } from '@/lib/supabase-data'
 
-type SettingsTab = 'profile' | 'preferences' | 'properties' | 'integrations' | 'team'
+type SettingsTab = 'profile' | 'preferences' | 'properties' | 'sharing' | 'integrations' | 'team'
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'preferences', label: 'Preferences' },
   { id: 'properties', label: 'Properties' },
+  { id: 'sharing', label: 'Sharing & Permissions' },
   { id: 'integrations', label: 'Integrations' },
   { id: 'team', label: 'Team' },
 ]
@@ -197,7 +199,7 @@ export function AccountPage() {
   )
 
   return (
-    <div style={{ maxWidth: tab === 'properties' ? 980 : 480, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ maxWidth: tab === 'properties' || tab === 'sharing' ? 980 : 480, margin: '0 auto', padding: '48px 24px 80px' }}>
       <h1 style={{
         fontSize: 24, fontWeight: 800, marginBottom: 24,
         fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
@@ -264,6 +266,8 @@ export function AccountPage() {
       {tab === 'preferences' && <PreferencesTab />}
 
       {tab === 'properties' && <PropertiesTab />}
+
+      {tab === 'sharing' && <SharingPermissionsTab />}
 
       {/* ── Integrations tab ──────────────────────────────────── */}
       {tab === 'integrations' && (
