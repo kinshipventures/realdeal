@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Check, Link, Search, ShieldCheck, UserPlus, Users, X } from 'lucide-react'
+import { Check, KeyRound, Link, Plus, Search, ShieldCheck, UserPlus, Users, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
+import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
 import {
+  createCollaborationAccessGrant,
   getCollaborationAccessGrants,
   getCollaborationApprovalRequests,
   getCollaborationContactProposals,
@@ -18,11 +20,21 @@ import {
   type CollaborationFieldScope,
   type CollaborationPermissionLevel,
   type CollaborationPublicCampaignLink,
+  type CollaborationResourceType,
+  type CollaborationSubjectType,
 } from '@/lib/collaboration'
 import type { CampaignContactSnapshot } from '@/lib/collaborationPolicy'
 
 type ApprovalTab = 'requests' | 'proposals'
 type SharedSourceFilter = 'all' | 'campaign' | 'pod' | 'sub_pod' | 'direct' | 'public_link'
+type ShareMode = 'contact' | 'company' | 'pod' | 'sub_pod' | 'campaign'
+type ShareResourceOption = {
+  id: string
+  label: string
+  mode: ShareMode
+  resourceType: CollaborationResourceType
+  description?: string
+}
 type SharedContactRow = {
   id: string
   contactId: string | null
@@ -62,6 +74,45 @@ const SOURCE_OPTIONS: Array<{ value: SharedSourceFilter; label: string }> = [
   { value: 'sub_pod', label: 'Shared sub-pods' },
   { value: 'direct', label: 'Direct contacts' },
   { value: 'public_link', label: 'Public links' },
+]
+
+const SHARE_MODE_OPTIONS: Array<{ value: ShareMode; label: string; description: string }> = [
+  { value: 'contact', label: 'Individual contact', description: 'Share one relationship record.' },
+  { value: 'company', label: 'Company', description: 'Share a company and linked people.' },
+  { value: 'pod', label: 'Pod', description: 'Share everyone in a pod.' },
+  { value: 'sub_pod', label: 'Sub-pod', description: 'Share everyone in a sub-pod.' },
+  { value: 'campaign', label: 'Campaign', description: 'Share selected campaign contacts.' },
+]
+
+const SUBJECT_TYPES: Array<{ value: CollaborationSubjectType; label: string }> = [
+  { value: 'user', label: 'User' },
+  { value: 'team', label: 'Team' },
+  { value: 'organization', label: 'Organization' },
+  { value: 'public_link', label: 'Public link reviewer' },
+]
+
+const CREATE_PERMISSION_OPTIONS: Array<{ value: CollaborationPermissionLevel; label: string }> = [
+  { value: 'view', label: 'Reader' },
+  { value: 'comment', label: 'Commenter' },
+  { value: 'suggest', label: 'Contributor' },
+  { value: 'edit', label: 'Editor' },
+  { value: 'approve', label: 'Approver' },
+  { value: 'admin', label: 'Admin' },
+]
+
+const FIELD_SCOPE_OPTIONS: Array<{ value: CollaborationFieldScope; label: string; summary: string }> = [
+  { value: 'public_profile', label: 'Public profile', summary: 'Name, company, role, city, LinkedIn, pod, and list context.' },
+  { value: 'private_contact', label: 'Private contact', summary: 'Email, phone, address, and direct contact fields.' },
+  { value: 'relationship_private', label: 'Relationship private', summary: 'Private notes, relationship context, activity, and communication history.' },
+  { value: 'investment_private', label: 'Investment private', summary: 'Investment details, financial commitments, LP/SPV context, and restricted investor fields.' },
+  { value: 'campaign_private', label: 'Campaign private', summary: 'Campaign notes, outreach status, approval comments, and campaign-only updates.' },
+]
+
+const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
+  { label: 'No expiration', days: null },
+  { label: '7 days', days: 7 },
+  { label: '30 days', days: 30 },
+  { label: '90 days', days: 90 },
 ]
 
 function titleCase(value: string): string {
@@ -139,9 +190,11 @@ function rowsForGrant(
   }
 
   if (grant.resource_type === 'pod') {
-    return contacts
-      .filter(contact => Boolean(grant.resource_id && contact.list_ids.includes(grant.resource_id)))
-      .map(contact => makeRow(contact, 'pod'))
+    const podContacts = contacts.filter(contact => Boolean(grant.resource_id && contact.list_ids.includes(grant.resource_id)))
+    const subPodContacts = contacts.filter(contact => Boolean(grant.resource_id && contact.category_ids.includes(grant.resource_id)))
+    const targetContacts = podContacts.length > 0 ? podContacts : subPodContacts
+    const sourceType = podContacts.length > 0 ? 'pod' : 'sub_pod'
+    return targetContacts.map(contact => makeRow(contact, sourceType))
   }
 
   if (grant.resource_type === 'campaign') {
@@ -200,8 +253,10 @@ export function ApprovalsPage() {
   const [pods, setPods] = useState<Pod[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
   const [publicLinks, setPublicLinks] = useState<CollaborationPublicCampaignLink[]>([])
+  const [showShareModal, setShowShareModal] = useState(false)
   const [sourceFilter, setSourceFilter] = useState<SharedSourceFilter>('all')
   const [campaignFilter, setCampaignFilter] = useState('all')
   const [podFilter, setPodFilter] = useState('all')
@@ -249,6 +304,52 @@ export function ApprovalsPage() {
   const activeSharedRows = useMemo(() => sharedRows.filter(row => row.status === 'active'), [sharedRows])
   const activePublicLinks = useMemo(() => publicLinks.filter(link => !link.revoked_at), [publicLinks])
   const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
+  const shareResourceOptions = useMemo<ShareResourceOption[]>(() => {
+    const people = contacts
+      .filter(contact => contact.type !== 'Company')
+      .map(contact => ({
+        id: contact.id,
+        label: contact.name,
+        mode: 'contact' as const,
+        resourceType: 'contact' as const,
+        description: [contact.company, contact.email].filter(Boolean).join(' - ') || 'Relationship contact',
+      }))
+    const companies = contacts
+      .filter(contact => contact.type === 'Company')
+      .map(company => ({
+        id: company.id,
+        label: company.name,
+        mode: 'company' as const,
+        resourceType: 'company' as const,
+        description: company.domain ?? company.industry ?? 'Company record',
+      }))
+    const podOptions = pods.map(pod => ({
+      id: pod.id,
+      label: pod.name,
+      mode: 'pod' as const,
+      resourceType: 'pod' as const,
+      description: 'Pod contacts',
+    }))
+    const subPodOptions = categories.map(category => {
+      const parentPod = pods.find(pod => pod.id === category.list_id)
+      return {
+        id: category.id,
+        label: category.name,
+        mode: 'sub_pod' as const,
+        resourceType: 'pod' as const,
+        description: parentPod ? `${parentPod.name} sub-pod` : 'Sub-pod contacts',
+      }
+    })
+    const campaignOptions = campaigns.map(campaign => ({
+      id: campaign.id,
+      label: campaign.name,
+      mode: 'campaign' as const,
+      resourceType: 'campaign' as const,
+      description: `${titleCase(campaign.type)} campaign`,
+    }))
+
+    return [...people, ...companies, ...podOptions, ...subPodOptions, ...campaignOptions]
+  }, [campaigns, categories, contacts, pods])
 
   const loadData = useCallback(async () => {
     if (!workspaceId) return
@@ -262,6 +363,7 @@ export function ApprovalsPage() {
         nextPods,
         nextCategories,
         nextCampaigns,
+        nextMembers,
         nextGrants,
         nextPublicLinks,
       ] = await Promise.all([
@@ -271,6 +373,7 @@ export function ApprovalsPage() {
         getPods(),
         getCategories(),
         getCampaigns(),
+        fetchWorkspaceMembers(workspaceId),
         getCollaborationAccessGrants(workspaceId),
         getCollaborationPublicCampaignLinks(workspaceId),
       ])
@@ -280,6 +383,7 @@ export function ApprovalsPage() {
       setPods(nextPods)
       setCategories(nextCategories)
       setCampaigns(nextCampaigns.filter(campaign => campaign.status !== 'hidden'))
+      setMembers(nextMembers)
       setGrants(nextGrants)
       setPublicLinks(nextPublicLinks)
     } catch (err) {
@@ -345,6 +449,10 @@ export function ApprovalsPage() {
               Filter active shares by campaigns, pods, sub-pods, public links, direct contacts, and permission level.
             </p>
           </div>
+          <button type="button" onClick={() => setShowShareModal(true)} style={primaryButtonStyle}>
+            <Plus size={14} />
+            Share contacts
+          </button>
         </div>
 
         <SharedContactFilters
@@ -405,6 +513,19 @@ export function ApprovalsPage() {
           <ContactProposalsTable proposals={proposals} onResolve={handleResolveProposal} />
         )}
       </section>
+
+      {showShareModal && workspaceId && (
+        <ShareContactsModal
+          workspaceId={workspaceId}
+          members={members}
+          resources={shareResourceOptions}
+          onClose={() => setShowShareModal(false)}
+          onCreated={async () => {
+            setShowShareModal(false)
+            await loadData()
+          }}
+        />
+      )}
     </main>
   )
 }
@@ -510,6 +631,282 @@ function SharedContactsTable({
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function ShareContactsModal({
+  workspaceId,
+  members,
+  resources,
+  onClose,
+  onCreated,
+}: {
+  workspaceId: string
+  members: WorkspaceMember[]
+  resources: ShareResourceOption[]
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [shareMode, setShareMode] = useState<ShareMode>('contact')
+  const [subjectType, setSubjectType] = useState<CollaborationSubjectType>('user')
+  const [subjectId, setSubjectId] = useState('')
+  const [subjectLabel, setSubjectLabel] = useState('')
+  const [resourceId, setResourceId] = useState('')
+  const [permission, setPermission] = useState<CollaborationPermissionLevel>('view')
+  const [fieldScopes, setFieldScopes] = useState<CollaborationFieldScope[]>(['public_profile'])
+  const [expirationDays, setExpirationDays] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const filteredResources = resources.filter(resource => resource.mode === shareMode)
+  const selectedResource = filteredResources.find(resource => resource.id === resourceId) ?? null
+
+  useEffect(() => {
+    setResourceId('')
+  }, [shareMode])
+
+  useEffect(() => {
+    setSubjectId('')
+    setSubjectLabel(subjectType === 'public_link' ? 'Public reviewer' : '')
+  }, [subjectType])
+
+  useEffect(() => {
+    if (subjectType !== 'user') return
+    const member = members.find(item => item.user_id === subjectId)
+    setSubjectLabel(member ? member.display_name || member.email || 'User' : '')
+  }, [members, subjectId, subjectType])
+
+  function toggleFieldScope(scope: CollaborationFieldScope) {
+    setFieldScopes(current => {
+      if (scope === 'public_profile') return current.includes(scope) ? current : [...current, scope]
+      return current.includes(scope) ? current.filter(item => item !== scope) : [...current, scope]
+    })
+  }
+
+  async function handleSubmit() {
+    if (!selectedResource || !subjectLabel.trim() || fieldScopes.length === 0) return
+    setSaving(true)
+    setError('')
+    try {
+      await createCollaborationAccessGrant({
+        workspace_id: workspaceId,
+        subject_type: subjectType,
+        subject_id: subjectId || null,
+        subject_label: subjectLabel.trim(),
+        resource_type: selectedResource.resourceType,
+        resource_id: selectedResource.id,
+        resource_label: selectedResource.mode === 'sub_pod' ? `Sub-pod: ${selectedResource.label}` : selectedResource.label,
+        permission_level: permission,
+        field_scopes: fieldScopes,
+        expires_at: expirationDays ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000).toISOString() : null,
+      })
+      onCreated()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not share contacts')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const canSubmit = Boolean(selectedResource && subjectLabel.trim() && fieldScopes.length > 0 && !saving)
+
+  return (
+    <Modal title="Share contacts" onClose={onClose}>
+      <div style={modalGridStyle}>
+        <SelectField label="What to share" value={shareMode} onChange={value => setShareMode(value as ShareMode)}>
+          {SHARE_MODE_OPTIONS.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </SelectField>
+
+        <SelectField label="Resource" value={resourceId} onChange={setResourceId}>
+          <option value="">Select {SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()}</option>
+          {filteredResources.map(resource => (
+            <option key={resource.id} value={resource.id}>{resource.label}</option>
+          ))}
+        </SelectField>
+
+        <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
+          {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+        </SelectField>
+
+        {subjectType === 'user' ? (
+          <SelectField label="User" value={subjectId} onChange={setSubjectId}>
+            <option value="">Select a user</option>
+            {members.map(member => (
+              <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
+            ))}
+          </SelectField>
+        ) : (
+          <TextField label="Recipient label" value={subjectLabel} onChange={setSubjectLabel} placeholder="Production team, Investor reviewer, OpenAI team..." />
+        )}
+
+        <SelectField label="Permission level" value={permission} onChange={value => setPermission(value as CollaborationPermissionLevel)}>
+          {CREATE_PERMISSION_OPTIONS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
+        </SelectField>
+
+        <SelectField label="Expiration" value={String(expirationDays ?? '')} onChange={value => setExpirationDays(value ? Number(value) : null)}>
+          {EXPIRATION_OPTIONS.map(option => (
+            <option key={option.label} value={option.days ?? ''}>{option.label}</option>
+          ))}
+        </SelectField>
+      </div>
+
+      <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
+        <div style={fieldLabelStyle}>Visible fields</div>
+        <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+          {FIELD_SCOPE_OPTIONS.map(scope => (
+            <label key={scope.value} style={checkboxRowStyle}>
+              <input
+                type="checkbox"
+                checked={fieldScopes.includes(scope.value)}
+                disabled={scope.value === 'public_profile'}
+                onChange={() => toggleFieldScope(scope.value)}
+                style={{ width: 15, height: 15, accentColor: 'var(--color-brand)' }}
+              />
+              <span>
+                <strong style={{ color: 'var(--color-text-primary)' }}>{scope.label}</strong>
+                <span style={{ color: 'var(--color-text-tertiary)', marginLeft: 6 }}>{scope.summary}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
+        <div style={fieldLabelStyle}>Share summary</div>
+        <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 12, lineHeight: 1.5 }}>
+          {selectedResource
+            ? `${selectedResource.label} will be shared as ${SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()} access with ${permissionLabel(permission)} permissions.`
+            : 'Choose a resource to preview the access grant.'}
+        </p>
+      </div>
+
+      {error && <div style={{ color: 'var(--health-fading)', fontSize: 12, marginTop: 12 }}>{error}</div>}
+
+      <ModalActions onCancel={onClose} onSubmit={handleSubmit} submitLabel={saving ? 'Sharing...' : 'Create share'} disabled={!canSubmit} />
+    </Modal>
+  )
+}
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(15,23,42,0.38)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        style={{
+          width: 'min(680px, 100%)',
+          maxHeight: 'min(780px, calc(100vh - 40px))',
+          overflowY: 'auto',
+          borderRadius: 14,
+          border: '1px solid var(--edge)',
+          background: 'var(--color-surface)',
+          boxShadow: '0 24px 70px rgba(15,23,42,0.22)',
+          padding: 20,
+        }}
+        onClick={event => event.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 9,
+              background: 'rgba(0,61,165,0.08)',
+              color: 'var(--color-brand)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <KeyRound size={16} />
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 850, margin: 0, color: 'var(--color-text-primary)' }}>{title}</h3>
+          </div>
+          <IconButton label="Close" onClick={onClose}><X size={15} /></IconButton>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+}) {
+  return (
+    <label style={{ display: 'grid', gap: 6 }}>
+      <span style={fieldLabelStyle}>{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        placeholder={placeholder}
+        style={inputStyle}
+      />
+    </label>
+  )
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  children: React.ReactNode
+}) {
+  return (
+    <label style={{ display: 'grid', gap: 6 }}>
+      <span style={fieldLabelStyle}>{label}</span>
+      <select value={value} onChange={event => onChange(event.target.value)} style={inputStyle}>
+        {children}
+      </select>
+    </label>
+  )
+}
+
+function ModalActions({
+  onCancel,
+  onSubmit,
+  submitLabel,
+  disabled,
+}: {
+  onCancel: () => void
+  onSubmit: () => void
+  submitLabel: string
+  disabled?: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
+      <button type="button" onClick={onCancel} style={secondaryButtonStyle}>Cancel</button>
+      <button type="button" onClick={onSubmit} disabled={disabled} style={{ ...primaryButtonStyle, opacity: disabled ? 0.65 : 1, cursor: disabled ? 'default' : 'pointer' }}>
+        {submitLabel}
+      </button>
     </div>
   )
 }
@@ -744,4 +1141,68 @@ const iconButtonStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
+}
+
+const primaryButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 7,
+  minHeight: 34,
+  padding: '8px 12px',
+  borderRadius: 8,
+  border: 'none',
+  background: 'var(--color-brand)',
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: 750,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+}
+
+const secondaryButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 7,
+  minHeight: 34,
+  padding: '8px 12px',
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'transparent',
+  color: 'var(--color-text-secondary)',
+  fontSize: 12,
+  fontWeight: 750,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+}
+
+const surfaceMiniStyle: React.CSSProperties = {
+  border: '1px solid var(--edge)',
+  borderRadius: 10,
+  background: 'var(--surface-panel)',
+  padding: 12,
+}
+
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 750,
+  color: 'var(--color-text-secondary)',
+}
+
+const checkboxRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 8,
+  minHeight: 28,
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: 'var(--color-text-primary)',
+}
+
+const modalGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 12,
 }
