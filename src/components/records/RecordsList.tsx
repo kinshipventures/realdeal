@@ -17,7 +17,8 @@ import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
-import { createCollaborationSavedView, recordCollaborationAuditEvent } from '@/lib/collaboration'
+import { createCollaborationSavedView, getCollaborationAccessGrants, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel } from '@/lib/collaboration'
+import { supabase } from '@/integrations/supabase/client'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -47,6 +48,18 @@ const COLUMNS: ColumnDef[] = [
 // ── Filter types ─────────────────────────────────────────────────────────────
 
 type RecencyFilter = 'any' | '7d' | '30d' | '90d' | 'never'
+type RelationshipScope = 'all' | 'mine' | 'shared_with_me' | 'shared_by_me'
+
+type ContactShareMeta = {
+  direction: 'shared_with_me' | 'shared_by_me'
+  grantId: string
+  sourceLabel: string
+  sharedWith: string
+  permissionLevel: CollaborationPermissionLevel
+  permissionLabel: string
+  fieldScopes: CollaborationFieldScope[]
+  status: 'active' | 'expired' | 'revoked'
+}
 
 interface FilterState {
   search: string
@@ -66,6 +79,13 @@ const DEFAULT_FILTERS: FilterState = {
   recency: 'any',
 }
 
+const RELATIONSHIP_SCOPE_OPTIONS: Array<{ value: RelationshipScope; label: string }> = [
+  { value: 'all', label: 'All contacts' },
+  { value: 'mine', label: 'My contacts' },
+  { value: 'shared_with_me', label: 'Shared with me' },
+  { value: 'shared_by_me', label: 'Shared by me' },
+]
+
 // ── Sort types ───────────────────────────────────────────────────────────────
 
 type SortDir = 'asc' | 'desc'
@@ -77,6 +97,7 @@ const VIEWS_KEY = 'realdeal:contacts-views'
 interface SavedView {
   name: string
   filters: FilterState
+  relationshipScope?: RelationshipScope
   visibleColumns: ColumnId[]
   sort: { col: ColumnId; dir: SortDir }
 }
@@ -150,6 +171,26 @@ function pulseCopy(count: number, atRisk: number, hasFilters: boolean): string {
   return `${atRisk} relationships are ready for a little love.`
 }
 
+function permissionLabel(value: CollaborationPermissionLevel): string {
+  if (value === 'view') return 'Reader'
+  if (value === 'comment') return 'Commenter'
+  if (value === 'suggest') return 'Contributor'
+  if (value === 'edit') return 'Editor'
+  if (value === 'approve') return 'Approver'
+  if (value === 'admin') return 'Admin'
+  return 'Reader'
+}
+
+function accessStatus(expiresAt: string | null, revokedAt?: string | null): ContactShareMeta['status'] {
+  if (revokedAt) return 'revoked'
+  if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return 'expired'
+  return 'active'
+}
+
+function isRelationshipScope(value: string | null): value is RelationshipScope {
+  return value === 'all' || value === 'mine' || value === 'shared_with_me' || value === 'shared_by_me'
+}
+
 // ── View toggle ─────────────────────────────────────────────────────────────
 
 function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onChange: (v: 'people' | 'companies') => void }) {
@@ -200,6 +241,8 @@ export function RecordsList() {
   const [pods, setPods] = useState<Pod[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
+  const [collaborationGrants, setCollaborationGrants] = useState<CollaborationAccessGrant[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -215,6 +258,11 @@ export function RecordsList() {
     if (search) f.search = search
     if (recency && ['7d', '30d', '90d', 'never'].includes(recency)) f.recency = recency as any
     return f
+  })
+
+  const [relationshipScope, setRelationshipScope] = useState<RelationshipScope>(() => {
+    const scope = searchParams.get('scope')
+    return isRelationshipScope(scope) ? scope : 'all'
   })
 
   // Sort - restore from URL query params
@@ -240,6 +288,15 @@ export function RecordsList() {
       return next
     }, { replace: true })
   }, [sort.col, sort.dir]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (relationshipScope === 'all') next.delete('scope')
+      else next.set('scope', relationshipScope)
+      return next
+    }, { replace: true })
+  }, [relationshipScope]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Column visibility
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnId>>(
@@ -310,19 +367,32 @@ export function RecordsList() {
   useEffect(() => {
     let stale = false
     async function load() {
-      const [allContacts, allPods, allCategories, allInteractions, allCampaigns] = await Promise.all([
+      const workspaceId = activeWorkspace?.id
+      const [
+        userResult,
+        allContacts,
+        allPods,
+        allCategories,
+        allInteractions,
+        allCampaigns,
+        allGrants,
+      ] = await Promise.all([
+        supabase.auth.getUser(),
         getContacts(),
         getPods(),
         getCategories(),
         getAllInteractions(),
         getCampaigns(),
+        workspaceId ? getCollaborationAccessGrants(workspaceId) : Promise.resolve([]),
       ])
       if (stale) return
 
+      setCurrentUserId(userResult.data.user?.id ?? null)
       setPods(allPods)
       setCategories(allCategories)
       setContacts(allContacts)
       setCampaigns(allCampaigns)
+      setCollaborationGrants(allGrants)
 
       const interactionsByContact: Record<string, Interaction[]> = {}
       for (const interaction of allInteractions) {
@@ -343,7 +413,7 @@ export function RecordsList() {
       if (!stale) setLoading(false)
     })
     return () => { stale = true }
-  }, [refreshKey])
+  }, [activeWorkspace?.id, refreshKey])
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -434,9 +504,110 @@ export function RecordsList() {
     [selectedCampaign, selectedIds],
   )
 
+  const sharedContactMetaById = useMemo(() => {
+    const contactMap = new Map(contacts.map(contact => [contact.id, contact]))
+    const campaignMap = new Map(campaigns.map(campaign => [campaign.id, campaign]))
+    const next = new Map<string, ContactShareMeta[]>()
+
+    function addMeta(contactId: string, meta: ContactShareMeta) {
+      const existing = next.get(contactId) ?? []
+      if (!existing.some(item => item.grantId === meta.grantId && item.direction === meta.direction)) {
+        next.set(contactId, [...existing, meta])
+      }
+    }
+
+    function contactIdsForGrant(grant: CollaborationAccessGrant): string[] {
+      const resourceId = grant.resource_id
+      if (!resourceId) return []
+
+      if (grant.resource_type === 'contact') {
+        return contactMap.has(resourceId) ? [resourceId] : []
+      }
+
+      if (grant.resource_type === 'pod') {
+        const podContacts = contacts.filter(contact => contact.list_ids.includes(resourceId))
+        const subPodContacts = contacts.filter(contact => contact.category_ids.includes(resourceId))
+        return (podContacts.length > 0 ? podContacts : subPodContacts).map(contact => contact.id)
+      }
+
+      if (grant.resource_type === 'campaign') {
+        return (campaignMap.get(resourceId)?.contact_ids ?? []).filter(contactId => contactMap.has(contactId))
+      }
+
+      if (grant.resource_type === 'company') {
+        return contacts
+          .filter(contact => (
+            contact.id === resourceId ||
+            contact.company_record_id === resourceId ||
+            contact.company_ids.includes(resourceId)
+          ))
+          .map(contact => contact.id)
+      }
+
+      return []
+    }
+
+    for (const grant of collaborationGrants) {
+      const status = accessStatus(grant.expires_at, grant.revoked_at)
+      if (status !== 'active') continue
+
+      const directions: ContactShareMeta['direction'][] = []
+      if (currentUserId && grant.subject_type === 'user' && grant.subject_id === currentUserId) directions.push('shared_with_me')
+      if (currentUserId && grant.created_by === currentUserId) directions.push('shared_by_me')
+      if (directions.length === 0) continue
+
+      const contactIds = contactIdsForGrant(grant)
+      for (const direction of directions) {
+        const meta: ContactShareMeta = {
+          direction,
+          grantId: grant.id,
+          sourceLabel: grant.resource_label,
+          sharedWith: grant.subject_label,
+          permissionLevel: grant.permission_level,
+          permissionLabel: permissionLabel(grant.permission_level),
+          fieldScopes: grant.field_scopes,
+          status,
+        }
+        contactIds.forEach(contactId => addMeta(contactId, meta))
+      }
+    }
+
+    return next
+  }, [campaigns, collaborationGrants, contacts, currentUserId])
+
+  const sharedWithMeContactIds = useMemo(() => {
+    const ids = new Set<string>()
+    sharedContactMetaById.forEach((items, contactId) => {
+      if (items.some(item => item.direction === 'shared_with_me')) ids.add(contactId)
+    })
+    return ids
+  }, [sharedContactMetaById])
+
+  const sharedByMeContactIds = useMemo(() => {
+    const ids = new Set<string>()
+    sharedContactMetaById.forEach((items, contactId) => {
+      if (items.some(item => item.direction === 'shared_by_me')) ids.add(contactId)
+    })
+    return ids
+  }, [sharedContactMetaById])
+
+  const canSelectContact = useCallback((contact: Contact) => {
+    const inboundShare = sharedContactMetaById.get(contact.id)?.find(item => item.direction === 'shared_with_me')
+    if (!inboundShare) return true
+    return inboundShare.permissionLevel === 'edit' || inboundShare.permissionLevel === 'admin'
+  }, [sharedContactMetaById])
+
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
     let result = contacts.filter(c => c.type !== 'Company')
+
+    if (relationshipScope === 'mine') {
+      result = result.filter(c => !sharedWithMeContactIds.has(c.id))
+    } else if (relationshipScope === 'shared_with_me') {
+      result = result.filter(c => sharedWithMeContactIds.has(c.id))
+    } else if (relationshipScope === 'shared_by_me') {
+      result = result.filter(c => sharedByMeContactIds.has(c.id))
+    }
 
     if (filters.search.trim()) {
       const q = filters.search.toLowerCase()
@@ -495,7 +666,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [contacts, filters, sort, equityMap, podMap, categories])
+  }, [contacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, filters, sort, equityMap, podMap, categories])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -519,25 +690,31 @@ export function RecordsList() {
     })
   }, [])
 
+  const selectableFiltered = useMemo(
+    () => filtered.filter(contact => canSelectContact(contact)),
+    [canSelectContact, filtered],
+  )
+
   // Select all / deselect all
-  const allSelected = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id))
+  const allSelected = selectableFiltered.length > 0 && selectableFiltered.every(c => selectedIds.has(c.id))
   const toggleSelectAll = useCallback(() => {
     if (allSelected) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(filtered.map(c => c.id)))
+      setSelectedIds(new Set(selectableFiltered.map(c => c.id)))
     }
-  }, [allSelected, filtered])
+  }, [allSelected, selectableFiltered])
 
-  const toggleSelectRow = useCallback((id: string, e: React.MouseEvent) => {
+  const toggleSelectRow = useCallback((contact: Contact, e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!canSelectContact(contact)) return
     setSelectedIds(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(contact.id)) next.delete(contact.id)
+      else next.add(contact.id)
       return next
     })
-  }, [])
+  }, [canSelectContact])
 
   // Save current view
   const saveView = useCallback(() => {
@@ -546,6 +723,7 @@ export function RecordsList() {
     const view: SavedView = {
       name: viewName,
       filters,
+      relationshipScope,
       visibleColumns: Array.from(visibleColumns),
       sort,
     }
@@ -557,23 +735,25 @@ export function RecordsList() {
         workspace_id: activeWorkspace.id,
         view_type: 'relationships',
         label: viewName,
-        filters,
+        filters: { ...filters, relationshipScope },
         visible_fields: Array.from(visibleColumns),
         sort_state: sort,
       }).catch(() => undefined)
     }
     setSavingViewName('')
     setShowSaveInput(false)
-  }, [activeWorkspace?.id, savingViewName, filters, visibleColumns, sort, savedViews])
+  }, [activeWorkspace?.id, savingViewName, filters, relationshipScope, visibleColumns, sort, savedViews])
 
   // Apply a saved view
   const applyView = useCallback((view: SavedView | null) => {
     if (!view) {
       setFilters(DEFAULT_FILTERS)
+      setRelationshipScope('all')
       setVisibleColumns(new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id)))
       setSort({ col: 'equity', dir: 'desc' })
     } else {
       setFilters(view.filters)
+      setRelationshipScope(view.relationshipScope ?? 'all')
       setVisibleColumns(new Set(view.visibleColumns))
       setSort(view.sort)
     }
@@ -592,13 +772,15 @@ export function RecordsList() {
   // Clear filters
   const clearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS)
+    setRelationshipScope('all')
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.category || filters.recency !== 'any'
+  const hasActiveFilters = filters.search || filters.pod || filters.category || filters.recency !== 'any' || relationshipScope !== 'all'
   const activeFilterCount =
     (filters.search ? 1 : 0) +
     (filters.pod || filters.category ? 1 : 0) +
-    (filters.recency !== 'any' ? 1 : 0)
+    (filters.recency !== 'any' ? 1 : 0) +
+    (relationshipScope !== 'all' ? 1 : 0)
   const atRiskCount = useMemo(
     () => filtered.reduce((count, contact) => count + ((equityMap[contact.id] ?? 0) < 70 ? 1 : 0), 0),
     [filtered, equityMap]
@@ -806,6 +988,7 @@ export function RecordsList() {
     if (filters.category) params.set('category', filters.category)
     if (filters.search) params.set('q', filters.search)
     if (filters.recency !== 'any') params.set('recency', filters.recency)
+    if (relationshipScope !== 'all') params.set('scope', relationshipScope)
     const qs = params.toString()
     const url = `${window.location.origin}/relationships${qs ? `?${qs}` : ''}`
     await navigator.clipboard.writeText(url)
@@ -1186,6 +1369,18 @@ export function RecordsList() {
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
             <option value="never">Never contacted</option>
+          </select>
+
+          <select
+            value={relationshipScope}
+            onChange={e => setRelationshipScope(e.target.value as RelationshipScope)}
+            className="records-toolbar-select"
+            aria-label="Relationship ownership scope"
+            style={selectStyle}
+          >
+            {RELATIONSHIP_SCOPE_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
 
           <div ref={columnFilterRef} style={{ position: 'relative' }}>
@@ -1835,6 +2030,12 @@ export function RecordsList() {
                 const label = scoreLabel(score)
                 const badge = EQUITY_BADGE[label]
                 const selected = selectedIds.has(contact.id)
+                const shareMeta = sharedContactMetaById.get(contact.id) ?? []
+                const primaryShareMeta =
+                  shareMeta.find(item => item.direction === 'shared_with_me') ??
+                  shareMeta.find(item => item.direction === 'shared_by_me') ??
+                  null
+                const selectable = canSelectContact(contact)
 
                 return (
                   <tr
@@ -1848,14 +2049,18 @@ export function RecordsList() {
                     }}
                   >
                     {/* Pod color + checkbox */}
-                    <td style={{ padding: '0', width: 48, height: 52 }} onClick={e => toggleSelectRow(contact.id, e)}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: 'pointer' }}>
+                    <td style={{ padding: '0', width: 48, height: 52 }} onClick={e => toggleSelectRow(contact, e)}>
+                      <div
+                        title={selectable ? undefined : 'Reader shared contacts cannot be used for bulk actions'}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: selectable ? 'pointer' : 'not-allowed' }}
+                      >
                         <input
                           className="records-checkbox"
                           type="checkbox"
                           checked={selected}
+                          disabled={!selectable}
                           onChange={() => {}}
-                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-brand)' }}
+                          style={{ cursor: selectable ? 'pointer' : 'not-allowed', width: 15, height: 15, accentColor: 'var(--color-brand)' }}
                         />
                       </div>
                     </td>
@@ -1908,6 +2113,33 @@ export function RecordsList() {
                                       : ''
                                   )}
                               </span>
+                              {primaryShareMeta && (
+                                <span
+                                  title={primaryShareMeta.sourceLabel}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    width: 'fit-content',
+                                    maxWidth: 'clamp(120px, 16vw, 260px)',
+                                    padding: '2px 7px',
+                                    borderRadius: 999,
+                                    background: primaryShareMeta.direction === 'shared_with_me'
+                                      ? 'color-mix(in srgb, var(--color-brand) 12%, transparent)'
+                                      : 'var(--tint)',
+                                    color: primaryShareMeta.direction === 'shared_with_me'
+                                      ? 'var(--color-brand)'
+                                      : 'var(--color-text-secondary)',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    lineHeight: 1.2,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                >
+                                  {primaryShareMeta.direction === 'shared_with_me' ? 'Shared with me' : 'Shared by me'} - {primaryShareMeta.permissionLabel}
+                                </span>
+                              )}
                             </span>
                           </span>
                         )}
