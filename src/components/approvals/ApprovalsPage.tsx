@@ -423,9 +423,15 @@ export function ApprovalsPage() {
     <main className="content-enter" style={{ padding: '32px clamp(16px, 4vw, 36px) 80px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'flex-start', marginBottom: 22 }}>
         <div>
-          <h1 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: 28, fontWeight: 850 }}>
-            Shared contacts
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: 28, fontWeight: 850 }}>
+              Shared contacts
+            </h1>
+            <button type="button" onClick={() => setShowShareModal(true)} style={headerShareButtonStyle}>
+              <Plus size={15} />
+              Share contacts
+            </button>
+          </div>
           <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 13, lineHeight: 1.5 }}>
             Manage shared contacts, permissions, public links, campaign access, and approval queues from one place.
           </p>
@@ -449,10 +455,6 @@ export function ApprovalsPage() {
               Filter active shares by campaigns, pods, sub-pods, public links, direct contacts, and permission level.
             </p>
           </div>
-          <button type="button" onClick={() => setShowShareModal(true)} style={primaryButtonStyle}>
-            <Plus size={14} />
-            Share contacts
-          </button>
         </div>
 
         <SharedContactFilters
@@ -1159,6 +1161,14 @@ const primaryButtonStyle: React.CSSProperties = {
   fontFamily: 'inherit',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
+}
+
+const headerShareButtonStyle: React.CSSProperties = {
+  ...primaryButtonStyle,
+  minHeight: 36,
+  padding: '9px 14px',
+  borderRadius: 9,
+  boxShadow: '0 10px 22px rgba(0,61,165,0.16)',
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
