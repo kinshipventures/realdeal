@@ -10,18 +10,24 @@ import {
   getCollaborationAccessGrants,
   getCollaborationApprovalRequests,
   getCollaborationAuditEvents,
+  getCollaborationPublicCampaignLinks,
+  getCollaborationSavedViews,
   resolveCollaborationApprovalRequest,
+  revokeCollaborationPublicCampaignLink,
   revokeCollaborationAccessGrant,
   type CollaborationAccessGrant,
   type CollaborationApprovalRequest,
   type CollaborationAuditEvent,
   type CollaborationFieldScope,
   type CollaborationPermissionLevel,
+  type CollaborationPublicCampaignLink,
   type CollaborationResourceType,
+  type CollaborationSavedView,
   type CollaborationSubjectType,
 } from '@/lib/collaboration'
+import { publicCampaignPath } from '@/lib/collaborationPolicy'
 
-type SharingTab = 'access' | 'approvals' | 'fields' | 'links' | 'audit'
+type SharingTab = 'access' | 'approvals' | 'fields' | 'links' | 'views' | 'audit'
 
 type ResourceOption = {
   id: string
@@ -35,6 +41,7 @@ const TAB_OPTIONS: Array<{ id: SharingTab; label: string }> = [
   { id: 'approvals', label: 'Approval Requests' },
   { id: 'fields', label: 'Field Visibility' },
   { id: 'links', label: 'Public Links' },
+  { id: 'views', label: 'Saved Views' },
   { id: 'audit', label: 'Audit History' },
 ]
 
@@ -182,6 +189,8 @@ export function SharingPermissionsTab() {
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
   const [requests, setRequests] = useState<CollaborationApprovalRequest[]>([])
   const [events, setEvents] = useState<CollaborationAuditEvent[]>([])
+  const [publicLinks, setPublicLinks] = useState<CollaborationPublicCampaignLink[]>([])
+  const [savedViews, setSavedViews] = useState<CollaborationSavedView[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAccessModal, setShowAccessModal] = useState(false)
@@ -230,6 +239,7 @@ export function SharingPermissionsTab() {
   const activeGrants = grants.filter(grant => !grant.revoked_at)
   const pendingRequests = requests.filter(request => request.status === 'pending')
   const publicLinkGrants = grants.filter(grant => grant.subject_type === 'public_link')
+  const activePublicLinks = publicLinks.filter(link => !link.revoked_at)
 
   const loadData = useCallback(async () => {
     if (!workspaceId) return
@@ -244,6 +254,8 @@ export function SharingPermissionsTab() {
         nextGrants,
         nextRequests,
         nextEvents,
+        nextPublicLinks,
+        nextSavedViews,
       ] = await Promise.all([
         getContacts(),
         getPods(),
@@ -252,6 +264,8 @@ export function SharingPermissionsTab() {
         getCollaborationAccessGrants(workspaceId),
         getCollaborationApprovalRequests(workspaceId),
         getCollaborationAuditEvents(workspaceId),
+        getCollaborationPublicCampaignLinks(workspaceId),
+        getCollaborationSavedViews(workspaceId),
       ])
       setContacts(nextContacts.filter(contact => contact.status !== 'Archived'))
       setPods(nextPods)
@@ -260,6 +274,8 @@ export function SharingPermissionsTab() {
       setGrants(nextGrants)
       setRequests(nextRequests)
       setEvents(nextEvents)
+      setPublicLinks(nextPublicLinks)
+      setSavedViews(nextSavedViews)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sharing data')
     } finally {
@@ -324,7 +340,7 @@ export function SharingPermissionsTab() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 16 }}>
         <SummaryCard icon={<Users size={15} />} label="Active access" value={activeGrants.length} />
         <SummaryCard icon={<ShieldCheck size={15} />} label="Pending approvals" value={pendingRequests.length} />
-        <SummaryCard icon={<Link size={15} />} label="Public links" value={publicLinkGrants.length} />
+        <SummaryCard icon={<Link size={15} />} label="Public links" value={activePublicLinks.length + publicLinkGrants.length} />
       </div>
 
       <div style={{ display: 'flex', borderBottom: '1px solid var(--edge)', marginBottom: 16, overflowX: 'auto' }}>
@@ -372,7 +388,17 @@ export function SharingPermissionsTab() {
             <ApprovalRequestsTable requests={requests} onResolve={handleResolveRequest} />
           )}
           {tab === 'fields' && <FieldVisibilityPanel />}
-          {tab === 'links' && <PublicLinksPanel grants={publicLinkGrants} />}
+          {tab === 'links' && (
+            <PublicLinksPanel
+              links={publicLinks}
+              grants={publicLinkGrants}
+              onRevoke={async (link) => {
+                await revokeCollaborationPublicCampaignLink(link.id, activeWorkspace.id)
+                await loadData()
+              }}
+            />
+          )}
+          {tab === 'views' && <SavedViewsPanel views={savedViews} />}
           {tab === 'audit' && <AuditHistoryPanel events={events} />}
         </>
       )}
@@ -509,20 +535,63 @@ function FieldVisibilityPanel() {
   )
 }
 
-function PublicLinksPanel({ grants }: { grants: CollaborationAccessGrant[] }) {
-  if (grants.length === 0) {
-    return <EmptyState title="No public links tracked" detail="Public campaign or list links will be tracked here when they are granted through New access." />
+function PublicLinksPanel({
+  links,
+  grants,
+  onRevoke,
+}: {
+  links: CollaborationPublicCampaignLink[]
+  grants: CollaborationAccessGrant[]
+  onRevoke: (link: CollaborationPublicCampaignLink) => void
+}) {
+  if (links.length === 0 && grants.length === 0) {
+    return <EmptyState title="No public links tracked" detail="Public campaign or list links will be tracked here when they are created." />
   }
 
   return (
     <div style={{ ...surfaceStyle, overflow: 'hidden' }}>
-      <TableHeader columns="1.2fr 1fr 0.8fr 0.8fr" labels={['Link label', 'Resource', 'Fields', 'Expires']} />
+      <TableHeader columns="1.2fr 1fr 0.8fr 0.8fr 72px" labels={['Link label', 'Resource', 'Fields', 'Expires', '']} />
+      {links.map(link => (
+        <div key={link.id} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr 0.8fr 72px', alignItems: 'center', minHeight: 54, borderBottom: '1px solid var(--divider)' }}>
+          <Cell primary={link.campaign_label} secondary={`${link.contacts_snapshot.length} contacts`} />
+          <Cell primary="Campaign" secondary={link.campaign_id} />
+          <Cell primary={`${link.field_scopes.length} groups`} secondary={link.field_scopes.map(titleCase).join(', ')} />
+          <Cell primary={formatDate(link.expires_at)} secondary={link.revoked_at ? 'Revoked' : 'Active'} />
+          <div style={{ padding: '10px 12px', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            <a href={publicCampaignPath(link.token)} target="_blank" rel="noreferrer" aria-label="Open public link" title="Open public link" style={linkIconStyle}>
+              <Link size={13} />
+            </a>
+            <IconButton icon={<X size={14} />} label="Revoke public link" disabled={Boolean(link.revoked_at)} onClick={() => onRevoke(link)} />
+          </div>
+        </div>
+      ))}
       {grants.map(grant => (
-        <div key={grant.id} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr 0.8fr', alignItems: 'center', minHeight: 54, borderBottom: '1px solid var(--divider)' }}>
+        <div key={grant.id} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr 0.8fr 72px', alignItems: 'center', minHeight: 54, borderBottom: '1px solid var(--divider)' }}>
           <Cell primary={grant.subject_label} secondary="Public reviewer" />
           <Cell primary={grant.resource_label} secondary={titleCase(grant.resource_type)} />
           <Cell primary={`${grant.field_scopes.length} groups`} secondary={grant.field_scopes.map(titleCase).join(', ')} />
           <Cell primary={formatDate(grant.expires_at)} secondary={grant.revoked_at ? 'Revoked' : 'Active'} />
+          <div />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SavedViewsPanel({ views }: { views: CollaborationSavedView[] }) {
+  if (views.length === 0) {
+    return <EmptyState title="No saved views synced yet" detail="Saved relationship and campaign views will appear here after users save them." />
+  }
+
+  return (
+    <div style={{ ...surfaceStyle, overflow: 'hidden' }}>
+      <TableHeader columns="1.1fr 0.8fr 0.9fr 0.8fr" labels={['View', 'Type', 'Fields', 'Updated']} />
+      {views.map(view => (
+        <div key={view.id} style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.8fr 0.9fr 0.8fr', alignItems: 'center', minHeight: 54, borderBottom: '1px solid var(--divider)' }}>
+          <Cell primary={view.label} secondary={view.resource_id ?? 'Personal view'} />
+          <Cell primary={titleCase(view.view_type)} secondary="Saved filters" />
+          <Cell primary={`${view.visible_fields.length} fields`} secondary={view.visible_fields.join(', ')} />
+          <Cell primary={formatDate(view.updated_at)} secondary={formatDate(view.created_at)} />
         </div>
       ))}
     </div>
@@ -975,6 +1044,20 @@ const secondaryButtonStyle: React.CSSProperties = {
   fontWeight: 750,
   fontFamily: 'inherit',
   cursor: 'pointer',
+}
+
+const linkIconStyle: React.CSSProperties = {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'transparent',
+  color: 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textDecoration: 'none',
 }
 
 const fieldLabelStyle: React.CSSProperties = {

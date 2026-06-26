@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
-import { supabase } from '@/integrations/supabase/client'
 import { Routes, Route, Outlet, useLocation, useNavigate, Navigate } from 'react-router'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { LoginPage } from './components/auth/LoginPage'
@@ -30,6 +29,8 @@ const CreateRecordModal = lazy(() => import('./components/records/CreateRecordMo
 const PodDetailPage = lazy(() => import('./components/pods/PodDetailPage').then(m => ({ default: m.PodDetailPage })))
 const CampaignsPage = lazy(() => import('./components/campaigns/CampaignsPage').then(m => ({ default: m.CampaignsPage })))
 const CampaignDetailRoute = lazy(() => import('./components/campaigns/CampaignDetailRoute').then(m => ({ default: m.CampaignDetailRoute })))
+const ApprovalsPage = lazy(() => import('./components/approvals/ApprovalsPage').then(m => ({ default: m.ApprovalsPage })))
+const PublicCampaignView = lazy(() => import('./components/public/PublicCampaignView').then(m => ({ default: m.PublicCampaignView })))
 const NurturingHub = lazy(() => import('./components/nurturing/NurturingHub').then(m => ({ default: m.NurturingHub })))
 const AccountPage = lazy(() => import('./components/settings/AccountPage').then(m => ({ default: m.AccountPage })))
 const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow').then(m => ({ default: m.OnboardingFlow })))
@@ -344,6 +345,7 @@ export default function App() {
       <Route path="demo" element={<DemoEntry />} />
       <Route path="demo/*" element={<DemoEntry />} />
       <Route path="s/:token" element={<SharedListPage />} />
+      <Route path="public/campaign/:token" element={<Suspense fallback={null}><PublicCampaignView /></Suspense>} />
       <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route path="invite" element={<AcceptInvitePage />} />
       <Route index element={<LandingRedirect />} />
@@ -360,6 +362,7 @@ export default function App() {
           <Route path="companies" element={<Navigate to="/relationships?view=companies" replace />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
+          <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects/:id" element={<Navigate to="/campaigns" replace />} />

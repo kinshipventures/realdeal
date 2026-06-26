@@ -17,6 +17,7 @@ import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
+import { createCollaborationSavedView, recordCollaborationAuditEvent } from '@/lib/collaboration'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
@@ -541,8 +542,9 @@ export function RecordsList() {
   // Save current view
   const saveView = useCallback(() => {
     if (!savingViewName.trim()) return
+    const viewName = savingViewName.trim()
     const view: SavedView = {
-      name: savingViewName.trim(),
+      name: viewName,
       filters,
       visibleColumns: Array.from(visibleColumns),
       sort,
@@ -550,9 +552,19 @@ export function RecordsList() {
     const updated = [...savedViews.filter(v => v.name !== view.name), view]
     setSavedViews(updated)
     saveViews(updated)
+    if (activeWorkspace?.id) {
+      void createCollaborationSavedView({
+        workspace_id: activeWorkspace.id,
+        view_type: 'relationships',
+        label: viewName,
+        filters,
+        visible_fields: Array.from(visibleColumns),
+        sort_state: sort,
+      }).catch(() => undefined)
+    }
     setSavingViewName('')
     setShowSaveInput(false)
-  }, [savingViewName, filters, visibleColumns, sort, savedViews])
+  }, [activeWorkspace?.id, savingViewName, filters, visibleColumns, sort, savedViews])
 
   // Apply a saved view
   const applyView = useCallback((view: SavedView | null) => {
@@ -759,6 +771,20 @@ export function RecordsList() {
     a.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+    if (activeWorkspace?.id) {
+      void recordCollaborationAuditEvent({
+        workspace_id: activeWorkspace.id,
+        event_type: 'export_downloaded',
+        resource_type: 'export',
+        resource_id: null,
+        resource_label: activeView === 'companies' ? 'Companies export' : 'Relationships export',
+        metadata: {
+          row_count: rows.length,
+          visible_fields: visibleColsSnap.map(col => col.id),
+          view: activeView,
+        },
+      }).catch(() => undefined)
+    }
   }
 
   async function downloadImportTemplate() {

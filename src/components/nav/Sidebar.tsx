@@ -21,6 +21,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
   const isRelationships = location.pathname === '/relationships' || location.pathname === '/contacts' || location.pathname.startsWith('/contact/') || location.pathname.startsWith('/category/') || location.pathname === '/companies'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
+  const isApprovals = location.pathname.startsWith('/approvals')
   const isLearn = location.pathname === '/learn'
   const isChangelog = location.pathname === '/changelog'
 
@@ -178,6 +179,13 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           active={isCampaigns}
           collapsed={collapsed}
           onClick={() => navigate('/campaigns')}
+        />
+        <NavItem
+          icon={<ApprovalsIcon />}
+          label="Approvals"
+          active={isApprovals}
+          collapsed={collapsed}
+          onClick={() => navigate('/approvals')}
         />
       </div>
 
@@ -414,6 +422,15 @@ function CampaignsIcon() {
       <path d="M3 11l18-5v12L3 13v-2z"/>
       <line x1="11.6" y1="16.8" x2="10.4" y2="21.2"/>
       <line x1="7.6" y1="15.6" x2="6.4" y2="20"/>
+    </svg>
+  )
+}
+
+function ApprovalsIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M9 11l2 2 4-4" />
+      <path d="M21 12c0 4.5-3.6 8.2-9 10-5.4-1.8-9-5.5-9-10V5l9-3 9 3v7z" />
     </svg>
   )
 }

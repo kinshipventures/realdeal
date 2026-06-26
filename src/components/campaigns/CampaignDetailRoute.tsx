@@ -10,6 +10,8 @@ import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { CampaignPermissionsPanel } from './CampaignPermissionsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { recordCollaborationAuditEvent } from '@/lib/collaboration'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
@@ -84,6 +86,7 @@ function loadSort(id: string): { key: string; asc: boolean } {
 export function CampaignDetailRoute() {
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { activeWorkspace } = useWorkspace()
 
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -242,6 +245,19 @@ export function CampaignDetailRoute() {
     a.download = `${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}_contacts.csv`
     a.click()
     URL.revokeObjectURL(url)
+    if (activeWorkspace?.id) {
+      void recordCollaborationAuditEvent({
+        workspace_id: activeWorkspace.id,
+        event_type: 'export_downloaded',
+        resource_type: 'export',
+        resource_id: campaign.id,
+        resource_label: campaign.name,
+        metadata: {
+          row_count: campaignContacts.length,
+          export_type: 'campaign_contacts',
+        },
+      }).catch(() => undefined)
+    }
   }
 
   function handleCardClick(cc: CampaignContact) {
@@ -618,6 +634,7 @@ export function CampaignDetailRoute() {
           campaign={campaign}
           campaignContacts={campaignContacts}
           contacts={contacts}
+          stages={stages}
           onClose={() => setShowPermissions(false)}
         />
       )}
