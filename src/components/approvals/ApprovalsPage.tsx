@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Check, KeyRound, Link, Plus, Search, ShieldCheck, UserPlus, Users, X } from 'lucide-react'
+import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
+import {
+  createUserConnectionRequest,
+  findAppUsersForContactEmails,
+  getUserConnections,
+  respondUserConnection,
+  type RecognizedAppUser,
+  type UserConnection,
+} from '@/lib/connections'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
 import {
   createCollaborationAccessGrant,
@@ -34,6 +42,13 @@ type ShareResourceOption = {
   mode: ShareMode
   resourceType: CollaborationResourceType
   description?: string
+}
+type ShareUserOption = {
+  id: string
+  user_id: string
+  display_name: string | null
+  email: string | null
+  source: 'workspace' | 'connection'
 }
 type SharedContactRow = {
   id: string
@@ -152,6 +167,12 @@ function contactFromMap(contactMap: Map<string, Contact>, contactId: string | nu
   return contactMap.get(contactId) ?? null
 }
 
+function contactEmails(contact: Contact): string[] {
+  return [contact.email, contact.email_2, contact.email_3]
+    .map(email => email?.trim().toLowerCase())
+    .filter((email): email is string => Boolean(email))
+}
+
 function rowsForGrant(
   grant: CollaborationAccessGrant,
   contacts: Contact[],
@@ -254,6 +275,8 @@ export function ApprovalsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [members, setMembers] = useState<WorkspaceMember[]>([])
+  const [connections, setConnections] = useState<UserConnection[]>([])
+  const [recognizedUsers, setRecognizedUsers] = useState<RecognizedAppUser[]>([])
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
   const [publicLinks, setPublicLinks] = useState<CollaborationPublicCampaignLink[]>([])
   const [showShareModal, setShowShareModal] = useState(false)
@@ -304,6 +327,33 @@ export function ApprovalsPage() {
   const activeSharedRows = useMemo(() => sharedRows.filter(row => row.status === 'active'), [sharedRows])
   const activePublicLinks = useMemo(() => publicLinks.filter(link => !link.revoked_at), [publicLinks])
   const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
+  const shareUsers = useMemo<ShareUserOption[]>(() => {
+    const byUserId = new Map<string, ShareUserOption>()
+    members.forEach(member => {
+      byUserId.set(member.user_id, {
+        id: `workspace-${member.id}`,
+        user_id: member.user_id,
+        display_name: member.display_name,
+        email: member.email,
+        source: 'workspace',
+      })
+    })
+    connections
+      .filter(connection => connection.status === 'accepted')
+      .forEach(connection => {
+        if (byUserId.has(connection.connected_user_id)) return
+        byUserId.set(connection.connected_user_id, {
+          id: `connection-${connection.id}`,
+          user_id: connection.connected_user_id,
+          display_name: connection.connected_display_name,
+          email: connection.connected_email,
+          source: 'connection',
+        })
+      })
+    return [...byUserId.values()].sort((a, b) => (
+      (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '')
+    ))
+  }, [connections, members])
   const shareResourceOptions = useMemo<ShareResourceOption[]>(() => {
     const people = contacts
       .filter(contact => contact.type !== 'Company')
@@ -364,6 +414,7 @@ export function ApprovalsPage() {
         nextCategories,
         nextCampaigns,
         nextMembers,
+        nextConnections,
         nextGrants,
         nextPublicLinks,
       ] = await Promise.all([
@@ -374,16 +425,22 @@ export function ApprovalsPage() {
         getCategories(),
         getCampaigns(),
         fetchWorkspaceMembers(workspaceId),
+        getUserConnections(),
         getCollaborationAccessGrants(workspaceId),
         getCollaborationPublicCampaignLinks(workspaceId),
       ])
+      const activeContacts = nextContacts.filter(contact => contact.status !== 'Archived')
+      const contactEmailList = activeContacts.flatMap(contactEmails)
+      const nextRecognizedUsers = await findAppUsersForContactEmails(contactEmailList)
       setRequests(nextRequests)
       setProposals(nextProposals)
-      setContacts(nextContacts.filter(contact => contact.status !== 'Archived'))
+      setContacts(activeContacts)
       setPods(nextPods)
       setCategories(nextCategories)
       setCampaigns(nextCampaigns.filter(campaign => campaign.status !== 'hidden'))
       setMembers(nextMembers)
+      setConnections(nextConnections)
+      setRecognizedUsers(nextRecognizedUsers)
       setGrants(nextGrants)
       setPublicLinks(nextPublicLinks)
     } catch (err) {
@@ -419,6 +476,16 @@ export function ApprovalsPage() {
     await loadData()
   }
 
+  async function handleCreateConnection(email: string) {
+    await createUserConnectionRequest(email)
+    await loadData()
+  }
+
+  async function handleRespondConnection(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
+    await respondUserConnection(connection.id, status)
+    await loadData()
+  }
+
   return (
     <main className="content-enter" style={{ padding: '32px clamp(16px, 4vw, 36px) 80px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'flex-start', marginBottom: 22 }}>
@@ -444,6 +511,14 @@ export function ApprovalsPage() {
         <SummaryCard icon={<Link size={16} />} label="Public links" value={activePublicLinks.length} />
         <SummaryCard icon={<UserPlus size={16} />} label="Pending approvals" value={pendingRequests.length + pendingProposals.length} />
       </section>
+
+      <ConnectionsPanel
+        connections={connections}
+        recognizedUsers={recognizedUsers}
+        contacts={contacts}
+        onCreateConnection={handleCreateConnection}
+        onRespondConnection={handleRespondConnection}
+      />
 
       <section style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
@@ -519,7 +594,7 @@ export function ApprovalsPage() {
       {showShareModal && workspaceId && (
         <ShareContactsModal
           workspaceId={workspaceId}
-          members={members}
+          users={shareUsers}
           resources={shareResourceOptions}
           onClose={() => setShowShareModal(false)}
           onCreated={async () => {
@@ -529,6 +604,265 @@ export function ApprovalsPage() {
         />
       )}
     </main>
+  )
+}
+
+function ConnectionsPanel({
+  connections,
+  recognizedUsers,
+  contacts,
+  onCreateConnection,
+  onRespondConnection,
+}: {
+  connections: UserConnection[]
+  recognizedUsers: RecognizedAppUser[]
+  contacts: Contact[]
+  onCreateConnection: (email: string) => Promise<void>
+  onRespondConnection: (connection: UserConnection, status: 'accepted' | 'declined' | 'removed') => Promise<void>
+}) {
+  const [email, setEmail] = useState('')
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
+  const acceptedConnections = connections.filter(connection => connection.status === 'accepted')
+  const pendingReceived = connections.filter(connection => connection.status === 'pending' && connection.direction === 'received')
+  const pendingSent = connections.filter(connection => connection.status === 'pending' && connection.direction === 'sent')
+  const contactByEmail = useMemo(() => {
+    const map = new Map<string, Contact>()
+    contacts.forEach(contact => {
+      contactEmails(contact).forEach(contactEmail => {
+        if (!map.has(contactEmail)) map.set(contactEmail, contact)
+      })
+    })
+    return map
+  }, [contacts])
+  const recognizedCards = useMemo(() => {
+    const byUserId = new Map<string, RecognizedAppUser>()
+    recognizedUsers.forEach(user => {
+      if (!byUserId.has(user.user_id)) byUserId.set(user.user_id, user)
+    })
+    return [...byUserId.values()]
+  }, [recognizedUsers])
+
+  async function handleInvite(targetEmail: string) {
+    const cleanEmail = targetEmail.trim().toLowerCase()
+    if (!cleanEmail) return
+    setBusyId(cleanEmail)
+    setError('')
+    setNotice('')
+    try {
+      await onCreateConnection(cleanEmail)
+      setEmail('')
+      setNotice('Connection request sent.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send connection request')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleRespond(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
+    setBusyId(connection.id)
+    setError('')
+    setNotice('')
+    try {
+      await onRespondConnection(connection, status)
+      setNotice(status === 'accepted' ? 'Connection accepted.' : status === 'removed' ? 'Connection removed.' : 'Connection declined.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update connection')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <section style={{ marginBottom: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+            Connections
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
+            Add trusted Real Deal users before sharing direct contacts, pods, sub-pods, or campaigns with them.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 360 }}>
+          <label style={{ ...inputWrapStyle, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px' }}>
+            <Mail size={14} color="var(--color-text-tertiary)" />
+            <input
+              value={email}
+              onChange={event => setEmail(event.target.value)}
+              placeholder="Find user by email"
+              style={{ border: 0, outline: 'none', background: 'transparent', width: '100%', fontSize: 13, color: 'var(--color-text-primary)' }}
+            />
+          </label>
+          <button type="button" onClick={() => handleInvite(email)} disabled={!email.trim() || Boolean(busyId)} style={{ ...primaryButtonStyle, minWidth: 96, opacity: !email.trim() || busyId ? 0.62 : 1 }}>
+            <Send size={14} />
+            Invite
+          </button>
+        </div>
+      </div>
+
+      {(notice || error) && (
+        <div style={{ ...noticeStyle, color: error ? 'var(--health-fading)' : 'var(--color-brand)' }}>
+          {error || notice}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.15fr', gap: 12 }}>
+        <div style={surfaceMiniStyle}>
+          <ConnectionPanelHeader icon={<UserCheck size={15} />} title="Trusted users" count={acceptedConnections.length} />
+          {acceptedConnections.length === 0 ? (
+            <MiniEmptyState detail="Accepted users will appear in Share contacts." />
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {acceptedConnections.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
+                  detail={connection.connected_email || 'Connected user'}
+                  meta="Connected"
+                  actionLabel="Remove"
+                  busy={busyId === connection.id}
+                  onAction={() => handleRespond(connection, 'removed')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={surfaceMiniStyle}>
+          <ConnectionPanelHeader icon={<UserPlus size={15} />} title="Pending requests" count={pendingReceived.length + pendingSent.length} />
+          {pendingReceived.length === 0 && pendingSent.length === 0 ? (
+            <MiniEmptyState detail="Incoming and sent requests will appear here." />
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {pendingReceived.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
+                  detail={connection.connected_email || 'Pending user'}
+                  meta="Incoming request"
+                  busy={busyId === connection.id}
+                  actionLabel="Accept"
+                  secondaryActionLabel="Decline"
+                  onAction={() => handleRespond(connection, 'accepted')}
+                  onSecondaryAction={() => handleRespond(connection, 'declined')}
+                />
+              ))}
+              {pendingSent.map(connection => (
+                <ConnectionCard
+                  key={connection.id}
+                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
+                  detail={connection.connected_email || 'Pending user'}
+                  meta="Request sent"
+                  busy={busyId === connection.id}
+                  actionLabel="Cancel"
+                  onAction={() => handleRespond(connection, 'removed')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={surfaceMiniStyle}>
+          <ConnectionPanelHeader icon={<Users size={15} />} title="App users in contacts" count={recognizedCards.length} />
+          {recognizedCards.length === 0 ? (
+            <MiniEmptyState detail="Contacts that match Real Deal user emails will appear here." />
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {recognizedCards.slice(0, 5).map(user => {
+                const contact = contactByEmail.get(user.contact_email)
+                const isConnected = user.connection_status === 'accepted'
+                const isPending = user.connection_status === 'pending'
+                return (
+                  <ConnectionCard
+                    key={user.user_id}
+                    title={contact?.name || user.display_name || user.email || 'Real Deal user'}
+                    detail={user.email || user.contact_email}
+                    meta={isConnected ? 'Connected' : isPending ? 'Pending' : 'Detected contact'}
+                    busy={busyId === user.contact_email}
+                    actionLabel={isConnected ? undefined : isPending ? undefined : 'Invite'}
+                    onAction={isConnected || isPending ? undefined : () => handleInvite(user.email || user.contact_email)}
+                  />
+                )
+              })}
+              {recognizedCards.length > 5 && (
+                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                  +{recognizedCards.length - 5} more app users detected in contacts
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ConnectionPanelHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,61,165,0.08)', color: 'var(--color-brand)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          {icon}
+        </span>
+        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 850, color: 'var(--color-text-primary)' }}>{title}</h3>
+      </div>
+      <TagPill tone="blue">{count}</TagPill>
+    </div>
+  )
+}
+
+function ConnectionCard({
+  title,
+  detail,
+  meta,
+  actionLabel,
+  secondaryActionLabel,
+  busy,
+  onAction,
+  onSecondaryAction,
+}: {
+  title: string
+  detail: string
+  meta: string
+  actionLabel?: string
+  secondaryActionLabel?: string
+  busy?: boolean
+  onAction?: () => void
+  onSecondaryAction?: () => void
+}) {
+  return (
+    <div style={{ border: '1px solid var(--edge)', borderRadius: 8, background: 'var(--color-bg)', padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+        <div style={{ marginTop: 3, fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>
+        <div style={{ marginTop: 6 }}><TagPill tone="gray">{meta}</TagPill></div>
+      </div>
+      {(actionLabel || secondaryActionLabel) && (
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {secondaryActionLabel && onSecondaryAction && (
+            <button type="button" onClick={onSecondaryAction} disabled={busy} style={{ ...secondaryButtonStyle, minHeight: 30, padding: '6px 9px', opacity: busy ? 0.6 : 1 }}>
+              {secondaryActionLabel}
+            </button>
+          )}
+          {actionLabel && onAction && (
+            <button type="button" onClick={onAction} disabled={busy} style={{ ...primaryButtonStyle, minHeight: 30, padding: '6px 9px', opacity: busy ? 0.6 : 1 }}>
+              {busy ? 'Working...' : actionLabel}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MiniEmptyState({ detail }: { detail: string }) {
+  return (
+    <div style={{ border: '1px dashed var(--edge)', borderRadius: 8, padding: 12, fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center', lineHeight: 1.45 }}>
+      {detail}
+    </div>
   )
 }
 
@@ -639,13 +973,13 @@ function SharedContactsTable({
 
 function ShareContactsModal({
   workspaceId,
-  members,
+  users,
   resources,
   onClose,
   onCreated,
 }: {
   workspaceId: string
-  members: WorkspaceMember[]
+  users: ShareUserOption[]
   resources: ShareResourceOption[]
   onClose: () => void
   onCreated: () => void
@@ -674,9 +1008,9 @@ function ShareContactsModal({
 
   useEffect(() => {
     if (subjectType !== 'user') return
-    const member = members.find(item => item.user_id === subjectId)
-    setSubjectLabel(member ? member.display_name || member.email || 'User' : '')
-  }, [members, subjectId, subjectType])
+    const user = users.find(item => item.user_id === subjectId)
+    setSubjectLabel(user ? user.display_name || user.email || 'User' : '')
+  }, [subjectId, subjectType, users])
 
   function toggleFieldScope(scope: CollaborationFieldScope) {
     setFieldScopes(current => {
@@ -735,8 +1069,10 @@ function ShareContactsModal({
         {subjectType === 'user' ? (
           <SelectField label="User" value={subjectId} onChange={setSubjectId}>
             <option value="">Select a user</option>
-            {members.map(member => (
-              <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
+            {users.map(user => (
+              <option key={user.id} value={user.user_id}>
+                {user.display_name || user.email || 'User'}{user.source === 'connection' ? ' (Connection)' : ''}
+              </option>
             ))}
           </SelectField>
         ) : (
