@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
-import { Check, Download, MessageSquare, X } from 'lucide-react'
+import { Check, Download, MessageSquare, Search, X } from 'lucide-react'
 import {
   createCollaborationContactProposal,
   createPublicLinkReview,
@@ -12,6 +12,8 @@ import {
 } from '@/lib/collaboration'
 import type { CampaignContactSnapshot } from '@/lib/collaborationPolicy'
 
+type PublicReviewFilter = 'all' | PublicCampaignReviewStatus | 'unreviewed'
+
 function statusLabel(status: PublicCampaignReviewStatus): string {
   if (status === 'discussion') return 'Needs discussion'
   return status === 'approved' ? 'Approved' : 'Rejected'
@@ -22,6 +24,13 @@ function contactReviews(
   contactId: string,
 ): CollaborationPublicLinkReview[] {
   return reviews.filter(review => review.contact_id === contactId)
+}
+
+function latestContactReview(
+  reviews: CollaborationPublicLinkReview[],
+  contactId: string,
+): CollaborationPublicLinkReview | undefined {
+  return contactReviews(reviews, contactId)[0]
 }
 
 function csvValue(value: unknown): string {
@@ -41,8 +50,23 @@ export function PublicCampaignView() {
   const [proposalCompany, setProposalCompany] = useState('')
   const [proposalEmail, setProposalEmail] = useState('')
   const [proposalRole, setProposalRole] = useState('')
+  const [searchText, setSearchText] = useState('')
+  const [reviewFilter, setReviewFilter] = useState<PublicReviewFilter>('all')
+  const [savedViewNotice, setSavedViewNotice] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(`realdeal-public-campaign-view:${token}`)
+      if (!saved) return
+      const parsed = JSON.parse(saved) as { searchText?: string; reviewFilter?: PublicReviewFilter }
+      setSearchText(parsed.searchText ?? '')
+      setReviewFilter(parsed.reviewFilter ?? 'all')
+    } catch {
+      // Ignore malformed local-only view preferences.
+    }
+  }, [token])
 
   useEffect(() => {
     let cancelled = false
@@ -74,6 +98,30 @@ export function PublicCampaignView() {
     () => ((link?.contacts_snapshot ?? []) as CampaignContactSnapshot[]),
     [link?.contacts_snapshot],
   )
+  const visibleContacts = useMemo(() => {
+    const query = searchText.trim().toLowerCase()
+
+    return contacts.filter(contact => {
+      const latestReview = latestContactReview(reviews, contact.contact_id)
+      const matchesReview = reviewFilter === 'all'
+        || (reviewFilter === 'unreviewed' && !latestReview)
+        || latestReview?.status === reviewFilter
+      if (!matchesReview) return false
+      if (!query) return true
+
+      return [
+        contact.name,
+        contact.company,
+        contact.role,
+        contact.location,
+        contact.country,
+        contact.industry,
+        contact.linkedin,
+        contact.campaign_status,
+        contact.stage,
+      ].some(value => String(value ?? '').toLowerCase().includes(query))
+    })
+  }, [contacts, reviews, reviewFilter, searchText])
 
   const canReview = Boolean(link?.permissions.includes('review_contacts'))
   const canComment = Boolean(link?.permissions.includes('comment'))
@@ -146,7 +194,7 @@ export function PublicCampaignView() {
       ['Name', 'Company', 'Role', 'Location', 'Country', 'LinkedIn', 'Campaign Status', 'Stage']
         .map(csvValue)
         .join(','),
-      ...contacts.map(contact => [
+      ...visibleContacts.map(contact => [
         contact.name,
         contact.company,
         contact.role,
@@ -164,6 +212,18 @@ export function PublicCampaignView() {
     anchor.download = `${link.campaign_label.replace(/[^a-zA-Z0-9]/g, '_')}_approved_view.csv`
     anchor.click()
     URL.revokeObjectURL(url)
+  }
+
+  function savePersonalView() {
+    try {
+      window.localStorage.setItem(
+        `realdeal-public-campaign-view:${token}`,
+        JSON.stringify({ searchText, reviewFilter }),
+      )
+      setSavedViewNotice('View saved on this device.')
+    } catch {
+      setSavedViewNotice('This browser could not save the view.')
+    }
   }
 
   if (loading) {
@@ -205,6 +265,29 @@ export function PublicCampaignView() {
         </header>
 
         {error && <div style={{ ...noticeStyle, color: 'var(--health-fading)' }}>{error}</div>}
+        {savedViewNotice && <div style={noticeStyle}>{savedViewNotice}</div>}
+
+        <section style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
+          <label style={{ ...inputWrapStyle, flex: '1 1 260px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Search size={14} color="var(--color-text-tertiary)" />
+            <input
+              value={searchText}
+              onChange={event => setSearchText(event.target.value)}
+              placeholder="Search shared contacts"
+              style={{ border: 0, outline: 'none', background: 'transparent', width: '100%', fontSize: 13, color: 'var(--color-text-primary)' }}
+            />
+          </label>
+          <select value={reviewFilter} onChange={event => setReviewFilter(event.target.value as PublicReviewFilter)} style={{ ...inputStyle, flex: '0 1 180px' }}>
+            <option value="all">All reviews</option>
+            <option value="unreviewed">Unreviewed</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="discussion">Needs discussion</option>
+          </select>
+          <button type="button" onClick={savePersonalView} style={secondaryButtonStyle}>
+            Save view
+          </button>
+        </section>
 
         <section style={{ border: '1px solid var(--edge)', borderRadius: 10, overflow: 'hidden', background: 'var(--surface-panel)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: canReview ? '1.25fr 0.9fr 0.85fr 0.85fr 1fr 150px' : '1.25fr 0.9fr 0.85fr 0.85fr 1fr', minHeight: 38, alignItems: 'center', background: 'var(--tint)', borderBottom: '1px solid var(--edge)' }}>
@@ -214,8 +297,8 @@ export function PublicCampaignView() {
             {canReview && <div style={headerCellStyle}>Review</div>}
           </div>
 
-          {contacts.map(contact => {
-            const latestReview = contactReviews(reviews, contact.contact_id)[0]
+          {visibleContacts.map(contact => {
+            const latestReview = latestContactReview(reviews, contact.contact_id)
             return (
               <div key={contact.contact_id} style={{ display: 'grid', gridTemplateColumns: canReview ? '1.25fr 0.9fr 0.85fr 0.85fr 1fr 150px' : '1.25fr 0.9fr 0.85fr 0.85fr 1fr', minHeight: 62, alignItems: 'center', borderBottom: '1px solid var(--divider)' }}>
                 <Cell primary={contact.name} secondary={contact.linkedin ?? undefined} />
@@ -233,6 +316,11 @@ export function PublicCampaignView() {
               </div>
             )
           })}
+          {visibleContacts.length === 0 && (
+            <div style={{ padding: 18, color: 'var(--color-text-tertiary)', fontSize: 13 }}>
+              No shared contacts match this view.
+            </div>
+          )}
         </section>
 
         {selectedContact && (
@@ -355,6 +443,15 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'inherit',
   padding: '0 10px',
   outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const inputWrapStyle: React.CSSProperties = {
+  width: '100%',
+  height: 38,
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'var(--color-surface)',
   boxSizing: 'border-box',
 }
 

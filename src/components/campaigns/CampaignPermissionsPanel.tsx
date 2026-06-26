@@ -122,6 +122,7 @@ export function CampaignPermissionsPanel({
   const campaignRequests = requests.filter(request => request.campaign_id === campaign.id)
   const pendingRequests = campaignRequests.filter(request => request.status === 'pending')
   const activePublicLinks = publicLinks.filter(link => !link.revoked_at)
+  const isHistoricalCampaign = campaign.status !== 'active'
 
   async function handleResolve(request: CollaborationApprovalRequest, status: 'approved' | 'rejected') {
     if (!workspaceId) return
@@ -180,6 +181,14 @@ export function CampaignPermissionsPanel({
           access area. Private fields stay hidden unless they are explicitly enabled for this campaign or link.
         </span>
       </div>
+      {isHistoricalCampaign && (
+        <div style={{ ...noticeStyle, marginBottom: 14 }}>
+          <strong style={{ color: 'var(--color-text-primary)' }}>Historical campaign.</strong>
+          <span style={{ color: 'var(--color-text-tertiary)', marginLeft: 6 }}>
+            New public links stay limited to public profile fields; revoke existing private access when a campaign closes.
+          </span>
+        </div>
+      )}
 
       {error && <div style={{ ...noticeStyle, color: 'var(--health-fading)' }}>{error}</div>}
 
@@ -236,6 +245,7 @@ export function CampaignPermissionsPanel({
           contacts={campaignPeople}
           campaignContacts={campaignContacts}
           stages={stages}
+          isHistoricalCampaign={isHistoricalCampaign}
           onClose={() => setShowPublicLinkModal(false)}
           onCreated={async () => {
             setShowPublicLinkModal(false)
@@ -524,6 +534,7 @@ function PublicLinkModal({
   contacts,
   campaignContacts,
   stages,
+  isHistoricalCampaign,
   onClose,
   onCreated,
 }: {
@@ -532,6 +543,7 @@ function PublicLinkModal({
   contacts: Contact[]
   campaignContacts: CampaignContact[]
   stages: CampaignStage[]
+  isHistoricalCampaign: boolean
   onClose: () => void
   onCreated: () => void
 }) {
@@ -544,6 +556,7 @@ function PublicLinkModal({
   function toggleScope(scope: CollaborationFieldScope) {
     setFieldScopes(current => {
       if (scope === 'public_profile') return current.includes(scope) ? current : [...current, scope]
+      if (isHistoricalCampaign) return current
       return current.includes(scope) ? current.filter(item => item !== scope) : [...current, scope]
     })
   }
@@ -599,6 +612,11 @@ function PublicLinkModal({
         <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: '0 0 14px', lineHeight: 1.5 }}>
           The link stores a limited snapshot of this campaign, so reviewers only see the fields selected here.
         </p>
+        {isHistoricalCampaign && (
+          <div style={{ ...noticeStyle, marginBottom: 14 }}>
+            This campaign is not active, so new public links are limited to public profile fields.
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <section style={miniPanelStyle}>
             <div style={sectionTitleStyle}>Visible fields</div>
@@ -607,7 +625,7 @@ function PublicLinkModal({
                 <input
                   type="checkbox"
                   checked={fieldScopes.includes(scope.value)}
-                  disabled={scope.value === 'public_profile'}
+                  disabled={scope.value === 'public_profile' || (isHistoricalCampaign && scope.value !== 'public_profile')}
                   onChange={() => toggleScope(scope.value)}
                   style={{ accentColor: 'var(--color-brand)' }}
                 />
