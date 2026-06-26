@@ -182,7 +182,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
         />
         <NavItem
           icon={<ApprovalsIcon />}
-          label="Approvals"
+          label="Shared contacts"
           active={isApprovals}
           collapsed={collapsed}
           onClick={() => navigate('/approvals')}
