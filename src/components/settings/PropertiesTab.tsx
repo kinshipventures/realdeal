@@ -8,6 +8,8 @@ import {
   CONTACT_STANDARD_PROPERTY_OPTIONS,
   DEFAULT_CONTACT_DISPLAY_SETTINGS,
   type ContactDisplaySettings,
+  type ContactDisplaySectionId,
+  type ContactDisplaySectionOption,
   type PropertyObjectType,
   type PropertyOption,
 } from '@/lib/contactDisplaySettings'
@@ -46,6 +48,17 @@ const REMOVED_CONTACT_PROPERTY_NAMES = new Set([
   'spv investor',
   'spv investor checkbox',
 ])
+
+const CONTACT_CARD_SECTION_ORDER: ContactDisplaySectionId[] = [
+  'details',
+  'ways_to_contact',
+  'fund_activity',
+  'pods',
+  'campaigns',
+  'associated_company',
+  'recent_activity',
+  'next_touchpoint',
+]
 
 function normalizeRemovedPropertyName(value: string): string {
   return value
@@ -629,8 +642,11 @@ export function PropertiesTab() {
     })
 
     function standardFieldRows(options: PropertyOption[], ids: string[], depth = 0): PropertyRow[] {
-      return options
-        .filter(option => ids.includes(option.id))
+      const optionById = new Map(options.map(option => [option.id, option]))
+
+      return ids
+        .map(id => optionById.get(id))
+        .filter((option): option is PropertyOption => Boolean(option))
         .map(option => {
           const checked = !settings.hiddenStandardFieldIds.includes(option.id)
           return {
@@ -660,8 +676,18 @@ export function PropertiesTab() {
       ? COMPANY_STANDARD_PROPERTY_OPTIONS
       : CONTACT_STANDARD_PROPERTY_OPTIONS
 
-    const sectionRows = CONTACT_DISPLAY_SECTION_OPTIONS
+    const availableSections = CONTACT_DISPLAY_SECTION_OPTIONS
       .filter(section => section.appliesTo === objectType || section.appliesTo === 'Both')
+    const sectionById = new Map<ContactDisplaySectionId, ContactDisplaySectionOption>(
+      availableSections.map(section => [section.id, section]),
+    )
+    const orderedSections = objectType === 'Contact'
+      ? CONTACT_CARD_SECTION_ORDER
+          .map(sectionId => sectionById.get(sectionId))
+          .filter((section): section is ContactDisplaySectionOption => Boolean(section))
+      : availableSections
+
+    const sectionRows = orderedSections
       .flatMap(section => {
         const checked = !settings.hiddenSectionIds.includes(section.id)
         const rowsForSection: PropertyRow[] = [{
@@ -697,8 +723,24 @@ export function PropertiesTab() {
             ))
           }
 
-          if (section.id === 'pods') rowsForSection.push(...podRows(1))
-          if (section.id === 'sub_pods') rowsForSection.push(...subPodRows(1))
+          if (section.id === 'pods') {
+            rowsForSection.push(...podRows(1))
+
+            const subPodsSection = sectionById.get('sub_pods')
+            if (subPodsSection) {
+              const subPodsChecked = !settings.hiddenSectionIds.includes(subPodsSection.id)
+              rowsForSection.push({
+                ...subPodsSection,
+                label: contactDetailSectionLabel(subPodsSection.id, subPodsSection.label, objectType),
+                group: 'Sub-pods',
+                checked: subPodsChecked,
+                statusLabel: subPodsChecked ? 'Shown' : (selectedContact ? 'Hidden here' : 'Hidden'),
+                onToggle: () => toggleSection(subPodsSection.id),
+                depth: 1,
+              })
+              rowsForSection.push(...subPodRows(1))
+            }
+          }
           if (section.id === 'campaigns') rowsForSection.push(...campaignRows(1))
           if (section.id === 'associated_company') rowsForSection.push(...companyRows(1))
 
@@ -753,7 +795,7 @@ export function PropertiesTab() {
         }
       })
 
-    return [...sectionRows, ...customRows]
+    return objectType === 'Contact' ? sectionRows : [...sectionRows, ...customRows]
   }, [
     categories,
     campaigns,
