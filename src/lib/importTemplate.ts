@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from 'fflate'
 import { getCampaigns, getCategories, getCompanies, getContacts, getPipelineStages, getPods } from './data'
 import { getFieldConfigs } from './fieldConfig'
+import { DEFAULT_KINSHIP_INVESTMENTS } from './kinshipInvestments'
 import { LP_TRACKER_FIELDS } from './lpTrackerFields'
 import type { Campaign, CampaignStage, Category, Company, Contact, Pod } from './types'
 
@@ -125,12 +126,6 @@ function uniqueSorted(values: Iterable<string>): string[] {
   return [...seen.values()].sort((a, b) => a.localeCompare(b))
 }
 
-function splitOptionValues(value: unknown): string[] {
-  if (Array.isArray(value)) return value.flatMap(splitOptionValues)
-  if (typeof value !== 'string') return []
-  return value.split(/[;,|\n]+/).map(item => item.trim()).filter(Boolean)
-}
-
 function companyOptionNames(contacts: Contact[], companies: Company[]): string[] {
   return uniqueSorted([
     ...companies.map(company => company.name),
@@ -139,16 +134,13 @@ function companyOptionNames(contacts: Contact[], companies: Company[]): string[]
   ])
 }
 
-function investmentOptionNames(contacts: Contact[], companies: Company[]): string[] {
-  return uniqueSorted([
-    ...companyOptionNames(contacts, companies),
-    ...contacts.flatMap(contact => splitOptionValues(contact.kv_fund_investor)),
-  ])
+function investmentOptionNames(): string[] {
+  return uniqueSorted(DEFAULT_KINSHIP_INVESTMENTS)
 }
 
 function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
   const companyNames = companyOptionNames(data.contacts, data.companies)
-  const investmentNames = investmentOptionNames(data.contacts, data.companies)
+  const investmentNames = investmentOptionNames()
   const contactNames = uniqueSorted(data.contacts.filter(contact => contact.type === 'Contact').map(contact => contact.name))
   const campaignStatuses = uniqueSorted([
     ...DEFAULT_CAMPAIGN_STATUSES,

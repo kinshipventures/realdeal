@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { unzipSync } from 'fflate'
 import { buildImportTemplateWorkbook } from './importTemplate'
 import { detectColumns, parseWorkbookBuffer } from './csvImport'
 import type { Campaign, CampaignStage, Category, Company, Contact, Pod } from './types'
 
 function bufferFromBytes(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+}
+
+function optionColumnValues(optionsXml: string, column: string): string[] {
+  return [...optionsXml.matchAll(new RegExp(`<c r="${column}\\d+"[^>]*><is><t>(.*?)</t></is></c>`, 'g'))].map(match => match[1])
 }
 
 describe('workspace import template', () => {
@@ -87,5 +92,15 @@ describe('workspace import template', () => {
     expect(targetByHeader.get('Campaign 1')).toBe('Campaign')
     expect(targetByHeader.get('Campaign 1 Status')).toBe('Campaign Status')
     expect(targetByHeader.get('Kinship Investments 1')).toBe('KV Fund Investor')
+
+    const workbookFiles = unzipSync(bytes)
+    const optionsXml = new TextDecoder().decode(workbookFiles['xl/worksheets/sheet2.xml'])
+    const kinshipInvestmentOptions = optionColumnValues(optionsXml, 'G')
+
+    expect(kinshipInvestmentOptions).toContain('Applyboard')
+    expect(kinshipInvestmentOptions).toContain('Goop Series A')
+    expect(kinshipInvestmentOptions).toContain('Kinship Fund I')
+    expect(kinshipInvestmentOptions).toContain('TeraWulf')
+    expect(kinshipInvestmentOptions).not.toContain('Company Record')
   })
 })
