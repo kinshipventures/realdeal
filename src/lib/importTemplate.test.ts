@@ -68,9 +68,9 @@ describe('workspace import template', () => {
       'Referred By',
       'Gender',
       'Birthday',
+      'Notables',
       'Email',
       'Email 2',
-      'Email 3',
     ])
     expect(parsed.headers).toContain('Pod 1')
     expect(parsed.headers).toContain('Sub-pod 1')
@@ -92,10 +92,24 @@ describe('workspace import template', () => {
     expect(targetByHeader.get('Campaign 1')).toBe('Campaign')
     expect(targetByHeader.get('Campaign 1 Status')).toBe('Campaign Status')
     expect(targetByHeader.get('Kinship Investments 1')).toBe('KV Fund Investor')
+    expect(targetByHeader.get('Notables')).toBe('Notables')
 
     const workbookFiles = unzipSync(bytes)
+    const contactsXml = new TextDecoder().decode(workbookFiles['xl/worksheets/sheet1.xml'])
     const optionsXml = new TextDecoder().decode(workbookFiles['xl/worksheets/sheet2.xml'])
     const kinshipInvestmentOptions = optionColumnValues(optionsXml, 'G')
+
+    expect(contactsXml).toContain('<pane ySplit="2" topLeftCell="A3"')
+    expect(contactsXml).toContain('<c r="A1" t="inlineStr" s="1"><is><t>contact information</t></is></c>')
+    expect(contactsXml).toContain('<c r="I1" t="inlineStr" s="1"><is><t>ways to contact</t></is></c>')
+    expect(contactsXml).toContain('<c r="S1" t="inlineStr" s="1"><is><t>investor profile</t></is></c>')
+    expect(contactsXml).toContain('<c r="Z1" t="inlineStr" s="1"><is><t>pods</t></is></c>')
+    expect(contactsXml).toContain('<c r="AH1" t="inlineStr" s="1"><is><t>campaigns</t></is></c>')
+    expect(contactsXml).toContain('<c r="AQ1" t="inlineStr" s="1"><is><t>companies</t></is></c>')
+    expect(contactsXml).toContain('<mergeCell ref="A1:H1"/>')
+    expect(contactsXml).toContain('<mergeCell ref="I1:R1"/>')
+    expect(contactsXml).toContain('sqref="F3:F1000"')
+    expect(contactsXml).not.toContain('sqref="F2:F1000"')
 
     expect(kinshipInvestmentOptions).toContain('Applyboard')
     expect(kinshipInvestmentOptions).toContain('Goop Series A')

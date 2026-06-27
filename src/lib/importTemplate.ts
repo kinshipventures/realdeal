@@ -16,6 +16,13 @@ type TemplateValidation = {
   optionKey: string
 }
 
+type WorksheetOptions = {
+  validations?: string
+  styledRows?: number
+  freezeRows?: number
+  mergeCells?: string[]
+}
+
 export type ImportTemplateWorkspaceData = {
   pods: Pod[]
   categories: Category[]
@@ -34,6 +41,7 @@ const TEMPLATE_HEADERS = [
   'Referred By',
   'Gender',
   'Birthday',
+  'Notables',
   'Email',
   'Email 2',
   'Email 3',
@@ -99,6 +107,7 @@ const BASE_VALIDATIONS: TemplateValidation[] = [
 ]
 
 const DEFAULT_CAMPAIGN_STATUSES = ['Pending', 'Reached', 'Responded', 'Confirmed']
+const CUSTOM_FIELDS_SECTION_LABEL = 'custom fields'
 const REMOVED_TEMPLATE_FIELD_NAMES = new Set([
   'category',
   'fund type',
@@ -170,6 +179,71 @@ function templateHeaders(customFieldNames: string[]): string[] {
   return [...TEMPLATE_HEADERS, ...custom]
 }
 
+function templateSectionForHeader(header: string): string {
+  const normalized = normalizeRemovedTemplateFieldName(header)
+  if ([
+    'name',
+    'company',
+    'job title',
+    'linkedin',
+    'referred by',
+    'gender',
+    'birthday',
+    'notables',
+  ].includes(normalized)) {
+    return 'contact information'
+  }
+  if ([
+    'email',
+    'email 2',
+    'email 3',
+    'phone',
+    'address',
+    'city',
+    'state',
+    'country',
+    'global region',
+    'assistant info',
+  ].includes(normalized)) {
+    return 'ways to contact'
+  }
+  if (
+    /^kinship investments?(?:\s*\d+)?$/.test(normalized) ||
+    ['investment entity', 'investment email'].includes(normalized)
+  ) {
+    return 'investor profile'
+  }
+  if (/^pods?(?:\s*\d+)?$/.test(normalized) || /^sub[\s-]*pods?(?:\s*\d+)?$/.test(normalized)) {
+    return 'pods'
+  }
+  if (/^campaign(?:\s*\d+)?(?:\s+status|\s+target commitment)?$/.test(normalized)) {
+    return 'campaigns'
+  }
+  if (['companies', 'contacts'].includes(normalized)) {
+    return 'companies'
+  }
+  return CUSTOM_FIELDS_SECTION_LABEL
+}
+
+function templateSectionLabels(headers: string[]): string[] {
+  return headers.map(templateSectionForHeader)
+}
+
+function mergeRefsForSectionRow(sectionLabels: string[]): string[] {
+  const refs: string[] = []
+  let startIndex = 0
+
+  for (let index = 1; index <= sectionLabels.length; index += 1) {
+    if (index < sectionLabels.length && sectionLabels[index] === sectionLabels[startIndex]) continue
+    if (sectionLabels[startIndex] && index - startIndex > 1) {
+      refs.push(`${columnName(startIndex)}1:${columnName(index - 1)}1`)
+    }
+    startIndex = index
+  }
+
+  return refs
+}
+
 function columnName(index: number): string {
   let n = index + 1
   let name = ''
@@ -199,7 +273,7 @@ function rowXml(values: string[], rowNumber: number, styleId = 0): string {
   return `<row r="${rowNumber}">${cells.join('')}</row>`
 }
 
-function validationXml(headers: string[], optionColumns: OptionColumn[], validations: TemplateValidation[]): string {
+function validationXml(headers: string[], optionColumns: OptionColumn[], validations: TemplateValidation[], startRow = 2): string {
   const optionIndexByKey = new Map(optionColumns.map((column, index) => [column.key, index]))
   const headerIndexByName = new Map(headers.map((header, index) => [header, index]))
   const items = validations.flatMap(validation => {
@@ -211,32 +285,46 @@ function validationXml(headers: string[], optionColumns: OptionColumn[], validat
     const sourceColumn = columnName(optionIndex)
     const endRow = optionColumn.values.length + 1
     const formula = `'Options'!$${sourceColumn}$2:$${sourceColumn}$${endRow}`
-    return [`<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="${targetColumn}2:${targetColumn}1000"><formula1>${escapeXml(formula)}</formula1></dataValidation>`]
+    return [`<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="${targetColumn}${startRow}:${targetColumn}1000"><formula1>${escapeXml(formula)}</formula1></dataValidation>`]
   })
   if (items.length === 0) return ''
   return `<dataValidations count="${items.length}">${items.join('')}</dataValidations>`
 }
 
-function worksheetXml(rows: string[][], validations = ''): string {
+function mergeCellsXml(mergeCells: string[]): string {
+  if (mergeCells.length === 0) return ''
+  const items = mergeCells.map(ref => `<mergeCell ref="${escapeXml(ref)}"/>`).join('')
+  return `<mergeCells count="${mergeCells.length}">${items}</mergeCells>`
+}
+
+function worksheetXml(rows: string[][], options: WorksheetOptions | string = {}): string {
+  const config = typeof options === 'string' ? { validations: options } : options
+  const styledRows = config.styledRows ?? 1
+  const freezeRows = config.freezeRows ?? 1
+  const mergeCells = config.mergeCells ?? []
   const columnCount = Math.max(...rows.map(row => row.length), 1)
   const dimension = `A1:${columnName(columnCount - 1)}${Math.max(rows.length, 1)}`
   const cols = Array.from({ length: columnCount }, (_, index) => {
     const width = index === 0 ? 28 : 22
     return `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
   }).join('')
-  const body = rows.map((row, index) => rowXml(row, index + 1, index === 0 ? 1 : 0)).join('')
+  const body = rows.map((row, index) => rowXml(row, index + 1, index < styledRows ? 1 : 0)).join('')
+  const freezePane = freezeRows > 0
+    ? `<pane ySplit="${freezeRows}" topLeftCell="A${freezeRows + 1}" activePane="bottomLeft" state="frozen"/>
+      <selection pane="bottomLeft"/>`
+    : ''
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <dimension ref="${dimension}"/>
   <sheetViews>
     <sheetView workbookViewId="0">
-      <pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>
-      <selection pane="bottomLeft"/>
+      ${freezePane}
     </sheetView>
   </sheetViews>
   <cols>${cols}</cols>
   <sheetData>${body}</sheetData>
-  ${validations}
+  ${mergeCellsXml(mergeCells)}
+  ${config.validations ?? ''}
 </worksheet>`
 }
 
@@ -312,14 +400,20 @@ function optionsRows(optionColumns: OptionColumn[]): string[][] {
 export function buildImportTemplateWorkbook(data: ImportTemplateWorkspaceData): Uint8Array {
   const optionColumns = buildOptionColumns(data)
   const headers = templateHeaders(data.customFieldNames)
-  const validations = validationXml(headers, optionColumns, BASE_VALIDATIONS)
+  const sectionLabels = templateSectionLabels(headers)
+  const validations = validationXml(headers, optionColumns, BASE_VALIDATIONS, 3)
   const files = {
     '[Content_Types].xml': strToU8(contentTypesXml()),
     '_rels/.rels': strToU8(rootRelsXml()),
     'xl/workbook.xml': strToU8(workbookXml()),
     'xl/_rels/workbook.xml.rels': strToU8(workbookRelsXml()),
     'xl/styles.xml': strToU8(stylesXml()),
-    'xl/worksheets/sheet1.xml': strToU8(worksheetXml([headers], validations)),
+    'xl/worksheets/sheet1.xml': strToU8(worksheetXml([sectionLabels, headers], {
+      validations,
+      styledRows: 2,
+      freezeRows: 2,
+      mergeCells: mergeRefsForSectionRow(sectionLabels),
+    })),
     'xl/worksheets/sheet2.xml': strToU8(worksheetXml(optionsRows(optionColumns))),
   }
   return zipSync(files)
