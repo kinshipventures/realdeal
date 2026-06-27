@@ -131,6 +131,15 @@ function groupChildrenBySection(rows: PropertyRow[]): Array<{ label: string; row
   return Array.from(groups.entries()).map(([label, groupedRows]) => ({ label, rows: groupedRows }))
 }
 
+function propertyGroupDisplayLabel(row: PropertyRow): string {
+  return row.fieldType === 'Section' ? row.label : row.group
+}
+
+function optionPanelGroupDisplayLabel(groupLabel: string, parentSectionLabel?: string): string {
+  if (!parentSectionLabel || parentSectionLabel === 'Pods' || parentSectionLabel === 'Sub-pods') return groupLabel
+  return parentSectionLabel
+}
+
 function PropertyCheckbox({ row }: { row: PropertyRow }) {
   return (
     <input
@@ -151,7 +160,7 @@ function contactDetailSectionLabel(id: string, fallback: string, objectType: Pro
   return fallback
 }
 
-function PropertyOptionPanel({ rows }: { rows: PropertyRow[] }) {
+function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sectionLabel?: string }) {
   const groupedRows = groupChildrenBySection(rows)
 
   return (
@@ -193,7 +202,7 @@ function PropertyOptionPanel({ rows }: { rows: PropertyRow[] }) {
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}>
-                {group.label}
+                {optionPanelGroupDisplayLabel(group.label, sectionLabel)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
                 {group.rows.length} options
@@ -393,13 +402,13 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                 </div>
               </div>
               <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.fieldType}</div>
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.group}</div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
               <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
               <div style={{ padding: '8px 12px' }}>
                 <StatusPill active={row.checked} label={row.statusLabel} />
               </div>
             </div>
-            {hasChildren && isExpanded && <PropertyOptionPanel rows={children} />}
+            {hasChildren && isExpanded && <PropertyOptionPanel rows={children} sectionLabel={row.label} />}
           </div>
         )
       })}
