@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+tmp/*.json
+supabase/.temp/linked-project.json
+supabase/.temp/pooler-url
 
 node_modules
 dist

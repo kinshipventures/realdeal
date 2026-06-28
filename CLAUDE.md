@@ -181,9 +181,9 @@ Toggle via sidebar. When active, all data functions return static sample data. W
 ## Deploy Configuration
 
 - Platform: Vercel (auto-deploys from github main)
-- Production URL: https://real-deal-2.vercel.app
-- Supabase project: pnhyhcwecpgbcsoabbrm (personal, not Lovable Cloud)
-- Lovable editor still used for code edits (syncs via git); real-deal.lovable.app is a stale zombie
+- Production URL: https://realdeal-crm-app.vercel.app
+- Supabase production project: zsecxtxpwmvgggqksdfb
+- Vercel project: realdeal-crm-app
 - Pre-merge: `pnpm build`
 - Required env vars (set in Vercel): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `VITE_USE_LOVABLE_AUTH_BRIDGE=false`
 
