@@ -108,6 +108,7 @@ function StatusPill({ active, label }: { active: boolean; label: string }) {
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
+      justifyContent: 'center',
       padding: '2px 8px',
       borderRadius: 999,
       fontSize: 11,
@@ -196,33 +197,41 @@ function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sect
             overflow: 'hidden',
           }}>
             <div style={{
-              minHeight: 32,
-              display: 'flex',
+              minHeight: 34,
+              display: 'grid',
+              gridTemplateColumns: CHILD_GRID_COLUMNS,
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-              padding: '0 10px',
               borderBottom: '1px solid var(--divider)',
-              background: 'var(--tint)',
+              background: 'linear-gradient(180deg, rgba(248,250,252,0.95), rgba(248,250,252,0.72))',
             }}>
+              <div />
               <span style={{
                 fontSize: 11,
                 fontWeight: 800,
                 color: 'var(--color-text-secondary)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
+                padding: '0 10px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}>
                 {optionPanelGroupDisplayLabel(group.label, sectionLabel)}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+              <div />
+              <div />
+              <span style={{
+                padding: '0 10px',
+                fontSize: 11,
+                color: 'var(--color-text-tertiary)',
+                whiteSpace: 'nowrap',
+                textAlign: 'right',
+              }}>
                 {group.rows.length} options
               </span>
             </div>
 
-            {group.rows.map(row => (
+            {group.rows.map((row, index) => (
               <label
                 key={`${row.objectType}:${row.id}`}
                 style={{
@@ -230,7 +239,7 @@ function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sect
                   gridTemplateColumns: CHILD_GRID_COLUMNS,
                   alignItems: 'center',
                   minHeight: 42,
-                  borderBottom: '1px solid var(--divider)',
+                  borderBottom: index === group.rows.length - 1 ? 'none' : '1px solid var(--divider)',
                   cursor: 'pointer',
                 }}
               >
@@ -240,7 +249,7 @@ function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sect
                 <div style={{ padding: '7px 10px', minWidth: 0 }}>
                   <div style={{
                     fontSize: 12,
-                    fontWeight: 650,
+                    fontWeight: 700,
                     color: 'var(--color-text-secondary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -304,14 +313,20 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
   }
 
   return (
-    <div style={{ border: '1px solid var(--edge)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{
+      border: '1px solid var(--edge)',
+      borderRadius: 10,
+      overflow: 'hidden',
+      background: 'var(--surface-panel)',
+      boxShadow: '0 1px 0 rgba(15,23,42,0.02)',
+    }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: TABLE_GRID_COLUMNS,
         gap: 0,
         alignItems: 'center',
         minHeight: 38,
-        background: 'var(--tint)',
+        background: 'linear-gradient(180deg, rgba(248,250,252,0.98), rgba(241,245,249,0.92))',
         borderBottom: '1px solid var(--edge)',
         fontSize: 10,
         fontWeight: 800,
@@ -340,15 +355,15 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                 display: 'grid',
                 gridTemplateColumns: TABLE_GRID_COLUMNS,
                 alignItems: 'center',
-                minHeight: 52,
+                minHeight: 54,
                 borderBottom: hasChildren && isExpanded ? 'none' : '1px solid var(--divider)',
-                background: 'transparent',
+                background: hasChildren ? 'rgba(248,250,252,0.36)' : 'transparent',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <PropertyCheckbox row={row} />
               </div>
-              <div style={{ padding: '8px 12px', minWidth: 0 }}>
+              <div style={{ padding: '9px 12px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                   {hasChildren ? (
                     <button
@@ -364,8 +379,8 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                         })
                       }}
                       style={{
-                        width: 26,
-                        height: 26,
+                        width: 28,
+                        height: 28,
                         borderRadius: 6,
                         border: '1px solid var(--edge)',
                         background: 'var(--surface-panel)',
@@ -391,7 +406,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                   <div style={{ minWidth: 0 }}>
                     <div style={{
                       fontSize: 13,
-                      fontWeight: 700,
+                      fontWeight: 800,
                       color: 'var(--color-text-primary)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -401,8 +416,9 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                     </div>
                     {hasChildren && (
                       <div style={{
-                        marginTop: 3,
+                        marginTop: 4,
                         fontSize: 11,
+                        fontWeight: 600,
                         color: 'var(--color-text-tertiary)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
