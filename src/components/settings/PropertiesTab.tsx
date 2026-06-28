@@ -32,22 +32,6 @@ type PropertyRowGroup = {
 
 const TABLE_GRID_COLUMNS = '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px'
 const CHILD_GRID_COLUMNS = '36px minmax(170px, 1.4fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr) 86px'
-const SECTION_COLUMN_LABEL_STYLE: React.CSSProperties = {
-  marginBottom: 5,
-  fontSize: 10,
-  fontWeight: 800,
-  color: 'var(--color-text-tertiary)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-}
-
-const SECTION_CELL_TEXT_STYLE: React.CSSProperties = {
-  fontSize: 12,
-  color: 'var(--color-text-secondary)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-}
 
 const OBJECT_OPTIONS: { value: PropertyObjectType; label: string }[] = [
   { value: 'Contact', label: 'Contact properties' },
@@ -168,15 +152,6 @@ function propertyGroupDisplayLabel(row: PropertyRow): string {
 function optionPanelGroupDisplayLabel(groupLabel: string, parentSectionLabel?: string): string {
   if (!parentSectionLabel || parentSectionLabel === 'Pods' || parentSectionLabel === 'Sub-pods') return groupLabel
   return parentSectionLabel
-}
-
-function SectionMetaCell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ padding: '9px 12px', minWidth: 0 }}>
-      <div style={SECTION_COLUMN_LABEL_STYLE}>{label}</div>
-      {children}
-    </div>
-  )
 }
 
 function PropertyCheckbox({ row }: { row: PropertyRow }) {
@@ -360,7 +335,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                 display: 'grid',
                 gridTemplateColumns: TABLE_GRID_COLUMNS,
                 alignItems: 'center',
-                minHeight: 68,
+                minHeight: 54,
                 borderBottom: hasChildren && isExpanded ? 'none' : '1px solid var(--divider)',
                 background: hasChildren ? 'rgba(248,250,252,0.36)' : 'transparent',
               }}
@@ -409,7 +384,6 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                     <span style={{ width: 26, flexShrink: 0 }} />
                   )}
                   <div style={{ minWidth: 0 }}>
-                    <div style={SECTION_COLUMN_LABEL_STYLE}>Name</div>
                     <div style={{
                       fontSize: 13,
                       fontWeight: 800,
@@ -436,18 +410,12 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                   </div>
                 </div>
               </div>
-              <SectionMetaCell label="Type">
-                <div style={SECTION_CELL_TEXT_STYLE}>{row.fieldType}</div>
-              </SectionMetaCell>
-              <SectionMetaCell label="Group">
-                <div style={SECTION_CELL_TEXT_STYLE}>{propertyGroupDisplayLabel(row)}</div>
-              </SectionMetaCell>
-              <SectionMetaCell label="Created by">
-                <div style={SECTION_CELL_TEXT_STYLE}>{row.ownerLabel}</div>
-              </SectionMetaCell>
-              <SectionMetaCell label="Status">
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
+              <div style={{ padding: '8px 12px' }}>
                 <StatusPill active={row.checked} label={row.statusLabel} />
-              </SectionMetaCell>
+              </div>
             </div>
             {hasChildren && isExpanded && <PropertyOptionPanel rows={children} sectionLabel={row.label} />}
           </div>
