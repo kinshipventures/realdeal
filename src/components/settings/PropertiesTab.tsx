@@ -324,6 +324,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
     }}>
       {rowGroups.map(({ row, children }) => {
         const hasChildren = children.length > 0
+        const isSectionRow = row.fieldType === 'Section'
         const rowKey = `${row.objectType}:${row.id}`
         const isExpanded = expandedRows.has(rowKey)
         const selectedChildren = children.filter(child => child.checked).length
@@ -410,12 +411,23 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                   </div>
                 </div>
               </div>
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
-              <div style={{ padding: '8px 12px' }}>
-                <StatusPill active={row.checked} label={row.statusLabel} />
-              </div>
+              {isSectionRow ? (
+                <>
+                  <div />
+                  <div />
+                  <div />
+                  <div />
+                </>
+              ) : (
+                <>
+                  <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
+                  <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
+                  <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
+                  <div style={{ padding: '8px 12px' }}>
+                    <StatusPill active={row.checked} label={row.statusLabel} />
+                  </div>
+                </>
+              )}
             </div>
             {hasChildren && isExpanded && <PropertyOptionPanel rows={children} sectionLabel={row.label} />}
           </div>
