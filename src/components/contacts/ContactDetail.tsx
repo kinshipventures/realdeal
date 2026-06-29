@@ -14,6 +14,7 @@ import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampai
 import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
+import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { CloseButton } from '../ui'
@@ -228,34 +229,27 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [acceptingField, setAcceptingField] = useState<string | null>(null)
   const [shellBounds, setShellBounds] = useState<ShellBounds | null>(null)
   const [availablePods, setAvailablePods] = useState<Pod[]>(pods)
-  const pinnedSubPodParentIds = useMemo(() => {
-    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
-    return availableCategories
-      .filter(category => pinnedSubPodIds.has(category.id))
-      .map(category => category.list_id)
-  }, [availableCategories, displaySettings.pinnedSubPodIds])
+  const hiddenPodIds = useMemo(() => new Set(displaySettings.hiddenPodIds), [displaySettings.hiddenPodIds])
+  const hiddenSubPodIds = useMemo(() => new Set(displaySettings.hiddenSubPodIds), [displaySettings.hiddenSubPodIds])
+  const hiddenCampaignIds = useMemo(() => new Set(displaySettings.hiddenCampaignIds), [displaySettings.hiddenCampaignIds])
+  const hiddenCompanyIds = useMemo(() => new Set(displaySettings.hiddenCompanyIds), [displaySettings.hiddenCompanyIds])
+  const visiblePods = useMemo(
+    () => availablePods.filter(pod => !hiddenPodIds.has(pod.id)),
+    [availablePods, hiddenPodIds],
+  )
   const visibleSubPodIds = useMemo(() => {
-    return uniqueIds([
-      ...(draft.list_ids ?? []),
-      ...displaySettings.pinnedPodIds,
-      ...pinnedSubPodParentIds,
-    ])
-  }, [draft.list_ids, displaySettings.pinnedPodIds, pinnedSubPodParentIds])
+    return visiblePods.map(pod => pod.id)
+  }, [visiblePods])
   const visibleSubPodPods = useMemo(
-    () => availablePods.filter(pod => visibleSubPodIds.includes(pod.id)),
-    [availablePods, visibleSubPodIds],
+    () => visiblePods,
+    [visiblePods],
   )
   const visibleSubPodCategories = useMemo(() => {
-    const assignedPodIds = new Set(draft.list_ids ?? [])
-    const pinnedPodIds = new Set(displaySettings.pinnedPodIds)
-    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
-
     return availableCategories.filter(category =>
-      assignedPodIds.has(category.list_id) ||
-      pinnedPodIds.has(category.list_id) ||
-      pinnedSubPodIds.has(category.id)
+      visibleSubPodIds.includes(category.list_id) &&
+      !hiddenSubPodIds.has(category.id)
     )
-  }, [availableCategories, draft.list_ids, displaySettings.pinnedPodIds, displaySettings.pinnedSubPodIds])
+  }, [availableCategories, hiddenSubPodIds, visibleSubPodIds])
   const readOnlySubPodCategoryIds = useMemo(() => {
     const assignedPodIds = new Set(draft.list_ids ?? [])
     return visibleSubPodCategories
@@ -387,17 +381,26 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const equityScore = contactEquityScore(interactions)
   const equityBreakdown = contactEquityBreakdown(interactions)
-  const totalCommitmentAmount = contactCampaignLinks.reduce(
+  const visibleContactCampaignLinks = useMemo(
+    () => contactCampaignLinks.filter(link => !hiddenCampaignIds.has(link.campaign_id)),
+    [contactCampaignLinks, hiddenCampaignIds],
+  )
+  const totalCommitmentAmount = visibleContactCampaignLinks.reduce(
     (sum, link) => sum + (getCampaignContactCommitmentAmount(link) ?? 0),
     0,
   )
-  const pinnedCampaignOptions = useMemo(() => {
-    const linkedCampaignIds = new Set(contactCampaignLinks.map(link => link.campaign_id))
+  const visibleCampaignOptions = useMemo(() => {
+    const linkedCampaignIds = new Set(visibleContactCampaignLinks.map(link => link.campaign_id))
     return campaigns.filter(campaign =>
-      displaySettings.pinnedCampaignIds.includes(campaign.id) &&
+      campaign.status !== 'hidden' &&
+      !hiddenCampaignIds.has(campaign.id) &&
       !linkedCampaignIds.has(campaign.id)
     )
-  }, [campaigns, contactCampaignLinks, displaySettings.pinnedCampaignIds])
+  }, [campaigns, hiddenCampaignIds, visibleContactCampaignLinks])
+  const visibleActiveCampaignOptions = useMemo(
+    () => visibleCampaignOptions.filter(campaign => campaign.status === 'active'),
+    [visibleCampaignOptions],
+  )
 
   const handleClose = useCallback(() => onClose(), [onClose])
   useEscape(handleClose)
@@ -1001,13 +1004,19 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const allowCustom = config.allowCustom ?? true
     const rawValue = draft[key]
     const values = Array.isArray(rawValue) ? rawValue.map(String) : []
-    const pinnedValues = displaySettings.pinnedFieldOptionValues[String(key)] ?? []
-    const displayValues = mergeOptions(values, pinnedValues)
+    const fieldId = String(key)
+    const hiddenValues = new Set(displaySettings.hiddenFieldOptionValues[fieldId] ?? [])
+    const defaultOptions = fieldId === 'kv_fund_investor' ? DEFAULT_KINSHIP_INVESTMENTS : []
+    const visibleValues = values.filter(value => !hiddenValues.has(value))
+    const visibleOptions = mergeOptions(options, defaultOptions).filter(option => !hiddenValues.has(option))
+    const displayValues = fieldId === 'kv_fund_investor'
+      ? mergeOptions(visibleValues, visibleOptions)
+      : visibleValues
     const hasDisplayedValues = displayValues.length > 0
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
     const labelTargetId = `labels:${String(key)}`
-    const labelOptions = mergeOptions(options, displayValues)
+    const labelOptions = mergeOptions(visibleOptions, displayValues)
     const inputStyle = {
       width: '100%',
       background: 'var(--tint)',
@@ -1780,20 +1789,23 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   function companiesAssociationField() {
     const companyRecords = contactsForOptions.filter(record => record.type === 'Company')
-    const selectedIds = uniqueIds([
+    const visibleCompanyRecords = companyRecords.filter(record => !hiddenCompanyIds.has(record.id))
+    const allSelectedIds = uniqueIds([
       ...(draft.company_ids ?? []),
       draft.company_record_id ?? '',
     ]).filter(Boolean)
+    const selectedIds = allSelectedIds.filter(id => !hiddenCompanyIds.has(id))
+    const hiddenSelectedIds = allSelectedIds.filter(id => hiddenCompanyIds.has(id))
     return linkedRecordsField({
       label: 'Companies',
-      records: companyRecords,
+      records: visibleCompanyRecords,
       selectedIds,
-      displayOnlyIds: displaySettings.pinnedCompanyIds,
+      displayOnlyIds: visibleCompanyRecords.map(record => record.id),
       placeholder: 'add companies',
       createOptionLabel: '+ Create new company...',
       createPlaceholder: 'New company name',
       onCreateRecord: name => createLinkedRelationshipRecord(name, 'Company'),
-      onChange: setLinkedCompanyIds,
+      onChange: ids => setLinkedCompanyIds(uniqueIds([...ids, ...hiddenSelectedIds])),
     })
   }
 
@@ -2504,9 +2516,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </span>
               </div>
 
-              {sectionVisible('campaigns') && !isNew && contactCampaignLinks.length > 0 && (
+              {sectionVisible('campaigns') && !isNew && visibleContactCampaignLinks.length > 0 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                  {contactCampaignLinks.map(link => {
+                  {visibleContactCampaignLinks.map(link => {
                     const campaign = campaigns.find(c => c.id === link.campaign_id)
                     if (!campaign || campaign.status !== 'active') return null
                     const stage = (campaignStagesMap[link.campaign_id] ?? []).find(s => s.id === link.stage_id)
@@ -2674,7 +2686,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <div style={{ padding: '16px 18px' }}>
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {availablePods.map(pod => {
+                      {visiblePods.map(pod => {
                         const isIn = (draft.list_ids ?? []).includes(pod.id)
                         const isPrimary = draft.primary_list_id === pod.id
                         return (
@@ -2777,13 +2789,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
 
-              {sectionVisible('campaigns') && !isNew && contact && (contactCampaignLinks.length > 0 || campaigns.length > 0) && (
+              {sectionVisible('campaigns') && !isNew && contact && (visibleContactCampaignLinks.length > 0 || visibleCampaignOptions.length > 0) && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>campaigns</div>
                   </div>
                   <div style={{ padding: '16px 18px' }}>
-                    {contactCampaignLinks.length > 0 && (
+                    {visibleContactCampaignLinks.length > 0 && (
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -2803,9 +2815,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         </span>
                       </div>
                     )}
-                    {contactCampaignLinks.length > 0 && (
+                    {visibleContactCampaignLinks.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-                        {[...contactCampaignLinks]
+                        {[...visibleContactCampaignLinks]
                           .sort((a, b) => {
                             const campaignA = campaigns.find(c => c.id === a.campaign_id)
                             const campaignB = campaigns.find(c => c.id === b.campaign_id)
@@ -2879,10 +2891,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                           })}
                       </div>
                     )}
-                    {pinnedCampaignOptions.length > 0 && (
+                    {visibleCampaignOptions.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-                        {pinnedCampaignOptions.map(campaign => (
-                          <div key={`pinned-campaign:${campaign.id}`} style={{
+                        {visibleCampaignOptions.map(campaign => (
+                          <div key={`visible-campaign:${campaign.id}`} style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 8,
@@ -2920,7 +2932,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
                         Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
                       </div>
-                    ) : campaigns.length > 0 && (
+                    ) : visibleActiveCampaignOptions.length > 0 && (
                       <>
                         <button
                           type="button"
@@ -2943,7 +2955,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             overflow: 'hidden',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                           }}>
-                            {campaigns.filter(c => c.status === 'active' && !contactCampaignLinks.some(l => l.campaign_id === c.id)).map(campaign => (
+                            {visibleActiveCampaignOptions.map(campaign => (
                               <button
                                 key={campaign.id}
                                 type="button"

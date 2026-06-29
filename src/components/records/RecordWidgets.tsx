@@ -7,6 +7,7 @@ import {
   type ContactDisplaySectionId,
   type ContactDisplaySettings,
 } from '../../lib/contactDisplaySettings'
+import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { SubPodSelector } from '../subpods/SubPodSelector'
 import { DetailsWidget } from './DetailsWidget'
@@ -22,9 +23,8 @@ function uniqueValues(values: string[]): string[] {
   return [...new Set(values.map(value => value.trim()).filter(Boolean))]
 }
 
-function FundTagsWidget({ contact, pinnedLabels = [] }: { contact: Contact; pinnedLabels?: string[] }) {
+function FundTagsWidget({ contact, labels }: { contact: Contact; labels: string[] }) {
   const contactLabels = contact.kv_fund_investor ?? []
-  const displayLabels = uniqueValues([...contactLabels, ...pinnedLabels])
 
   return (
     <div style={WIDGET_STYLE}>
@@ -38,7 +38,7 @@ function FundTagsWidget({ contact, pinnedLabels = [] }: { contact: Contact; pinn
         Fund Activity
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {displayLabels.map(tag => {
+        {labels.map(tag => {
           const selected = contactLabels.includes(tag)
           return (
           <span key={tag} style={{
@@ -126,40 +126,40 @@ export function RecordWidgets({
 }: RecordWidgetsProps) {
   const hiddenStandardFieldIds = useMemo(() => new Set(displaySettings.hiddenStandardFieldIds), [displaySettings.hiddenStandardFieldIds])
   const hiddenFieldConfigIds = useMemo(() => new Set(displaySettings.hiddenFieldConfigIds), [displaySettings.hiddenFieldConfigIds])
-
-  const pinnedSubPodParentIds = useMemo(() => {
-    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
-    return categories
-      .filter(category => pinnedSubPodIds.has(category.id))
-      .map(category => category.list_id)
-  }, [categories, displaySettings.pinnedSubPodIds])
+  const hiddenPodIds = useMemo(() => new Set(displaySettings.hiddenPodIds), [displaySettings.hiddenPodIds])
+  const hiddenSubPodIds = useMemo(() => new Set(displaySettings.hiddenSubPodIds), [displaySettings.hiddenSubPodIds])
 
   const displayPodIds = useMemo(() => {
-    return Array.from(new Set([...contact.list_ids, ...displaySettings.pinnedPodIds]))
-  }, [contact.list_ids, displaySettings.pinnedPodIds])
+    return pods
+      .filter(pod => !hiddenPodIds.has(pod.id))
+      .map(pod => pod.id)
+  }, [hiddenPodIds, pods])
 
   const subPodDisplayPodIds = useMemo(() => {
-    return Array.from(new Set([...displayPodIds, ...pinnedSubPodParentIds]))
-  }, [displayPodIds, pinnedSubPodParentIds])
+    return displayPodIds
+  }, [displayPodIds])
 
   const displayPods = useMemo(() => pods.filter(p => displayPodIds.includes(p.id)), [pods, displayPodIds])
   const subPodDisplayPods = useMemo(() => pods.filter(p => subPodDisplayPodIds.includes(p.id)), [pods, subPodDisplayPodIds])
   const displayCategories = useMemo(() => {
-    const assignedPodIds = new Set(contact.list_ids)
-    const pinnedPodIds = new Set(displaySettings.pinnedPodIds)
-    const pinnedSubPodIds = new Set(displaySettings.pinnedSubPodIds)
     return categories.filter(category =>
-      assignedPodIds.has(category.list_id) ||
-      pinnedPodIds.has(category.list_id) ||
-      pinnedSubPodIds.has(category.id)
+      subPodDisplayPodIds.includes(category.list_id) &&
+      !hiddenSubPodIds.has(category.id)
     )
-  }, [categories, contact.list_ids, displaySettings.pinnedPodIds, displaySettings.pinnedSubPodIds])
+  }, [categories, hiddenSubPodIds, subPodDisplayPodIds])
   const readOnlyCategoryIds = useMemo(() => {
     const assignedPodIds = new Set(contact.list_ids)
     return displayCategories
       .filter(category => !assignedPodIds.has(category.list_id))
       .map(category => category.id)
   }, [contact.list_ids, displayCategories])
+  const visibleFundLabels = useMemo(() => {
+    const hiddenLabels = new Set(displaySettings.hiddenFieldOptionValues.kv_fund_investor ?? [])
+    return uniqueValues([
+      ...DEFAULT_KINSHIP_INVESTMENTS,
+      ...(contact.kv_fund_investor ?? []),
+    ]).filter(label => !hiddenLabels.has(label))
+  }, [contact.kv_fund_investor, displaySettings.hiddenFieldOptionValues])
 
   function sectionVisible(sectionId: ContactDisplaySectionId) {
     return isSectionVisible(displaySettings, sectionId)
@@ -218,8 +218,8 @@ export function RecordWidgets({
           hiddenFieldConfigIds={hiddenFieldConfigIds}
         />
       ))}
-      {sectionVisible('fund_activity') && (contact.kv_fund_investor?.length || displaySettings.pinnedFieldOptionValues.kv_fund_investor?.length) ? (
-        <FundTagsWidget contact={contact} pinnedLabels={displaySettings.pinnedFieldOptionValues.kv_fund_investor} />
+      {sectionVisible('fund_activity') && visibleFundLabels.length > 0 ? (
+        <FundTagsWidget contact={contact} labels={visibleFundLabels} />
       ) : null}
       {sectionVisible('associated_company') && contact.type === 'Contact' && contact.company_record_id && (
         <AssociatedCompanyWidget contact={contact} />
@@ -228,7 +228,7 @@ export function RecordWidgets({
         <AssociatedPeopleWidget contact={contact} />
       )}
       {sectionVisible('campaigns') && (
-        <PipelinesWidget contact={contact} pinnedCampaignIds={displaySettings.pinnedCampaignIds} />
+        <PipelinesWidget contact={contact} hiddenCampaignIds={displaySettings.hiddenCampaignIds} />
       )}
       
     </div>

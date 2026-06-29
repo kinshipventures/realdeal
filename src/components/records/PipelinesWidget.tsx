@@ -6,10 +6,10 @@ import { WIDGET_STYLE } from './shared'
 
 interface PipelinesWidgetProps {
   contact: Contact
-  pinnedCampaignIds?: string[]
+  hiddenCampaignIds?: string[]
 }
 
-export function PipelinesWidget({ contact, pinnedCampaignIds = [] }: PipelinesWidgetProps) {
+export function PipelinesWidget({ contact, hiddenCampaignIds = [] }: PipelinesWidgetProps) {
   const navigate = useNavigate()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [linkedCampaignIds, setLinkedCampaignIds] = useState<string[]>([])
@@ -20,10 +20,10 @@ export function PipelinesWidget({ contact, pinnedCampaignIds = [] }: PipelinesWi
       getCampaignContactsForContact(contact.id),
     ])
     const ids = myLinks.map(cc => cc.campaign_id)
-    const visibleIds = new Set([...ids, ...pinnedCampaignIds])
+    const hiddenIds = new Set(hiddenCampaignIds)
     setLinkedCampaignIds(ids)
-    setCampaigns(allCampaigns.filter(c => visibleIds.has(c.id) && c.status !== 'hidden'))
-  }, [contact.id, pinnedCampaignIds])
+    setCampaigns(allCampaigns.filter(c => !hiddenIds.has(c.id) && c.status !== 'hidden'))
+  }, [contact.id, hiddenCampaignIds])
 
   useEffect(() => { load() }, [load])
 

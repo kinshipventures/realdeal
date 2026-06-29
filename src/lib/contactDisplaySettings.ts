@@ -35,6 +35,11 @@ export interface ContactDisplaySettings {
   hiddenSectionIds: ContactDisplaySectionId[]
   hiddenStandardFieldIds: string[]
   hiddenFieldConfigIds: string[]
+  hiddenPodIds: string[]
+  hiddenSubPodIds: string[]
+  hiddenCampaignIds: string[]
+  hiddenCompanyIds: string[]
+  hiddenFieldOptionValues: Record<string, string[]>
   pinnedPodIds: string[]
   pinnedSubPodIds: string[]
   pinnedCampaignIds: string[]
@@ -54,6 +59,11 @@ export const DEFAULT_CONTACT_DISPLAY_SETTINGS: ContactDisplaySettings = {
   hiddenSectionIds: [],
   hiddenStandardFieldIds: [],
   hiddenFieldConfigIds: [],
+  hiddenPodIds: [],
+  hiddenSubPodIds: [],
+  hiddenCampaignIds: [],
+  hiddenCompanyIds: [],
+  hiddenFieldOptionValues: {},
   pinnedPodIds: [],
   pinnedSubPodIds: [],
   pinnedCampaignIds: [],
@@ -252,6 +262,11 @@ export function normalizeContactDisplaySettings(value: unknown): ContactDisplayS
     hiddenSectionIds: normalizeStringArray(raw.hiddenSectionIds) as ContactDisplaySectionId[],
     hiddenStandardFieldIds: normalizeStringArray(raw.hiddenStandardFieldIds),
     hiddenFieldConfigIds: normalizeStringArray(raw.hiddenFieldConfigIds),
+    hiddenPodIds: normalizeStringArray(raw.hiddenPodIds),
+    hiddenSubPodIds: normalizeStringArray(raw.hiddenSubPodIds),
+    hiddenCampaignIds: normalizeStringArray(raw.hiddenCampaignIds),
+    hiddenCompanyIds: normalizeStringArray(raw.hiddenCompanyIds),
+    hiddenFieldOptionValues: normalizeFieldOptionValues(raw.hiddenFieldOptionValues),
     pinnedPodIds: normalizeStringArray(raw.pinnedPodIds),
     pinnedSubPodIds: normalizeStringArray(raw.pinnedSubPodIds),
     pinnedCampaignIds: normalizeStringArray(raw.pinnedCampaignIds),
@@ -312,6 +327,11 @@ function mergeDisplaySettings(globalSettings: ContactDisplaySettings, contactSet
     hiddenSectionIds: [...new Set([...globalSettings.hiddenSectionIds, ...contactSettings.hiddenSectionIds])],
     hiddenStandardFieldIds: [...new Set([...globalSettings.hiddenStandardFieldIds, ...contactSettings.hiddenStandardFieldIds])],
     hiddenFieldConfigIds: [...new Set([...globalSettings.hiddenFieldConfigIds, ...contactSettings.hiddenFieldConfigIds])],
+    hiddenPodIds: [...new Set([...globalSettings.hiddenPodIds, ...contactSettings.hiddenPodIds])],
+    hiddenSubPodIds: [...new Set([...globalSettings.hiddenSubPodIds, ...contactSettings.hiddenSubPodIds])],
+    hiddenCampaignIds: [...new Set([...globalSettings.hiddenCampaignIds, ...contactSettings.hiddenCampaignIds])],
+    hiddenCompanyIds: [...new Set([...globalSettings.hiddenCompanyIds, ...contactSettings.hiddenCompanyIds])],
+    hiddenFieldOptionValues: mergeFieldOptionValues(globalSettings.hiddenFieldOptionValues, contactSettings.hiddenFieldOptionValues),
     pinnedPodIds: [...new Set([...globalSettings.pinnedPodIds, ...contactSettings.pinnedPodIds])],
     pinnedSubPodIds: [...new Set([...globalSettings.pinnedSubPodIds, ...contactSettings.pinnedSubPodIds])],
     pinnedCampaignIds: [...new Set([...globalSettings.pinnedCampaignIds, ...contactSettings.pinnedCampaignIds])],
@@ -324,6 +344,11 @@ function isEmptySettings(settings: ContactDisplaySettings): boolean {
   return settings.hiddenSectionIds.length === 0 &&
     settings.hiddenStandardFieldIds.length === 0 &&
     settings.hiddenFieldConfigIds.length === 0 &&
+    settings.hiddenPodIds.length === 0 &&
+    settings.hiddenSubPodIds.length === 0 &&
+    settings.hiddenCampaignIds.length === 0 &&
+    settings.hiddenCompanyIds.length === 0 &&
+    Object.keys(settings.hiddenFieldOptionValues).length === 0 &&
     settings.pinnedPodIds.length === 0 &&
     settings.pinnedSubPodIds.length === 0 &&
     settings.pinnedCampaignIds.length === 0 &&

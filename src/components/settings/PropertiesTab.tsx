@@ -522,35 +522,35 @@ export function PropertiesTab() {
     }))
   }, [updateSettings])
 
-  const togglePinnedPod = useCallback((id: string) => {
+  const toggleHiddenPod = useCallback((id: string) => {
     updateSettings(current => replaceSettings(current, {
-      pinnedPodIds: toggleValue(current.pinnedPodIds, id),
+      hiddenPodIds: toggleValue(current.hiddenPodIds, id),
     }))
   }, [updateSettings])
 
-  const togglePinnedSubPod = useCallback((id: string) => {
+  const toggleHiddenSubPod = useCallback((id: string) => {
     updateSettings(current => replaceSettings(current, {
-      pinnedSubPodIds: toggleValue(current.pinnedSubPodIds, id),
+      hiddenSubPodIds: toggleValue(current.hiddenSubPodIds, id),
     }))
   }, [updateSettings])
 
-  const togglePinnedCampaign = useCallback((id: string) => {
+  const toggleHiddenCampaign = useCallback((id: string) => {
     updateSettings(current => replaceSettings(current, {
-      pinnedCampaignIds: toggleValue(current.pinnedCampaignIds, id),
+      hiddenCampaignIds: toggleValue(current.hiddenCampaignIds, id),
     }))
   }, [updateSettings])
 
-  const togglePinnedCompany = useCallback((id: string) => {
+  const toggleHiddenCompany = useCallback((id: string) => {
     updateSettings(current => replaceSettings(current, {
-      pinnedCompanyIds: toggleValue(current.pinnedCompanyIds, id),
+      hiddenCompanyIds: toggleValue(current.hiddenCompanyIds, id),
     }))
   }, [updateSettings])
 
-  const togglePinnedFieldOption = useCallback((fieldId: string, value: string) => {
+  const toggleHiddenFieldOption = useCallback((fieldId: string, value: string) => {
     updateSettings(current => {
-      const currentValues = current.pinnedFieldOptionValues[fieldId] ?? []
+      const currentValues = current.hiddenFieldOptionValues[fieldId] ?? []
       const nextValues = toggleValue(currentValues, value)
-      const nextFieldOptions = { ...current.pinnedFieldOptionValues }
+      const nextFieldOptions = { ...current.hiddenFieldOptionValues }
 
       if (nextValues.length > 0) {
         nextFieldOptions[fieldId] = nextValues
@@ -559,17 +559,17 @@ export function PropertiesTab() {
       }
 
       return replaceSettings(current, {
-        pinnedFieldOptionValues: nextFieldOptions,
+        hiddenFieldOptionValues: nextFieldOptions,
       })
     })
   }, [updateSettings])
 
   const rows = useMemo<PropertyRow[]>(() => {
-    const pinnedLabelValues = settings.pinnedFieldOptionValues.kv_fund_investor ?? []
-    const pinnedStatus = (checked: boolean) => checked ? (selectedContact ? 'Visible here' : 'Visible') : 'Default'
+    const hiddenLabelValues = settings.hiddenFieldOptionValues.kv_fund_investor ?? []
+    const displayStatus = (checked: boolean) => checked ? 'Shown' : (selectedContact ? 'Hidden here' : 'Hidden')
 
     const podRows = (depth = 0): PropertyRow[] => pods.map(pod => {
-      const checked = settings.pinnedPodIds.includes(pod.id)
+      const checked = !settings.hiddenPodIds.includes(pod.id)
       return {
         id: `pod:${pod.id}`,
         label: pod.name,
@@ -578,15 +578,15 @@ export function PropertiesTab() {
         objectType: 'Pod',
         ownerLabel: workspaceOwner,
         checked,
-        statusLabel: pinnedStatus(checked),
-        onToggle: () => togglePinnedPod(pod.id),
+        statusLabel: displayStatus(checked),
+        onToggle: () => toggleHiddenPod(pod.id),
         depth,
       }
     })
 
     const subPodRows = (depth = 0): PropertyRow[] => categories.map(category => {
       const parentPod = podById.get(category.list_id)
-      const checked = settings.pinnedSubPodIds.includes(category.id)
+      const checked = !settings.hiddenSubPodIds.includes(category.id)
       return {
         id: `sub-pod:${category.id}`,
         label: category.name,
@@ -595,14 +595,14 @@ export function PropertiesTab() {
         objectType: 'Sub-pod',
         ownerLabel: workspaceOwner,
         checked,
-        statusLabel: pinnedStatus(checked),
-        onToggle: () => togglePinnedSubPod(category.id),
+        statusLabel: displayStatus(checked),
+        onToggle: () => toggleHiddenSubPod(category.id),
         depth,
       }
     })
 
     const campaignRows = (depth = 0): PropertyRow[] => campaigns.map(campaign => {
-      const checked = settings.pinnedCampaignIds.includes(campaign.id)
+      const checked = !settings.hiddenCampaignIds.includes(campaign.id)
       return {
         id: `campaign:${campaign.id}`,
         label: campaign.name,
@@ -611,14 +611,14 @@ export function PropertiesTab() {
         objectType: 'Campaign',
         ownerLabel: workspaceOwner,
         checked,
-        statusLabel: pinnedStatus(checked),
-        onToggle: () => togglePinnedCampaign(campaign.id),
+        statusLabel: displayStatus(checked),
+        onToggle: () => toggleHiddenCampaign(campaign.id),
         depth,
       }
     })
 
     const companyRows = (depth = 0): PropertyRow[] => companyContacts.map(company => {
-      const checked = settings.pinnedCompanyIds.includes(company.id)
+      const checked = !settings.hiddenCompanyIds.includes(company.id)
       return {
         id: `company:${company.id}`,
         label: company.name,
@@ -627,14 +627,14 @@ export function PropertiesTab() {
         objectType: 'Company',
         ownerLabel: workspaceOwner,
         checked,
-        statusLabel: pinnedStatus(checked),
-        onToggle: () => togglePinnedCompany(company.id),
+        statusLabel: displayStatus(checked),
+        onToggle: () => toggleHiddenCompany(company.id),
         depth,
       }
     })
 
     const kinshipInvestmentRows = (depth = 0): PropertyRow[] => kinshipInvestmentOptions.map(label => {
-      const checked = pinnedLabelValues.includes(label)
+      const checked = !hiddenLabelValues.includes(label)
       return {
         id: `kv_fund_investor:${label}`,
         label,
@@ -643,8 +643,8 @@ export function PropertiesTab() {
         objectType: 'Contact',
         ownerLabel: workspaceOwner,
         checked,
-        statusLabel: pinnedStatus(checked),
-        onToggle: () => togglePinnedFieldOption('kv_fund_investor', label),
+        statusLabel: displayStatus(checked),
+        onToggle: () => toggleHiddenFieldOption('kv_fund_investor', label),
         depth,
       }
     })
@@ -816,11 +816,11 @@ export function PropertiesTab() {
     settings,
     selectedContact,
     toggleFieldConfig,
-    togglePinnedCampaign,
-    togglePinnedCompany,
-    togglePinnedFieldOption,
-    togglePinnedPod,
-    togglePinnedSubPod,
+    toggleHiddenCampaign,
+    toggleHiddenCompany,
+    toggleHiddenFieldOption,
+    toggleHiddenPod,
+    toggleHiddenSubPod,
     toggleSection,
     toggleStandardField,
     workspaceOwner,
