@@ -925,6 +925,96 @@ describe('bulk contact import', () => {
     )
   })
 
+  it('updates three imported campaign memberships independently on re-import', async () => {
+    mockedGetContacts.mockResolvedValue([
+      {
+        id: 'contact-juan',
+        name: 'Juan Test',
+        email: 'juan@example.com',
+        company: null,
+        recommended_by: null,
+        intel_notes: null,
+        notes: null,
+        list_ids: [],
+        category_ids: [],
+        primary_list_id: null,
+        company_ids: [],
+        kv_fund_investor: null,
+        spv_investor: null,
+        custom_fields: {},
+      } as any,
+    ])
+    mockedGetStagesForCampaign.mockImplementation(async (campaignId) => {
+      const stagesByCampaign: Record<string, any[]> = {
+        'campaign-dinner': [
+          { id: 'stage-dinner-invited', campaign_id: campaignId, name: 'Invited', color: null, order: 0, created_at: '2026-05-28T00:00:00.000Z' },
+          { id: 'stage-dinner-attended', campaign_id: campaignId, name: 'Attended', color: null, order: 1, created_at: '2026-05-28T00:00:00.000Z' },
+        ],
+        'campaign-fund': [
+          { id: 'stage-fund-for-connecting', campaign_id: campaignId, name: 'For Connecting', color: null, order: 0, created_at: '2026-05-28T00:00:00.000Z' },
+          { id: 'stage-fund-confirmed', campaign_id: campaignId, name: 'Confirmed', color: null, order: 1, created_at: '2026-05-28T00:00:00.000Z' },
+        ],
+        'campaign-outreach': [
+          { id: 'stage-outreach-open', campaign_id: campaignId, name: 'Open', color: null, order: 0, created_at: '2026-05-28T00:00:00.000Z' },
+          { id: 'stage-outreach-circle-back', campaign_id: campaignId, name: 'Circle Back', color: null, order: 1, created_at: '2026-05-28T00:00:00.000Z' },
+        ],
+      }
+      return stagesByCampaign[campaignId] ?? []
+    })
+    mockedAddContactToCampaign.mockImplementation(async (campaignId, contactId) => ({
+      id: `cc-${campaignId}`,
+      campaign_id: campaignId,
+      contact_id: contactId,
+      status: 'pending',
+      stage_id: `old-stage-${campaignId}`,
+      notes: null,
+      owner: null,
+      next_step: null,
+      next_step_due: null,
+      moved_at: '2026-05-27T00:00:00.000Z',
+      is_priority: false,
+      custom_fields: { commitmentAmount: 1, campaignStatus: 'Old Status' },
+      created_at: '2026-05-27T00:00:00.000Z',
+    } as any))
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status,Campaign 1 Target Commitment,Campaign 2,Campaign 2 Status,Campaign 2 Target Commitment,Campaign 3,Campaign 3 Status,Campaign 3 Target Commitment',
+      'Juan Test,juan@example.com,Fund III Launch Dinner,Attended,5000,Kinship Ventures Fund I,Confirmed,7000,Brand Partnership Outreach,Circle Back,9000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([
+      [normalize('Fund III Launch Dinner'), 'campaign-dinner'],
+      [normalize('Kinship Ventures Fund I'), 'campaign-fund'],
+      [normalize('Brand Partnership Outreach'), 'campaign-outreach'],
+    ])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1, campaignLinked: 3 })
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-dinner', 'contact-juan', 'stage-dinner-attended')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-juan', 'stage-fund-confirmed')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-outreach', 'contact-juan', 'stage-outreach-circle-back')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith('cc-campaign-dinner', {
+      stage_id: 'stage-dinner-attended',
+      moved_at: expect.any(String),
+      custom_fields: { commitmentAmount: 5000, campaignStatus: 'Attended' },
+    })
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith('cc-campaign-fund', {
+      stage_id: 'stage-fund-confirmed',
+      moved_at: expect.any(String),
+      custom_fields: { commitmentAmount: 7000, campaignStatus: 'Confirmed' },
+    })
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith('cc-campaign-outreach', {
+      stage_id: 'stage-outreach-circle-back',
+      moved_at: expect.any(String),
+      custom_fields: { commitmentAmount: 9000, campaignStatus: 'Circle Back' },
+    })
+  })
+
   it('creates a missing campaign stage from an imported campaign status', async () => {
     mockedGetStagesForCampaign.mockResolvedValue([
       {

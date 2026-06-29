@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getPods, getContacts, getCategories, getCampaigns, invalidateContactsCache } from '../../lib/data'
+import { getPods, getContacts, getCategories, getCampaigns, invalidateCampaignsCache, invalidateContactsCache } from '../../lib/data'
 import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, targetAllowsMultipleMapping, TARGET_FIELDS } from '../../lib/csvImport'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
@@ -292,6 +292,7 @@ export function ImportPanel() {
       }
     )
     invalidateContactsCache()
+    invalidateCampaignsCache()
     setResult(res)
     setState('done')
 
