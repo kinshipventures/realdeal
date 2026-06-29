@@ -186,6 +186,7 @@ Toggle via sidebar. When active, all data functions return static sample data. W
 - Vercel project: realdeal-crm-app
 - Pre-merge: `pnpm build`
 - Required env vars (set in Vercel): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `VITE_USE_LOVABLE_AUTH_BRIDGE=false`
+- Protected baseline: run `npm run verify:protected-baseline` before and after auth/deploy work; no Supabase ref other than `zsecxtxpwmvgggqksdfb` is allowed.
 
 ## Skill routing
 

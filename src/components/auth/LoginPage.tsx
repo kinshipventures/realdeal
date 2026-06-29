@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
-import { isLovableAuthBridgeEnabled, signInWithGoogle } from '@/lib/auth'
+import { signInWithGoogle } from '@/lib/auth'
 import { setDemoMode } from '@/lib/sampleData'
 
 type FeedbackTone = 'error' | 'success' | 'info'
@@ -85,22 +85,31 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null)
+  const returnTo = searchParams.get('return_to') ?? '/'
+  const safeReturnTo = returnTo.startsWith('/') ? returnTo : '/'
+
+  function stopLoading() {
+    setLoading(false)
+    setLoadingLabel(null)
+  }
+
   useEffect(() => {
     if (!session) return
-    const returnTo = searchParams.get('return_to') ?? '/'
-    navigate(returnTo.startsWith('/') ? returnTo : '/', { replace: true })
-  }, [session, navigate, searchParams])
+    navigate(safeReturnTo, { replace: true })
+  }, [session, navigate, safeReturnTo])
 
   const handleGoogleSignIn = async () => {
     setLoading(true)
     setLoadingLabel('Opening Google...')
     setFeedback(null)
-    const result = await signInWithGoogle()
-    if (result.error) {
+    try {
+      const result = await signInWithGoogle()
+      if (!result.error) return
       setFeedback({ tone: 'error', text: 'Sign in failed. Please try again.' })
-      setLoading(false)
-      setLoadingLabel(null)
+    } catch {
+      setFeedback({ tone: 'error', text: 'Sign in failed. Please try again.' })
     }
+    stopLoading()
   }
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -109,24 +118,50 @@ export function LoginPage() {
     setLoadingLabel(isSignUp ? 'Creating your account...' : 'Signing you in...')
     setFeedback(null)
 
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) {
-        setFeedback({ tone: 'error', text: error.message })
-        setLoading(false)
-        setLoadingLabel(null)
-      } else if (data?.user && !data.session) {
-        setSignUpSuccess(true)
-        setLoading(false)
-        setLoadingLabel(null)
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`,
+          },
+        })
+        if (error) {
+          setFeedback({ tone: 'error', text: error.message })
+          stopLoading()
+          return
+        }
+        if (data?.session) {
+          navigate(safeReturnTo, { replace: true })
+          return
+        }
+        if (data?.user) {
+          setSignUpSuccess(true)
+          stopLoading()
+          return
+        }
+
+        setFeedback({ tone: 'error', text: 'Account creation did not finish. Please try again.' })
+        stopLoading()
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) {
+          setFeedback({ tone: 'error', text: error.message })
+          stopLoading()
+          return
+        }
+        if (data?.session) {
+          navigate(safeReturnTo, { replace: true })
+          return
+        }
+
+        setFeedback({ tone: 'error', text: 'Sign in did not finish. Please try again.' })
+        stopLoading()
       }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setFeedback({ tone: 'error', text: error.message })
-        setLoading(false)
-        setLoadingLabel(null)
-      }
+    } catch {
+      setFeedback({ tone: 'error', text: 'Auth request failed. Please try again.' })
+      stopLoading()
     }
   }
 

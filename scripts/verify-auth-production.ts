@@ -61,6 +61,44 @@ async function fetchText(url: string) {
   return response.text()
 }
 
+async function fetchJson(url: string, headers: Record<string, string>) {
+  const response = await fetch(url, { headers })
+  const text = await response.text()
+  const data = text ? JSON.parse(text) as Record<string, unknown> : {}
+  return { response, data }
+}
+
+async function checkSupabaseAuthSettings() {
+  const envText = readText('.env')
+  const supabaseUrl = getEnvValue(envText, 'VITE_SUPABASE_URL')?.replace(/\/$/, '')
+  const publishableKey = getEnvValue(envText, 'VITE_SUPABASE_PUBLISHABLE_KEY')
+
+  if (!supabaseUrl || !publishableKey) {
+    fail('Supabase public auth settings check is missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY')
+    return
+  }
+
+  const { response, data } = await fetchJson(`${supabaseUrl}/auth/v1/settings`, {
+    apikey: publishableKey,
+    authorization: `Bearer ${publishableKey}`,
+  })
+
+  if (!response.ok) {
+    fail(`Supabase auth settings returned HTTP ${response.status}`)
+    return
+  }
+
+  pass('Supabase auth settings endpoint loads')
+  if (data.disable_signup === false) pass('Supabase Auth signup is enabled')
+  else fail('Supabase Auth signup must not be disabled')
+
+  const external = data.external && typeof data.external === 'object'
+    ? data.external as Record<string, unknown>
+    : {}
+  if (external.google === true || data.external_google_enabled === true) pass('Google OAuth is enabled')
+  else fail('Google OAuth must be enabled')
+}
+
 async function checkProductionBundle() {
   const home = await fetchText(PRODUCTION_URL)
   pass(`production app loads from ${PRODUCTION_URL}`)
@@ -155,6 +193,37 @@ function listFiles(dir: string): string[] {
   return files
 }
 
+function checkRepositorySupabaseRefs() {
+  const extensions = new Set([
+    '.env',
+    '.json',
+    '.md',
+    '.toml',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.mjs',
+    '.cjs',
+    '.sql',
+  ])
+  const offenders: string[] = []
+
+  for (const file of listFiles(root)) {
+    const relative = file.slice(root.length + 1).replace(/\\/g, '/')
+    const extension = relative.includes('.') ? relative.slice(relative.lastIndexOf('.')) : ''
+    if (!extensions.has(extension) && !relative.endsWith('.env')) continue
+
+    const text = readFileSync(file, 'utf8')
+    const refs = new Set([...collectSupabaseRefs(text), ...collectProjectRefs(text)])
+    const unexpected = [...refs].filter(ref => ref !== EXPECTED_SUPABASE_REF)
+    if (unexpected.length > 0) offenders.push(`${relative}: ${unexpected.join(', ')}`)
+  }
+
+  if (offenders.length === 0) pass('repository contains only canonical Supabase refs')
+  else fail(`non-canonical Supabase refs found: ${offenders.join('; ')}`)
+}
+
 function checkNoAuthUserDeletion() {
   const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.sql'])
   const banned = [
@@ -178,7 +247,9 @@ function checkNoAuthUserDeletion() {
 async function main() {
   checkLocalSupabaseConfig()
   checkAuthSource()
+  checkRepositorySupabaseRefs()
   checkNoAuthUserDeletion()
+  await checkSupabaseAuthSettings()
   await checkProductionBundle()
 
   if (failures > 0) {
