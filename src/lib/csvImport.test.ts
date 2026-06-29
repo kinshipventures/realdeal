@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { strToU8, zipSync } from 'fflate'
-import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, getInteractions, logInteraction, updateCampaignContact, updateContact } from './data'
+import { addContactToCampaign, createCampaign, createCampaignStage, createContactsBulk, getCampaigns, getContacts, getInteractions, getStagesForCampaign, logInteraction, updateCampaignContact, updateContact } from './data'
 import {
   countInvalidRows,
   detectColumns,
@@ -20,6 +20,8 @@ vi.mock('./data', () => ({
   createContactsBulk: vi.fn(),
   getCampaigns: vi.fn(),
   getInteractions: vi.fn(),
+  getStagesForCampaign: vi.fn(),
+  createCampaignStage: vi.fn(),
   logInteraction: vi.fn(),
   createCampaign: vi.fn(),
   addContactToCampaign: vi.fn(),
@@ -31,6 +33,8 @@ const mockedUpdateContact = vi.mocked(updateContact)
 const mockedCreateContactsBulk = vi.mocked(createContactsBulk)
 const mockedGetCampaigns = vi.mocked(getCampaigns)
 const mockedGetInteractions = vi.mocked(getInteractions)
+const mockedGetStagesForCampaign = vi.mocked(getStagesForCampaign)
+const mockedCreateCampaignStage = vi.mocked(createCampaignStage)
 const mockedLogInteraction = vi.mocked(logInteraction)
 const mockedCreateCampaign = vi.mocked(createCampaign)
 const mockedAddContactToCampaign = vi.mocked(addContactToCampaign)
@@ -97,6 +101,15 @@ beforeEach(() => {
   mockedUpdateContact.mockImplementation(async (id, data) => ({ id, name: 'Updated', created_at: '2026-05-28T00:00:00.000Z', ...data } as any))
   mockedGetCampaigns.mockResolvedValue([])
   mockedGetInteractions.mockResolvedValue([])
+  mockedGetStagesForCampaign.mockResolvedValue([])
+  mockedCreateCampaignStage.mockImplementation(async (campaignId, name, order, color) => ({
+    id: `stage-${campaignId}-${normalize(name).replace(/\s+/g, '-')}`,
+    campaign_id: campaignId,
+    name,
+    color: (color ?? null) as any,
+    order,
+    created_at: '2026-05-28T00:00:00.000Z',
+  }))
   mockedLogInteraction.mockImplementation(async (contactId, data) => ({
     ...data,
     id: `interaction-${contactId}-${data.date}`,
@@ -115,12 +128,12 @@ beforeEach(() => {
     contact_ids: [],
     created_at: '2026-05-28T00:00:00.000Z',
   } as any))
-  mockedAddContactToCampaign.mockImplementation(async (campaignId, contactId) => ({
+  mockedAddContactToCampaign.mockImplementation(async (campaignId, contactId, stageId) => ({
     id: `cc-${campaignId}-${contactId}`,
     campaign_id: campaignId,
     contact_id: contactId,
     status: 'pending',
-    stage_id: null,
+    stage_id: stageId ?? null,
     notes: null,
     owner: null,
     next_step: null,
@@ -198,6 +211,9 @@ describe('CSV and Excel import parsing', () => {
     ])
     expect(parsed.headers).toContain('Contacts')
     expect(parsed.headers).toContain('Companies')
+    expect(parsed.headers).toContain('Campaign 1')
+    expect(parsed.headers).toContain('Campaign 1 Status')
+    expect(parsed.headers).toContain('Campaign 1 Target Commitment')
     expect(parsed.headers).toContain('Source Sheet')
   }, 10000)
 
@@ -819,7 +835,8 @@ describe('bulk contact import', () => {
       category_ids: ['cat-lp-internal', 'cat-spv-investor'],
       custom_fields: {},
     })
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id)
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-fund', 'Closed/Won', 0)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id, 'stage-campaign-fund-closed-won')
     expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
       `cc-campaign-fund-${contactRecord.id}`,
       {
@@ -851,8 +868,10 @@ describe('bulk contact import', () => {
 
     expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 2 })
     const contactRecord = createdRecordNamed('Jordan Lee')
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id)
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-dinner', contactRecord.id)
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-fund', 'Open', 0)
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-dinner', 'Invited', 0)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id, 'stage-campaign-fund-open')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-dinner', contactRecord.id, 'stage-campaign-dinner-invited')
     expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
       `cc-campaign-fund-${contactRecord.id}`,
       { custom_fields: { commitmentAmount: 250000, campaignStatus: 'Open' } },
@@ -861,6 +880,186 @@ describe('bulk contact import', () => {
       `cc-campaign-dinner-${contactRecord.id}`,
       { custom_fields: { commitmentAmount: 100000, campaignStatus: 'Invited' } },
     )
+  })
+
+  it('places imported campaign contacts in the matching campaign stage', async () => {
+    mockedGetStagesForCampaign.mockResolvedValue([
+      {
+        id: 'stage-for-connecting',
+        campaign_id: 'campaign-fund',
+        name: 'For Connecting',
+        color: null,
+        order: 0,
+        created_at: '2026-05-28T00:00:00.000Z',
+      },
+      {
+        id: 'stage-circle-back',
+        campaign_id: 'campaign-fund',
+        name: 'Circle Back',
+        color: null,
+        order: 1,
+        created_at: '2026-05-28T00:00:00.000Z',
+      },
+    ])
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status,Campaign 1 Target Commitment',
+      'Briell Test,briell@example.com,Kinship Fund Pipeline,Circle Back,1500000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([[normalize('Kinship Fund Pipeline'), 'campaign-fund']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 1 })
+    const contactRecord = createdRecordNamed('Briell Test')
+    expect(mockedGetStagesForCampaign).toHaveBeenCalledWith('campaign-fund')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', contactRecord.id, 'stage-circle-back')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      `cc-campaign-fund-${contactRecord.id}`,
+      { custom_fields: { commitmentAmount: 1500000, campaignStatus: 'Circle Back' } },
+    )
+  })
+
+  it('creates a missing campaign stage from an imported campaign status', async () => {
+    mockedGetStagesForCampaign.mockResolvedValue([
+      {
+        id: 'stage-invited',
+        campaign_id: 'campaign-dinner',
+        name: 'Invited',
+        color: null,
+        order: 0,
+        created_at: '2026-05-28T00:00:00.000Z',
+      },
+    ])
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status,Campaign 1 Target Commitment',
+      'JJ Test,jj@example.com,Fund III Fundraise,Attended,5000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([[normalize('Fund III Fundraise'), 'campaign-dinner']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [], campaignLinked: 1 })
+    const contactRecord = createdRecordNamed('JJ Test')
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-dinner', 'Attended', 1)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-dinner', contactRecord.id, 'stage-campaign-dinner-attended')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
+      `cc-campaign-dinner-${contactRecord.id}`,
+      { custom_fields: { commitmentAmount: 5000, campaignStatus: 'Attended' } },
+    )
+  })
+
+  it('reuses a newly created campaign stage across rows in the same import', async () => {
+    mockedGetStagesForCampaign.mockResolvedValue([])
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status',
+      'JJ Test,jj@example.com,Fund III Fundraise,Attended',
+      'Moj Test,moj@example.com,Fund III Fundraise,Attended',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([[normalize('Fund III Fundraise'), 'campaign-fund']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 2, skipped: 0, errors: [], campaignLinked: 2 })
+    const jjRecord = createdRecordNamed('JJ Test')
+    const mojRecord = createdRecordNamed('Moj Test')
+    expect(mockedCreateCampaignStage).toHaveBeenCalledTimes(1)
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-fund', 'Attended', 0)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', jjRecord.id, 'stage-campaign-fund-attended')
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', mojRecord.id, 'stage-campaign-fund-attended')
+  })
+
+  it('updates campaign status, stage, and target commitment on re-import', async () => {
+    mockedGetContacts.mockResolvedValue([
+      {
+        id: 'contact-jj',
+        name: 'JJ Test',
+        email: 'jj@example.com',
+        company: null,
+        recommended_by: null,
+        intel_notes: null,
+        notes: null,
+        list_ids: [],
+        category_ids: [],
+        primary_list_id: null,
+        company_ids: [],
+        kv_fund_investor: null,
+        spv_investor: null,
+        custom_fields: {},
+      } as any,
+    ])
+    mockedGetStagesForCampaign.mockResolvedValue([
+      {
+        id: 'stage-for-connecting',
+        campaign_id: 'campaign-fund',
+        name: 'For Connecting',
+        color: null,
+        order: 0,
+        created_at: '2026-05-28T00:00:00.000Z',
+      },
+      {
+        id: 'stage-confirmed',
+        campaign_id: 'campaign-fund',
+        name: 'Confirmed',
+        color: null,
+        order: 1,
+        created_at: '2026-05-28T00:00:00.000Z',
+      },
+    ])
+    mockedAddContactToCampaign.mockResolvedValue({
+      id: 'cc-existing',
+      campaign_id: 'campaign-fund',
+      contact_id: 'contact-jj',
+      status: 'pending',
+      stage_id: 'stage-for-connecting',
+      notes: null,
+      owner: null,
+      next_step: null,
+      next_step_due: null,
+      moved_at: '2026-05-27T00:00:00.000Z',
+      is_priority: false,
+      custom_fields: { commitmentAmount: 5000, campaignStatus: 'Attended' },
+      created_at: '2026-05-27T00:00:00.000Z',
+    } as any)
+    const parsed = parseCSV([
+      'Name,Email,Campaign 1,Campaign 1 Status,Campaign 1 Target Commitment',
+      'JJ Test,jj@example.com,Kinship Ventures Fund I,Confirmed,7000',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+    const campaignMap = new Map([[normalize('Kinship Ventures Fund I'), 'campaign-fund']])
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      campaignMap,
+    })
+
+    expect(result).toEqual({ imported: 0, skipped: 0, errors: [], updated: 1, campaignLinked: 1 })
+    expect(mockedCreateCampaignStage).not.toHaveBeenCalled()
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-jj', 'stage-confirmed')
+    expect(mockedUpdateCampaignContact).toHaveBeenCalledWith('cc-existing', {
+      stage_id: 'stage-confirmed',
+      moved_at: expect.any(String),
+      custom_fields: { commitmentAmount: 7000, campaignStatus: 'Confirmed' },
+    })
   })
 
   it('updates existing contacts with missing spreadsheet data instead of duplicating them', async () => {
@@ -916,7 +1115,8 @@ describe('bulk contact import', () => {
     expect(mockedUpdateContact).not.toHaveBeenCalledWith('contact-ivan', expect.objectContaining({
       intel_notes: 'Advisor to MoonPay',
     }))
-    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-ivan')
+    expect(mockedCreateCampaignStage).toHaveBeenCalledWith('campaign-fund', 'Closed/Won', 0)
+    expect(mockedAddContactToCampaign).toHaveBeenCalledWith('campaign-fund', 'contact-ivan', 'stage-campaign-fund-closed-won')
     expect(mockedUpdateCampaignContact).toHaveBeenCalledWith(
       'cc-campaign-fund-contact-ivan',
       { custom_fields: { commitmentAmount: 500000, campaignStatus: 'Closed/Won' } },

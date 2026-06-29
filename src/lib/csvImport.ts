@@ -1,7 +1,7 @@
 import * as Papa from 'papaparse'
 import { strFromU8, unzipSync } from 'fflate'
 import type { Cadence, Contact, ContactFrequency, Gender, Interaction, InteractionSource, InteractionType, RelationshipType } from './types'
-import { addContactToCampaign, createCampaign, createContactsBulk, getCampaigns, getContacts, getInteractions, logInteraction, updateCampaignContact, updateContact } from './data'
+import { addContactToCampaign, createCampaign, createCampaignStage, createContactsBulk, getCampaigns, getContacts, getInteractions, getStagesForCampaign, logInteraction, updateCampaignContact, updateContact } from './data'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, parseMoneyInput, withMoneyField, withTextField } from './campaignCommitments'
 import { LP_TRACKER_ALIAS_ENTRIES, LP_TRACKER_FIELDS, LP_TRACKER_TARGET_FIELDS, normalizeLpTrackerFieldValue, trimImportListItem } from './lpTrackerFields'
 
@@ -34,6 +34,10 @@ export const TARGET_FIELDS = [
 
 type TargetField = typeof TARGET_FIELDS[number]
 type ContactInput = Omit<Contact, 'id' | 'created_at'>
+type CampaignStageResolutionCache = {
+  byStatus: Map<string, string>
+  nextOrderByCampaign: Map<string, number>
+}
 
 const TARGET_FIELD_SET = new Set<string>(TARGET_FIELDS)
 const MULTI_COLUMN_TARGETS = new Set<string>(['Pod', 'Sub-pod', 'Notes', 'KV Fund Investor', 'SPV Investor', 'Companies', 'Contacts', 'Campaign', 'Campaign Status', 'Commitment Amount'])
@@ -1683,30 +1687,84 @@ async function resolveCampaignId(
   return campaign.id
 }
 
+async function resolveCampaignStageId(
+  campaignId: string,
+  importedStatus: string,
+  stageResolutionCache: CampaignStageResolutionCache,
+): Promise<string | null> {
+  const statusName = importedStatus.trim()
+  const normalizedStatus = normalize(statusName)
+  if (!normalizedStatus) return null
+
+  const cacheKey = `${campaignId}:${normalizedStatus}`
+  const cachedStageId = stageResolutionCache.byStatus.get(cacheKey)
+  if (cachedStageId) return cachedStageId
+
+  const stages = await getStagesForCampaign(campaignId)
+  if (!stageResolutionCache.nextOrderByCampaign.has(campaignId)) {
+    const nextOrder = stages.reduce((max, stage) => Math.max(max, stage.order), -1) + 1
+    stageResolutionCache.nextOrderByCampaign.set(campaignId, nextOrder)
+  }
+
+  for (const stage of stages) {
+    const stageKey = `${campaignId}:${normalize(stage.name)}`
+    if (!stageResolutionCache.byStatus.has(stageKey)) {
+      stageResolutionCache.byStatus.set(stageKey, stage.id)
+    }
+  }
+
+  const existingStage = stages.find(stage => normalize(stage.name) === normalizedStatus)
+  if (existingStage) {
+    stageResolutionCache.byStatus.set(cacheKey, existingStage.id)
+    return existingStage.id
+  }
+
+  const nextOrder = stageResolutionCache.nextOrderByCampaign.get(campaignId) ?? 0
+  const createdStage = await createCampaignStage(campaignId, statusName, nextOrder)
+  stageResolutionCache.byStatus.set(cacheKey, createdStage.id)
+  stageResolutionCache.nextOrderByCampaign.set(campaignId, nextOrder + 1)
+  return createdStage.id
+}
+
 async function syncCampaignImportFields(
   contactId: string,
   campaignFields: CampaignImportFields | null,
   campaignMap: Map<string, string>,
   campaignAliases: Map<string, string>,
   createMissingCampaigns: boolean,
+  stageResolutionCache: CampaignStageResolutionCache,
 ): Promise<boolean> {
   if (!campaignFields?.name) return false
   const campaignId = await resolveCampaignId(campaignFields.name, campaignMap, campaignAliases, createMissingCampaigns)
   if (!campaignId) return false
 
-  const link = await addContactToCampaign(campaignId, contactId)
-  let nextCustomFields = link.custom_fields ?? {}
+  const stageId = campaignFields.status ? await resolveCampaignStageId(campaignId, campaignFields.status, stageResolutionCache) : null
+  const link = stageId
+    ? await addContactToCampaign(campaignId, contactId, stageId)
+    : await addContactToCampaign(campaignId, contactId)
+  const updatePatch: { stage_id?: string; moved_at?: string; custom_fields?: Record<string, unknown> } = {}
+  if (stageId && link.stage_id !== stageId) {
+    updatePatch.stage_id = stageId
+    updatePatch.moved_at = new Date().toISOString()
+  }
 
-  if (campaignFields.commitmentAmount !== null && !hasContactValue(nextCustomFields[CAMPAIGN_COMMITMENT_AMOUNT_FIELD])) {
+  const existingCustomFields = link.custom_fields ?? {}
+  let nextCustomFields = existingCustomFields
+
+  if (campaignFields.commitmentAmount !== null) {
     nextCustomFields = withMoneyField(nextCustomFields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, campaignFields.commitmentAmount)
   }
 
-  if (campaignFields.status && !hasContactValue(nextCustomFields[CAMPAIGN_SOURCE_STATUS_FIELD])) {
+  if (campaignFields.status) {
     nextCustomFields = withTextField(nextCustomFields, CAMPAIGN_SOURCE_STATUS_FIELD, campaignFields.status)
   }
 
-  if (nextCustomFields !== link.custom_fields) {
-    await updateCampaignContact(link.id, { custom_fields: nextCustomFields })
+  if (JSON.stringify(nextCustomFields) !== JSON.stringify(existingCustomFields)) {
+    updatePatch.custom_fields = nextCustomFields
+  }
+
+  if (Object.keys(updatePatch).length > 0) {
+    await updateCampaignContact(link.id, updatePatch)
   }
 
   return true
@@ -1718,10 +1776,11 @@ async function syncCampaignImportFieldList(
   campaignMap: Map<string, string>,
   campaignAliases: Map<string, string>,
   createMissingCampaigns: boolean,
+  stageResolutionCache: CampaignStageResolutionCache,
 ): Promise<number> {
   let linked = 0
   for (const fields of campaignFields) {
-    if (await syncCampaignImportFields(contactId, fields, campaignMap, campaignAliases, createMissingCampaigns)) {
+    if (await syncCampaignImportFields(contactId, fields, campaignMap, campaignAliases, createMissingCampaigns, stageResolutionCache)) {
       linked++
     }
   }
@@ -1790,6 +1849,7 @@ export async function importContacts(
   const podMap = options?.podMap ?? new Map<string, string>()
   const campaignMap = options?.campaignMap ?? new Map<string, string>()
   const campaignAliases = options?.campaignAliases ?? new Map<string, string>()
+  const stageResolutionCache: CampaignStageResolutionCache = { byStatus: new Map(), nextOrderByCampaign: new Map() }
   const createMissingCampaigns = options?.createMissingCampaigns ?? false
   const batchId = options?.batchId ?? null
   const importSrc = options?.importSource ?? null
@@ -2129,6 +2189,7 @@ export async function importContacts(
         campaignMap,
         campaignAliases,
         createMissingCampaigns,
+        stageResolutionCache,
       )
       campaignLinked += linked
       const syncedTouchpoints = await syncImportedTouchpoints(item.contactId, item.touchpoints)
@@ -2153,6 +2214,7 @@ export async function importContacts(
           campaignMap,
           campaignAliases,
           createMissingCampaigns,
+          stageResolutionCache,
         )
         campaignLinked += linked
         if (created[j].type === 'Company' && (chunk[j]?.linkedPeopleIds ?? []).length > 0) {
@@ -2175,6 +2237,7 @@ export async function importContacts(
               campaignMap,
               campaignAliases,
               createMissingCampaigns,
+              stageResolutionCache,
             )
             campaignLinked += linked
             if (created.type === 'Company' && item.linkedPeopleIds.length > 0) {
