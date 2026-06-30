@@ -55,10 +55,18 @@ Locked behavior may only be changed when the user explicitly names that behavior
 For app changes:
 
 - Review the diff before commit.
+- Run `npm.cmd run verify:import-safety` before any build or deploy. The `prebuild` script also runs this automatically.
 - Run `npm.cmd run lint`.
 - Run `npm.cmd run test`.
 - Run `npm.cmd run build`.
 - Perform visual verification when UI changes.
+
+For import-related work:
+
+- Do not change import mapping, parsing, pod/sub-pod assignment, campaign linking, template behavior, or storage behavior unless the user explicitly approves that exact scope.
+- Run `npm.cmd run verify:import-safety`.
+- The import safety check must prove that a real Excel fixture imports without stalled progress and stores contacts, companies, pods, sub-pods, campaigns, commitment amounts, and import metadata in the expected places.
+- If import safety fails, do not deploy.
 
 For auth changes:
 
@@ -93,4 +101,3 @@ node scripts/check-realdeal-guardrails.mjs --staged-only --scope docs/REALDEAL_G
 ```
 
 Adjust the `--scope` list to match the approved files for the current task.
-

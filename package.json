@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run verify:import-safety",
     "build": "vite build",
     "build:dev": "vite build",
     "lint": "eslint .",
@@ -12,6 +13,7 @@
     "test:watch": "vitest",
     "preview": "vite preview",
     "verify:auth-production": "tsx scripts/verify-auth-production.ts",
+    "verify:import-safety": "vitest run src/lib/importSafety.test.ts",
     "verify:protected-baseline": "tsx scripts/verify-auth-production.ts",
     "export:supabase-data": "tsx --env-file=.env.local scripts/export-supabase-data.ts",
     "import:supabase-data": "tsx --env-file=.env.local scripts/import-supabase-data.ts",

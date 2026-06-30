@@ -29,6 +29,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Import safety
+        run: pnpm verify:import-safety
+
       - name: Build
         run: pnpm build
         env:
