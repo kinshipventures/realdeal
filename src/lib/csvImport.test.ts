@@ -1387,4 +1387,98 @@ describe('bulk contact import', () => {
     expect(result.errors).toEqual([])
     expect(mockedCreateContactsBulk).toHaveBeenCalledTimes(3)
   })
+
+  it('keeps importing the contact when a linked company record cannot be created', async () => {
+    const parsed = parseCSV('Name,Email,Company\nAna Gomez,ana@example.com,Kinship Ventures\n')
+    const mapping = detectColumns(parsed.headers)
+    const progress: any[] = []
+    mockedCreateContactsBulk.mockRejectedValueOnce(new Error('company insert failed'))
+
+    const result = await importContacts(parsed.rows, '', p => progress.push(p), {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+    })
+
+    expect(result.imported).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0]).toContain('Could not link company "Kinship Ventures"')
+    const contactRecord = createdRecordNamed('Ana Gomez')
+    expect(contactRecord).toMatchObject({
+      email: 'ana@example.com',
+      company: 'Kinship Ventures',
+      company_record_id: null,
+      company_ids: [],
+    })
+    expect(progress.some(item => item.phase === 'preparing' && item.current === 1)).toBe(true)
+  })
+
+  it('maps contextual sub-pod template options to their parent pod', async () => {
+    const parsed = parseCSV([
+      'First Name,Email,Pod,Sub-pod',
+      'Maya,maya@example.com,MAPS,Music / MAPS',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap: new Map([
+        [normalize('MAPS'), 'pod-maps'],
+        [normalize('LPs'), 'pod-lps'],
+      ]),
+      categoryMap: new Map([
+        [`pod-maps:${normalize('Music')}`, 'cat-music-maps'],
+        [`pod-lps:${normalize('Music')}`, 'cat-music-lps'],
+      ]),
+      categoryPodMap: new Map([
+        ['cat-music-maps', 'pod-maps'],
+        ['cat-music-lps', 'pod-lps'],
+      ]),
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Maya',
+      email: 'maya@example.com',
+      list_ids: ['pod-maps'],
+      primary_list_id: 'pod-maps',
+      category_ids: ['cat-music-maps'],
+    })
+  })
+
+  it('maps every sub-pod template column instead of only the first one', async () => {
+    const parsed = parseCSV([
+      'First Name,Email,Pod 1,Sub-pod 1,Sub-pod 2',
+      'Ava,ava@example.com,MAPS,Music / MAPS,Art / MAPS',
+    ].join('\n'))
+    const mapping = detectColumns(parsed.headers)
+
+    const result = await importContacts(parsed.rows, '', undefined, {
+      type: 'Contact',
+      mapping,
+      podIds: [],
+      podMap: new Map([[normalize('MAPS'), 'pod-maps']]),
+      categoryMap: new Map([
+        [`pod-maps:${normalize('Music')}`, 'cat-music-maps'],
+        [`pod-maps:${normalize('Art')}`, 'cat-art-maps'],
+      ]),
+      categoryPodMap: new Map([
+        ['cat-music-maps', 'pod-maps'],
+        ['cat-art-maps', 'pod-maps'],
+      ]),
+    })
+
+    expect(result).toEqual({ imported: 1, skipped: 0, errors: [] })
+    const [records] = mockedCreateContactsBulk.mock.calls[0]
+    expect(records[0]).toMatchObject({
+      name: 'Ava',
+      email: 'ava@example.com',
+      list_ids: ['pod-maps'],
+      primary_list_id: 'pod-maps',
+      category_ids: ['cat-music-maps', 'cat-art-maps'],
+    })
+  })
 })

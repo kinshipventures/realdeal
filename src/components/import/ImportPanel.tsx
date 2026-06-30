@@ -79,6 +79,7 @@ export function ImportPanel() {
 
   const [fileName, setFileName] = useState('')
   const [fileError, setFileError] = useState<string | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
   const [parsedHeaders, setParsedHeaders] = useState<string[]>([])
   const [parsedRows, setParsedRows] = useState<Record<string, string>[]>([])
 
@@ -138,6 +139,7 @@ export function ImportPanel() {
   async function processFile(file: File, source: ImportSource) {
     setImportSource(source)
     setFileError(null)
+    setImportError(null)
 
     try {
       const lowerName = file.name.toLowerCase()
@@ -226,6 +228,7 @@ export function ImportPanel() {
   // ---- Paste handling ----
   const handlePasteParsed = (headers: string[], rows: Record<string, string>[]) => {
     setImportSource('paste')
+    setImportError(null)
     setFileName('Pasted data')
     setParsedHeaders(headers)
     setParsedRows(rows)
@@ -237,69 +240,84 @@ export function ImportPanel() {
   async function handleImport() {
     if (readyCount === 0) return
     setState('importing')
+    setImportError(null)
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
-    // Generate batch ID for undo
-    const newBatchId = crypto.randomUUID()
-    setBatchId(newBatchId)
+    try {
+      // Generate batch ID for undo
+      const newBatchId = crypto.randomUUID()
+      setBatchId(newBatchId)
 
-    const podMap = new Map<string, string>()
-    for (const pod of pods) {
-      podMap.set(normalize(pod.name), pod.id)
-    }
-
-    const categories = await getCategories()
-    const categoryNameCounts = new Map<string, number>()
-    for (const cat of categories) {
-      const key = normalize(cat.name)
-      categoryNameCounts.set(key, (categoryNameCounts.get(key) ?? 0) + 1)
-    }
-    const categoryMap = new Map<string, string>()
-    const categoryPodMap = new Map<string, string>()
-    for (const cat of categories) {
-      const normalizedName = normalize(cat.name)
-      categoryMap.set(`${cat.list_id}:${normalizedName}`, cat.id)
-      if (categoryNameCounts.get(normalizedName) === 1) {
-        categoryMap.set(normalizedName, cat.id)
+      const podMap = new Map<string, string>()
+      for (const pod of pods) {
+        podMap.set(normalize(pod.name), pod.id)
       }
-      categoryPodMap.set(cat.id, cat.list_id)
-    }
 
-    const campaigns = await getCampaigns()
-    const campaignMap = new Map<string, string>()
-    const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active')
-    for (const campaign of activeCampaigns) {
-      campaignMap.set(normalize(campaign.name), campaign.id)
-    }
-    for (const campaign of campaigns) {
-      const key = normalize(campaign.name)
-      if (!campaignMap.has(key)) campaignMap.set(key, campaign.id)
-    }
-    const campaignAliases = new Map<string, string>()
-    const kinshipFundCampaign = activeCampaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
-      ?? campaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
-    if (kinshipFundCampaign) {
-      campaignAliases.set(normalize('Kinship Fund Pipeline'), kinshipFundCampaign.id)
-    }
-
-    const res = await importContacts(
-      parsedRows, '', (p) => setProgress(p),
-      {
-        type: recordType, podIds: [], mapping: safeColumnMapping,
-        categoryMap, categoryPodMap, podMap,
-        campaignMap, campaignAliases, createMissingCampaigns: true,
-        batchId: newBatchId, importSource,
+      const categories = await getCategories()
+      const podNameById = new Map(pods.map(pod => [pod.id, pod.name]))
+      const categoryNameCounts = new Map<string, number>()
+      for (const cat of categories) {
+        const key = normalize(cat.name)
+        categoryNameCounts.set(key, (categoryNameCounts.get(key) ?? 0) + 1)
       }
-    )
-    invalidateContactsCache()
-    invalidateCampaignsCache()
-    setResult(res)
-    setState('done')
+      const categoryMap = new Map<string, string>()
+      const categoryPodMap = new Map<string, string>()
+      for (const cat of categories) {
+        const normalizedName = normalize(cat.name)
+        categoryMap.set(`${cat.list_id}:${normalizedName}`, cat.id)
+        const podName = podNameById.get(cat.list_id)
+        if (podName) {
+          const contextualName = normalize(`${cat.name} / ${podName}`)
+          categoryMap.set(contextualName, cat.id)
+          categoryMap.set(`${cat.list_id}:${contextualName}`, cat.id)
+        }
+        if (categoryNameCounts.get(normalizedName) === 1) {
+          categoryMap.set(normalizedName, cat.id)
+        }
+        categoryPodMap.set(cat.id, cat.list_id)
+      }
 
-    // Enable undo for 5 minutes
-    if (res.imported > 0) {
-      setUndoAvailable(true)
-      setTimeout(() => setUndoAvailable(false), 5 * 60 * 1000)
+      const campaigns = await getCampaigns()
+      const campaignMap = new Map<string, string>()
+      const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active')
+      for (const campaign of activeCampaigns) {
+        campaignMap.set(normalize(campaign.name), campaign.id)
+      }
+      for (const campaign of campaigns) {
+        const key = normalize(campaign.name)
+        if (!campaignMap.has(key)) campaignMap.set(key, campaign.id)
+      }
+      const campaignAliases = new Map<string, string>()
+      const kinshipFundCampaign = activeCampaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
+        ?? campaigns.find(c => normalize(c.name) === normalize('Kinship Ventures Fund I'))
+      if (kinshipFundCampaign) {
+        campaignAliases.set(normalize('Kinship Fund Pipeline'), kinshipFundCampaign.id)
+      }
+
+      const res = await importContacts(
+        parsedRows, '', (p) => setProgress(p),
+        {
+          type: recordType, podIds: [], mapping: safeColumnMapping,
+          categoryMap, categoryPodMap, podMap,
+          campaignMap, campaignAliases, createMissingCampaigns: true,
+          batchId: newBatchId, importSource,
+        }
+      )
+      invalidateContactsCache()
+      invalidateCampaignsCache()
+      setResult(res)
+      setState('done')
+
+      // Enable undo for 5 minutes
+      if (res.imported > 0) {
+        setUndoAvailable(true)
+        setTimeout(() => setUndoAvailable(false), 5 * 60 * 1000)
+      }
+    } catch (err) {
+      console.error('Import failed:', err)
+      setImportError(err instanceof Error ? err.message : 'Import failed. Please try again.')
+      setState('preview')
+      setProgress(null)
     }
   }
 
@@ -325,6 +343,7 @@ export function ImportPanel() {
     setState('source')
     setFileName('')
     setFileError(null)
+    setImportError(null)
     setParsedHeaders([])
     setParsedRows([])
     setColumnMapping([])
@@ -435,6 +454,20 @@ export function ImportPanel() {
         {/* Step 2: Configure */}
         {state === 'preview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {importError && (
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: 8,
+                border: '1px solid rgba(211,47,47,0.2)',
+                background: 'rgba(211,47,47,0.06)',
+                color: '#B3261E',
+                fontSize: 13,
+                lineHeight: 1.45,
+              }}>
+                Import failed: {importError}
+              </div>
+            )}
+
             {/* File info + source badge */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -691,7 +724,7 @@ export function ImportPanel() {
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Importing...</p>
               <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
-                {estSeconds > 0 ? `About ${estSeconds}s remaining` : 'Finishing up...'}
+                {progress.phase === 'preparing' ? 'Preparing rows...' : estSeconds > 0 ? `About ${estSeconds}s remaining` : 'Finishing up...'}
               </p>
             </div>
             <div>

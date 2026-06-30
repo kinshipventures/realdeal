@@ -9,7 +9,7 @@ export type ParsedCSV = { headers: string[]; rows: Record<string, string>[] }
 
 export type ColumnMapping = { csvHeader: string; targetField: string | null }[]
 
-export type ImportProgress = { current: number; total: number; imported: number; skipped: number; updated?: number }
+export type ImportProgress = { current: number; total: number; imported: number; skipped: number; updated?: number; phase?: 'preparing' | 'saving' }
 
 export type ImportResult = { imported: number; skipped: number; errors: string[]; updated?: number; campaignLinked?: number; interactionsImported?: number }
 
@@ -776,6 +776,12 @@ export function splitMultiValue(value: string): string[] {
     .filter(Boolean)
 }
 
+function splitContextualOptionValue(value: string): { value: string; context: string | null } {
+  const parts = value.split(/\s+\/\s+/).map(part => part.trim()).filter(Boolean)
+  if (parts.length < 2) return { value: value.trim(), context: null }
+  return { value: parts[0], context: parts.slice(1).join(' / ') }
+}
+
 const CAMPAIGN_TARGET_FIELDS = new Set<string>(['Campaign', 'Campaign Status', 'Commitment Amount'])
 const CAMPAIGN_NUMBER_WORDS: Record<string, number> = {
   one: 1,
@@ -1382,14 +1388,24 @@ function resolveCategoryIds(
   mapping: ColumnMapping | undefined,
   primaryPodId: string | null,
   categoryMap: Map<string, string>,
+  podMap: Map<string, string>,
   extraSubPodNames: string[] = [],
 ): string[] {
   if (!mapping || mapping.length === 0) return []
-  const categoryValue = resolve(row, mapping, 'Sub-pod') || resolve(row, mapping, '_category')
-  return unique([...splitMultiValue(categoryValue), ...extraSubPodNames.flatMap(splitMultiValue)])
+  const categoryValues = [
+    ...resolveValues(row, mapping, 'Sub-pod'),
+    resolve(row, mapping, '_category'),
+  ].filter(Boolean)
+  return unique([...categoryValues.flatMap(splitMultiValue), ...extraSubPodNames.flatMap(splitMultiValue)])
     .map(categoryName => {
-      const normalizedName = normalize(categoryName)
-      return (primaryPodId ? categoryMap.get(`${primaryPodId}:${normalizedName}`) : undefined)
+      const parsed = splitContextualOptionValue(categoryName)
+      const normalizedName = normalize(parsed.value)
+      const normalizedOriginal = normalize(categoryName)
+      const contextualPodId = parsed.context ? podMap.get(normalize(parsed.context)) : undefined
+      return (contextualPodId ? categoryMap.get(`${contextualPodId}:${normalizedName}`) : undefined)
+        ?? (primaryPodId ? categoryMap.get(`${primaryPodId}:${normalizedName}`) : undefined)
+        ?? (primaryPodId ? categoryMap.get(`${primaryPodId}:${normalizedOriginal}`) : undefined)
+        ?? categoryMap.get(normalizedOriginal)
         ?? categoryMap.get(normalizedName)
     })
     .filter(Boolean) as string[]
@@ -1976,7 +1992,6 @@ export async function importContacts(
   let campaignLinked = 0
   let interactionsImported = 0
   let skipped = 0
-  let mergedRows = 0
   const errors: string[] = []
   const pendingCreateIndex = new Map<string, number>()
   const toCreate: Array<{ rowNumber: number; name: string; email: string; contact: ContactInput; campaignFields: CampaignImportFields[]; touchpoints: ImportedTouchpoint[]; linkedPeopleIds: string[] }> = []
@@ -1989,6 +2004,10 @@ export async function importContacts(
       if (value) return value
     }
     return ''
+  }
+
+  const reportPreparationProgress = (rowIndex: number) => {
+    onProgress?.({ current: rowIndex + 1, total: rows.length, imported, skipped, updated, phase: 'preparing' })
   }
 
   for (let i = 0; i < rows.length; i++) {
@@ -2016,7 +2035,7 @@ export async function importContacts(
     const campaignFields = resolveCampaignImportFields(row, mapping)
     const campaignSubPodNames = campaignFields.flatMap(fields => fields.subPodNames)
     const mappedPodIds = resolvePodIds(row, mapping, fallbackPodIds, podMap)
-    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, campaignSubPodNames)
+    const categoryIds = resolveCategoryIds(row, mapping, mappedPodIds[0] ?? null, categoryMap, podMap, campaignSubPodNames)
     const categoryPodIds = categoryIds
       .map(categoryId => categoryPodMap.get(categoryId))
       .filter(Boolean) as string[]
@@ -2042,8 +2061,12 @@ export async function importContacts(
       : []
     const linkedCompanies: Contact[] = []
     for (const linkedCompanyName of companyNames) {
-      const linkedCompany = await ensureCompanyRecord(linkedCompanyName, row, rowRecordType)
-      if (linkedCompany) linkedCompanies.push(linkedCompany)
+      try {
+        const linkedCompany = await ensureCompanyRecord(linkedCompanyName, row, rowRecordType)
+        if (linkedCompany) linkedCompanies.push(linkedCompany)
+      } catch (rowError) {
+        errors.push(`Row ${i + 2} (${name}): Could not link company "${linkedCompanyName}": ${importErrorMessage(rowError)}`)
+      }
     }
     const linkedCompanyIds = unique(linkedCompanies.map(record => record.id))
     const primaryLinkedCompany = linkedCompanies[0] ?? null
@@ -2053,15 +2076,23 @@ export async function importContacts(
     if (rowRecordType === 'Company') {
       const associatedPeopleNames = linkedRecordNames(resolveValues(row, safeMapping, 'Contacts'))
       for (const personName of associatedPeopleNames) {
-        const personRecord = await ensureLinkedPersonRecord(personName)
-        if (personRecord) associatedPeopleIds.push(personRecord.id)
+        try {
+          const personRecord = await ensureLinkedPersonRecord(personName)
+          if (personRecord) associatedPeopleIds.push(personRecord.id)
+        } catch (rowError) {
+          errors.push(`Row ${i + 2} (${name}): Could not link contact "${personName}": ${importErrorMessage(rowError)}`)
+        }
       }
     }
     const assistantNames = mapping ? linkedRecordNames(resolveValues(row, mapping, 'Assistant Info')) : []
     const assistantRecords: Contact[] = []
     for (const assistantName of assistantNames) {
-      const assistantRecord = await ensureLinkedPersonRecord(assistantName)
-      if (assistantRecord) assistantRecords.push(assistantRecord)
+      try {
+        const assistantRecord = await ensureLinkedPersonRecord(assistantName)
+        if (assistantRecord) assistantRecords.push(assistantRecord)
+      } catch (rowError) {
+        errors.push(`Row ${i + 2} (${name}): Could not link assistant "${assistantName}": ${importErrorMessage(rowError)}`)
+      }
     }
     if (assistantRecords.length > 0) {
       customFields.assistantContactIds = unique(assistantRecords.map(record => record.id))
@@ -2144,7 +2175,7 @@ export async function importContacts(
       pending.touchpoints = mergeImportedTouchpoints(pending.touchpoints, importedTouchpoints)
       pending.linkedPeopleIds = unique([...pending.linkedPeopleIds, ...associatedPeopleIds])
       pendingKeys.forEach(key => pendingCreateIndex.set(key, pendingIndex))
-      mergedRows++
+      reportPreparationProgress(i)
       continue
     }
 
@@ -2157,19 +2188,20 @@ export async function importContacts(
         toUpdate.push({ rowNumber: i + 2, name, contactId: existingContact.id, patch, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints, linkedPeopleIds: associatedPeopleIds })
       } else {
         skipped++
-        onProgress?.({ current: i + 1, total: rows.length, imported, skipped, updated })
       }
+      reportPreparationProgress(i)
       continue
     }
 
     const createIndex = toCreate.length
     toCreate.push({ rowNumber: i + 2, name, email, contact, campaignFields: mergeCampaignFields([], campaignFields), touchpoints: importedTouchpoints, linkedPeopleIds: associatedPeopleIds })
     pendingKeys.forEach(key => pendingCreateIndex.set(key, createIndex))
+    reportPreparationProgress(i)
   }
 
   const total = rows.length
-  let processedForProgress = skipped + mergedRows
-  onProgress?.({ current: processedForProgress, total, imported, skipped, updated })
+  let processedForProgress = total
+  onProgress?.({ current: processedForProgress, total, imported, skipped, updated, phase: 'saving' })
 
   for (const item of toUpdate) {
     try {
@@ -2199,7 +2231,7 @@ export async function importContacts(
       errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
     }
     processedForProgress++
-    onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
+    onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated, phase: 'saving' })
   }
 
   for (let i = 0; i < toCreate.length; i += BULK_INSERT_CHUNK_SIZE) {
@@ -2224,7 +2256,7 @@ export async function importContacts(
       }
       imported += created.length
       processedForProgress += chunk.length
-      onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
+      onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated, phase: 'saving' })
     } catch {
       for (const item of chunk) {
         try {
@@ -2250,7 +2282,7 @@ export async function importContacts(
           errors.push(`Row ${item.rowNumber} (${item.name}): ${importErrorMessage(rowError)}`)
         }
         processedForProgress++
-        onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated })
+        onProgress?.({ current: Math.min(processedForProgress, total), total, imported, skipped, updated, phase: 'saving' })
       }
     }
   }
