@@ -66,6 +66,7 @@ For import-related work:
 - Do not change import mapping, parsing, pod/sub-pod assignment, campaign linking, template behavior, or storage behavior unless the user explicitly approves that exact scope.
 - Run `npm.cmd run verify:import-safety`.
 - The import safety check must prove that a real Excel fixture imports without stalled progress and stores contacts, companies, pods, sub-pods, campaigns, commitment amounts, and import metadata in the expected places.
+- Import reliability protections may add preflight checks, progress watchdogs, post-save verification, and safe retry behavior around the approved import flow; they must not redefine the mapping or CRM organization rules.
 - If import safety fails, do not deploy.
 
 For auth changes:

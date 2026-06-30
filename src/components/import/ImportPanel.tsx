@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getPods, getContacts, getCategories, getCampaigns, invalidateCampaignsCache, invalidateContactsCache } from '../../lib/data'
 import { parseImportFile, detectColumns, importContacts, countInvalidRows, getRowWarnings, normalize, normalizeColumnMapping, targetAllowsMultipleMapping, TARGET_FIELDS } from '../../lib/csvImport'
+import { buildImportReliabilityPlan, createImportProgressWatchdog, mergeImportResults, runImportPreflight, verifyImportCompletion } from '../../lib/importReliability'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { parseVCard, vcardToRows, isVCard } from '../../lib/vcardParser'
+import { isDemoMode } from '../../lib/sampleData'
 import { supabase } from '@/integrations/supabase/client'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import type { Pod, Contact } from '../../lib/types'
 import type { RelationshipType } from '../../lib/types'
 import type { ImportProgress, ImportResult, ColumnMapping, RowWarning } from '../../lib/csvImport'
+import type { ImportVerificationResult } from '../../lib/importReliability'
 import { ImportSourcePicker } from './ImportSourcePicker'
 import { PasteImport } from './PasteImport'
 
@@ -87,6 +90,8 @@ export function ImportPanel() {
   const [result, setResult] = useState<ImportResult | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
+  const [importNotice, setImportNotice] = useState<string | null>(null)
+  const [verification, setVerification] = useState<ImportVerificationResult | null>(null)
 
   const [existingContacts, setExistingContacts] = useState<Contact[]>([])
   const [rowWarnings, setRowWarnings] = useState<RowWarning[]>([])
@@ -239,8 +244,18 @@ export function ImportPanel() {
   // ---- Import ----
   async function handleImport() {
     if (readyCount === 0) return
+    const reliabilityPlan = buildImportReliabilityPlan(parsedRows, safeColumnMapping, recordType)
+    const preflightWorkspaceId = activeWorkspace?.id ?? (isDemoMode() ? 'demo-workspace' : null)
+    const preflight = runImportPreflight(reliabilityPlan, preflightWorkspaceId)
+    if (!preflight.ok) {
+      setImportError(preflight.errors.join(' '))
+      return
+    }
+
     setState('importing')
     setImportError(null)
+    setImportNotice(preflight.warnings[0] ?? null)
+    setVerification(null)
     setProgress({ current: 0, total: parsedRows.length, imported: 0, skipped: 0 })
 
     try {
@@ -294,17 +309,53 @@ export function ImportPanel() {
         campaignAliases.set(normalize('Kinship Fund Pipeline'), kinshipFundCampaign.id)
       }
 
-      const res = await importContacts(
-        parsedRows, '', (p) => setProgress(p),
-        {
-          type: recordType, podIds: [], mapping: safeColumnMapping,
-          categoryMap, categoryPodMap, podMap,
-          campaignMap, campaignAliases, createMissingCampaigns: true,
-          batchId: newBatchId, importSource,
+      const importOptions = {
+        type: recordType, podIds: [], mapping: safeColumnMapping,
+        categoryMap, categoryPodMap, podMap,
+        campaignMap, campaignAliases, createMissingCampaigns: true,
+        batchId: newBatchId, importSource,
+      }
+      const runImportAttempt = async (attempt: 'initial' | 'retry') => {
+        const watchdog = createImportProgressWatchdog(() => {
+          setImportNotice('This import is taking longer than expected. Real Deal is still working and will verify saved contacts before finishing.')
+        })
+        watchdog.start()
+        try {
+          if (attempt === 'retry') {
+            setImportNotice('Real Deal is verifying saved contacts and retrying the import safely.')
+          }
+          return await importContacts(
+            parsedRows, '', (p) => {
+              watchdog.report(p)
+              setProgress(p)
+            },
+            importOptions,
+          )
+        } finally {
+          watchdog.stop()
         }
-      )
+      }
+
+      let res = await runImportAttempt('initial')
       invalidateContactsCache()
+      let savedContacts = await getContacts()
+      let verificationResult = verifyImportCompletion(reliabilityPlan, savedContacts, res)
+
+      if (!verificationResult.ok) {
+        const retryResult = await runImportAttempt('retry')
+        res = mergeImportResults(res, retryResult)
+        invalidateContactsCache()
+        savedContacts = await getContacts()
+        verificationResult = verifyImportCompletion(reliabilityPlan, savedContacts, res)
+      }
+
+      if (!verificationResult.ok) {
+        throw new Error(`Import verification could not find ${verificationResult.missing.length} row${verificationResult.missing.length === 1 ? '' : 's'} after saving. Nothing was marked complete.`)
+      }
+
       invalidateCampaignsCache()
+      setVerification(verificationResult)
+      setImportNotice(null)
       setResult(res)
       setState('done')
 
@@ -318,6 +369,7 @@ export function ImportPanel() {
       setImportError(err instanceof Error ? err.message : 'Import failed. Please try again.')
       setState('preview')
       setProgress(null)
+      setImportNotice(null)
     }
   }
 
@@ -351,6 +403,8 @@ export function ImportPanel() {
     setResult(null)
     setShowPreview(false)
     setShowErrors(false)
+    setImportNotice(null)
+    setVerification(null)
     setRowWarnings([])
     setShowPaste(false)
     setGoogleState('idle')
@@ -747,6 +801,20 @@ export function ImportPanel() {
               <span style={{ color: 'var(--edge-strong)' }}>|</span>
               <span>{progress.skipped} skipped</span>
             </div>
+            {importNotice && (
+              <div style={{
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(0,120,212,0.18)',
+                background: 'rgba(0,120,212,0.06)',
+                color: '#005A9E',
+                fontSize: 12,
+                lineHeight: 1.45,
+                textAlign: 'center',
+              }}>
+                {importNotice}
+              </div>
+            )}
           </div>
         )}
 
@@ -765,6 +833,11 @@ export function ImportPanel() {
                 {(result.interactionsImported ?? 0) > 0 && ` - ${result.interactionsImported} touchpoint${result.interactionsImported === 1 ? '' : 's'} imported`}
                 {result.skipped > 0 && ` - ${result.skipped} skipped`}
               </p>
+              {verification && (
+                <p style={{ fontSize: 12, color: 'var(--color-brand)', margin: '8px 0 0' }}>
+                  Verified after save: {verification.matched} of {verification.expected} rows found in this workspace.
+                </p>
+              )}
 
               {/* Undo button */}
               {undoAvailable && !undoResult && (
