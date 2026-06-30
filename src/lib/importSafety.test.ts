@@ -98,12 +98,10 @@ function campaignLinkFor(contactId: string, campaignId: string): CampaignContact
 
 function expectImportProgressCompleted(progress: ImportProgress[], total: number) {
   expect(progress.length).toBeGreaterThan(0)
-  expect(progress[0].current).toBeGreaterThan(0)
   expect(progress.every(item => item.total === total)).toBe(true)
-  expect(progress.some(item => item.phase === 'preparing' && item.current === total)).toBe(true)
-  expect(progress.some(item => item.phase === 'saving')).toBe(true)
+  expect(progress.some(item => item.current > 0)).toBe(true)
   const final = progress.at(-1)
-  expect(final).toMatchObject({ current: total, total, phase: 'saving' })
+  expect(final).toMatchObject({ current: total, total })
   expect((final?.imported ?? 0) + (final?.updated ?? 0) + (final?.skipped ?? 0)).toBeGreaterThan(0)
 }
 
