@@ -13,6 +13,16 @@ const pod = {
   created_at: '2026-01-01',
 }
 
+const subPod = {
+  id: 'subpod-music',
+  list_id: pod.id,
+  name: 'Music',
+  description: null,
+  color: null,
+  sort_order: 0,
+  created_at: '2026-01-01',
+}
+
 describe('SubPodSelector', () => {
   it('keeps Sub-pods visible before a pod is selected', () => {
     const markup = renderToStaticMarkup(
@@ -28,6 +38,37 @@ describe('SubPodSelector', () => {
 
     expect(markup).toContain('Sub-pods')
     expect(markup).toContain('Select a pod to view its sub-pods.')
+  })
+
+  it('hides sub-pod options until their parent pod is selected', () => {
+    const markup = renderToStaticMarkup(
+      <SubPodSelector
+        pods={[pod]}
+        categories={[subPod]}
+        selectedPodIds={[]}
+        selectedCategoryIds={[]}
+        onSelect={() => {}}
+        onClear={() => {}}
+      />,
+    )
+
+    expect(markup).toContain('Select a pod to view its sub-pods.')
+    expect(markup).not.toContain('Music')
+  })
+
+  it('shows sub-pod options only after their parent pod is selected', () => {
+    const markup = renderToStaticMarkup(
+      <SubPodSelector
+        pods={[pod]}
+        categories={[subPod]}
+        selectedPodIds={[pod.id]}
+        selectedCategoryIds={[]}
+        onSelect={() => {}}
+        onClear={() => {}}
+      />,
+    )
+
+    expect(markup).toContain('Music')
   })
 
   it('keeps Sub-pods visible when a selected pod has no options', () => {
