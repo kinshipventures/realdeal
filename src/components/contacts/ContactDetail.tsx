@@ -15,7 +15,6 @@ import { avatarHue, initials } from '../../lib/utils'
 import { useEscape } from '../../lib/escapeStack'
 import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
-import { selectedContactCardValues, visibleAssignedIds } from '../../lib/contactCardVisibility'
 import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
 import { CloseButton } from '../ui'
@@ -241,18 +240,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const visibleSubPodIds = useMemo(() => {
     return visiblePods.map(pod => pod.id)
   }, [visiblePods])
-  const selectedVisiblePods = useMemo(() => {
-    const selectedIds = visibleAssignedIds(visibleSubPodIds, draft.list_ids)
-    return selectedIds
-      .map(id => visiblePods.find(pod => pod.id === id))
-      .filter(Boolean) as Pod[]
-  }, [draft.list_ids, visiblePods, visibleSubPodIds])
   const visibleSubPodPods = useMemo(
     () => visiblePods,
     [visiblePods],
   )
   const selectedVisibleSubPodIds = useMemo(() => {
-    return visibleAssignedIds(visibleSubPodIds, draft.list_ids)
+    const assignedPodIds = new Set(draft.list_ids ?? [])
+    return visibleSubPodIds.filter(podId => assignedPodIds.has(podId))
   }, [draft.list_ids, visibleSubPodIds])
   const visibleSubPodCategories = useMemo(() => {
     return availableCategories.filter(category =>
@@ -1011,8 +1005,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const fieldId = String(key)
     const hiddenValues = new Set(displaySettings.hiddenFieldOptionValues[fieldId] ?? [])
     const defaultOptions = fieldId === 'kv_fund_investor' ? DEFAULT_KINSHIP_INVESTMENTS : []
-    const displayValues = selectedContactCardValues(values, hiddenValues)
+    const visibleValues = values.filter(value => !hiddenValues.has(value))
     const visibleOptions = mergeOptions(options, defaultOptions).filter(option => !hiddenValues.has(option))
+    const displayValues = visibleValues
     const hasDisplayedValues = displayValues.length > 0
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
@@ -1038,12 +1033,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       setArrayDraftValue(key, nextValues)
     }
 
-    function renderLabelChip(option: string, selected = true) {
+    function renderLabelChip(option: string, selected = true, readOnly = false) {
       return (
         <button
           key={option}
           type="button"
-          onClick={() => editing && toggleLabel(option)}
+          onClick={() => editing && !readOnly && toggleLabel(option)}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -1061,12 +1056,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             fontSize: 12,
             fontWeight: selected ? 600 : 500,
             lineHeight: 1.3,
-            cursor: editing ? 'pointer' : 'default',
+            cursor: editing && !readOnly ? 'pointer' : 'default',
             fontFamily: 'inherit',
           }}
         >
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{option}</span>
-          {editing && selected && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
+          {readOnly && <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 500 }}>Available</span>}
+          {editing && selected && !readOnly && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
         </button>
       )
     }
@@ -1186,7 +1182,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             >
               {displayValues.map(option => {
                 const selected = values.includes(option)
-                return renderLabelChip(option, selected)
+                return renderLabelChip(option, selected, !selected)
               })}
             </div>
           ) : (
@@ -1587,6 +1583,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     label,
     records,
     selectedIds,
+    displayOnlyIds = [],
     placeholder,
     onChange,
     multi = true,
@@ -1597,6 +1594,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     label: string
     records: Contact[]
     selectedIds: string[]
+    displayOnlyIds?: string[]
     placeholder: string
     onChange: (ids: string[]) => void
     multi?: boolean
@@ -1606,6 +1604,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }) {
     const normalizedSelectedIds = uniqueIds(selectedIds)
     const selectedRecords = normalizedSelectedIds
+      .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
+      .filter(Boolean) as Contact[]
+    const displayOnlyRecords = uniqueIds(displayOnlyIds)
+      .filter(id => !normalizedSelectedIds.includes(id))
       .map(id => records.find(record => record.id === id) ?? contactsForOptions.find(record => record.id === id))
       .filter(Boolean) as Contact[]
     const availableRecords = records.filter(record => !normalizedSelectedIds.includes(record.id))
@@ -1639,9 +1641,31 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           <div style={rowLabel}>{label}</div>
         </div>
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {selectedRecords.length > 0 ? (
+          {selectedRecords.length > 0 || displayOnlyRecords.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {selectedRecords.map(record => recordChip(record, () => removeRecord(record.id)))}
+              {displayOnlyRecords.map(record => (
+                <span
+                  key={`display-only:${record.id}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    maxWidth: '100%',
+                    padding: '5px 9px',
+                    borderRadius: 999,
+                    border: '1px dashed var(--edge)',
+                    background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</span>
+                  <span style={{ color: 'var(--color-text-tertiary)' }}>Available</span>
+                </span>
+              ))}
             </div>
           ) : (
             <div style={{ fontSize: 14, color: 'var(--color-text-tertiary)', minHeight: 22, lineHeight: 1.45 }}>
@@ -2657,8 +2681,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   <div style={{ padding: '16px 18px' }}>
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pods</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {selectedVisiblePods.map(pod => {
-                        const isIn = true
+                      {visiblePods.map(pod => {
+                        const isIn = (draft.list_ids ?? []).includes(pod.id)
                         const isPrimary = draft.primary_list_id === pod.id
                         return (
                           <button

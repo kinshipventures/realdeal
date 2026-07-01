@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { getCampaigns, getCampaignContactsForContact } from '../../lib/data'
 import type { Contact, Campaign } from '../../lib/types'
-import { linkedContactCardCampaigns } from '../../lib/contactCardVisibility'
 import { WIDGET_STYLE } from './shared'
 
 interface PipelinesWidgetProps {
@@ -19,7 +18,9 @@ export function PipelinesWidget({ contact, hiddenCampaignIds = [] }: PipelinesWi
       getCampaigns(),
       getCampaignContactsForContact(contact.id),
     ])
-    setCampaigns(linkedContactCardCampaigns(allCampaigns, myLinks, hiddenCampaignIds))
+    const ids = myLinks.map(cc => cc.campaign_id)
+    const hiddenIds = new Set(hiddenCampaignIds)
+    setCampaigns(allCampaigns.filter(c => ids.includes(c.id) && !hiddenIds.has(c.id) && c.status !== 'hidden'))
   }, [contact.id, hiddenCampaignIds])
 
   useEffect(() => { load() }, [load])
