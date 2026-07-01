@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { isChunkLoadError, reloadOnceForChunkLoadError } from '@/lib/chunkLoadRecovery'
 
 interface Props { children: ReactNode }
 interface State { hasError: boolean; error: Error | null }
@@ -10,8 +11,13 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
+  componentDidCatch(error: Error) {
+    if (isChunkLoadError(error)) reloadOnceForChunkLoadError()
+  }
+
   render() {
     if (!this.state.hasError) return this.props.children
+    const chunkLoadError = isChunkLoadError(this.state.error)
 
     return (
       <div style={{
@@ -21,10 +27,12 @@ export class ErrorBoundary extends Component<Props, State> {
       }}>
         <div style={{ fontSize: 48 }}>:(</div>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-text-primary, #000)' }}>
-          Something went wrong
+          {chunkLoadError ? 'A new version is available' : 'Something went wrong'}
         </h1>
         <p style={{ fontSize: 14, color: 'var(--color-text-secondary, #666)', maxWidth: 400, textAlign: 'center' }}>
-          {this.state.error?.message || 'An unexpected error occurred.'}
+          {chunkLoadError
+            ? 'Real Deal is refreshing to load the latest version. If it does not reload automatically, use the button below.'
+            : this.state.error?.message || 'An unexpected error occurred.'}
         </p>
         <button
           type="button"
@@ -35,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
             border: 'none', borderRadius: 8, cursor: 'pointer',
           }}
         >
-          Reload
+          {chunkLoadError ? 'Reload now' : 'Reload'}
         </button>
       </div>
     )
