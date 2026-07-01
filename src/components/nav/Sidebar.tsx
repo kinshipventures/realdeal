@@ -10,9 +10,19 @@ interface SidebarProps {
   onSearch: () => void
   demo: boolean
   onDemoToggle?: () => void
+  sharedContactsBadgeCount?: number
+  sharedContactsBadgeLabel?: string
 }
 
-export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: SidebarProps) {
+export function Sidebar({
+  collapsed,
+  onToggle,
+  onSearch,
+  demo,
+  onDemoToggle,
+  sharedContactsBadgeCount = 0,
+  sharedContactsBadgeLabel,
+}: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const width = collapsed ? 56 : 220
@@ -186,6 +196,8 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
           active={isApprovals}
           collapsed={collapsed}
           onClick={() => navigate('/approvals')}
+          badgeCount={sharedContactsBadgeCount}
+          badgeLabel={sharedContactsBadgeLabel}
         />
       </div>
 
@@ -255,7 +267,7 @@ export function Sidebar({ collapsed, onToggle, onSearch, demo, onDemoToggle }: S
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, active, collapsed, onClick, hint, labelStyle, badge,
+  icon, label, active, collapsed, onClick, hint, labelStyle, badge, badgeCount, badgeLabel,
 }: {
   icon: React.ReactNode
   label: string
@@ -265,9 +277,12 @@ function NavItem({
   hint?: string
   labelStyle?: React.CSSProperties
   badge?: boolean
+  badgeCount?: number
+  badgeLabel?: string
 }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const hasCountBadge = typeof badgeCount === 'number' && badgeCount > 0
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
 
   function handleEnter() {
@@ -284,6 +299,8 @@ function NavItem({
     <button
       type="button"
       aria-current={active ? 'page' : undefined}
+      aria-label={badgeLabel ? `${label}: ${badgeLabel}` : label}
+      title={badgeLabel || undefined}
       onClick={onClick}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
@@ -309,7 +326,23 @@ function NavItem({
     >
       <span style={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {icon}
-        {badge && collapsed && (
+        {hasCountBadge && collapsed && (
+          <span className="badge-pulse" style={{
+            position: 'absolute', top: -8, right: -9,
+            minWidth: 16, height: 16, padding: '0 4px',
+            borderRadius: 999,
+            background: active ? 'var(--color-shell)' : 'var(--color-brand)',
+            color: active ? 'var(--color-brand)' : 'white',
+            fontSize: 9,
+            fontWeight: 800,
+            lineHeight: '16px',
+            textAlign: 'center',
+            boxShadow: '0 0 0 2px var(--nav-bg)',
+          }}>
+            {badgeCount > 9 ? '9+' : badgeCount}
+          </span>
+        )}
+        {badge && collapsed && !hasCountBadge && (
           <span className="badge-pulse" style={{
             position: 'absolute', top: -2, right: -2,
             width: 6, height: 6, borderRadius: '50%',
@@ -332,7 +365,26 @@ function NavItem({
           {label}
         </span>
       )}
-      {badge && !collapsed && (
+      {hasCountBadge && !collapsed && (
+        <span className="badge-pulse" style={{
+          minWidth: 20,
+          height: 20,
+          padding: '0 6px',
+          borderRadius: 999,
+          background: active ? 'var(--color-shell)' : 'var(--color-brand)',
+          color: active ? 'var(--color-brand)' : 'white',
+          flexShrink: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 10,
+          fontWeight: 800,
+          lineHeight: 1,
+        }}>
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
+      )}
+      {badge && !collapsed && !hasCountBadge && (
         <span className="badge-pulse" style={{
           width: 6, height: 6, borderRadius: '50%',
           background: 'var(--color-shell)', flexShrink: 0,

@@ -12,6 +12,7 @@ import {
   type UserConnection,
 } from '@/lib/connections'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
+import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
 import {
   createCollaborationAccessGrant,
   getCollaborationAccessGrants,
@@ -454,6 +455,50 @@ export function ApprovalsPage() {
     loadData()
   }, [loadData])
 
+  useEffect(() => {
+    if (!workspaceId || loading) return
+
+    let cancelled = false
+
+    async function refreshConnectionData() {
+      if (document.visibilityState === 'hidden') return
+
+      try {
+        const nextConnections = await getUserConnections()
+        if (cancelled) return
+
+        setConnections(nextConnections)
+
+        if (contacts.length === 0) return
+
+        const nextRecognizedUsers = await findAppUsersForContactEmails(contacts.flatMap(contactEmails))
+        if (!cancelled) setRecognizedUsers(nextRecognizedUsers)
+      } catch (err) {
+        if (!cancelled) console.warn('Failed to refresh user connections', err)
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshConnectionData()
+    }, 15000)
+    const handleFocus = () => {
+      void refreshConnectionData()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void refreshConnectionData()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [contacts, loading, workspaceId])
+
   async function handleResolveRequest(request: CollaborationApprovalRequest, status: 'approved' | 'rejected') {
     if (!workspaceId) return
     await resolveCollaborationApprovalRequest(request.id, workspaceId, status)
@@ -479,11 +524,13 @@ export function ApprovalsPage() {
   async function handleCreateConnection(email: string) {
     await createUserConnectionRequest(email)
     await loadData()
+    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
   }
 
   async function handleRespondConnection(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
     await respondUserConnection(connection.id, status)
     await loadData()
+    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
   }
 
   return (

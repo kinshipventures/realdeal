@@ -17,6 +17,13 @@ import { SearchPalette, type SearchResult, type QuickActionId } from './componen
 import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
 import { SharedListPage } from './components/sharing/SharedListPage'
 import { ChatPanel } from '@/components/chat/ChatPanel'
+import { getUserConnections } from './lib/connections'
+import {
+  CONNECTIONS_CHANGED_EVENT,
+  readConnectionNotificationState,
+  summarizeConnectionNotifications,
+  writeConnectionNotificationState,
+} from './lib/connectionNotifications'
 
 // Heavy routes — lazy loaded so they don't bloat the initial bundle
 const OrbMap = lazy(() => import('./components/map/OrbMap').then(m => ({ default: m.OrbMap })))
@@ -97,6 +104,7 @@ function AppShell() {
   const isSettings = location.pathname === '/account'
   const isCampaigns = location.pathname.startsWith('/campaigns') || location.pathname.startsWith('/projects')
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')
+  const isApprovals = location.pathname.startsWith('/approvals')
   const isMobile = useIsMobile()
   const { session } = useAuth()
   const [demo, setDemo] = useState(isDemoMode)
@@ -107,6 +115,7 @@ function AppShell() {
     () => localStorage.getItem('realdeal:sidebar-collapsed') === '1'
   )
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [sharedContactsBadge, setSharedContactsBadge] = useState({ count: 0, label: '' })
 
   // Show onboarding for any user who hasn't completed it (scoped per user email)
   useEffect(() => {
@@ -124,6 +133,53 @@ function AppShell() {
   }, [session])
 
   const closeSearch = useCallback(() => setShowSearch(false), [])
+
+  const refreshConnectionNotifications = useCallback(async () => {
+    const userId = session?.user?.id
+    if (!userId || demo) {
+      setSharedContactsBadge({ count: 0, label: '' })
+      return
+    }
+
+    try {
+      const connections = await getUserConnections()
+      const previousState = readConnectionNotificationState(userId)
+      const summary = summarizeConnectionNotifications(connections, previousState, {
+        clearAccepted: isApprovals,
+      })
+      writeConnectionNotificationState(userId, summary.state)
+      setSharedContactsBadge({ count: summary.totalCount, label: summary.label })
+    } catch (err) {
+      console.warn('Failed to refresh connection notifications', err)
+    }
+  }, [demo, isApprovals, session?.user?.id])
+
+  useEffect(() => {
+    void refreshConnectionNotifications()
+  }, [refreshConnectionNotifications])
+
+  useEffect(() => {
+    if (!session?.user?.id || demo) return
+
+    const refresh = () => {
+      void refreshConnectionNotifications()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    const intervalId = window.setInterval(refresh, 15000)
+
+    window.addEventListener('focus', refresh)
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refresh)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refresh)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [demo, refreshConnectionNotifications, session?.user?.id])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -163,6 +219,8 @@ function AppShell() {
           onSearch={() => setShowSearch(true)}
           demo={demo}
           onDemoToggle={showDemoControls ? handleDemoToggle : undefined}
+          sharedContactsBadgeCount={sharedContactsBadge.count}
+          sharedContactsBadgeLabel={sharedContactsBadge.label}
         />
       )}
 
@@ -363,6 +421,7 @@ export default function App() {
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="campaigns/:id" element={<CampaignDetailRoute />} />
           <Route path="approvals" element={<ApprovalsPage />} />
+          <Route path="shared" element={<Navigate to="/approvals" replace />} />
           <Route path="pipelines" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects" element={<Navigate to="/campaigns" replace />} />
           <Route path="projects/:id" element={<Navigate to="/campaigns" replace />} />
