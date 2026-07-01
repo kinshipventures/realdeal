@@ -52,4 +52,20 @@ describe('Shared contacts guardrails', () => {
     expect(connections).toContain('next_status: status')
     expect(connections).toContain("db.rpc('find_app_users_for_contact_emails', { contact_emails: contactEmails })")
   })
+
+  it('keeps Share contacts searchable and field-personalized without changing grant storage scopes', () => {
+    const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
+    const visibleFields = source('src/lib/sharedContactVisibleFields.ts')
+
+    expect(approvalsPage).toContain('const [resourceSearch, setResourceSearch] = useState')
+    expect(approvalsPage).toContain('placeholder="Search contacts, pods, sub-pods, companies, or campaigns"')
+    expect(approvalsPage).toContain('SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map')
+    expect(approvalsPage).toContain('deriveSharedContactFieldScopes(selectedVisibleFieldIds)')
+    expect(visibleFields).toContain('export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS')
+    expect(visibleFields).toContain("scope: 'public_profile'")
+    expect(visibleFields).toContain("scope: 'private_contact'")
+    expect(visibleFields).toContain("scope: 'relationship_private'")
+    expect(visibleFields).toContain("scope: 'investment_private'")
+    expect(visibleFields).toContain("scope: 'campaign_private'")
+  })
 })

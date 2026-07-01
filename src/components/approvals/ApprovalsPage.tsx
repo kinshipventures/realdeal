@@ -14,6 +14,12 @@ import {
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
 import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
 import {
+  DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS,
+  deriveSharedContactFieldScopes,
+  SHARED_CONTACT_VISIBLE_FIELD_GROUPS,
+  type SharedContactVisibleFieldId,
+} from '@/lib/sharedContactVisibleFields'
+import {
   createCollaborationAccessGrant,
   getCollaborationAccessGrants,
   getCollaborationApprovalRequests,
@@ -114,14 +120,6 @@ const CREATE_PERMISSION_OPTIONS: Array<{ value: CollaborationPermissionLevel; la
   { value: 'edit', label: 'Editor' },
   { value: 'approve', label: 'Approver' },
   { value: 'admin', label: 'Admin' },
-]
-
-const FIELD_SCOPE_OPTIONS: Array<{ value: CollaborationFieldScope; label: string; summary: string }> = [
-  { value: 'public_profile', label: 'Public profile', summary: 'Name, company, role, city, LinkedIn, pod, and list context.' },
-  { value: 'private_contact', label: 'Private contact', summary: 'Email, phone, address, and direct contact fields.' },
-  { value: 'relationship_private', label: 'Relationship private', summary: 'Private notes, relationship context, activity, and communication history.' },
-  { value: 'investment_private', label: 'Investment private', summary: 'Investment details, financial commitments, LP/SPV context, and restricted investor fields.' },
-  { value: 'campaign_private', label: 'Campaign private', summary: 'Campaign notes, outreach status, approval comments, and campaign-only updates.' },
 ]
 
 const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
@@ -1036,16 +1034,35 @@ function ShareContactsModal({
   const [subjectId, setSubjectId] = useState('')
   const [subjectLabel, setSubjectLabel] = useState('')
   const [resourceId, setResourceId] = useState('')
+  const [resourceSearch, setResourceSearch] = useState('')
   const [permission, setPermission] = useState<CollaborationPermissionLevel>('view')
-  const [fieldScopes, setFieldScopes] = useState<CollaborationFieldScope[]>(['public_profile'])
+  const [selectedVisibleFieldIds, setSelectedVisibleFieldIds] = useState<SharedContactVisibleFieldId[]>(DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS)
   const [expirationDays, setExpirationDays] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const filteredResources = resources.filter(resource => resource.mode === shareMode)
   const selectedResource = filteredResources.find(resource => resource.id === resourceId) ?? null
+  const resourceQuery = resourceSearch.trim().toLowerCase()
+  const searchedResources = resourceQuery
+    ? filteredResources.filter(resource => [
+      resource.label,
+      resource.description,
+      resource.mode,
+      resource.resourceType,
+    ].some(value => String(value ?? '').toLowerCase().includes(resourceQuery)))
+    : filteredResources
+  const resourceSelectOptions = selectedResource && !searchedResources.some(resource => resource.id === selectedResource.id)
+    ? [selectedResource, ...searchedResources]
+    : searchedResources
+  const fieldScopes = useMemo(
+    () => deriveSharedContactFieldScopes(selectedVisibleFieldIds),
+    [selectedVisibleFieldIds],
+  )
+  const selectedVisibleFieldCount = selectedVisibleFieldIds.length
 
   useEffect(() => {
     setResourceId('')
+    setResourceSearch('')
   }, [shareMode])
 
   useEffect(() => {
@@ -1059,11 +1076,13 @@ function ShareContactsModal({
     setSubjectLabel(user ? user.display_name || user.email || 'User' : '')
   }, [subjectId, subjectType, users])
 
-  function toggleFieldScope(scope: CollaborationFieldScope) {
-    setFieldScopes(current => {
-      if (scope === 'public_profile') return current.includes(scope) ? current : [...current, scope]
-      return current.includes(scope) ? current.filter(item => item !== scope) : [...current, scope]
-    })
+  function toggleVisibleField(fieldId: SharedContactVisibleFieldId, locked: boolean) {
+    if (locked) return
+    setSelectedVisibleFieldIds(current => (
+      current.includes(fieldId)
+        ? current.filter(item => item !== fieldId)
+        : [...current, fieldId]
+    ))
   }
 
   async function handleSubmit() {
@@ -1102,12 +1121,29 @@ function ShareContactsModal({
           ))}
         </SelectField>
 
-        <SelectField label="Resource" value={resourceId} onChange={setResourceId}>
-          <option value="">Select {SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()}</option>
-          {filteredResources.map(resource => (
-            <option key={resource.id} value={resource.id}>{resource.label}</option>
-          ))}
-        </SelectField>
+        <div style={{ display: 'grid', gap: 6 }}>
+          <span style={fieldLabelStyle}>Resource</span>
+          <div style={resourceSearchWrapStyle}>
+            <Search size={14} />
+            <input
+              type="search"
+              aria-label="Search resources"
+              value={resourceSearch}
+              onChange={event => setResourceSearch(event.target.value)}
+              placeholder="Search contacts, pods, sub-pods, companies, or campaigns"
+              style={resourceSearchInputStyle}
+            />
+          </div>
+          <select value={resourceId} onChange={event => setResourceId(event.target.value)} style={inputStyle}>
+            <option value="">Select {SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()}</option>
+            {resourceSelectOptions.map(resource => (
+              <option key={resource.id} value={resource.id}>{resource.label}</option>
+            ))}
+          </select>
+          {resourceQuery && searchedResources.length === 0 && (
+            <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>No resources match this search.</span>
+          )}
+        </div>
 
         <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
           {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
@@ -1139,21 +1175,36 @@ function ShareContactsModal({
 
       <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
         <div style={fieldLabelStyle}>Visible fields</div>
-        <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
-          {FIELD_SCOPE_OPTIONS.map(scope => (
-            <label key={scope.value} style={checkboxRowStyle}>
-              <input
-                type="checkbox"
-                checked={fieldScopes.includes(scope.value)}
-                disabled={scope.value === 'public_profile'}
-                onChange={() => toggleFieldScope(scope.value)}
-                style={{ width: 15, height: 15, accentColor: 'var(--color-brand)' }}
-              />
-              <span>
-                <strong style={{ color: 'var(--color-text-primary)' }}>{scope.label}</strong>
-                <span style={{ color: 'var(--color-text-tertiary)', marginLeft: 6 }}>{scope.summary}</span>
-              </span>
-            </label>
+        <div style={visibleFieldGroupsStyle}>
+          {SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map(group => (
+            <section key={group.scope} style={visibleFieldGroupStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)' }}>{group.label}</div>
+                  <div style={{ color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.4, marginTop: 2 }}>{group.summary}</div>
+                </div>
+                <TagPill tone={group.required ? 'gray' : fieldScopes.includes(group.scope) ? 'blue' : 'gray'}>
+                  {group.required ? 'Required' : fieldScopes.includes(group.scope) ? 'Selected' : 'Off'}
+                </TagPill>
+              </div>
+              <div style={visibleFieldOptionsStyle}>
+                {group.fields.map(field => {
+                  const locked = Boolean(group.required)
+                  return (
+                    <label key={field.id} style={visibleFieldCheckboxStyle(locked)}>
+                      <input
+                        type="checkbox"
+                        checked={selectedVisibleFieldIds.includes(field.id)}
+                        disabled={locked}
+                        onChange={() => toggleVisibleField(field.id, locked)}
+                        style={{ width: 15, height: 15, accentColor: 'var(--color-brand)' }}
+                      />
+                      <span>{field.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </section>
           ))}
         </div>
       </div>
@@ -1162,7 +1213,7 @@ function ShareContactsModal({
         <div style={fieldLabelStyle}>Share summary</div>
         <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 12, lineHeight: 1.5 }}>
           {selectedResource
-            ? `${selectedResource.label} will be shared as ${SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()} access with ${permissionLabel(permission)} permissions.`
+            ? `${selectedResource.label} will be shared as ${SHARE_MODE_OPTIONS.find(option => option.value === shareMode)?.label.toLowerCase()} access with ${permissionLabel(permission)} permissions and ${selectedVisibleFieldCount} visible fields.`
             : 'Choose a resource to preview the access grant.'}
         </p>
       </div>
@@ -1584,14 +1635,66 @@ const fieldLabelStyle: React.CSSProperties = {
   color: 'var(--color-text-secondary)',
 }
 
-const checkboxRowStyle: React.CSSProperties = {
+const resourceSearchWrapStyle: React.CSSProperties = {
+  width: '100%',
+  minHeight: 38,
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'var(--surface-panel)',
+  color: 'var(--color-text-tertiary)',
   display: 'flex',
-  alignItems: 'flex-start',
-  gap: 8,
-  minHeight: 28,
-  fontSize: 12,
-  lineHeight: 1.45,
+  alignItems: 'center',
+  gap: 7,
+  padding: '0 10px',
+  boxSizing: 'border-box',
+}
+
+const resourceSearchInputStyle: React.CSSProperties = {
+  width: '100%',
+  minWidth: 0,
+  height: 34,
+  border: 'none',
+  background: 'transparent',
   color: 'var(--color-text-primary)',
+  fontSize: 13,
+  fontFamily: 'inherit',
+  outline: 'none',
+}
+
+const visibleFieldGroupsStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  gap: 10,
+  marginTop: 8,
+}
+
+const visibleFieldGroupStyle: React.CSSProperties = {
+  border: '1px solid var(--edge)',
+  borderRadius: 9,
+  background: 'var(--color-surface)',
+  padding: 10,
+  minWidth: 0,
+}
+
+const visibleFieldOptionsStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+  gap: 7,
+  marginTop: 10,
+}
+
+function visibleFieldCheckboxStyle(locked: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    minWidth: 0,
+    minHeight: 25,
+    color: locked ? 'var(--color-text-tertiary)' : 'var(--color-text-primary)',
+    fontSize: 12,
+    lineHeight: 1.35,
+    cursor: locked ? 'default' : 'pointer',
+  }
 }
 
 const modalGridStyle: React.CSSProperties = {
