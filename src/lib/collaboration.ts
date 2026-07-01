@@ -1,8 +1,10 @@
 import { supabase } from '@/integrations/supabase/client'
+import type { Contact } from './types'
 
 export type CollaborationSubjectType = 'user' | 'team' | 'organization' | 'public_link'
 export type CollaborationResourceType = 'contact' | 'company' | 'pod' | 'campaign' | 'field_group'
 export type CollaborationPermissionLevel = 'view' | 'comment' | 'suggest' | 'edit' | 'approve' | 'admin'
+export type CollaborationAccessGrantStatus = 'pending' | 'accepted' | 'declined'
 export type CollaborationFieldScope =
   | 'public_profile'
   | 'private_contact'
@@ -19,16 +21,38 @@ export interface CollaborationAccessGrant {
   workspace_id: string
   subject_type: CollaborationSubjectType
   subject_id: string | null
+  subject_email: string | null
   subject_label: string
   resource_type: CollaborationResourceType
   resource_id: string | null
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
+  status: CollaborationAccessGrantStatus
   expires_at: string | null
   created_by: string | null
+  created_by_label?: string | null
+  created_by_email?: string | null
   created_at: string
+  responded_at: string | null
   revoked_at: string | null
+}
+
+export interface SharedContactAccessSnapshot {
+  grant_id: string
+  owner_workspace_id: string
+  subject_label: string
+  created_by: string | null
+  created_by_label: string | null
+  created_by_email: string | null
+  resource_type: CollaborationResourceType
+  resource_id: string | null
+  resource_label: string
+  permission_level: CollaborationPermissionLevel
+  field_scopes: CollaborationFieldScope[]
+  expires_at: string | null
+  created_at: string
+  contact: Contact
 }
 
 export interface CollaborationApprovalRequest {
@@ -143,12 +167,14 @@ export interface CreateAccessGrantInput {
   workspace_id: string
   subject_type: CollaborationSubjectType
   subject_id?: string | null
+  subject_email?: string | null
   subject_label: string
   resource_type: CollaborationResourceType
   resource_id?: string | null
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
+  status?: CollaborationAccessGrantStatus
   expires_at?: string | null
 }
 
@@ -223,7 +249,11 @@ const db = supabase as any
 function isMissingCollaborationTable(error: unknown): boolean {
   const code = (error as { code?: string })?.code
   const message = String((error as { message?: string })?.message ?? '').toLowerCase()
-  return code === '42P01' || message.includes('does not exist') || message.includes('schema cache')
+  return code === '42P01'
+    || code === '42883'
+    || message.includes('does not exist')
+    || message.includes('function')
+    || message.includes('schema cache')
 }
 
 function emptyWhenMissing<T>(error: unknown): T[] {
@@ -249,7 +279,46 @@ export async function getCollaborationAccessGrants(workspaceId: string): Promise
     .order('created_at', { ascending: false })
 
   if (error) return emptyWhenMissing<CollaborationAccessGrant>(error)
-  return (data ?? []) as CollaborationAccessGrant[]
+  return normalizeAccessGrants(data ?? [])
+}
+
+function normalizeAccessGrants(rows: unknown[]): CollaborationAccessGrant[] {
+  return (rows as Partial<CollaborationAccessGrant>[]).map(row => ({
+    ...row,
+    subject_email: row.subject_email ?? null,
+    status: row.status ?? 'accepted',
+    responded_at: row.responded_at ?? null,
+  })) as CollaborationAccessGrant[]
+}
+
+export async function getIncomingCollaborationAccessGrants(): Promise<CollaborationAccessGrant[]> {
+  const { data, error } = await db.rpc('get_incoming_collaboration_access_grants')
+
+  if (error) return emptyWhenMissing<CollaborationAccessGrant>(error)
+  return normalizeAccessGrants(data ?? [])
+}
+
+export async function respondIncomingCollaborationAccessGrant(
+  id: string,
+  status: Extract<CollaborationAccessGrantStatus, 'accepted' | 'declined'>,
+): Promise<CollaborationAccessGrant> {
+  const { data, error } = await db.rpc('respond_incoming_collaboration_access_grant', {
+    grant_id: id,
+    next_status: status,
+  })
+
+  if (error) throw error
+  return normalizeAccessGrants(Array.isArray(data) ? data : [data])[0]
+}
+
+export async function getSharedContactsWithMe(): Promise<SharedContactAccessSnapshot[]> {
+  const { data, error } = await db.rpc('get_shared_contacts_with_me')
+
+  if (error) return emptyWhenMissing<SharedContactAccessSnapshot>(error)
+  return ((data ?? []) as SharedContactAccessSnapshot[]).map(row => ({
+    ...row,
+    contact: row.contact,
+  }))
 }
 
 export async function createCollaborationAccessGrant(input: CreateAccessGrantInput): Promise<CollaborationAccessGrant> {
@@ -269,8 +338,10 @@ export async function createCollaborationAccessGrant(input: CreateAccessGrantInp
     resource_label: input.resource_label,
     metadata: {
       subject_label: input.subject_label,
+      subject_email: input.subject_email ?? null,
       permission_level: input.permission_level,
       field_scopes: input.field_scopes,
+      status: input.status ?? 'accepted',
     },
   })
   return data as CollaborationAccessGrant

@@ -68,4 +68,22 @@ describe('Shared contacts guardrails', () => {
     expect(visibleFields).toContain("scope: 'investment_private'")
     expect(visibleFields).toContain("scope: 'campaign_private'")
   })
+
+  it('keeps incoming shared-contact requests visible and actionable for recipients', () => {
+    const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
+    const collaboration = source('src/lib/collaboration.ts')
+    const migration = source('supabase/migrations/20260701142000_incoming_shared_contact_requests.sql')
+
+    expect(collaboration).toContain("db.rpc('get_incoming_collaboration_access_grants')")
+    expect(collaboration).toContain("db.rpc('respond_incoming_collaboration_access_grant'")
+    expect(collaboration).toContain("db.rpc('get_shared_contacts_with_me')")
+    expect(approvalsPage).toContain("type ApprovalTab = 'requests' | 'proposals' | 'shared_requests'")
+    expect(approvalsPage).toContain('label="Shared requests"')
+    expect(approvalsPage).toContain('<SharedRequestsTable requests={incomingGrants} onRespond={handleRespondSharedRequest} />')
+    expect(approvalsPage).toContain('status: shareByEmail ? \'pending\' : \'accepted\'')
+    expect(approvalsPage).toContain('subject_email: shareByEmail ? normalizedRecipientEmail : null')
+    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.get_incoming_collaboration_access_grants()')
+    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.respond_incoming_collaboration_access_grant')
+    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.get_shared_contacts_with_me()')
+  })
 })
