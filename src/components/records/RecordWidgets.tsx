@@ -7,6 +7,7 @@ import {
   type ContactDisplaySectionId,
   type ContactDisplaySettings,
 } from '../../lib/contactDisplaySettings'
+import { selectedContactCardValues, visibleAssignedIds } from '../../lib/contactCardVisibility'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { SubPodSelector } from '../subpods/SubPodSelector'
 import { DetailsWidget } from './DetailsWidget'
@@ -59,7 +60,6 @@ function SubPodsWidget({
   allCategories,
   pods,
   selectedPodIds,
-  readOnlyCategoryIds,
   onUpdate,
 }: {
   contact: Contact
@@ -67,7 +67,6 @@ function SubPodsWidget({
   allCategories: Category[]
   pods: Pod[]
   selectedPodIds: string[]
-  readOnlyCategoryIds: string[]
   onUpdate: (data: Partial<Contact>) => void
 }) {
   const hasAvailableSubPods = categories.some(category => selectedPodIds.includes(category.list_id))
@@ -90,7 +89,6 @@ function SubPodsWidget({
         selectedCategoryIds={contact.category_ids}
         onSelect={selectSubPod}
         onClear={clearSubPod}
-        readOnlyCategoryIds={readOnlyCategoryIds}
       />
     </div>
   )
@@ -134,11 +132,13 @@ export function RecordWidgets({
     return displayPodIds
   }, [displayPodIds])
   const selectedSubPodDisplayPodIds = useMemo(() => {
-    const assignedPodIds = new Set(contact.list_ids)
-    return subPodDisplayPodIds.filter(podId => assignedPodIds.has(podId))
+    return visibleAssignedIds(subPodDisplayPodIds, contact.list_ids)
   }, [contact.list_ids, subPodDisplayPodIds])
+  const selectedDisplayPodIds = useMemo(() => {
+    return visibleAssignedIds(displayPodIds, contact.list_ids)
+  }, [contact.list_ids, displayPodIds])
 
-  const displayPods = useMemo(() => pods.filter(p => displayPodIds.includes(p.id)), [pods, displayPodIds])
+  const displayPods = useMemo(() => pods.filter(p => selectedDisplayPodIds.includes(p.id)), [pods, selectedDisplayPodIds])
   const subPodDisplayPods = useMemo(() => pods.filter(p => subPodDisplayPodIds.includes(p.id)), [pods, subPodDisplayPodIds])
   const displayCategories = useMemo(() => {
     return categories.filter(category =>
@@ -146,15 +146,9 @@ export function RecordWidgets({
       !hiddenSubPodIds.has(category.id)
     )
   }, [categories, hiddenSubPodIds, subPodDisplayPodIds])
-  const readOnlyCategoryIds = useMemo(() => {
-    const assignedPodIds = new Set(contact.list_ids)
-    return displayCategories
-      .filter(category => !assignedPodIds.has(category.list_id))
-      .map(category => category.id)
-  }, [contact.list_ids, displayCategories])
   const visibleFundLabels = useMemo(() => {
     const hiddenLabels = new Set(displaySettings.hiddenFieldOptionValues.kv_fund_investor ?? [])
-    return uniqueValues(contact.kv_fund_investor ?? []).filter(label => !hiddenLabels.has(label))
+    return selectedContactCardValues(uniqueValues(contact.kv_fund_investor ?? []), hiddenLabels)
   }, [contact.kv_fund_investor, displaySettings.hiddenFieldOptionValues])
 
   function sectionVisible(sectionId: ContactDisplaySectionId) {
@@ -192,7 +186,6 @@ export function RecordWidgets({
           allCategories={categories}
           pods={subPodDisplayPods}
           selectedPodIds={selectedSubPodDisplayPodIds}
-          readOnlyCategoryIds={readOnlyCategoryIds}
           onUpdate={onUpdate}
         />
       )}
