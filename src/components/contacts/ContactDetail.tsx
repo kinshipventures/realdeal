@@ -244,18 +244,16 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     () => visiblePods,
     [visiblePods],
   )
+  const selectedVisibleSubPodIds = useMemo(() => {
+    const assignedPodIds = new Set(draft.list_ids ?? [])
+    return visibleSubPodIds.filter(podId => assignedPodIds.has(podId))
+  }, [draft.list_ids, visibleSubPodIds])
   const visibleSubPodCategories = useMemo(() => {
     return availableCategories.filter(category =>
       visibleSubPodIds.includes(category.list_id) &&
       !hiddenSubPodIds.has(category.id)
     )
   }, [availableCategories, hiddenSubPodIds, visibleSubPodIds])
-  const readOnlySubPodCategoryIds = useMemo(() => {
-    const assignedPodIds = new Set(draft.list_ids ?? [])
-    return visibleSubPodCategories
-      .filter(category => !assignedPodIds.has(category.list_id))
-      .map(category => category.id)
-  }, [draft.list_ids, visibleSubPodCategories])
 
   function sectionVisible(sectionId: ContactDisplaySectionId): boolean {
     return isSectionVisible(displaySettings, sectionId)
@@ -1009,9 +1007,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const defaultOptions = fieldId === 'kv_fund_investor' ? DEFAULT_KINSHIP_INVESTMENTS : []
     const visibleValues = values.filter(value => !hiddenValues.has(value))
     const visibleOptions = mergeOptions(options, defaultOptions).filter(option => !hiddenValues.has(option))
-    const displayValues = fieldId === 'kv_fund_investor'
-      ? mergeOptions(visibleValues, visibleOptions)
-      : visibleValues
+    const displayValues = visibleValues
     const hasDisplayedValues = displayValues.length > 0
     const editing = editingField === key
     const hasSaveError = saveError?.field === key
@@ -1800,7 +1796,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       label: 'Companies',
       records: visibleCompanyRecords,
       selectedIds,
-      displayOnlyIds: visibleCompanyRecords.map(record => record.id),
       placeholder: 'add companies',
       createOptionLabel: '+ Create new company...',
       createPlaceholder: 'New company name',
@@ -2757,13 +2752,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                         <SubPodSelector
                           pods={visibleSubPodPods}
                           categories={visibleSubPodCategories}
-                          selectedPodIds={visibleSubPodIds}
+                          selectedPodIds={selectedVisibleSubPodIds}
                           selectedCategoryIds={draft.category_ids ?? []}
                           onSelect={handleSelectSubPod}
                           onClear={handleClearSubPod}
                           onCreateSubPod={handleCreateSubPodAssignment}
                           compact
-                          readOnlyCategoryIds={readOnlySubPodCategoryIds}
                         />
                       </div>
                     )}
@@ -2777,19 +2771,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     <SubPodSelector
                       pods={visibleSubPodPods}
                       categories={visibleSubPodCategories}
-                      selectedPodIds={visibleSubPodIds}
+                      selectedPodIds={selectedVisibleSubPodIds}
                       selectedCategoryIds={draft.category_ids ?? []}
                       onSelect={handleSelectSubPod}
                       onClear={handleClearSubPod}
                       onCreateSubPod={handleCreateSubPodAssignment}
                       compact
-                      readOnlyCategoryIds={readOnlySubPodCategoryIds}
                     />
                   </div>
                 </div>
               )}
 
-              {sectionVisible('campaigns') && !isNew && contact && (visibleContactCampaignLinks.length > 0 || visibleCampaignOptions.length > 0) && (
+              {sectionVisible('campaigns') && !isNew && contact && (visibleContactCampaignLinks.length > 0 || visibleActiveCampaignOptions.length > 0) && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>campaigns</div>
@@ -2889,43 +2882,6 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                               </div>
                             )
                           })}
-                      </div>
-                    )}
-                    {visibleCampaignOptions.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-                        {visibleCampaignOptions.map(campaign => (
-                          <div key={`visible-campaign:${campaign.id}`} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            padding: '7px 10px',
-                            borderRadius: 10,
-                            background: 'color-mix(in srgb, var(--surface-panel) 92%, var(--tint) 8%)',
-                            border: '1px dashed var(--edge)',
-                          }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                              <line x1="4" y1="22" x2="4" y2="15"/>
-                            </svg>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
-                              {campaign.name}
-                            </span>
-                            <span style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              padding: '2px 7px',
-                              borderRadius: 100,
-                              background: 'var(--tint)',
-                              color: 'var(--color-text-tertiary)',
-                              whiteSpace: 'nowrap',
-                            }}>
-                              Available
-                            </span>
-                            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
-                              {campaign.type}
-                            </span>
-                          </div>
-                        ))}
                       </div>
                     )}
                     {addedCampaignId ? (

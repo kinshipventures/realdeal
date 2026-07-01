@@ -7,7 +7,6 @@ import {
   type ContactDisplaySectionId,
   type ContactDisplaySettings,
 } from '../../lib/contactDisplaySettings'
-import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { SubPodSelector } from '../subpods/SubPodSelector'
 import { DetailsWidget } from './DetailsWidget'
@@ -23,9 +22,7 @@ function uniqueValues(values: string[]): string[] {
   return [...new Set(values.map(value => value.trim()).filter(Boolean))]
 }
 
-function FundTagsWidget({ contact, labels }: { contact: Contact; labels: string[] }) {
-  const contactLabels = contact.kv_fund_investor ?? []
-
+function FundTagsWidget({ labels }: { labels: string[] }) {
   return (
     <div style={WIDGET_STYLE}>
       <div style={{
@@ -39,17 +36,15 @@ function FundTagsWidget({ contact, labels }: { contact: Contact; labels: string[
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {labels.map(tag => {
-          const selected = contactLabels.includes(tag)
           return (
           <span key={tag} style={{
             fontSize: 11, fontWeight: 500,
             padding: '3px 10px', borderRadius: 100,
-            border: selected ? 'none' : '1px dashed var(--edge)',
-            background: selected ? 'hsla(150, 60%, 40%, 0.08)' : 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
-            color: selected ? 'hsla(150, 60%, 30%, 0.80)' : 'var(--color-text-secondary)',
+            border: 'none',
+            background: 'hsla(150, 60%, 40%, 0.08)',
+            color: 'hsla(150, 60%, 30%, 0.80)',
           }}>
             KV: {tag}
-            {!selected && <span style={{ color: 'var(--color-text-tertiary)', marginLeft: 5 }}>Available</span>}
           </span>
           )
         })}
@@ -138,6 +133,10 @@ export function RecordWidgets({
   const subPodDisplayPodIds = useMemo(() => {
     return displayPodIds
   }, [displayPodIds])
+  const selectedSubPodDisplayPodIds = useMemo(() => {
+    const assignedPodIds = new Set(contact.list_ids)
+    return subPodDisplayPodIds.filter(podId => assignedPodIds.has(podId))
+  }, [contact.list_ids, subPodDisplayPodIds])
 
   const displayPods = useMemo(() => pods.filter(p => displayPodIds.includes(p.id)), [pods, displayPodIds])
   const subPodDisplayPods = useMemo(() => pods.filter(p => subPodDisplayPodIds.includes(p.id)), [pods, subPodDisplayPodIds])
@@ -155,10 +154,7 @@ export function RecordWidgets({
   }, [contact.list_ids, displayCategories])
   const visibleFundLabels = useMemo(() => {
     const hiddenLabels = new Set(displaySettings.hiddenFieldOptionValues.kv_fund_investor ?? [])
-    return uniqueValues([
-      ...DEFAULT_KINSHIP_INVESTMENTS,
-      ...(contact.kv_fund_investor ?? []),
-    ]).filter(label => !hiddenLabels.has(label))
+    return uniqueValues(contact.kv_fund_investor ?? []).filter(label => !hiddenLabels.has(label))
   }, [contact.kv_fund_investor, displaySettings.hiddenFieldOptionValues])
 
   function sectionVisible(sectionId: ContactDisplaySectionId) {
@@ -195,7 +191,7 @@ export function RecordWidgets({
           categories={displayCategories}
           allCategories={categories}
           pods={subPodDisplayPods}
-          selectedPodIds={subPodDisplayPodIds}
+          selectedPodIds={selectedSubPodDisplayPodIds}
           readOnlyCategoryIds={readOnlyCategoryIds}
           onUpdate={onUpdate}
         />
@@ -219,7 +215,7 @@ export function RecordWidgets({
         />
       ))}
       {sectionVisible('fund_activity') && visibleFundLabels.length > 0 ? (
-        <FundTagsWidget contact={contact} labels={visibleFundLabels} />
+        <FundTagsWidget labels={visibleFundLabels} />
       ) : null}
       {sectionVisible('associated_company') && contact.type === 'Contact' && contact.company_record_id && (
         <AssociatedCompanyWidget contact={contact} />

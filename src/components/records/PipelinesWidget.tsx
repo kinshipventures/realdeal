@@ -12,7 +12,6 @@ interface PipelinesWidgetProps {
 export function PipelinesWidget({ contact, hiddenCampaignIds = [] }: PipelinesWidgetProps) {
   const navigate = useNavigate()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [linkedCampaignIds, setLinkedCampaignIds] = useState<string[]>([])
 
   const load = useCallback(async () => {
     const [allCampaigns, myLinks] = await Promise.all([
@@ -21,8 +20,7 @@ export function PipelinesWidget({ contact, hiddenCampaignIds = [] }: PipelinesWi
     ])
     const ids = myLinks.map(cc => cc.campaign_id)
     const hiddenIds = new Set(hiddenCampaignIds)
-    setLinkedCampaignIds(ids)
-    setCampaigns(allCampaigns.filter(c => !hiddenIds.has(c.id) && c.status !== 'hidden'))
+    setCampaigns(allCampaigns.filter(c => ids.includes(c.id) && !hiddenIds.has(c.id) && c.status !== 'hidden'))
   }, [contact.id, hiddenCampaignIds])
 
   useEffect(() => { load() }, [load])
@@ -65,7 +63,7 @@ export function PipelinesWidget({ contact, hiddenCampaignIds = [] }: PipelinesWi
                 {c.name}
               </div>
               <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--color-text-secondary)', marginTop: 1 }}>
-                {linkedCampaignIds.includes(c.id) ? c.type : `${c.type} · Available`}
+                {c.type}
               </div>
             </div>
           ))}
