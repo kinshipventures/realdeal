@@ -187,6 +187,15 @@ export interface CreateAccessGrantInput {
   expires_at?: string | null
 }
 
+export interface UpdateAccessGrantInput {
+  id: string
+  workspace_id: string
+  permission_level: CollaborationPermissionLevel
+  field_scopes: CollaborationFieldScope[]
+  visible_field_ids?: readonly SharedContactVisibleFieldId[]
+  expires_at?: string | null
+}
+
 export interface CreateApprovalRequestInput {
   workspace_id: string
   campaign_id?: string | null
@@ -381,6 +390,42 @@ export async function createCollaborationAccessGrant(input: CreateAccessGrantInp
       field_scopes: normalizeSharedContactFieldScopes(field_scopes),
       visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(field_scopes),
       status: input.status ?? 'accepted',
+    },
+  })
+  return normalizeAccessGrants([data])[0]
+}
+
+export async function updateCollaborationAccessGrant(input: UpdateAccessGrantInput): Promise<CollaborationAccessGrant> {
+  const field_scopes = input.visible_field_ids
+    ? encodeSharedContactFieldScopes(input.visible_field_ids)
+    : normalizeSharedContactFieldScopes(input.field_scopes)
+  const updatePayload: Record<string, unknown> = {
+    permission_level: input.permission_level,
+    field_scopes,
+  }
+  if ('expires_at' in input) updatePayload.expires_at = input.expires_at ?? null
+
+  const { data, error } = await db
+    .from('collaboration_access_grants')
+    .update(updatePayload)
+    .eq('id', input.id)
+    .eq('workspace_id', input.workspace_id)
+    .select()
+    .single()
+
+  if (error) throw error
+  await recordCollaborationAuditEvent({
+    workspace_id: input.workspace_id,
+    event_type: 'access_grant_updated',
+    resource_type: data.resource_type,
+    resource_id: data.resource_id,
+    resource_label: data.resource_label,
+    metadata: {
+      subject_label: data.subject_label,
+      subject_email: data.subject_email ?? null,
+      permission_level: input.permission_level,
+      field_scopes: normalizeSharedContactFieldScopes(field_scopes),
+      visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(field_scopes),
     },
   })
   return normalizeAccessGrants([data])[0]

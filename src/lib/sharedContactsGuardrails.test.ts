@@ -67,6 +67,8 @@ describe('Shared contacts guardrails', () => {
     expect(approvalsPage).toContain('selectedVisibleFieldCount > 0')
     expect(approvalsPage).not.toContain('disabled={locked}')
     expect(collaboration).toContain('encodeSharedContactFieldScopes(visible_field_ids)')
+    expect(collaboration).toContain('export async function updateCollaborationAccessGrant')
+    expect(collaboration).toContain("event_type: 'access_grant_updated'")
     expect(collaboration).toContain('decodeSharedContactVisibleFieldIdsFromScopes(rawFieldScopes)')
     expect(collaboration).toContain('field_scopes: normalizeSharedContactFieldScopes(rawFieldScopes)')
     expect(visibleFields).toContain('export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS')
@@ -83,6 +85,22 @@ describe('Shared contacts guardrails', () => {
     expect(contactDetail).toContain('visibleFieldIds?: readonly string[]')
     expect(contactDetail).toContain('sharedVisibleFieldForKey')
     expect(contactDetail).toContain('SHARED_FIELD_VISIBLE_REQUIREMENTS')
+  })
+
+  it('keeps existing shared-by-me access editable without changing received shares', () => {
+    const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
+
+    expect(approvalsPage).toContain('updateCollaborationAccessGrant')
+    expect(approvalsPage).toContain('const [editingGrant, setEditingGrant] = useState<CollaborationAccessGrant | null>(null)')
+    expect(approvalsPage).toContain('function handleEditSharedRow(row: SharedContactRow)')
+    expect(approvalsPage).toContain("row.revokeKind !== 'grant'")
+    expect(approvalsPage).toContain('onEditAccess={handleEditSharedRow}')
+    expect(approvalsPage).toContain('<EditSharedAccessModal')
+    expect(approvalsPage).toContain('title="Edit shared access"')
+    expect(approvalsPage).toContain('submitLabel={saving ? \'Saving...\' : \'Save\'}')
+    expect(approvalsPage).toContain('visible_field_ids: selectedVisibleFieldIds')
+    expect(approvalsPage).toContain('if (canEditAccess) {')
+    expect(approvalsPage).toContain('onOpenContact(row)')
   })
 
   it('keeps incoming shared-contact requests visible and actionable for recipients', () => {

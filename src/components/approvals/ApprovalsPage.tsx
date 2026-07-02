@@ -33,6 +33,7 @@ import {
   resolveCollaborationContactProposal,
   revokeCollaborationAccessGrant,
   revokeCollaborationPublicCampaignLink,
+  updateCollaborationAccessGrant,
   type CollaborationAccessGrant,
   type CollaborationApprovalRequest,
   type CollaborationContactProposal,
@@ -382,6 +383,7 @@ export function ApprovalsPage() {
   const [highlightedSharedRequestId, setHighlightedSharedRequestId] = useState<string | null>(null)
   const [sharedRequestFeedback, setSharedRequestFeedback] = useState<SharedRequestFeedback | null>(null)
   const [selectedSharedContact, setSelectedSharedContact] = useState<{ contact: Contact; shareAccess: ContactDetailShareAccess } | null>(null)
+  const [editingGrant, setEditingGrant] = useState<CollaborationAccessGrant | null>(null)
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
@@ -691,9 +693,21 @@ export function ApprovalsPage() {
     await loadData()
   }
 
+  function handleEditSharedRow(row: SharedContactRow) {
+    if (row.revokeKind !== 'grant' || !['active', 'pending'].includes(row.status)) return
+    const grant = grants.find(item => item.id === row.revokeId)
+    if (grant) setEditingGrant(grant)
+  }
+
   function handleOpenSharedContact(row: SharedContactRow) {
     if (!row.contact || !row.shareAccess) return
     setSelectedSharedContact({ contact: row.contact, shareAccess: row.shareAccess })
+  }
+
+  async function handleSharedAccessUpdated(updatedGrant: CollaborationAccessGrant) {
+    setGrants(current => current.map(grant => (grant.id === updatedGrant.id ? updatedGrant : grant)))
+    setEditingGrant(null)
+    await loadData()
   }
 
   function handleSharedContactSaved(updated: Contact) {
@@ -790,7 +804,12 @@ export function ApprovalsPage() {
       {loading ? (
         <div style={{ color: 'var(--color-text-secondary)', fontSize: 13, padding: 24 }}>Loading...</div>
       ) : (
-        <SharedContactsTable rows={filteredSharedRows} onRevoke={handleRevokeSharedRow} onOpenContact={handleOpenSharedContact} />
+        <SharedContactsTable
+          rows={filteredSharedRows}
+          onRevoke={handleRevokeSharedRow}
+          onEditAccess={handleEditSharedRow}
+          onOpenContact={handleOpenSharedContact}
+        />
       )}
 
       <section style={{ marginTop: 30 }}>
@@ -848,6 +867,14 @@ export function ApprovalsPage() {
             setShowShareModal(false)
             await loadData()
           }}
+        />
+      )}
+      {editingGrant && workspaceId && (
+        <EditSharedAccessModal
+          workspaceId={workspaceId}
+          grant={editingGrant}
+          onClose={() => setEditingGrant(null)}
+          onUpdated={handleSharedAccessUpdated}
         />
       )}
       {selectedSharedContact && (
@@ -1207,10 +1234,12 @@ function SharedContactFilters({
 function SharedContactsTable({
   rows,
   onRevoke,
+  onEditAccess,
   onOpenContact,
 }: {
   rows: SharedContactRow[]
   onRevoke: (row: SharedContactRow) => void
+  onEditAccess: (row: SharedContactRow) => void
   onOpenContact: (row: SharedContactRow) => void
 }) {
   if (rows.length === 0) {
@@ -1222,6 +1251,8 @@ function SharedContactsTable({
       <Header columns="1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px" labels={['Contact', 'Shared through', 'Shared with', 'Permission', 'Fields', 'Status', '']} />
       {rows.map(row => {
         const canOpenContact = Boolean(row.contact && row.shareAccess)
+        const canEditAccess = row.revokeKind === 'grant' && row.canRevoke && ['active', 'pending'].includes(row.status)
+        const canOpenRow = canEditAccess || canOpenContact
         const shareLabel = row.shareDirection === 'shared_with_me'
           ? 'Shared with me'
           : row.shareDirection === 'shared_by_me'
@@ -1231,14 +1262,24 @@ function SharedContactsTable({
         return (
           <div
             key={row.id}
-            role={canOpenContact ? 'button' : undefined}
-            tabIndex={canOpenContact ? 0 : undefined}
-            onClick={() => { if (canOpenContact) onOpenContact(row) }}
+            role={canOpenRow ? 'button' : undefined}
+            tabIndex={canOpenRow ? 0 : undefined}
+            onClick={() => {
+              if (canEditAccess) {
+                onEditAccess(row)
+              } else if (canOpenContact) {
+                onOpenContact(row)
+              }
+            }}
             onKeyDown={event => {
-              if (!canOpenContact) return
+              if (!canOpenRow) return
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                onOpenContact(row)
+                if (canEditAccess) {
+                  onEditAccess(row)
+                } else {
+                  onOpenContact(row)
+                }
               }
             }}
             style={{
@@ -1247,7 +1288,7 @@ function SharedContactsTable({
               minHeight: 62,
               alignItems: 'center',
               borderBottom: '1px solid var(--divider)',
-              cursor: canOpenContact ? 'pointer' : 'default',
+              cursor: canOpenRow ? 'pointer' : 'default',
             }}
           >
             <div style={{ padding: '10px 12px', minWidth: 0 }}>
@@ -1289,6 +1330,139 @@ function SharedContactsTable({
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function EditSharedAccessModal({
+  workspaceId,
+  grant,
+  onClose,
+  onUpdated,
+}: {
+  workspaceId: string
+  grant: CollaborationAccessGrant
+  onClose: () => void
+  onUpdated: (grant: CollaborationAccessGrant) => void | Promise<void>
+}) {
+  const [permission, setPermission] = useState<CollaborationPermissionLevel>(grant.permission_level)
+  const [selectedVisibleFieldIds, setSelectedVisibleFieldIds] = useState<SharedContactVisibleFieldId[]>(grant.visible_field_ids)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const fieldScopes = useMemo(
+    () => deriveSharedContactFieldScopes(selectedVisibleFieldIds),
+    [selectedVisibleFieldIds],
+  )
+  const selectedVisibleFieldCount = selectedVisibleFieldIds.length
+
+  function toggleVisibleField(fieldId: SharedContactVisibleFieldId) {
+    setSelectedVisibleFieldIds(current => (
+      current.includes(fieldId)
+        ? current.filter(item => item !== fieldId)
+        : [...current, fieldId]
+    ))
+  }
+
+  async function handleSubmit() {
+    if (selectedVisibleFieldCount === 0) {
+      setError('Select at least one visible field')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      const updatedGrant = await updateCollaborationAccessGrant({
+        id: grant.id,
+        workspace_id: workspaceId,
+        permission_level: permission,
+        field_scopes: fieldScopes,
+        visible_field_ids: selectedVisibleFieldIds,
+      })
+      await onUpdated(updatedGrant)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update shared access')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const canSubmit = selectedVisibleFieldCount > 0 && !saving
+
+  return (
+    <Modal title="Edit shared access" onClose={onClose}>
+      <div style={{ ...surfaceMiniStyle, marginBottom: 12 }}>
+        <div style={fieldLabelStyle}>Shared item</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
+          <ReadOnlyAccessField label="Resource" value={grant.resource_label} detail={titleCase(grant.resource_type)} />
+          <ReadOnlyAccessField label="Shared with" value={grant.subject_label} detail={grant.subject_email || titleCase(grant.subject_type)} />
+        </div>
+      </div>
+
+      <div style={modalGridStyle}>
+        <SelectField label="Permission level" value={permission} onChange={value => setPermission(value as CollaborationPermissionLevel)}>
+          {CREATE_PERMISSION_OPTIONS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
+        </SelectField>
+      </div>
+
+      <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
+        <div style={fieldLabelStyle}>Visible fields</div>
+        <div style={visibleFieldGroupsStyle}>
+          {SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map(group => {
+            const groupSelected = group.fields.some(field => selectedVisibleFieldIds.includes(field.id))
+            return (
+              <section key={group.scope} style={visibleFieldGroupStyle}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)' }}>{group.label}</div>
+                    <div style={{ color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.4, marginTop: 2 }}>{group.summary}</div>
+                  </div>
+                  <TagPill tone={groupSelected ? 'blue' : 'gray'}>
+                    {groupSelected ? 'Selected' : 'Off'}
+                  </TagPill>
+                </div>
+                <div style={visibleFieldOptionsStyle}>
+                  {group.fields.map(field => (
+                    <label key={field.id} style={visibleFieldCheckboxStyle(false)}>
+                      <input
+                        type="checkbox"
+                        checked={selectedVisibleFieldIds.includes(field.id)}
+                        onChange={() => toggleVisibleField(field.id)}
+                        style={{ width: 15, height: 15, accentColor: 'var(--color-brand)' }}
+                      />
+                      <span>{field.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      </div>
+
+      <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
+        <div style={fieldLabelStyle}>Share summary</div>
+        <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 12, lineHeight: 1.5 }}>
+          {grant.resource_label} is shared with {grant.subject_label} using {permissionLabel(permission)} permissions and {selectedVisibleFieldCount} visible fields.
+        </p>
+      </div>
+
+      {error && <div style={{ color: 'var(--health-fading)', fontSize: 12, marginTop: 12 }}>{error}</div>}
+
+      <ModalActions onCancel={onClose} onSubmit={handleSubmit} submitLabel={saving ? 'Saving...' : 'Save'} disabled={!canSubmit} />
+    </Modal>
+  )
+}
+
+function ReadOnlyAccessField({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={fieldLabelStyle}>{label}</div>
+      <div style={{ marginTop: 4, fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {value}
+      </div>
+      <div style={{ marginTop: 3, fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {detail}
+      </div>
     </div>
   )
 }
