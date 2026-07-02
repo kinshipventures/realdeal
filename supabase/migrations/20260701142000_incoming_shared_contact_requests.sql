@@ -299,8 +299,8 @@ AS $$
     ) OR (
       grants.resource_type = 'pod'
       AND (
-        grants.resource_id = ANY(coalesce(contacts.pod_ids, ARRAY[]::text[]))
-        OR grants.resource_id = ANY(coalesce(contacts.category_ids, ARRAY[]::text[]))
+        grants.resource_id = ANY(coalesce(contacts.pod_ids::text[], ARRAY[]::text[]))
+        OR grants.resource_id = ANY(coalesce(contacts.category_ids::text[], ARRAY[]::text[]))
       )
     ) OR (
       grants.resource_type = 'campaign'
@@ -316,7 +316,7 @@ AS $$
       AND (
         contacts.id::text = grants.resource_id
         OR contacts.company_id::text = grants.resource_id
-        OR grants.resource_id = ANY(coalesce(contacts.company_ids, ARRAY[]::text[]))
+        OR grants.resource_id = ANY(coalesce(contacts.company_ids::text[], ARRAY[]::text[]))
       )
     )
   )
@@ -334,7 +334,8 @@ AS $$
     shared_contacts.field_scopes,
     shared_contacts.expires_at,
     shared_contacts.grant_created_at AS created_at,
-    jsonb_strip_nulls(jsonb_build_object(
+    jsonb_strip_nulls(
+      jsonb_build_object(
       'id', shared_contacts.contact_id,
       'name', shared_contacts.name,
       'email', CASE WHEN 'private_contact' = ANY(shared_contacts.field_scopes) THEN shared_contacts.email ELSE NULL END,
@@ -352,8 +353,8 @@ AS $$
       'interests', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.interests ELSE NULL END,
       'relationship_context', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.relationship_context ELSE NULL END,
       'last_contacted_at', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.last_contacted_at ELSE NULL END,
-      'list_ids', coalesce(shared_contacts.pod_ids, ARRAY[]::text[]),
-      'category_ids', coalesce(shared_contacts.category_ids, ARRAY[]::text[]),
+      'list_ids', coalesce(shared_contacts.pod_ids::text[], ARRAY[]::text[]),
+      'category_ids', coalesce(shared_contacts.category_ids::text[], ARRAY[]::text[]),
       'primary_list_id', shared_contacts.primary_pod_id,
       'cadence_override', shared_contacts.cadence_override,
       'first_name', shared_contacts.first_name,
@@ -368,14 +369,15 @@ AS $$
       'contact_frequency', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.contact_frequency ELSE NULL END,
       'communication_preferences', CASE WHEN 'private_contact' = ANY(shared_contacts.field_scopes) THEN shared_contacts.communication_preferences ELSE NULL END,
       'next_follow_up_date', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.next_follow_up_date ELSE NULL END,
-      'next_action', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.next_action ELSE NULL END,
+      'next_action', CASE WHEN 'relationship_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.next_action ELSE NULL END
+    ) || jsonb_build_object(
       'kv_fund_investor', CASE WHEN 'investment_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.kv_fund_investor ELSE NULL END,
       'spv_investor', CASE WHEN 'investment_private' = ANY(shared_contacts.field_scopes) THEN shared_contacts.spv_investor ELSE NULL END,
       'needs_review', false,
       'type', shared_contacts.type,
       'status', shared_contacts.contact_status,
       'company_record_id', shared_contacts.company_id,
-      'company_ids', coalesce(shared_contacts.company_ids, ARRAY[]::text[]),
+      'company_ids', coalesce(shared_contacts.company_ids::text[], ARRAY[]::text[]),
       'industry', shared_contacts.industry,
       'stage', shared_contacts.stage,
       'ticker', shared_contacts.ticker,
@@ -390,7 +392,8 @@ AS $$
       END,
       'snoozed_until', NULL,
       'created_at', shared_contacts.contact_created_at
-    )) AS contact
+      )
+    ) AS contact
   FROM shared_contacts
   ORDER BY shared_contacts.grant_created_at DESC;
 $$;
