@@ -60,7 +60,6 @@ export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS: SharedContactVisibleFieldGroup
     scope: 'public_profile',
     label: 'Public profile',
     summary: 'Core contact card identity and list context.',
-    required: true,
     fields: [
       { id: 'name', label: 'Name' },
       { id: 'company', label: 'Company' },
@@ -123,9 +122,7 @@ export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS: SharedContactVisibleFieldGroup
   },
 ]
 
-export const DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
-  .filter(group => group.required)
-  .flatMap(group => group.fields.map(field => field.id))
+export const DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS: SharedContactVisibleFieldId[] = []
 
 export const ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
   .flatMap(group => group.fields.map(field => field.id))
@@ -165,7 +162,7 @@ export function normalizeSharedContactVisibleFieldIds(
 ): SharedContactVisibleFieldId[] {
   const selected = selectedFieldIds?.filter(isSharedContactVisibleFieldId) ?? []
   const source = selected.length > 0
-    ? [...DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS, ...selected]
+    ? selected
     : deriveSharedContactVisibleFieldIdsFromScopes(fallbackScopes)
   const unique = new Set(source)
   return ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS.filter(fieldId => unique.has(fieldId))
@@ -188,7 +185,8 @@ export function encodeSharedContactFieldScopes(
   selectedFieldIds: readonly SharedContactVisibleFieldId[],
 ): string[] {
   const fieldScopes = deriveSharedContactFieldScopes([...selectedFieldIds])
-  const visibleFieldIds = normalizeSharedContactVisibleFieldIds(selectedFieldIds, fieldScopes)
+  const selected = new Set(selectedFieldIds.filter(isSharedContactVisibleFieldId))
+  const visibleFieldIds = ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS.filter(fieldId => selected.has(fieldId))
   return [
     ...fieldScopes,
     ...visibleFieldIds.map(encodeSharedContactVisibleFieldToken),
@@ -202,7 +200,7 @@ export function deriveSharedContactFieldScopes(
   const scopes = new Set<CollaborationFieldScope>(['public_profile'])
 
   SHARED_CONTACT_VISIBLE_FIELD_GROUPS.forEach(group => {
-    if (group.required || group.fields.some(field => selected.has(field.id))) {
+    if (group.fields.some(field => selected.has(field.id))) {
       scopes.add(group.scope)
     }
   })

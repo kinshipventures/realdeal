@@ -10,18 +10,11 @@ import {
 } from './sharedContactVisibleFields'
 
 describe('shared contact visible field options', () => {
-  it('keeps public profile as the required baseline scope', () => {
-    expect(DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS).toEqual([
-      'name',
-      'company',
-      'job_title',
-      'city',
-      'country',
-      'linkedin',
-      'pods',
-      'sub_pods',
-    ])
+  it('keeps public profile fields optional while preserving the baseline scope', () => {
+    expect(DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS).toEqual([])
     expect(deriveSharedContactFieldScopes([])).toEqual(['public_profile'])
+    expect(deriveSharedContactFieldScopes(['name'])).toEqual(['public_profile'])
+    expect(deriveSharedContactFieldScopes(['phone'])).toEqual(['public_profile', 'private_contact'])
   })
 
   it('maps detailed contact-card fields back to the approved collaboration field scopes', () => {
@@ -45,27 +38,11 @@ describe('shared contact visible field options', () => {
     expect(encoded).toEqual([
       'public_profile',
       'private_contact',
-      'visible:name',
-      'visible:company',
-      'visible:job_title',
-      'visible:city',
-      'visible:country',
-      'visible:linkedin',
-      'visible:pods',
-      'visible:sub_pods',
       'visible:email',
       'visible:phone',
     ])
     expect(normalizeSharedContactFieldScopes(encoded)).toEqual(['public_profile', 'private_contact'])
     expect(decodeSharedContactVisibleFieldIdsFromScopes(encoded)).toEqual([
-      'name',
-      'company',
-      'job_title',
-      'city',
-      'country',
-      'linkedin',
-      'pods',
-      'sub_pods',
       'email',
       'phone',
     ])
@@ -73,14 +50,6 @@ describe('shared contact visible field options', () => {
 
   it('falls back to legacy broad scopes when no exact visual tokens exist', () => {
     expect(normalizeSharedContactVisibleFieldIds(['phone'], ['public_profile', 'private_contact'])).toEqual([
-      'name',
-      'company',
-      'job_title',
-      'city',
-      'country',
-      'linkedin',
-      'pods',
-      'sub_pods',
       'phone',
     ])
 
@@ -117,6 +86,7 @@ describe('shared contact visible field options', () => {
       'investment_private',
       'campaign_private',
     ])
+    expect(SHARED_CONTACT_VISIBLE_FIELD_GROUPS.some(group => group.required)).toBe(false)
   })
 })
 

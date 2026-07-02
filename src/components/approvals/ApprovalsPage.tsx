@@ -1357,8 +1357,7 @@ function ShareContactsModal({
     setRecipientEmail(user?.email ?? '')
   }, [subjectId, subjectType, users])
 
-  function toggleVisibleField(fieldId: SharedContactVisibleFieldId, locked: boolean) {
-    if (locked) return
+  function toggleVisibleField(fieldId: SharedContactVisibleFieldId) {
     setSelectedVisibleFieldIds(current => (
       current.includes(fieldId)
         ? current.filter(item => item !== fieldId)
@@ -1371,7 +1370,11 @@ function ShareContactsModal({
     const nextSubjectLabel = shareByEmail
       ? subjectLabel.trim() || normalizedRecipientEmail
       : subjectLabel.trim()
-    if (!selectedResource || !nextSubjectLabel || fieldScopes.length === 0) return
+    if (!selectedResource || !nextSubjectLabel) return
+    if (selectedVisibleFieldCount === 0) {
+      setError('Select at least one visible field')
+      return
+    }
     if (shareByEmail && !isValidEmail(normalizedRecipientEmail)) {
       setError('Enter a valid recipient email')
       return
@@ -1405,7 +1408,7 @@ function ShareContactsModal({
   const canSubmit = Boolean(
     selectedResource
       && (subjectType === 'user' ? isValidEmail(normalizedRecipientEmail) : subjectLabel.trim())
-      && fieldScopes.length > 0
+      && selectedVisibleFieldCount > 0
       && !saving,
   )
 
@@ -1476,36 +1479,35 @@ function ShareContactsModal({
       <div style={{ ...surfaceMiniStyle, marginTop: 12 }}>
         <div style={fieldLabelStyle}>Visible fields</div>
         <div style={visibleFieldGroupsStyle}>
-          {SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map(group => (
-            <section key={group.scope} style={visibleFieldGroupStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)' }}>{group.label}</div>
-                  <div style={{ color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.4, marginTop: 2 }}>{group.summary}</div>
+          {SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map(group => {
+            const groupSelected = group.fields.some(field => selectedVisibleFieldIds.includes(field.id))
+            return (
+              <section key={group.scope} style={visibleFieldGroupStyle}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)' }}>{group.label}</div>
+                    <div style={{ color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.4, marginTop: 2 }}>{group.summary}</div>
+                  </div>
+                  <TagPill tone={groupSelected ? 'blue' : 'gray'}>
+                    {groupSelected ? 'Selected' : 'Off'}
+                  </TagPill>
                 </div>
-                <TagPill tone={group.required ? 'gray' : fieldScopes.includes(group.scope) ? 'blue' : 'gray'}>
-                  {group.required ? 'Required' : fieldScopes.includes(group.scope) ? 'Selected' : 'Off'}
-                </TagPill>
-              </div>
-              <div style={visibleFieldOptionsStyle}>
-                {group.fields.map(field => {
-                  const locked = Boolean(group.required)
-                  return (
-                    <label key={field.id} style={visibleFieldCheckboxStyle(locked)}>
+                <div style={visibleFieldOptionsStyle}>
+                  {group.fields.map(field => (
+                    <label key={field.id} style={visibleFieldCheckboxStyle(false)}>
                       <input
                         type="checkbox"
                         checked={selectedVisibleFieldIds.includes(field.id)}
-                        disabled={locked}
-                        onChange={() => toggleVisibleField(field.id, locked)}
+                        onChange={() => toggleVisibleField(field.id)}
                         style={{ width: 15, height: 15, accentColor: 'var(--color-brand)' }}
                       />
                       <span>{field.label}</span>
                     </label>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </div>
       </div>
 
