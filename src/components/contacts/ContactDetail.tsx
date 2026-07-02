@@ -43,6 +43,8 @@ export type ContactDetailShareAccess = {
   fieldScopes: CollaborationFieldScope[]
 }
 
+type ContactPatch = Partial<Omit<Contact, 'id' | 'created_at'>>
+
 const SHARED_SECTION_SCOPE_REQUIREMENTS: Partial<Record<ContactDisplaySectionId, CollaborationFieldScope>> = {
   relationship_overview: 'relationship_private',
   health: 'relationship_private',
@@ -117,6 +119,23 @@ const SHARED_WRITABLE_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFiel
   last_contacted_at: 'relationship_private',
   cadence_override: 'relationship_private',
   custom_fields: 'relationship_private',
+}
+
+function stableComparableValue(value: unknown): string {
+  const normalize = (input: unknown): unknown => {
+    if (input === undefined || input === '') return null
+    if (Array.isArray(input)) return input.map(normalize)
+    if (input && typeof input === 'object') {
+      const normalized: Record<string, unknown> = {}
+      for (const key of Object.keys(input as Record<string, unknown>).sort()) {
+        normalized[key] = normalize((input as Record<string, unknown>)[key])
+      }
+      return normalized
+    }
+    return input
+  }
+
+  return JSON.stringify(normalize(value))
 }
 
 function SegmentedEquityRing({ breakdown, score, size = 72 }: {
@@ -361,9 +380,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return sharedFieldScopes.has(scope)
   }
 
-  function sharedWritablePatch(data: Partial<Omit<Contact, 'id' | 'created_at'>>): Partial<Omit<Contact, 'id' | 'created_at'>> {
+  function sharedWritablePatch(data: ContactPatch): ContactPatch {
     if (!isInboundSharedContact) return data
-    const next: Partial<Omit<Contact, 'id' | 'created_at'>> = {}
+    const next: ContactPatch = {}
     for (const [key, value] of Object.entries(data)) {
       const scope = SHARED_WRITABLE_FIELD_SCOPE_REQUIREMENTS[key]
       const customFieldAllowed = key === 'custom_fields'
@@ -375,16 +394,33 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return next
   }
 
-  async function persistContactPatch(id: string, data: Partial<Omit<Contact, 'id' | 'created_at'>>): Promise<Contact> {
+  function dirtySharedWritablePatch(scopedPatch: ContactPatch): ContactPatch {
+    if (!isInboundSharedContact || !contact) return scopedPatch
+    const currentContact = contact as unknown as Record<string, unknown>
+    const next: ContactPatch = {}
+    for (const [key, value] of Object.entries(scopedPatch)) {
+      const currentValue = key === 'custom_fields'
+        ? sanitizeCustomFields(contact.custom_fields)
+        : currentContact[key]
+      if (stableComparableValue(value) !== stableComparableValue(currentValue)) {
+        ;(next as Record<string, unknown>)[key] = value
+      }
+    }
+    return next
+  }
+
+  async function persistContactPatch(id: string, data: ContactPatch): Promise<Contact> {
     if (isInboundSharedContact) {
-      if (!sharedContactCanEdit || !sharedAccess?.grantId || contact?.id !== id) {
+      if (!sharedContactCanEdit || !sharedAccess?.grantId || !contact || contact.id !== id) {
         throw new Error('This shared contact is read-only.')
       }
       const scopedPatch = sharedWritablePatch(data)
       if (Object.keys(scopedPatch).length === 0) {
         throw new Error('No visible shared fields can be edited.')
       }
-      return updateSharedContactWithGrant(sharedAccess.grantId, id, scopedPatch)
+      const dirtyPatch = dirtySharedWritablePatch(scopedPatch)
+      if (Object.keys(dirtyPatch).length === 0) return contact
+      return updateSharedContactWithGrant(sharedAccess.grantId, id, dirtyPatch)
     }
     return updateContact(id, data)
   }
