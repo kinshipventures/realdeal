@@ -738,15 +738,9 @@ export function ApprovalsPage() {
     <main className="content-enter" style={{ padding: '32px clamp(16px, 4vw, 36px) 80px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'flex-start', marginBottom: 22 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <h1 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: 28, fontWeight: 850 }}>
-              Shared contacts
-            </h1>
-            <button type="button" onClick={() => setShowShareModal(true)} style={headerShareButtonStyle}>
-              <Plus size={15} />
-              Share contacts
-            </button>
-          </div>
+          <h1 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: 28, fontWeight: 850 }}>
+            Shared contacts
+          </h1>
           <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 13, lineHeight: 1.5 }}>
             Manage shared contacts, permissions, public links, campaign access, and approval queues from one place.
           </p>
@@ -771,9 +765,15 @@ export function ApprovalsPage() {
       <section ref={sharedContactManagerRef} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
-              Shared contact manager
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+                Shared contact manager
+              </h2>
+              <button type="button" onClick={() => setShowShareModal(true)} style={headerShareButtonStyle}>
+                <Plus size={15} />
+                Share contacts
+              </button>
+            </div>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
               Filter active shares by campaigns, pods, sub-pods, public links, direct contacts, and permission level.
             </p>
