@@ -321,6 +321,21 @@ export async function getSharedContactsWithMe(): Promise<SharedContactAccessSnap
   }))
 }
 
+export async function updateSharedContactWithGrant(
+  grantId: string,
+  contactId: string,
+  patch: Partial<Omit<Contact, 'id' | 'created_at'>>,
+): Promise<Contact> {
+  const { data, error } = await db.rpc('update_shared_contact_with_grant', {
+    _grant_id: grantId,
+    _contact_id: contactId,
+    _contact_patch: patch,
+  })
+
+  if (error) throw error
+  return data as Contact
+}
+
 export async function createCollaborationAccessGrant(input: CreateAccessGrantInput): Promise<CollaborationAccessGrant> {
   const created_by = await getCurrentUserId()
   const { data, error } = await db

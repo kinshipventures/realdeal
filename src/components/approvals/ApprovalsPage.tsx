@@ -231,6 +231,7 @@ function rowsForGrant(
     shareDirection: 'shared_by_me',
     shareAccess: {
       direction: 'shared_by_me',
+      grantId: grant.id,
       sourceLabel,
       sharedWith: grant.subject_label,
       permissionLevel: grant.permission_level,
@@ -324,6 +325,7 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
     shareDirection: 'shared_with_me',
     shareAccess: {
       direction: 'shared_with_me',
+      grantId: snapshot.grant_id,
       sourceLabel: snapshot.resource_label,
       sharedWith: snapshot.created_by_label || snapshot.created_by_email || 'Shared contact owner',
       permissionLevel: snapshot.permission_level,

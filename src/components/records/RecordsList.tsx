@@ -148,6 +148,7 @@ function contactShareMetaToAccess(meta: ContactShareMeta | undefined): ContactDe
   if (!meta) return undefined
   return {
     direction: meta.direction,
+    grantId: meta.grantId,
     sourceLabel: meta.sourceLabel,
     sharedWith: meta.sharedWith,
     permissionLevel: meta.permissionLevel,
