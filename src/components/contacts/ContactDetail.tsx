@@ -22,6 +22,10 @@ import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
 import { SubPodSelector } from '../subpods/SubPodSelector'
 import { updateSharedContactWithGrant, type CollaborationFieldScope, type CollaborationPermissionLevel } from '../../lib/collaboration'
+import {
+  normalizeSharedContactVisibleFieldIds,
+  type SharedContactVisibleFieldId,
+} from '../../lib/sharedContactVisibleFields'
 
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
@@ -41,6 +45,7 @@ export type ContactDetailShareAccess = {
   permissionLevel: CollaborationPermissionLevel
   permissionLabel: string
   fieldScopes: CollaborationFieldScope[]
+  visibleFieldIds?: readonly string[]
 }
 
 type ContactPatch = Partial<Omit<Contact, 'id' | 'created_at'>>
@@ -59,6 +64,22 @@ const SHARED_SECTION_SCOPE_REQUIREMENTS: Partial<Record<ContactDisplaySectionId,
   campaigns: 'campaign_private',
   recent_activity: 'relationship_private',
   next_touchpoint: 'relationship_private',
+}
+
+const SHARED_SECTION_VISIBLE_FIELD_REQUIREMENTS: Partial<Record<ContactDisplaySectionId, SharedContactVisibleFieldId[]>> = {
+  relationship_overview: ['relationship_context', 'recent_activity', 'next_touchpoint'],
+  health: ['recent_activity', 'next_touchpoint'],
+  pods: ['pods'],
+  sub_pods: ['sub_pods'],
+  details: ['name', 'company', 'job_title', 'linkedin', 'referred_by', 'gender', 'birthday', 'notables'],
+  ways_to_contact: ['email', 'email_2', 'email_3', 'phone', 'address', 'city', 'country', 'assistant_info'],
+  pod_fields: ['pods', 'sub_pods'],
+  fund_activity: ['kinship_investments', 'investment_entity', 'investment_email', 'commitment_amount'],
+  associated_company: ['company'],
+  associated_people: ['company'],
+  campaigns: ['campaign', 'campaign_status', 'campaign_step', 'campaign_notes', 'commitment_amount'],
+  recent_activity: ['recent_activity'],
+  next_touchpoint: ['next_touchpoint'],
 }
 
 const SHARED_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFieldScope> = {
@@ -100,6 +121,58 @@ const SHARED_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFieldScope> =
   investmentEntity: 'investment_private',
   investmentEmail: 'investment_private',
 }
+
+const SHARED_FIELD_VISIBLE_REQUIREMENTS: Record<string, SharedContactVisibleFieldId> = {
+  name: 'name',
+  first_name: 'name',
+  last_name: 'name',
+  primary_company: 'company',
+  company: 'company',
+  company_record_id: 'company',
+  company_ids: 'company',
+  role: 'job_title',
+  linkedin: 'linkedin',
+  city: 'city',
+  country: 'country',
+  email: 'email',
+  email_2: 'email_2',
+  email_3: 'email_3',
+  phone: 'phone',
+  address: 'address',
+  state: 'address',
+  assistantContactIds: 'assistant_info',
+  recommended_by: 'referred_by',
+  gender: 'gender',
+  birthday: 'birthday',
+  notables: 'notables',
+  notes: 'relationship_context',
+  relationship_context: 'relationship_context',
+  last_contacted_at: 'recent_activity',
+  next_follow_up_date: 'next_touchpoint',
+  next_action: 'next_touchpoint',
+  kv_fund_investor: 'kinship_investments',
+  spv_investor: 'kinship_investments',
+  investmentEntity: 'investment_entity',
+  investmentEmail: 'investment_email',
+  [CAMPAIGN_COMMITMENT_AMOUNT_FIELD]: 'commitment_amount',
+  campaignStatus: 'campaign_status',
+  campaignStep: 'campaign_step',
+  campaignNotes: 'campaign_notes',
+}
+
+const SHARED_CUSTOM_FIELD_KEYS = new Set([
+  'address',
+  'city',
+  'state',
+  'assistantContactIds',
+  'notables',
+  'investmentEntity',
+  'investmentEmail',
+  CAMPAIGN_COMMITMENT_AMOUNT_FIELD,
+  'campaignStatus',
+  'campaignStep',
+  'campaignNotes',
+])
 
 const SHARED_WRITABLE_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFieldScope> = {
   ...SHARED_FIELD_SCOPE_REQUIREMENTS,
@@ -300,6 +373,14 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     () => new Set(sharedAccess?.fieldScopes ?? []),
     [sharedAccess?.fieldScopes],
   )
+  const sharedVisibleFieldIds = useMemo(
+    () => normalizeSharedContactVisibleFieldIds(sharedAccess?.visibleFieldIds ?? [], sharedAccess?.fieldScopes ?? []),
+    [sharedAccess?.fieldScopes, sharedAccess?.visibleFieldIds],
+  )
+  const sharedVisibleFields = useMemo(
+    () => new Set(sharedVisibleFieldIds),
+    [sharedVisibleFieldIds],
+  )
   const { activeWorkspace } = useWorkspace()
   const [displaySettings] = useContactDisplaySettings(activeWorkspace?.id, contact?.id)
 
@@ -380,14 +461,50 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return sharedFieldScopes.has(scope)
   }
 
+  function sharedFieldAllows(fieldId: SharedContactVisibleFieldId | undefined): boolean {
+    if (!sharedAccess || sharedAccess.direction !== 'shared_with_me') return true
+    if (!fieldId) return false
+    return sharedVisibleFields.has(fieldId)
+  }
+
+  function sharedVisibleFieldForKey(fieldId: string): SharedContactVisibleFieldId | undefined {
+    return SHARED_FIELD_VISIBLE_REQUIREMENTS[fieldId]
+  }
+
+  function filterSharedCustomFields(fields: Record<string, unknown>): Record<string, unknown> {
+    if (!isInboundSharedContact) return fields
+    const next: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(fields)) {
+      if (sharedFieldAllows(sharedVisibleFieldForKey(key))) {
+        next[key] = value
+      }
+    }
+    return next
+  }
+
+  function hasSharedCustomFieldAccess(): boolean {
+    return [...SHARED_CUSTOM_FIELD_KEYS].some(key => sharedFieldAllows(sharedVisibleFieldForKey(key)))
+  }
+
   function sharedWritablePatch(data: ContactPatch): ContactPatch {
     if (!isInboundSharedContact) return data
     const next: ContactPatch = {}
     for (const [key, value] of Object.entries(data)) {
+      if (key === 'custom_fields') {
+        const filteredFields = filterSharedCustomFields(
+          value && typeof value === 'object' && !Array.isArray(value)
+            ? value as Record<string, unknown>
+            : {},
+        )
+        if (Object.keys(filteredFields).length > 0 || hasSharedCustomFieldAccess()) {
+          ;(next as Record<string, unknown>)[key] = filteredFields
+        }
+        continue
+      }
+
+      const visibleField = sharedVisibleFieldForKey(key)
       const scope = SHARED_WRITABLE_FIELD_SCOPE_REQUIREMENTS[key]
-      const customFieldAllowed = key === 'custom_fields'
-        && (sharedFieldScopes.has('relationship_private') || sharedFieldScopes.has('investment_private') || sharedFieldScopes.has('campaign_private'))
-      if ((scope && sharedFieldScopes.has(scope)) || customFieldAllowed) {
+      if (sharedFieldAllows(visibleField) || (!visibleField && scope && sharedScopeAllows(scope))) {
         ;(next as Record<string, unknown>)[key] = value
       }
     }
@@ -426,10 +543,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function scopeAllowsSharedSection(sectionId: ContactDisplaySectionId): boolean {
+    if (!isInboundSharedContact) return true
+    const fieldRequirements = SHARED_SECTION_VISIBLE_FIELD_REQUIREMENTS[sectionId]
+    if (fieldRequirements) return fieldRequirements.some(fieldId => sharedFieldAllows(fieldId))
     return sharedScopeAllows(SHARED_SECTION_SCOPE_REQUIREMENTS[sectionId])
   }
 
   function scopeAllowsSharedField(fieldId: string): boolean {
+    const visibleField = sharedVisibleFieldForKey(fieldId)
+    if (visibleField) return sharedFieldAllows(visibleField)
     return sharedScopeAllows(SHARED_FIELD_SCOPE_REQUIREMENTS[fieldId])
   }
 

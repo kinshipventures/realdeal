@@ -53,20 +53,32 @@ describe('Shared contacts guardrails', () => {
     expect(connections).toContain("db.rpc('find_app_users_for_contact_emails', { contact_emails: contactEmails })")
   })
 
-  it('keeps Share contacts searchable and field-personalized without changing grant storage scopes', () => {
+  it('keeps Share contacts searchable and field-personalized with exact visible-field grants', () => {
     const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
+    const collaboration = source('src/lib/collaboration.ts')
     const visibleFields = source('src/lib/sharedContactVisibleFields.ts')
+    const exactFieldsMigration = source('supabase/migrations/20260702193000_exact_shared_contact_visible_fields.sql')
 
     expect(approvalsPage).toContain('const [resourceSearch, setResourceSearch] = useState')
     expect(approvalsPage).toContain('placeholder="Search contacts, pods, sub-pods, companies, or campaigns"')
     expect(approvalsPage).toContain('SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map')
     expect(approvalsPage).toContain('deriveSharedContactFieldScopes(selectedVisibleFieldIds)')
+    expect(approvalsPage).toContain('visible_field_ids: selectedVisibleFieldIds')
+    expect(collaboration).toContain('visible_field_ids: normalizeSharedContactVisibleFieldIds')
+    expect(collaboration).toContain('_shared_visible_field_ids')
     expect(visibleFields).toContain('export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS')
+    expect(visibleFields).toContain('normalizeSharedContactVisibleFieldIds')
     expect(visibleFields).toContain("scope: 'public_profile'")
     expect(visibleFields).toContain("scope: 'private_contact'")
     expect(visibleFields).toContain("scope: 'relationship_private'")
     expect(visibleFields).toContain("scope: 'investment_private'")
     expect(visibleFields).toContain("scope: 'campaign_private'")
+    expect(exactFieldsMigration).toContain('ADD COLUMN IF NOT EXISTS visible_field_ids text[]')
+    expect(exactFieldsMigration).toContain('CREATE OR REPLACE FUNCTION public.resolve_shared_contact_visible_field_ids')
+    expect(exactFieldsMigration).toContain('CREATE OR REPLACE FUNCTION public.scope_shared_contact_payload')
+    expect(exactFieldsMigration).toContain('public.scope_shared_contact_payload(shared_contacts.contacts, shared_contacts.field_scopes, shared_contacts.visible_field_ids) AS contact')
+    expect(exactFieldsMigration).toContain('visible_field_ids := public.resolve_shared_contact_visible_field_ids')
+    expect(exactFieldsMigration).toContain('allowed_custom_field_keys')
   })
 
   it('keeps incoming shared-contact requests visible and actionable for recipients', () => {
@@ -122,6 +134,8 @@ describe('Shared contacts guardrails', () => {
     expect(contactDetail).toContain('export type ContactDetailShareAccess')
     expect(contactDetail).toContain('contactCardReadOnly')
     expect(contactDetail).toContain('scopeAllowsSharedField')
+    expect(contactDetail).toContain('sharedVisibleFieldForKey')
+    expect(contactDetail).toContain('filterSharedCustomFields')
     expect(contactDetail).toContain('if (isInboundSharedContact && sectionId === \'recent_activity\') return false')
   })
 
@@ -137,6 +151,7 @@ describe('Shared contacts guardrails', () => {
     expect(contactDetail).toContain("sharedAccess?.permissionLevel === 'edit' || sharedAccess?.permissionLevel === 'admin'")
     expect(contactDetail).toContain('updateSharedContactWithGrant(sharedAccess.grantId')
     expect(contactDetail).toContain('sharedWritablePatch')
+    expect(contactDetail).toContain('hasSharedCustomFieldAccess')
     expect(contactDetail).toContain('dirtySharedWritablePatch')
     expect(contactDetail).toContain('stableComparableValue')
     expect(contactDetail).toContain('contactCardStructureReadOnly')

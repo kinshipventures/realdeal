@@ -18,6 +18,7 @@ import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibil
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
+import { normalizeSharedContactVisibleFieldIds, type SharedContactVisibleFieldId } from '@/lib/sharedContactVisibleFields'
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
@@ -58,6 +59,7 @@ type ContactShareMeta = {
   permissionLevel: CollaborationPermissionLevel
   permissionLabel: string
   fieldScopes: CollaborationFieldScope[]
+  visibleFieldIds: SharedContactVisibleFieldId[]
   status: 'active' | 'expired' | 'revoked'
 }
 
@@ -154,6 +156,7 @@ function contactShareMetaToAccess(meta: ContactShareMeta | undefined): ContactDe
     permissionLevel: meta.permissionLevel,
     permissionLabel: meta.permissionLabel,
     fieldScopes: meta.fieldScopes,
+    visibleFieldIds: meta.visibleFieldIds,
   }
 }
 
@@ -639,6 +642,7 @@ export function RecordsList() {
       if (directions.length === 0) continue
 
       const contactIds = contactIdsForGrant(grant)
+      const visibleFieldIds = normalizeSharedContactVisibleFieldIds(grant.visible_field_ids, grant.field_scopes)
       for (const direction of directions) {
         const meta: ContactShareMeta = {
           direction,
@@ -648,6 +652,7 @@ export function RecordsList() {
           permissionLevel: grant.permission_level,
           permissionLabel: permissionLabel(grant.permission_level),
           fieldScopes: grant.field_scopes,
+          visibleFieldIds,
           status,
         }
         contactIds.forEach(contactId => addMeta(contactId, meta))
@@ -667,6 +672,7 @@ export function RecordsList() {
         permissionLevel: snapshot.permission_level,
         permissionLabel: permissionLabel(snapshot.permission_level),
         fieldScopes: snapshot.field_scopes,
+        visibleFieldIds: normalizeSharedContactVisibleFieldIds(snapshot.visible_field_ids, snapshot.field_scopes),
         status,
       })
     }
