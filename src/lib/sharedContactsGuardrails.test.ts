@@ -53,20 +53,32 @@ describe('Shared contacts guardrails', () => {
     expect(connections).toContain("db.rpc('find_app_users_for_contact_emails', { contact_emails: contactEmails })")
   })
 
-  it('keeps Share contacts searchable and field-personalized without changing grant storage scopes', () => {
+  it('keeps Share contacts searchable and visually scoped to selected fields', () => {
     const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
+    const collaboration = source('src/lib/collaboration.ts')
     const visibleFields = source('src/lib/sharedContactVisibleFields.ts')
+    const contactDetail = source('src/components/contacts/ContactDetail.tsx')
 
     expect(approvalsPage).toContain('const [resourceSearch, setResourceSearch] = useState')
     expect(approvalsPage).toContain('placeholder="Search contacts, pods, sub-pods, companies, or campaigns"')
     expect(approvalsPage).toContain('SHARED_CONTACT_VISIBLE_FIELD_GROUPS.map')
     expect(approvalsPage).toContain('deriveSharedContactFieldScopes(selectedVisibleFieldIds)')
+    expect(approvalsPage).toContain('visible_field_ids: selectedVisibleFieldIds')
+    expect(collaboration).toContain('encodeSharedContactFieldScopes(visible_field_ids)')
+    expect(collaboration).toContain('decodeSharedContactVisibleFieldIdsFromScopes(rawFieldScopes)')
+    expect(collaboration).toContain('field_scopes: normalizeSharedContactFieldScopes(rawFieldScopes)')
     expect(visibleFields).toContain('export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS')
+    expect(visibleFields).toContain("const VISIBLE_FIELD_TOKEN_PREFIX = 'visible:'")
+    expect(visibleFields).toContain('encodeSharedContactVisibleFieldToken')
+    expect(visibleFields).toContain('decodeSharedContactVisibleFieldIdsFromScopes')
     expect(visibleFields).toContain("scope: 'public_profile'")
     expect(visibleFields).toContain("scope: 'private_contact'")
     expect(visibleFields).toContain("scope: 'relationship_private'")
     expect(visibleFields).toContain("scope: 'investment_private'")
     expect(visibleFields).toContain("scope: 'campaign_private'")
+    expect(contactDetail).toContain('visibleFieldIds?: readonly string[]')
+    expect(contactDetail).toContain('sharedVisibleFieldForKey')
+    expect(contactDetail).toContain('SHARED_FIELD_VISIBLE_REQUIREMENTS')
   })
 
   it('keeps incoming shared-contact requests visible and actionable for recipients', () => {
@@ -126,6 +138,9 @@ describe('Shared contacts guardrails', () => {
     expect(contactDetail).toContain('export type ContactDetailShareAccess')
     expect(contactDetail).toContain('contactCardReadOnly')
     expect(contactDetail).toContain('scopeAllowsSharedField')
+    expect(contactDetail).toContain('sharedVisibleFieldForKey')
+    expect(recordsList).toContain('visibleFieldIds: snapshot.visible_field_ids')
+    expect(approvalsPage).toContain('visibleFieldIds: snapshot.visible_field_ids')
     expect(contactDetail).toContain('if (isInboundSharedContact && sectionId === \'recent_activity\') return false')
   })
 

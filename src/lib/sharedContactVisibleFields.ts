@@ -52,6 +52,9 @@ const FIELD_SCOPE_ORDER: CollaborationFieldScope[] = [
   'campaign_private',
 ]
 
+const FIELD_SCOPE_SET = new Set<string>(FIELD_SCOPE_ORDER)
+const VISIBLE_FIELD_TOKEN_PREFIX = 'visible:'
+
 export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS: SharedContactVisibleFieldGroup[] = [
   {
     scope: 'public_profile',
@@ -123,6 +126,74 @@ export const SHARED_CONTACT_VISIBLE_FIELD_GROUPS: SharedContactVisibleFieldGroup
 export const DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
   .filter(group => group.required)
   .flatMap(group => group.fields.map(field => field.id))
+
+export const ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
+  .flatMap(group => group.fields.map(field => field.id))
+
+const SHARED_CONTACT_VISIBLE_FIELD_ID_SET = new Set(ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS)
+
+export function isSharedContactVisibleFieldId(value: string): value is SharedContactVisibleFieldId {
+  return SHARED_CONTACT_VISIBLE_FIELD_ID_SET.has(value as SharedContactVisibleFieldId)
+}
+
+export function isCollaborationFieldScope(value: string): value is CollaborationFieldScope {
+  return FIELD_SCOPE_SET.has(value)
+}
+
+export function normalizeSharedContactFieldScopes(
+  fieldScopes?: readonly string[] | null,
+): CollaborationFieldScope[] {
+  const selected = new Set(
+    (fieldScopes ?? []).filter(isCollaborationFieldScope),
+  )
+  if (selected.size === 0) selected.add('public_profile')
+  return FIELD_SCOPE_ORDER.filter(scope => selected.has(scope))
+}
+
+export function deriveSharedContactVisibleFieldIdsFromScopes(
+  scopes: readonly string[] = ['public_profile'],
+): SharedContactVisibleFieldId[] {
+  const selectedScopes = new Set(normalizeSharedContactFieldScopes(scopes))
+  return SHARED_CONTACT_VISIBLE_FIELD_GROUPS
+    .filter(group => selectedScopes.has(group.scope))
+    .flatMap(group => group.fields.map(field => field.id))
+}
+
+export function normalizeSharedContactVisibleFieldIds(
+  selectedFieldIds?: readonly string[] | null,
+  fallbackScopes: readonly string[] = ['public_profile'],
+): SharedContactVisibleFieldId[] {
+  const selected = selectedFieldIds?.filter(isSharedContactVisibleFieldId) ?? []
+  const source = selected.length > 0
+    ? [...DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS, ...selected]
+    : deriveSharedContactVisibleFieldIdsFromScopes(fallbackScopes)
+  const unique = new Set(source)
+  return ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS.filter(fieldId => unique.has(fieldId))
+}
+
+export function encodeSharedContactVisibleFieldToken(fieldId: SharedContactVisibleFieldId): string {
+  return `${VISIBLE_FIELD_TOKEN_PREFIX}${fieldId}`
+}
+
+export function decodeSharedContactVisibleFieldIdsFromScopes(
+  fieldScopes?: readonly string[] | null,
+): SharedContactVisibleFieldId[] {
+  const decoded = (fieldScopes ?? [])
+    .filter(scope => scope.startsWith(VISIBLE_FIELD_TOKEN_PREFIX))
+    .map(scope => scope.slice(VISIBLE_FIELD_TOKEN_PREFIX.length))
+  return normalizeSharedContactVisibleFieldIds(decoded, fieldScopes ?? ['public_profile'])
+}
+
+export function encodeSharedContactFieldScopes(
+  selectedFieldIds: readonly SharedContactVisibleFieldId[],
+): string[] {
+  const fieldScopes = deriveSharedContactFieldScopes([...selectedFieldIds])
+  const visibleFieldIds = normalizeSharedContactVisibleFieldIds(selectedFieldIds, fieldScopes)
+  return [
+    ...fieldScopes,
+    ...visibleFieldIds.map(encodeSharedContactVisibleFieldToken),
+  ]
+}
 
 export function deriveSharedContactFieldScopes(
   selectedFieldIds: SharedContactVisibleFieldId[],

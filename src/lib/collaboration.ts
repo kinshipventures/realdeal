@@ -1,5 +1,11 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact } from './types'
+import {
+  decodeSharedContactVisibleFieldIdsFromScopes,
+  encodeSharedContactFieldScopes,
+  normalizeSharedContactFieldScopes,
+  type SharedContactVisibleFieldId,
+} from './sharedContactVisibleFields'
 
 export type CollaborationSubjectType = 'user' | 'team' | 'organization' | 'public_link'
 export type CollaborationResourceType = 'contact' | 'company' | 'pod' | 'campaign' | 'field_group'
@@ -28,6 +34,7 @@ export interface CollaborationAccessGrant {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
+  visible_field_ids: SharedContactVisibleFieldId[]
   status: CollaborationAccessGrantStatus
   expires_at: string | null
   created_by: string | null
@@ -50,6 +57,7 @@ export interface SharedContactAccessSnapshot {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
+  visible_field_ids: SharedContactVisibleFieldId[]
   expires_at: string | null
   created_at: string
   contact: Contact
@@ -174,6 +182,7 @@ export interface CreateAccessGrantInput {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
+  visible_field_ids?: readonly SharedContactVisibleFieldId[]
   status?: CollaborationAccessGrantStatus
   expires_at?: string | null
 }
@@ -283,12 +292,17 @@ export async function getCollaborationAccessGrants(workspaceId: string): Promise
 }
 
 function normalizeAccessGrants(rows: unknown[]): CollaborationAccessGrant[] {
-  return (rows as Partial<CollaborationAccessGrant>[]).map(row => ({
-    ...row,
-    subject_email: row.subject_email ?? null,
-    status: row.status ?? 'accepted',
-    responded_at: row.responded_at ?? null,
-  })) as CollaborationAccessGrant[]
+  return (rows as Partial<CollaborationAccessGrant>[]).map(row => {
+    const rawFieldScopes = (row.field_scopes ?? []).map(String)
+    return {
+      ...row,
+      subject_email: row.subject_email ?? null,
+      field_scopes: normalizeSharedContactFieldScopes(rawFieldScopes),
+      visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(rawFieldScopes),
+      status: row.status ?? 'accepted',
+      responded_at: row.responded_at ?? null,
+    }
+  }) as CollaborationAccessGrant[]
 }
 
 export async function getIncomingCollaborationAccessGrants(): Promise<CollaborationAccessGrant[]> {
@@ -315,10 +329,15 @@ export async function getSharedContactsWithMe(): Promise<SharedContactAccessSnap
   const { data, error } = await db.rpc('get_shared_contacts_with_me')
 
   if (error) return emptyWhenMissing<SharedContactAccessSnapshot>(error)
-  return ((data ?? []) as SharedContactAccessSnapshot[]).map(row => ({
-    ...row,
-    contact: row.contact,
-  }))
+  return ((data ?? []) as SharedContactAccessSnapshot[]).map(row => {
+    const rawFieldScopes = (row.field_scopes ?? []).map(String)
+    return {
+      ...row,
+      field_scopes: normalizeSharedContactFieldScopes(rawFieldScopes),
+      visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(rawFieldScopes),
+      contact: row.contact,
+    }
+  })
 }
 
 export async function updateSharedContactWithGrant(
@@ -338,9 +357,13 @@ export async function updateSharedContactWithGrant(
 
 export async function createCollaborationAccessGrant(input: CreateAccessGrantInput): Promise<CollaborationAccessGrant> {
   const created_by = await getCurrentUserId()
+  const { visible_field_ids, ...grantInput } = input
+  const field_scopes = visible_field_ids
+    ? encodeSharedContactFieldScopes(visible_field_ids)
+    : normalizeSharedContactFieldScopes(input.field_scopes)
   const { data, error } = await db
     .from('collaboration_access_grants')
-    .insert({ ...input, created_by })
+    .insert({ ...grantInput, field_scopes, created_by })
     .select()
     .single()
 
@@ -355,11 +378,12 @@ export async function createCollaborationAccessGrant(input: CreateAccessGrantInp
       subject_label: input.subject_label,
       subject_email: input.subject_email ?? null,
       permission_level: input.permission_level,
-      field_scopes: input.field_scopes,
+      field_scopes: normalizeSharedContactFieldScopes(field_scopes),
+      visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(field_scopes),
       status: input.status ?? 'accepted',
     },
   })
-  return data as CollaborationAccessGrant
+  return normalizeAccessGrants([data])[0]
 }
 
 export async function revokeCollaborationAccessGrant(id: string, workspaceId: string): Promise<void> {

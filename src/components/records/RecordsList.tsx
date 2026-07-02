@@ -58,6 +58,7 @@ type ContactShareMeta = {
   permissionLevel: CollaborationPermissionLevel
   permissionLabel: string
   fieldScopes: CollaborationFieldScope[]
+  visibleFieldIds?: readonly string[]
   status: 'active' | 'expired' | 'revoked'
 }
 
@@ -154,6 +155,7 @@ function contactShareMetaToAccess(meta: ContactShareMeta | undefined): ContactDe
     permissionLevel: meta.permissionLevel,
     permissionLabel: meta.permissionLabel,
     fieldScopes: meta.fieldScopes,
+    visibleFieldIds: meta.visibleFieldIds,
   }
 }
 
@@ -648,6 +650,7 @@ export function RecordsList() {
           permissionLevel: grant.permission_level,
           permissionLabel: permissionLabel(grant.permission_level),
           fieldScopes: grant.field_scopes,
+          visibleFieldIds: grant.visible_field_ids,
           status,
         }
         contactIds.forEach(contactId => addMeta(contactId, meta))
@@ -667,6 +670,7 @@ export function RecordsList() {
         permissionLevel: snapshot.permission_level,
         permissionLabel: permissionLabel(snapshot.permission_level),
         fieldScopes: snapshot.field_scopes,
+        visibleFieldIds: snapshot.visible_field_ids,
         status,
       })
     }

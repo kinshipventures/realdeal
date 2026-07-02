@@ -237,6 +237,7 @@ function rowsForGrant(
       permissionLevel: grant.permission_level,
       permissionLabel: permissionLabel(grant.permission_level),
       fieldScopes: grant.field_scopes,
+      visibleFieldIds: grant.visible_field_ids,
     },
     sourceType,
     sourceLabel,
@@ -331,6 +332,7 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
       permissionLevel: snapshot.permission_level,
       permissionLabel: permissionLabel(snapshot.permission_level),
       fieldScopes: snapshot.field_scopes,
+      visibleFieldIds: snapshot.visible_field_ids,
     },
     sourceType,
     sourceLabel: snapshot.resource_label,
@@ -1388,6 +1390,7 @@ function ShareContactsModal({
         resource_label: selectedResource.mode === 'sub_pod' ? `Sub-pod: ${selectedResource.label}` : selectedResource.label,
         permission_level: permission,
         field_scopes: fieldScopes,
+        visible_field_ids: selectedVisibleFieldIds,
         status: shareByEmail ? 'pending' : 'accepted',
         expires_at: expirationDays ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000).toISOString() : null,
       })
