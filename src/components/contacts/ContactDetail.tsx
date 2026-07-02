@@ -21,6 +21,7 @@ import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
 import { SubPodSelector } from '../subpods/SubPodSelector'
+import type { CollaborationFieldScope, CollaborationPermissionLevel } from '../../lib/collaboration'
 
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
@@ -31,6 +32,71 @@ const RING_COLORS: Record<string, string> = {
 }
 
 const ADD_NEW_OPTION_VALUE = '__realdeal_add_new_option__'
+
+export type ContactDetailShareAccess = {
+  direction: 'shared_with_me' | 'shared_by_me'
+  sourceLabel: string
+  sharedWith: string
+  permissionLevel: CollaborationPermissionLevel
+  permissionLabel: string
+  fieldScopes: CollaborationFieldScope[]
+}
+
+const SHARED_SECTION_SCOPE_REQUIREMENTS: Partial<Record<ContactDisplaySectionId, CollaborationFieldScope>> = {
+  relationship_overview: 'relationship_private',
+  health: 'relationship_private',
+  pods: 'public_profile',
+  sub_pods: 'public_profile',
+  details: 'public_profile',
+  ways_to_contact: 'private_contact',
+  pod_fields: 'public_profile',
+  fund_activity: 'investment_private',
+  associated_company: 'public_profile',
+  associated_people: 'public_profile',
+  campaigns: 'campaign_private',
+  recent_activity: 'relationship_private',
+  next_touchpoint: 'relationship_private',
+}
+
+const SHARED_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFieldScope> = {
+  name: 'public_profile',
+  primary_company: 'public_profile',
+  company: 'public_profile',
+  role: 'public_profile',
+  linkedin: 'public_profile',
+  city: 'public_profile',
+  country: 'public_profile',
+  global_region: 'public_profile',
+  website: 'public_profile',
+  industry: 'public_profile',
+  companyType: 'public_profile',
+  fundType: 'public_profile',
+  email: 'private_contact',
+  email_2: 'private_contact',
+  email_3: 'private_contact',
+  phone: 'private_contact',
+  address: 'private_contact',
+  state: 'private_contact',
+  location: 'private_contact',
+  assistantContactIds: 'private_contact',
+  communication_preferences: 'private_contact',
+  recommended_by: 'relationship_private',
+  gender: 'relationship_private',
+  birthday: 'relationship_private',
+  notables: 'relationship_private',
+  notes: 'relationship_private',
+  relationship_context: 'relationship_private',
+  introduced_by: 'relationship_private',
+  intel_notes: 'relationship_private',
+  relationship_owner: 'relationship_private',
+  contact_frequency: 'relationship_private',
+  next_follow_up_date: 'relationship_private',
+  next_action: 'relationship_private',
+  kv_fund_investor: 'investment_private',
+  spv_investor: 'investment_private',
+  investmentEntity: 'investment_private',
+  investmentEmail: 'investment_private',
+}
 
 function SegmentedEquityRing({ breakdown, score, size = 72 }: {
   breakdown: EquityBreakdown[]
@@ -92,6 +158,7 @@ interface Props {
   pods?: Pod[]  // optional -- enrichment features disabled when not provided
   categories?: Category[]
   onCampaignContactUpdated?: (updated: CampaignContact) => void
+  sharedAccess?: ContactDetailShareAccess
 }
 
 type SaveError = { field: keyof Contact; value: string | string[] | null } | null
@@ -183,8 +250,13 @@ function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
   return nextFields
 }
 
-export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated }: Props) {
+export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated, sharedAccess }: Props) {
   const isNew = contact === null
+  const contactCardReadOnly = sharedAccess?.direction === 'shared_with_me'
+  const sharedFieldScopes = useMemo(
+    () => new Set(sharedAccess?.fieldScopes ?? []),
+    [sharedAccess?.fieldScopes],
+  )
   const { activeWorkspace } = useWorkspace()
   const [displaySettings] = useContactDisplaySettings(activeWorkspace?.id, contact?.id)
 
@@ -254,13 +326,32 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       !hiddenSubPodIds.has(category.id)
     )
   }, [availableCategories, hiddenSubPodIds, visibleSubPodIds])
+  const visibleSelectedSubPodCategories = useMemo(() => {
+    const selectedCategoryIds = new Set(draft.category_ids ?? [])
+    return visibleSubPodCategories.filter(category => selectedCategoryIds.has(category.id))
+  }, [draft.category_ids, visibleSubPodCategories])
+
+  function sharedScopeAllows(scope: CollaborationFieldScope | undefined): boolean {
+    if (!sharedAccess || sharedAccess.direction !== 'shared_with_me') return true
+    if (!scope) return false
+    return sharedFieldScopes.has(scope)
+  }
+
+  function scopeAllowsSharedSection(sectionId: ContactDisplaySectionId): boolean {
+    return sharedScopeAllows(SHARED_SECTION_SCOPE_REQUIREMENTS[sectionId])
+  }
+
+  function scopeAllowsSharedField(fieldId: string): boolean {
+    return sharedScopeAllows(SHARED_FIELD_SCOPE_REQUIREMENTS[fieldId])
+  }
 
   function sectionVisible(sectionId: ContactDisplaySectionId): boolean {
-    return isSectionVisible(displaySettings, sectionId)
+    if (contactCardReadOnly && sectionId === 'recent_activity') return false
+    return isSectionVisible(displaySettings, sectionId) && scopeAllowsSharedSection(sectionId)
   }
 
   function standardFieldVisible(fieldId: string): boolean {
-    return isStandardFieldVisible(displaySettings, fieldId)
+    return isStandardFieldVisible(displaySettings, fieldId) && scopeAllowsSharedField(fieldId)
   }
 
   useEffect(() => {
@@ -353,7 +444,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }, [contact?.id])
 
   async function handleAddToCampaign(campaignId: string) {
-    if (!contact) return
+    if (contactCardReadOnly || !contact) return
     setAddingToCampaign(true)
     try {
       // Place in first stage so the contact appears on the board
@@ -370,6 +461,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleCommitmentAmountSave(link: CampaignContact, amount: number | null) {
+    if (contactCardReadOnly) return
     const updated = await updateCampaignContact(link.id, {
       custom_fields: withMoneyField(link.custom_fields, CAMPAIGN_COMMITMENT_AMOUNT_FIELD, amount),
     })
@@ -437,6 +529,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }, [])
 
   function markContactInfoChanged() {
+    if (contactCardReadOnly) return
     setHasPendingContactChanges(true)
     setContactSaveError(null)
     setSaveError(null)
@@ -444,6 +537,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function handleBlur(key: keyof Contact, value: string) {
+    if (contactCardReadOnly) {
+      setEditingField(null)
+      return
+    }
     const v = value.trim() || null
     setDraft(prev => ({ ...prev, [key]: v }))
     setEditingField(null)
@@ -457,7 +554,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleSaveContactInfo() {
-    if (!contact || isNew || !hasPendingContactChanges) return
+    if (contactCardReadOnly || !contact || isNew || !hasPendingContactChanges) return
 
     const nextName = String(draft.name ?? contact.name ?? '').trim()
     const spvInvestor = Array.isArray(draft.spv_investor)
@@ -555,6 +652,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function beginAddingOption(targetId: string) {
+    if (contactCardReadOnly) return
     setNewOptionTarget(targetId)
     setNewOptionValue('')
   }
@@ -638,6 +736,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function renderAddOptionControl(targetId: string, onAdd: (value: string) => void | Promise<void>, placeholder = 'New option') {
+    if (contactCardReadOnly) return null
     if (newOptionTarget !== targetId) return null
 
     async function commitNewOption() {
@@ -802,6 +901,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function setArrayDraftValue(key: keyof Contact, values: string[], closeEditor = false) {
+    if (contactCardReadOnly) return
     const nextValue = normalizeLabelValues(values)
     const persistedValue = nextValue.length > 0 ? nextValue : null
     setDraft(prev => ({ ...prev, [key]: persistedValue }))
@@ -817,7 +917,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const options = typeof renderOptions === 'boolean' ? { multi: renderOptions } : renderOptions
     const multi = options.multi ?? false
     const val = (draft[key] as string | null | undefined) ?? null
-    const editing = editingField === key
+    const editing = !contactCardReadOnly && editingField === key
     const hasSaveError = saveError?.field === key
     const isEnriched = enrichedFields.has(key)
     const fieldKey = key as string
@@ -897,7 +997,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           )}
         </div>
         <div style={{ minWidth: 0 }}>
-          {alwaysInput ? (
+          {alwaysInput && !contactCardReadOnly ? (
             <input
               type={options.inputType ?? 'text'}
               value={val ?? ''}
@@ -943,11 +1043,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             )
           ) : (
             <div
-              onClick={() => setEditingField(key)}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingField(key)
+              }}
               style={{
                 fontSize: 14,
                 color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
                 minHeight: 22,
                 whiteSpace: multi ? 'pre-wrap' : 'nowrap',
                 overflow: 'hidden',
@@ -1009,7 +1111,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const visibleOptions = mergeOptions(options, defaultOptions).filter(option => !hiddenValues.has(option))
     const displayValues = visibleValues
     const hasDisplayedValues = displayValues.length > 0
-    const editing = editingField === key
+    const editing = !contactCardReadOnly && editingField === key
     const hasSaveError = saveError?.field === key
     const labelTargetId = `labels:${String(key)}`
     const labelOptions = mergeOptions(visibleOptions, displayValues)
@@ -1171,13 +1273,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
           ) : hasDisplayedValues ? (
             <div
-              onClick={() => setEditingField(key)}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingField(key)
+              }}
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 6,
                 minHeight: 22,
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
               }}
             >
               {displayValues.map(option => {
@@ -1187,11 +1291,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
           ) : (
             <div
-              onClick={() => setEditingField(key)}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingField(key)
+              }}
               style={{
                 fontSize: 14,
                 color: 'var(--color-text-tertiary)',
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
                 minHeight: 22,
                 lineHeight: 1.45,
                 overflow: 'hidden',
@@ -1212,6 +1318,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function handleCustomFieldSave(field: LpTrackerFieldDefinition, rawValue: string | boolean | string[]) {
+    if (contactCardReadOnly) return
     const value = Array.isArray(rawValue)
       ? normalizeLabelValues(rawValue)
       : typeof rawValue === 'boolean'
@@ -1237,7 +1344,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const customFields = getDraftCustomFields()
     const rawValue = customFields[fieldDef.key]
     const value = lpTrackerDisplayValue(rawValue)
-    const editing = editingCustomField === fieldDef.key
+    const editing = !contactCardReadOnly && editingCustomField === fieldDef.key
     const hasSaveError = customFieldSaveError === fieldDef.key
     const multi = fieldDef.type === 'long_text' || fieldDef.type === 'multi_select'
     const selectOptions = fieldDef.type === 'select' ? customFieldOptions(fieldDef) : []
@@ -1363,12 +1470,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               gap: 8,
               fontSize: 14,
               color: 'var(--color-text-primary)',
-              cursor: 'pointer',
+              cursor: contactCardReadOnly ? 'default' : 'pointer',
               minHeight: 28,
             }}>
               <input
                 type="checkbox"
                 checked={rawValue === true}
+                disabled={contactCardReadOnly}
                 onChange={event => handleCustomFieldSave(fieldDef, event.target.checked)}
               />
               {rawValue === true ? 'Yes' : 'No'}
@@ -1478,24 +1586,28 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             )
           ) : fieldDef.type === 'multi_select' && multiSelectValues.length > 0 ? (
             <div
-              onClick={() => setEditingCustomField(fieldDef.key)}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingCustomField(fieldDef.key)
+              }}
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 6,
                 minHeight: 22,
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
               }}
             >
               {multiSelectValues.map(option => renderCustomLabelChip(option))}
             </div>
           ) : (
             <div
-              onClick={() => setEditingCustomField(fieldDef.key)}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingCustomField(fieldDef.key)
+              }}
               style={{
                 fontSize: 14,
                 color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
                 minHeight: 22,
                 whiteSpace: multi ? 'pre-wrap' : 'nowrap',
                 overflow: 'hidden',
@@ -1518,6 +1630,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function setCustomFieldDraftValue(key: string, value: unknown) {
+    if (contactCardReadOnly) return
     const nextCustomFields = { ...getDraftCustomFields() }
     if (hasLpTrackerValue(value)) {
       nextCustomFields[key] = value
@@ -1614,15 +1727,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const targetId = `linked:${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 
     function addRecord(id: string) {
+      if (contactCardReadOnly) return
       if (!id) return
       onChange(multi ? uniqueIds([...normalizedSelectedIds, id]) : [id])
     }
 
     function removeRecord(id: string) {
+      if (contactCardReadOnly) return
       onChange(normalizedSelectedIds.filter(selectedId => selectedId !== id))
     }
 
     async function createAndAddRecord(name: string) {
+      if (contactCardReadOnly) return
       if (!onCreateRecord) return
       const created = await onCreateRecord(name)
       if (created?.id) addRecord(created.id)
@@ -1643,7 +1759,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {selectedRecords.length > 0 || displayOnlyRecords.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {selectedRecords.map(record => recordChip(record, () => removeRecord(record.id)))}
+              {selectedRecords.map(record => recordChip(record, contactCardReadOnly ? undefined : () => removeRecord(record.id)))}
               {displayOnlyRecords.map(record => (
                 <span
                   key={`display-only:${record.id}`}
@@ -1672,7 +1788,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {placeholder}
             </div>
           )}
-          {(availableRecords.length > 0 || onCreateRecord) && (
+          {!contactCardReadOnly && (availableRecords.length > 0 || onCreateRecord) && (
             <div style={{ position: 'relative' }}>
               <select
                 value=""
@@ -1875,6 +1991,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null, nextCategoryIds = draft.category_ids ?? []) {
+    if (contactCardReadOnly) return
     if (isNew || !contact) return
     const previousListIds = contact.list_ids
     const previousPrimaryId = contact.primary_list_id
@@ -1911,6 +2028,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function handleSelectSubPod(subPod: Category) {
+    if (contactCardReadOnly) return
     const update = planMoveToSubPod(
       {
         list_ids: draft.list_ids ?? [],
@@ -1927,6 +2045,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   function handleClearSubPod(podId: string) {
+    if (contactCardReadOnly) return
     const update = planClearSubPodForPod(
       {
         list_ids: draft.list_ids ?? [],
@@ -1943,6 +2062,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleCreatePodAssignment(name: string) {
+    if (contactCardReadOnly) return
     const trimmed = trimImportListItem(name)
     if (!trimmed) return
 
@@ -1964,6 +2084,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleCreateSubPodAssignment(podId: string, name: string) {
+    if (contactCardReadOnly) throw new Error('Shared contacts are read-only.')
     const trimmed = trimImportListItem(name)
     if (!trimmed) throw new Error('Enter a sub-pod name.')
 
@@ -1997,6 +2118,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleCreate() {
+    if (contactCardReadOnly) return
     if (!draft.name) return
     setCreating(true)
     setCreateError(false)
@@ -2047,6 +2169,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleDelete() {
+    if (contactCardReadOnly) return
     if (!contact?.id) return
     setDeleting(true)
     try {
@@ -2061,6 +2184,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   const hue = avatarHue(draft.name ?? '')
   const nameInitials = initials(draft.name ?? '')
+  const sharedAccessLabel = sharedAccess
+    ? sharedAccess.direction === 'shared_with_me'
+      ? 'Shared with me'
+      : 'Shared by me'
+    : null
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 13,
@@ -2107,7 +2235,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     if (!standardFieldVisible('linkedin')) return null
 
     const val = (draft.linkedin as string | null) ?? null
-    const editing = editingField === 'linkedin'
+    const editing = !contactCardReadOnly && editingField === 'linkedin'
     const hasSaveError = saveError?.field === 'linkedin'
     const isEnriched = enrichedFields.has('linkedin')
 
@@ -2187,19 +2315,23 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 {val.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '') || val}
               </a>
               <span
-                onClick={() => setEditingField('linkedin')}
-                style={{ fontSize: 11, color: 'var(--color-text-tertiary)', cursor: 'pointer', letterSpacing: '0.01em' }}
+                onClick={() => {
+                  if (!contactCardReadOnly) setEditingField('linkedin')
+                }}
+                style={{ fontSize: 11, color: 'var(--color-text-tertiary)', cursor: contactCardReadOnly ? 'default' : 'pointer', letterSpacing: '0.01em' }}
               >
-                edit
+                {contactCardReadOnly ? 'shared' : 'edit'}
               </span>
             </div>
           ) : (
             <div
-              onClick={() => setEditingField('linkedin')}
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingField('linkedin')
+              }}
               style={{
                 fontSize: 14,
                 color: val ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                cursor: 'text',
+                cursor: contactCardReadOnly ? 'default' : 'text',
                 minHeight: 20,
                 lineHeight: 1.45,
               }}
@@ -2303,7 +2435,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           background: 'color-mix(in srgb, var(--surface-panel) 74%, transparent)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            {!isNew ? (
+            {!isNew && !contactCardReadOnly ? (
               confirmDelete ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
@@ -2346,7 +2478,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) : <div />}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {!isNew && contact && (
+              {!isNew && contact && !contactCardReadOnly && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <button
                     type="button"
@@ -2374,7 +2506,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 </div>
               )}
               {/* Enrich button -- only for existing contacts */}
-              {!isNew && contact && (
+              {!isNew && contact && !contactCardReadOnly && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <button
                     type="button"
@@ -2461,7 +2593,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              {editingField === 'name' ? (
+              {editingField === 'name' && !contactCardReadOnly ? (
                 <input
                   autoFocus
                   type="text"
@@ -2488,14 +2620,16 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                 />
               ) : (
                 <div
-                  onClick={() => setEditingField('name')}
+                  onClick={() => {
+                    if (!contactCardReadOnly) setEditingField('name')
+                  }}
                   style={{
                     fontSize: 36, fontWeight: 700,
                     fontFamily: 'var(--font-sans)',
                     lineHeight: 1.02,
                     letterSpacing: '-0.04em',
                     color: draft.name ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                    cursor: 'text',
+                    cursor: contactCardReadOnly ? 'default' : 'text',
                     padding: '0 0 6px',
                   }}
                 >
@@ -2509,6 +2643,37 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     ? (draft.industry ?? 'Company record')
                     : [draft.role, currentPrimaryCompanyName()].filter(Boolean).join(' at ') || 'Title or role'}
                 </span>
+                {sharedAccess && sharedAccessLabel && (
+                  <span
+                    title={`${sharedAccess.sourceLabel} - ${sharedAccess.permissionLabel}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      maxWidth: '100%',
+                      padding: '4px 9px',
+                      borderRadius: 999,
+                      border: '1px solid color-mix(in srgb, var(--color-brand) 28%, var(--edge) 72%)',
+                      background: 'color-mix(in srgb, var(--color-brand) 9%, var(--surface-panel) 91%)',
+                      color: 'var(--color-brand)',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: 'currentColor',
+                        flexShrink: 0,
+                      }}
+                    />
+                    {sharedAccessLabel}
+                  </span>
+                )}
               </div>
 
               {sectionVisible('campaigns') && !isNew && visibleContactCampaignLinks.length > 0 && (
@@ -2689,6 +2854,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                             key={pod.id}
                             type="button"
                             onClick={() => {
+                              if (contactCardReadOnly) return
                               const currentIds = draft.list_ids ?? []
                               const currentCategoryIds = draft.category_ids ?? []
                               let nextIds: string[]
@@ -2719,7 +2885,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                               borderColor: isIn ? (pod.color ?? 'var(--edge-strong)') : 'var(--edge)',
                               background: isIn ? `color-mix(in srgb, ${pod.color ?? 'var(--edge)'} 14%, var(--surface-panel) 86%)` : 'color-mix(in srgb, var(--surface-panel) 72%, transparent)',
                               color: isIn ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-                              cursor: 'pointer',
+                              cursor: contactCardReadOnly ? 'default' : 'pointer',
                               fontFamily: 'inherit',
                               transition: 'all 0.12s',
                             }}
@@ -2728,37 +2894,76 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                           </button>
                         )
                       })}
-                      <button
-                        type="button"
-                        onClick={() => beginAddingOption('pods-create-pod')}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: 500,
-                          border: '1px dashed var(--edge-strong)',
-                          background: 'transparent',
-                          color: 'var(--color-text-secondary)',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        + Add pod
-                      </button>
+                      {!contactCardReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() => beginAddingOption('pods-create-pod')}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 500,
+                            border: '1px dashed var(--edge-strong)',
+                            background: 'transparent',
+                            color: 'var(--color-text-secondary)',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          + Add pod
+                        </button>
+                      )}
                     </div>
                     {renderAddOptionControl('pods-create-pod', value => handleCreatePodAssignment(value), 'New pod')}
                     {sectionVisible('sub_pods') && (
                       <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed var(--divider)' }}>
-                        <SubPodSelector
-                          pods={visibleSubPodPods}
-                          categories={visibleSubPodCategories}
-                          selectedPodIds={selectedVisibleSubPodIds}
-                          selectedCategoryIds={draft.category_ids ?? []}
-                          onSelect={handleSelectSubPod}
-                          onClear={handleClearSubPod}
-                          onCreateSubPod={handleCreateSubPodAssignment}
-                          compact
-                        />
+                        {contactCardReadOnly ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {visibleSelectedSubPodCategories.length > 0 ? visibleSelectedSubPodCategories.map(category => (
+                              <span
+                                key={category.id}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '5px 9px',
+                                  borderRadius: 999,
+                                  border: '1px solid var(--edge)',
+                                  background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                                  color: 'var(--color-text-secondary)',
+                                  fontSize: 12,
+                                  fontWeight: 500,
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                <span
+                                  aria-hidden="true"
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: category.color ?? 'var(--color-brand)',
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                {category.name}
+                              </span>
+                            )) : (
+                              <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>No shared sub-pods</span>
+                            )}
+                          </div>
+                        ) : (
+                          <SubPodSelector
+                            pods={visibleSubPodPods}
+                            categories={visibleSubPodCategories}
+                            selectedPodIds={selectedVisibleSubPodIds}
+                            selectedCategoryIds={draft.category_ids ?? []}
+                            onSelect={handleSelectSubPod}
+                            onClear={handleClearSubPod}
+                            onCreateSubPod={handleCreateSubPodAssignment}
+                            compact
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -2768,16 +2973,53 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               {!sectionVisible('pods') && sectionVisible('sub_pods') && (
                 <div style={sectionShell}>
                   <div style={{ padding: '16px 18px' }}>
-                    <SubPodSelector
-                      pods={visibleSubPodPods}
-                      categories={visibleSubPodCategories}
-                      selectedPodIds={selectedVisibleSubPodIds}
-                      selectedCategoryIds={draft.category_ids ?? []}
-                      onSelect={handleSelectSubPod}
-                      onClear={handleClearSubPod}
-                      onCreateSubPod={handleCreateSubPodAssignment}
-                      compact
-                    />
+                    {contactCardReadOnly ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {visibleSelectedSubPodCategories.length > 0 ? visibleSelectedSubPodCategories.map(category => (
+                          <span
+                            key={category.id}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '5px 9px',
+                              borderRadius: 999,
+                              border: '1px solid var(--edge)',
+                              background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                              color: 'var(--color-text-secondary)',
+                              fontSize: 12,
+                              fontWeight: 500,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: category.color ?? 'var(--color-brand)',
+                                flexShrink: 0,
+                              }}
+                            />
+                            {category.name}
+                          </span>
+                        )) : (
+                          <span style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>No shared sub-pods</span>
+                        )}
+                      </div>
+                    ) : (
+                      <SubPodSelector
+                        pods={visibleSubPodPods}
+                        categories={visibleSubPodCategories}
+                        selectedPodIds={selectedVisibleSubPodIds}
+                        selectedCategoryIds={draft.category_ids ?? []}
+                        onSelect={handleSelectSubPod}
+                        onClear={handleClearSubPod}
+                        onCreateSubPod={handleCreateSubPodAssignment}
+                        compact
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -2868,12 +3110,27 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                                     {campaignStatus}
                                   </span>
                                 )}
-                                <CampaignCommitmentInput
-                                  value={getCampaignContactCommitmentAmount(link)}
-                                  onSave={(amount) => handleCommitmentAmountSave(link, amount)}
-                                  compact
-                                  placeholder="$0"
-                                />
+                                {contactCardReadOnly ? (
+                                  <span style={{
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: 'var(--color-text-primary)',
+                                    background: 'var(--tint)',
+                                    border: '1px solid var(--edge)',
+                                    borderRadius: 7,
+                                    padding: '4px 10px',
+                                    fontVariantNumeric: 'tabular-nums',
+                                  }}>
+                                    {formatMoney(getCampaignContactCommitmentAmount(link))}
+                                  </span>
+                                ) : (
+                                  <CampaignCommitmentInput
+                                    value={getCampaignContactCommitmentAmount(link)}
+                                    onSave={(amount) => handleCommitmentAmountSave(link, amount)}
+                                    compact
+                                    placeholder="$0"
+                                  />
+                                )}
                                 {camp && (
                                   <span style={{ fontSize: 11, color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                                     {isActive ? camp.type : 'completed'}
@@ -2888,7 +3145,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       <div style={{ fontSize: 12, color: 'var(--color-brand)', padding: '4px 0' }}>
                         Added to {campaigns.find(c => c.id === addedCampaignId)?.name ?? 'campaign'}
                       </div>
-                    ) : visibleActiveCampaignOptions.length > 0 && (
+                    ) : visibleActiveCampaignOptions.length > 0 && !contactCardReadOnly && (
                       <>
                         <button
                           type="button"
@@ -3005,7 +3262,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             borderTop: '1px solid var(--divider)',
             background: 'color-mix(in srgb, var(--surface-panel) 88%, transparent)',
           }}>
-            {editingField === 'next_follow_up_date' ? (
+            {editingField === 'next_follow_up_date' && !contactCardReadOnly ? (
               /* Edit mode */
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
@@ -3093,8 +3350,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               /* Read mode: follow-up exists */
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <div
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: contactCardReadOnly ? 'default' : 'pointer' }}
                   onClick={() => {
+                    if (contactCardReadOnly) return
                     setEditFollowUpDate(contact.next_follow_up_date ?? '')
                     setEditFollowUpAction(contact.next_action ?? '')
                     setEditingField('next_follow_up_date')
@@ -3113,11 +3371,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       fontSize: 12, fontWeight: 600, color: 'var(--color-brand)',
                       background: 'rgba(37,180,57,0.08)',
                       padding: '6px 11px', borderRadius: 999,
-                      cursor: 'pointer',
+                      cursor: contactCardReadOnly ? 'default' : 'pointer',
                       letterSpacing: '0.01em',
                       fontVariantNumeric: 'tabular-nums',
                     }}
                     onClick={() => {
+                      if (contactCardReadOnly) return
                       setEditFollowUpDate(contact.next_follow_up_date ?? '')
                       setEditFollowUpAction(contact.next_action ?? '')
                       setEditingField('next_follow_up_date')
@@ -3125,56 +3384,58 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   >
                     {new Date(contact.next_follow_up_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
-                  <button
-                    type="button"
-                    title="Mark touchpoint complete"
-                    disabled={completingFollowUp}
-                    onClick={async () => {
-                      setCompletingFollowUp(true)
-                      try {
-                        await logSystemEvent({
-                          contactId: contact.id,
-                          type: 'field_update',
-                          detail: {
-                            source: 'follow_up_completed',
-                            action: contact.next_action,
-                            date: contact.next_follow_up_date,
-                          },
-                          notes: `Touchpoint completed: ${contact.next_action ?? 'Reach out'}`,
-                        })
-                        const updated = await updateContact(contact.id, {
-                          next_follow_up_date: null,
-                          next_action: null,
-                        })
-                        onSaved(updated)
-                      } finally {
-                        setCompletingFollowUp(false)
-                      }
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: completingFollowUp ? 'default' : 'pointer',
-                      padding: 4,
-                      borderRadius: 8,
-                      color: 'var(--color-text-tertiary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      opacity: completingFollowUp ? 0.5 : 1,
-                    }}
-                    onMouseEnter={e => { if (!completingFollowUp) (e.currentTarget as HTMLElement).style.color = '#22c55e' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="9 12 11 14 15 10"/>
-                    </svg>
-                  </button>
+                  {!contactCardReadOnly && (
+                    <button
+                      type="button"
+                      title="Mark touchpoint complete"
+                      disabled={completingFollowUp}
+                      onClick={async () => {
+                        setCompletingFollowUp(true)
+                        try {
+                          await logSystemEvent({
+                            contactId: contact.id,
+                            type: 'field_update',
+                            detail: {
+                              source: 'follow_up_completed',
+                              action: contact.next_action,
+                              date: contact.next_follow_up_date,
+                            },
+                            notes: `Touchpoint completed: ${contact.next_action ?? 'Reach out'}`,
+                          })
+                          const updated = await updateContact(contact.id, {
+                            next_follow_up_date: null,
+                            next_action: null,
+                          })
+                          onSaved(updated)
+                        } finally {
+                          setCompletingFollowUp(false)
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: completingFollowUp ? 'default' : 'pointer',
+                        padding: 4,
+                        borderRadius: 8,
+                        color: 'var(--color-text-tertiary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        opacity: completingFollowUp ? 0.5 : 1,
+                      }}
+                      onMouseEnter={e => { if (!completingFollowUp) (e.currentTarget as HTMLElement).style.color = '#22c55e' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="9 12 11 14 15 10"/>
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
               /* Empty state: no follow-up set */
-              <button
+              !contactCardReadOnly && <button
                 type="button"
                 onClick={() => {
                   setEditFollowUpDate('')

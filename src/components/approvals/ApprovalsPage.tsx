@@ -13,6 +13,7 @@ import {
 } from '@/lib/connections'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
 import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
+import { ContactDetail, type ContactDetailShareAccess } from '@/components/contacts/ContactDetail'
 import {
   DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS,
   deriveSharedContactFieldScopes,
@@ -64,8 +65,11 @@ type ShareUserOption = {
 type SharedContactRow = {
   id: string
   contactId: string | null
+  contact: Contact | null
   contactName: string
   company: string | null
+  shareDirection: 'shared_with_me' | 'shared_by_me' | 'public_link'
+  shareAccess?: ContactDetailShareAccess
   sourceType: Exclude<SharedSourceFilter, 'all'>
   sourceLabel: string
   campaignId: string | null
@@ -221,8 +225,18 @@ function rowsForGrant(
     ...base,
     id: `${grant.id}-${contact.id}-${sourceType}`,
     contactId: contact.id,
+    contact,
     contactName: contact.name,
     company: contact.company,
+    shareDirection: 'shared_by_me',
+    shareAccess: {
+      direction: 'shared_by_me',
+      sourceLabel,
+      sharedWith: grant.subject_label,
+      permissionLevel: grant.permission_level,
+      permissionLabel: permissionLabel(grant.permission_level),
+      fieldScopes: grant.field_scopes,
+    },
     sourceType,
     sourceLabel,
     campaignId,
@@ -270,8 +284,10 @@ function rowsForPublicLink(link: CollaborationPublicCampaignLink): SharedContact
   return snapshots.map(snapshot => ({
     id: `${link.id}-${snapshot.contact_id}`,
     contactId: snapshot.contact_id,
+    contact: null,
     contactName: snapshot.name,
     company: snapshot.company,
+    shareDirection: 'public_link',
     sourceType: 'public_link',
     sourceLabel: link.campaign_label,
     campaignId: link.campaign_id,
@@ -302,8 +318,18 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
   return {
     id: `${snapshot.grant_id}-${snapshot.contact.id}-incoming`,
     contactId: snapshot.contact.id,
+    contact: snapshot.contact,
     contactName: snapshot.contact.name,
     company: snapshot.contact.company,
+    shareDirection: 'shared_with_me',
+    shareAccess: {
+      direction: 'shared_with_me',
+      sourceLabel: snapshot.resource_label,
+      sharedWith: snapshot.created_by_label || snapshot.created_by_email || 'Shared contact owner',
+      permissionLevel: snapshot.permission_level,
+      permissionLabel: permissionLabel(snapshot.permission_level),
+      fieldScopes: snapshot.field_scopes,
+    },
     sourceType,
     sourceLabel: snapshot.resource_label,
     campaignId: snapshot.resource_type === 'campaign' ? snapshot.resource_id : null,
@@ -351,6 +377,7 @@ export function ApprovalsPage() {
   const [busySharedRequestId, setBusySharedRequestId] = useState<string | null>(null)
   const [highlightedSharedRequestId, setHighlightedSharedRequestId] = useState<string | null>(null)
   const [sharedRequestFeedback, setSharedRequestFeedback] = useState<SharedRequestFeedback | null>(null)
+  const [selectedSharedContact, setSelectedSharedContact] = useState<{ contact: Contact; shareAccess: ContactDetailShareAccess } | null>(null)
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
@@ -660,6 +687,23 @@ export function ApprovalsPage() {
     await loadData()
   }
 
+  function handleOpenSharedContact(row: SharedContactRow) {
+    if (!row.contact || !row.shareAccess) return
+    setSelectedSharedContact({ contact: row.contact, shareAccess: row.shareAccess })
+  }
+
+  function handleSharedContactSaved(updated: Contact) {
+    setContacts(current => current.map(contact => contact.id === updated.id ? updated : contact))
+    setSelectedSharedContact(current => current ? { ...current, contact: updated } : current)
+  }
+
+  function handleSharedContactDeleted() {
+    const deletedId = selectedSharedContact?.contact.id
+    if (deletedId) setContacts(current => current.filter(contact => contact.id !== deletedId))
+    setSelectedSharedContact(null)
+    void loadData()
+  }
+
   async function handleCreateConnection(email: string) {
     await createUserConnectionRequest(email)
     await loadData()
@@ -742,7 +786,7 @@ export function ApprovalsPage() {
       {loading ? (
         <div style={{ color: 'var(--color-text-secondary)', fontSize: 13, padding: 24 }}>Loading...</div>
       ) : (
-        <SharedContactsTable rows={filteredSharedRows} onRevoke={handleRevokeSharedRow} />
+        <SharedContactsTable rows={filteredSharedRows} onRevoke={handleRevokeSharedRow} onOpenContact={handleOpenSharedContact} />
       )}
 
       <section style={{ marginTop: 30 }}>
@@ -800,6 +844,18 @@ export function ApprovalsPage() {
             setShowShareModal(false)
             await loadData()
           }}
+        />
+      )}
+      {selectedSharedContact && (
+        <ContactDetail
+          contact={selectedSharedContact.contact}
+          categoryId={(selectedSharedContact.contact.category_ids ?? [])[0]}
+          onClose={() => setSelectedSharedContact(null)}
+          onSaved={handleSharedContactSaved}
+          onDeleted={handleSharedContactDeleted}
+          pods={pods}
+          categories={categories}
+          sharedAccess={selectedSharedContact.shareAccess}
         />
       )}
       <style>
@@ -1147,9 +1203,11 @@ function SharedContactFilters({
 function SharedContactsTable({
   rows,
   onRevoke,
+  onOpenContact,
 }: {
   rows: SharedContactRow[]
   onRevoke: (row: SharedContactRow) => void
+  onOpenContact: (row: SharedContactRow) => void
 }) {
   if (rows.length === 0) {
     return <EmptyState title="No shared contacts match this view" detail="Shared campaign contacts, pod contacts, sub-pod contacts, direct contacts, and public links will appear here." />
@@ -1158,31 +1216,75 @@ function SharedContactsTable({
   return (
     <div style={tableStyle}>
       <Header columns="1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px" labels={['Contact', 'Shared through', 'Shared with', 'Permission', 'Fields', 'Status', '']} />
-      {rows.map(row => (
-        <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px', minHeight: 62, alignItems: 'center', borderBottom: '1px solid var(--divider)' }}>
-          <Cell primary={row.contactName} secondary={row.company ?? 'No company'} />
-          <Cell primary={row.sourceLabel} secondary={titleCase(row.sourceType)} />
-          <Cell primary={row.sharedWith} secondary={formatDate(row.createdAt)} />
-          <div style={{ padding: '10px 12px' }}>
-            <TagPill tone={row.permissionValue === 'public_link' ? 'gray' : 'blue'}>{row.permissionLabel}</TagPill>
-          </div>
-          <Cell primary={fieldScopeSummary(row.fieldScopes)} secondary={row.fieldScopes.map(titleCase).join(', ')} />
-          <div style={{ padding: '10px 12px' }}>
-            <TagPill tone={row.status === 'active' ? 'green' : row.status === 'pending' || row.status === 'expired' ? 'yellow' : 'red'}>
-              {titleCase(row.status)}
-            </TagPill>
-          </div>
-          <div style={{ padding: '10px 12px', display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton
-              label={row.revokeKind === 'incoming_grant' ? 'Owner controls this access' : row.revokeKind === 'public_link' ? 'Revoke public link' : 'Revoke access'}
-              disabled={!row.canRevoke || !['active', 'pending'].includes(row.status)}
-              onClick={() => onRevoke(row)}
+      {rows.map(row => {
+        const canOpenContact = Boolean(row.contact && row.shareAccess)
+        const shareLabel = row.shareDirection === 'shared_with_me'
+          ? 'Shared with me'
+          : row.shareDirection === 'shared_by_me'
+            ? 'Shared by me'
+            : 'Public link'
+
+        return (
+          <div
+            key={row.id}
+            role={canOpenContact ? 'button' : undefined}
+            tabIndex={canOpenContact ? 0 : undefined}
+            onClick={() => { if (canOpenContact) onOpenContact(row) }}
+            onKeyDown={event => {
+              if (!canOpenContact) return
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onOpenContact(row)
+              }
+            }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px',
+              minHeight: 62,
+              alignItems: 'center',
+              borderBottom: '1px solid var(--divider)',
+              cursor: canOpenContact ? 'pointer' : 'default',
+            }}
+          >
+            <div style={{ padding: '10px 12px', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minWidth: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {row.contactName}
+                </span>
+                <TagPill tone={row.shareDirection === 'shared_with_me' ? 'green' : row.shareDirection === 'shared_by_me' ? 'blue' : 'gray'}>
+                  {shareLabel}
+                </TagPill>
+              </div>
+              <div style={{ marginTop: 3, fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {row.company ?? 'No company'}
+              </div>
+            </div>
+            <Cell primary={row.sourceLabel} secondary={titleCase(row.sourceType)} />
+            <Cell primary={row.sharedWith} secondary={formatDate(row.createdAt)} />
+            <div style={{ padding: '10px 12px' }}>
+              <TagPill tone={row.permissionValue === 'public_link' ? 'gray' : 'blue'}>{row.permissionLabel}</TagPill>
+            </div>
+            <Cell primary={fieldScopeSummary(row.fieldScopes)} secondary={row.fieldScopes.map(titleCase).join(', ')} />
+            <div style={{ padding: '10px 12px' }}>
+              <TagPill tone={row.status === 'active' ? 'green' : row.status === 'pending' || row.status === 'expired' ? 'yellow' : 'red'}>
+                {titleCase(row.status)}
+              </TagPill>
+            </div>
+            <div
+              onClick={event => event.stopPropagation()}
+              style={{ padding: '10px 12px', display: 'flex', justifyContent: 'flex-end' }}
             >
-              <X size={14} />
-            </IconButton>
+              <IconButton
+                label={row.revokeKind === 'incoming_grant' ? 'Owner controls this access' : row.revokeKind === 'public_link' ? 'Revoke public link' : 'Revoke access'}
+                disabled={!row.canRevoke || !['active', 'pending'].includes(row.status)}
+                onClick={() => onRevoke(row)}
+              >
+                <X size={14} />
+              </IconButton>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

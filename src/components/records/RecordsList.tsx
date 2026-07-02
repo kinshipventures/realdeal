@@ -5,7 +5,7 @@ import { getContacts, getPods, getCategories, getAllInteractions, updateContact,
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
-import { ContactDetail } from '../contacts/ContactDetail'
+import { ContactDetail, type ContactDetailShareAccess } from '../contacts/ContactDetail'
 import { CreateRecordModal } from './CreateRecordModal'
 import { CollaborationQuickAccessModal, type CollaborationResourceOption } from '../collaboration/CollaborationQuickAccessModal'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
@@ -17,7 +17,7 @@ import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
-import { createCollaborationSavedView, getCollaborationAccessGrants, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel } from '@/lib/collaboration'
+import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
@@ -85,6 +85,76 @@ const RELATIONSHIP_SCOPE_OPTIONS: Array<{ value: RelationshipScope; label: strin
   { value: 'shared_with_me', label: 'Shared with me' },
   { value: 'shared_by_me', label: 'Shared by me' },
 ]
+
+function normalizeSharedContactSnapshotContact(contact: Contact): Contact {
+  return {
+    ...contact,
+    email: contact.email ?? null,
+    phone: contact.phone ?? null,
+    company: contact.company ?? null,
+    role: contact.role ?? null,
+    location: contact.location ?? null,
+    website: contact.website ?? null,
+    notes: contact.notes ?? null,
+    recommended_by: contact.recommended_by ?? null,
+    specialization: contact.specialization ?? null,
+    past_clients: contact.past_clients ?? null,
+    birthday: contact.birthday ?? null,
+    milestones: contact.milestones ?? null,
+    interests: contact.interests ?? null,
+    relationship_context: contact.relationship_context ?? null,
+    last_contacted_at: contact.last_contacted_at ?? null,
+    list_ids: Array.isArray(contact.list_ids) ? contact.list_ids : [],
+    category_ids: Array.isArray(contact.category_ids) ? contact.category_ids : [],
+    primary_list_id: contact.primary_list_id ?? null,
+    cadence_override: contact.cadence_override ?? null,
+    first_name: contact.first_name ?? null,
+    last_name: contact.last_name ?? null,
+    linkedin: contact.linkedin ?? null,
+    country: contact.country ?? null,
+    global_region: contact.global_region ?? null,
+    gender: contact.gender ?? null,
+    introduced_by: contact.introduced_by ?? null,
+    intel_notes: contact.intel_notes ?? null,
+    relationship_owner: contact.relationship_owner ?? null,
+    contact_frequency: contact.contact_frequency ?? null,
+    communication_preferences: contact.communication_preferences ?? null,
+    next_follow_up_date: contact.next_follow_up_date ?? null,
+    next_action: contact.next_action ?? null,
+    kv_fund_investor: Array.isArray(contact.kv_fund_investor) ? contact.kv_fund_investor : null,
+    spv_investor: Array.isArray(contact.spv_investor) ? contact.spv_investor : null,
+    needs_review: contact.needs_review ?? false,
+    type: contact.type ?? 'Contact',
+    status: contact.status ?? 'Pending',
+    ring_ids: Array.isArray(contact.ring_ids) ? contact.ring_ids : [],
+    company_record_id: contact.company_record_id ?? null,
+    company_ids: Array.isArray(contact.company_ids) ? contact.company_ids : [],
+    industry: contact.industry ?? null,
+    stage: contact.stage ?? null,
+    ticker: contact.ticker ?? null,
+    domain: contact.domain ?? null,
+    email_2: contact.email_2 ?? null,
+    email_3: contact.email_3 ?? null,
+    photo_url: contact.photo_url ?? null,
+    custom_fields: contact.custom_fields && typeof contact.custom_fields === 'object' && !Array.isArray(contact.custom_fields)
+      ? contact.custom_fields
+      : {},
+    snoozed_until: contact.snoozed_until ?? null,
+    created_at: contact.created_at ?? new Date(0).toISOString(),
+  }
+}
+
+function contactShareMetaToAccess(meta: ContactShareMeta | undefined): ContactDetailShareAccess | undefined {
+  if (!meta) return undefined
+  return {
+    direction: meta.direction,
+    sourceLabel: meta.sourceLabel,
+    sharedWith: meta.sharedWith,
+    permissionLevel: meta.permissionLevel,
+    permissionLabel: meta.permissionLabel,
+    fieldScopes: meta.fieldScopes,
+  }
+}
 
 // ── Sort types ───────────────────────────────────────────────────────────────
 
@@ -242,6 +312,7 @@ export function RecordsList() {
   const [categories, setCategories] = useState<Category[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [collaborationGrants, setCollaborationGrants] = useState<CollaborationAccessGrant[]>([])
+  const [incomingSharedContacts, setIncomingSharedContacts] = useState<SharedContactAccessSnapshot[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -376,6 +447,7 @@ export function RecordsList() {
         allInteractions,
         allCampaigns,
         allGrants,
+        allIncomingSharedContacts,
       ] = await Promise.all([
         supabase.auth.getUser(),
         getContacts(),
@@ -384,6 +456,7 @@ export function RecordsList() {
         getAllInteractions(),
         getCampaigns(),
         workspaceId ? getCollaborationAccessGrants(workspaceId) : Promise.resolve([]),
+        getSharedContactsWithMe(),
       ])
       if (stale) return
 
@@ -393,6 +466,7 @@ export function RecordsList() {
       setContacts(allContacts)
       setCampaigns(allCampaigns)
       setCollaborationGrants(allGrants)
+      setIncomingSharedContacts(allIncomingSharedContacts)
 
       const interactionsByContact: Record<string, Interaction[]> = {}
       for (const interaction of allInteractions) {
@@ -492,6 +566,13 @@ export function RecordsList() {
     [campaigns],
   )
 
+  const sharedWithMeContacts = useMemo(
+    () => incomingSharedContacts
+      .map(snapshot => normalizeSharedContactSnapshotContact(snapshot.contact))
+      .filter(contact => contact.type !== 'Company'),
+    [incomingSharedContacts],
+  )
+
   const selectedCampaign = useMemo(
     () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
     [activeCampaigns, selectedCampaignId],
@@ -572,8 +653,25 @@ export function RecordsList() {
       }
     }
 
+    for (const snapshot of incomingSharedContacts) {
+      const status = accessStatus(snapshot.expires_at)
+      if (status !== 'active') continue
+
+      const sharedContact = normalizeSharedContactSnapshotContact(snapshot.contact)
+      addMeta(sharedContact.id, {
+        direction: 'shared_with_me',
+        grantId: snapshot.grant_id,
+        sourceLabel: snapshot.resource_label,
+        sharedWith: snapshot.created_by_label || snapshot.created_by_email || 'Shared contact owner',
+        permissionLevel: snapshot.permission_level,
+        permissionLabel: permissionLabel(snapshot.permission_level),
+        fieldScopes: snapshot.field_scopes,
+        status,
+      })
+    }
+
     return next
-  }, [campaigns, collaborationGrants, contacts, currentUserId])
+  }, [campaigns, collaborationGrants, contacts, currentUserId, incomingSharedContacts])
 
   const sharedWithMeContactIds = useMemo(() => {
     const ids = new Set<string>()
@@ -594,17 +692,15 @@ export function RecordsList() {
   const canSelectContact = useCallback((contact: Contact) => {
     const inboundShare = sharedContactMetaById.get(contact.id)?.find(item => item.direction === 'shared_with_me')
     if (!inboundShare) return true
-    return inboundShare.permissionLevel === 'edit' || inboundShare.permissionLevel === 'admin'
+    return false
   }, [sharedContactMetaById])
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = contacts.filter(c => c.type !== 'Company')
+    let result = (relationshipScope === 'shared_with_me' ? sharedWithMeContacts : contacts).filter(c => c.type !== 'Company')
 
     if (relationshipScope === 'mine') {
       result = result.filter(c => !sharedWithMeContactIds.has(c.id))
-    } else if (relationshipScope === 'shared_with_me') {
-      result = result.filter(c => sharedWithMeContactIds.has(c.id))
     } else if (relationshipScope === 'shared_by_me') {
       result = result.filter(c => sharedByMeContactIds.has(c.id))
     }
@@ -666,7 +762,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [contacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, filters, sort, equityMap, podMap, categories])
+  }, [contacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, sharedWithMeContacts, filters, sort, equityMap, podMap, categories])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -1129,6 +1225,13 @@ export function RecordsList() {
       type: contact.type === 'Company' ? 'company' : 'contact',
       description: [contact.company, contact.email].filter(Boolean).join(' - '),
     }))
+  const selectedContactShareAccess = useMemo(() => {
+    if (!selectedContact) return undefined
+    const shareMeta = sharedContactMetaById.get(selectedContact.id)?.find(item => (
+      item.direction === 'shared_with_me' || item.direction === 'shared_by_me'
+    ))
+    return contactShareMetaToAccess(shareMeta)
+  }, [selectedContact, sharedContactMetaById])
 
   function handleContactSaved(updated: Contact) {
     setContacts(prev => prev.map(contact => contact.id === updated.id ? updated : contact))
@@ -1244,6 +1347,7 @@ export function RecordsList() {
             onDeleted={handleContactDeleted}
             pods={pods}
             categories={categories}
+            sharedAccess={selectedContactShareAccess}
           />
         )}
         <CreateRecordModal
@@ -2371,6 +2475,7 @@ export function RecordsList() {
           onDeleted={handleContactDeleted}
           pods={pods}
           categories={categories}
+          sharedAccess={selectedContactShareAccess}
         />
       )}
 
