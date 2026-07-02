@@ -124,50 +124,6 @@ export const DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_F
   .filter(group => group.required)
   .flatMap(group => group.fields.map(field => field.id))
 
-export const ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
-  .flatMap(group => group.fields.map(field => field.id))
-
-export const SHARED_CONTACT_VISIBLE_FIELD_LABELS = new Map(
-  SHARED_CONTACT_VISIBLE_FIELD_GROUPS
-    .flatMap(group => group.fields)
-    .map(field => [field.id, field.label] as const),
-)
-
-const SHARED_CONTACT_VISIBLE_FIELD_ID_SET = new Set(ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS)
-
-export function isSharedContactVisibleFieldId(value: string): value is SharedContactVisibleFieldId {
-  return SHARED_CONTACT_VISIBLE_FIELD_ID_SET.has(value as SharedContactVisibleFieldId)
-}
-
-export function deriveSharedContactVisibleFieldIdsFromScopes(
-  scopes: CollaborationFieldScope[] = ['public_profile'],
-): SharedContactVisibleFieldId[] {
-  const selectedScopes = new Set(scopes.length > 0 ? scopes : ['public_profile'])
-  return SHARED_CONTACT_VISIBLE_FIELD_GROUPS
-    .filter(group => selectedScopes.has(group.scope))
-    .flatMap(group => group.fields.map(field => field.id))
-}
-
-export function normalizeSharedContactVisibleFieldIds(
-  selectedFieldIds?: readonly string[] | null,
-  fallbackScopes: CollaborationFieldScope[] = ['public_profile'],
-): SharedContactVisibleFieldId[] {
-  const selected = selectedFieldIds
-    ?.filter(isSharedContactVisibleFieldId) ?? []
-  const source = selected.length > 0
-    ? [...DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS, ...selected]
-    : deriveSharedContactVisibleFieldIdsFromScopes(fallbackScopes)
-  const unique = new Set(source)
-  return ALL_SHARED_CONTACT_VISIBLE_FIELD_IDS.filter(fieldId => unique.has(fieldId))
-}
-
-export function sharedContactVisibleFieldSummary(fieldIds: readonly string[]): string {
-  const normalized = normalizeSharedContactVisibleFieldIds(fieldIds, [])
-  if (normalized.length === 0) return 'No visible fields'
-  if (normalized.length === 1) return SHARED_CONTACT_VISIBLE_FIELD_LABELS.get(normalized[0]) ?? normalized[0]
-  return `${normalized.length} visible fields`
-}
-
 export function deriveSharedContactFieldScopes(
   selectedFieldIds: SharedContactVisibleFieldId[],
 ): CollaborationFieldScope[] {
@@ -182,3 +138,4 @@ export function deriveSharedContactFieldScopes(
 
   return FIELD_SCOPE_ORDER.filter(scope => scopes.has(scope))
 }
+

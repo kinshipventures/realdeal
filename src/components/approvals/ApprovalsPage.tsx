@@ -17,10 +17,7 @@ import { ContactDetail, type ContactDetailShareAccess } from '@/components/conta
 import {
   DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS,
   deriveSharedContactFieldScopes,
-  normalizeSharedContactVisibleFieldIds,
   SHARED_CONTACT_VISIBLE_FIELD_GROUPS,
-  SHARED_CONTACT_VISIBLE_FIELD_LABELS,
-  sharedContactVisibleFieldSummary,
   type SharedContactVisibleFieldId,
 } from '@/lib/sharedContactVisibleFields'
 import {
@@ -82,7 +79,6 @@ type SharedContactRow = {
   permissionLabel: string
   permissionValue: CollaborationPermissionLevel | 'public_link'
   fieldScopes: CollaborationFieldScope[]
-  visibleFieldIds: SharedContactVisibleFieldId[]
   status: 'active' | 'pending' | 'declined' | 'expired' | 'revoked'
   expiresAt: string | null
   createdAt: string
@@ -168,10 +164,10 @@ function permissionLabel(value: CollaborationPermissionLevel | 'public_link', pu
   return 'Public link'
 }
 
-function visibleFieldLabels(fieldIds: readonly string[]): string {
-  return normalizeSharedContactVisibleFieldIds(fieldIds, [])
-    .map(fieldId => SHARED_CONTACT_VISIBLE_FIELD_LABELS.get(fieldId) ?? titleCase(fieldId))
-    .join(', ')
+function fieldScopeSummary(scopes: CollaborationFieldScope[]): string {
+  if (scopes.length === 0) return 'No field groups'
+  if (scopes.length === 1) return titleCase(scopes[0])
+  return `${scopes.length} field groups`
 }
 
 function accessStatus(expiresAt: string | null, revokedAt?: string | null): SharedContactRow['status'] {
@@ -212,13 +208,11 @@ function rowsForGrant(
   campaignMap: Map<string, Campaign>,
 ): SharedContactRow[] {
   const status = grantAccessStatus(grant)
-  const visibleFieldIds = normalizeSharedContactVisibleFieldIds(grant.visible_field_ids, grant.field_scopes)
   const base = {
     sharedWith: grant.subject_label,
     permissionLabel: permissionLabel(grant.permission_level),
     permissionValue: grant.permission_level,
     fieldScopes: grant.field_scopes,
-    visibleFieldIds,
     status,
     expiresAt: grant.expires_at,
     createdAt: grant.created_at,
@@ -243,7 +237,6 @@ function rowsForGrant(
       permissionLevel: grant.permission_level,
       permissionLabel: permissionLabel(grant.permission_level),
       fieldScopes: grant.field_scopes,
-      visibleFieldIds,
     },
     sourceType,
     sourceLabel,
@@ -289,7 +282,6 @@ function rowsForGrant(
 function rowsForPublicLink(link: CollaborationPublicCampaignLink): SharedContactRow[] {
   const snapshots = (link.contacts_snapshot ?? []) as CampaignContactSnapshot[]
   const status = accessStatus(link.expires_at, link.revoked_at)
-  const visibleFieldIds = normalizeSharedContactVisibleFieldIds([], link.field_scopes)
   return snapshots.map(snapshot => ({
     id: `${link.id}-${snapshot.contact_id}`,
     contactId: snapshot.contact_id,
@@ -306,7 +298,6 @@ function rowsForPublicLink(link: CollaborationPublicCampaignLink): SharedContact
     permissionLabel: permissionLabel('public_link', link.permissions),
     permissionValue: 'public_link',
     fieldScopes: link.field_scopes,
-    visibleFieldIds,
     status,
     expiresAt: link.expires_at,
     createdAt: link.created_at,
@@ -317,7 +308,6 @@ function rowsForPublicLink(link: CollaborationPublicCampaignLink): SharedContact
 }
 
 function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): SharedContactRow {
-  const visibleFieldIds = normalizeSharedContactVisibleFieldIds(snapshot.visible_field_ids, snapshot.field_scopes)
   const sourceType = snapshot.resource_type === 'campaign'
     ? 'campaign'
     : snapshot.resource_type === 'pod' && snapshot.resource_label.toLowerCase().startsWith('sub-pod:')
@@ -341,7 +331,6 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
       permissionLevel: snapshot.permission_level,
       permissionLabel: permissionLabel(snapshot.permission_level),
       fieldScopes: snapshot.field_scopes,
-      visibleFieldIds,
     },
     sourceType,
     sourceLabel: snapshot.resource_label,
@@ -352,7 +341,6 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
     permissionLabel: permissionLabel(snapshot.permission_level),
     permissionValue: snapshot.permission_level,
     fieldScopes: snapshot.field_scopes,
-    visibleFieldIds,
     status: accessStatus(snapshot.expires_at),
     expiresAt: snapshot.expires_at,
     createdAt: snapshot.created_at,
@@ -433,7 +421,7 @@ export function ApprovalsPage() {
         row.sourceLabel,
         row.sharedWith,
         row.permissionLabel,
-        visibleFieldLabels(row.visibleFieldIds),
+        row.fieldScopes.map(titleCase).join(' '),
       ].some(value => String(value ?? '').toLowerCase().includes(query))
     })
   }, [campaignFilter, permissionFilter, podFilter, searchText, sharedRows, sourceFilter, subPodFilter])
@@ -1278,7 +1266,7 @@ function SharedContactsTable({
             <div style={{ padding: '10px 12px' }}>
               <TagPill tone={row.permissionValue === 'public_link' ? 'gray' : 'blue'}>{row.permissionLabel}</TagPill>
             </div>
-            <Cell primary={sharedContactVisibleFieldSummary(row.visibleFieldIds)} secondary={visibleFieldLabels(row.visibleFieldIds)} />
+            <Cell primary={fieldScopeSummary(row.fieldScopes)} secondary={row.fieldScopes.map(titleCase).join(', ')} />
             <div style={{ padding: '10px 12px' }}>
               <TagPill tone={row.status === 'active' ? 'green' : row.status === 'pending' || row.status === 'expired' ? 'yellow' : 'red'}>
                 {titleCase(row.status)}
@@ -1400,7 +1388,6 @@ function ShareContactsModal({
         resource_label: selectedResource.mode === 'sub_pod' ? `Sub-pod: ${selectedResource.label}` : selectedResource.label,
         permission_level: permission,
         field_scopes: fieldScopes,
-        visible_field_ids: selectedVisibleFieldIds,
         status: shareByEmail ? 'pending' : 'accepted',
         expires_at: expirationDays ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000).toISOString() : null,
       })
@@ -1770,7 +1757,6 @@ function SharedRequestsTable({
         const isBusy = busyRequestId === request.id
         const isHighlighted = highlightedRequestId === request.id
         const isActionable = request.status === 'pending' && accessStatus(request.expires_at, request.revoked_at) === 'active'
-        const visibleFieldIds = normalizeSharedContactVisibleFieldIds(request.visible_field_ids, request.field_scopes)
 
         return (
           <div
@@ -1786,7 +1772,7 @@ function SharedRequestsTable({
           >
             <Cell primary={request.resource_label} secondary={`${titleCase(request.resource_type)} - ${permissionLabel(request.permission_level)}`} />
             <Cell primary={request.created_by_label ?? 'Shared contact owner'} secondary={request.created_by_email ?? formatDate(request.created_at)} />
-            <Cell primary={sharedContactVisibleFieldSummary(visibleFieldIds)} secondary={visibleFieldLabels(visibleFieldIds)} />
+            <Cell primary={fieldScopeSummary(request.field_scopes)} secondary={request.field_scopes.map(titleCase).join(', ')} />
             <div style={{ padding: '10px 12px' }}>
               <TagPill tone={isBusy ? 'blue' : request.status === 'accepted' ? 'green' : request.status === 'pending' ? 'yellow' : 'red'}>
                 {isBusy ? 'Updating' : titleCase(request.status)}

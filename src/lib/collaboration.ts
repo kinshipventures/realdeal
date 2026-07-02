@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact } from './types'
-import { normalizeSharedContactVisibleFieldIds } from './sharedContactVisibleFields'
 
 export type CollaborationSubjectType = 'user' | 'team' | 'organization' | 'public_link'
 export type CollaborationResourceType = 'contact' | 'company' | 'pod' | 'campaign' | 'field_group'
@@ -29,7 +28,6 @@ export interface CollaborationAccessGrant {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
-  visible_field_ids: string[]
   status: CollaborationAccessGrantStatus
   expires_at: string | null
   created_by: string | null
@@ -52,7 +50,6 @@ export interface SharedContactAccessSnapshot {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
-  visible_field_ids: string[]
   expires_at: string | null
   created_at: string
   contact: Contact
@@ -177,7 +174,6 @@ export interface CreateAccessGrantInput {
   resource_label: string
   permission_level: CollaborationPermissionLevel
   field_scopes: CollaborationFieldScope[]
-  visible_field_ids?: string[]
   status?: CollaborationAccessGrantStatus
   expires_at?: string | null
 }
@@ -290,7 +286,6 @@ function normalizeAccessGrants(rows: unknown[]): CollaborationAccessGrant[] {
   return (rows as Partial<CollaborationAccessGrant>[]).map(row => ({
     ...row,
     subject_email: row.subject_email ?? null,
-    visible_field_ids: normalizeSharedContactVisibleFieldIds(row.visible_field_ids ?? [], row.field_scopes ?? ['public_profile']),
     status: row.status ?? 'accepted',
     responded_at: row.responded_at ?? null,
   })) as CollaborationAccessGrant[]
@@ -320,19 +315,10 @@ export async function getSharedContactsWithMe(): Promise<SharedContactAccessSnap
   const { data, error } = await db.rpc('get_shared_contacts_with_me')
 
   if (error) return emptyWhenMissing<SharedContactAccessSnapshot>(error)
-  return ((data ?? []) as SharedContactAccessSnapshot[]).map(row => {
-    const rawContact = (row.contact ?? {}) as Contact & { _shared_visible_field_ids?: string[] }
-    const { _shared_visible_field_ids, ...contact } = rawContact
-    const visibleFieldIds = normalizeSharedContactVisibleFieldIds(
-      row.visible_field_ids ?? _shared_visible_field_ids ?? [],
-      row.field_scopes,
-    )
-    return {
-      ...row,
-      visible_field_ids: visibleFieldIds,
-      contact: contact as Contact,
-    }
-  })
+  return ((data ?? []) as SharedContactAccessSnapshot[]).map(row => ({
+    ...row,
+    contact: row.contact,
+  }))
 }
 
 export async function updateSharedContactWithGrant(
@@ -354,11 +340,7 @@ export async function createCollaborationAccessGrant(input: CreateAccessGrantInp
   const created_by = await getCurrentUserId()
   const { data, error } = await db
     .from('collaboration_access_grants')
-    .insert({
-      ...input,
-      visible_field_ids: normalizeSharedContactVisibleFieldIds(input.visible_field_ids ?? [], input.field_scopes),
-      created_by,
-    })
+    .insert({ ...input, created_by })
     .select()
     .single()
 
