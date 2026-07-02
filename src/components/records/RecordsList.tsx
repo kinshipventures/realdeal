@@ -1235,8 +1235,20 @@ export function RecordsList() {
   }, [selectedContact, sharedContactMetaById])
 
   function handleContactSaved(updated: Contact) {
+    const isIncomingSharedContact = incomingSharedContacts.some(snapshot => snapshot.contact.id === updated.id)
+    const normalizedUpdated = isIncomingSharedContact
+      ? normalizeSharedContactSnapshotContact(updated)
+      : updated
+
     setContacts(prev => prev.map(contact => contact.id === updated.id ? updated : contact))
-    setSelectedContact(updated)
+    if (isIncomingSharedContact) {
+      setIncomingSharedContacts(prev => prev.map(snapshot => (
+        snapshot.contact.id === updated.id
+          ? { ...snapshot, contact: normalizedUpdated }
+          : snapshot
+      )))
+    }
+    setSelectedContact(normalizedUpdated)
   }
 
   function handleContactDeleted() {
