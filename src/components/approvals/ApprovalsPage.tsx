@@ -765,18 +765,16 @@ export function ApprovalsPage() {
       <section ref={sharedContactManagerRef} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
-                Shared contact manager
-              </h2>
-              <button type="button" onClick={() => setShowShareModal(true)} style={headerShareButtonStyle}>
-                <Plus size={15} />
-                Share contacts
-              </button>
-            </div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+              Shared contact manager
+            </h2>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
               Filter active shares by campaigns, pods, sub-pods, public links, direct contacts, and permission level.
             </p>
+            <button type="button" onClick={() => setShowShareModal(true)} style={{ ...headerShareButtonStyle, marginTop: 10 }}>
+              <Plus size={15} />
+              Share contacts
+            </button>
           </div>
         </div>
 
