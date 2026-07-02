@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
@@ -81,6 +81,12 @@ type SharedContactRow = {
   revokeKind: 'grant' | 'public_link' | 'incoming_grant'
   revokeId: string
   canRevoke: boolean
+}
+
+type SharedRequestFeedback = {
+  id: number
+  tone: 'success' | 'warning' | 'error'
+  message: string
 }
 
 const PERMISSION_OPTIONS: Array<{ value: 'all' | CollaborationPermissionLevel | 'public_link'; label: string }> = [
@@ -342,6 +348,11 @@ export function ApprovalsPage() {
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [busySharedRequestId, setBusySharedRequestId] = useState<string | null>(null)
+  const [highlightedSharedRequestId, setHighlightedSharedRequestId] = useState<string | null>(null)
+  const [sharedRequestFeedback, setSharedRequestFeedback] = useState<SharedRequestFeedback | null>(null)
+  const sharedContactManagerRef = useRef<HTMLElement | null>(null)
+  const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
   const pendingRequests = useMemo(() => requests.filter(request => request.status === 'pending'), [requests])
   const pendingProposals = useMemo(() => proposals.filter(proposal => proposal.status === 'pending'), [proposals])
@@ -521,6 +532,10 @@ export function ApprovalsPage() {
     loadData()
   }, [loadData])
 
+  useEffect(() => () => {
+    if (sharedRequestFeedbackTimer.current) window.clearTimeout(sharedRequestFeedbackTimer.current)
+  }, [])
+
   useEffect(() => {
     if (!workspaceId || loading) return
 
@@ -578,8 +593,61 @@ export function ApprovalsPage() {
   }
 
   async function handleRespondSharedRequest(grant: CollaborationAccessGrant, status: 'accepted' | 'declined') {
-    await respondIncomingCollaborationAccessGrant(grant.id, status)
-    await loadData()
+    if (busySharedRequestId) return
+
+    const message = status === 'accepted'
+      ? `${grant.resource_label} accepted and added to Shared contact manager.`
+      : `${grant.resource_label} declined.`
+
+    setBusySharedRequestId(grant.id)
+    setHighlightedSharedRequestId(null)
+    setSharedRequestFeedback(null)
+    setError('')
+
+    try {
+      const updatedGrant = await respondIncomingCollaborationAccessGrant(grant.id, status)
+      setIncomingGrants(current => current.map(item => (
+        item.id === grant.id ? { ...item, ...updatedGrant } : item
+      )))
+
+      if (status === 'accepted') {
+        setSourceFilter('all')
+        setCampaignFilter('all')
+        setPodFilter('all')
+        setSubPodFilter('all')
+        setPermissionFilter('all')
+        setSearchText(grant.resource_label)
+      }
+
+      await loadData()
+
+      setHighlightedSharedRequestId(grant.id)
+      setSharedRequestFeedback({
+        id: Date.now(),
+        tone: status === 'accepted' ? 'success' : 'warning',
+        message,
+      })
+
+      if (sharedRequestFeedbackTimer.current) window.clearTimeout(sharedRequestFeedbackTimer.current)
+      sharedRequestFeedbackTimer.current = window.setTimeout(() => {
+        setSharedRequestFeedback(null)
+        setHighlightedSharedRequestId(null)
+      }, 4500)
+
+      if (status === 'accepted') {
+        window.requestAnimationFrame(() => {
+          sharedContactManagerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
+    } catch (err) {
+      setSharedRequestFeedback({
+        id: Date.now(),
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'Could not update shared request.',
+      })
+    } finally {
+      setBusySharedRequestId(null)
+    }
   }
 
   async function handleRevokeSharedRow(row: SharedContactRow) {
@@ -638,7 +706,7 @@ export function ApprovalsPage() {
         onRespondConnection={handleRespondConnection}
       />
 
-      <section style={{ marginBottom: 28 }}>
+      <section ref={sharedContactManagerRef} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
@@ -696,6 +764,10 @@ export function ApprovalsPage() {
           <SummaryCard icon={<Check size={16} />} label="Resolved items" value={requests.length + proposals.length + resolvedSharedRequests.length - pendingRequests.length - pendingProposals.length} />
         </section>
 
+        {sharedRequestFeedback && (
+          <SharedRequestFeedbackBanner key={sharedRequestFeedback.id} feedback={sharedRequestFeedback} />
+        )}
+
         <div style={{ display: 'flex', borderBottom: '1px solid var(--edge)', marginBottom: 16 }}>
           <TabButton active={tab === 'requests'} onClick={() => setTab('requests')}>Approval Requests</TabButton>
           <TabButton active={tab === 'proposals'} onClick={() => setTab('proposals')}>Contact Proposals</TabButton>
@@ -707,7 +779,12 @@ export function ApprovalsPage() {
         ) : tab === 'requests' ? (
           <ApprovalRequestsTable requests={requests} onResolve={handleResolveRequest} />
         ) : tab === 'shared_requests' ? (
-          <SharedRequestsTable requests={incomingGrants} onRespond={handleRespondSharedRequest} />
+          <SharedRequestsTable
+            requests={incomingGrants}
+            busyRequestId={busySharedRequestId}
+            highlightedRequestId={highlightedSharedRequestId}
+            onRespond={handleRespondSharedRequest}
+          />
         ) : (
           <ContactProposalsTable proposals={proposals} onResolve={handleResolveProposal} />
         )}
@@ -725,6 +802,19 @@ export function ApprovalsPage() {
           }}
         />
       )}
+      <style>
+        {`
+          @keyframes shared-request-feedback-enter {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          @keyframes shared-request-row-confirm {
+            0% { background: rgba(37, 180, 57, 0.18); }
+            100% { background: transparent; }
+          }
+        `}
+      </style>
     </main>
   )
 }
@@ -1543,9 +1633,13 @@ function ContactProposalsTable({
 
 function SharedRequestsTable({
   requests,
+  busyRequestId,
+  highlightedRequestId,
   onRespond,
 }: {
   requests: CollaborationAccessGrant[]
+  busyRequestId: string | null
+  highlightedRequestId: string | null
   onRespond: (request: CollaborationAccessGrant, status: 'accepted' | 'declined') => void
 }) {
   if (requests.length === 0) {
@@ -1555,25 +1649,75 @@ function SharedRequestsTable({
   return (
     <div style={tableStyle}>
       <Header columns="1fr 1fr 1fr 0.75fr 96px" labels={['Resource', 'Shared by', 'Fields', 'Status', '']} />
-      {requests.map(request => (
-        <div key={request.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 0.75fr 96px', minHeight: 62, alignItems: 'center', borderBottom: '1px solid var(--divider)' }}>
-          <Cell primary={request.resource_label} secondary={`${titleCase(request.resource_type)} - ${permissionLabel(request.permission_level)}`} />
-          <Cell primary={request.created_by_label ?? 'Shared contact owner'} secondary={request.created_by_email ?? formatDate(request.created_at)} />
-          <Cell primary={fieldScopeSummary(request.field_scopes)} secondary={request.field_scopes.map(titleCase).join(', ')} />
-          <div style={{ padding: '10px 12px' }}>
-            <TagPill tone={request.status === 'accepted' ? 'green' : request.status === 'pending' ? 'yellow' : 'red'}>
-              {titleCase(request.status)}
-            </TagPill>
+      {requests.map(request => {
+        const isBusy = busyRequestId === request.id
+        const isHighlighted = highlightedRequestId === request.id
+        const isActionable = request.status === 'pending' && accessStatus(request.expires_at, request.revoked_at) === 'active'
+
+        return (
+          <div
+            key={request.id}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr 0.75fr 96px',
+              minHeight: 62,
+              alignItems: 'center',
+              borderBottom: '1px solid var(--divider)',
+              animation: isHighlighted ? 'shared-request-row-confirm 1.2s ease-out' : undefined,
+            }}
+          >
+            <Cell primary={request.resource_label} secondary={`${titleCase(request.resource_type)} - ${permissionLabel(request.permission_level)}`} />
+            <Cell primary={request.created_by_label ?? 'Shared contact owner'} secondary={request.created_by_email ?? formatDate(request.created_at)} />
+            <Cell primary={fieldScopeSummary(request.field_scopes)} secondary={request.field_scopes.map(titleCase).join(', ')} />
+            <div style={{ padding: '10px 12px' }}>
+              <TagPill tone={isBusy ? 'blue' : request.status === 'accepted' ? 'green' : request.status === 'pending' ? 'yellow' : 'red'}>
+                {isBusy ? 'Updating' : titleCase(request.status)}
+              </TagPill>
+            </div>
+            <Actions
+              disabled={!isActionable || Boolean(busyRequestId)}
+              busy={isBusy}
+              approveLabel="Accept"
+              rejectLabel="Decline"
+              onApprove={() => onRespond(request, 'accepted')}
+              onReject={() => onRespond(request, 'declined')}
+            />
           </div>
-          <Actions
-            disabled={request.status !== 'pending' || accessStatus(request.expires_at, request.revoked_at) !== 'active'}
-            approveLabel="Accept"
-            rejectLabel="Decline"
-            onApprove={() => onRespond(request, 'accepted')}
-            onReject={() => onRespond(request, 'declined')}
-          />
-        </div>
-      ))}
+        )
+      })}
+    </div>
+  )
+}
+
+function SharedRequestFeedbackBanner({ feedback }: { feedback: SharedRequestFeedback }) {
+  const isError = feedback.tone === 'error'
+  const isWarning = feedback.tone === 'warning'
+  const color = isError ? 'var(--health-fading)' : isWarning ? '#a16207' : 'var(--color-brand)'
+  const background = isError ? 'rgba(225,29,72,0.08)' : isWarning ? 'rgba(245,166,35,0.12)' : 'rgba(37,180,57,0.09)'
+  const borderColor = isError ? 'rgba(225,29,72,0.20)' : isWarning ? 'rgba(245,166,35,0.26)' : 'rgba(37,180,57,0.22)'
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        minHeight: 40,
+        borderRadius: 9,
+        border: `1px solid ${borderColor}`,
+        background,
+        color,
+        padding: '9px 12px',
+        fontSize: 13,
+        fontWeight: 750,
+        marginBottom: 14,
+        animation: 'shared-request-feedback-enter 0.22s ease-out',
+      }}
+    >
+      {feedback.tone === 'success' ? <Check size={15} /> : <X size={15} />}
+      <span>{feedback.message}</span>
     </div>
   )
 }
@@ -1635,12 +1779,14 @@ function TagPill({ tone, children }: { tone: 'green' | 'yellow' | 'red' | 'gray'
 
 function Actions({
   disabled,
+  busy,
   approveLabel = 'Approve',
   rejectLabel = 'Reject',
   onApprove,
   onReject,
 }: {
   disabled: boolean
+  busy?: boolean
   approveLabel?: string
   rejectLabel?: string
   onApprove: () => void
@@ -1648,8 +1794,8 @@ function Actions({
 }) {
   return (
     <div style={{ padding: '10px 12px', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-      <IconButton label={approveLabel} disabled={disabled} onClick={onApprove}><Check size={14} /></IconButton>
-      <IconButton label={rejectLabel} disabled={disabled} onClick={onReject}><X size={14} /></IconButton>
+      <IconButton label={busy ? 'Updating request' : approveLabel} disabled={disabled} onClick={onApprove}><Check size={14} /></IconButton>
+      <IconButton label={busy ? 'Updating request' : rejectLabel} disabled={disabled} onClick={onReject}><X size={14} /></IconButton>
     </div>
   )
 }
