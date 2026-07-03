@@ -1123,7 +1123,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const fieldKey = key as string
     const selectOptions = options.options ?? []
     const isSelect = options.options !== undefined
-    const alwaysInput = options.alwaysInput ?? false
+    const alwaysInput = isNew || (options.alwaysInput ?? false)
 
     const inputStyle = {
       width: '100%',
@@ -1198,20 +1198,46 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         </div>
         <div style={{ minWidth: 0 }}>
           {alwaysInput && !contactCardReadOnly ? (
-            <input
-              type={options.inputType ?? 'text'}
-              value={val ?? ''}
-              placeholder={`Add ${label.toLowerCase()}`}
-              onChange={event => {
-                const value = event.target.value
-                setDraft(prev => ({ ...prev, [key]: value || null }))
-                markContactInfoChanged()
-              }}
-              onKeyDown={event => {
-                if (event.key === 'Enter') event.currentTarget.blur()
-              }}
-              style={inputStyle}
-            />
+            isSelect ? (
+              brandedSelect({
+                value: val ?? '',
+                placeholder: `add ${label.toLowerCase()}`,
+                options: selectOptions,
+                targetId: `contact:${String(key)}`,
+                onSelect: value => handleBlur(key, value),
+                onAdd: value => handleBlur(key, value),
+              })
+            ) : multi ? (
+              <textarea
+                value={val ?? ''}
+                placeholder={`Add ${label.toLowerCase()}`}
+                onChange={event => {
+                  const value = event.target.value
+                  setDraft(prev => ({ ...prev, [key]: value || null }))
+                  markContactInfoChanged()
+                }}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) event.currentTarget.blur()
+                }}
+                rows={4}
+                style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                type={options.inputType ?? 'text'}
+                value={val ?? ''}
+                placeholder={`Add ${label.toLowerCase()}`}
+                onChange={event => {
+                  const value = event.target.value
+                  setDraft(prev => ({ ...prev, [key]: value || null }))
+                  markContactInfoChanged()
+                }}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                style={inputStyle}
+              />
+            )
           ) : editing ? (
             isSelect ? (
               brandedSelect({
@@ -1311,7 +1337,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const visibleOptions = mergeOptions(options, defaultOptions).filter(option => !hiddenValues.has(option))
     const displayValues = visibleValues
     const hasDisplayedValues = displayValues.length > 0
-    const editing = !contactCardReadOnly && editingField === key
+    const editing = !contactCardReadOnly && (editingField === key || isNew)
     const hasSaveError = saveError?.field === key
     const labelTargetId = `labels:${String(key)}`
     const labelOptions = mergeOptions(visibleOptions, displayValues)
@@ -1452,22 +1478,24 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     Add label
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setEditingField(null)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 999,
-                    border: '1px solid var(--edge)',
-                    background: 'transparent',
-                    color: 'var(--color-text-secondary)',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Done
-                </button>
+                {!isNew && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingField(null)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px solid var(--edge)',
+                      background: 'transparent',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Done
+                  </button>
+                )}
               </div>
               {allowCustom && renderAddOptionControl(labelTargetId, option => setArrayDraftValue(key, [...values, option]), 'New label')}
             </div>
@@ -1544,7 +1572,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const customFields = getDraftCustomFields()
     const rawValue = customFields[fieldDef.key]
     const value = lpTrackerDisplayValue(rawValue)
-    const editing = !contactCardReadOnly && editingCustomField === fieldDef.key
+    const editing = !contactCardReadOnly && (editingCustomField === fieldDef.key || isNew)
     const hasSaveError = customFieldSaveError === fieldDef.key
     const multi = fieldDef.type === 'long_text' || fieldDef.type === 'multi_select'
     const selectOptions = fieldDef.type === 'select' ? customFieldOptions(fieldDef) : []
@@ -1742,22 +1770,24 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   >
                     Add label
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingCustomField(null)}
-                    style={{
-                      padding: '6px 10px',
-                      borderRadius: 999,
-                      border: '1px solid var(--edge)',
-                      background: 'transparent',
-                      color: 'var(--color-text-secondary)',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    Done
-                  </button>
+                  {!isNew && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingCustomField(null)}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 999,
+                        border: '1px solid var(--edge)',
+                        background: 'transparent',
+                        color: 'var(--color-text-secondary)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      Done
+                    </button>
+                  )}
                 </div>
                 {renderAddOptionControl(multiSelectTargetId, option => {
                   setCustomLabelValues([...multiSelectValues, option])
@@ -1767,7 +1797,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             ) :
             multi ? (
               <textarea
-                autoFocus
+                autoFocus={!isNew}
                 defaultValue={value}
                 onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
                 onKeyDown={onKeyDown}
@@ -1776,7 +1806,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               />
             ) : (
               <input
-                autoFocus
+                autoFocus={!isNew}
                 type={fieldDef.type === 'url' ? 'url' : fieldDef.type === 'email' ? 'email' : 'text'}
                 defaultValue={value}
                 onBlur={event => handleCustomFieldSave(fieldDef, event.target.value)}
@@ -2436,7 +2466,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     if (!standardFieldVisible('linkedin')) return null
 
     const val = (draft.linkedin as string | null) ?? null
-    const editing = !contactCardReadOnly && editingField === 'linkedin'
+    const editing = !contactCardReadOnly && (editingField === 'linkedin' || isNew)
     const hasSaveError = saveError?.field === 'linkedin'
     const isEnriched = enrichedFields.has('linkedin')
 
@@ -2483,7 +2513,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         <div style={{ minWidth: 0 }}>
           {editing ? (
             <input
-              autoFocus
+              autoFocus={!isNew}
               type="url"
               defaultValue={val ?? ''}
               placeholder="https://linkedin.com/in/..."
@@ -2794,7 +2824,35 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              {editingField === 'name' && !contactCardReadOnly ? (
+              {isNew && !contactCardReadOnly ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={draft.name ?? ''}
+                  placeholder="Name"
+                  onChange={event => {
+                    const value = event.target.value
+                    setDraft(prev => ({ ...prev, name: value || null }))
+                    markContactInfoChanged()
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') event.currentTarget.blur()
+                  }}
+                  style={{
+                    width: '100%',
+                    fontSize: 36, fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.02,
+                    background: 'var(--tint)',
+                    border: '1px solid var(--edge-strong)',
+                    borderRadius: 10,
+                    color: 'var(--color-text-primary)',
+                    padding: '6px 12px',
+                    outline: 'none',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                />
+              ) : editingField === 'name' && !contactCardReadOnly ? (
                 <input
                   autoFocus
                   type="text"
