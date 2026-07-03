@@ -173,7 +173,14 @@ export function useSharedContactBadges({ contacts, campaigns = [] }: Options) {
       const status = accessStatus(snapshot.expires_at)
       if (status !== 'active') continue
 
-      addMeta(snapshot.contact.id, {
+      const contactIds = contacts
+        .filter(contact => (
+          contact.id === snapshot.contact.id ||
+          contact.custom_fields?.shared_contact_grant_id === snapshot.grant_id
+        ))
+        .map(contact => contact.id)
+      const targetContactIds = contactIds.length > 0 ? contactIds : [snapshot.contact.id]
+      const meta = {
         direction: 'shared_with_me',
         grantId: snapshot.grant_id,
         sourceLabel: snapshot.resource_label,
@@ -183,7 +190,8 @@ export function useSharedContactBadges({ contacts, campaigns = [] }: Options) {
         fieldScopes: snapshot.field_scopes,
         visibleFieldIds: snapshot.visible_field_ids,
         status,
-      })
+      } satisfies SharedContactBadgeMeta
+      targetContactIds.forEach(contactId => addMeta(contactId, meta))
     }
 
     return next

@@ -10,6 +10,13 @@ type ProjectionStructure = {
 
 const SHARED_CAMPAIGN_CONTACT_PREFIX = 'shared-campaign-contact:'
 
+export type OrganizedSharedContacts = {
+  allContacts: Contact[]
+  sharedContacts: Contact[]
+  contactIdsByGrantId: Map<string, string[]>
+  contactIdBySnapshotKey: Map<string, string>
+}
+
 function normalizeLabel(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase()
 }
@@ -134,6 +141,81 @@ function projectOneSharedContact(snapshot: SharedContactAccessSnapshot, structur
   }
 }
 
+function mergeProjectedMembership(base: Contact, projected: Contact): Contact {
+  return {
+    ...base,
+    list_ids: unique([...base.list_ids, ...projected.list_ids]),
+    category_ids: unique([...base.category_ids, ...projected.category_ids]),
+    primary_list_id: base.primary_list_id ?? projected.primary_list_id,
+    company_record_id: base.company_record_id ?? projected.company_record_id,
+    company_ids: unique([...base.company_ids, ...projected.company_ids]),
+    custom_fields: {
+      ...base.custom_fields,
+      ...projected.custom_fields,
+    },
+  }
+}
+
+function addMappedGrantId(target: Map<string, string[]>, grantId: string, contactId: string) {
+  target.set(grantId, unique([...(target.get(grantId) ?? []), contactId]))
+}
+
+export function sharedContactSnapshotKey(snapshot: Pick<SharedContactAccessSnapshot, 'grant_id' | 'contact'>): string {
+  return `${snapshot.grant_id}:${snapshot.contact.id}`
+}
+
+export function organizeSharedContactsForWorkspace(
+  snapshots: SharedContactAccessSnapshot[],
+  structure: ProjectionStructure,
+): OrganizedSharedContacts {
+  const localContacts = structure.contacts ?? []
+  const localById = new Map(localContacts.map(contact => [contact.id, contact]))
+  const localByIdentity = new Map<string, Contact>()
+  for (const contact of localContacts) {
+    const key = contactIdentityKey(contact)
+    if (!localByIdentity.has(key)) localByIdentity.set(key, contact)
+  }
+
+  const localOverlays = new Map<string, Contact>()
+  const virtualContacts = new Map<string, Contact>()
+  const contactIdsByGrantId = new Map<string, string[]>()
+  const contactIdBySnapshotKey = new Map<string, string>()
+
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot)) continue
+
+    const projected = projectOneSharedContact(snapshot, structure)
+    const localMatch = localById.get(projected.id) ?? localByIdentity.get(contactIdentityKey(projected)) ?? null
+    const targetId = localMatch?.id ?? projected.id
+    contactIdBySnapshotKey.set(sharedContactSnapshotKey(snapshot), targetId)
+    addMappedGrantId(contactIdsByGrantId, snapshot.grant_id, targetId)
+
+    if (localMatch) {
+      const current = localOverlays.get(localMatch.id) ?? localMatch
+      localOverlays.set(localMatch.id, mergeProjectedMembership(current, projected))
+      continue
+    }
+
+    const current = virtualContacts.get(projected.id)
+    virtualContacts.set(projected.id, current ? mergeProjectedMembership(current, projected) : projected)
+  }
+
+  const allContacts = localContacts.map(contact => localOverlays.get(contact.id) ?? contact)
+  const sharedContactsById = new Map<string, Contact>()
+  for (const contact of localOverlays.values()) sharedContactsById.set(contact.id, contact)
+  for (const contact of virtualContacts.values()) {
+    allContacts.push(contact)
+    sharedContactsById.set(contact.id, contact)
+  }
+
+  return {
+    allContacts,
+    sharedContacts: [...sharedContactsById.values()],
+    contactIdsByGrantId,
+    contactIdBySnapshotKey,
+  }
+}
+
 export function projectSharedContactsToWorkspace(
   snapshots: SharedContactAccessSnapshot[],
   structure: ProjectionStructure,
@@ -189,6 +271,7 @@ export function projectedSharedCampaignContacts(
   snapshots: SharedContactAccessSnapshot[],
   campaign: Campaign,
   stages: CampaignStage[],
+  resolveContactId: (snapshot: SharedContactAccessSnapshot) => string = snapshot => snapshot.contact.id,
 ): CampaignContact[] {
   const firstStage = [...stages].sort((a, b) => a.order - b.order)[0] ?? null
   const campaignLabel = normalizeLabel(campaign.name)
@@ -199,24 +282,27 @@ export function projectedSharedCampaignContacts(
       && snapshot.resource_type === 'campaign'
       && normalizeLabel(snapshot.resource_label) === campaignLabel
     ))
-    .map(snapshot => ({
-      id: `${SHARED_CAMPAIGN_CONTACT_PREFIX}${snapshot.grant_id}:${snapshot.contact.id}:${campaign.id}`,
-      campaign_id: campaign.id,
-      contact_id: snapshot.contact.id,
-      status: 'pending',
-      stage_id: firstStage?.id ?? null,
-      notes: null,
-      owner: null,
-      next_step: null,
-      next_step_due: null,
-      moved_at: snapshot.created_at,
-      is_priority: false,
-      custom_fields: {
-        shared_contact_grant_id: snapshot.grant_id,
-        shared_campaign_contact: true,
-      },
-      created_at: snapshot.created_at,
-    }))
+    .map(snapshot => {
+      const contactId = resolveContactId(snapshot)
+      return {
+        id: `${SHARED_CAMPAIGN_CONTACT_PREFIX}${snapshot.grant_id}:${contactId}:${campaign.id}`,
+        campaign_id: campaign.id,
+        contact_id: contactId,
+        status: 'pending',
+        stage_id: firstStage?.id ?? null,
+        notes: null,
+        owner: null,
+        next_step: null,
+        next_step_due: null,
+        moved_at: snapshot.created_at,
+        is_priority: false,
+        custom_fields: {
+          shared_contact_grant_id: snapshot.grant_id,
+          shared_campaign_contact: true,
+        },
+        created_at: snapshot.created_at,
+      }
+    })
 }
 
 export function isProjectedSharedCampaignContact(contact: CampaignContact): boolean {

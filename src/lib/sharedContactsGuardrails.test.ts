@@ -146,7 +146,8 @@ describe('Shared contacts guardrails', () => {
 
     expect(recordsList).toContain('getSharedContactsWithMe')
     expect(recordsList).toContain('const [incomingSharedContacts, setIncomingSharedContacts]')
-    expect(recordsList).toContain("relationshipScope === 'shared_with_me' ? sharedWithMeContacts : contacts")
+    expect(recordsList).toContain('organizeSharedContactsForWorkspace')
+    expect(recordsList).toContain("relationshipScope === 'shared_with_me' ? sharedWithMeContacts : relationshipContacts")
     expect(recordsList).toContain('const isIncomingSharedContact = incomingSharedContacts.some')
     expect(recordsList).toContain('setIncomingSharedContacts(prev => prev.map(snapshot => (')
     expect(recordsList).toContain('snapshot.contact.id === updated.id')

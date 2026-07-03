@@ -4,8 +4,10 @@ import type { Campaign, CampaignStage, Contact } from './types'
 import {
   isProjectedSharedCampaignContact,
   mergeContactsWithProjectedSharedContacts,
+  organizeSharedContactsForWorkspace,
   projectedSharedCampaignContacts,
   projectSharedContactsToWorkspace,
+  sharedContactSnapshotKey,
 } from './sharedContactProjection'
 
 const baseContact: Contact = {
@@ -135,6 +137,73 @@ describe('shared contact projection', () => {
     expect(rows[0].campaign_id).toBe('local-campaign')
     expect(rows[0].stage_id).toBe('stage-1')
     expect(isProjectedSharedCampaignContact(rows[0])).toBe(true)
+  })
+
+  it('organizes a new shared contact into receiver relationships and pods', () => {
+    const organized = organizeSharedContactsForWorkspace([snapshot()], {
+      pods: [{ id: 'local-pod-maps', name: 'MAPS', color: null, owner: null, is_priority: false, cadence: null, description: null, capacity: null, enrichment_opt_in: false, created_at: '' }],
+      categories: [],
+      contacts: [],
+    })
+
+    expect(organized.allContacts).toHaveLength(1)
+    expect(organized.sharedContacts).toHaveLength(1)
+    expect(organized.sharedContacts[0].id).toBe('owner-contact-1')
+    expect(organized.sharedContacts[0].list_ids).toEqual(['local-pod-maps'])
+    expect(organized.contactIdsByGrantId.get('grant-1')).toEqual(['owner-contact-1'])
+  })
+
+  it('organizes an existing local shared contact without duplicating it', () => {
+    const local = {
+      ...baseContact,
+      id: 'local-contact',
+      list_ids: [],
+      category_ids: [],
+      primary_list_id: null,
+    }
+    const contactSnapshot = snapshot()
+    const organized = organizeSharedContactsForWorkspace([contactSnapshot], {
+      pods: [{ id: 'local-pod-maps', name: 'MAPS', color: null, owner: null, is_priority: false, cadence: null, description: null, capacity: null, enrichment_opt_in: false, created_at: '' }],
+      categories: [],
+      contacts: [local],
+    })
+
+    expect(organized.allContacts).toHaveLength(1)
+    expect(organized.allContacts[0].id).toBe('local-contact')
+    expect(organized.allContacts[0].list_ids).toEqual(['local-pod-maps'])
+    expect(organized.sharedContacts).toHaveLength(1)
+    expect(organized.sharedContacts[0].id).toBe('local-contact')
+    expect(organized.contactIdsByGrantId.get('grant-1')).toEqual(['local-contact'])
+    expect(organized.contactIdBySnapshotKey.get(sharedContactSnapshotKey(contactSnapshot))).toBe('local-contact')
+  })
+
+  it('uses the resolved receiver contact id for shared campaign rows', () => {
+    const campaign: Campaign = {
+      id: 'local-campaign',
+      name: 'Fund III Launch Dinner',
+      type: 'event',
+      deadline: null,
+      status: 'active',
+      notes: null,
+      description: null,
+      custom_fields: {},
+      contact_ids: [],
+      created_at: '',
+    }
+    const stages: CampaignStage[] = [
+      { id: 'stage-1', campaign_id: campaign.id, name: 'Prospects', color: null, order: 0, created_at: '' },
+    ]
+
+    const contactSnapshot = snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Fund III Launch Dinner' })
+    const rows = projectedSharedCampaignContacts(
+      [contactSnapshot],
+      campaign,
+      stages,
+      () => 'local-contact',
+    )
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0].contact_id).toBe('local-contact')
   })
 
   it('does not add visual duplicates when a local contact already matches a shared contact email', () => {

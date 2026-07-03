@@ -13,7 +13,7 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getSharedContactsWithMe, recordCollaborationAuditEvent } from '@/lib/collaboration'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { mergeContactsWithProjectedSharedContacts, projectedSharedCampaignContacts, projectSharedContactsToWorkspace } from '@/lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace, projectedSharedCampaignContacts, sharedContactSnapshotKey } from '@/lib/sharedContactProjection'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
@@ -177,16 +177,20 @@ export function CampaignDetailRoute() {
         getStagesForCampaign(id),
         getCampaignContacts(id),
       ])
-      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+      const organizedSharedContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
         pods: allPods,
         categories: [],
         campaigns: allCampaigns,
         contacts: localContacts,
       })
-      const mergedContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
-      const sharedCampaignContacts = projectedSharedCampaignContacts(incomingSharedContacts, camp, s)
+      const sharedCampaignContacts = projectedSharedCampaignContacts(
+        incomingSharedContacts,
+        camp,
+        s,
+        snapshot => organizedSharedContacts.contactIdBySnapshotKey.get(sharedContactSnapshotKey(snapshot)) ?? snapshot.contact.id,
+      )
         .filter(sharedCc => !cc.some(localCc => localCc.contact_id === sharedCc.contact_id))
-      setContacts(mergedContacts)
+      setContacts(organizedSharedContacts.allContacts)
       setStages(s)
       setCampaignContacts([...cc, ...sharedCampaignContacts])
       // Fetch interactions for equity scoring

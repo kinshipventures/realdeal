@@ -16,7 +16,7 @@ import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
-import { projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
@@ -571,14 +571,21 @@ export function RecordsList() {
     [campaigns],
   )
 
-  const sharedWithMeContacts = useMemo(
-    () => projectSharedContactsToWorkspace(incomingSharedContacts, {
+  const organizedSharedContacts = useMemo(
+    () => organizeSharedContactsForWorkspace(incomingSharedContacts, {
       pods,
       categories,
       campaigns,
       contacts,
-    }).filter(contact => contact.type !== 'Company'),
+    }),
     [campaigns, categories, contacts, incomingSharedContacts, pods],
+  )
+
+  const relationshipContacts = organizedSharedContacts.allContacts
+
+  const sharedWithMeContacts = useMemo(
+    () => organizedSharedContacts.sharedContacts.filter(contact => contact.type !== 'Company'),
+    [organizedSharedContacts],
   )
 
   const selectedCampaign = useMemo(
@@ -594,7 +601,7 @@ export function RecordsList() {
   )
 
   const sharedContactMetaById = useMemo(() => {
-    const contactMap = new Map(contacts.map(contact => [contact.id, contact]))
+    const contactMap = new Map(relationshipContacts.map(contact => [contact.id, contact]))
     const campaignMap = new Map(campaigns.map(campaign => [campaign.id, campaign]))
     const next = new Map<string, ContactShareMeta[]>()
 
@@ -614,8 +621,8 @@ export function RecordsList() {
       }
 
       if (grant.resource_type === 'pod') {
-        const podContacts = contacts.filter(contact => contact.list_ids.includes(resourceId))
-        const subPodContacts = contacts.filter(contact => contact.category_ids.includes(resourceId))
+        const podContacts = relationshipContacts.filter(contact => contact.list_ids.includes(resourceId))
+        const subPodContacts = relationshipContacts.filter(contact => contact.category_ids.includes(resourceId))
         return (podContacts.length > 0 ? podContacts : subPodContacts).map(contact => contact.id)
       }
 
@@ -624,7 +631,7 @@ export function RecordsList() {
       }
 
       if (grant.resource_type === 'company') {
-        return contacts
+        return relationshipContacts
           .filter(contact => (
             contact.id === resourceId ||
             contact.company_record_id === resourceId ||
@@ -666,8 +673,8 @@ export function RecordsList() {
       const status = accessStatus(snapshot.expires_at)
       if (status !== 'active') continue
 
-      const sharedContact = normalizeSharedContactSnapshotContact(snapshot.contact)
-      addMeta(sharedContact.id, {
+      const contactIds = organizedSharedContacts.contactIdsByGrantId.get(snapshot.grant_id) ?? [snapshot.contact.id]
+      const meta = {
         direction: 'shared_with_me',
         grantId: snapshot.grant_id,
         sourceLabel: snapshot.resource_label,
@@ -677,11 +684,12 @@ export function RecordsList() {
         fieldScopes: snapshot.field_scopes,
         visibleFieldIds: snapshot.visible_field_ids,
         status,
-      })
+      } satisfies ContactShareMeta
+      contactIds.forEach(contactId => addMeta(contactId, meta))
     }
 
     return next
-  }, [campaigns, collaborationGrants, contacts, currentUserId, incomingSharedContacts])
+  }, [campaigns, collaborationGrants, currentUserId, incomingSharedContacts, organizedSharedContacts, relationshipContacts])
 
   const sharedWithMeContactIds = useMemo(() => {
     const ids = new Set<string>()
@@ -707,7 +715,7 @@ export function RecordsList() {
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = (relationshipScope === 'shared_with_me' ? sharedWithMeContacts : contacts).filter(c => c.type !== 'Company')
+    let result = (relationshipScope === 'shared_with_me' ? sharedWithMeContacts : relationshipContacts).filter(c => c.type !== 'Company')
 
     if (relationshipScope === 'mine') {
       result = result.filter(c => !sharedWithMeContactIds.has(c.id))
@@ -772,7 +780,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [contacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, sharedWithMeContacts, filters, sort, equityMap, podMap, categories])
+  }, [relationshipContacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, sharedWithMeContacts, filters, sort, equityMap, podMap, categories])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {

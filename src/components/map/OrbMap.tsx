@@ -33,7 +33,7 @@ import { PodCreateModal } from '../pods/PodCreateModal'
 import { PodDetailPage } from '../pods/PodDetailPage'
 import { useEscape } from '../../lib/escapeStack'
 import { groupVisibleContactsByPod } from '../../lib/podMembership'
-import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => (
@@ -754,12 +754,11 @@ export function OrbMap() {
     const [allPods, localContacts, allInteractions, allCategoriesRaw, incomingSharedContacts] = await Promise.all([
       getPods(), getContacts(), getAllInteractions(), getCategories(), getSharedContactsWithMe(),
     ])
-    const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+    const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
       pods: allPods,
       categories: allCategoriesRaw,
       contacts: localContacts,
-    })
-    const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
+    }).allContacts
 
     const podById = new Map(allPods.map(pod => [pod.id, pod]))
     const countsByPod: Record<string, PodCounts> = {}

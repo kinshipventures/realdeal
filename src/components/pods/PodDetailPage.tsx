@@ -29,7 +29,7 @@ import { isVisiblePodMember } from '../../lib/podMembership'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -285,12 +285,11 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       const found = pods.find(p => p.id === podId)
       if (!found) { setNotFound(true); setLoading(false); return }
 
-      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+      const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
         pods,
         categories: cats,
         contacts: localContacts,
-      })
-      const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
+      }).allContacts
       const podMembers = allContacts.filter(c => isVisiblePodMember(c, podId!))
 
       const byContact = indexByContact(allInteractions)

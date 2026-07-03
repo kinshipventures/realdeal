@@ -10,7 +10,7 @@ import { EmptyState } from '../empty/EmptyState'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { ContactDetail } from './ContactDetail'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
@@ -76,12 +76,11 @@ export function CategoryTable() {
       setPodName(pod?.name ?? '')
       setPodId(pod?.id ?? null)
       if (pod?.cadence) setCadence(pod.cadence)
-      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+      const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
         pods,
         categories,
         contacts: localContacts,
-      })
-      const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
+      }).allContacts
       const categoryContacts = allContacts.filter(contact => contact.category_ids.includes(id))
       setContacts(categoryContacts)
 
