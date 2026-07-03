@@ -6,6 +6,8 @@ import type { Contact, Pod, Cadence } from '../../lib/types'
 import { formatRelativeTime } from '../../lib/utils'
 import { Avatar } from '../ui'
 import { EmptyState } from '../empty/EmptyState'
+import { SharedContactBadge } from '../collaboration/SharedContactBadge'
+import { primarySharedContactMeta, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
@@ -38,6 +40,7 @@ export function CategoryTable() {
   const [filterOverdue, setFilterOverdue] = useState(false)
   const [filterCooling, setFilterCooling] = useState(false)
   const [search, setSearch] = useState('')
+  const sharedContactMetaById = useSharedContactBadges({ contacts })
 
   useEffect(() => {
     if (!id) { navigate('/pods'); return }
@@ -345,6 +348,7 @@ export function CategoryTable() {
                 const label = scoreLabel(score)
                 const badge = EQUITY_BADGE[label]
                 const overdue = isOverdue(contact, cadence)
+                const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(contact.id))
 
                 return (
                   <tr
@@ -361,7 +365,10 @@ export function CategoryTable() {
                     <td style={{ padding: '12px 12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <Avatar name={contact.name} size={28} />
-                        <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{contact.name}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                          <span style={{ fontWeight: 500, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.name}</span>
+                          {shareMeta && <SharedContactBadge meta={shareMeta} compact />}
+                        </span>
                       </div>
                     </td>
 

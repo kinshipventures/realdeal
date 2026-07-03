@@ -8,6 +8,7 @@ import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail, type ContactDetailShareAccess } from '../contacts/ContactDetail'
 import { CreateRecordModal } from './CreateRecordModal'
 import { CollaborationQuickAccessModal, type CollaborationResourceOption } from '../collaboration/CollaborationQuickAccessModal'
+import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { formatRelativeTime } from '../../lib/utils'
 import { logSystemEvent } from '../../lib/timeline'
@@ -2235,31 +2236,7 @@ export function RecordsList() {
                                   )}
                               </span>
                               {primaryShareMeta && (
-                                <span
-                                  title={primaryShareMeta.sourceLabel}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    width: 'fit-content',
-                                    maxWidth: 'clamp(120px, 16vw, 260px)',
-                                    padding: '2px 7px',
-                                    borderRadius: 999,
-                                    background: primaryShareMeta.direction === 'shared_with_me'
-                                      ? 'color-mix(in srgb, var(--color-brand) 12%, transparent)'
-                                      : 'var(--tint)',
-                                    color: primaryShareMeta.direction === 'shared_with_me'
-                                      ? 'var(--color-brand)'
-                                      : 'var(--color-text-secondary)',
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    lineHeight: 1.2,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                  }}
-                                >
-                                  {primaryShareMeta.direction === 'shared_with_me' ? 'Shared with me' : 'Shared by me'} - {primaryShareMeta.permissionLabel}
-                                </span>
+                                <SharedContactBadge meta={primaryShareMeta} />
                               )}
                             </span>
                           </span>

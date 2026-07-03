@@ -5,6 +5,8 @@ import { updateCampaignContact, removeContactFromCampaign } from '../../lib/data
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, CAMPAIGN_SOURCE_STATUS_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, parseMoneyInput, withMoneyField, withTextField } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
+import { SharedContactBadge } from '../collaboration/SharedContactBadge'
+import { primarySharedContactMeta, type SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
 
 interface Props {
   campaign: Campaign
@@ -17,6 +19,7 @@ interface Props {
   sortAsc: boolean
   onSortChange: (key: string) => void
   visibleColumns?: Set<string>
+  sharedContactMetaById?: ReadonlyMap<string, SharedContactBadgeMeta[]>
 }
 
 type ColumnKey = 'name' | 'company' | 'email' | 'role' | 'stage' | 'commitment_amount' | 'campaign_status' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at'
@@ -46,7 +49,7 @@ function getVisibleColumns(campaignId: string): Set<ColumnKey> {
   return new Set(ALL_COLUMNS.map(c => c.key))
 }
 
-export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange, onCardClick, sortKey, sortAsc, onSortChange, visibleColumns }: Props) {
+export function CampaignTableView({ campaign, stages, campaignContacts, contacts, onContactsChange, onCardClick, sortKey, sortAsc, onSortChange, visibleColumns, sharedContactMetaById }: Props) {
   const navigate = useNavigate()
   const [internalCols, setInternalCols] = useState(() => getVisibleColumns(campaign.id))
   const visibleCols = visibleColumns ?? internalCols
@@ -333,7 +336,13 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                     ) : c.key === 'name' ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Avatar name={contact?.name ?? '?'} size={22} />
-                        {contact?.name ?? 'Unknown'}
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact?.name ?? 'Unknown'}</span>
+                        {contact && (
+                          (() => {
+                            const shareMeta = primarySharedContactMeta(sharedContactMetaById?.get(contact.id))
+                            return shareMeta ? <SharedContactBadge meta={shareMeta} compact /> : null
+                          })()
+                        )}
                       </span>
                     ) : (
                       getCellValue(cc, contact, c.key) || <span style={{ color: 'var(--color-text-tertiary)' }}>-</span>

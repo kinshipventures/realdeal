@@ -26,6 +26,8 @@ import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
 import { SharePopover } from '../sharing/SharePopover'
 import { isVisiblePodMember } from '../../lib/podMembership'
 import { ContactDetail } from '../contacts/ContactDetail'
+import { SharedContactBadge } from '../collaboration/SharedContactBadge'
+import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -256,6 +258,11 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const [revokingId, setRevokingId] = useState<string | null>(null)
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const sharedContactMetaById = useSharedContactBadges({ contacts: members })
+  const selectedContactShareAccess = useMemo(
+    () => sharedContactBadgeMetaToAccess(primarySharedContactMeta(selectedContact ? sharedContactMetaById.get(selectedContact.id) : undefined)),
+    [selectedContact, sharedContactMetaById],
+  )
 
   useEffect(() => {
     if (!podId) { setNotFound(true); setLoading(false); return }
@@ -1055,6 +1062,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                 const isPrimary = m.primary_list_id === podId
                 const lastIx = lastHumanInteraction(interactionMap.get(m.id) ?? [])
                 const days = daysSinceContact(m)
+                const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(m.id))
                 return (
                   <DraggableMemberRow key={m.id} contact={m}>
                     <button
@@ -1079,6 +1087,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                           {isPrimary && (
                             <span style={{ fontSize: 9, fontWeight: 600, color: podColor, background: `${podColor}18`, borderRadius: 4, padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>Primary</span>
                           )}
+                          {shareMeta && <SharedContactBadge meta={shareMeta} compact />}
                         </div>
                         {(m.company || m.role) && (
                           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1114,6 +1123,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           {dragContactId && (() => {
             const m = members.find(c => c.id === dragContactId)
             if (!m) return null
+            const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(m.id))
             return (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -1125,6 +1135,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               }}>
                 <Avatar name={m.name} size={24} />
                 {m.name}
+                {shareMeta && <SharedContactBadge meta={shareMeta} compact />}
               </div>
             )
           })()}
@@ -1245,6 +1256,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           onDeleted={handleContactDeleted}
           pods={allPods}
           categories={allCategories}
+          sharedAccess={selectedContactShareAccess}
         />
       )}
     </div>

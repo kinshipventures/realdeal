@@ -6,6 +6,7 @@ import type { CampaignContact, CampaignStage, Contact, HexColor, Interaction } f
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
 import { CampaignContactCard } from './CampaignContactCard'
 import { Avatar } from '../ui'
+import { primarySharedContactMeta, type SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
 
 const COLOR_SWATCHES = ['#718096', '#4299E1', '#ECC94B', '#48BB78', '#E53935', '#FF6B8A', '#7E57C2', '#F5A623', '#38B2AC', '#667EEA', '#84CC16', '#F59E0B', '#06B6D4', '#A1887F', '#64748B', '#FB7185']
 
@@ -35,6 +36,7 @@ interface Props {
   isLast: boolean
   visibleCardFields?: Set<string>
   stagger?: number
+  sharedContactMetaById?: ReadonlyMap<string, SharedContactBadgeMeta[]>
 }
 
 export function CampaignStageColumn({
@@ -55,6 +57,7 @@ export function CampaignStageColumn({
   isLast,
   visibleCardFields,
   stagger = 0,
+  sharedContactMetaById,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -314,6 +317,7 @@ export function CampaignStageColumn({
                   onToggleSelect={onToggleSelect}
                   visibleFields={visibleCardFields}
                   stagger={i}
+                  shareMeta={primarySharedContactMeta(sharedContactMetaById?.get(contact.id))}
                 />
               ))}
               {hasMore && !expanded && (

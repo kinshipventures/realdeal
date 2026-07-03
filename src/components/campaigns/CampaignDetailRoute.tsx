@@ -12,6 +12,7 @@ import { CampaignPermissionsPanel } from './CampaignPermissionsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { recordCollaborationAuditEvent } from '@/lib/collaboration'
+import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
@@ -281,6 +282,11 @@ export function CampaignDetailRoute() {
   }
 
   const selectedContact = selectedContactId ? contacts.find(contact => contact.id === selectedContactId) : null
+  const sharedContactMetaById = useSharedContactBadges({ contacts, campaigns: campaign ? [campaign] : campaigns })
+  const selectedContactShareAccess = useMemo(
+    () => sharedContactBadgeMetaToAccess(primarySharedContactMeta(selectedContact ? sharedContactMetaById.get(selectedContact.id) : undefined)),
+    [selectedContact, sharedContactMetaById],
+  )
 
   if (loading) return <DetailSkeleton />
   if (!campaign) return <div style={{ padding: 32, color: 'var(--color-text-secondary)' }}>Campaign not found</div>
@@ -655,6 +661,7 @@ export function CampaignDetailRoute() {
               sortKey={sortKey}
               sortAsc={sortAsc}
               visibleCardFields={cardFields}
+              sharedContactMetaById={sharedContactMetaById}
             />
           ) : (
             <CampaignTableView
@@ -668,6 +675,7 @@ export function CampaignDetailRoute() {
               sortAsc={sortAsc}
               onSortChange={handleSortChange}
               visibleColumns={tableFields}
+              sharedContactMetaById={sharedContactMetaById}
             />
           )}
         </div>
@@ -691,6 +699,7 @@ export function CampaignDetailRoute() {
           onDeleted={handleContactDeleted}
           pods={pods}
           onCampaignContactUpdated={handleCampaignContactUpdated}
+          sharedAccess={selectedContactShareAccess}
         />
       )}
     </div>

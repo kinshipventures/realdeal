@@ -22,6 +22,7 @@ import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Con
 import { getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
+import { primarySharedContactMeta, type SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
 
 interface Props {
   campaign: Campaign
@@ -35,6 +36,7 @@ interface Props {
   sortKey: string
   sortAsc: boolean
   visibleCardFields: Set<string>
+  sharedContactMetaById?: ReadonlyMap<string, SharedContactBadgeMeta[]>
 }
 
 interface UndoToast {
@@ -54,6 +56,7 @@ export function CampaignBoard({
   sortKey,
   sortAsc,
   visibleCardFields,
+  sharedContactMetaById,
 }: Props) {
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
@@ -331,6 +334,7 @@ export function CampaignBoard({
               isFirst={i === 0}
               isLast={i === sortedStages.length - 1}
               visibleCardFields={visibleCardFields}
+              sharedContactMetaById={sharedContactMetaById}
             />
           ))}
 
@@ -421,6 +425,7 @@ export function CampaignBoard({
               onTogglePriority={() => {}}
               isDragOverlay
               visibleFields={visibleCardFields}
+              shareMeta={primarySharedContactMeta(sharedContactMetaById?.get(activeDragContact.id))}
             />
           ) : null}
         </DragOverlay>

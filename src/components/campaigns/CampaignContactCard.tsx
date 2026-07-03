@@ -6,6 +6,8 @@ import type { CampaignContact, Contact } from '../../lib/types'
 import type { ScoreLabel } from '../../lib/equity'
 import { formatMoneyCompact, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
+import { SharedContactBadge } from '../collaboration/SharedContactBadge'
+import type { SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
 
 interface Props {
   cc: CampaignContact
@@ -19,6 +21,7 @@ interface Props {
   onToggleSelect?: (id: string) => void
   visibleFields?: Set<string>
   stagger?: number
+  shareMeta?: SharedContactBadgeMeta | null
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -53,7 +56,7 @@ function isDueSoon(due: string | null): boolean {
   return diff < 3 * DAY_MS
 }
 
-export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger }: Props) {
+export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger, shareMeta }: Props) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id })
 
@@ -122,10 +125,18 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            minWidth: 0,
           }}>
-            {contact.name}
+            <span style={{
+              fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {contact.name}
+            </span>
+            {shareMeta && <SharedContactBadge meta={shareMeta} compact />}
           </div>
           {show('company') && contact.company && (
             <div style={{
