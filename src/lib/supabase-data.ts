@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client'
 import type { Pod, Cadence, Category, Contact, Interaction, InteractionType, Owner, Campaign, CampaignContact, CampaignStage, CampaignType, CampaignContactStatus, CampaignStatus, Project, HexColor, RelationshipType, RelationshipStatus, RelationshipRing } from './types'
 import { getActiveWorkspaceId } from './workspace'
 import { isDemoMode, DEMO_PODS, DEMO_CATEGORIES, DEMO_CONTACTS, DEMO_INTERACTIONS, DEMO_CAMPAIGNS, DEMO_CAMPAIGN_CONTACTS, DEMO_CAMPAIGN_STAGES, DEMO_PROJECTS, DEMO_COMPANIES } from './sampleData'
+import { buildActivityChanges, queueWorkspaceActivityEvent } from './workspaceActivity'
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,21 @@ async function fetchAllRows<T>(
     offset += PAGE
   }
   return all
+}
+
+function labelFromContactId(id: string | null | undefined): string | null {
+  if (!id) return null
+  return _contactsCache?.find(contact => contact.id === id)?.name ?? null
+}
+
+function labelFromCampaignId(id: string | null | undefined): string | null {
+  if (!id) return null
+  return _campaignsCache?.find(campaign => campaign.id === id)?.name ?? null
+}
+
+function labelFromPodId(id: string | null | undefined): string | null {
+  if (!id) return null
+  return _podsCache?.find(pod => pod.id === id)?.name ?? null
 }
 
 const CACHE_TTL = 5 * 60 * 1000
@@ -112,7 +128,9 @@ export async function createPod(data: {
   }).select().single()
   if (error) throw error
   _podsCache = null
-  return mapPod(row)
+  const pod = mapPod(row)
+  queueWorkspaceActivityEvent({ action: 'created', entityType: 'pod', entityId: pod.id, entityLabel: pod.name })
+  return pod
 }
 
 export async function updatePod(id: string, data: Partial<{
@@ -127,7 +145,9 @@ export async function updatePod(id: string, data: Partial<{
   const { data: row, error } = await supabase.from('pods').update(data).eq('id', id).select().single()
   if (error) throw error
   _podsCache = null
-  return mapPod(row)
+  const pod = mapPod(row)
+  queueWorkspaceActivityEvent({ action: 'updated', entityType: 'pod', entityId: pod.id, entityLabel: pod.name, changes: buildActivityChanges(data) })
+  return pod
 }
 
 export async function deletePod(id: string): Promise<void> {
@@ -136,9 +156,11 @@ export async function deletePod(id: string): Promise<void> {
     if (idx >= 0) DEMO_PODS.splice(idx, 1)
     return
   }
+  const deletedPod = _podsCache?.find(p => p.id === id)
   const { error } = await supabase.from('pods').delete().eq('id', id)
   if (error) throw error
   _podsCache = null
+  queueWorkspaceActivityEvent({ action: 'deleted', entityType: 'pod', entityId: id, entityLabel: deletedPod?.name ?? null })
 }
 
 // ── Categories ───────────────────────────────────────────────────────────────
@@ -177,7 +199,17 @@ export async function createCategory(name: string, listId: string): Promise<Cate
   const { data: row, error } = await supabase.from('categories').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), name, pod_id: listId }).select().single()
   if (error) throw error
   _categoriesCache = null
-  return mapCategory(row)
+  const category = mapCategory(row)
+  queueWorkspaceActivityEvent({
+    action: 'created',
+    entityType: 'sub_pod',
+    entityId: category.id,
+    entityLabel: category.name,
+    relatedType: 'pod',
+    relatedId: listId,
+    relatedLabel: labelFromPodId(listId),
+  })
+  return category
 }
 
 export async function updateCategory(id: string, data: Partial<Pick<Category, 'name' | 'color' | 'icon'>>): Promise<Category> {
@@ -190,7 +222,18 @@ export async function updateCategory(id: string, data: Partial<Pick<Category, 'n
   const { data: row, error } = await supabase.from('categories').update(updateData).eq('id', id).select().single()
   if (error) throw error
   _categoriesCache = null
-  return mapCategory(row)
+  const category = mapCategory(row)
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'sub_pod',
+    entityId: category.id,
+    entityLabel: category.name,
+    relatedType: 'pod',
+    relatedId: category.list_id,
+    relatedLabel: labelFromPodId(category.list_id),
+    changes: buildActivityChanges(updateData),
+  })
+  return category
 }
 
 export async function deleteCategory(id: string): Promise<void> {
@@ -199,9 +242,19 @@ export async function deleteCategory(id: string): Promise<void> {
     if (idx >= 0) DEMO_CATEGORIES.splice(idx, 1)
     return
   }
+  const deletedCategory = _categoriesCache?.find(c => c.id === id)
   const { error } = await supabase.from('categories').delete().eq('id', id)
   if (error) throw error
   _categoriesCache = null
+  queueWorkspaceActivityEvent({
+    action: 'deleted',
+    entityType: 'sub_pod',
+    entityId: id,
+    entityLabel: deletedCategory?.name ?? null,
+    relatedType: 'pod',
+    relatedId: deletedCategory?.list_id ?? null,
+    relatedLabel: labelFromPodId(deletedCategory?.list_id),
+  })
 }
 
 // ── Contacts ─────────────────────────────────────────────────────────────────
@@ -321,7 +374,14 @@ export async function createContact(data: ContactInput): Promise<Contact> {
   const { data: row, error } = await supabase.from('contacts').insert(insert as any).select().single()
   if (error) throw error
   _contactsCache = null
-  return mapContact(row)
+  const contact = mapContact(row)
+  queueWorkspaceActivityEvent({
+    action: 'created',
+    entityType: contact.type === 'Company' ? 'company' : 'contact',
+    entityId: contact.id,
+    entityLabel: contact.name,
+  })
+  return contact
 }
 
 export async function createContactsBulk(records: ContactInput[], chunkSize = 100): Promise<Contact[]> {
@@ -406,6 +466,13 @@ export async function updateContact(id: string, data: Partial<Omit<Contact, 'id'
     const idx = _contactsCache.findIndex(c => c.id === id)
     if (idx !== -1) _contactsCache[idx] = updated; else _contactsCache = null
   }
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: updated.type === 'Company' ? 'company' : 'contact',
+    entityId: updated.id,
+    entityLabel: updated.name,
+    changes: buildActivityChanges(update),
+  })
   return updated
 }
 
@@ -415,9 +482,16 @@ export async function deleteContact(id: string): Promise<void> {
     if (idx !== -1) DEMO_CONTACTS.splice(idx, 1)
     return
   }
+  const deletedContact = _contactsCache?.find(c => c.id === id)
   const { error } = await supabase.from('contacts').delete().eq('id', id)
   if (error) throw error
   if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
+  queueWorkspaceActivityEvent({
+    action: 'deleted',
+    entityType: deletedContact?.type === 'Company' ? 'company' : 'contact',
+    entityId: id,
+    entityLabel: deletedContact?.name ?? null,
+  })
 }
 
 // ── Interactions ─────────────────────────────────────────────────────────────
@@ -484,6 +558,16 @@ export async function createInteraction(data: Omit<Interaction, 'id' | 'created_
   if (error) throw error
   const mapped = mapInteraction(row)
   if (_interactionsCache) _interactionsCache.unshift(mapped)
+  queueWorkspaceActivityEvent({
+    action: mapped.type === 'note' ? 'created' : 'contacted',
+    entityType: 'interaction',
+    entityId: mapped.id,
+    entityLabel: labelFromContactId(mapped.contact_id) ?? 'contact',
+    relatedType: 'contact',
+    relatedId: mapped.contact_id,
+    relatedLabel: labelFromContactId(mapped.contact_id),
+    changes: buildActivityChanges({ type: mapped.type, date: mapped.date, notes: mapped.notes }),
+  })
   return mapped
 }
 
@@ -496,7 +580,18 @@ export async function updateInteraction(id: string, data: Partial<Pick<Interacti
   }
   const { data: row, error } = await supabase.from('interactions').update(data).eq('id', id).select().single()
   if (error) throw error
-  return mapInteraction(row)
+  const interaction = mapInteraction(row)
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'interaction',
+    entityId: interaction.id,
+    entityLabel: labelFromContactId(interaction.contact_id) ?? 'touchpoint',
+    relatedType: 'contact',
+    relatedId: interaction.contact_id,
+    relatedLabel: labelFromContactId(interaction.contact_id),
+    changes: buildActivityChanges(data),
+  })
+  return interaction
 }
 
 export async function deleteInteraction(id: string): Promise<void> {
@@ -505,8 +600,18 @@ export async function deleteInteraction(id: string): Promise<void> {
     if (idx !== -1) DEMO_INTERACTIONS.splice(idx, 1)
     return
   }
+  const deletedInteraction = _interactionsCache?.find(i => i.id === id)
   await supabase.from('interactions').delete().eq('id', id)
   if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
+  queueWorkspaceActivityEvent({
+    action: 'deleted',
+    entityType: 'interaction',
+    entityId: id,
+    entityLabel: labelFromContactId(deletedInteraction?.contact_id) ?? null,
+    relatedType: 'contact',
+    relatedId: deletedInteraction?.contact_id ?? null,
+    relatedLabel: labelFromContactId(deletedInteraction?.contact_id),
+  })
 }
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────
@@ -617,7 +722,15 @@ export async function createCampaign(data: { name: string; type: CampaignType; d
   const { data: row, error } = await supabase.from('campaigns').insert([{ user_id: userId, workspace_id: getActiveWorkspaceId(), name: data.name, type: data.type as any, deadline: data.deadline ?? null }]).select().single()
   if (error) throw error
   _campaignsCache = null
-  return mapCampaign(row)
+  const campaign = mapCampaign(row)
+  queueWorkspaceActivityEvent({
+    action: 'created',
+    entityType: 'campaign',
+    entityId: campaign.id,
+    entityLabel: campaign.name,
+    changes: buildActivityChanges({ type: campaign.type, deadline: campaign.deadline }),
+  })
+  return campaign
 }
 
 export async function addContactToCampaign(campaignId: string, contactId: string, _stageId?: string): Promise<CampaignContact> {
@@ -659,7 +772,18 @@ export async function addContactToCampaign(campaignId: string, contactId: string
       if (repairError) throw repairError
       _campaignsCache = null
       _campaignContactsCache = null
-      return mapCampaignContact(repaired)
+      const mapped = mapCampaignContact(repaired)
+      queueWorkspaceActivityEvent({
+        action: 'moved',
+        entityType: 'campaign_contact',
+        entityId: mapped.id,
+        entityLabel: labelFromContactId(mapped.contact_id) ?? 'contact',
+        relatedType: 'campaign',
+        relatedId: mapped.campaign_id,
+        relatedLabel: labelFromCampaignId(mapped.campaign_id),
+        changes: buildActivityChanges({ stage_id: mapped.stage_id }),
+      })
+      return mapped
     }
     return mapCampaignContact(existing)
   }
@@ -671,7 +795,18 @@ export async function addContactToCampaign(campaignId: string, contactId: string
   if (error) throw error
   _campaignsCache = null
   _campaignContactsCache = null
-  return mapCampaignContact(row)
+  const campaignContact = mapCampaignContact(row)
+  queueWorkspaceActivityEvent({
+    action: 'created',
+    entityType: 'campaign_contact',
+    entityId: campaignContact.id,
+    entityLabel: labelFromContactId(contactId) ?? 'contact',
+    relatedType: 'campaign',
+    relatedId: campaignId,
+    relatedLabel: labelFromCampaignId(campaignId),
+    changes: buildActivityChanges({ campaign_id: campaignId, contact_id: contactId, stage_id: stageId }),
+  })
+  return campaignContact
 }
 
 export async function removeContactFromCampaign(id: string): Promise<void> {
@@ -684,10 +819,20 @@ export async function removeContactFromCampaign(id: string): Promise<void> {
     }
     return
   }
+  const deletedLink = _campaignContactsCache?.find(cc => cc.id === id)
   const { error } = await supabase.from('campaign_contacts').delete().eq('id', id)
   if (error) throw error
   _campaignsCache = null
   _campaignContactsCache = null
+  queueWorkspaceActivityEvent({
+    action: 'deleted',
+    entityType: 'campaign_contact',
+    entityId: id,
+    entityLabel: labelFromContactId(deletedLink?.contact_id) ?? 'contact',
+    relatedType: 'campaign',
+    relatedId: deletedLink?.campaign_id ?? null,
+    relatedLabel: labelFromCampaignId(deletedLink?.campaign_id),
+  })
 }
 
 export async function updateCampaignContactStatus(id: string, status: CampaignContactStatus): Promise<CampaignContact> {
@@ -702,7 +847,18 @@ export async function updateCampaignContactStatus(id: string, status: CampaignCo
     const idx = _campaignContactsCache.findIndex(cc => cc.id === id)
     if (idx !== -1) _campaignContactsCache[idx] = mapCampaignContact(row)
   }
-  return mapCampaignContact(row)
+  const campaignContact = mapCampaignContact(row)
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'campaign_contact',
+    entityId: campaignContact.id,
+    entityLabel: labelFromContactId(campaignContact.contact_id) ?? 'contact',
+    relatedType: 'campaign',
+    relatedId: campaignContact.campaign_id,
+    relatedLabel: labelFromCampaignId(campaignContact.campaign_id),
+    changes: buildActivityChanges({ status }),
+  })
+  return campaignContact
 }
 
 export async function completeCampaign(id: string): Promise<Campaign> {
@@ -717,7 +873,9 @@ export async function completeCampaign(id: string): Promise<Campaign> {
     const idx = _campaignsCache.findIndex(c => c.id === id)
     if (idx !== -1) _campaignsCache[idx] = { ..._campaignsCache[idx], status: 'completed' }
   }
-  return mapCampaign(row)
+  const campaign = mapCampaign(row)
+  queueWorkspaceActivityEvent({ action: 'completed', entityType: 'campaign', entityId: campaign.id, entityLabel: campaign.name })
+  return campaign
 }
 
 export async function updateCampaignNotes(id: string, notes: string | null): Promise<void> {
@@ -732,6 +890,13 @@ export async function updateCampaignNotes(id: string, notes: string | null): Pro
     const idx = _campaignsCache.findIndex(c => c.id === id)
     if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], notes }
   }
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'campaign',
+    entityId: id,
+    entityLabel: labelFromCampaignId(id),
+    changes: buildActivityChanges({ notes }),
+  })
 }
 
 
@@ -760,6 +925,13 @@ export async function updateCampaign(id: string, data: Partial<Pick<Campaign, 'n
     const idx = _campaignsCache.findIndex(c => c.id === id)
     if (idx >= 0) _campaignsCache[idx] = { ..._campaignsCache[idx], ...updated }
   }
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'campaign',
+    entityId: updated.id,
+    entityLabel: updated.name,
+    changes: buildActivityChanges(dbData),
+  })
   return updated
 }
 
@@ -782,7 +954,17 @@ export async function createCampaignStage(campaignId: string, name: string, orde
   const { data: row, error } = await supabase.from('campaign_stages').insert({ user_id: userId, workspace_id: getActiveWorkspaceId(), campaign_id: campaignId, name, order, color: color ?? null }).select().single()
   if (error) throw error
   invalidateCampaignStagesDBCache()
-  return mapCampaignStageRow(row)
+  const stage = mapCampaignStageRow(row)
+  queueWorkspaceActivityEvent({
+    action: 'created',
+    entityType: 'campaign_stage',
+    entityId: stage.id,
+    entityLabel: stage.name,
+    relatedType: 'campaign',
+    relatedId: campaignId,
+    relatedLabel: labelFromCampaignId(campaignId),
+  })
+  return stage
 }
 
 export async function updateCampaignStage(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color' | 'order'>>): Promise<void> {
@@ -794,6 +976,13 @@ export async function updateCampaignStage(id: string, data: Partial<Pick<Campaig
   const { error } = await supabase.from('campaign_stages').update(data).eq('id', id)
   if (error) throw error
   invalidateCampaignStagesDBCache()
+  queueWorkspaceActivityEvent({
+    action: 'updated',
+    entityType: 'campaign_stage',
+    entityId: id,
+    entityLabel: data.name ?? null,
+    changes: buildActivityChanges(data),
+  })
 }
 
 export async function deleteCampaignStage(id: string): Promise<void> {
@@ -802,9 +991,19 @@ export async function deleteCampaignStage(id: string): Promise<void> {
     if (idx !== -1) DEMO_CAMPAIGN_STAGES.splice(idx, 1)
     return
   }
+  const deletedStage = _campaignStagesDBCache?.find(stage => stage.id === id)
   const { error } = await supabase.from('campaign_stages').delete().eq('id', id)
   if (error) throw error
   invalidateCampaignStagesDBCache()
+  queueWorkspaceActivityEvent({
+    action: 'deleted',
+    entityType: 'campaign_stage',
+    entityId: id,
+    entityLabel: deletedStage?.name ?? null,
+    relatedType: 'campaign',
+    relatedId: deletedStage?.campaign_id ?? null,
+    relatedLabel: labelFromCampaignId(deletedStage?.campaign_id),
+  })
 }
 
 export async function updateCampaignContact(id: string, data: Partial<Pick<CampaignContact, 'stage_id' | 'owner' | 'next_step' | 'next_step_due' | 'notes' | 'moved_at' | 'is_priority' | 'custom_fields'>>): Promise<CampaignContact> {
@@ -833,7 +1032,18 @@ export async function updateCampaignContact(id: string, data: Partial<Pick<Campa
     const idx = _campaignContactsCache.findIndex(cc => cc.id === id)
     if (idx !== -1) _campaignContactsCache[idx] = mapCampaignContact(row)
   }
-  return mapCampaignContact(row)
+  const campaignContact = mapCampaignContact(row)
+  queueWorkspaceActivityEvent({
+    action: data.stage_id !== undefined ? 'moved' : 'updated',
+    entityType: 'campaign_contact',
+    entityId: campaignContact.id,
+    entityLabel: labelFromContactId(campaignContact.contact_id) ?? 'contact',
+    relatedType: 'campaign',
+    relatedId: campaignContact.campaign_id,
+    relatedLabel: labelFromCampaignId(campaignContact.campaign_id),
+    changes: buildActivityChanges(dbData),
+  })
+  return campaignContact
 }
 
 // ── Campaign Stages (DB table) ────────────────────────────────────────────────
@@ -1026,6 +1236,14 @@ export async function createWorkspaceInvite(workspaceId: string, email: string, 
     .select()
     .single()
   if (error) throw error
+  queueWorkspaceActivityEvent({
+    workspaceId,
+    action: 'invited',
+    entityType: 'workspace_invite',
+    entityId: data.id,
+    entityLabel: email.toLowerCase(),
+    changes: buildActivityChanges({ role: 'Full access' }),
+  })
   return data
 }
 
@@ -1033,13 +1251,20 @@ export async function revokeInvite(inviteId: string): Promise<void> {
   // Check if already accepted
   const { data: invite } = await supabase
     .from('workspace_invites')
-    .select('accepted_at')
+    .select('accepted_at, workspace_id, email')
     .eq('id', inviteId)
     .single()
   if (invite?.accepted_at) throw new Error('Already accepted')
 
   const { error } = await supabase.from('workspace_invites').delete().eq('id', inviteId)
   if (error) throw error
+  queueWorkspaceActivityEvent({
+    workspaceId: invite?.workspace_id ?? null,
+    action: 'revoked_invite',
+    entityType: 'workspace_invite',
+    entityId: inviteId,
+    entityLabel: invite?.email ?? null,
+  })
 }
 
 export async function removeMember(memberId: string, workspaceId: string): Promise<void> {
@@ -1053,8 +1278,24 @@ export async function removeMember(memberId: string, workspaceId: string): Promi
     const { data: target } = await supabase.from('workspace_members').select('role').eq('id', memberId).single()
     if (target?.role === 'owner') throw new Error('Cannot remove the last owner')
   }
+  const { data: targetMember } = await supabase
+    .from('workspace_members')
+    .select('user_id, role')
+    .eq('id', memberId)
+    .single()
+  const targetProfile = targetMember?.user_id
+    ? await supabase.from('profiles').select('display_name, email').eq('id', targetMember.user_id).maybeSingle()
+    : null
+
   const { error } = await supabase.from('workspace_members').delete().eq('id', memberId)
   if (error) throw error
+  queueWorkspaceActivityEvent({
+    workspaceId,
+    action: 'removed',
+    entityType: 'workspace_member',
+    entityId: memberId,
+    entityLabel: targetProfile?.data?.display_name || targetProfile?.data?.email || targetMember?.user_id || null,
+  })
 }
 
 export async function updateMemberRole(memberId: string, role: 'owner' | 'admin' | 'member', workspaceId: string): Promise<void> {
@@ -1072,6 +1313,13 @@ export async function updateMemberRole(memberId: string, role: 'owner' | 'admin'
   }
   const { error } = await supabase.from('workspace_members').update({ role }).eq('id', memberId)
   if (error) throw error
+  queueWorkspaceActivityEvent({
+    workspaceId,
+    action: 'updated',
+    entityType: 'workspace_member',
+    entityId: memberId,
+    changes: buildActivityChanges({ role }),
+  })
 }
 
 // ── Contact filter helpers ────────────────────────────────────────────────────

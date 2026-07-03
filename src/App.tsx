@@ -17,6 +17,7 @@ import { SearchPalette, type SearchResult, type QuickActionId } from './componen
 import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
 import { SharedListPage } from './components/sharing/SharedListPage'
 import { ChatPanel } from '@/components/chat/ChatPanel'
+import { WorkspaceChoiceGate } from '@/components/workspace/WorkspaceChoiceGate'
 import { getUserConnections } from './lib/connections'
 import {
   CONNECTIONS_CHANGED_EVENT,
@@ -211,6 +212,7 @@ function AppShell() {
     <div className="rd-product-shell" style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       <a href="#main-content" className="sr-only">Skip to main content</a>
       {showOnboarding && session && <OnboardingFlow onComplete={completeOnboarding} />}
+      {!demo && session && !showOnboarding && <WorkspaceChoiceGate />}
 
       {!isMobile && (
         <Sidebar

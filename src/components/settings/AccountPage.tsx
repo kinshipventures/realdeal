@@ -10,9 +10,20 @@ import { PropertiesTab } from './PropertiesTab'
 import { SharingPermissionsTab } from './SharingPermissionsTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
-  revokeInvite, removeMember, updateMemberRole, invalidateAllCaches,
+  revokeInvite, removeMember, invalidateAllCaches,
   type WorkspaceMember, type WorkspaceInvite,
 } from '@/lib/supabase-data'
+import {
+  buildActivityChanges,
+  describeWorkspaceActivity,
+  fetchWorkspaceActivityEvents,
+  queueWorkspaceActivityEvent,
+  summarizeActivityChanges,
+  WORKSPACE_ACTIVITY_ACTION_OPTIONS,
+  WORKSPACE_ACTIVITY_ENTITY_OPTIONS,
+  type WorkspaceActivityEvent,
+  type WorkspaceActivityFilters,
+} from '@/lib/workspaceActivity'
 
 type SettingsTab = 'profile' | 'preferences' | 'properties' | 'sharing' | 'integrations' | 'team'
 const TABS: { id: SettingsTab; label: string }[] = [
@@ -37,8 +48,14 @@ export function AccountPage() {
   // Team state
   const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [invites, setInvites] = useState<WorkspaceInvite[]>([])
+  const [activityEvents, setActivityEvents] = useState<WorkspaceActivityEvent[]>([])
+  const [activityLoading, setActivityLoading] = useState(false)
+  const [activityError, setActivityError] = useState('')
+  const [activityFilters, setActivityFilters] = useState<WorkspaceActivityFilters>({
+    entityType: 'all',
+    action: 'all',
+  })
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member')
   const [inviteError, setInviteError] = useState('')
   const [inviteSending, setInviteSending] = useState(false)
   const [copiedLink, setCopiedLink] = useState<string | null>(null)
@@ -49,9 +66,8 @@ export function AccountPage() {
 
   const myRole = activeWorkspace?.role ?? 'member'
   const isOwner = myRole === 'owner'
-  const isAdmin = myRole === 'admin'
-  const canManage = isOwner || isAdmin
-  const canInvite = isOwner || isAdmin
+  const canManage = Boolean(activeWorkspace)
+  const canInvite = Boolean(activeWorkspace)
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -65,6 +81,20 @@ export function AccountPage() {
     setWsName(activeWorkspace.name)
     loadWorkspaceData()
   }, [activeWorkspace?.id])
+
+  useEffect(() => {
+    if (tab !== 'team' || !activeWorkspace?.id) return
+    loadWorkspaceActivity()
+  }, [
+    tab,
+    activeWorkspace?.id,
+    activityFilters.actorUserId,
+    activityFilters.entityType,
+    activityFilters.action,
+    activityFilters.search,
+    activityFilters.dateFrom,
+    activityFilters.dateTo,
+  ])
 
   useEffect(() => {
     if (!session?.user?.email || !canInvite) return
@@ -95,6 +125,19 @@ export function AccountPage() {
     }
   }
 
+  async function loadWorkspaceActivity() {
+    if (!activeWorkspace) return
+    setActivityLoading(true)
+    setActivityError('')
+    try {
+      setActivityEvents(await fetchWorkspaceActivityEvents(activeWorkspace.id, activityFilters))
+    } catch (err) {
+      setActivityError(err instanceof Error ? err.message : 'Failed to load team activity')
+    } finally {
+      setActivityLoading(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!session?.user?.id) return
     setSaving(true)
@@ -112,9 +155,19 @@ export function AccountPage() {
 
   const handleSaveWsName = async () => {
     if (!activeWorkspace || !wsName.trim()) return
-    await supabase.from('workspaces').update({ name: wsName.trim() }).eq('id', activeWorkspace.id)
+    const nextName = wsName.trim()
+    await supabase.from('workspaces').update({ name: nextName }).eq('id', activeWorkspace.id)
+    queueWorkspaceActivityEvent({
+      workspaceId: activeWorkspace.id,
+      action: 'renamed',
+      entityType: 'workspace',
+      entityId: activeWorkspace.id,
+      entityLabel: nextName,
+      changes: buildActivityChanges({ name: nextName }),
+    })
     setEditingName(false)
     refreshWorkspaces()
+    loadWorkspaceActivity()
   }
 
   const handleInvite = async () => {
@@ -122,10 +175,10 @@ export function AccountPage() {
     setInviteSending(true)
     setInviteError('')
     try {
-      const invite = await createWorkspaceInvite(activeWorkspace.id, inviteEmail.trim(), inviteRole)
+      const invite = await createWorkspaceInvite(activeWorkspace.id, inviteEmail.trim(), 'member')
       setInviteEmail('')
-      setInviteRole('member')
       setInvites(prev => [invite, ...prev])
+      loadWorkspaceActivity()
       const link = `${window.location.origin}/invite?token=${invite.token}`
       try {
         await navigator.clipboard.writeText(link)
@@ -149,9 +202,11 @@ export function AccountPage() {
       if (type === 'revoke' && target) {
         await revokeInvite(target.id)
         setInvites(prev => prev.filter(i => i.id !== target.id))
+        loadWorkspaceActivity()
       } else if (type === 'remove' && target && activeWorkspace) {
         await removeMember(target.id, activeWorkspace.id)
         setMembers(prev => prev.filter(m => m.id !== target.id))
+        loadWorkspaceActivity()
       } else if (type === 'leave' && activeWorkspace && session?.user?.id) {
         const me = members.find(m => m.user_id === session.user.id)
         if (me) {
@@ -165,20 +220,14 @@ export function AccountPage() {
     }
   }
 
-  const handleRoleChange = async (member: WorkspaceMember, newRole: 'owner' | 'admin' | 'member') => {
-    if (!activeWorkspace) return
-    try {
-      await updateMemberRole(member.id, newRole, activeWorkspace.id)
-      setMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m))
-    } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Failed to update role')
-      setTimeout(() => setInviteError(''), 3000)
-    }
-  }
-
   const labelStyle = { fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 } as const
   const inputStyle = {
     width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8,
+    border: '1px solid var(--edge)', background: 'transparent',
+    color: 'var(--color-text-primary)', fontFamily: 'inherit', outline: 'none',
+  } as const
+  const selectStyle = {
+    padding: '10px 12px', fontSize: 13, borderRadius: 8,
     border: '1px solid var(--edge)', background: 'transparent',
     color: 'var(--color-text-primary)', fontFamily: 'inherit', outline: 'none',
   } as const
@@ -199,7 +248,7 @@ export function AccountPage() {
   )
 
   return (
-    <div style={{ maxWidth: tab === 'properties' || tab === 'sharing' ? 980 : 480, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ maxWidth: tab === 'properties' || tab === 'sharing' || tab === 'team' ? 980 : 480, margin: '0 auto', padding: '48px 24px 80px' }}>
       <h1 style={{
         fontSize: 24, fontWeight: 800, marginBottom: 24,
         fontFamily: 'var(--font-sans)', letterSpacing: '-0.02em',
@@ -285,10 +334,13 @@ export function AccountPage() {
         </section>
       )}
 
-      {/* ── Team tab ──────────────────────────────────────────── */}
+      {/* Team tab */}
       {tab === 'team' && activeWorkspace && (
         <section>
-          {/* Team name */}
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 24px', lineHeight: 1.5, maxWidth: 720 }}>
+            Team members can choose this workspace at sign-in and work here with full access using their own login.
+          </p>
+
           <div style={{ marginBottom: 24 }}>
             <span style={labelStyle}>Name</span>
             {canManage && editingName ? (
@@ -337,25 +389,17 @@ export function AccountPage() {
                       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.email}</div>
                     )}
                   </div>
-                  {canManage ? (
-                    <select
-                      value={member.role}
-                      onChange={e => handleRoleChange(member, e.target.value as any)}
-                      disabled={member.user_id === session?.user?.id || (!isOwner && member.role === 'owner')}
-                      title="Owner: full control. Admin: can invite members. Member: can view and edit contacts."
-                      style={{
-                        fontSize: 12, padding: '4px 6px', borderRadius: 6, fontFamily: 'inherit',
-                        border: '1px solid var(--edge)', background: 'transparent',
-                        color: 'var(--color-text-secondary)', cursor: 'pointer',
-                      }}
-                    >
-                      {isOwner && <option value="owner">Owner</option>}
-                      <option value="admin">Admin</option>
-                      <option value="member">Member</option>
-                    </select>
-                  ) : (
-                    <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textTransform: 'capitalize' }}>{member.role}</span>
-                  )}
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: member.role === 'owner' ? 'var(--color-brand)' : 'var(--health-cooling)',
+                    background: member.role === 'owner' ? 'rgba(37,99,235,0.08)' : 'rgba(34,197,94,0.1)',
+                    borderRadius: 999,
+                    padding: '4px 8px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {member.role === 'owner' ? 'Owner' : 'Full access'}
+                  </span>
                   {canManage && member.user_id !== session?.user?.id && member.role !== 'owner' && (
                     <button type="button" onClick={() => setConfirmAction({ type: 'remove', target: member })}
                       style={{ padding: '4px 8px', fontSize: 11, color: 'var(--health-fading)', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -380,7 +424,7 @@ export function AccountPage() {
                     <span style={{ fontSize: 13, color: 'var(--color-text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {invite.email}
                     </span>
-                    <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textTransform: 'capitalize' }}>{invite.role}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--health-cooling)', background: 'rgba(34,197,94,0.1)', borderRadius: 999, padding: '4px 8px', whiteSpace: 'nowrap' }}>Full access</span>
                     {copiedLink === invite.id ? (
                       <span style={{ fontSize: 11, color: 'var(--color-brand)', fontWeight: 500 }}>Link copied!</span>
                     ) : (
@@ -419,13 +463,6 @@ export function AccountPage() {
                   type="email"
                   style={{ ...inputStyle, flex: 1 }}
                 />
-                {canManage && (
-                  <select value={inviteRole} onChange={e => setInviteRole(e.target.value as any)}
-                    style={{ fontSize: 13, padding: '10px 8px', borderRadius: 8, fontFamily: 'inherit', border: '1px solid var(--edge)', background: 'transparent', color: 'var(--color-text-primary)' }}>
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                )}
                 <button type="button" onClick={handleInvite} disabled={inviteSending || !inviteEmail.trim()}
                   style={{ ...btnStyle('primary'), opacity: inviteSending || !inviteEmail.trim() ? 0.5 : 1 }}>
                   {inviteSending ? 'Sending...' : 'Invite'}
@@ -471,6 +508,111 @@ export function AccountPage() {
               )}
             </div>
           )}
+
+          <div style={{ paddingTop: 28, borderTop: '1px solid var(--edge)', marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
+              <div>
+                <span style={labelStyle}>Activity record</span>
+                <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: 0 }}>
+                  Track who changed contacts, companies, pods, sub-pods, campaigns, touchpoints, and team access.
+                </p>
+              </div>
+              <button type="button" onClick={loadWorkspaceActivity} style={btnStyle('secondary')}>
+                Refresh
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 12 }}>
+              <input
+                value={activityFilters.search ?? ''}
+                onChange={e => setActivityFilters(prev => ({ ...prev, search: e.target.value }))}
+                placeholder="Search activity"
+                style={inputStyle}
+              />
+              <select
+                value={activityFilters.actorUserId ?? ''}
+                onChange={e => setActivityFilters(prev => ({ ...prev, actorUserId: e.target.value || undefined }))}
+                style={selectStyle}
+              >
+                <option value="">All members</option>
+                {members.map(member => (
+                  <option key={member.user_id} value={member.user_id}>{member.display_name || member.email || 'Unknown'}</option>
+                ))}
+              </select>
+              <select
+                value={activityFilters.entityType ?? 'all'}
+                onChange={e => setActivityFilters(prev => ({ ...prev, entityType: e.target.value as any }))}
+                style={selectStyle}
+              >
+                {WORKSPACE_ACTIVITY_ENTITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <select
+                value={activityFilters.action ?? 'all'}
+                onChange={e => setActivityFilters(prev => ({ ...prev, action: e.target.value as any }))}
+                style={selectStyle}
+              >
+                {WORKSPACE_ACTIVITY_ACTION_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <input
+                type="datetime-local"
+                aria-label="Activity from date and time"
+                value={activityFilters.dateFrom ?? ''}
+                onChange={e => setActivityFilters(prev => ({ ...prev, dateFrom: e.target.value || undefined }))}
+                style={selectStyle}
+              />
+              <input
+                type="datetime-local"
+                aria-label="Activity to date and time"
+                value={activityFilters.dateTo ?? ''}
+                onChange={e => setActivityFilters(prev => ({ ...prev, dateTo: e.target.value || undefined }))}
+                style={selectStyle}
+              />
+            </div>
+
+            <div style={{ border: '1px solid var(--edge)', borderRadius: 10, overflow: 'hidden' }}>
+              {activityLoading && (
+                <div style={{ padding: 18, fontSize: 13, color: 'var(--color-text-tertiary)' }}>Loading activity...</div>
+              )}
+              {!activityLoading && activityError && (
+                <div style={{ padding: 18, fontSize: 13, color: 'var(--health-fading)' }}>{activityError}</div>
+              )}
+              {!activityLoading && !activityError && activityEvents.length === 0 && (
+                <div style={{ padding: 18, fontSize: 13, color: 'var(--color-text-tertiary)' }}>No team activity yet.</div>
+              )}
+              {!activityLoading && !activityError && activityEvents.map(event => {
+                const changeSummary = summarizeActivityChanges(event)
+                return (
+                  <div key={event.id} style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 1fr) 160px',
+                    gap: 12,
+                    padding: '12px 14px',
+                    borderBottom: '1px solid var(--divider)',
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.35 }}>
+                        {describeWorkspaceActivity(event)}
+                      </div>
+                      {changeSummary && (
+                        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {changeSummary}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                      {new Date(event.created_at).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
 
           {/* Leave team */}
           {!isOwner && (

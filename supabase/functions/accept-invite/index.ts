@@ -115,6 +115,26 @@ Deno.serve(async (req) => {
       .eq("id", invite.workspace_id)
       .single();
 
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await supabaseAdmin
+      .from("workspace_activity_events")
+      .insert({
+        workspace_id: invite.workspace_id,
+        actor_user_id: userId,
+        actor_label: profile?.display_name || profile?.email || userEmail || "Team member",
+        actor_email: profile?.email || userEmail,
+        action: "accepted_invite",
+        entity_type: "workspace_member",
+        entity_id: userId,
+        entity_label: profile?.display_name || profile?.email || userEmail,
+        metadata: { invite_id: invite.id },
+      });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -123,7 +143,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (_err) {
     return new Response(
       JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
