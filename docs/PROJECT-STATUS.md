@@ -1,7 +1,7 @@
 # Kinship Brain — Project Status & Context
 
 **Last updated:** March 29, 2026
-**Author:** Gabriel Murray
+**Author:** Real Deal team
 **Status:** Course correction in progress
 
 ---
@@ -47,13 +47,13 @@ On **March 26 at 10:30am**, Moj sent a group email to Briell, Nicole, Mariana, a
 > "Everything feels incredibly vague"
 > "Toast has not been able to accomplish a single task for me. I have no idea what to do with it; it just feels like ChatGPT on my phone."
 
-Gabe responded at 1:00pm with a status update (done, incomplete, blockers, what's needed). Moj pushed back: "This doesn't satisfy an update for me. I really don't understand what we're doing right now."
+The developer responded at 1:00pm with a status update (done, incomplete, blockers, what's needed). Moj pushed back: "This doesn't satisfy an update for me. I really don't understand what we're doing right now."
 
-Gabe went to Fairfax for an in-person meeting. Realignment:
+The developer went to Fairfax for an in-person meeting. Realignment:
 - Priority #1: Ship Service Providers category end-to-end
 - Priority #2: LP Tracker
 - ClickUp → Notion migration = Phase 2
-- Briell's lane: Lovable + ClickUp only. Gabe works directly with Moj.
+- Briell's lane: Lovable + ClickUp only. Development work runs directly with Moj.
 
 ### The March 28 Email
 
@@ -119,7 +119,7 @@ On **March 28 at 4:31pm**, Moj sent a comprehensive email (2000+ words) to the f
 
 ---
 
-## Access Blockers (Not On Gabe)
+## Access Blockers (External Dependencies)
 
 These have been requested multiple times (Mar 26 email, in-person meetings) and not provided:
 
@@ -152,7 +152,7 @@ A detailed roadmap and delivery plan has been created (`ROADMAP-AND-DELIVERY-PLA
 
 ### Risks
 1. **Trust deficit.** Moj used the word "misled." Rebuilding trust requires visible, undeniable output over the next 2–3 weeks.
-2. **Access dependencies.** Half the remaining deliverables require OAuth/tokens from Moj's team. If those don't come, timeline slips — and it won't be on Gabe.
+2. **Access dependencies.** Half the remaining deliverables require OAuth/tokens from Moj's team. If those don't come, timeline slips because external access is blocked.
 3. **Scope vs. hours.** 15 hrs/week for the full MVP spec is tight. The roadmap is ambitious but achievable if blockers clear on time.
 4. **Paper trail.** Moj cc'd Finance (Nicole) and Ops (Mariana) on an email that uses words like "misled" and "impacted trust." This could be positioning for contract dispute. All work should be documented and visible in ClickUp going forward.
 
@@ -163,7 +163,7 @@ A detailed roadmap and delivery plan has been created (`ROADMAP-AND-DELIVERY-PLA
 | Person | Role | Context |
 |---|---|---|
 | **Moj Mahdara** | CEO, Kinship Ventures | Client. Wants operational AI layer + relationship tool. Frustrated with pace. Direct communicator. |
-| **Briell Huddleston** | Operations / Systems Strategist | Manages Airtable data, ClickUp. Owns Lovable case study. Not PM'ing Gabe. |
+| **Briell Huddleston** | Operations / Systems Strategist | Manages Airtable data, ClickUp. Owns Lovable case study. Not PM'ing the technical build. |
 | **Nicole Camacho** | Financial Controller | Handles contract, payments, SOW. cc'd on escalation email. |
 | **Mariana Dominguez** | Operations | cc'd on escalation. Involved in process/accountability tracking. |
 | **Gabriela Trujillo** | Media / Case Study | Owns Lovable case study narrative. Pushed back on "shoehorning." |
@@ -182,7 +182,7 @@ A detailed roadmap and delivery plan has been created (`ROADMAP-AND-DELIVERY-PLA
 | Design System | `DESIGN.md` | Typography, colors, component specs |
 | Architecture | `.planning/research/ARCHITECTURE.md` | System architecture, component map |
 | Engagement Memo | `docs/engagement-memo.md` | Week 5 status summary (pre-escalation) |
-| SOW | `SOW - AI & Technical Specialist - Gabe.docx` | Original scope of work |
+| SOW | `SOW - AI & Technical Specialist.docx` | Original scope of work |
 | Trolley CRM Reference | `2026 Trolley CRM.pdf` | Visual design reference from Moj |
 | Supabase Schema | `supabase/schema.sql` | Ready for migration |
 | Airtable Skill | `skills/kinship-brain/SKILL.md` | AI assistant's guide to querying Airtable |

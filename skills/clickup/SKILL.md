@@ -18,7 +18,7 @@ When the user asks "anything new in clickup" or similar, run this full sequence:
 # 1. @mentions (inbox)
 cup inbox --days 7
 
-# 2. Recently updated tasks assigned to Gabriel
+# 2. Recently updated tasks assigned to the configured user
 cup inbox --days 7
 
 # 3. Current assigned tasks
@@ -30,7 +30,7 @@ for ch in "8cqbk2w-71137" "8cqbk2w-71937"; do
     "https://api.clickup.com/api/v3/workspaces/9017085020/chat/channels/$ch/messages?limit=5"
 done
 
-# 5. Gabe's deliverables list - tasks updated in last 24h
+# 5. configured deliverables list - tasks updated in last 24h
 curl -s -H "Authorization: $CLICKUP_API_KEY" \
   "https://api.clickup.com/api/v2/list/901711757325/task?date_updated_gt=$(python3 -c 'import time; print(int((time.time()-86400)*1000))')&assignees[]=95389616"
 ```
@@ -46,7 +46,7 @@ Summarize: new mentions, task changes by others, chat messages worth noting. Ski
 ## Workspace
 
 - **Workspace ID:** `9017085020` (Moj Mahdara / Trolley HQ)
-- **Gabe's user ID:** `95389616`
+- **Configured user ID:** `95389616`
 - **Auth:** `$CLICKUP_API_KEY` env var. v2 uses raw token in `Authorization` header (no Bearer). v3 same.
 
 ## Preferred Interface: `cup` CLI for tasks, raw API for chat
@@ -71,7 +71,7 @@ Notes:
 
 | ID | Name | Email |
 |----|------|-------|
-| 95389616 | Gabriel Murray | gabriel@withtrolley.ai |
+| 95389616 | Configured user | [redacted] |
 | 89337602 | Briell Huddleston | relationshipmanager@withtrolley.ai |
 | 89137173 | Moj Mahdara | moj@kinshipventures.co |
 | 75491783 | Gaby Trujillo | gaby@withtrolley.com |
@@ -86,7 +86,7 @@ Notes:
 | 60117476 | Roya Rastegar | royazrastegar@gmail.com |
 | 150082954 | Daniela Liberatoscioli | dani.libe02@gmail.com |
 
-## Chat Channels (Gabe is member of all)
+## Chat Channels (configured user is member of all)
 
 | Channel ID | Name | Type |
 |------------|------|------|
@@ -94,7 +94,7 @@ Notes:
 | 8cqbk2w-71937 | general-int-production | CHANNEL |
 | 8cqbk2w-71177 | int-ops-hr-general | CHANNEL |
 | 8cqbk2w-71797 | trolley-general | CHANNEL |
-| 6-901711757325-8 | Moj RM - Gabe's Deliverables | CHANNEL (list) |
+| 6-901711757325-8 | Moj RM Deliverables | CHANNEL (list) |
 | 6-901711774022-8 | Trolley Founder Suite - Briell | CHANNEL (list) |
 | 6-901710503665-8 | Team Backlog | CHANNEL (list) |
 | 4-90173895815-8 | Systems & AI | CHANNEL (space) |
@@ -120,7 +120,7 @@ Refresh archive: run the python script pattern from the session that created the
 
 | List ID | Name | Folder |
 |---------|------|--------|
-| 901711757325 | Moj RM - Gabe's Deliverables | Systems Ops |
+| 901711757325 | Moj RM Deliverables | Systems Ops |
 | 901711774022 | Trolley Founder Suite - Briell's Deliverables | Systems Ops |
 | 901710503665 | Team Backlog | Systems Ops |
 
@@ -137,7 +137,7 @@ Refresh archive: run the python script pattern from the session that created the
 
 ## Preferred Interface: CLI (tasks, docs, members)
 
-Use the `cup` CLI for task operations. It is already configured for Gabriel Murray on this machine.
+Use the `cup` CLI for task operations. It is already configured for this workspace.
 
 ### Quick Commands
 ```bash

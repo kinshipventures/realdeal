@@ -4,9 +4,9 @@
 
 Use this combination:
 
-- Shell: Variant B from [shell-variants.md](/Users/gabrielmurray/dev/realdeal/docs/design-boards/shell-variants.md)
-- Dashboard: Variant B from [dashboard-variants.md](/Users/gabrielmurray/dev/realdeal/docs/design-boards/dashboard-variants.md)
-- Record Detail: Variant A from [record-detail-variants.md](/Users/gabrielmurray/dev/realdeal/docs/design-boards/record-detail-variants.md)
+- Shell: Variant B from [shell-variants.md](shell-variants.md)
+- Dashboard: Variant B from [dashboard-variants.md](dashboard-variants.md)
+- Record Detail: Variant A from [record-detail-variants.md](record-detail-variants.md)
 
 ## Why This Combo
 

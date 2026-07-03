@@ -31,7 +31,7 @@ describe('Workspace helpers', () => {
 
   it('derives a starter workspace name from email', () => {
     expect(deriveWorkspaceName('systemsstrategist@withtrolley.ai')).toBe("Systemsstrategist's Team")
-    expect(deriveWorkspaceName('gabriel.murray@withtrolley.ai')).toBe("Gabriel Murray's Team")
+    expect(deriveWorkspaceName('jordan.lee@withtrolley.ai')).toBe("Jordan Lee's Team")
     expect(deriveWorkspaceName(null)).toBe('My Team')
   })
 

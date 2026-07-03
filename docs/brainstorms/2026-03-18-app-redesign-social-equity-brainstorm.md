@@ -1,7 +1,7 @@
 # App Redesign: Social Equity Relationship Manager
 
 **Date:** 2026-03-18
-**Participants:** Moj Mahdara (product owner), Gabe Murray (dev)
+**Participants:** Moj Mahdara (product owner), developer
 **Status:** Brainstorm complete
 
 ---

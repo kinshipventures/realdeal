@@ -3,7 +3,7 @@
 ## Current Reference
 
 - Routes: `/pods`, `/pods/:podName`
-- Page source: [src/components/map/OrbMap.tsx](/Users/gabrielmurray/dev/realdeal/src/components/map/OrbMap.tsx)
+- Page source: [src/components/map/OrbMap.tsx](../../src/components/map/OrbMap.tsx)
 
 ## What This Page Needs To Do
 

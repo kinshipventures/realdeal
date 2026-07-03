@@ -3,7 +3,7 @@
 ## Current Reference
 
 - Route: `/contacts`
-- Page source: [src/components/records/RecordsList.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordsList.tsx)
+- Page source: [src/components/records/RecordsList.tsx](../../src/components/records/RecordsList.tsx)
 
 ## What This Page Needs To Do
 

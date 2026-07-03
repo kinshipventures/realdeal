@@ -1,6 +1,6 @@
 # Kinship Brain — Product Roadmap & Delivery Plan
 
-**Prepared by:** Gabriel Murray
+**Prepared by:** Real Deal team
 **Date:** March 29, 2026
 **Timeline:** 3–4 weeks (March 31 – April 25)
 **Hours:** 15 hrs/week

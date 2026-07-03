@@ -35,7 +35,7 @@ Kinship Brain is Moj's relationship intelligence app — not a CRM. It's a visua
 
 **Where it lives**
 
-The app runs in a browser. It connects directly to the Airtable base — no backend server. To use it, open the URL Gabe provided and bookmark it. There's no login screen.
+The app runs in a browser. It connects directly to the Airtable base — no backend server. To use it, open the provided URL and bookmark it. There's no login screen.
 
 ---
 
@@ -309,10 +309,10 @@ The app works on mobile browsers today but isn't optimized for all workflows (lo
 
 ## Escalation Contact
 
-**Developer:** Gabe Murray
+**Developer:** Real Deal support
 
-**For bugs or questions after March 31:** [Gabe to fill in contact method — email or phone]
+**For bugs or questions after March 31:** [Contact method to be confirmed]
 
 **For Airtable issues:** Airtable support at [support.airtable.com](https://support.airtable.com). You can also access Airtable's built-in help at the bottom of any Airtable view.
 
-**If the app won't load:** First try a hard refresh (Cmd+Shift+R on Mac). If the Airtable token has expired, the app will show a blank screen or an error — this can be fixed by updating the token in the deployment settings (Gabe can do this remotely in under 5 minutes).
+**If the app won't load:** First try a hard refresh (Cmd+Shift+R on Mac). If the Airtable token has expired, the app will show a blank screen or an error — this can be fixed by updating the token in the deployment settings.

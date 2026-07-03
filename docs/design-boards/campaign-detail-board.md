@@ -3,7 +3,7 @@
 ## Current Reference
 
 - Route: `/campaigns/:id`
-- Page source: [src/components/campaigns/CampaignDetailRoute.tsx](/Users/gabrielmurray/dev/realdeal/src/components/campaigns/CampaignDetailRoute.tsx)
+- Page source: [src/components/campaigns/CampaignDetailRoute.tsx](../../src/components/campaigns/CampaignDetailRoute.tsx)
 
 ## What This Page Needs To Do
 

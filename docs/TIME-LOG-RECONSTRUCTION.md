@@ -76,7 +76,7 @@
 | Git history (kinshipbrain repo) | `github.com/gkmur/kinshipbrain` | All coding work — timestamps, commit messages, diffs |
 | Git history (mrm repo) | `github.com/gkmur/mrm` | Lovable-compat duplicate — same commits + Lovable branch |
 | Granola transcripts | `~/clawd/memory/granola/` | 9 meeting recordings with timestamps |
-| Email thread | iCloud: gabriel@gabrielmurray.me | SOW thread with Moj, Briell, Nicole, Mariana, Gaby |
+| Email thread | iCloud: [redacted] | SOW thread with Moj, Briell, Nicole, Mariana, Gaby |
 | Vercel deploy logs | mojrm.vercel.app | Deploy timestamps match git pushes |
 | Mac Mini system logs | Mac Mini (Tailscale) | Setup/provisioning evidence for Week 1 |
 

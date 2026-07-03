@@ -2,9 +2,9 @@
 
 ## Current Reference
 
-- Nurturing: [src/components/nurturing/NurturingHub.tsx](/Users/gabrielmurray/dev/realdeal/src/components/nurturing/NurturingHub.tsx)
-- Import: [src/components/import/ImportPanel.tsx](/Users/gabrielmurray/dev/realdeal/src/components/import/ImportPanel.tsx)
-- Settings: [src/components/settings/AccountPage.tsx](/Users/gabrielmurray/dev/realdeal/src/components/settings/AccountPage.tsx)
+- Nurturing: [src/components/nurturing/NurturingHub.tsx](../../src/components/nurturing/NurturingHub.tsx)
+- Import: [src/components/import/ImportPanel.tsx](../../src/components/import/ImportPanel.tsx)
+- Settings: [src/components/settings/AccountPage.tsx](../../src/components/settings/AccountPage.tsx)
 
 ## Purpose
 

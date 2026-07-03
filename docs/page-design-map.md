@@ -35,8 +35,8 @@ Before redesigning any one page, treat these as shared across the app:
 - status/tag behavior
 
 Current shell source:
-- [src/App.tsx](/Users/gabrielmurray/dev/realdeal/src/App.tsx)
-- [src/components/nav/Sidebar.tsx](/Users/gabrielmurray/dev/realdeal/src/components/nav/Sidebar.tsx)
+- [src/App.tsx](../src/App.tsx)
+- [src/components/nav/Sidebar.tsx](../src/components/nav/Sidebar.tsx)
 
 Current shell read:
 - fixed left rail
@@ -55,7 +55,7 @@ These are the first screens to map and redesign.
 ### 1. Dashboard
 
 - Route: `/dashboard`
-- Source: [src/components/dashboard/Dashboard.tsx](/Users/gabrielmurray/dev/realdeal/src/components/dashboard/Dashboard.tsx)
+- Source: [src/components/dashboard/Dashboard.tsx](../src/components/dashboard/Dashboard.tsx)
 - Job: help the user decide what matters today
 - Current structure:
   - configurable widget-based page
@@ -74,7 +74,7 @@ These are the first screens to map and redesign.
 ### 2. Records List
 
 - Route: `/contacts`
-- Source: [src/components/records/RecordsList.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordsList.tsx)
+- Source: [src/components/records/RecordsList.tsx](../src/components/records/RecordsList.tsx)
 - Job: scan and filter people fast
 - Current structure:
   - people / companies toggle
@@ -92,7 +92,7 @@ These are the first screens to map and redesign.
 ### 3. Record Detail
 
 - Route: `/contact/:id`
-- Source: [src/components/records/RecordPage.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordPage.tsx)
+- Source: [src/components/records/RecordPage.tsx](../src/components/records/RecordPage.tsx)
 - Job: understand one relationship and act on it
 - Current structure:
   - header
@@ -112,7 +112,7 @@ These are the first screens to map and redesign.
 ### 4. Campaign Overview
 
 - Route: `/campaigns`
-- Source: [src/components/campaigns/CampaignOverview.tsx](/Users/gabrielmurray/dev/realdeal/src/components/campaigns/CampaignOverview.tsx)
+- Source: [src/components/campaigns/CampaignOverview.tsx](../src/components/campaigns/CampaignOverview.tsx)
 - Job: browse active and completed campaigns
 - Current structure:
   - title and create button
@@ -130,7 +130,7 @@ These are the first screens to map and redesign.
 ### 5. Campaign Detail
 
 - Route: `/campaigns/:id`
-- Source: [src/components/campaigns/CampaignDetailRoute.tsx](/Users/gabrielmurray/dev/realdeal/src/components/campaigns/CampaignDetailRoute.tsx)
+- Source: [src/components/campaigns/CampaignDetailRoute.tsx](../src/components/campaigns/CampaignDetailRoute.tsx)
 - Job: run one campaign day to day
 - Current structure:
   - campaign header area
@@ -151,7 +151,7 @@ These are the first screens to map and redesign.
 ### 6. Pods / Map
 
 - Routes: `/pods`, `/pods/:podName`
-- Source: [src/components/map/OrbMap.tsx](/Users/gabrielmurray/dev/realdeal/src/components/map/OrbMap.tsx)
+- Source: [src/components/map/OrbMap.tsx](../src/components/map/OrbMap.tsx)
 - Job: navigate the relationship model spatially
 - Current structure:
   - orbital map
@@ -170,7 +170,7 @@ These are the first screens to map and redesign.
 ### 7. Category Table
 
 - Route: `/category/:id`
-- Source: [src/components/contacts/CategoryTable.tsx](/Users/gabrielmurray/dev/realdeal/src/components/contacts/CategoryTable.tsx)
+- Source: [src/components/contacts/CategoryTable.tsx](../src/components/contacts/CategoryTable.tsx)
 - Job: work through one category with more depth than the map
 - Current structure:
   - breadcrumb
@@ -190,19 +190,19 @@ These matter, but they should follow the patterns established by the core screen
 ### Nurturing Hub
 
 - Route: `/dashboard/nurturing`
-- Source: [src/components/nurturing/NurturingHub.tsx](/Users/gabrielmurray/dev/realdeal/src/components/nurturing/NurturingHub.tsx)
+- Source: [src/components/nurturing/NurturingHub.tsx](../src/components/nurturing/NurturingHub.tsx)
 - Pattern: multi-section action page
 
 ### Import
 
 - Route: `/import`
-- Source: [src/components/import/ImportPanel.tsx](/Users/gabrielmurray/dev/realdeal/src/components/import/ImportPanel.tsx)
+- Source: [src/components/import/ImportPanel.tsx](../src/components/import/ImportPanel.tsx)
 - Pattern: guided flow / setup page
 
 ### Settings
 
 - Route: `/account`
-- Source: [src/components/settings/AccountPage.tsx](/Users/gabrielmurray/dev/realdeal/src/components/settings/AccountPage.tsx)
+- Source: [src/components/settings/AccountPage.tsx](../src/components/settings/AccountPage.tsx)
 - Pattern: narrow settings page with tabs
 
 ### Learn / Changelog / Onboarding
@@ -262,7 +262,7 @@ That does not block the page map itself, but it does block a full screenshot set
 
 ## Source Of Truth
 
-- Product direction: [DESIGN.md](/Users/gabrielmurray/dev/realdeal/DESIGN.md)
-- Quick implementation guide: [docs/design-system.md](/Users/gabrielmurray/dev/realdeal/docs/design-system.md)
-- Screen map: [docs/page-design-map.md](/Users/gabrielmurray/dev/realdeal/docs/page-design-map.md)
-- Design boards: [docs/design-boards/README.md](/Users/gabrielmurray/dev/realdeal/docs/design-boards/README.md)
+- Product direction: [DESIGN.md](../DESIGN.md)
+- Quick implementation guide: [docs/design-system.md](design-system.md)
+- Screen map: [docs/page-design-map.md](page-design-map.md)
+- Design boards: [docs/design-boards/README.md](design-boards/README.md)

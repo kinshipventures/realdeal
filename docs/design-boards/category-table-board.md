@@ -3,7 +3,7 @@
 ## Current Reference
 
 - Route: `/category/:id`
-- Page source: [src/components/contacts/CategoryTable.tsx](/Users/gabrielmurray/dev/realdeal/src/components/contacts/CategoryTable.tsx)
+- Page source: [src/components/contacts/CategoryTable.tsx](../../src/components/contacts/CategoryTable.tsx)
 
 ## What This Page Needs To Do
 

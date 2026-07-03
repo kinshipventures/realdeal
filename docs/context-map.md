@@ -15,7 +15,7 @@
 | Mar 11 | Briell catchup | Airtable confirmed as DB. Two-part system: CRM nurturing (Airtable + app) + deal pipeline (ClickUp board). Prototype ready to show Moj. |
 | Mar 12 | Moj + Briell 1:1 | CRM timeline vision — drag emails/texts to contacts, history backfill, iMessage bot setup. Feature brain dump requested. |
 | Mar 18 | In-person dev session | The big one. Social equity vision brainstormed with Moj. Inline category creation built live. Trolley CRM PDF as design reference. Gabby on board for Lovable case study (separate project). |
-| Mar 23 | Moj + Brielle + Gabriela | Lovable case study fully decoupled from Kinship Brain. Gabriela flagged duplicate work isn't genuine for case study. Brielle pivots to separate Lovable project (NotebookLM-style content tool). Gabe continues Airtable+Claude Code build independently. |
+| Mar 23 | Moj + Brielle + Gabriela | Lovable case study fully decoupled from Kinship Brain. Gabriela flagged duplicate work isn't genuine for case study. Brielle pivots to separate Lovable project (NotebookLM-style content tool). Development continues independently. |
 
 **Current status:** Week 5 of 6. Dashboard, equity scoring, nav shell, search, birthdays shipped. Visual redesign (Trolley CRM alignment) complete. Data layer solid. Wrapped slides and campaigns remain.
 

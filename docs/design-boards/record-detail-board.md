@@ -3,11 +3,11 @@
 ## Current Reference
 
 - Route: `/contact/:id`
-- Page source: [src/components/records/RecordPage.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordPage.tsx)
+- Page source: [src/components/records/RecordPage.tsx](../../src/components/records/RecordPage.tsx)
 - Main pieces:
-  - [src/components/records/RecordHeader.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordHeader.tsx)
-  - [src/components/records/RecordWidgets.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordWidgets.tsx)
-  - [src/components/records/RecordTimeline.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordTimeline.tsx)
+  - [src/components/records/RecordHeader.tsx](../../src/components/records/RecordHeader.tsx)
+  - [src/components/records/RecordWidgets.tsx](../../src/components/records/RecordWidgets.tsx)
+  - [src/components/records/RecordTimeline.tsx](../../src/components/records/RecordTimeline.tsx)
 
 ## What This Page Needs To Do
 

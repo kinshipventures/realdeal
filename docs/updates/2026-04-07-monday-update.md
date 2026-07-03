@@ -45,4 +45,4 @@ Week 2 theme: **"Context flows in"**
 
 You can view the latest changes here: https://real-deal.lovable.app/changelog -- check it out when you get a chance.
 
-- Gabe
+- Real Deal team

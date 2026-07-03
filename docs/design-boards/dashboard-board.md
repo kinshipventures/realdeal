@@ -3,7 +3,7 @@
 ## Current Reference
 
 - Live current capture: [/tmp/realdeal-current.png](/tmp/realdeal-current.png)
-- Page source: [src/components/dashboard/Dashboard.tsx](/Users/gabrielmurray/dev/realdeal/src/components/dashboard/Dashboard.tsx)
+- Page source: [src/components/dashboard/Dashboard.tsx](../../src/components/dashboard/Dashboard.tsx)
 
 ## What This Page Needs To Do
 

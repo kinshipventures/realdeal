@@ -4,9 +4,9 @@
 
 - Live current capture: [/tmp/realdeal-current.png](/tmp/realdeal-current.png)
 - Shell source:
-  - [src/App.tsx](/Users/gabrielmurray/dev/realdeal/src/App.tsx)
-  - [src/components/nav/Sidebar.tsx](/Users/gabrielmurray/dev/realdeal/src/components/nav/Sidebar.tsx)
-  - [src/index.css](/Users/gabrielmurray/dev/realdeal/src/index.css)
+  - [src/App.tsx](../../src/App.tsx)
+  - [src/components/nav/Sidebar.tsx](../../src/components/nav/Sidebar.tsx)
+  - [src/index.css](../../src/index.css)
 
 ## What The Current Shell Already Gets Right
 

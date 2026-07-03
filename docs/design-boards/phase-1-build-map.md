@@ -8,9 +8,9 @@ Map the design work to the real app files before implementation starts.
 
 ### Main files
 
-- [src/App.tsx](/Users/gabrielmurray/dev/realdeal/src/App.tsx)
-- [src/components/nav/Sidebar.tsx](/Users/gabrielmurray/dev/realdeal/src/components/nav/Sidebar.tsx)
-- [src/index.css](/Users/gabrielmurray/dev/realdeal/src/index.css)
+- [src/App.tsx](../../src/App.tsx)
+- [src/components/nav/Sidebar.tsx](../../src/components/nav/Sidebar.tsx)
+- [src/index.css](../../src/index.css)
 
 ### What changes here
 
@@ -23,8 +23,8 @@ Map the design work to the real app files before implementation starts.
 
 ### Main files
 
-- [src/components/dashboard/Dashboard.tsx](/Users/gabrielmurray/dev/realdeal/src/components/dashboard/Dashboard.tsx)
-- dashboard widgets under [src/components/dashboard/widgets](/Users/gabrielmurray/dev/realdeal/src/components/dashboard/widgets)
+- [src/components/dashboard/Dashboard.tsx](../../src/components/dashboard/Dashboard.tsx)
+- dashboard widgets under [src/components/dashboard/widgets](../../src/components/dashboard/widgets)
 
 ### What changes here
 
@@ -36,10 +36,10 @@ Map the design work to the real app files before implementation starts.
 
 ### Main files
 
-- [src/components/records/RecordPage.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordPage.tsx)
-- [src/components/records/RecordHeader.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordHeader.tsx)
-- [src/components/records/RecordWidgets.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordWidgets.tsx)
-- [src/components/records/RecordTimeline.tsx](/Users/gabrielmurray/dev/realdeal/src/components/records/RecordTimeline.tsx)
+- [src/components/records/RecordPage.tsx](../../src/components/records/RecordPage.tsx)
+- [src/components/records/RecordHeader.tsx](../../src/components/records/RecordHeader.tsx)
+- [src/components/records/RecordWidgets.tsx](../../src/components/records/RecordWidgets.tsx)
+- [src/components/records/RecordTimeline.tsx](../../src/components/records/RecordTimeline.tsx)
 
 ### What changes here
 
@@ -52,8 +52,8 @@ Map the design work to the real app files before implementation starts.
 
 ### Main files
 
-- [src/components/campaigns/CampaignDetailRoute.tsx](/Users/gabrielmurray/dev/realdeal/src/components/campaigns/CampaignDetailRoute.tsx)
-- board and table files under [src/components/campaigns](/Users/gabrielmurray/dev/realdeal/src/components/campaigns)
+- [src/components/campaigns/CampaignDetailRoute.tsx](../../src/components/campaigns/CampaignDetailRoute.tsx)
+- board and table files under [src/components/campaigns](../../src/components/campaigns)
 
 ### What changes here
 
