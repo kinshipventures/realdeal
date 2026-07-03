@@ -1167,6 +1167,8 @@ export interface WorkspaceInvite {
 
 export interface IncomingWorkspaceInvite extends WorkspaceInvite {
   workspace_name: string | null
+  invited_by_display_name: string | null
+  invited_by_email: string | null
 }
 
 export interface AcceptedWorkspaceInvite {
@@ -1242,8 +1244,24 @@ export async function fetchIncomingWorkspaceInvites(email?: string | null): Prom
     .order('created_at', { ascending: false })
   if (error) throw error
 
-  return ((data ?? []) as any[]).map(invite => {
+  const invites = (data ?? []) as any[]
+  const inviterIds = [...new Set(invites.map(invite => invite.invited_by).filter(Boolean))]
+  const profilesById = new Map<string, ProfileRow>()
+  if (inviterIds.length > 0) {
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', inviterIds)
+    if (profilesError) throw profilesError
+
+    for (const profile of (profiles ?? []) as ProfileRow[]) {
+      profilesById.set(profile.id, profile)
+    }
+  }
+
+  return invites.map(invite => {
     const workspace = Array.isArray(invite.workspaces) ? invite.workspaces[0] : invite.workspaces
+    const inviter = profilesById.get(invite.invited_by)
     return {
       id: invite.id,
       workspace_id: invite.workspace_id,
@@ -1254,6 +1272,8 @@ export async function fetchIncomingWorkspaceInvites(email?: string | null): Prom
       created_at: invite.created_at,
       invited_by: invite.invited_by,
       workspace_name: workspace?.name ?? null,
+      invited_by_display_name: inviter?.display_name ?? null,
+      invited_by_email: inviter?.email ?? null,
     }
   })
 }

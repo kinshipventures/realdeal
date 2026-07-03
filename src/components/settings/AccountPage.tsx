@@ -416,17 +416,31 @@ export function AccountPage() {
               <div style={{ borderRadius: 10, border: '1px solid var(--edge)', overflow: 'hidden' }}>
                 {incomingInvites.map(invite => {
                   const busy = incomingInviteActionId === invite.id
+                  const inviterName = invite.invited_by_display_name?.trim()
+                  const inviterEmail = invite.invited_by_email?.trim()
+                  const inviterLabel = inviterName && inviterEmail
+                    ? `${inviterName} (${inviterEmail})`
+                    : inviterEmail || inviterName || 'a Real Deal workspace member'
+                  const sentDate = invite.created_at
+                    ? new Date(invite.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : null
                   return (
                     <div key={invite.id} style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
                       borderBottom: '1px solid var(--divider)',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 2 }}>
+                          Workspace invitation
+                        </div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {invite.workspace_name || 'Workspace invite'}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          Full access invite for {invite.email}
+                          From {inviterLabel}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Full access invite for {invite.email}{sentDate ? ` - Sent ${sentDate}` : ''}
                         </div>
                       </div>
                       <button type="button" onClick={() => handleAcceptIncomingInvite(invite)} disabled={busy}
