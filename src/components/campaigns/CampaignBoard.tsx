@@ -23,6 +23,7 @@ import { getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } 
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
 import { primarySharedContactMeta, type SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
+import { isProjectedSharedCampaignContact } from '@/lib/sharedContactProjection'
 
 interface Props {
   campaign: Campaign
@@ -135,6 +136,7 @@ export function CampaignBoard({
 
     const draggedCc = campaignContacts.find(cc => cc.id === activeId)
     if (!draggedCc) return
+    if (isProjectedSharedCampaignContact(draggedCc)) return
 
     if (overId === '__new_stage__') {
       setPendingDragCardId(activeId)
@@ -270,6 +272,7 @@ export function CampaignBoard({
   function handleTogglePriority(ccId: string) {
     const cc = campaignContacts.find(c => c.id === ccId)
     if (!cc) return
+    if (isProjectedSharedCampaignContact(cc)) return
     const next = !cc.is_priority
     onContactsChange(campaignContacts.map(c => c.id === ccId ? { ...c, is_priority: next } : c))
     updateCampaignContact(ccId, { is_priority: next }).catch(() => {
@@ -279,6 +282,14 @@ export function CampaignBoard({
 
   async function handleBulkMove(targetStageId: string) {
     const ids = Array.from(selectedIds)
+      .filter(id => {
+        const cc = campaignContacts.find(item => item.id === id)
+        return cc ? !isProjectedSharedCampaignContact(cc) : false
+      })
+    if (ids.length === 0) {
+      setSelectedIds(new Set())
+      return
+    }
     const now = new Date().toISOString()
     const prevContacts = [...campaignContacts]
     const targetName = stages.find(s => s.id === targetStageId)?.name ?? ''
@@ -426,6 +437,7 @@ export function CampaignBoard({
               isDragOverlay
               visibleFields={visibleCardFields}
               shareMeta={primarySharedContactMeta(sharedContactMetaById?.get(activeDragContact.id))}
+              readOnly={isProjectedSharedCampaignContact(activeDragCc)}
             />
           ) : null}
         </DragOverlay>

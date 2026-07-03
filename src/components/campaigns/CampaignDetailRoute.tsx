@@ -11,8 +11,9 @@ import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { CampaignPermissionsPanel } from './CampaignPermissionsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
-import { recordCollaborationAuditEvent } from '@/lib/collaboration'
+import { getSharedContactsWithMe, recordCollaborationAuditEvent } from '@/lib/collaboration'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
+import { mergeContactsWithProjectedSharedContacts, projectedSharedCampaignContacts, projectSharedContactsToWorkspace } from '@/lib/sharedContactProjection'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
@@ -166,9 +167,8 @@ export function CampaignDetailRoute() {
 
   const loadData = useCallback(async () => {
     if (!id) return
-    const [allCampaigns, ct, allPods] = await Promise.all([getAllCampaigns(), getContacts(), getPods()])
+    const [allCampaigns, localContacts, allPods, incomingSharedContacts] = await Promise.all([getAllCampaigns(), getContacts(), getPods(), getSharedContactsWithMe()])
     setCampaigns(allCampaigns)
-    setContacts(ct)
     setPods(allPods)
     const camp = allCampaigns.find(c => c.id === id)
     setCampaign(camp ?? null)
@@ -177,12 +177,24 @@ export function CampaignDetailRoute() {
         getStagesForCampaign(id),
         getCampaignContacts(id),
       ])
+      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+        pods: allPods,
+        categories: [],
+        campaigns: allCampaigns,
+        contacts: localContacts,
+      })
+      const mergedContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
+      const sharedCampaignContacts = projectedSharedCampaignContacts(incomingSharedContacts, camp, s)
+        .filter(sharedCc => !cc.some(localCc => localCc.contact_id === sharedCc.contact_id))
+      setContacts(mergedContacts)
       setStages(s)
-      setCampaignContacts(cc)
+      setCampaignContacts([...cc, ...sharedCampaignContacts])
       // Fetch interactions for equity scoring
       const contactIds = [...new Set(cc.map(c => c.contact_id))]
       const ixResults = await Promise.all(contactIds.map(cid => getInteractions(cid).then(ix => [cid, ix] as const)))
       setInteractionsMap(new Map(ixResults))
+    } else {
+      setContacts(localContacts)
     }
     setLoading(false)
   }, [id])

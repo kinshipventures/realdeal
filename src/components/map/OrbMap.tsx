@@ -16,6 +16,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { getPods, getContacts, getAllInteractions, getCategories, isOverdue } from '../../lib/data'
+import { getSharedContactsWithMe } from '../../lib/collaboration'
 import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type ScoreLabel } from '../../lib/equity'
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import { POD_SHIFT_COLORS } from './SolidOrb'
@@ -32,6 +33,7 @@ import { PodCreateModal } from '../pods/PodCreateModal'
 import { PodDetailPage } from '../pods/PodDetailPage'
 import { useEscape } from '../../lib/escapeStack'
 import { groupVisibleContactsByPod } from '../../lib/podMembership'
+import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => (
@@ -749,9 +751,15 @@ export function OrbMap() {
   }, [activeHighlights, setNodes])
 
   async function loadPodData() {
-    const [allPods, allContacts, allInteractions, allCategoriesRaw] = await Promise.all([
-      getPods(), getContacts(), getAllInteractions(), getCategories(),
+    const [allPods, localContacts, allInteractions, allCategoriesRaw, incomingSharedContacts] = await Promise.all([
+      getPods(), getContacts(), getAllInteractions(), getCategories(), getSharedContactsWithMe(),
     ])
+    const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+      pods: allPods,
+      categories: allCategoriesRaw,
+      contacts: localContacts,
+    })
+    const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
 
     const podById = new Map(allPods.map(pod => [pod.id, pod]))
     const countsByPod: Record<string, PodCounts> = {}

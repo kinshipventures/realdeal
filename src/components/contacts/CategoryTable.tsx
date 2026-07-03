@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { getContacts, getCategories, getPods, getAllInteractions, isOverdue } from '../../lib/data'
+import { getSharedContactsWithMe } from '../../lib/collaboration'
 import { contactEquityScore, scoreLabel } from '../../lib/equity'
-import type { Contact, Pod, Cadence } from '../../lib/types'
+import type { Contact, Pod, Category, Cadence } from '../../lib/types'
 import { formatRelativeTime } from '../../lib/utils'
 import { Avatar } from '../ui'
 import { EmptyState } from '../empty/EmptyState'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
-import { primarySharedContactMeta, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
+import { ContactDetail } from './ContactDetail'
+import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
+import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
@@ -33,25 +36,33 @@ export function CategoryTable() {
   const [categoryName, setCategoryName] = useState('')
   const [podName, setPodName] = useState('')
   const [podId, setPodId] = useState<string | null>(null)
+  const [allPods, setAllPods] = useState<Pod[]>([])
+  const [allCategories, setAllCategories] = useState<Category[]>([])
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [loading, setLoading] = useState(true)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir }>({ col: 'equity', dir: 'desc' })
   const [filterOverdue, setFilterOverdue] = useState(false)
   const [filterCooling, setFilterCooling] = useState(false)
   const [search, setSearch] = useState('')
   const sharedContactMetaById = useSharedContactBadges({ contacts })
+  const selectedContactShareAccess = useMemo(
+    () => sharedContactBadgeMetaToAccess(primarySharedContactMeta(selectedContact ? sharedContactMetaById.get(selectedContact.id) : undefined)),
+    [selectedContact, sharedContactMetaById],
+  )
 
   useEffect(() => {
     if (!id) { navigate('/pods'); return }
     let stale = false
 
     async function load() {
-      const [categoryContacts, categories, pods, allInteractions] = await Promise.all([
-        getContacts(id),
+      const [localContacts, categories, pods, allInteractions, incomingSharedContacts] = await Promise.all([
+        getContacts(),
         getCategories(),
         getPods(),
         getAllInteractions(),
+        getSharedContactsWithMe(),
       ])
       if (stale) return
 
@@ -59,10 +70,19 @@ export function CategoryTable() {
       if (!cat) { navigate('/pods'); return }
 
       const pod = pods.find((p: Pod) => p.id === cat.list_id)
+      setAllPods(pods)
+      setAllCategories(categories)
       setCategoryName(cat.name)
       setPodName(pod?.name ?? '')
       setPodId(pod?.id ?? null)
       if (pod?.cadence) setCadence(pod.cadence)
+      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+        pods,
+        categories,
+        contacts: localContacts,
+      })
+      const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
+      const categoryContacts = allContacts.filter(contact => contact.category_ids.includes(id))
       setContacts(categoryContacts)
 
       const eqMap: Record<string, number> = {}
@@ -147,6 +167,39 @@ export function CategoryTable() {
         : { col, dir: 'desc' }
     )
   }, [])
+
+  function handleContactSaved(updated: Contact) {
+    setContacts(prev => prev.map(contact => {
+      if (contact.id !== updated.id) return contact
+      const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(contact.id))
+      if (shareMeta?.direction !== 'shared_with_me') return updated
+      return {
+        ...contact,
+        ...updated,
+        list_ids: contact.list_ids,
+        category_ids: contact.category_ids,
+        primary_list_id: contact.primary_list_id,
+        company_record_id: contact.company_record_id,
+        company_ids: contact.company_ids,
+        custom_fields: { ...updated.custom_fields, ...contact.custom_fields },
+      }
+    }))
+    setSelectedContact(prev => {
+      if (!prev || prev.id !== updated.id) return prev
+      const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(prev.id))
+      if (shareMeta?.direction !== 'shared_with_me') return updated
+      return {
+        ...prev,
+        ...updated,
+        list_ids: prev.list_ids,
+        category_ids: prev.category_ids,
+        primary_list_id: prev.primary_list_id,
+        company_record_id: prev.company_record_id,
+        company_ids: prev.company_ids,
+        custom_fields: { ...updated.custom_fields, ...prev.custom_fields },
+      }
+    })
+  }
 
   if (loading) {
     return (
@@ -353,7 +406,13 @@ export function CategoryTable() {
                 return (
                   <tr
                     key={contact.id}
-                    onClick={() => navigate(`/contact/${contact.id}`)}
+                    onClick={() => {
+                      if (shareMeta?.direction === 'shared_with_me') {
+                        setSelectedContact(contact)
+                        return
+                      }
+                      navigate(`/contact/${contact.id}`)
+                    }}
                     style={{
                       borderBottom: '1px solid var(--edge)',
                       cursor: 'pointer',
@@ -467,6 +526,22 @@ export function CategoryTable() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedContact && (
+        <ContactDetail
+          contact={selectedContact}
+          categoryId={selectedContact.category_ids[0]}
+          onClose={() => setSelectedContact(null)}
+          onSaved={handleContactSaved}
+          onDeleted={() => {
+            setContacts(prev => prev.filter(contact => contact.id !== selectedContact.id))
+            setSelectedContact(null)
+          }}
+          pods={allPods}
+          categories={allCategories}
+          sharedAccess={selectedContactShareAccess}
+        />
       )}
 
     </div>

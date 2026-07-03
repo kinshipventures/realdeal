@@ -22,6 +22,7 @@ interface Props {
   visibleFields?: Set<string>
   stagger?: number
   shareMeta?: SharedContactBadgeMeta | null
+  readOnly?: boolean
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -56,9 +57,9 @@ function isDueSoon(due: string | null): boolean {
   return diff < 3 * DAY_MS
 }
 
-export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger, shareMeta }: Props) {
+export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger, shareMeta, readOnly = false }: Props) {
   const navigate = useNavigate()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id, disabled: readOnly })
 
   const days = daysInStage(cc.moved_at)
   const isStale = days >= 7
@@ -79,6 +80,7 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
   function handleStarClick(e: React.MouseEvent) {
     e.stopPropagation()
     e.preventDefault()
+    if (readOnly) return
     onTogglePriority(cc.id)
   }
 
@@ -105,12 +107,12 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
         borderRadius: 10,
         border: selected ? '1px solid rgba(37,180,57,0.3)' : '1px solid var(--edge)',
         padding: '12px 14px',
-        cursor: isDragOverlay ? 'grabbing' : 'grab',
+        cursor: readOnly ? 'pointer' : isDragOverlay ? 'grabbing' : 'grab',
         boxShadow: isDragOverlay ? '0 8px 24px rgba(0,0,0,0.12)' : undefined,
         userSelect: 'none',
       }}
-      {...attributes}
-      {...listeners}
+      {...(readOnly ? {} : attributes)}
+      {...(readOnly ? {} : listeners)}
       onClick={onClick}
       className={`cc-card${stagger != null ? ' cc-card-enter' : ''}`}
     >
@@ -148,24 +150,26 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
           )}
         </div>
         {/* Priority star */}
-        <div
-          className="cc-star"
-          onClick={handleStarClick}
-          onPointerDown={(e) => e.stopPropagation()}
-          style={{
-            flexShrink: 0,
-            cursor: 'pointer',
-            opacity: cc.is_priority ? 1 : 0,
-            transition: 'opacity 120ms',
-          }}
-        >
-          <Star
-            size={14}
-            fill={cc.is_priority ? '#F5A623' : 'none'}
-            stroke={cc.is_priority ? '#F5A623' : 'var(--color-text-tertiary)'}
-            strokeWidth={1.5}
-          />
-        </div>
+        {!readOnly && (
+          <div
+            className="cc-star"
+            onClick={handleStarClick}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{
+              flexShrink: 0,
+              cursor: 'pointer',
+              opacity: cc.is_priority ? 1 : 0,
+              transition: 'opacity 120ms',
+            }}
+          >
+            <Star
+              size={14}
+              fill={cc.is_priority ? '#F5A623' : 'none'}
+              stroke={cc.is_priority ? '#F5A623' : 'var(--color-text-tertiary)'}
+              strokeWidth={1.5}
+            />
+          </div>
+        )}
       </div>
 
       {/* Status row: equity pill + time in stage */}

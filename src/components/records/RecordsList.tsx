@@ -16,6 +16,7 @@ import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
+import { projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
@@ -571,10 +572,13 @@ export function RecordsList() {
   )
 
   const sharedWithMeContacts = useMemo(
-    () => incomingSharedContacts
-      .map(snapshot => normalizeSharedContactSnapshotContact(snapshot.contact))
-      .filter(contact => contact.type !== 'Company'),
-    [incomingSharedContacts],
+    () => projectSharedContactsToWorkspace(incomingSharedContacts, {
+      pods,
+      categories,
+      campaigns,
+      contacts,
+    }).filter(contact => contact.type !== 'Company'),
+    [campaigns, categories, contacts, incomingSharedContacts, pods],
   )
 
   const selectedCampaign = useMemo(

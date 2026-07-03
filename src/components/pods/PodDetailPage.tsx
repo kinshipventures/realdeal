@@ -23,11 +23,13 @@ import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { LucideIcon } from '../LucideIcon'
 import { IconPicker } from '../map/IconPicker'
 import { getActiveShareLinks, revokeShareLink } from '../../lib/sharing'
+import { getSharedContactsWithMe } from '../../lib/collaboration'
 import { SharePopover } from '../sharing/SharePopover'
 import { isVisiblePodMember } from '../../lib/podMembership'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
+import { mergeContactsWithProjectedSharedContacts, projectSharedContactsToWorkspace } from '../../lib/sharedContactProjection'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -166,10 +168,10 @@ function lastHumanInteraction(interactions: Interaction[]): { type: InteractionT
   return { type: latest.type, daysAgo }
 }
 
-function DraggableMemberRow({ contact, children }: { contact: Contact; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: contact.id })
+function DraggableMemberRow({ contact, disabled, children }: { contact: Contact; disabled?: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: contact.id, disabled })
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={{ opacity: isDragging ? 0.4 : 1, touchAction: 'none' }}>
+    <div ref={setNodeRef} {...(!disabled ? listeners : {})} {...(!disabled ? attributes : {})} style={{ opacity: isDragging ? 0.4 : 1, touchAction: disabled ? 'auto' : 'none' }}>
       {children}
     </div>
   )
@@ -269,19 +271,26 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     let stale = false
 
     async function load() {
-      const [pods, allContacts, cats, configs, allInteractions, activeLinks] = await Promise.all([
+      const [pods, localContacts, cats, configs, allInteractions, activeLinks, incomingSharedContacts] = await Promise.all([
         getPods(),
         getContacts(),
         getCategories(),
         getFieldConfigs(),
         getAllInteractions() as Promise<Interaction[]>,
         getActiveShareLinks(podId).catch(() => [] as ShareLink[]),
+        getSharedContactsWithMe(),
       ])
       if (stale) return
 
       const found = pods.find(p => p.id === podId)
       if (!found) { setNotFound(true); setLoading(false); return }
 
+      const projectedSharedContacts = projectSharedContactsToWorkspace(incomingSharedContacts, {
+        pods,
+        categories: cats,
+        contacts: localContacts,
+      })
+      const allContacts = mergeContactsWithProjectedSharedContacts(localContacts, projectedSharedContacts)
       const podMembers = allContacts.filter(c => isVisiblePodMember(c, podId!))
 
       const byContact = indexByContact(allInteractions)
@@ -413,7 +422,11 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const otherPods = useMemo(() => allPods.filter(p => p.id !== podId), [allPods, podId])
 
   function handleDragStart(event: DragStartEvent) {
-    setDragContactId(String(event.active.id))
+    const contactId = String(event.active.id)
+    const contact = members.find(member => member.id === contactId)
+    const shareMeta = primarySharedContactMeta(contact ? sharedContactMetaById.get(contact.id) : undefined)
+    if (shareMeta?.direction === 'shared_with_me') return
+    setDragContactId(contactId)
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -427,6 +440,8 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     const contact = members.find(m => m.id === contactId)
     const targetPod = otherPods.find(p => p.id === targetPodId)
     if (!contact || !targetPod) return
+    const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(contact.id))
+    if (shareMeta?.direction === 'shared_with_me') return
     if (contact.list_ids.includes(targetPodId)) return // already in that pod
 
     const prevListIds = [...contact.list_ids]
@@ -1064,7 +1079,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                 const days = daysSinceContact(m)
                 const shareMeta = primarySharedContactMeta(sharedContactMetaById.get(m.id))
                 return (
-                  <DraggableMemberRow key={m.id} contact={m}>
+                  <DraggableMemberRow key={m.id} contact={m} disabled={shareMeta?.direction === 'shared_with_me'}>
                     <button
                       type="button"
                       onClick={() => setSelectedContact(m)}

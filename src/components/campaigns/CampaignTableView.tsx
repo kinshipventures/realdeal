@@ -7,6 +7,7 @@ import { Avatar } from '../ui'
 import { Search } from 'lucide-react'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { primarySharedContactMeta, type SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
+import { isProjectedSharedCampaignContact } from '@/lib/sharedContactProjection'
 
 interface Props {
   campaign: Campaign
@@ -124,6 +125,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
     if (col === 'name' || col === 'moved_at') return // not editable inline
     const row = rows.find(r => r.cc.id === rowId)
     if (!row) return
+    if (isProjectedSharedCampaignContact(row.cc)) return
     setEditValue(col === 'commitment_amount'
       ? (getCampaignContactCommitmentAmount(row.cc) !== null ? formatMoney(getCampaignContactCommitmentAmount(row.cc)) : '')
       : getCellValue(row.cc, row.contact, col)
@@ -180,12 +182,16 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   }
 
   async function handleStageChange(ccId: string, stageId: string) {
+    const row = campaignContacts.find(cc => cc.id === ccId)
+    if (!row || isProjectedSharedCampaignContact(row)) return
     const now = new Date().toISOString()
     const updated = await updateCampaignContact(ccId, { stage_id: stageId, moved_at: now })
     onContactsChange(campaignContacts.map(cc => cc.id === ccId ? updated : cc))
   }
 
   function toggleSelect(id: string) {
+    const row = campaignContacts.find(cc => cc.id === id)
+    if (!row || isProjectedSharedCampaignContact(row)) return
     setSelectedIds(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -195,13 +201,23 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === rows.length) setSelectedIds(new Set())
-    else setSelectedIds(new Set(rows.map(r => r.cc.id)))
+    const selectableIds = rows
+      .filter(row => !isProjectedSharedCampaignContact(row.cc))
+      .map(row => row.cc.id)
+    if (selectedIds.size === selectableIds.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(selectableIds))
   }
 
   async function handleBulkMove(stageId: string) {
     const now = new Date().toISOString()
-    const ids = Array.from(selectedIds)
+    const ids = Array.from(selectedIds).filter(id => {
+      const row = campaignContacts.find(cc => cc.id === id)
+      return row ? !isProjectedSharedCampaignContact(row) : false
+    })
+    if (ids.length === 0) {
+      setSelectedIds(new Set())
+      return
+    }
     await Promise.all(ids.map(id =>
       updateCampaignContact(id, { stage_id: stageId, moved_at: now })
     ))
@@ -213,6 +229,8 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
 
   async function handleRemoveContact(ccId: string) {
     setContextMenu(null)
+    const target = campaignContacts.find(cc => cc.id === ccId)
+    if (!target || isProjectedSharedCampaignContact(target)) return
     const previous = [...campaignContacts]
     onContactsChange(campaignContacts.filter(cc => cc.id !== ccId))
     try {
@@ -273,7 +291,9 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ cc, contact }) => (
+            {rows.map(({ cc, contact }) => {
+              const readOnly = isProjectedSharedCampaignContact(cc)
+              return (
               <tr
                 key={cc.id}
                 style={{
@@ -282,18 +302,19 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                 }}
                 onContextMenu={e => {
                   e.preventDefault()
+                  if (readOnly) return
                   setContextMenu({ x: e.clientX, y: e.clientY, ccId: cc.id })
                 }}
               >
                 <td style={{ padding: '6px', textAlign: 'center' }}>
-                  <input type="checkbox" checked={selectedIds.has(cc.id)} onChange={() => toggleSelect(cc.id)} />
+                  <input type="checkbox" checked={selectedIds.has(cc.id)} disabled={readOnly} onChange={() => toggleSelect(cc.id)} />
                 </td>
                 {cols.map(c => (
                   <td
                     key={c.key}
                     onClick={() => {
                       if (c.key === 'name') { onCardClick(cc); }
-                      else startEdit(cc.id, c.key)
+                      else if (!readOnly) startEdit(cc.id, c.key)
                     }}
                     style={{
                       padding: '6px 10px', cursor: 'pointer',
@@ -320,6 +341,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                     ) : c.key === 'stage' ? (
                       <select
                         value={cc.stage_id ?? ''}
+                        disabled={readOnly}
                         onChange={e => handleStageChange(cc.id, e.target.value)}
                         onClick={e => e.stopPropagation()}
                         style={{
@@ -350,7 +372,7 @@ export function CampaignTableView({ campaign, stages, campaignContacts, contacts
                   </td>
                 ))}
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>
