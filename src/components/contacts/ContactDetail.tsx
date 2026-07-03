@@ -409,6 +409,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [contactSaveError, setContactSaveError] = useState<string | null>(null)
   const [newOptionTarget, setNewOptionTarget] = useState<string | null>(null)
   const [newOptionValue, setNewOptionValue] = useState('')
+  const [openLinkedRecordDropdown, setOpenLinkedRecordDropdown] = useState<string | null>(null)
+  const [linkedRecordSearchQueries, setLinkedRecordSearchQueries] = useState<Record<string, string>>({})
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [contactCampaignLinks, setContactCampaignLinks] = useState<CampaignContact[]>([])
@@ -573,6 +575,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setCustomFieldSaveError(null)
     setNewOptionTarget(null)
     setNewOptionValue('')
+    setOpenLinkedRecordDropdown(null)
+    setLinkedRecordSearchQueries({})
   }, [contact?.id])
 
   useEffect(() => {
@@ -854,6 +858,24 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     if (contactCardReadOnly) return
     setNewOptionTarget(targetId)
     setNewOptionValue('')
+  }
+
+  function setLinkedRecordSearchQuery(targetId: string, query: string) {
+    setLinkedRecordSearchQueries(prev => ({ ...prev, [targetId]: query }))
+  }
+
+  function clearLinkedRecordSearchQuery(targetId: string) {
+    setLinkedRecordSearchQueries(prev => {
+      if (!prev[targetId]) return prev
+      const next = { ...prev }
+      delete next[targetId]
+      return next
+    })
+  }
+
+  function closeLinkedRecordDropdown(targetId: string) {
+    setOpenLinkedRecordDropdown(current => current === targetId ? null : current)
+    clearLinkedRecordSearchQuery(targetId)
   }
 
   function blankRelationshipInput(
@@ -1930,6 +1952,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     placeholder,
     onChange,
     multi = true,
+    searchable = false,
     createOptionLabel,
     createPlaceholder,
     onCreateRecord,
@@ -1941,6 +1964,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     placeholder: string
     onChange: (ids: string[]) => void
     multi?: boolean
+    searchable?: boolean
     createOptionLabel?: string
     createPlaceholder?: string
     onCreateRecord?: (name: string) => Promise<Contact | null> | Contact | null
@@ -1956,6 +1980,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       .filter(Boolean) as Contact[]
     const availableRecords = records.filter(record => !normalizedSelectedIds.includes(record.id))
     const targetId = `linked:${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    const searchQuery = linkedRecordSearchQueries[targetId] ?? ''
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+    const filteredAvailableRecords = searchable && normalizedSearchQuery
+      ? availableRecords.filter(record => record.name.toLowerCase().includes(normalizedSearchQuery))
+      : availableRecords
+    const searchableDropdownOpen = openLinkedRecordDropdown === targetId
 
     function addRecord(id: string) {
       if (linkedRecordsReadOnly) return
@@ -2020,64 +2050,239 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
             </div>
           )}
           {!linkedRecordsReadOnly && (availableRecords.length > 0 || onCreateRecord) && (
-            <div style={{ position: 'relative' }}>
-              <select
-                value=""
-                onChange={event => {
-                  if (event.target.value === ADD_NEW_OPTION_VALUE) {
-                    beginAddingOption(targetId)
-                    return
-                  }
-                  addRecord(event.target.value)
-                }}
-                style={{
-                  width: '100%',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none',
-                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 94%, var(--tint) 6%), color-mix(in srgb, var(--surface-panel) 82%, var(--tint) 18%))',
-                  border: '1px solid color-mix(in srgb, var(--edge-strong) 82%, var(--color-brand) 18%)',
-                  borderRadius: 9,
-                  color: 'var(--color-text-primary)',
-                  fontSize: 14,
-                  lineHeight: 1.45,
-                  padding: '8px 36px 8px 11px',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.55)',
-                  cursor: 'pointer',
+            searchable ? (
+              <div
+                style={{ position: 'relative' }}
+                onBlur={event => {
+                  const nextFocus = event.relatedTarget as Node | null
+                  if (nextFocus && event.currentTarget.contains(nextFocus)) return
+                  closeLinkedRecordDropdown(targetId)
                 }}
               >
-                <option value="">{multi ? 'Add linked record...' : 'Select linked record...'}</option>
-                {availableRecords.map(record => (
-                  <option key={record.id} value={record.id}>{record.name}</option>
-                ))}
-                {onCreateRecord && (
-                  <option value={ADD_NEW_OPTION_VALUE}>{createOptionLabel ?? '+ Create new record...'}</option>
+                <button
+                  type="button"
+                  aria-expanded={searchableDropdownOpen}
+                  onClick={() => {
+                    if (searchableDropdownOpen) {
+                      closeLinkedRecordDropdown(targetId)
+                    } else {
+                      setOpenLinkedRecordDropdown(targetId)
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    background: 'linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 94%, var(--tint) 6%), color-mix(in srgb, var(--surface-panel) 82%, var(--tint) 18%))',
+                    border: '1px solid color-mix(in srgb, var(--edge-strong) 82%, var(--color-brand) 18%)',
+                    borderRadius: 9,
+                    color: 'var(--color-text-primary)',
+                    fontSize: 14,
+                    lineHeight: 1.45,
+                    padding: '8px 11px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 1px 0 rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.55)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>{multi ? 'Add linked record...' : 'Select linked record...'}</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    style={{
+                      flex: '0 0 auto',
+                      color: 'var(--color-text-secondary)',
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {searchableDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      zIndex: 80,
+                      top: 'calc(100% + 6px)',
+                      left: 0,
+                      right: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      padding: 8,
+                      border: '1px solid var(--edge)',
+                      borderRadius: 10,
+                      background: 'var(--surface-panel)',
+                      boxShadow: '0 16px 32px rgba(15,23,42,0.16)',
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={event => setLinkedRecordSearchQuery(targetId, event.target.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Escape') {
+                          closeLinkedRecordDropdown(targetId)
+                        }
+                      }}
+                      placeholder="Search records..."
+                      style={{
+                        width: '100%',
+                        border: '1px solid var(--edge)',
+                        borderRadius: 8,
+                        background: 'var(--surface)',
+                        color: 'var(--color-text-primary)',
+                        fontFamily: 'inherit',
+                        fontSize: 13,
+                        lineHeight: 1.4,
+                        outline: 'none',
+                        padding: '8px 10px',
+                      }}
+                    />
+                    <div
+                      role="listbox"
+                      style={{
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                      }}
+                    >
+                      {filteredAvailableRecords.length > 0 ? (
+                        filteredAvailableRecords.map(record => (
+                          <button
+                            key={record.id}
+                            type="button"
+                            role="option"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={() => {
+                              addRecord(record.id)
+                              closeLinkedRecordDropdown(targetId)
+                            }}
+                            style={{
+                              width: '100%',
+                              border: 'none',
+                              borderRadius: 7,
+                              background: 'transparent',
+                              color: 'var(--color-text-primary)',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                              fontSize: 13,
+                              lineHeight: 1.35,
+                              padding: '8px 9px',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {record.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div style={{ color: 'var(--color-text-tertiary)', fontSize: 13, padding: '8px 9px' }}>
+                          No matching records
+                        </div>
+                      )}
+                      {onCreateRecord && (
+                        <button
+                          type="button"
+                          onMouseDown={event => event.preventDefault()}
+                          onClick={() => {
+                            closeLinkedRecordDropdown(targetId)
+                            beginAddingOption(targetId)
+                          }}
+                          style={{
+                            width: '100%',
+                            border: 'none',
+                            borderRadius: 7,
+                            background: 'color-mix(in srgb, var(--color-brand) 8%, transparent)',
+                            color: 'var(--color-brand)',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            lineHeight: 1.35,
+                            marginTop: 4,
+                            padding: '8px 9px',
+                            textAlign: 'left',
+                          }}
+                        >
+                          {createOptionLabel ?? '+ Create new record...'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </select>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  right: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-secondary)',
-                  pointerEvents: 'none',
-                }}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <select
+                  value=""
+                  onChange={event => {
+                    if (event.target.value === ADD_NEW_OPTION_VALUE) {
+                      beginAddingOption(targetId)
+                      return
+                    }
+                    addRecord(event.target.value)
+                  }}
+                  style={{
+                    width: '100%',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    background: 'linear-gradient(180deg, color-mix(in srgb, var(--surface-panel) 94%, var(--tint) 6%), color-mix(in srgb, var(--surface-panel) 82%, var(--tint) 18%))',
+                    border: '1px solid color-mix(in srgb, var(--edge-strong) 82%, var(--color-brand) 18%)',
+                    borderRadius: 9,
+                    color: 'var(--color-text-primary)',
+                    fontSize: 14,
+                    lineHeight: 1.45,
+                    padding: '8px 36px 8px 11px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 1px 0 rgba(255,255,255,0.7), inset 0 1px 0 rgba(255,255,255,0.55)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">{multi ? 'Add linked record...' : 'Select linked record...'}</option>
+                  {availableRecords.map(record => (
+                    <option key={record.id} value={record.id}>{record.name}</option>
+                  ))}
+                  {onCreateRecord && (
+                    <option value={ADD_NEW_OPTION_VALUE}>{createOptionLabel ?? '+ Create new record...'}</option>
+                  )}
+                </select>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--color-text-secondary)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            )
           )}
           {!linkedRecordsReadOnly && onCreateRecord && renderAddOptionControl(
             targetId,
@@ -2162,6 +2367,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       placeholder: 'add assistant records',
       createOptionLabel: '+ Create new person...',
       createPlaceholder: 'New person name',
+      searchable: true,
       onCreateRecord: name => createLinkedRelationshipRecord(name, 'Contact'),
       onChange: ids => setCustomFieldDraftValue('assistantContactIds', uniqueIds(ids)),
     })
