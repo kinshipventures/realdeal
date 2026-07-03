@@ -6,6 +6,7 @@ import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignm
 import { useEscape } from '../../lib/escapeStack'
 import { POD_SHIFT_COLORS } from '../map/SolidOrb'
 import { SubPodSelector } from '../subpods/SubPodSelector'
+import { ContactDetail } from '../contacts/ContactDetail'
 
 type Step = 'type' | 'form'
 type RecordType = 'Contact' | 'Company'
@@ -495,6 +496,22 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
         : undefined
 
   if (!isOpen) return null
+
+  if (recordType === 'Contact' && step === 'form' && formMode === 'single') {
+    return (
+      <ContactDetail
+        contact={null}
+        onClose={handleClose}
+        onSaved={created => {
+          reset()
+          onCreated(created)
+          navigate(`/contact/${created.id}`)
+        }}
+        pods={pods}
+        categories={categories}
+      />
+    )
+  }
 
   return (
     <div
