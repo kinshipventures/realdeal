@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
-import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { acceptWorkspaceInvite } from '@/lib/supabase-data'
+import { setActiveWorkspaceId } from '@/lib/workspace'
 
 export function AcceptInvitePage() {
   const [searchParams] = useSearchParams()
@@ -20,18 +21,17 @@ export function AcceptInvitePage() {
 
     const accept = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('accept-invite', {
-          body: { token },
-        })
-        if (error) throw error
-        if (data?.error) throw new Error(data.error)
+        const data = await acceptWorkspaceInvite(token)
 
-        await refreshWorkspaces()
         if (data?.workspace_id) {
+          setActiveWorkspaceId(data.workspace_id)
+          await refreshWorkspaces()
           switchWorkspace(data.workspace_id)
           const email = session?.user?.email ?? ''
           const onboardKey = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
           localStorage.setItem(onboardKey, '1')
+        } else {
+          await refreshWorkspaces()
         }
         if (data?.workspace_name) setTeamName(data.workspace_name)
 

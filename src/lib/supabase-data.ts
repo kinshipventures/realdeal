@@ -1156,12 +1156,24 @@ export interface WorkspaceMember {
 
 export interface WorkspaceInvite {
   id: string
+  workspace_id: string
   email: string
   role: 'owner' | 'admin' | 'member' | 'viewer'
   token: string
   accepted_at: string | null
   created_at: string
   invited_by: string
+}
+
+export interface IncomingWorkspaceInvite extends WorkspaceInvite {
+  workspace_name: string | null
+}
+
+export interface AcceptedWorkspaceInvite {
+  success: boolean
+  already_member?: boolean
+  workspace_id?: string
+  workspace_name?: string
 }
 
 type WorkspaceMemberRow = Pick<WorkspaceMember, 'id' | 'user_id' | 'role' | 'created_at'>
@@ -1216,6 +1228,52 @@ export async function fetchPendingInvites(workspaceId: string): Promise<Workspac
     .order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
+}
+
+export async function fetchIncomingWorkspaceInvites(email?: string | null): Promise<IncomingWorkspaceInvite[]> {
+  const normalizedEmail = email?.trim().toLowerCase()
+  if (!normalizedEmail) return []
+
+  const { data, error } = await supabase
+    .from('workspace_invites')
+    .select('id, workspace_id, email, role, token, accepted_at, created_at, invited_by, workspaces:workspace_id(id, name)')
+    .eq('email', normalizedEmail)
+    .is('accepted_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+
+  return ((data ?? []) as any[]).map(invite => {
+    const workspace = Array.isArray(invite.workspaces) ? invite.workspaces[0] : invite.workspaces
+    return {
+      id: invite.id,
+      workspace_id: invite.workspace_id,
+      email: invite.email,
+      role: invite.role,
+      token: invite.token,
+      accepted_at: invite.accepted_at,
+      created_at: invite.created_at,
+      invited_by: invite.invited_by,
+      workspace_name: workspace?.name ?? null,
+    }
+  })
+}
+
+export async function acceptWorkspaceInvite(token: string): Promise<AcceptedWorkspaceInvite> {
+  const { data, error } = await supabase.functions.invoke('accept-invite', {
+    body: { token },
+  })
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return data as AcceptedWorkspaceInvite
+}
+
+export async function declineIncomingWorkspaceInvite(inviteId: string): Promise<void> {
+  const { error } = await supabase
+    .from('workspace_invites')
+    .delete()
+    .eq('id', inviteId)
+    .is('accepted_at', null)
+  if (error) throw error
 }
 
 export async function createWorkspaceInvite(workspaceId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<WorkspaceInvite> {

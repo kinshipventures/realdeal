@@ -11,8 +11,10 @@ import { SharingPermissionsTab } from './SharingPermissionsTab'
 import {
   fetchWorkspaceMembers, fetchPendingInvites, createWorkspaceInvite,
   revokeInvite, removeMember, invalidateAllCaches,
-  type WorkspaceMember, type WorkspaceInvite,
+  fetchIncomingWorkspaceInvites, acceptWorkspaceInvite, declineIncomingWorkspaceInvite,
+  type WorkspaceMember, type WorkspaceInvite, type IncomingWorkspaceInvite,
 } from '@/lib/supabase-data'
+import { setActiveWorkspaceId } from '@/lib/workspace'
 import {
   buildActivityChanges,
   describeWorkspaceActivity,
@@ -37,7 +39,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
 
 export function AccountPage() {
   const { session } = useAuth()
-  const { activeWorkspace, refreshWorkspaces } = useWorkspace()
+  const { activeWorkspace, refreshWorkspaces, switchWorkspace } = useWorkspace()
   const navigate = useNavigate()
   const [tab, setTab] = useState<SettingsTab>('profile')
   const [displayName, setDisplayName] = useState('')
@@ -48,6 +50,9 @@ export function AccountPage() {
   // Team state
   const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [invites, setInvites] = useState<WorkspaceInvite[]>([])
+  const [incomingInvites, setIncomingInvites] = useState<IncomingWorkspaceInvite[]>([])
+  const [incomingInviteActionId, setIncomingInviteActionId] = useState<string | null>(null)
+  const [incomingInviteMessage, setIncomingInviteMessage] = useState('')
   const [activityEvents, setActivityEvents] = useState<WorkspaceActivityEvent[]>([])
   const [activityLoading, setActivityLoading] = useState(false)
   const [activityError, setActivityError] = useState('')
@@ -120,6 +125,7 @@ export function AccountPage() {
       ])
       setMembers(m)
       setInvites(inv)
+      setIncomingInvites(await fetchIncomingWorkspaceInvites(session?.user?.email))
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Failed to load team data')
     }
@@ -217,6 +223,45 @@ export function AccountPage() {
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Action failed')
       setTimeout(() => setInviteError(''), 3000)
+    }
+  }
+
+  const handleAcceptIncomingInvite = async (invite: IncomingWorkspaceInvite) => {
+    setIncomingInviteActionId(invite.id)
+    setIncomingInviteMessage('')
+    setInviteError('')
+    try {
+      const data = await acceptWorkspaceInvite(invite.token)
+      setIncomingInvites(prev => prev.filter(item => item.id !== invite.id))
+      if (data.workspace_id) {
+        setActiveWorkspaceId(data.workspace_id)
+        await refreshWorkspaces()
+        switchWorkspace(data.workspace_id)
+      } else {
+        await refreshWorkspaces()
+      }
+      setIncomingInviteMessage(`Joined ${data.workspace_name || invite.workspace_name || 'workspace'}.`)
+      await loadWorkspaceData()
+      await loadWorkspaceActivity()
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to accept invite')
+    } finally {
+      setIncomingInviteActionId(null)
+    }
+  }
+
+  const handleDeclineIncomingInvite = async (invite: IncomingWorkspaceInvite) => {
+    setIncomingInviteActionId(invite.id)
+    setIncomingInviteMessage('')
+    setInviteError('')
+    try {
+      await declineIncomingWorkspaceInvite(invite.id)
+      setIncomingInvites(prev => prev.filter(item => item.id !== invite.id))
+      setIncomingInviteMessage(`Declined ${invite.workspace_name || 'workspace'} invite.`)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to decline invite')
+    } finally {
+      setIncomingInviteActionId(null)
     }
   }
 
@@ -363,6 +408,42 @@ export function AccountPage() {
               </div>
             )}
           </div>
+
+          {/* Incoming invites */}
+          {incomingInvites.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <span style={labelStyle}>Invitations for you ({incomingInvites.length})</span>
+              <div style={{ borderRadius: 10, border: '1px solid var(--edge)', overflow: 'hidden' }}>
+                {incomingInvites.map(invite => {
+                  const busy = incomingInviteActionId === invite.id
+                  return (
+                    <div key={invite.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                      borderBottom: '1px solid var(--divider)',
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {invite.workspace_name || 'Workspace invite'}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Full access invite for {invite.email}
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => handleAcceptIncomingInvite(invite)} disabled={busy}
+                        style={{ ...btnStyle('primary'), padding: '5px 10px', fontSize: 11, opacity: busy ? 0.6 : 1 }}>
+                        {busy ? 'Joining...' : 'Accept'}
+                      </button>
+                      <button type="button" onClick={() => handleDeclineIncomingInvite(invite)} disabled={busy}
+                        style={{ padding: '5px 10px', fontSize: 11, color: 'var(--color-text-secondary)', background: 'none', border: '1px solid var(--edge)', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}>
+                        Decline
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+              {incomingInviteMessage && <p style={{ fontSize: 12, color: 'var(--health-cooling)', marginTop: 6, marginBottom: 0 }}>{incomingInviteMessage}</p>}
+            </div>
+          )}
 
           {/* Members */}
           <div style={{ marginBottom: 24 }}>
