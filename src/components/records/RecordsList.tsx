@@ -588,6 +588,11 @@ export function RecordsList() {
     [organizedSharedContacts],
   )
 
+  const visibleRelationshipContacts = useMemo(
+    () => relationshipScope === 'shared_with_me' ? sharedWithMeContacts : relationshipContacts,
+    [relationshipContacts, relationshipScope, sharedWithMeContacts],
+  )
+
   const selectedCampaign = useMemo(
     () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
     [activeCampaigns, selectedCampaignId],
@@ -715,7 +720,7 @@ export function RecordsList() {
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = (relationshipScope === 'shared_with_me' ? sharedWithMeContacts : relationshipContacts).filter(c => c.type !== 'Company')
+    let result = visibleRelationshipContacts.filter(c => c.type !== 'Company')
 
     if (relationshipScope === 'mine') {
       result = result.filter(c => !sharedWithMeContactIds.has(c.id))
@@ -780,7 +785,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [relationshipContacts, relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, sharedWithMeContacts, filters, sort, equityMap, podMap, categories])
+  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, podMap, categories])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -2074,7 +2079,7 @@ export function RecordsList() {
       )}
 
       {/* Table area */}
-      {contacts.length === 0 ? (
+      {visibleRelationshipContacts.length === 0 ? (
         <EmptyState
           icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
           heading="Your people live here"
