@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { getContactsByType } from '../../lib/data'
+import { getCampaigns, getCategories, getContacts, getPods } from '../../lib/data'
+import { getSharedContactsWithMe } from '../../lib/collaboration'
 import { EmptyState } from '../empty/EmptyState'
 import type { Contact } from '../../lib/types'
+import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 
 type SortCol = 'name' | 'industry' | 'stage' | 'domain' | 'location'
 type SortDir = 'asc' | 'desc'
@@ -44,8 +46,25 @@ export function CompaniesPage({
 
   useEffect(() => {
     let cancelled = false
-    getContactsByType('Company').then(data => {
-      if (!cancelled) { setCompanies(data); setLoading(false) }
+    Promise.all([
+      getContacts(),
+      getPods(),
+      getCategories(),
+      getCampaigns(),
+      getSharedContactsWithMe(),
+    ]).then(([contacts, pods, categories, campaigns, incomingSharedContacts]) => {
+      const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
+        pods,
+        categories,
+        campaigns,
+        contacts,
+      })
+      if (!cancelled) {
+        setCompanies(projection.contacts.filter(contact => contact.type === 'Company'))
+        setLoading(false)
+      }
+    }).catch(() => {
+      if (!cancelled) setLoading(false)
     })
     return () => { cancelled = true }
   }, [])

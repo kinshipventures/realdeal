@@ -9,6 +9,12 @@ type ProjectionStructure = {
 }
 
 const SHARED_CAMPAIGN_CONTACT_PREFIX = 'shared-campaign-contact:'
+const SHARED_POD_PREFIX = 'shared-pod:'
+const SHARED_CATEGORY_PREFIX = 'shared-category:'
+const SHARED_CAMPAIGN_PREFIX = 'shared-campaign:'
+const SHARED_CAMPAIGN_STAGE_PREFIX = 'shared-campaign-stage:'
+const SHARED_COMPANY_PREFIX = 'shared-company:'
+const SHARED_SUB_PODS_LABEL = 'Shared sub-pods'
 
 export type OrganizedSharedContacts = {
   allContacts: Contact[]
@@ -17,8 +23,19 @@ export type OrganizedSharedContacts = {
   contactIdBySnapshotKey: Map<string, string>
 }
 
+export type SharedWorkspaceProjection = OrganizedSharedContacts & {
+  pods: Pod[]
+  categories: Category[]
+  campaigns: Campaign[]
+  contacts: Contact[]
+}
+
 function normalizeLabel(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase()
+}
+
+function slugLabel(value: string | null | undefined): string {
+  return normalizeLabel(value).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'shared'
 }
 
 function unique(values: Array<string | null | undefined>): string[] {
@@ -97,6 +114,32 @@ function findByName<T extends { name: string }>(items: T[], label: string | null
   const target = normalizeLabel(label)
   if (!target) return null
   return items.find(item => normalizeLabel(item.name) === target) ?? null
+}
+
+function earliestDate(values: string[]): string {
+  return values.length > 0
+    ? [...values].sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]
+    : new Date(0).toISOString()
+}
+
+function sharedPodId(label: string): string {
+  return `${SHARED_POD_PREFIX}${slugLabel(label)}`
+}
+
+function sharedCategoryId(label: string): string {
+  return `${SHARED_CATEGORY_PREFIX}${slugLabel(label)}`
+}
+
+function sharedCampaignId(label: string): string {
+  return `${SHARED_CAMPAIGN_PREFIX}${slugLabel(label)}`
+}
+
+function sharedCampaignStageId(campaignId: string): string {
+  return `${SHARED_CAMPAIGN_STAGE_PREFIX}${campaignId}:shared`
+}
+
+function sharedCompanyId(label: string): string {
+  return `${SHARED_COMPANY_PREFIX}${slugLabel(label)}`
 }
 
 function projectOneSharedContact(snapshot: SharedContactAccessSnapshot, structure: ProjectionStructure): Contact {
@@ -243,6 +286,274 @@ export function projectSharedContactsToWorkspace(
   }
 
   return [...byId.values()]
+}
+
+function projectSharedPodsToWorkspace(snapshots: SharedContactAccessSnapshot[], localPods: Pod[]): Pod[] {
+  const byName = new Map<string, Pod>()
+  for (const pod of localPods) {
+    const key = normalizeLabel(pod.name)
+    if (key && !byName.has(key)) byName.set(key, pod)
+  }
+
+  const projected: Pod[] = []
+  const projectedKeys = new Set<string>()
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
+    if (subPodLabel(snapshot.resource_label)) continue
+    const key = normalizeLabel(snapshot.resource_label)
+    if (!key || byName.has(key) || projectedKeys.has(key)) continue
+    projectedKeys.add(key)
+    projected.push({
+      id: sharedPodId(snapshot.resource_label),
+      name: snapshot.resource_label,
+      color: null,
+      owner: null,
+      is_priority: false,
+      cadence: null,
+      description: null,
+      capacity: null,
+      enrichment_opt_in: false,
+      created_at: snapshot.created_at,
+    })
+  }
+
+  return [...localPods, ...projected]
+}
+
+function projectSharedCategoriesToWorkspace(
+  snapshots: SharedContactAccessSnapshot[],
+  pods: Pod[],
+  localCategories: Category[],
+): Category[] {
+  const byName = new Map<string, Category>()
+  for (const category of localCategories) {
+    const key = normalizeLabel(category.name)
+    if (key && !byName.has(key)) byName.set(key, category)
+  }
+
+  const projected: Category[] = []
+  const projectedKeys = new Set<string>()
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
+    const label = subPodLabel(snapshot.resource_label)
+    if (!label) continue
+    const key = normalizeLabel(label)
+    if (!key || byName.has(key) || projectedKeys.has(key)) continue
+    projectedKeys.add(key)
+
+    const parentPod = pods.find(pod => pod.id === snapshot.contact.primary_list_id)
+      ?? pods.find(pod => snapshot.contact.list_ids.includes(pod.id))
+      ?? findByName(pods, SHARED_SUB_PODS_LABEL)
+      ?? {
+        id: sharedPodId(SHARED_SUB_PODS_LABEL),
+        name: SHARED_SUB_PODS_LABEL,
+        color: null,
+        owner: null,
+        is_priority: false,
+        cadence: null,
+        description: null,
+        capacity: null,
+        enrichment_opt_in: false,
+        created_at: snapshot.created_at,
+      }
+
+    projected.push({
+      id: sharedCategoryId(label),
+      list_id: parentPod.id,
+      name: label,
+      color: null,
+      icon: null,
+      created_at: snapshot.created_at,
+    })
+  }
+
+  return [...localCategories, ...projected]
+}
+
+function projectSharedCompaniesToWorkspace(snapshots: SharedContactAccessSnapshot[], localContacts: Contact[]): Contact[] {
+  const companyRecords = localContacts.filter(contact => contact.type === 'Company')
+  const byName = new Map<string, Contact>()
+  for (const company of companyRecords) {
+    const key = normalizeLabel(company.name)
+    if (key && !byName.has(key)) byName.set(key, company)
+  }
+
+  const projected = new Map<string, Contact>()
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot)) continue
+    const labels = unique([
+      snapshot.resource_type === 'company' ? snapshot.resource_label : null,
+      snapshot.contact.company,
+    ])
+    for (const label of labels) {
+      const key = normalizeLabel(label)
+      if (!key || byName.has(key) || projected.has(key)) continue
+      projected.set(key, {
+        ...normalizeSharedContact({
+          ...snapshot.contact,
+          id: sharedCompanyId(label),
+          name: label,
+          email: null,
+          phone: null,
+          company: null,
+          role: null,
+          list_ids: [],
+          category_ids: [],
+          primary_list_id: null,
+          company_record_id: null,
+          company_ids: [],
+          type: 'Company',
+          status: 'Active',
+          custom_fields: {
+            shared_company_record: true,
+            shared_contact_grant_id: snapshot.grant_id,
+            shared_contact_resource_type: snapshot.resource_type,
+            shared_contact_resource_label: snapshot.resource_label,
+          },
+          created_at: snapshot.created_at,
+        }),
+      })
+    }
+  }
+
+  return [...localContacts, ...projected.values()]
+}
+
+export function projectSharedCampaignsToWorkspace(
+  snapshots: SharedContactAccessSnapshot[],
+  {
+    campaigns,
+    resolveContactId,
+  }: {
+    campaigns: Campaign[]
+    resolveContactId?: (snapshot: SharedContactAccessSnapshot) => string
+  },
+): Campaign[] {
+  const localByName = new Map<string, Campaign>()
+  for (const campaign of campaigns) {
+    const key = normalizeLabel(campaign.name)
+    if (key && !localByName.has(key)) localByName.set(key, campaign)
+  }
+
+  const grouped = new Map<string, SharedContactAccessSnapshot[]>()
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'campaign') continue
+    const key = normalizeLabel(snapshot.resource_label)
+    if (!key) continue
+    grouped.set(key, [...(grouped.get(key) ?? []), snapshot])
+  }
+
+  const overlays = new Map<string, Campaign>()
+  const virtualCampaigns: Campaign[] = []
+  for (const [key, group] of grouped.entries()) {
+    const contactIds = unique(group.map(snapshot => resolveContactId?.(snapshot) ?? snapshot.contact.id))
+    const local = localByName.get(key) ?? null
+    if (local) {
+      overlays.set(local.id, {
+        ...local,
+        contact_ids: unique([...local.contact_ids, ...contactIds]),
+      })
+      continue
+    }
+
+    const label = group[0].resource_label
+    virtualCampaigns.push({
+      id: sharedCampaignId(label),
+      name: label,
+      type: 'outreach',
+      deadline: null,
+      status: 'active',
+      notes: null,
+      description: null,
+      custom_fields: {
+        shared_campaign: true,
+        shared_campaign_grant_ids: unique(group.map(snapshot => snapshot.grant_id)),
+        shared_campaign_resource_label: label,
+      },
+      contact_ids: contactIds,
+      created_at: earliestDate(group.map(snapshot => snapshot.created_at)),
+    })
+  }
+
+  return [
+    ...campaigns.map(campaign => overlays.get(campaign.id) ?? campaign),
+    ...virtualCampaigns,
+  ]
+}
+
+export function projectedSharedCampaignStages(campaign: Campaign): CampaignStage[] {
+  if (!isProjectedSharedCampaign(campaign)) return []
+  return [{
+    id: sharedCampaignStageId(campaign.id),
+    campaign_id: campaign.id,
+    name: 'Shared',
+    color: null,
+    order: 0,
+    created_at: campaign.created_at,
+  }]
+}
+
+export function isProjectedSharedCampaign(campaign: Campaign): boolean {
+  return campaign.id.startsWith(SHARED_CAMPAIGN_PREFIX)
+    || campaign.custom_fields?.shared_campaign === true
+}
+
+export function isProjectedSharedPod(pod: Pod): boolean {
+  return pod.id.startsWith(SHARED_POD_PREFIX)
+}
+
+export function isProjectedSharedCategory(category: Category): boolean {
+  return category.id.startsWith(SHARED_CATEGORY_PREFIX)
+}
+
+export function projectSharedWorkspaceResources(
+  snapshots: SharedContactAccessSnapshot[],
+  structure: ProjectionStructure,
+): SharedWorkspaceProjection {
+  const pods = projectSharedPodsToWorkspace(snapshots, structure.pods)
+  const projectedSubPodParentNeeded = snapshots.some(snapshot => (
+    isActiveSnapshot(snapshot)
+    && snapshot.resource_type === 'pod'
+    && Boolean(subPodLabel(snapshot.resource_label))
+    && !structure.categories.some(category => normalizeLabel(category.name) === normalizeLabel(subPodLabel(snapshot.resource_label)))
+  ))
+  const podsWithSubPodParent = projectedSubPodParentNeeded && !pods.some(pod => normalizeLabel(pod.name) === normalizeLabel(SHARED_SUB_PODS_LABEL))
+    ? [
+      ...pods,
+      {
+        id: sharedPodId(SHARED_SUB_PODS_LABEL),
+        name: SHARED_SUB_PODS_LABEL,
+        color: null,
+        owner: null,
+        is_priority: false,
+        cadence: null,
+        description: null,
+        capacity: null,
+        enrichment_opt_in: false,
+        created_at: earliestDate(snapshots.map(snapshot => snapshot.created_at)),
+      },
+    ]
+    : pods
+  const categories = projectSharedCategoriesToWorkspace(snapshots, podsWithSubPodParent, structure.categories)
+  const contactsWithCompanies = projectSharedCompaniesToWorkspace(snapshots, structure.contacts ?? [])
+  const organized = organizeSharedContactsForWorkspace(snapshots, {
+    ...structure,
+    pods: podsWithSubPodParent,
+    categories,
+    contacts: contactsWithCompanies,
+  })
+  const campaigns = projectSharedCampaignsToWorkspace(snapshots, {
+    campaigns: structure.campaigns ?? [],
+    resolveContactId: snapshot => organized.contactIdBySnapshotKey.get(sharedContactSnapshotKey(snapshot)) ?? snapshot.contact.id,
+  })
+
+  return {
+    ...organized,
+    pods: podsWithSubPodParent,
+    categories,
+    campaigns,
+    contacts: organized.allContacts,
+  }
 }
 
 function contactIdentityKey(contact: Contact): string {

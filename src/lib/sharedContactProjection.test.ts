@@ -3,10 +3,13 @@ import type { SharedContactAccessSnapshot } from './collaboration'
 import type { Campaign, CampaignStage, Contact } from './types'
 import {
   isProjectedSharedCampaignContact,
+  isProjectedSharedCampaign,
   mergeContactsWithProjectedSharedContacts,
   organizeSharedContactsForWorkspace,
+  projectedSharedCampaignStages,
   projectedSharedCampaignContacts,
   projectSharedContactsToWorkspace,
+  projectSharedWorkspaceResources,
   sharedContactSnapshotKey,
 } from './sharedContactProjection'
 
@@ -211,5 +214,68 @@ describe('shared contact projection', () => {
     const projected = { ...baseContact, id: 'owner-contact-1', list_ids: ['local-pod-maps'], primary_list_id: 'local-pod-maps' }
 
     expect(mergeContactsWithProjectedSharedContacts([local], [projected])).toHaveLength(1)
+  })
+
+  it('creates a virtual shared campaign when the receiver does not have a matching campaign', () => {
+    const projection = projectSharedWorkspaceResources([
+      snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Kinship Ventures Fund I' }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(projection.campaigns).toHaveLength(1)
+    expect(projection.campaigns[0].name).toBe('Kinship Ventures Fund I')
+    expect(projection.campaigns[0].contact_ids).toEqual(['owner-contact-1'])
+    expect(isProjectedSharedCampaign(projection.campaigns[0])).toBe(true)
+    expect(projectedSharedCampaignStages(projection.campaigns[0])[0].name).toBe('Shared')
+  })
+
+  it('matches an existing receiver campaign by name instead of adding a duplicate', () => {
+    const campaign: Campaign = {
+      id: 'local-campaign',
+      name: 'Kinship Ventures Fund I',
+      type: 'fundraise',
+      deadline: null,
+      status: 'active',
+      notes: null,
+      description: null,
+      custom_fields: {},
+      contact_ids: [],
+      created_at: '',
+    }
+
+    const projection = projectSharedWorkspaceResources([
+      snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Kinship Ventures Fund I' }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [campaign],
+      contacts: [],
+    })
+
+    expect(projection.campaigns).toHaveLength(1)
+    expect(projection.campaigns[0].id).toBe('local-campaign')
+    expect(projection.campaigns[0].type).toBe('fundraise')
+    expect(projection.campaigns[0].contact_ids).toEqual(['owner-contact-1'])
+  })
+
+  it('creates shared pod, sub-pod, and company projections when the receiver is missing those resources', () => {
+    const projection = projectSharedWorkspaceResources([
+      snapshot({ resource_type: 'pod', resource_label: 'LPs' }),
+      snapshot({ grant_id: 'grant-2', resource_type: 'pod', resource_label: 'Sub-pod: Inner Circle' }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(projection.pods.map(pod => pod.name)).toEqual(['LPs', 'Shared sub-pods'])
+    expect(projection.categories.map(category => category.name)).toEqual(['Inner Circle'])
+    expect(projection.contacts.some(contact => contact.type === 'Company' && contact.name === 'Kinship Ventures')).toBe(true)
+    expect(projection.sharedContacts[0].list_ids).toContain(projection.pods[0].id)
   })
 })

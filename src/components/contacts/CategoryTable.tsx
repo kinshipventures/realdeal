@@ -10,7 +10,7 @@ import { EmptyState } from '../empty/EmptyState'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { ContactDetail } from './ContactDetail'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
+import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
@@ -66,22 +66,22 @@ export function CategoryTable() {
       ])
       if (stale) return
 
-      const cat = categories.find(c => c.id === id)
+      const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
+        pods,
+        categories,
+        contacts: localContacts,
+      })
+      const cat = projection.categories.find(c => c.id === id)
       if (!cat) { navigate('/pods'); return }
 
-      const pod = pods.find((p: Pod) => p.id === cat.list_id)
-      setAllPods(pods)
-      setAllCategories(categories)
+      const pod = projection.pods.find((p: Pod) => p.id === cat.list_id)
+      setAllPods(projection.pods)
+      setAllCategories(projection.categories)
       setCategoryName(cat.name)
       setPodName(pod?.name ?? '')
       setPodId(pod?.id ?? null)
       if (pod?.cadence) setCadence(pod.cadence)
-      const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
-        pods,
-        categories,
-        contacts: localContacts,
-      }).allContacts
-      const categoryContacts = allContacts.filter(contact => contact.category_ids.includes(id))
+      const categoryContacts = projection.contacts.filter(contact => contact.category_ids.includes(id))
       setContacts(categoryContacts)
 
       const eqMap: Record<string, number> = {}

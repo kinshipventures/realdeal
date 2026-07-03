@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router'
-import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, getPods, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/data'
+import { getAllCampaigns, getCampaignContacts, getStagesForCampaign, getContacts, getInteractions, getPods, getCategories, invalidateCampaignsCache, completeCampaign, updateCampaign } from '../../lib/data'
 import type { Campaign, CampaignContact, CampaignStage, Contact, Interaction, Pod } from '../../lib/types'
 import { CampaignBoard } from './CampaignBoard'
 import { CampaignStatsBar } from './CampaignStatsBar'
@@ -13,7 +13,7 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getSharedContactsWithMe, recordCollaborationAuditEvent } from '@/lib/collaboration'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { organizeSharedContactsForWorkspace, projectedSharedCampaignContacts, sharedContactSnapshotKey } from '@/lib/sharedContactProjection'
+import { isProjectedSharedCampaign, projectSharedWorkspaceResources, projectedSharedCampaignContacts, projectedSharedCampaignStages, sharedContactSnapshotKey } from '@/lib/sharedContactProjection'
 import { formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { TYPE_LABELS, TYPE_COLORS, STALE_MS, daysUntil } from './campaignUtils'
 import { Download, Filter, Settings, LayoutGrid, Table, ArrowUpDown, Eye, Check, KeyRound } from 'lucide-react'
@@ -167,38 +167,47 @@ export function CampaignDetailRoute() {
 
   const loadData = useCallback(async () => {
     if (!id) return
-    const [allCampaigns, localContacts, allPods, incomingSharedContacts] = await Promise.all([getAllCampaigns(), getContacts(), getPods(), getSharedContactsWithMe()])
-    setCampaigns(allCampaigns)
-    setPods(allPods)
-    const camp = allCampaigns.find(c => c.id === id)
+    const [allCampaigns, localContacts, allPods, categories, incomingSharedContacts] = await Promise.all([
+      getAllCampaigns(),
+      getContacts(),
+      getPods(),
+      getCategories(),
+      getSharedContactsWithMe(),
+    ])
+    const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
+      pods: allPods,
+      categories,
+      campaigns: allCampaigns,
+      contacts: localContacts,
+    })
+    setCampaigns(projection.campaigns)
+    setPods(projection.pods)
+    const camp = projection.campaigns.find(c => c.id === id)
     setCampaign(camp ?? null)
     if (camp) {
-      const [s, cc] = await Promise.all([
-        getStagesForCampaign(id),
-        getCampaignContacts(id),
-      ])
-      const organizedSharedContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
-        pods: allPods,
-        categories: [],
-        campaigns: allCampaigns,
-        contacts: localContacts,
-      })
+      const isProjectedCampaign = isProjectedSharedCampaign(camp)
+      const [s, cc] = isProjectedCampaign
+        ? [projectedSharedCampaignStages(camp), [] as CampaignContact[]]
+        : await Promise.all([
+          getStagesForCampaign(id),
+          getCampaignContacts(id),
+        ])
       const sharedCampaignContacts = projectedSharedCampaignContacts(
         incomingSharedContacts,
         camp,
         s,
-        snapshot => organizedSharedContacts.contactIdBySnapshotKey.get(sharedContactSnapshotKey(snapshot)) ?? snapshot.contact.id,
+        snapshot => projection.contactIdBySnapshotKey.get(sharedContactSnapshotKey(snapshot)) ?? snapshot.contact.id,
       )
         .filter(sharedCc => !cc.some(localCc => localCc.contact_id === sharedCc.contact_id))
-      setContacts(organizedSharedContacts.allContacts)
+      setContacts(projection.contacts)
       setStages(s)
       setCampaignContacts([...cc, ...sharedCampaignContacts])
       // Fetch interactions for equity scoring
-      const contactIds = [...new Set(cc.map(c => c.contact_id))]
+      const contactIds = [...new Set([...cc, ...sharedCampaignContacts].map(c => c.contact_id))]
       const ixResults = await Promise.all(contactIds.map(cid => getInteractions(cid).then(ix => [cid, ix] as const)))
       setInteractionsMap(new Map(ixResults))
     } else {
-      setContacts(localContacts)
+      setContacts(projection.contacts)
     }
     setLoading(false)
   }, [id])
@@ -206,12 +215,12 @@ export function CampaignDetailRoute() {
   useEffect(() => { loadData() }, [loadData])
 
   const handleComplete = useCallback(async () => {
-    if (!id) return
+    if (!id || (campaign && isProjectedSharedCampaign(campaign))) return
     await completeCampaign(id)
     invalidateCampaignsCache()
     setCampaign(prev => prev ? { ...prev, status: 'completed' } : prev)
     setConfirmingComplete(false)
-  }, [id])
+  }, [campaign, id])
 
   const sortedStages = useMemo(() => [...stages].sort((a, b) => a.order - b.order), [stages])
   const firstStage = sortedStages[0]
@@ -306,6 +315,7 @@ export function CampaignDetailRoute() {
 
   if (loading) return <DetailSkeleton />
   if (!campaign) return <div style={{ padding: 32, color: 'var(--color-text-secondary)' }}>Campaign not found</div>
+  const isSharedProjectedCampaign = isProjectedSharedCampaign(campaign)
 
   return (
     <div className="content-enter" style={{ padding: '24px clamp(16px, 4vw, 32px) 96px' }}>
@@ -331,6 +341,7 @@ export function CampaignDetailRoute() {
 
       <InlineDescription
         value={campaign.description ?? ''}
+        readOnly={isSharedProjectedCampaign}
         onSave={async (desc) => {
           const updated = await updateCampaign(campaign.id, { description: desc || null })
           invalidateCampaignsCache()
@@ -544,41 +555,45 @@ export function CampaignDetailRoute() {
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => setShowSettings(prev => !prev)}
-            title="Campaign settings"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '5px 10px', borderRadius: 7,
-              border: showSettings ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
-              background: showSettings ? 'var(--tint)' : 'transparent',
-              fontSize: 11, fontWeight: 500,
-              color: showSettings ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <Settings size={11} />
-          </button>
+          {!isSharedProjectedCampaign && (
+            <button
+              type="button"
+              onClick={() => setShowSettings(prev => !prev)}
+              title="Campaign settings"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 7,
+                border: showSettings ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+                background: showSettings ? 'var(--tint)' : 'transparent',
+                fontSize: 11, fontWeight: 500,
+                color: showSettings ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <Settings size={11} />
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setShowPermissions(prev => !prev)}
-            title="Campaign permissions"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '5px 10px', borderRadius: 7,
-              border: showPermissions ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
-              background: showPermissions ? 'var(--tint)' : 'transparent',
-              fontSize: 11, fontWeight: 500,
-              color: showPermissions ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <KeyRound size={11} />
-          </button>
+          {!isSharedProjectedCampaign && (
+            <button
+              type="button"
+              onClick={() => setShowPermissions(prev => !prev)}
+              title="Campaign permissions"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 7,
+                border: showPermissions ? '1px solid var(--edge-strong)' : '1px solid var(--edge)',
+                background: showPermissions ? 'var(--tint)' : 'transparent',
+                fontSize: 11, fontWeight: 500,
+                color: showPermissions ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <KeyRound size={11} />
+            </button>
+          )}
 
-          {campaign.status === 'active' && !confirmingComplete && (
+          {!isSharedProjectedCampaign && campaign.status === 'active' && !confirmingComplete && (
             <button
               type="button"
               onClick={() => setConfirmingComplete(true)}
@@ -600,7 +615,7 @@ export function CampaignDetailRoute() {
       </div>
 
       {/* Confirmation dialog */}
-      {confirmingComplete && (
+      {!isSharedProjectedCampaign && confirmingComplete && (
         <div style={{
           background: 'var(--surface-panel)', border: '1px solid var(--edge)',
           borderRadius: 10, padding: '14px 16px', marginBottom: 10,
@@ -643,7 +658,7 @@ export function CampaignDetailRoute() {
         </div>
       )}
 
-      {showSettings && (
+      {!isSharedProjectedCampaign && showSettings && (
         <CampaignSettingsPanel
           campaign={campaign}
           onUpdate={(updated) => setCampaign(updated)}
@@ -651,7 +666,7 @@ export function CampaignDetailRoute() {
         />
       )}
 
-      {showPermissions && (
+      {!isSharedProjectedCampaign && showPermissions && (
         <CampaignPermissionsPanel
           campaign={campaign}
           campaignContacts={campaignContacts}
@@ -678,6 +693,7 @@ export function CampaignDetailRoute() {
               sortAsc={sortAsc}
               visibleCardFields={cardFields}
               sharedContactMetaById={sharedContactMetaById}
+              readOnly={isSharedProjectedCampaign}
             />
           ) : (
             <CampaignTableView
@@ -702,6 +718,7 @@ export function CampaignDetailRoute() {
           stages={stages}
           hasCampaignContacts={campaignContacts.length > 0}
           onCampaignUpdate={(updated) => setCampaign(updated)}
+          readOnly={isSharedProjectedCampaign}
         />
       </div>
 
@@ -722,7 +739,7 @@ export function CampaignDetailRoute() {
   )
 }
 
-function InlineDescription({ value, onSave }: { value: string; onSave: (v: string) => Promise<void> }) {
+function InlineDescription({ value, onSave, readOnly = false }: { value: string; onSave: (v: string) => Promise<void>; readOnly?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const [saving, setSaving] = useState(false)
@@ -735,6 +752,21 @@ function InlineDescription({ value, onSave }: { value: string; onSave: (v: strin
     await onSave(draft)
     setSaving(false)
     setEditing(false)
+  }
+
+  if (readOnly) {
+    if (!value) return null
+    return (
+      <p style={{
+        fontSize: 13,
+        color: 'var(--color-text-secondary)',
+        lineHeight: 1.5,
+        margin: '0 0 10px',
+        maxWidth: 600,
+      }}>
+        {value}
+      </p>
+    )
   }
 
   if (editing) {

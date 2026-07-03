@@ -29,7 +29,7 @@ import { isVisiblePodMember } from '../../lib/podMembership'
 import { ContactDetail } from '../contacts/ContactDetail'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
-import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
+import { isProjectedSharedCategory, isProjectedSharedPod, projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -271,25 +271,26 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     let stale = false
 
     async function load() {
-      const [pods, localContacts, cats, configs, allInteractions, activeLinks, incomingSharedContacts] = await Promise.all([
+      const [pods, localContacts, cats, configs, allInteractions, incomingSharedContacts] = await Promise.all([
         getPods(),
         getContacts(),
         getCategories(),
         getFieldConfigs(),
         getAllInteractions() as Promise<Interaction[]>,
-        getActiveShareLinks(podId).catch(() => [] as ShareLink[]),
         getSharedContactsWithMe(),
       ])
       if (stale) return
 
-      const found = pods.find(p => p.id === podId)
-      if (!found) { setNotFound(true); setLoading(false); return }
-
-      const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
+      const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
         pods,
         categories: cats,
         contacts: localContacts,
-      }).allContacts
+      })
+      const found = projection.pods.find(p => p.id === podId)
+      if (!found) { setNotFound(true); setLoading(false); return }
+      const activeLinks = isProjectedSharedPod(found) ? [] : await getActiveShareLinks(podId).catch(() => [] as ShareLink[])
+
+      const allContacts = projection.contacts
       const podMembers = allContacts.filter(c => isVisiblePodMember(c, podId!))
 
       const byContact = indexByContact(allInteractions)
@@ -301,15 +302,15 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
       const score = podEquityScore(podMembers, byContact)
 
       setPod(found)
-      setAllPods(pods)
+      setAllPods(projection.pods)
       setDescription(found.description ?? '')
       setCadence(found.cadence ?? '')
       setCapacity(found.capacity != null ? String(found.capacity) : '')
       setOwner(found.owner ?? '')
       setIsPriority(found.is_priority)
       setMembers(podMembers.sort((a, b) => (eqMap[b.id] ?? 0) - (eqMap[a.id] ?? 0)))
-      setAllCategories(cats)
-      setCategories(cats.filter(cat => cat.list_id === podId))
+      setAllCategories(projection.categories)
+      setCategories(projection.categories.filter(cat => cat.list_id === podId))
       setFieldConfigs(configs.filter(fc => fc.scope_pod_id === podId))
       setEquityMap(eqMap)
       setInteractionMap(byContact)
@@ -326,7 +327,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }, [podId])
 
   const save = useCallback(async (data: Parameters<typeof updatePod>[1]) => {
-    if (!podId) return
+    if (!podId || (pod && isProjectedSharedPod(pod))) return
     setSaving(true)
     try {
       const updated = await updatePod(podId, data)
@@ -334,9 +335,10 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     } finally {
       setSaving(false)
     }
-  }, [podId])
+  }, [pod, podId])
 
   const handleAddSubPod = useCallback(async () => {
+    if (pod && isProjectedSharedPod(pod)) return
     const name = newSubPodName.trim()
     if (!podId || !name || savingSubPod) return
     if (categories.some(cat => cat.name.trim().toLowerCase() === name.toLowerCase())) {
@@ -358,39 +360,52 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     } finally {
       setSavingSubPod(false)
     }
-  }, [categories, podId, newSubPodName, savingSubPod])
+  }, [categories, newSubPodName, pod, podId, savingSubPod])
 
   const handleIconChange = useCallback(async (catId: string, icon: string | null) => {
+    const target = categories.find(category => category.id === catId)
+    if (target && isProjectedSharedCategory(target)) return
     await updateCategory(catId, { icon })
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, icon } : c))
-  }, [])
+  }, [categories])
 
   const handleRenamePod = useCallback(async () => {
+    if (pod && isProjectedSharedPod(pod)) {
+      setRenamingPod(false)
+      return
+    }
     if (!podId || !renameValue.trim() || renameValue.trim() === pod?.name) {
       setRenamingPod(false)
       return
     }
     await save({ name: renameValue.trim() })
     setRenamingPod(false)
-  }, [podId, renameValue, pod?.name, save])
+  }, [pod, podId, renameValue, save])
 
   const handleDeletePod = useCallback(async () => {
-    if (!podId) return
+    if (!podId || (pod && isProjectedSharedPod(pod))) return
     await deletePod(podId)
     navigate('/pods')
-  }, [podId, navigate])
+  }, [pod, podId, navigate])
 
   const handleRenameCategory = useCallback(async (catId: string) => {
+    const target = categories.find(category => category.id === catId)
+    if (target && isProjectedSharedCategory(target)) {
+      setEditingCatId(null)
+      return
+    }
     if (!editCatName.trim()) { setEditingCatId(null); return }
     await updateCategory(catId, { name: editCatName.trim() })
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, name: editCatName.trim() } : c))
     setEditingCatId(null)
-  }, [editCatName])
+  }, [categories, editCatName])
 
   const handleDeleteCategory = useCallback(async (catId: string) => {
+    const target = categories.find(category => category.id === catId)
+    if (target && isProjectedSharedCategory(target)) return
     await deleteCategory(catId)
     setCategories(prev => prev.filter(c => c.id !== catId))
-  }, [])
+  }, [categories])
 
   useEffect(() => {
     if (addingSubPod) newSubPodInputRef.current?.focus()
@@ -419,8 +434,10 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }, [pod])
 
   const otherPods = useMemo(() => allPods.filter(p => p.id !== podId), [allPods, podId])
+  const podReadOnly = pod ? isProjectedSharedPod(pod) : false
 
   function handleDragStart(event: DragStartEvent) {
+    if (podReadOnly) return
     const contactId = String(event.active.id)
     const contact = members.find(member => member.id === contactId)
     const shareMeta = primarySharedContactMeta(contact ? sharedContactMetaById.get(contact.id) : undefined)
@@ -430,6 +447,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
 
   async function handleDragEnd(event: DragEndEvent) {
     setDragContactId(null)
+    if (podReadOnly) return
     const { active, over } = event
     if (!over) return
 
@@ -609,6 +627,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
           </div>
 
           {/* Share + More menu */}
+          {!podReadOnly && (
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <div style={{ position: 'relative' }}>
               <button
@@ -687,6 +706,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               )}
             </div>
           </div>
+          )}
 
           {/* Delete confirmation */}
           {confirmDelete && (
@@ -753,9 +773,11 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                       type="button"
                       onClick={() => navigate(`/category/${cat.id}`)}
                       onDoubleClick={e => {
-                        e.preventDefault()
-                        setEditingCatId(cat.id)
-                        setEditCatName(cat.name)
+                        if (!podReadOnly && !isProjectedSharedCategory(cat)) {
+                          e.preventDefault()
+                          setEditingCatId(cat.id)
+                          setEditCatName(cat.name)
+                        }
                       }}
                       className="subpod-pill"
                       style={{
@@ -769,19 +791,32 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                     >
                       {cat.icon ? (
                         <span
-                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                          style={{ lineHeight: 0, cursor: 'pointer' }}
+                          onClick={e => {
+                            e.stopPropagation()
+                            if (!podReadOnly && !isProjectedSharedCategory(cat)) {
+                              setIconPickerCatId(cat.id)
+                              setIconPickerAnchor(e.currentTarget as HTMLElement)
+                            }
+                          }}
+                          style={{ lineHeight: 0, cursor: podReadOnly || isProjectedSharedCategory(cat) ? 'default' : 'pointer' }}
                         >
                           <LucideIcon name={cat.icon} size={14} color={cat.color ?? 'var(--color-text-secondary)'} strokeWidth={1.75} />
                         </span>
                       ) : (
                         <span
-                          onClick={e => { e.stopPropagation(); setIconPickerCatId(cat.id); setIconPickerAnchor(e.currentTarget as HTMLElement) }}
-                          style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
+                          onClick={e => {
+                            e.stopPropagation()
+                            if (!podReadOnly && !isProjectedSharedCategory(cat)) {
+                              setIconPickerCatId(cat.id)
+                              setIconPickerAnchor(e.currentTarget as HTMLElement)
+                            }
+                          }}
+                          style={{ width: 14, height: 14, borderRadius: '50%', background: cat.color ?? 'var(--edge-strong)', flexShrink: 0, cursor: podReadOnly || isProjectedSharedCategory(cat) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--color-text-tertiary)' }}
                           title="Set icon"
                         />
                       )}
                       {cat.name}
+                      {!podReadOnly && !isProjectedSharedCategory(cat) && (
                       <span
                         onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id) }}
                         style={{
@@ -795,6 +830,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                       >
                         x
                       </span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -808,7 +844,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                 />
               )}
             </div>
-            {addingSubPod ? (
+            {!podReadOnly && (addingSubPod ? (
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input
                   ref={newSubPodInputRef}
@@ -856,13 +892,14 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               >
                 + Add Sub-pod
               </button>
-            )}
+            ))}
             {subPodError && (
               <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{subPodError}</p>
             )}
           </section>
 
         {/* ── Pod Settings (collapsible) ── */}
+        {!podReadOnly && (
         <section style={{ marginBottom: 32 }}>
           <button
             type="button"
@@ -1027,6 +1064,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
             </div>
           )}
         </section>
+        )}
 
         {/* ── Members (primary content) ── */}
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>

@@ -33,7 +33,7 @@ import { PodCreateModal } from '../pods/PodCreateModal'
 import { PodDetailPage } from '../pods/PodDetailPage'
 import { useEscape } from '../../lib/escapeStack'
 import { groupVisibleContactsByPod } from '../../lib/podMembership'
-import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
+import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => (
@@ -740,7 +740,7 @@ export function OrbMap() {
       window.removeEventListener('map:highlight-pods', handleHighlight)
       clearTimeout(clearTimer)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   // Apply highlighted flag to nodes when activeHighlights changes
   useEffect(() => {
@@ -751,14 +751,17 @@ export function OrbMap() {
   }, [activeHighlights, setNodes])
 
   async function loadPodData() {
-    const [allPods, localContacts, allInteractions, allCategoriesRaw, incomingSharedContacts] = await Promise.all([
+    const [localPods, localContacts, allInteractions, localCategories, incomingSharedContacts] = await Promise.all([
       getPods(), getContacts(), getAllInteractions(), getCategories(), getSharedContactsWithMe(),
     ])
-    const allContacts = organizeSharedContactsForWorkspace(incomingSharedContacts, {
-      pods: allPods,
-      categories: allCategoriesRaw,
+    const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
+      pods: localPods,
+      categories: localCategories,
       contacts: localContacts,
-    }).allContacts
+    })
+    const allPods = projection.pods
+    const allCategoriesRaw = projection.categories
+    const allContacts = projection.contacts
 
     const podById = new Map(allPods.map(pod => [pod.id, pod]))
     const countsByPod: Record<string, PodCounts> = {}

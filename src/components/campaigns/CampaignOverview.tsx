@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { getAllCampaigns, getContacts } from '../../lib/data'
+import { getAllCampaigns, getCategories, getContacts, getPods } from '../../lib/data'
+import { getSharedContactsWithMe } from '../../lib/collaboration'
 import type { Campaign, Contact } from '../../lib/types'
+import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 import { CampaignCreate } from './CampaignCreate'
 import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { EmptyState } from '../empty/EmptyState'
@@ -47,13 +49,24 @@ export function CampaignOverview() {
   )
 
   const load = useCallback(async () => {
-    const [c, ct] = await Promise.all([getAllCampaigns(), getContacts()])
-    setCampaigns(c)
-    setContacts(ct)
+    const [c, ct, pods, categories, incomingSharedContacts] = await Promise.all([
+      getAllCampaigns(),
+      getContacts(),
+      getPods(),
+      getCategories(),
+      getSharedContactsWithMe(),
+    ])
+    const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
+      pods,
+      categories,
+      campaigns: c,
+      contacts: ct,
+    })
+    setCampaigns(projection.campaigns)
+    setContacts(projection.contacts)
     setLoading(false)
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
   function toggleView(v: 'grid' | 'list') {

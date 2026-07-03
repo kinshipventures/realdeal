@@ -18,7 +18,7 @@ import {
   updateCampaignStage,
   createInteraction,
 } from '../../lib/data'
-import type { Campaign, CampaignContact, CampaignOpportunity, CampaignStage, Contact, Interaction } from '../../lib/types'
+import type { Campaign, CampaignContact, CampaignStage, Contact, Interaction } from '../../lib/types'
 import { getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { CampaignStageColumn } from './CampaignStageColumn'
 import { CampaignContactCard } from './CampaignContactCard'
@@ -38,6 +38,7 @@ interface Props {
   sortAsc: boolean
   visibleCardFields: Set<string>
   sharedContactMetaById?: ReadonlyMap<string, SharedContactBadgeMeta[]>
+  readOnly?: boolean
 }
 
 interface UndoToast {
@@ -58,6 +59,7 @@ export function CampaignBoard({
   sortAsc,
   visibleCardFields,
   sharedContactMetaById,
+  readOnly = false,
 }: Props) {
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
@@ -128,6 +130,7 @@ export function CampaignBoard({
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveDragId(null)
+    if (readOnly) return
     const { active, over } = event
     if (!over) return
 
@@ -189,6 +192,7 @@ export function CampaignBoard({
   }
 
   function handleStageUpdate(id: string, data: Partial<Pick<CampaignStage, 'name' | 'color'>>) {
+    if (readOnly) return
     const prev = [...stages]
     onStagesChange(stages.map(s => s.id === id ? { ...s, ...data } : s))
     updateCampaignStage(id, data).catch(() => onStagesChange(prev))
@@ -216,6 +220,7 @@ export function CampaignBoard({
   }
 
   async function handleAddContact(contactId: string, stageId: string) {
+    if (readOnly) return
     const cc = await addContactToCampaign(campaign.id, contactId, stageId)
     if (campaignContacts.some(existing => existing.id === cc.id || existing.contact_id === contactId)) return
     onContactsChange([...campaignContacts, cc])
@@ -223,6 +228,7 @@ export function CampaignBoard({
 
   async function handleAddStageSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (readOnly) return
     const trimmed = newStageName.trim()
     if (!trimmed) return
     const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.order)) + 1 : 0
@@ -243,6 +249,7 @@ export function CampaignBoard({
   }
 
   async function handleDeleteStage(id: string) {
+    if (readOnly) return
     const stageContacts = campaignContacts.filter(cc => cc.stage_id === id)
     if (stageContacts.length > 0) return
     await deleteCampaignStage(id)
@@ -346,10 +353,12 @@ export function CampaignBoard({
               isLast={i === sortedStages.length - 1}
               visibleCardFields={visibleCardFields}
               sharedContactMetaById={sharedContactMetaById}
+              readOnly={readOnly}
             />
           ))}
 
           {/* Add Stage */}
+          {!readOnly && (
           <div ref={setNewStageRef} style={{ minWidth: 200, flexShrink: 0, paddingTop: 8, alignSelf: 'stretch', display: 'flex', flexDirection: 'column' }}>
             {showAddStage ? (
               <form
@@ -423,6 +432,7 @@ export function CampaignBoard({
               </button>
             )}
           </div>
+          )}
         </div>
 
         <DragOverlay>

@@ -16,7 +16,7 @@ import { CompaniesPage } from '../companies/CompaniesPage'
 import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
-import { organizeSharedContactsForWorkspace } from '../../lib/sharedContactProjection'
+import { organizeSharedContactsForWorkspace, projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
@@ -465,11 +465,18 @@ export function RecordsList() {
       ])
       if (stale) return
 
+      const projection = projectSharedWorkspaceResources(allIncomingSharedContacts, {
+        pods: allPods,
+        categories: allCategories,
+        campaigns: allCampaigns,
+        contacts: allContacts,
+      })
+
       setCurrentUserId(userResult.data.user?.id ?? null)
-      setPods(allPods)
-      setCategories(allCategories)
-      setContacts(allContacts)
-      setCampaigns(allCampaigns)
+      setPods(projection.pods)
+      setCategories(projection.categories)
+      setContacts(projection.contacts)
+      setCampaigns(projection.campaigns)
       setCollaborationGrants(allGrants)
       setIncomingSharedContacts(allIncomingSharedContacts)
 
@@ -480,7 +487,7 @@ export function RecordsList() {
       }
 
       const eqMap: Record<string, number> = {}
-      for (const contact of allContacts) {
+      for (const contact of projection.contacts) {
         const interactions = interactionsByContact[contact.id] ?? []
         eqMap[contact.id] = contactEquityScore(interactions)
       }

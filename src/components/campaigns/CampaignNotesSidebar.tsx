@@ -9,9 +9,10 @@ interface Props {
   stages: CampaignStage[]
   hasCampaignContacts: boolean
   onCampaignUpdate: (updated: Campaign) => void
+  readOnly?: boolean
 }
 
-export function CampaignNotesSidebar({ campaign, contacts, stages, hasCampaignContacts, onCampaignUpdate }: Props) {
+export function CampaignNotesSidebar({ campaign, contacts, stages, hasCampaignContacts, onCampaignUpdate, readOnly = false }: Props) {
   const [notes, setNotes] = useState(campaign.notes ?? '')
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -23,6 +24,7 @@ export function CampaignNotesSidebar({ campaign, contacts, stages, hasCampaignCo
   }, [campaign.id, campaign.notes])
 
   async function handleSave() {
+    if (readOnly) return
     setSaving(true)
     try {
       const updated = await updateCampaign(campaign.id, { notes: notes || null })
@@ -65,9 +67,14 @@ export function CampaignNotesSidebar({ campaign, contacts, stages, hasCampaignCo
         <textarea
           ref={textareaRef}
           value={notes}
-          onChange={e => { setNotes(e.target.value); setDirty(true) }}
+          readOnly={readOnly}
+          onChange={e => {
+            if (readOnly) return
+            setNotes(e.target.value)
+            setDirty(true)
+          }}
           onKeyDown={handleKeyDown}
-          placeholder="Add notes, context, links..."
+          placeholder={readOnly ? 'Shared campaign notes are read-only here.' : 'Add notes, context, links...'}
           rows={6}
           style={{
             width: '100%', fontSize: 13, lineHeight: 1.5,
@@ -77,11 +84,12 @@ export function CampaignNotesSidebar({ campaign, contacts, stages, hasCampaignCo
             fontFamily: 'inherit', resize: 'vertical',
             minHeight: 80, boxSizing: 'border-box',
             transition: 'border-color 150ms',
+            cursor: readOnly ? 'default' : 'text',
           }}
           onFocus={e => { e.currentTarget.style.borderColor = 'var(--edge-strong)' }}
           onBlur={e => { e.currentTarget.style.borderColor = 'var(--edge)' }}
         />
-        {dirty && (
+        {dirty && !readOnly && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8, gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
               {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter

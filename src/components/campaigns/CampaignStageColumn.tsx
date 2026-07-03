@@ -38,6 +38,7 @@ interface Props {
   visibleCardFields?: Set<string>
   stagger?: number
   sharedContactMetaById?: ReadonlyMap<string, SharedContactBadgeMeta[]>
+  readOnly?: boolean
 }
 
 export function CampaignStageColumn({
@@ -59,6 +60,7 @@ export function CampaignStageColumn({
   visibleCardFields,
   stagger = 0,
   sharedContactMetaById,
+  readOnly = false,
 }: Props) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [draft, setDraft] = useState(stage.name)
@@ -85,6 +87,7 @@ export function CampaignStageColumn({
   const stageColor = stage.color ?? '#999999'
 
   function handleNameClick() {
+    if (readOnly) return
     setDraft(stage.name)
     setIsRenaming(true)
     setTimeout(() => inputRef.current?.focus(), 0)
@@ -106,6 +109,7 @@ export function CampaignStageColumn({
   }
 
   function handleColorSelect(hex: string) {
+    if (readOnly) return
     onStageUpdate(stage.id, { color: hex as HexColor })
     setShowColorPicker(false)
   }
@@ -163,12 +167,12 @@ export function CampaignStageColumn({
       {/* Header */}
       <div style={{ padding: '14px 14px 10px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
         <button
-          onClick={() => setShowColorPicker(prev => !prev)}
+          onClick={() => { if (!readOnly) setShowColorPicker(prev => !prev) }}
           aria-label="Change stage color"
           style={{
             width: 10, height: 10, borderRadius: '50%',
             background: stageColor, border: '2px solid rgba(255,255,255,0.6)',
-            cursor: 'pointer', padding: 0, flexShrink: 0,
+            cursor: readOnly ? 'default' : 'pointer', padding: 0, flexShrink: 0,
             boxShadow: `0 0 0 1px ${hexToRgba(stageColor, 0.3)}`,
           }}
         />
@@ -228,6 +232,7 @@ export function CampaignStageColumn({
           {stageContacts.length}
         </span>
 
+        {!readOnly && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
           <button
             type="button"
@@ -268,8 +273,9 @@ export function CampaignStageColumn({
             <ChevronRight size={13} />
           </button>
         </div>
+        )}
 
-        {canDelete && (
+        {canDelete && !readOnly && (
           <button
             onClick={() => onDeleteStage(stage.id)}
             aria-label="Delete stage"
@@ -358,6 +364,7 @@ export function CampaignStageColumn({
       </div>
 
       {/* Add relationship */}
+      {!readOnly && (
       <div style={{ padding: '0 12px 14px' }}>
         {showSearch ? (
           <div>
@@ -417,6 +424,7 @@ export function CampaignStageColumn({
           </button>
         )}
       </div>
+      )}
     </div>
   )
 }
