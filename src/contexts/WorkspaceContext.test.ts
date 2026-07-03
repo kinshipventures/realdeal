@@ -20,8 +20,8 @@ describe('Workspace helpers', () => {
 
   it('prefers the stored workspace when present', () => {
     const workspaces: Workspace[] = [
-      { id: 'ws-1', name: 'Alpha', slug: 'alpha', role: 'owner', created_at: '2026-04-15T00:00:00.000Z' },
-      { id: 'ws-2', name: 'Beta', slug: 'beta', role: 'member', created_at: '2026-04-15T00:00:00.000Z' },
+      { id: 'ws-1', name: 'Alpha', slug: 'alpha', role: 'owner', created_at: '2026-04-15T00:00:00.000Z', account_email: 'owner@example.com', account_label: null },
+      { id: 'ws-2', name: 'Beta', slug: 'beta', role: 'member', created_at: '2026-04-15T00:00:00.000Z', account_email: 'team@example.com', account_label: null },
     ]
 
     expect(resolveActiveWorkspace(workspaces, 'ws-2')?.name).toBe('Beta')
@@ -68,6 +68,8 @@ describe('Workspace helpers', () => {
       slug: 'systemsstrategist-s-team-abc',
       role: 'owner',
       created_at: '2026-04-15T00:00:00.000Z',
+      account_email: 'systemsstrategist@withtrolley.ai',
+      account_label: null,
     })
   })
 })

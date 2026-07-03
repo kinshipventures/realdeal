@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext'
 
-const CHOICE_PREFIX = 'realdeal:workspace-choice-shown:'
+const CHOICE_PREFIX = 'realdeal:workspace-choice-confirmed:'
 
-function optionLabel(workspace: Workspace): string {
-  if (workspace.role === 'owner') return 'Use personal account'
-  return `Use ${workspace.name}`
+function optionEmail(workspace: Workspace, fallbackEmail?: string | null): string {
+  return workspace.account_email || (workspace.role === 'owner' ? fallbackEmail || '' : '')
+}
+
+function optionMeta(workspace: Workspace): string {
+  if (workspace.role === 'owner') return 'Personal account'
+  return `Workspace: ${workspace.name}`
 }
 
 function workspaceInitial(workspace: Workspace): string {
@@ -21,8 +25,9 @@ export function WorkspaceChoiceGate() {
 
   const storageKey = useMemo(() => {
     const userId = session?.user?.id
-    return userId ? `${CHOICE_PREFIX}${userId}` : null
-  }, [session?.user?.id])
+    const loginKey = session?.user?.last_sign_in_at || session?.access_token || ''
+    return userId && loginKey ? `${CHOICE_PREFIX}${userId}:${loginKey}` : null
+  }, [session?.access_token, session?.user?.id, session?.user?.last_sign_in_at])
 
   useEffect(() => {
     if (!storageKey || workspaces.length <= 1 || !activeWorkspace) {
@@ -45,11 +50,6 @@ export function WorkspaceChoiceGate() {
 
   const handleContinue = () => {
     if (selected) switchWorkspace(selected)
-    if (storageKey) sessionStorage.setItem(storageKey, '1')
-    setShow(false)
-  }
-
-  const handleCancel = () => {
     if (storageKey) sessionStorage.setItem(storageKey, '1')
     setShow(false)
   }
@@ -95,8 +95,16 @@ export function WorkspaceChoiceGate() {
           margin: '0 0 12px',
           color: 'var(--color-text-primary)',
         }}>
-          Select a workspace
+          Choose account to use
         </h2>
+        <p style={{
+          margin: '0 0 14px',
+          color: 'var(--color-text-secondary)',
+          fontSize: 13,
+          lineHeight: 1.45,
+        }}>
+          Select exactly one account for this session. Real Deal will only load data from the account you choose.
+        </p>
 
         <div style={{
           border: '1px solid var(--edge)',
@@ -106,6 +114,7 @@ export function WorkspaceChoiceGate() {
         }}>
           {workspaces.map(workspace => {
             const isSelected = workspace.id === selected
+            const email = optionEmail(workspace, session?.user?.email)
             return (
               <button
                 key={workspace.id}
@@ -143,16 +152,24 @@ export function WorkspaceChoiceGate() {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{
                     color: 'var(--color-text-primary)',
-                    fontSize: 15,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    marginBottom: 2,
+                  }}>
+                    Use account of
+                  </div>
+                  <div style={{
+                    color: 'var(--color-text-primary)',
+                    fontSize: 14,
                     fontWeight: 700,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                   }}>
-                    {optionLabel(workspace)}
+                    {email || workspace.name}
                   </div>
                   <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12, marginTop: 2 }}>
-                    {workspace.role === 'owner' ? 'Owner workspace' : 'Full access team workspace'}
+                    {optionMeta(workspace)}
                   </div>
                 </div>
                 {isSelected && (
@@ -167,27 +184,12 @@ export function WorkspaceChoiceGate() {
           })}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <button
-            type="button"
-            onClick={handleCancel}
-            style={{
-              minHeight: 44,
-              borderRadius: 999,
-              border: '1px solid var(--edge)',
-              background: 'transparent',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
+        <div>
           <button
             type="button"
             onClick={handleContinue}
             style={{
+              width: '100%',
               minHeight: 44,
               borderRadius: 999,
               border: 'none',

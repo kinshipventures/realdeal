@@ -24,9 +24,12 @@ describe('Team workspace guardrails', () => {
 
     expect(app).toContain('import { WorkspaceChoiceGate }')
     expect(app).toContain('<WorkspaceChoiceGate />')
-    expect(choiceGate).toContain('Select a workspace')
-    expect(choiceGate).toContain('Use personal account')
-    expect(choiceGate).toContain('Full access team workspace')
+    expect(choiceGate).toContain('Choose account to use')
+    expect(choiceGate).toContain('Select exactly one account for this session')
+    expect(choiceGate).toContain('Use account of')
+    expect(choiceGate).toContain('realdeal:workspace-choice-confirmed:')
+    expect(choiceGate).toContain('last_sign_in_at')
+    expect(choiceGate).not.toContain('Cancel')
   })
 
   it('keeps team activity visible and filterable from Settings Team', () => {
