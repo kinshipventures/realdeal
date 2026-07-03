@@ -17,6 +17,7 @@ import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId 
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
+import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
@@ -349,6 +350,8 @@ function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
     const field = lpFieldForStoredKey(key)
     if (field) {
       nextFields[field.key] = value
+    } else {
+      nextFields[key] = value
     }
   }
 
@@ -417,6 +420,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [campaignStagesMap, setCampaignStagesMap] = useState<Record<string, CampaignStage[]>>({})
   const [availableCategories, setAvailableCategories] = useState<Category[]>(providedCategories ?? [])
   const [contactsForOptions, setContactsForOptions] = useState<Contact[]>(contact ? [contact] : [])
+  const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [showCampaignPicker, setShowCampaignPicker] = useState(false)
   const [addingToCampaign, setAddingToCampaign] = useState(false)
   const [addedCampaignId, setAddedCampaignId] = useState<string | null>(null)
@@ -434,6 +438,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const hiddenSubPodIds = useMemo(() => new Set(displaySettings.hiddenSubPodIds), [displaySettings.hiddenSubPodIds])
   const hiddenCampaignIds = useMemo(() => new Set(displaySettings.hiddenCampaignIds), [displaySettings.hiddenCampaignIds])
   const hiddenCompanyIds = useMemo(() => new Set(displaySettings.hiddenCompanyIds), [displaySettings.hiddenCompanyIds])
+  const hiddenFieldConfigIds = useMemo(() => new Set(displaySettings.hiddenFieldConfigIds), [displaySettings.hiddenFieldConfigIds])
   const visiblePods = useMemo(
     () => availablePods.filter(pod => !hiddenPodIds.has(pod.id)),
     [availablePods, hiddenPodIds],
@@ -582,6 +587,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   useEffect(() => {
     setAvailablePods(pods)
   }, [pods])
+
+  useEffect(() => {
+    let canceled = false
+    getFieldConfigs()
+      .then(configs => {
+        if (!canceled) setFieldConfigs(configs)
+      })
+      .catch(() => {
+        if (!canceled) setFieldConfigs([])
+      })
+    return () => { canceled = true }
+  }, [activeWorkspace?.id])
 
   useEffect(() => {
     if (!contact) return
@@ -1881,6 +1898,338 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return fieldDef ? customField(fieldDef) : null
   }
 
+  function customPropertyKey(config: FieldConfig): string {
+    return config.name
+  }
+
+  function customPropertyRawValue(config: FieldConfig): unknown {
+    const customFields = getDraftCustomFields()
+    return customFields[customPropertyKey(config)] ?? customFields[config.source_field_id]
+  }
+
+  function customPropertyOptions(config: FieldConfig): string[] {
+    const key = customPropertyKey(config)
+    const current = customPropertyRawValue(config)
+    return mergeOptions(
+      contactsForOptions.map(optionContact => {
+        const fields = optionContact.custom_fields
+        if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return null
+        const customFields = fields as Record<string, unknown>
+        return customFields[key] ?? customFields[config.source_field_id] ?? null
+      }),
+      [current],
+    )
+  }
+
+  function normalizeCustomPropertyValue(config: FieldConfig, rawValue: string | boolean | string[]): unknown {
+    if (config.field_type === 'checkbox') return rawValue === true
+    if (Array.isArray(rawValue)) return normalizeLabelValues(rawValue)
+
+    const textValue = String(rawValue ?? '').trim()
+    if (!textValue) return null
+    if (config.field_type === 'multi_select') return splitLabelInput(textValue)
+    return textValue
+  }
+
+  function handleCustomPropertySave(config: FieldConfig, rawValue: string | boolean | string[]) {
+    if (contactCardReadOnly) return
+    const key = customPropertyKey(config)
+    const value = normalizeCustomPropertyValue(config, rawValue)
+    const nextCustomFields = { ...getDraftCustomFields() }
+
+    if (hasLpTrackerValue(value)) {
+      nextCustomFields[key] = value
+      if (config.source_field_id && config.source_field_id !== key) delete nextCustomFields[config.source_field_id]
+    } else {
+      delete nextCustomFields[key]
+      if (config.source_field_id) delete nextCustomFields[config.source_field_id]
+    }
+
+    setDraft(prev => ({ ...prev, custom_fields: nextCustomFields }))
+    setEditingCustomField(null)
+    setNewOptionTarget(null)
+    setNewOptionValue('')
+    markContactInfoChanged()
+  }
+
+  function customPropertyField(config: FieldConfig) {
+    const editorKey = `field-config:${config.id}`
+    const rawValue = customPropertyRawValue(config)
+    const value = lpTrackerDisplayValue(rawValue)
+    const editing = !contactCardReadOnly && (editingCustomField === editorKey || isNew)
+    const isMultiSelect = config.field_type === 'multi_select'
+    const multi = config.field_type === 'multiline' || isMultiSelect
+    const selectOptions = config.field_type === 'select' ? customPropertyOptions(config) : []
+    const multiSelectValues = isMultiSelect
+      ? Array.isArray(rawValue)
+        ? rawValue.map(String)
+        : splitLabelInput(value)
+      : []
+    const multiSelectOptions = isMultiSelect ? mergeOptions(customPropertyOptions(config), multiSelectValues) : []
+    const multiSelectTargetId = `field-config-labels:${config.id}`
+
+    const inputStyle = {
+      width: '100%',
+      background: 'var(--tint)',
+      border: '1px solid var(--edge-strong)',
+      borderRadius: 6,
+      color: 'var(--color-text-primary)',
+      fontSize: 14,
+      lineHeight: 1.45,
+      padding: '7px 10px',
+      outline: 'none',
+      fontFamily: 'inherit',
+    }
+
+    function onKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      const tag = e.currentTarget.tagName
+      if (e.key === 'Enter' && tag === 'INPUT') {
+        e.currentTarget.blur()
+      }
+      if (e.key === 'Enter' && tag === 'TEXTAREA' && (e.metaKey || e.ctrlKey)) {
+        e.currentTarget.blur()
+      }
+      if (e.key === 'Escape') {
+        e.currentTarget.value = value
+        e.currentTarget.blur()
+        e.stopPropagation()
+      }
+    }
+
+    function setCustomLabelValues(values: string[]) {
+      handleCustomPropertySave(config, normalizeLabelValues(values))
+    }
+
+    function toggleCustomLabel(option: string) {
+      const nextValues = multiSelectValues.includes(option)
+        ? multiSelectValues.filter(valueItem => valueItem !== option)
+        : [...multiSelectValues, option]
+      setCustomLabelValues(nextValues)
+      setEditingCustomField(editorKey)
+    }
+
+    function renderCustomLabelChip(option: string, selected = true) {
+      return (
+        <button
+          key={option}
+          type="button"
+          onClick={() => editing && toggleCustomLabel(option)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            maxWidth: '100%',
+            padding: '5px 9px',
+            borderRadius: 999,
+            border: selected
+              ? '1px solid color-mix(in srgb, var(--color-brand) 55%, var(--edge) 45%)'
+              : '1px dashed var(--edge)',
+            background: selected
+              ? 'color-mix(in srgb, var(--color-brand) 11%, var(--surface-panel) 89%)'
+              : 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+            color: selected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+            fontSize: 12,
+            fontWeight: selected ? 600 : 500,
+            lineHeight: 1.3,
+            cursor: editing ? 'pointer' : 'default',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{option}</span>
+          {editing && selected && <span aria-hidden="true" style={{ fontSize: 12 }}>x</span>}
+        </button>
+      )
+    }
+
+    const inputType = config.field_type === 'email'
+      ? 'email'
+      : config.field_type === 'url'
+        ? 'url'
+        : config.field_type === 'number'
+          ? 'number'
+          : config.field_type === 'date'
+            ? 'date'
+            : 'text'
+
+    return (
+      <div
+        key={config.id}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '132px minmax(0, 1fr)',
+          gap: 14,
+          alignItems: multi || editing ? 'start' : 'center',
+          padding: '13px 18px',
+          borderBottom: '1px solid var(--divider)',
+        }}
+      >
+        <div style={rowLabelWrap}>
+          <div style={rowLabel}>{config.name}</div>
+        </div>
+        <div style={{ minWidth: 0 }}>
+          {config.field_type === 'checkbox' ? (
+            <label style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 14,
+              color: 'var(--color-text-primary)',
+              cursor: contactCardReadOnly ? 'default' : 'pointer',
+              minHeight: 28,
+            }}>
+              <input
+                type="checkbox"
+                checked={rawValue === true}
+                disabled={contactCardReadOnly}
+                onChange={event => handleCustomPropertySave(config, event.target.checked)}
+              />
+              {rawValue === true ? 'Yes' : 'No'}
+            </label>
+          ) : editing ? (
+            config.field_type === 'select' ? (
+              brandedSelect({
+                value,
+                placeholder: `add ${config.name.toLowerCase()}`,
+                options: selectOptions,
+                targetId: `field-config:${config.id}`,
+                onSelect: nextValue => handleCustomPropertySave(config, nextValue),
+                onAdd: nextValue => handleCustomPropertySave(config, nextValue),
+              })
+            ) :
+            isMultiSelect ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {multiSelectOptions.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {multiSelectOptions.map(option => renderCustomLabelChip(option, multiSelectValues.includes(option)))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder={`Add ${config.name.toLowerCase()} separated by commas`}
+                  onBlur={event => {
+                    if (!event.target.value.trim()) return
+                    setCustomLabelValues([...multiSelectValues, ...splitLabelInput(event.target.value)])
+                    setEditingCustomField(editorKey)
+                    event.target.value = ''
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      if (event.currentTarget.value.trim()) {
+                        setCustomLabelValues([...multiSelectValues, ...splitLabelInput(event.currentTarget.value)])
+                        setEditingCustomField(editorKey)
+                        event.currentTarget.value = ''
+                      }
+                    }
+                    if (event.key === 'Escape') {
+                      setEditingCustomField(null)
+                      event.stopPropagation()
+                    }
+                  }}
+                  style={inputStyle}
+                />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => beginAddingOption(multiSelectTargetId)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      border: '1px dashed var(--edge-strong)',
+                      background: 'color-mix(in srgb, var(--surface-panel) 86%, var(--tint) 14%)',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Add label
+                  </button>
+                  {!isNew && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingCustomField(null)}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 999,
+                        border: '1px solid var(--edge)',
+                        background: 'transparent',
+                        color: 'var(--color-text-secondary)',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      Done
+                    </button>
+                  )}
+                </div>
+                {renderAddOptionControl(multiSelectTargetId, option => {
+                  setCustomLabelValues([...multiSelectValues, option])
+                  setEditingCustomField(editorKey)
+                }, 'New label')}
+              </div>
+            ) :
+            config.field_type === 'multiline' ? (
+              <textarea
+                autoFocus={!isNew}
+                defaultValue={value}
+                onBlur={event => handleCustomPropertySave(config, event.target.value)}
+                onKeyDown={onKeyDown}
+                rows={4}
+                style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : (
+              <input
+                autoFocus={!isNew}
+                type={inputType}
+                defaultValue={value}
+                onBlur={event => handleCustomPropertySave(config, event.target.value)}
+                onKeyDown={onKeyDown}
+                style={inputStyle}
+              />
+            )
+          ) : isMultiSelect && multiSelectValues.length > 0 ? (
+            <div
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingCustomField(editorKey)
+              }}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 6,
+                minHeight: 22,
+                cursor: contactCardReadOnly ? 'default' : 'text',
+              }}
+            >
+              {multiSelectValues.map(option => renderCustomLabelChip(option))}
+            </div>
+          ) : (
+            <div
+              onClick={() => {
+                if (!contactCardReadOnly) setEditingCustomField(editorKey)
+              }}
+              style={{
+                fontSize: 14,
+                color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
+                cursor: contactCardReadOnly ? 'default' : 'text',
+                minHeight: 22,
+                whiteSpace: multi ? 'pre-wrap' : 'nowrap',
+                overflow: 'hidden',
+                textOverflow: multi ? undefined : 'ellipsis',
+                lineHeight: multi ? 1.6 : 1.45,
+                padding: multi ? '2px 0' : '0',
+              }}
+            >
+              {value || `add ${config.name.toLowerCase()}`}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   function setCustomFieldDraftValue(key: string, value: unknown) {
     if (contactCardReadOnly) return
     const nextCustomFields = { ...getDraftCustomFields() }
@@ -2668,6 +3017,18 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     lineHeight: 1.2,
   }
 
+  const recordType = (draft.type ?? contact?.type ?? 'Contact') as Contact['type']
+  const assignedPodIds = draft.list_ids ?? []
+  const canShowCustomProperties = !isInboundSharedContact || hasSharedCustomFieldAccess()
+  const visibleCustomPropertyConfigs = canShowCustomProperties
+    ? fieldConfigs
+        .filter(config => config.source_field_id.startsWith('custom_'))
+        .filter(config => !hiddenFieldConfigIds.has(config.id))
+        .filter(config => config.scope_type === recordType || config.scope_type === 'Both')
+        .filter(config => !config.scope_pod_id || assignedPodIds.includes(config.scope_pod_id))
+        .sort((a, b) => a.display_order - b.display_order)
+    : []
+
   function linkedinField() {
     if (!standardFieldVisible('linkedin')) return null
 
@@ -3301,6 +3662,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                     </div>
                   )}
                 </>
+              )}
+
+              {visibleCustomPropertyConfigs.length > 0 && (
+                <div style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>custom properties</div>
+                  </div>
+                  {visibleCustomPropertyConfigs.map(config => customPropertyField(config))}
+                </div>
               )}
 
               {sectionVisible('pods') && (

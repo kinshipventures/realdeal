@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronDown, RotateCcw, Search, X } from 'lucide-react'
+import { ChevronDown, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { useContactDisplaySettings } from '@/hooks/useContactDisplaySettings'
 import {
@@ -14,14 +15,17 @@ import {
   type PropertyOption,
 } from '@/lib/contactDisplaySettings'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
-import { getFieldConfigs, type FieldConfig } from '@/lib/fieldConfig'
+import { createCustomField, deleteCustomField, getFieldConfigs, type FieldConfig } from '@/lib/fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '@/lib/kinshipInvestments'
+import { isDemoMode } from '@/lib/sampleData'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
 
 type PropertyRow = PropertyOption & {
   checked: boolean
   statusLabel: string
   onToggle: () => void
+  onDelete?: () => void
+  deleteDisabled?: boolean
   depth?: number
 }
 
@@ -73,8 +77,31 @@ const FIELD_TYPE_LABELS: Record<FieldConfig['field_type'], string> = {
   multiline: 'Multi-line text',
   number: 'Number',
   select: 'Single select',
+  multi_select: 'Multiple select',
   date: 'Date',
   checkbox: 'Checkbox',
+  email: 'Email',
+  url: 'URL',
+}
+
+const FIELD_TYPE_OPTIONS: Array<{ value: FieldConfig['field_type']; label: string }> = [
+  { value: 'text', label: 'Single-line text' },
+  { value: 'multiline', label: 'Multi-line text' },
+  { value: 'email', label: 'Email' },
+  { value: 'url', label: 'URL' },
+  { value: 'number', label: 'Number' },
+  { value: 'date', label: 'Date' },
+  { value: 'select', label: 'Single select' },
+  { value: 'multi_select', label: 'Multiple select' },
+  { value: 'checkbox', label: 'Checkbox' },
+]
+
+function isCustomUserField(config: FieldConfig): boolean {
+  return config.source_field_id.startsWith('custom_')
+}
+
+function propertyNameKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
 function toggleValue(list: string[], value: string): string[] {
@@ -423,8 +450,35 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                   <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
                   <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
                   <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
-                  <div style={{ padding: '8px 12px' }}>
+                  <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <StatusPill active={row.checked} label={row.statusLabel} />
+                    {row.onDelete && (
+                      <button
+                        type="button"
+                        onClick={event => {
+                          event.stopPropagation()
+                          row.onDelete?.()
+                        }}
+                        disabled={row.deleteDisabled}
+                        aria-label={`Delete ${row.label}`}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 7,
+                          border: '1px solid var(--edge)',
+                          background: 'transparent',
+                          color: 'var(--color-text-tertiary)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: row.deleteDisabled ? 'default' : 'pointer',
+                          opacity: row.deleteDisabled ? 0.45 : 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -438,6 +492,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
 }
 
 export function PropertiesTab() {
+  const { session } = useAuth()
   const { activeWorkspace } = useWorkspace()
   const [objectType, setObjectType] = useState<PropertyObjectType>('Contact')
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
@@ -448,7 +503,14 @@ export function PropertiesTab() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [showCreateProperty, setShowCreateProperty] = useState(false)
+  const [newPropertyName, setNewPropertyName] = useState('')
+  const [newPropertyType, setNewPropertyType] = useState<FieldConfig['field_type']>('text')
+  const [createPropertyError, setCreatePropertyError] = useState<string | null>(null)
+  const [creatingProperty, setCreatingProperty] = useState(false)
+  const [deletingFieldConfigId, setDeletingFieldConfigId] = useState<string | null>(null)
   const workspaceOwner = activeWorkspace?.name || 'Workspace'
+  const canManageCustomProperties = objectType === 'Contact' || objectType === 'Company'
 
   useEffect(() => {
     let stale = false
@@ -470,7 +532,7 @@ export function PropertiesTab() {
         setContacts([])
       })
     return () => { stale = true }
-  }, [])
+  }, [activeWorkspace?.id])
 
   const podById = useMemo(() => new Map(pods.map(pod => [pod.id, pod])), [pods])
   const companyContacts = useMemo(
@@ -488,6 +550,18 @@ export function PropertiesTab() {
     () => contacts.find(contact => contact.id === selectedContactId) ?? null,
     [contacts, selectedContactId],
   )
+  const existingPropertyNames = useMemo(() => {
+    const standardOptions = objectType === 'Company'
+      ? COMPANY_STANDARD_PROPERTY_OPTIONS
+      : CONTACT_STANDARD_PROPERTY_OPTIONS
+    const names = new Set(standardOptions.map(option => propertyNameKey(option.label)))
+
+    fieldConfigs
+      .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .forEach(config => names.add(propertyNameKey(config.name)))
+
+    return names
+  }, [fieldConfigs, objectType])
   const filteredContacts = useMemo(() => {
     const query = contactQuery.trim().toLowerCase()
     if (!query) return []
@@ -562,6 +636,74 @@ export function PropertiesTab() {
         hiddenFieldOptionValues: nextFieldOptions,
       })
     })
+  }, [updateSettings])
+
+  const handleCreateProperty = useCallback(async () => {
+    const name = newPropertyName.trim()
+    const demoMode = isDemoMode()
+    if (!canManageCustomProperties) return
+    if (!name) {
+      setCreatePropertyError('Property name is required.')
+      return
+    }
+    if (existingPropertyNames.has(propertyNameKey(name))) {
+      setCreatePropertyError('A property with this name already exists.')
+      return
+    }
+    if ((!activeWorkspace?.id || !session?.user?.id) && !demoMode) {
+      setCreatePropertyError('Could not save this property for the current workspace.')
+      return
+    }
+
+    setCreatingProperty(true)
+    setCreatePropertyError(null)
+    try {
+      const displayOrder = Math.max(0, ...fieldConfigs.map(config => config.display_order)) + 1
+      const created = await createCustomField({
+        workspace_id: activeWorkspace?.id ?? 'demo-workspace',
+        user_id: session?.user?.id ?? 'demo-user',
+        name,
+        field_type: newPropertyType,
+        scope_type: objectType === 'Company' ? 'Company' : 'Contact',
+        scope_pod_id: null,
+        required: false,
+        display_order: displayOrder,
+      })
+      setFieldConfigs(current => [...current, created])
+      setNewPropertyName('')
+      setNewPropertyType('text')
+      setShowCreateProperty(false)
+    } catch {
+      setCreatePropertyError('Could not create this property. Try again.')
+    } finally {
+      setCreatingProperty(false)
+    }
+  }, [
+    activeWorkspace?.id,
+    canManageCustomProperties,
+    existingPropertyNames,
+    fieldConfigs,
+    newPropertyName,
+    newPropertyType,
+    objectType,
+    session?.user?.id,
+  ])
+
+  const handleDeleteCustomProperty = useCallback(async (config: FieldConfig) => {
+    if (!isCustomUserField(config)) return
+    const confirmed = window.confirm(`Delete ${config.name}? Existing contact values for this custom property will stay stored but the property will be removed from the workspace settings.`)
+    if (!confirmed) return
+
+    setDeletingFieldConfigId(config.id)
+    try {
+      await deleteCustomField(config.id)
+      setFieldConfigs(current => current.filter(item => item.id !== config.id))
+      updateSettings(current => replaceSettings(current, {
+        hiddenFieldConfigIds: current.hiddenFieldConfigIds.filter(id => id !== config.id),
+      }))
+    } finally {
+      setDeletingFieldConfigId(null)
+    }
   }, [updateSettings])
 
   const rows = useMemo<PropertyRow[]>(() => {
@@ -785,11 +927,13 @@ export function PropertiesTab() {
 
     const customRows = fieldConfigs
       .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => objectType !== 'Contact' || isCustomUserField(config))
       .filter(config => objectType !== 'Contact' || !REMOVED_CONTACT_PROPERTY_NAMES.has(normalizeRemovedPropertyName(config.name)))
       .sort((a, b) => a.display_order - b.display_order)
       .map(config => {
         const checked = !settings.hiddenFieldConfigIds.includes(config.id)
         const pod = config.scope_pod_id ? podById.get(config.scope_pod_id) : null
+        const canDelete = isCustomUserField(config)
         return {
           id: config.id,
           label: config.name,
@@ -800,15 +944,19 @@ export function PropertiesTab() {
           checked,
           statusLabel: checked ? 'Shown' : (selectedContact ? 'Hidden here' : 'Hidden'),
           onToggle: () => toggleFieldConfig(config.id),
+          onDelete: canDelete ? () => handleDeleteCustomProperty(config) : undefined,
+          deleteDisabled: deletingFieldConfigId === config.id,
         }
       })
 
-    return objectType === 'Contact' ? sectionRows : [...sectionRows, ...customRows]
+    return [...sectionRows, ...customRows]
   }, [
     categories,
     campaigns,
     companyContacts,
+    deletingFieldConfigId,
     fieldConfigs,
+    handleDeleteCustomProperty,
     kinshipInvestmentOptions,
     objectType,
     podById,
@@ -845,28 +993,57 @@ export function PropertiesTab() {
             {selectedContact ? `Only ${selectedContact.name}` : 'All contacts'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => updateSettings(() => DEFAULT_CONTACT_DISPLAY_SETTINGS)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            minHeight: 34,
-            padding: '7px 10px',
-            borderRadius: 8,
-            border: '1px solid var(--edge)',
-            background: 'transparent',
-            color: 'var(--color-text-secondary)',
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-          }}
-        >
-          <RotateCcw size={13} />
-          {selectedContact ? 'Reset contact' : 'Reset'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {canManageCustomProperties && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateProperty(value => !value)
+                setCreatePropertyError(null)
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                minHeight: 34,
+                padding: '7px 11px',
+                borderRadius: 8,
+                border: '1px solid var(--color-brand)',
+                background: 'var(--color-brand)',
+                color: 'white',
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={13} />
+              Add property
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => updateSettings(() => DEFAULT_CONTACT_DISPLAY_SETTINGS)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              minHeight: 34,
+              padding: '7px 10px',
+              borderRadius: 8,
+              border: '1px solid var(--edge)',
+              background: 'transparent',
+              color: 'var(--color-text-secondary)',
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            <RotateCcw size={13} />
+            {selectedContact ? 'Reset contact' : 'Reset'}
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: 8, marginBottom: 18, position: 'relative' }}>
@@ -1018,7 +1195,11 @@ export function PropertiesTab() {
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Select an object</span>
         <select
           value={objectType}
-          onChange={event => setObjectType(event.target.value as PropertyObjectType)}
+          onChange={event => {
+            setObjectType(event.target.value as PropertyObjectType)
+            setShowCreateProperty(false)
+            setCreatePropertyError(null)
+          }}
           style={{
             width: 'min(100%, 320px)',
             height: 40,
@@ -1036,6 +1217,125 @@ export function PropertiesTab() {
           ))}
         </select>
       </label>
+
+      {showCreateProperty && canManageCustomProperties && (
+        <div style={{
+          border: '1px solid var(--edge)',
+          borderRadius: 10,
+          background: 'var(--surface-panel)',
+          padding: 14,
+          marginBottom: 18,
+          display: 'grid',
+          gap: 10,
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, alignItems: 'end' }}>
+            <label style={{ display: 'grid', gap: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Property name</span>
+              <input
+                type="text"
+                value={newPropertyName}
+                onChange={event => {
+                  setNewPropertyName(event.target.value)
+                  setCreatePropertyError(null)
+                }}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    void handleCreateProperty()
+                  }
+                  if (event.key === 'Escape') {
+                    setShowCreateProperty(false)
+                    setCreatePropertyError(null)
+                  }
+                }}
+                placeholder="Email 4"
+                autoFocus
+                style={{
+                  width: '100%',
+                  height: 38,
+                  borderRadius: 8,
+                  border: '1px solid var(--edge)',
+                  background: 'var(--tint)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  padding: '0 10px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </label>
+            <label style={{ display: 'grid', gap: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Type</span>
+              <select
+                value={newPropertyType}
+                onChange={event => setNewPropertyType(event.target.value as FieldConfig['field_type'])}
+                style={{
+                  width: '100%',
+                  height: 38,
+                  borderRadius: 8,
+                  border: '1px solid var(--edge)',
+                  background: 'var(--tint)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  padding: '0 10px',
+                }}
+              >
+                {FIELD_TYPE_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => void handleCreateProperty()}
+              disabled={creatingProperty}
+              style={{
+                minHeight: 38,
+                padding: '0 14px',
+                borderRadius: 8,
+                border: '1px solid var(--color-brand)',
+                background: 'var(--color-brand)',
+                color: 'white',
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: 'inherit',
+                cursor: creatingProperty ? 'default' : 'pointer',
+                opacity: creatingProperty ? 0.55 : 1,
+              }}
+            >
+              {creatingProperty ? 'Adding...' : 'Add'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateProperty(false)
+                setNewPropertyName('')
+                setNewPropertyType('text')
+                setCreatePropertyError(null)
+              }}
+              style={{
+                minHeight: 38,
+                padding: '0 14px',
+                borderRadius: 8,
+                border: '1px solid var(--edge)',
+                background: 'transparent',
+                color: 'var(--color-text-secondary)',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+          {createPropertyError && (
+            <div style={{ color: '#B42318', fontSize: 12, fontWeight: 600 }}>{createPropertyError}</div>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
         <h3 style={{

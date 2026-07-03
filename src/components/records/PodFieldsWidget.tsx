@@ -45,8 +45,14 @@ export function PodFieldsWidget({
     return contact.custom_fields[fc.name] ?? contact.custom_fields[fc.source_field_id] ?? null
   }
 
-  function handleFieldSave(fc: FieldConfig, rawValue: string | boolean) {
-    const value = fc.field_type === 'checkbox' ? rawValue : (rawValue as string).trim() || null
+  function handleFieldSave(fc: FieldConfig, rawValue: string | boolean | string[]) {
+    const value = fc.field_type === 'checkbox'
+      ? rawValue
+      : fc.field_type === 'multi_select'
+        ? Array.isArray(rawValue)
+          ? rawValue.map(valueItem => String(valueItem).trim()).filter(Boolean)
+          : String(rawValue).split(/[;,|\n]+/).map(valueItem => valueItem.trim()).filter(Boolean)
+        : (rawValue as string).trim() || null
     setEditingFieldId(null)
     onUpdate({ custom_fields: { ...contact.custom_fields, [fc.name]: value } })
   }
@@ -129,14 +135,16 @@ export function PodFieldsWidget({
                       style={inputStyle}
                     />
                   )}
-                  {(fc.field_type === 'text' || fc.field_type === 'select') && (
+                  {(['text', 'select', 'multi_select', 'email', 'url'] as FieldConfig['field_type'][]).includes(fc.field_type) && (
                     <input
                       autoFocus
-                      type="text"
-                      defaultValue={String(val ?? '')}
+                      type={fc.field_type === 'email' ? 'email' : fc.field_type === 'url' ? 'url' : 'text'}
+                      defaultValue={Array.isArray(val) ? val.join(', ') : String(val ?? '')}
                       onBlur={e => handleFieldSave(fc, e.target.value)}
                       onKeyDown={e => {
-                        if (e.key === 'Enter') e.currentTarget.blur()
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur()
+                        }
                         if (e.key === 'Escape') { e.currentTarget.value = String(val ?? ''); e.currentTarget.blur(); e.stopPropagation() }
                       }}
                       style={inputStyle}
@@ -157,7 +165,9 @@ export function PodFieldsWidget({
                 >
                   {fc.field_type === 'checkbox'
                     ? (val ? 'Yes' : 'No')
-                    : (val !== null && val !== undefined && val !== '' ? String(val) : '\u2014')}
+                    : Array.isArray(val)
+                      ? val.join(', ')
+                      : (val !== null && val !== undefined && val !== '' ? String(val) : '\u2014')}
                 </div>
               )}
             </div>
