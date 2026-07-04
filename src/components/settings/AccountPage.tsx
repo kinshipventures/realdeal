@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
-import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext'
 import { PROVIDERS, getProviderKey, setProviderKey } from '@/lib/meeting-sync'
 import { PreferencesTab } from './PreferencesTab'
 import { GoogleIntegrationSettings } from './GoogleIntegrationSettings'
@@ -37,9 +37,17 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'team', label: 'Team' },
 ]
 
+function workspaceAccountEmail(workspace: Workspace, fallbackEmail?: string | null): string {
+  return workspace.account_email || (workspace.role === 'owner' ? fallbackEmail || '' : '')
+}
+
+function workspaceAccountType(workspace: Workspace): string {
+  return workspace.role === 'owner' ? 'Personal account' : 'Team workspace'
+}
+
 export function AccountPage() {
   const { session } = useAuth()
-  const { activeWorkspace, refreshWorkspaces, switchWorkspace } = useWorkspace()
+  const { workspaces, activeWorkspace, refreshWorkspaces, switchWorkspace } = useWorkspace()
   const navigate = useNavigate()
   const [tab, setTab] = useState<SettingsTab>('profile')
   const [displayName, setDisplayName] = useState('')
@@ -265,6 +273,13 @@ export function AccountPage() {
     }
   }
 
+  const handleWorkspaceSelect = (workspaceId: string) => {
+    if (!workspaceId || workspaceId === activeWorkspace?.id) return
+    setInviteError('')
+    setIncomingInviteMessage('')
+    switchWorkspace(workspaceId)
+  }
+
   const labelStyle = { fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 } as const
   const inputStyle = {
     width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8,
@@ -385,6 +400,72 @@ export function AccountPage() {
           <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '0 0 24px', lineHeight: 1.5, maxWidth: 720 }}>
             Team members can choose this workspace at sign-in and work here with full access using their own login.
           </p>
+
+          <div style={{ marginBottom: 24 }}>
+            <span style={labelStyle}>Active workspace</span>
+            <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', margin: '0 0 10px', lineHeight: 1.45 }}>
+              Real Deal loads one workspace at a time. Choose the account you want to use before working here.
+            </p>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {workspaces.map(workspace => {
+                const isCurrent = workspace.id === activeWorkspace.id
+                const accountEmail = workspaceAccountEmail(workspace, session?.user?.email)
+                return (
+                  <button
+                    key={workspace.id}
+                    type="button"
+                    onClick={() => handleWorkspaceSelect(workspace.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: `1px solid ${isCurrent ? 'var(--color-brand)' : 'var(--edge)'}`,
+                      background: isCurrent ? 'rgba(37,99,235,0.06)' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      cursor: isCurrent ? 'default' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 8,
+                      flexShrink: 0,
+                      background: isCurrent ? 'var(--color-brand)' : 'var(--tint)',
+                      color: isCurrent ? '#fff' : 'var(--color-brand)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}>
+                      {workspace.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: 0 }}>
+                        Use account of
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {accountEmail || workspace.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {workspaceAccountType(workspace)} - {workspace.name}
+                      </div>
+                    </div>
+                    {isCurrent && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-brand)', background: 'rgba(37,99,235,0.1)', borderRadius: 999, padding: '4px 8px', whiteSpace: 'nowrap' }}>
+                        Current
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           <div style={{ marginBottom: 24 }}>
             <span style={labelStyle}>Name</span>

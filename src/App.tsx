@@ -18,6 +18,7 @@ import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
 import { SharedListPage } from './components/sharing/SharedListPage'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { WorkspaceChoiceGate } from '@/components/workspace/WorkspaceChoiceGate'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getUserConnections } from './lib/connections'
 import {
   CONNECTIONS_CHANGED_EVENT,
@@ -108,6 +109,7 @@ function AppShell() {
   const isApprovals = location.pathname.startsWith('/approvals')
   const isMobile = useIsMobile()
   const { session } = useAuth()
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace()
   const [demo, setDemo] = useState(isDemoMode)
   const [showSearch, setShowSearch] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -207,6 +209,10 @@ function AppShell() {
   }
 
   const showDemoControls = demo || window.location.hostname === 'localhost'
+
+  if (!demo && session && (workspaceLoading || !activeWorkspace)) {
+    return <SplashScreen />
+  }
 
   return (
     <div className="rd-product-shell" style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>

@@ -21,15 +21,38 @@ describe('Team workspace guardrails', () => {
   it('keeps the workspace choice gate wired after login', () => {
     const app = source('src/App.tsx')
     const choiceGate = source('src/components/workspace/WorkspaceChoiceGate.tsx')
+    const accountPage = source('src/components/settings/AccountPage.tsx')
 
     expect(app).toContain('import { WorkspaceChoiceGate }')
+    expect(app).toContain('import { useWorkspace }')
     expect(app).toContain('<WorkspaceChoiceGate />')
+    expect(app).toContain('workspaceLoading || !activeWorkspace')
     expect(choiceGate).toContain('Choose account to use')
     expect(choiceGate).toContain('Select exactly one account for this session')
     expect(choiceGate).toContain('Use account of')
     expect(choiceGate).toContain('realdeal:workspace-choice-confirmed:')
     expect(choiceGate).toContain('last_sign_in_at')
     expect(choiceGate).not.toContain('Cancel')
+    expect(accountPage).toContain('Active workspace')
+    expect(accountPage).toContain('Real Deal loads one workspace at a time')
+    expect(accountPage).toContain('Use account of')
+    expect(accountPage).toContain('switchWorkspace(workspaceId)')
+  })
+
+  it('keeps core app reads scoped to the active workspace', () => {
+    const dataLayer = source('src/lib/supabase-data.ts')
+
+    expect(dataLayer).toMatch(/from\('pods'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('categories'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('contacts'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('interactions'\)\.select\('\*'\)\s*\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('campaigns'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('campaign_contacts'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toMatch(/from\('campaign_stages'\)\.select\('\*'\)\.eq\('workspace_id', wsId\)/)
+    expect(dataLayer).toContain('workspaceId: _podsCacheWorkspaceId')
+    expect(dataLayer).toContain('workspaceId: _contactsCacheWorkspaceId')
+    expect(dataLayer).toContain('cacheMatchesWorkspace')
+    expect(dataLayer).toContain('setCache(null, null, workspaceId)')
   })
 
   it('keeps team activity visible and filterable from Settings Team', () => {

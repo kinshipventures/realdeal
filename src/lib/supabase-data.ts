@@ -46,33 +46,43 @@ function labelFromPodId(id: string | null | undefined): string | null {
 }
 
 const CACHE_TTL = 5 * 60 * 1000
+type WorkspaceCache<T> = { data: T[] | null; time: number; fetch: Promise<T[]> | null; workspaceId: string | null }
 
 // Generic stale-while-revalidate cache helper
 function cachedFetch<T>(
-  getCache: () => { data: T[] | null; time: number; fetch: Promise<T[]> | null },
-  setCache: (data: T[], fetch: Promise<T[]> | null) => void,
+  getCache: () => WorkspaceCache<T>,
+  setCache: (data: T[] | null, fetch: Promise<T[]> | null, workspaceId: string | null) => void,
   doFetch: () => Promise<T[]>,
   filter?: (all: T[]) => T[]
 ): Promise<T[]> {
+  const workspaceId = getActiveWorkspaceId()
   const c = getCache()
-  const isExpired = !c.data || Date.now() - c.time > CACHE_TTL
+  const cacheMatchesWorkspace = c.workspaceId === workspaceId
+  const cachedData = cacheMatchesWorkspace ? c.data : null
+  const cachedFetch = cacheMatchesWorkspace ? c.fetch : null
+  const cachedTime = cacheMatchesWorkspace ? c.time : 0
+  const isExpired = !cachedData || Date.now() - cachedTime > CACHE_TTL
   const applyFilter = (arr: T[]) => filter ? filter(arr) : arr
 
-  if (c.data && !isExpired) return Promise.resolve(applyFilter(c.data))
+  if (!cacheMatchesWorkspace && (c.data || c.fetch)) {
+    setCache(null, null, workspaceId)
+  }
 
-  if (c.data && isExpired && !c.fetch) {
-    const stale = c.data
-    const p = doFetch().then(result => { setCache(result, null); return result }).catch(err => { setCache(c.data!, null); throw err })
-    setCache(c.data, p)
+  if (cachedData && !isExpired) return Promise.resolve(applyFilter(cachedData))
+
+  if (cachedData && isExpired && !cachedFetch) {
+    const stale = cachedData
+    const p = doFetch().then(result => { setCache(result, null, workspaceId); return result }).catch(err => { setCache(stale, null, workspaceId); throw err })
+    setCache(stale, p, workspaceId)
     return Promise.resolve(applyFilter(stale))
   }
 
-  if (!c.fetch) {
-    const p = doFetch().then(result => { setCache(result, null); return result }).catch(err => { setCache(null as any, null); throw err })
-    setCache(null as any, p)
+  if (!cachedFetch) {
+    const p = doFetch().then(result => { setCache(result, null, workspaceId); return result }).catch(err => { setCache(null, null, workspaceId); throw err })
+    setCache(null, p, workspaceId)
     return p.then(applyFilter)
   }
-  return c.fetch.then(applyFilter)
+  return cachedFetch.then(applyFilter)
 }
 
 // ── Pods ─────────────────────────────────────────────────────────────────────
@@ -89,9 +99,11 @@ function mapPod(r: any): Pod {
 let _podsCache: Pod[] | null = null
 let _podsCacheTime = 0
 let _podsFetch: Promise<Pod[]> | null = null
+let _podsCacheWorkspaceId: string | null = null
 
 async function fetchPods(): Promise<Pod[]> {
-  const { data, error } = await supabase.from('pods').select('*')
+  const wsId = getActiveWorkspaceId()
+  const { data, error } = await supabase.from('pods').select('*').eq('workspace_id', wsId)
   if (error) throw error
   return (data ?? []).map(mapPod)
 }
@@ -99,8 +111,8 @@ async function fetchPods(): Promise<Pod[]> {
 export function getPods(): Promise<Pod[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_PODS)
   return cachedFetch(
-    () => ({ data: _podsCache, time: _podsCacheTime, fetch: _podsFetch }),
-    (d, f) => { if (d) { _podsCache = d; _podsCacheTime = Date.now() } _podsFetch = f },
+    () => ({ data: _podsCache, time: _podsCacheTime, fetch: _podsFetch, workspaceId: _podsCacheWorkspaceId }),
+    (d, f, wsId) => { _podsCache = d; _podsCacheTime = d ? Date.now() : 0; _podsFetch = f; _podsCacheWorkspaceId = wsId },
     fetchPods,
   )
 }
@@ -172,9 +184,11 @@ function mapCategory(r: any): Category {
 let _categoriesCache: Category[] | null = null
 let _categoriesCacheTime = 0
 let _categoriesFetch: Promise<Category[]> | null = null
+let _categoriesCacheWorkspaceId: string | null = null
 
 async function fetchCategories(): Promise<Category[]> {
-  const { data, error } = await supabase.from('categories').select('*')
+  const wsId = getActiveWorkspaceId()
+  const { data, error } = await supabase.from('categories').select('*').eq('workspace_id', wsId)
   if (error) throw error
   return (data ?? []).map(mapCategory)
 }
@@ -182,8 +196,8 @@ async function fetchCategories(): Promise<Category[]> {
 export function getCategories(listId?: string): Promise<Category[]> {
   if (isDemoMode()) return Promise.resolve(listId ? DEMO_CATEGORIES.filter(c => c.list_id === listId) : DEMO_CATEGORIES)
   return cachedFetch(
-    () => ({ data: _categoriesCache, time: _categoriesCacheTime, fetch: _categoriesFetch }),
-    (d, f) => { if (d) { _categoriesCache = d; _categoriesCacheTime = Date.now() } _categoriesFetch = f },
+    () => ({ data: _categoriesCache, time: _categoriesCacheTime, fetch: _categoriesFetch, workspaceId: _categoriesCacheWorkspaceId }),
+    (d, f, wsId) => { _categoriesCache = d; _categoriesCacheTime = d ? Date.now() : 0; _categoriesFetch = f; _categoriesCacheWorkspaceId = wsId },
     fetchCategories,
     listId ? (all => all.filter(c => c.list_id === listId)) : undefined,
   )
@@ -306,17 +320,19 @@ function mapContact(r: any, catIds?: string[]): Contact {
 let _contactsCache: Contact[] | null = null
 let _contactsCacheTime = 0
 let _contactsFetch: Promise<Contact[]> | null = null
+let _contactsCacheWorkspaceId: string | null = null
 
 async function fetchContacts(): Promise<Contact[]> {
-  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*'))
+  const wsId = getActiveWorkspaceId()
+  const data = await fetchAllRows<any>(() => supabase.from('contacts').select('*').eq('workspace_id', wsId))
   return enrichContactJunctions(data)
 }
 
 export function getContacts(categoryId?: string): Promise<Contact[]> {
   if (isDemoMode()) return Promise.resolve(categoryId ? DEMO_CONTACTS.filter(c => c.category_ids.includes(categoryId)) : DEMO_CONTACTS)
   return cachedFetch(
-    () => ({ data: _contactsCache, time: _contactsCacheTime, fetch: _contactsFetch }),
-    (d, f) => { if (d) { _contactsCache = d; _contactsCacheTime = Date.now() } _contactsFetch = f },
+    () => ({ data: _contactsCache, time: _contactsCacheTime, fetch: _contactsFetch, workspaceId: _contactsCacheWorkspaceId }),
+    (d, f, wsId) => { _contactsCache = d; _contactsCacheTime = d ? Date.now() : 0; _contactsFetch = f; _contactsCacheWorkspaceId = wsId },
     fetchContacts,
     categoryId ? (all => all.filter(c => c.category_ids.includes(categoryId))) : undefined,
   )
@@ -509,12 +525,15 @@ function mapInteraction(r: any): Interaction {
 let _interactionsCache: Interaction[] | null = null
 let _interactionsCacheTime = 0
 let _interactionsFetch: Promise<Interaction[]> | null = null
+let _interactionsCacheWorkspaceId: string | null = null
 
 async function fetchInteractions90d(): Promise<Interaction[]> {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - 90)
+  const wsId = getActiveWorkspaceId()
   const data = await fetchAllRows<any>(() =>
     supabase.from('interactions').select('*')
+      .eq('workspace_id', wsId)
       .gte('date', cutoff.toISOString().split('T')[0])
       .order('date', { ascending: false })
   )
@@ -524,18 +543,20 @@ async function fetchInteractions90d(): Promise<Interaction[]> {
 export function getAllInteractions(): Promise<Interaction[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_INTERACTIONS)
   return cachedFetch(
-    () => ({ data: _interactionsCache, time: _interactionsCacheTime, fetch: _interactionsFetch }),
-    (d, f) => { if (d) { _interactionsCache = d; _interactionsCacheTime = Date.now() } _interactionsFetch = f },
+    () => ({ data: _interactionsCache, time: _interactionsCacheTime, fetch: _interactionsFetch, workspaceId: _interactionsCacheWorkspaceId }),
+    (d, f, wsId) => { _interactionsCache = d; _interactionsCacheTime = d ? Date.now() : 0; _interactionsFetch = f; _interactionsCacheWorkspaceId = wsId },
     fetchInteractions90d,
   )
 }
 
-export function invalidateInteractionsCache(): void { _interactionsCache = null }
-export function invalidateContactsCache(): void { _contactsCache = null }
+export function invalidateInteractionsCache(): void { _interactionsCache = null; _interactionsCacheTime = 0; _interactionsFetch = null; _interactionsCacheWorkspaceId = null }
+export function invalidateContactsCache(): void { _contactsCache = null; _contactsCacheTime = 0; _contactsFetch = null; _contactsCacheWorkspaceId = null }
 
 export async function getInteractions(contactId: string): Promise<Interaction[]> {
   if (isDemoMode()) return DEMO_INTERACTIONS.filter(i => i.contact_id === contactId)
+  const wsId = getActiveWorkspaceId()
   const { data, error } = await supabase.from('interactions').select('*')
+    .eq('workspace_id', wsId)
     .eq('contact_id', contactId).order('date', { ascending: false })
   if (error) throw error
   return (data ?? []).map(mapInteraction)
@@ -656,15 +677,24 @@ function mapCampaignStage(r: any): CampaignStage {
 let _campaignsCache: Campaign[] | null = null
 let _campaignsCacheTime = 0
 let _campaignsFetch: Promise<Campaign[]> | null = null
+let _campaignsCacheWorkspaceId: string | null = null
 let _campaignContactsCache: CampaignContact[] | null = null
 let _campaignStagesCache: CampaignStage[] | null = null
 
-export function invalidateCampaignsCache(): void { _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null }
+export function invalidateCampaignsCache(): void {
+  _campaignsCache = null
+  _campaignsCacheTime = 0
+  _campaignsFetch = null
+  _campaignsCacheWorkspaceId = null
+  _campaignContactsCache = null
+  _campaignStagesCache = null
+}
 
 async function fetchCampaigns(): Promise<Campaign[]> {
+  const wsId = getActiveWorkspaceId()
   const [campRes, ccRes] = await Promise.all([
-    supabase.from('campaigns').select('*'),
-    supabase.from('campaign_contacts').select('*'),
+    supabase.from('campaigns').select('*').eq('workspace_id', wsId),
+    supabase.from('campaign_contacts').select('*').eq('workspace_id', wsId),
   ])
   if (campRes.error) throw campRes.error
   if (ccRes.error) throw new Error(`campaign_contacts query failed: ${ccRes.error.message}`)
@@ -680,8 +710,8 @@ async function fetchCampaigns(): Promise<Campaign[]> {
 export function getCampaigns(): Promise<Campaign[]> {
   if (isDemoMode()) return Promise.resolve(DEMO_CAMPAIGNS.filter(c => c.status === 'active' || c.status === 'completed'))
   return cachedFetch(
-    () => ({ data: _campaignsCache, time: _campaignsCacheTime, fetch: _campaignsFetch }),
-    (d, f) => { if (d) { _campaignsCache = d; _campaignsCacheTime = Date.now() } _campaignsFetch = f },
+    () => ({ data: _campaignsCache, time: _campaignsCacheTime, fetch: _campaignsFetch, workspaceId: _campaignsCacheWorkspaceId }),
+    (d, f, wsId) => { _campaignsCache = d; _campaignsCacheTime = d ? Date.now() : 0; _campaignsFetch = f; _campaignsCacheWorkspaceId = wsId },
     fetchCampaigns,
   )
 }
@@ -1055,11 +1085,18 @@ function mapCampaignStageRow(r: any): CampaignStage {
 let _campaignStagesDBCache: CampaignStage[] | null = null
 let _campaignStagesDBCacheTime = 0
 let _campaignStagesDBFetch: Promise<CampaignStage[]> | null = null
+let _campaignStagesDBCacheWorkspaceId: string | null = null
 
-function invalidateCampaignStagesDBCache(): void { _campaignStagesDBCache = null; _campaignStagesDBFetch = null }
+function invalidateCampaignStagesDBCache(): void {
+  _campaignStagesDBCache = null
+  _campaignStagesDBCacheTime = 0
+  _campaignStagesDBFetch = null
+  _campaignStagesDBCacheWorkspaceId = null
+}
 
 async function fetchCampaignStagesDB(): Promise<CampaignStage[]> {
-  const { data, error } = await supabase.from('campaign_stages').select('*')
+  const wsId = getActiveWorkspaceId()
+  const { data, error } = await supabase.from('campaign_stages').select('*').eq('workspace_id', wsId)
   if (error) throw error
   return (data ?? []).map(mapCampaignStageRow)
 }
@@ -1069,8 +1106,8 @@ export function getPipelineStages(campaignId?: string): Promise<CampaignStage[]>
     return Promise.resolve(campaignId ? DEMO_CAMPAIGN_STAGES.filter(s => s.campaign_id === campaignId) : [...DEMO_CAMPAIGN_STAGES])
   }
   return cachedFetch(
-    () => ({ data: _campaignStagesDBCache, time: _campaignStagesDBCacheTime, fetch: _campaignStagesDBFetch }),
-    (d, f) => { if (d) { _campaignStagesDBCache = d; _campaignStagesDBCacheTime = Date.now() } _campaignStagesDBFetch = f },
+    () => ({ data: _campaignStagesDBCache, time: _campaignStagesDBCacheTime, fetch: _campaignStagesDBFetch, workspaceId: _campaignStagesDBCacheWorkspaceId }),
+    (d, f, wsId) => { _campaignStagesDBCache = d; _campaignStagesDBCacheTime = d ? Date.now() : 0; _campaignStagesDBFetch = f; _campaignStagesDBCacheWorkspaceId = wsId },
     fetchCampaignStagesDB,
     campaignId ? (all => all.filter(s => s.campaign_id === campaignId)) : undefined,
   )
@@ -1447,10 +1484,11 @@ export async function getCompanies(): Promise<import('./types').Company[]> {
 }
 
 export function invalidateAllCaches(): void {
-  _podsCache = null; _podsCacheTime = 0; _podsFetch = null
-  _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null
-  _contactsCache = null
-  _interactionsCache = null
-  _campaignsCache = null; _campaignContactsCache = null; _campaignStagesCache = null
-  _campaignStagesDBCache = null; _campaignStagesDBFetch = null
+  _podsCache = null; _podsCacheTime = 0; _podsFetch = null; _podsCacheWorkspaceId = null
+  _categoriesCache = null; _categoriesCacheTime = 0; _categoriesFetch = null; _categoriesCacheWorkspaceId = null
+  _contactsCache = null; _contactsCacheTime = 0; _contactsFetch = null; _contactsCacheWorkspaceId = null
+  _interactionsCache = null; _interactionsCacheTime = 0; _interactionsFetch = null; _interactionsCacheWorkspaceId = null
+  _campaignsCache = null; _campaignsCacheTime = 0; _campaignsFetch = null; _campaignsCacheWorkspaceId = null
+  _campaignContactsCache = null; _campaignStagesCache = null
+  _campaignStagesDBCache = null; _campaignStagesDBCacheTime = 0; _campaignStagesDBFetch = null; _campaignStagesDBCacheWorkspaceId = null
 }

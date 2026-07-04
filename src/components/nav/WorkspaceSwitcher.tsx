@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext'
+
+function workspaceAccountEmail(workspace: Workspace): string {
+  return workspace.account_email || ''
+}
+
+function workspaceAccountType(workspace: Workspace): string {
+  return workspace.role === 'owner' ? 'Personal account' : 'Team workspace'
+}
 
 export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
   const { workspaces, activeWorkspace, switchWorkspace, createWorkspace } = useWorkspace()
@@ -123,12 +131,23 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
                 }}>
                   {ws.name.charAt(0).toUpperCase()}
                 </div>
-                <span style={{
-                  fontSize: 13, fontWeight: ws.id === activeWorkspace.id ? 600 : 400,
-                  color: 'var(--color-text-primary)',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>
-                  {ws.name}
+                <span style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
+                  <span style={{
+                    display: 'block',
+                    fontSize: 13, fontWeight: ws.id === activeWorkspace.id ? 600 : 400,
+                    color: 'var(--color-text-primary)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    {ws.name}
+                  </span>
+                  <span style={{
+                    display: 'block',
+                    fontSize: 11,
+                    color: 'var(--color-text-tertiary)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    {workspaceAccountEmail(ws) || workspaceAccountType(ws)}
+                  </span>
                 </span>
                 {ws.id === activeWorkspace.id && (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
