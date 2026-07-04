@@ -125,4 +125,16 @@ describe('Team workspace guardrails', () => {
     expect(migration).toContain('workspace_invited_user_read')
     expect(senderMigration).toContain('profiles_read_workspace_invite_sender')
   })
+
+  it('allows team members to be re-invited after they are removed', () => {
+    const dataLayer = source('src/lib/supabase-data.ts')
+    const migration = source('supabase/migrations/20260704031500_allow_team_reinvite_after_remove.sql')
+
+    expect(migration).toContain('DROP CONSTRAINT IF EXISTS workspace_invites_workspace_id_email_key')
+    expect(migration).toContain('workspace_invites_pending_workspace_email_key')
+    expect(migration).toContain('WHERE accepted_at IS NULL')
+    expect(dataLayer).toContain('This user is already a team member')
+    expect(dataLayer).toContain('Already invited')
+    expect(dataLayer).toContain("error.code === '23505'")
+  })
 })

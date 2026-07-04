@@ -1335,28 +1335,54 @@ export async function declineIncomingWorkspaceInvite(inviteId: string): Promise<
 
 export async function createWorkspaceInvite(workspaceId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<WorkspaceInvite> {
   const userId = await getUserId()
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const { data: matchingProfiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .ilike('email', normalizedEmail)
+    .limit(10)
+  if (profilesError) throw profilesError
+
+  const matchingUserIds = [...new Set((matchingProfiles ?? []).map(profile => profile.id).filter(Boolean))]
+  if (matchingUserIds.length > 0) {
+    const { data: existingMembers, error: membersError } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .in('user_id', matchingUserIds)
+      .limit(1)
+    if (membersError) throw membersError
+    if (existingMembers && existingMembers.length > 0) {
+      throw new Error('This user is already a team member')
+    }
+  }
+
   // Check for existing pending invite
   const { data: existing } = await supabase
     .from('workspace_invites')
     .select('id')
     .eq('workspace_id', workspaceId)
-    .eq('email', email.toLowerCase())
+    .eq('email', normalizedEmail)
     .is('accepted_at', null)
     .limit(1)
   if (existing && existing.length > 0) throw new Error('Already invited')
 
   const { data, error } = await supabase
     .from('workspace_invites')
-    .insert({ workspace_id: workspaceId, email: email.toLowerCase(), role, invited_by: userId })
+    .insert({ workspace_id: workspaceId, email: normalizedEmail, role, invited_by: userId })
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    if (error.code === '23505') throw new Error('Already invited')
+    throw error
+  }
   queueWorkspaceActivityEvent({
     workspaceId,
     action: 'invited',
     entityType: 'workspace_invite',
     entityId: data.id,
-    entityLabel: email.toLowerCase(),
+    entityLabel: normalizedEmail,
     changes: buildActivityChanges({ role: 'Full access' }),
   })
   return data
