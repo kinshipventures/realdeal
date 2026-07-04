@@ -9,7 +9,7 @@ export function AcceptInvitePage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { session } = useAuth()
-  const { refreshWorkspaces, switchWorkspace } = useWorkspace()
+  const { refreshWorkspaces } = useWorkspace()
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
@@ -24,9 +24,8 @@ export function AcceptInvitePage() {
         const data = await acceptWorkspaceInvite(token)
 
         if (data?.workspace_id) {
-          setActiveWorkspaceId(data.workspace_id)
+          setActiveWorkspaceId(data.workspace_id, session.user.id)
           await refreshWorkspaces()
-          switchWorkspace(data.workspace_id)
           const email = session?.user?.email ?? ''
           const onboardKey = email ? `realdeal:onboarding-complete:${email}` : 'realdeal:onboarding-complete'
           localStorage.setItem(onboardKey, '1')

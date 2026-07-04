@@ -17,7 +17,7 @@ import { planCampaignContactAdd } from '../../lib/campaignMembership'
 import { planMoveToSubPod } from '../../lib/subPodAssignment'
 import { formatContactSubPods, getContactSubPods } from '../../lib/subPodVisibility'
 import { organizeSharedContactsForWorkspace, projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
-import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
 import { supabase } from '@/integrations/supabase/client'
@@ -309,6 +309,7 @@ export function RecordsList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
   const activeView = searchParams.get('view') === 'companies' ? 'companies' : 'people'
 
   // Data
@@ -461,7 +462,7 @@ export function RecordsList() {
         getAllInteractions(),
         getCampaigns(),
         workspaceId ? getCollaborationAccessGrants(workspaceId) : Promise.resolve([]),
-        getSharedContactsWithMe(),
+        includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
       ])
       if (stale) return
 
@@ -499,7 +500,7 @@ export function RecordsList() {
       if (!stale) setLoading(false)
     })
     return () => { stale = true }
-  }, [activeWorkspace?.id, refreshKey])
+  }, [activeWorkspace?.id, includeSharedWorkspaceResources, refreshKey])
 
   // Close dropdowns on outside click
   useEffect(() => {

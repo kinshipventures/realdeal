@@ -21,6 +21,7 @@ import { indexByContact, podEquityScore, overallEquityScore, scoreLabel, type Sc
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import { POD_SHIFT_COLORS } from './SolidOrb'
 import { useAuth } from '../../contexts/AuthContext'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { isDemoMode } from '../../lib/sampleData'
 import { ListNodeComponent } from './ListNode'
 import { CategoryNodeComponent } from './CategoryNode'
@@ -465,6 +466,8 @@ export function OrbMap() {
   const navigate = useNavigate()
   const { podName } = useParams<{ podName?: string }>()
   const { session } = useAuth()
+  const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
   const userName = isDemoMode() ? 'Moj Mahdara' : (session?.user?.user_metadata?.full_name as string | undefined)
   const [activeHighlights, setActiveHighlights] = useState<Set<string>>(new Set())
   const isMobile = useIsMobile()
@@ -752,7 +755,11 @@ export function OrbMap() {
 
   async function loadPodData() {
     const [localPods, localContacts, allInteractions, localCategories, incomingSharedContacts] = await Promise.all([
-      getPods(), getContacts(), getAllInteractions(), getCategories(), getSharedContactsWithMe(),
+      getPods(),
+      getContacts(),
+      getAllInteractions(),
+      getCategories(),
+      includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
     ])
     const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
       pods: localPods,

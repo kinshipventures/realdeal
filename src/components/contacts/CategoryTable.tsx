@@ -11,6 +11,7 @@ import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { ContactDetail } from './ContactDetail'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 
 type SortCol = 'name' | 'company' | 'equity' | 'last_contacted' | 'location' | 'follow_up' | 'frequency' | 'introduced_by' | 'email'
 type SortDir = 'asc' | 'desc'
@@ -30,6 +31,8 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 export function CategoryTable() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
@@ -62,7 +65,7 @@ export function CategoryTable() {
         getCategories(),
         getPods(),
         getAllInteractions(),
-        getSharedContactsWithMe(),
+        includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
       ])
       if (stale) return
 
@@ -99,7 +102,7 @@ export function CategoryTable() {
     })
 
     return () => { stale = true }
-  }, [id, navigate])
+  }, [id, includeSharedWorkspaceResources, navigate])
 
   const overdueCount = useMemo(
     () => contacts.filter(c => isOverdue(c, cadence)).length,

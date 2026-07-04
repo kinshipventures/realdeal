@@ -214,6 +214,8 @@ function AppShell() {
     return <SplashScreen />
   }
 
+  const workspaceRenderKey = demo ? 'demo' : activeWorkspace?.id ?? 'loading'
+
   return (
     <div className="rd-product-shell" style={{ width: '100vw', height: '100vh', position: 'relative', background: BG }}>
       <a href="#main-content" className="sr-only">Skip to main content</a>
@@ -239,7 +241,7 @@ function AppShell() {
         transition: isMobile ? undefined : 'padding-left 0.2s cubic-bezier(0.215, 0.61, 0.355, 1)',
       }}>
         <Suspense fallback={null}>
-          <Outlet />
+          <Outlet key={workspaceRenderKey} />
         </Suspense>
       </div>
 

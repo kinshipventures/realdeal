@@ -28,6 +28,7 @@ import {
 } from '@/lib/workspaceActivity'
 
 type SettingsTab = 'profile' | 'preferences' | 'properties' | 'sharing' | 'integrations' | 'team'
+const SETTINGS_TAB_STORAGE_KEY = 'realdeal:settings-tab'
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'preferences', label: 'Preferences' },
@@ -36,6 +37,10 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'integrations', label: 'Integrations' },
   { id: 'team', label: 'Team' },
 ]
+
+function isSettingsTab(value: string | null): value is SettingsTab {
+  return Boolean(value && TABS.some(tab => tab.id === value))
+}
 
 function workspaceAccountEmail(workspace: Workspace, fallbackEmail?: string | null): string {
   return workspace.account_email || (workspace.role === 'owner' ? fallbackEmail || '' : '')
@@ -49,7 +54,10 @@ export function AccountPage() {
   const { session } = useAuth()
   const { workspaces, activeWorkspace, refreshWorkspaces, switchWorkspace } = useWorkspace()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<SettingsTab>('profile')
+  const [tab, setTab] = useState<SettingsTab>(() => {
+    const stored = typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem(SETTINGS_TAB_STORAGE_KEY)
+    return isSettingsTab(stored) ? stored : 'profile'
+  })
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
@@ -242,9 +250,8 @@ export function AccountPage() {
       const data = await acceptWorkspaceInvite(invite.token)
       setIncomingInvites(prev => prev.filter(item => item.id !== invite.id))
       if (data.workspace_id) {
-        setActiveWorkspaceId(data.workspace_id)
+        setActiveWorkspaceId(data.workspace_id, session?.user?.id)
         await refreshWorkspaces()
-        switchWorkspace(data.workspace_id)
       } else {
         await refreshWorkspaces()
       }
@@ -278,6 +285,11 @@ export function AccountPage() {
     setInviteError('')
     setIncomingInviteMessage('')
     switchWorkspace(workspaceId)
+  }
+
+  const handleTabSelect = (nextTab: SettingsTab) => {
+    setTab(nextTab)
+    sessionStorage.setItem(SETTINGS_TAB_STORAGE_KEY, nextTab)
   }
 
   const labelStyle = { fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 } as const
@@ -325,7 +337,7 @@ export function AccountPage() {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => handleTabSelect(t.id)}
               style={{
                 padding: '10px 16px', fontSize: 13, fontWeight: active ? 600 : 400,
                 fontFamily: 'inherit', cursor: 'pointer', minHeight: 44,

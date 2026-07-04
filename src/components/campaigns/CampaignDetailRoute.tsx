@@ -10,7 +10,7 @@ import { CampaignTypeIcon } from './CampaignTypeIcon'
 import { CampaignSettingsPanel } from './CampaignSettingsPanel'
 import { CampaignPermissionsPanel } from './CampaignPermissionsPanel'
 import { ContactDetail } from '../contacts/ContactDetail'
-import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { getSharedContactsWithMe, recordCollaborationAuditEvent } from '@/lib/collaboration'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 import { isProjectedSharedCampaign, projectSharedWorkspaceResources, projectedSharedCampaignContacts, projectedSharedCampaignStages, sharedContactSnapshotKey } from '@/lib/sharedContactProjection'
@@ -89,6 +89,7 @@ export function CampaignDetailRoute() {
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
 
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -172,7 +173,7 @@ export function CampaignDetailRoute() {
       getContacts(),
       getPods(),
       getCategories(),
-      getSharedContactsWithMe(),
+      includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
     ])
     const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
       pods: allPods,
@@ -210,7 +211,7 @@ export function CampaignDetailRoute() {
       setContacts(projection.contacts)
     }
     setLoading(false)
-  }, [id])
+  }, [id, includeSharedWorkspaceResources])
 
   useEffect(() => { loadData() }, [loadData])
 

@@ -39,6 +39,44 @@ describe('Team workspace guardrails', () => {
     expect(accountPage).toContain('switchWorkspace(workspaceId)')
   })
 
+  it('keeps active workspace selection scoped to one user session', () => {
+    const workspace = source('src/lib/workspace.ts')
+    const workspaceContext = source('src/contexts/WorkspaceContext.tsx')
+    const accountPage = source('src/components/settings/AccountPage.tsx')
+    const acceptInvitePage = source('src/components/settings/AcceptInvitePage.tsx')
+    const app = source('src/App.tsx')
+
+    expect(workspace).toContain('activeWorkspaceStorageKey')
+    expect(workspace).toContain("const CURRENT_SESSION_KEY = 'realdeal:active-workspace:current'")
+    expect(workspace).toContain("const SCOPED_STORAGE_PREFIX = 'realdeal:active-workspace:'")
+    expect(workspace).not.toContain('localStorage.setItem(STORAGE_KEY')
+    expect(workspaceContext).toContain('getStoredActiveWorkspaceId(session.user.id)')
+    expect(workspaceContext).toContain('setActiveWorkspaceId(ws.id, session?.user?.id)')
+    expect(accountPage).toContain('setActiveWorkspaceId(data.workspace_id, session?.user?.id)')
+    expect(acceptInvitePage).toContain('setActiveWorkspaceId(data.workspace_id, session.user.id)')
+    expect(app).toContain('workspaceRenderKey')
+    expect(app).toContain('<Outlet key={workspaceRenderKey} />')
+  })
+
+  it('keeps Team workspaces separate from Shared contacts projections', () => {
+    const guardedViews = [
+      'src/components/records/RecordsList.tsx',
+      'src/components/map/OrbMap.tsx',
+      'src/components/companies/CompaniesPage.tsx',
+      'src/components/campaigns/CampaignOverview.tsx',
+      'src/components/campaigns/CampaignDetailRoute.tsx',
+      'src/components/pods/PodDetailPage.tsx',
+      'src/components/contacts/CategoryTable.tsx',
+    ]
+
+    for (const file of guardedViews) {
+      const view = source(file)
+      expect(view).toContain('isTeamWorkspace')
+      expect(view).toContain('includeSharedWorkspaceResources')
+      expect(view).toContain('includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([])')
+    }
+  })
+
   it('keeps core app reads scoped to the active workspace', () => {
     const dataLayer = source('src/lib/supabase-data.ts')
 

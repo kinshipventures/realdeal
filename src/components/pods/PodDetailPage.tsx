@@ -30,6 +30,7 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import { primarySharedContactMeta, sharedContactBadgeMetaToAccess, useSharedContactBadges } from '@/hooks/useSharedContactBadges'
 import { isProjectedSharedCategory, isProjectedSharedPod, projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 
 const EQUITY_COLORS: Record<string, string> = {
   Thriving: '#16a34a',
@@ -205,6 +206,8 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const podId = podIdProp ?? paramId
   const navigate = useNavigate()
   const isOverlay = !!onClose
+  const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
 
   const [pod, setPod] = useState<Pod | null>(null)
   const [allPods, setAllPods] = useState<Pod[]>([])
@@ -277,7 +280,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
         getCategories(),
         getFieldConfigs(),
         getAllInteractions() as Promise<Interaction[]>,
-        getSharedContactsWithMe(),
+        includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
       ])
       if (stale) return
 
@@ -324,7 +327,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
     })
 
     return () => { stale = true }
-  }, [podId])
+  }, [podId, includeSharedWorkspaceResources])
 
   const save = useCallback(async (data: Parameters<typeof updatePod>[1]) => {
     if (!podId || (pod && isProjectedSharedPod(pod))) return

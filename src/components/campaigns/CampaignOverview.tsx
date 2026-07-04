@@ -10,6 +10,7 @@ import { EmptyState } from '../empty/EmptyState'
 import { TYPE_LABELS, TYPE_COLORS, daysUntil } from './campaignUtils'
 import { Avatar } from '../ui'
 import { LayoutGrid, List } from 'lucide-react'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 
 const VIEW_KEY = 'realdeal:campaigns-view'
 const SORT_KEY = 'realdeal:campaigns-sort'
@@ -33,6 +34,8 @@ const GROUP_OPTIONS: Array<{ key: GroupKey; label: string }> = [
 
 export function CampaignOverview() {
   const navigate = useNavigate()
+  const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,7 +57,7 @@ export function CampaignOverview() {
       getContacts(),
       getPods(),
       getCategories(),
-      getSharedContactsWithMe(),
+      includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
     ])
     const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
       pods,
@@ -65,7 +68,7 @@ export function CampaignOverview() {
     setCampaigns(projection.campaigns)
     setContacts(projection.contacts)
     setLoading(false)
-  }, [])
+  }, [includeSharedWorkspaceResources])
 
   useEffect(() => { load() }, [load])
 

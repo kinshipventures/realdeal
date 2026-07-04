@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './AuthContext'
-import { setActiveWorkspaceId, clearActiveWorkspaceId } from '@/lib/workspace'
+import { setActiveWorkspaceId, clearActiveWorkspaceId, getStoredActiveWorkspaceId } from '@/lib/workspace'
 import { invalidateAllCaches } from '@/lib/supabase-data'
 import { ensureWorkspaceBaseline } from '@/lib/defaultWorkspace'
 
@@ -33,14 +33,16 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   refreshWorkspaces: async () => {},
 })
 
-const STORAGE_KEY = 'realdeal:active-workspace'
-
 export function resolveActiveWorkspace(workspaces: Workspace[], storedId: string | null): Workspace | null {
   if (storedId) {
     const storedMatch = workspaces.find(w => w.id === storedId)
     if (storedMatch) return storedMatch
   }
   return workspaces[0] ?? null
+}
+
+export function isTeamWorkspace(workspace: Workspace | null | undefined): boolean {
+  return Boolean(workspace && workspace.role !== 'owner')
 }
 
 export function deriveWorkspaceName(email?: string | null): string {
@@ -169,11 +171,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
     setWorkspaces(labeledWorkspaces)
 
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = getStoredActiveWorkspaceId(session.user.id)
     const active = resolveActiveWorkspace(labeledWorkspaces, stored)
     if (active) {
       setActiveWorkspace(active)
-      setActiveWorkspaceId(active.id)
+      setActiveWorkspaceId(active.id, session.user.id)
     }
     setLoading(false)
   }, [session?.user?.email, session?.user?.id])
@@ -185,17 +187,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     if (ws) {
       invalidateAllCaches()
       setActiveWorkspace(ws)
-      setActiveWorkspaceId(ws.id)
+      setActiveWorkspaceId(ws.id, session?.user?.id)
     }
-  }, [workspaces])
+  }, [session?.user?.id, workspaces])
 
   const createWorkspace = useCallback(async (name: string): Promise<Workspace> => {
     if (!session?.user?.id) throw new Error('Not authenticated')
     const workspace = await bootstrapWorkspaceForUser(session.user.id, session.user.email, name)
     setWorkspaces(prev => [...prev, workspace])
-    switchWorkspace(workspace.id)
+    invalidateAllCaches()
+    setActiveWorkspace(workspace)
+    setActiveWorkspaceId(workspace.id, session.user.id)
     return workspace
-  }, [session?.user?.email, session?.user?.id, switchWorkspace])
+  }, [session?.user?.email, session?.user?.id])
 
   useEffect(() => {
     if (!session) {

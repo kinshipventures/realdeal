@@ -5,6 +5,7 @@ import { getSharedContactsWithMe } from '../../lib/collaboration'
 import { EmptyState } from '../empty/EmptyState'
 import type { Contact } from '../../lib/types'
 import { projectSharedWorkspaceResources } from '../../lib/sharedContactProjection'
+import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 
 type SortCol = 'name' | 'industry' | 'stage' | 'domain' | 'location'
 type SortDir = 'asc' | 'desc'
@@ -39,6 +40,8 @@ export function CompaniesPage({
 } = {}) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { activeWorkspace } = useWorkspace()
+  const includeSharedWorkspaceResources = !isTeamWorkspace(activeWorkspace)
   const [companies, setCompanies] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -51,7 +54,7 @@ export function CompaniesPage({
       getPods(),
       getCategories(),
       getCampaigns(),
-      getSharedContactsWithMe(),
+      includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
     ]).then(([contacts, pods, categories, campaigns, incomingSharedContacts]) => {
       const projection = projectSharedWorkspaceResources(incomingSharedContacts, {
         pods,
@@ -67,7 +70,7 @@ export function CompaniesPage({
       if (!cancelled) setLoading(false)
     })
     return () => { cancelled = true }
-  }, [])
+  }, [includeSharedWorkspaceResources])
 
   const toggleSort = useCallback((col: SortCol) => {
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' })
