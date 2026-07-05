@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
-import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import {
   createUserConnectionRequest,
   findAppUsersForContactEmails,
@@ -61,7 +60,7 @@ type ShareUserOption = {
   user_id: string
   display_name: string | null
   email: string | null
-  source: 'workspace' | 'connection'
+  source: 'connection'
 }
 type SharedContactRow = {
   id: string
@@ -147,6 +146,16 @@ const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
 
 function titleCase(value: string): string {
   return value.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function shareUserSourceLabel(): string {
+  return 'Connection'
+}
+
+function shareUserOptionLabel(user: ShareUserOption): string {
+  const name = user.display_name || 'User'
+  const email = user.email || 'No email'
+  return `${name} - ${email} - ${shareUserSourceLabel()}`
 }
 
 function formatDate(value: string | null): string {
@@ -363,7 +372,6 @@ export function ApprovalsPage() {
   const [pods, setPods] = useState<Pod[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [connections, setConnections] = useState<UserConnection[]>([])
   const [recognizedUsers, setRecognizedUsers] = useState<RecognizedAppUser[]>([])
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
@@ -434,15 +442,6 @@ export function ApprovalsPage() {
   const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
   const shareUsers = useMemo<ShareUserOption[]>(() => {
     const byUserId = new Map<string, ShareUserOption>()
-    members.forEach(member => {
-      byUserId.set(member.user_id, {
-        id: `workspace-${member.id}`,
-        user_id: member.user_id,
-        display_name: member.display_name,
-        email: member.email,
-        source: 'workspace',
-      })
-    })
     connections
       .filter(connection => connection.status === 'accepted')
       .forEach(connection => {
@@ -458,7 +457,7 @@ export function ApprovalsPage() {
     return [...byUserId.values()].sort((a, b) => (
       (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '')
     ))
-  }, [connections, members])
+  }, [connections])
   const shareResourceOptions = useMemo<ShareResourceOption[]>(() => {
     const people = contacts
       .filter(contact => contact.type !== 'Company')
@@ -518,7 +517,6 @@ export function ApprovalsPage() {
         nextPods,
         nextCategories,
         nextCampaigns,
-        nextMembers,
         nextConnections,
         nextGrants,
         nextIncomingGrants,
@@ -531,7 +529,6 @@ export function ApprovalsPage() {
         getPods(),
         getCategories(),
         getCampaigns(),
-        fetchWorkspaceMembers(workspaceId),
         getUserConnections(),
         getCollaborationAccessGrants(workspaceId),
         getIncomingCollaborationAccessGrants(),
@@ -547,7 +544,6 @@ export function ApprovalsPage() {
       setPods(nextPods)
       setCategories(nextCategories)
       setCampaigns(nextCampaigns.filter(campaign => campaign.status !== 'hidden'))
-      setMembers(nextMembers)
       setConnections(nextConnections)
       setRecognizedUsers(nextRecognizedUsers)
       setGrants(nextGrants)
@@ -574,32 +570,38 @@ export function ApprovalsPage() {
 
     let cancelled = false
 
-    async function refreshConnectionData() {
+    async function refreshSharedContactData() {
       if (document.visibilityState === 'hidden') return
 
       try {
-        const nextConnections = await getUserConnections()
+        const [nextConnections, nextIncomingGrants, nextIncomingSharedContacts] = await Promise.all([
+          getUserConnections(),
+          getIncomingCollaborationAccessGrants(),
+          getSharedContactsWithMe(),
+        ])
         if (cancelled) return
 
         setConnections(nextConnections)
+        setIncomingGrants(nextIncomingGrants)
+        setIncomingSharedContacts(nextIncomingSharedContacts)
 
         if (contacts.length === 0) return
 
         const nextRecognizedUsers = await findAppUsersForContactEmails(contacts.flatMap(contactEmails))
         if (!cancelled) setRecognizedUsers(nextRecognizedUsers)
       } catch (err) {
-        if (!cancelled) console.warn('Failed to refresh user connections', err)
+        if (!cancelled) console.warn('Failed to refresh shared contact requests', err)
       }
     }
 
     const intervalId = window.setInterval(() => {
-      void refreshConnectionData()
+      void refreshSharedContactData()
     }, 15000)
     const handleFocus = () => {
-      void refreshConnectionData()
+      void refreshSharedContactData()
     }
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') void refreshConnectionData()
+      if (document.visibilityState === 'visible') void refreshSharedContactData()
     }
 
     window.addEventListener('focus', handleFocus)
@@ -1510,6 +1512,9 @@ function ShareContactsModal({
   )
   const selectedVisibleFieldCount = selectedVisibleFieldIds.length
   const normalizedRecipientEmail = normalizeEmail(recipientEmail)
+  const selectedUser = subjectType === 'user'
+    ? users.find(item => item.user_id === subjectId) ?? null
+    : null
 
   useEffect(() => {
     setResourceId('')
@@ -1627,11 +1632,25 @@ function ShareContactsModal({
               <option value="">Use email instead</option>
               {users.map(user => (
                 <option key={user.id} value={user.user_id}>
-                  {user.display_name || user.email || 'User'}{user.source === 'connection' ? ' (Connection)' : ''}
+                  {shareUserOptionLabel(user)}
                 </option>
               ))}
             </SelectField>
             <TextField label="Recipient email" value={recipientEmail} onChange={setRecipientEmail} placeholder="name@example.com" />
+            {selectedUser && (
+              <div style={{
+                border: '1px solid var(--edge)',
+                borderRadius: 8,
+                padding: '8px 10px',
+                background: 'var(--tint)',
+                color: 'var(--color-text-secondary)',
+                fontSize: 11,
+                lineHeight: 1.45,
+              }}>
+                <strong style={{ color: 'var(--color-text-primary)' }}>Request target:</strong>{' '}
+                {selectedUser.email || 'No email'} - {shareUserSourceLabel()}
+              </div>
+            )}
           </div>
         ) : (
           <TextField label="Recipient label" value={subjectLabel} onChange={setSubjectLabel} placeholder="Production team, Investor reviewer, OpenAI team..." />
