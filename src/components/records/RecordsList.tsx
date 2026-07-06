@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, ListFilter, Share2, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
+import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail, type ContactDetailShareAccess } from '../contacts/ContactDetail'
@@ -1093,6 +1094,44 @@ export function RecordsList() {
           view: activeView,
         },
       }).catch(() => undefined)
+    }
+  }
+
+  function handleExportCurrentViewExcel(rows: Contact[] = filtered) {
+    const visibleColsSnap = visibleCols
+    if (visibleColsSnap.length === 0) {
+      showToast('Choose at least one visible section before exporting.')
+      return
+    }
+
+    try {
+      const date = new Date().toISOString().slice(0, 10)
+      downloadRelationshipExportWorkbook({
+        sheetName: 'Relationships',
+        filename: `realdeal-relationships-current-view-${date}.xlsx`,
+        headers: visibleColsSnap.map(col => col.label),
+        rows: rows.map(contact => visibleColsSnap.map(col => cellValue(contact, col.id))),
+      })
+      showToast(`Exported ${rows.length} ${rows.length === 1 ? 'relationship' : 'relationships'} to Excel.`)
+      if (activeWorkspace?.id) {
+        void recordCollaborationAuditEvent({
+          workspace_id: activeWorkspace.id,
+          event_type: 'export_downloaded',
+          resource_type: 'export',
+          resource_id: null,
+          resource_label: 'Relationships Excel export',
+          metadata: {
+            row_count: rows.length,
+            visible_fields: visibleColsSnap.map(col => col.id),
+            view: activeView,
+            format: 'xlsx',
+            source: 'current_view',
+          },
+        }).catch(() => undefined)
+      }
+    } catch (err) {
+      console.error('Excel export failed:', err)
+      showToast('Excel export failed. Try again.')
     }
   }
 
@@ -2533,6 +2572,17 @@ export function RecordsList() {
               >
                 <Download size={16} />
                 Download Excel template
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleExportCurrentViewExcel()
+                  setShowCreateMenu(false)
+                }}
+                style={{ ...dropdownButtonStyle, gap: 10 }}
+              >
+                <Download size={16} />
+                Export current view to Excel
               </button>
             </div>
           )}
