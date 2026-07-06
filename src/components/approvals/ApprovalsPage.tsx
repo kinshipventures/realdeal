@@ -22,20 +22,14 @@ import {
 import {
   createCollaborationAccessGrant,
   getCollaborationAccessGrants,
-  getCollaborationApprovalRequests,
-  getCollaborationContactProposals,
   getIncomingCollaborationAccessGrants,
   getCollaborationPublicCampaignLinks,
   getSharedContactsWithMe,
   respondIncomingCollaborationAccessGrant,
-  resolveCollaborationApprovalRequest,
-  resolveCollaborationContactProposal,
   revokeCollaborationAccessGrant,
   revokeCollaborationPublicCampaignLink,
   updateCollaborationAccessGrant,
   type CollaborationAccessGrant,
-  type CollaborationApprovalRequest,
-  type CollaborationContactProposal,
   type CollaborationFieldScope,
   type CollaborationPermissionLevel,
   type CollaborationPublicCampaignLink,
@@ -45,8 +39,8 @@ import {
 } from '@/lib/collaboration'
 import type { CampaignContactSnapshot } from '@/lib/collaborationPolicy'
 
-type ApprovalTab = 'requests' | 'proposals' | 'shared_requests'
 type SharedSourceFilter = 'all' | 'campaign' | 'pod' | 'sub_pod' | 'direct' | 'public_link'
+type SharedStatusFilter = 'all' | 'pending' | 'accepted' | 'removed'
 type ShareMode = 'contact' | 'company' | 'pod' | 'sub_pod' | 'campaign'
 type ShareResourceOption = {
   id: string
@@ -85,6 +79,7 @@ type SharedContactRow = {
   revokeKind: 'grant' | 'public_link' | 'incoming_grant'
   revokeId: string
   canRevoke: boolean
+  incomingGrant?: CollaborationAccessGrant
 }
 
 type SharedRequestFeedback = {
@@ -111,6 +106,13 @@ const SOURCE_OPTIONS: Array<{ value: SharedSourceFilter; label: string }> = [
   { value: 'sub_pod', label: 'Shared sub-pods' },
   { value: 'direct', label: 'Direct contacts' },
   { value: 'public_link', label: 'Public links' },
+]
+
+const STATUS_OPTIONS: Array<{ value: SharedStatusFilter; label: string }> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'removed', label: 'Removed' },
 ]
 
 const SHARE_MODE_OPTIONS: Array<{ value: ShareMode; label: string; description: string }> = [
@@ -190,6 +192,22 @@ function grantAccessStatus(grant: CollaborationAccessGrant): SharedContactRow['s
   if (grant.status === 'pending') return 'pending'
   if (grant.status === 'declined') return 'declined'
   return accessStatus(grant.expires_at, grant.revoked_at)
+}
+
+function sharedStatusFilterValue(status: SharedContactRow['status']): Exclude<SharedStatusFilter, 'all'> {
+  if (status === 'pending') return 'pending'
+  if (status === 'active') return 'accepted'
+  return 'removed'
+}
+
+function sharedStatusLabel(status: SharedContactRow['status']): string {
+  return STATUS_OPTIONS.find(option => option.value === sharedStatusFilterValue(status))?.label ?? titleCase(status)
+}
+
+function sharedStatusTone(status: SharedContactRow['status']): 'green' | 'yellow' | 'red' {
+  if (sharedStatusFilterValue(status) === 'accepted') return 'green'
+  if (sharedStatusFilterValue(status) === 'pending') return 'yellow'
+  return 'red'
 }
 
 function contactFromMap(contactMap: Map<string, Contact>, contactId: string | null | undefined): Contact | null {
@@ -319,13 +337,7 @@ function rowsForPublicLink(link: CollaborationPublicCampaignLink): SharedContact
 }
 
 function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): SharedContactRow {
-  const sourceType = snapshot.resource_type === 'campaign'
-    ? 'campaign'
-    : snapshot.resource_type === 'pod' && snapshot.resource_label.toLowerCase().startsWith('sub-pod:')
-      ? 'sub_pod'
-      : snapshot.resource_type === 'pod'
-        ? 'pod'
-        : 'direct'
+  const sourceType = sourceTypeForSharedResource(snapshot.resource_type, snapshot.resource_label)
 
   return {
     id: `${snapshot.grant_id}-${snapshot.contact.id}-incoming`,
@@ -362,12 +374,46 @@ function rowsForIncomingSharedContact(snapshot: SharedContactAccessSnapshot): Sh
   }
 }
 
+function sourceTypeForSharedResource(resourceType: CollaborationResourceType, resourceLabel: string): SharedContactRow['sourceType'] {
+  if (resourceType === 'campaign') return 'campaign'
+  if (resourceType === 'pod' && resourceLabel.toLowerCase().startsWith('sub-pod:')) return 'sub_pod'
+  if (resourceType === 'pod') return 'pod'
+  return 'direct'
+}
+
+function rowForIncomingSharedRequest(grant: CollaborationAccessGrant): SharedContactRow {
+  const sourceType = sourceTypeForSharedResource(grant.resource_type, grant.resource_label)
+  const sharedBy = grant.created_by_label || grant.created_by_email || 'Shared contact owner'
+
+  return {
+    id: `${grant.id}-incoming-request`,
+    contactId: null,
+    contact: null,
+    contactName: grant.resource_label,
+    company: grant.created_by_email,
+    shareDirection: 'shared_with_me',
+    sourceType,
+    sourceLabel: grant.resource_label,
+    campaignId: grant.resource_type === 'campaign' ? grant.resource_id : null,
+    podIds: [],
+    subPodIds: [],
+    sharedWith: sharedBy,
+    permissionLabel: permissionLabel(grant.permission_level),
+    permissionValue: grant.permission_level,
+    fieldScopes: grant.field_scopes,
+    status: grantAccessStatus(grant),
+    expiresAt: grant.expires_at,
+    createdAt: grant.created_at,
+    revokeKind: 'incoming_grant',
+    revokeId: grant.id,
+    canRevoke: false,
+    incomingGrant: grant,
+  }
+}
+
 export function ApprovalsPage() {
   const { activeWorkspace } = useWorkspace()
   const workspaceId = activeWorkspace?.id
-  const [tab, setTab] = useState<ApprovalTab>('requests')
-  const [requests, setRequests] = useState<CollaborationApprovalRequest[]>([])
-  const [proposals, setProposals] = useState<CollaborationContactProposal[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -383,6 +429,7 @@ export function ApprovalsPage() {
   const [campaignFilter, setCampaignFilter] = useState('all')
   const [podFilter, setPodFilter] = useState('all')
   const [subPodFilter, setSubPodFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<SharedStatusFilter>('all')
   const [permissionFilter, setPermissionFilter] = useState<'all' | CollaborationPermissionLevel | 'public_link'>('all')
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(true)
@@ -395,22 +442,20 @@ export function ApprovalsPage() {
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
-  const pendingRequests = useMemo(() => requests.filter(request => request.status === 'pending'), [requests])
-  const pendingProposals = useMemo(() => proposals.filter(proposal => proposal.status === 'pending'), [proposals])
   const pendingSharedRequests = useMemo(() => (
     incomingGrants.filter(grant => grant.status === 'pending' && accessStatus(grant.expires_at, grant.revoked_at) === 'active')
-  ), [incomingGrants])
-  const resolvedSharedRequests = useMemo(() => (
-    incomingGrants.filter(grant => grant.status !== 'pending')
   ), [incomingGrants])
   const contactMap = useMemo(() => new Map(contacts.map(contact => [contact.id, contact])), [contacts])
   const campaignMap = useMemo(() => new Map(campaigns.map(campaign => [campaign.id, campaign])), [campaigns])
   const sharedRows = useMemo(() => {
     const grantRows = grants.flatMap(grant => rowsForGrant(grant, contacts, contactMap, campaignMap))
     const incomingRows = incomingSharedContacts.map(rowsForIncomingSharedContact)
+    const incomingRequestRows = incomingGrants
+      .filter(grant => !(grant.status === 'accepted' && accessStatus(grant.expires_at, grant.revoked_at) === 'active'))
+      .map(rowForIncomingSharedRequest)
     const linkRows = publicLinks.flatMap(rowsForPublicLink)
-    return [...grantRows, ...incomingRows, ...linkRows]
-  }, [campaignMap, contactMap, contacts, grants, incomingSharedContacts, publicLinks])
+    return [...grantRows, ...incomingRows, ...incomingRequestRows, ...linkRows]
+  }, [campaignMap, contactMap, contacts, grants, incomingGrants, incomingSharedContacts, publicLinks])
   const filteredSharedRows = useMemo(() => {
     const query = searchText.trim().toLowerCase()
     return sharedRows.filter(row => {
@@ -424,6 +469,7 @@ export function ApprovalsPage() {
       if (campaignFilter !== 'all' && row.campaignId !== campaignFilter) return false
       if (podFilter !== 'all' && !row.podIds.includes(podFilter)) return false
       if (subPodFilter !== 'all' && !row.subPodIds.includes(subPodFilter)) return false
+      if (statusFilter !== 'all' && sharedStatusFilterValue(row.status) !== statusFilter) return false
       if (permissionFilter !== 'all' && row.permissionValue !== permissionFilter) return false
       if (!query) return true
 
@@ -436,7 +482,7 @@ export function ApprovalsPage() {
         row.fieldScopes.map(titleCase).join(' '),
       ].some(value => String(value ?? '').toLowerCase().includes(query))
     })
-  }, [campaignFilter, permissionFilter, podFilter, searchText, sharedRows, sourceFilter, subPodFilter])
+  }, [campaignFilter, permissionFilter, podFilter, searchText, sharedRows, sourceFilter, statusFilter, subPodFilter])
   const activeSharedRows = useMemo(() => sharedRows.filter(row => row.status === 'active'), [sharedRows])
   const activePublicLinks = useMemo(() => publicLinks.filter(link => !link.revoked_at), [publicLinks])
   const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
@@ -511,8 +557,6 @@ export function ApprovalsPage() {
     setError('')
     try {
       const [
-        nextRequests,
-        nextProposals,
         nextContacts,
         nextPods,
         nextCategories,
@@ -523,8 +567,6 @@ export function ApprovalsPage() {
         nextIncomingSharedContacts,
         nextPublicLinks,
       ] = await Promise.all([
-        getCollaborationApprovalRequests(workspaceId),
-        getCollaborationContactProposals(workspaceId),
         getContacts(),
         getPods(),
         getCategories(),
@@ -538,8 +580,6 @@ export function ApprovalsPage() {
       const activeContacts = nextContacts.filter(contact => contact.status !== 'Archived')
       const contactEmailList = activeContacts.flatMap(contactEmails)
       const nextRecognizedUsers = await findAppUsersForContactEmails(contactEmailList)
-      setRequests(nextRequests)
-      setProposals(nextProposals)
       setContacts(activeContacts)
       setPods(nextPods)
       setCategories(nextCategories)
@@ -615,18 +655,6 @@ export function ApprovalsPage() {
     }
   }, [contacts, loading, workspaceId])
 
-  async function handleResolveRequest(request: CollaborationApprovalRequest, status: 'approved' | 'rejected') {
-    if (!workspaceId) return
-    await resolveCollaborationApprovalRequest(request.id, workspaceId, status)
-    await loadData()
-  }
-
-  async function handleResolveProposal(proposal: CollaborationContactProposal, status: 'approved' | 'rejected') {
-    if (!workspaceId) return
-    await resolveCollaborationContactProposal(proposal.id, workspaceId, status)
-    await loadData()
-  }
-
   async function handleRespondSharedRequest(grant: CollaborationAccessGrant, status: 'accepted' | 'declined') {
     if (busySharedRequestId) return
 
@@ -650,7 +678,11 @@ export function ApprovalsPage() {
         setCampaignFilter('all')
         setPodFilter('all')
         setSubPodFilter('all')
+        setStatusFilter('accepted')
         setPermissionFilter('all')
+        setSearchText(grant.resource_label)
+      } else {
+        setStatusFilter('removed')
         setSearchText(grant.resource_label)
       }
 
@@ -753,7 +785,7 @@ export function ApprovalsPage() {
         <SummaryCard icon={<Users size={16} />} label="Shared contacts" value={sharedContactCount} />
         <SummaryCard icon={<ShieldCheck size={16} />} label="Active access" value={activeSharedRows.length} />
         <SummaryCard icon={<Link size={16} />} label="Public links" value={activePublicLinks.length} />
-        <SummaryCard icon={<UserPlus size={16} />} label="Pending approvals" value={pendingRequests.length + pendingProposals.length + pendingSharedRequests.length} />
+        <SummaryCard icon={<UserPlus size={16} />} label="Pending approvals" value={pendingSharedRequests.length} />
       </section>
 
       <ConnectionsPanel
@@ -786,6 +818,7 @@ export function ApprovalsPage() {
           campaignFilter={campaignFilter}
           podFilter={podFilter}
           subPodFilter={subPodFilter}
+          statusFilter={statusFilter}
           permissionFilter={permissionFilter}
           campaigns={campaigns}
           pods={pods}
@@ -795,9 +828,14 @@ export function ApprovalsPage() {
           onCampaignFilterChange={setCampaignFilter}
           onPodFilterChange={setPodFilter}
           onSubPodFilterChange={setSubPodFilter}
+          onStatusFilterChange={setStatusFilter}
           onPermissionFilterChange={setPermissionFilter}
         />
       </section>
+
+      {sharedRequestFeedback && (
+        <SharedRequestFeedbackBanner key={sharedRequestFeedback.id} feedback={sharedRequestFeedback} />
+      )}
 
       {error && <div style={{ ...noticeStyle, color: 'var(--health-fading)' }}>{error}</div>}
 
@@ -809,53 +847,11 @@ export function ApprovalsPage() {
           onRevoke={handleRevokeSharedRow}
           onEditAccess={handleEditSharedRow}
           onOpenContact={handleOpenSharedContact}
+          busyRequestId={busySharedRequestId}
+          highlightedRequestId={highlightedSharedRequestId}
+          onRespondSharedRequest={handleRespondSharedRequest}
         />
       )}
-
-      <section style={{ marginTop: 30 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
-              Approvals
-            </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
-              Review campaign participation, private information access, and proposed contacts.
-            </p>
-          </div>
-        </div>
-
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
-          <SummaryCard icon={<ShieldCheck size={16} />} label="Pending requests" value={pendingRequests.length} />
-          <SummaryCard icon={<UserPlus size={16} />} label="Pending proposals" value={pendingProposals.length} />
-          <SummaryCard icon={<Mail size={16} />} label="Shared requests" value={pendingSharedRequests.length} />
-          <SummaryCard icon={<Check size={16} />} label="Resolved items" value={requests.length + proposals.length + resolvedSharedRequests.length - pendingRequests.length - pendingProposals.length} />
-        </section>
-
-        {sharedRequestFeedback && (
-          <SharedRequestFeedbackBanner key={sharedRequestFeedback.id} feedback={sharedRequestFeedback} />
-        )}
-
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--edge)', marginBottom: 16 }}>
-          <TabButton active={tab === 'requests'} onClick={() => setTab('requests')}>Approval Requests</TabButton>
-          <TabButton active={tab === 'proposals'} onClick={() => setTab('proposals')}>Contact Proposals</TabButton>
-          <TabButton active={tab === 'shared_requests'} onClick={() => setTab('shared_requests')}>Shared Requests</TabButton>
-        </div>
-
-        {loading ? (
-          <div style={{ color: 'var(--color-text-secondary)', fontSize: 13, padding: 24 }}>Loading...</div>
-        ) : tab === 'requests' ? (
-          <ApprovalRequestsTable requests={requests} onResolve={handleResolveRequest} />
-        ) : tab === 'shared_requests' ? (
-          <SharedRequestsTable
-            requests={incomingGrants}
-            busyRequestId={busySharedRequestId}
-            highlightedRequestId={highlightedSharedRequestId}
-            onRespond={handleRespondSharedRequest}
-          />
-        ) : (
-          <ContactProposalsTable proposals={proposals} onResolve={handleResolveProposal} />
-        )}
-      </section>
 
       {showShareModal && workspaceId && (
         <ShareContactsModal
@@ -1171,6 +1167,7 @@ function SharedContactFilters({
   campaignFilter,
   podFilter,
   subPodFilter,
+  statusFilter,
   permissionFilter,
   campaigns,
   pods,
@@ -1180,6 +1177,7 @@ function SharedContactFilters({
   onCampaignFilterChange,
   onPodFilterChange,
   onSubPodFilterChange,
+  onStatusFilterChange,
   onPermissionFilterChange,
 }: {
   searchText: string
@@ -1187,6 +1185,7 @@ function SharedContactFilters({
   campaignFilter: string
   podFilter: string
   subPodFilter: string
+  statusFilter: SharedStatusFilter
   permissionFilter: 'all' | CollaborationPermissionLevel | 'public_link'
   campaigns: Campaign[]
   pods: Pod[]
@@ -1196,10 +1195,11 @@ function SharedContactFilters({
   onCampaignFilterChange: (value: string) => void
   onPodFilterChange: (value: string) => void
   onSubPodFilterChange: (value: string) => void
+  onStatusFilterChange: (value: SharedStatusFilter) => void
   onPermissionFilterChange: (value: 'all' | CollaborationPermissionLevel | 'public_link') => void
 }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1.4fr) repeat(5, minmax(150px, 1fr))', gap: 10, alignItems: 'center' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1.4fr) repeat(6, minmax(140px, 1fr))', gap: 10, alignItems: 'center' }}>
       <label style={{ ...inputWrapStyle, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px' }}>
         <Search size={14} color="var(--color-text-tertiary)" />
         <input
@@ -1224,6 +1224,9 @@ function SharedContactFilters({
         <option value="all">All sub-pods</option>
         {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
       </Select>
+      <Select value={statusFilter} onChange={value => onStatusFilterChange(value as SharedStatusFilter)}>
+        {STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </Select>
       <Select value={permissionFilter} onChange={value => onPermissionFilterChange(value as typeof permissionFilter)}>
         {PERMISSION_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </Select>
@@ -1236,11 +1239,17 @@ function SharedContactsTable({
   onRevoke,
   onEditAccess,
   onOpenContact,
+  busyRequestId,
+  highlightedRequestId,
+  onRespondSharedRequest,
 }: {
   rows: SharedContactRow[]
   onRevoke: (row: SharedContactRow) => void
   onEditAccess: (row: SharedContactRow) => void
   onOpenContact: (row: SharedContactRow) => void
+  busyRequestId: string | null
+  highlightedRequestId: string | null
+  onRespondSharedRequest: (request: CollaborationAccessGrant, status: 'accepted' | 'declined') => void
 }) {
   if (rows.length === 0) {
     return <EmptyState title="No shared contacts match this view" detail="Shared campaign contacts, pod contacts, sub-pod contacts, direct contacts, and public links will appear here." />
@@ -1248,11 +1257,20 @@ function SharedContactsTable({
 
   return (
     <div style={tableStyle}>
-      <Header columns="1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px" labels={['Contact', 'Shared through', 'Shared with', 'Permission', 'Fields', 'Status', '']} />
+      <Header columns="1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 108px" labels={['Contact', 'Shared through', 'Shared with', 'Permission', 'Fields', 'Status', '']} />
       {rows.map(row => {
         const canOpenContact = Boolean(row.contact && row.shareAccess)
         const canEditAccess = row.revokeKind === 'grant' && row.canRevoke && ['active', 'pending'].includes(row.status)
         const canOpenRow = canEditAccess || canOpenContact
+        const isIncomingRequest = row.revokeKind === 'incoming_grant' && row.incomingGrant
+        const isBusyRequest = Boolean(isIncomingRequest && busyRequestId === row.revokeId)
+        const isHighlightedRequest = highlightedRequestId === row.revokeId
+        const canRespondRequest = Boolean(
+          isIncomingRequest
+          && row.status === 'pending'
+          && accessStatus(row.expiresAt) === 'active'
+          && !busyRequestId
+        )
         const shareLabel = row.shareDirection === 'shared_with_me'
           ? 'Shared with me'
           : row.shareDirection === 'shared_by_me'
@@ -1284,11 +1302,12 @@ function SharedContactsTable({
             }}
             style={{
               display: 'grid',
-              gridTemplateColumns: '1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 84px',
+              gridTemplateColumns: '1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 108px',
               minHeight: 62,
               alignItems: 'center',
               borderBottom: '1px solid var(--divider)',
               cursor: canOpenRow ? 'pointer' : 'default',
+              animation: isHighlightedRequest ? 'shared-request-row-confirm 1.2s ease-out' : undefined,
             }}
           >
             <div style={{ padding: '10px 12px', minWidth: 0 }}>
@@ -1311,21 +1330,32 @@ function SharedContactsTable({
             </div>
             <Cell primary={fieldScopeSummary(row.fieldScopes)} secondary={row.fieldScopes.map(titleCase).join(', ')} />
             <div style={{ padding: '10px 12px' }}>
-              <TagPill tone={row.status === 'active' ? 'green' : row.status === 'pending' || row.status === 'expired' ? 'yellow' : 'red'}>
-                {titleCase(row.status)}
+              <TagPill tone={isBusyRequest ? 'blue' : sharedStatusTone(row.status)}>
+                {isBusyRequest ? 'Updating' : sharedStatusLabel(row.status)}
               </TagPill>
             </div>
             <div
               onClick={event => event.stopPropagation()}
-              style={{ padding: '10px 12px', display: 'flex', justifyContent: 'flex-end' }}
+              style={{ padding: isIncomingRequest && row.status === 'pending' ? 0 : '10px 12px', display: 'flex', justifyContent: 'flex-end' }}
             >
-              <IconButton
-                label={row.revokeKind === 'incoming_grant' ? 'Owner controls this access' : row.revokeKind === 'public_link' ? 'Revoke public link' : 'Revoke access'}
-                disabled={!row.canRevoke || !['active', 'pending'].includes(row.status)}
-                onClick={() => onRevoke(row)}
-              >
-                <X size={14} />
-              </IconButton>
+              {isIncomingRequest && row.incomingGrant && row.status === 'pending' ? (
+                <Actions
+                  disabled={!canRespondRequest}
+                  busy={isBusyRequest}
+                  approveLabel="Accept"
+                  rejectLabel="Decline"
+                  onApprove={() => onRespondSharedRequest(row.incomingGrant as CollaborationAccessGrant, 'accepted')}
+                  onReject={() => onRespondSharedRequest(row.incomingGrant as CollaborationAccessGrant, 'declined')}
+                />
+              ) : (
+                <IconButton
+                  label={row.revokeKind === 'incoming_grant' ? 'Owner controls this access' : row.revokeKind === 'public_link' ? 'Revoke public link' : 'Revoke access'}
+                  disabled={!row.canRevoke || !['active', 'pending'].includes(row.status)}
+                  onClick={() => onRevoke(row)}
+                >
+                  <X size={14} />
+                </IconButton>
+              )}
             </div>
           </div>
         )
@@ -1854,141 +1884,6 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   )
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: '10px 12px',
-        border: 'none',
-        borderBottom: active ? '2px solid var(--color-brand)' : '2px solid transparent',
-        background: 'transparent',
-        color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-        fontSize: 12,
-        fontWeight: active ? 750 : 550,
-        fontFamily: 'inherit',
-        cursor: 'pointer',
-        marginBottom: -1,
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function ApprovalRequestsTable({
-  requests,
-  onResolve,
-}: {
-  requests: CollaborationApprovalRequest[]
-  onResolve: (request: CollaborationApprovalRequest, status: 'approved' | 'rejected') => void
-}) {
-  if (requests.length === 0) {
-    return <EmptyState title="No approval requests" detail="Campaign participation and private data requests will appear here." />
-  }
-
-  return (
-    <div style={tableStyle}>
-      <Header columns="1fr 1fr 1fr 0.75fr 96px" labels={['Request', 'Target', 'Fields', 'Status', '']} />
-      {requests.map(request => (
-        <div key={request.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 0.75fr 96px', minHeight: 62, alignItems: 'center', borderBottom: '1px solid var(--divider)' }}>
-          <Cell primary={titleCase(request.request_type)} secondary={request.requested_by_label} />
-          <Cell primary={request.contact_label ?? request.campaign_label ?? 'Request'} secondary={request.reason ?? formatDate(request.created_at)} />
-          <Cell primary={`${request.requested_field_scopes.length} groups`} secondary={request.requested_field_scopes.map(titleCase).join(', ')} />
-          <div style={{ padding: '10px 12px' }}><StatusPill status={request.status} /></div>
-          <Actions disabled={request.status !== 'pending'} onApprove={() => onResolve(request, 'approved')} onReject={() => onResolve(request, 'rejected')} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ContactProposalsTable({
-  proposals,
-  onResolve,
-}: {
-  proposals: CollaborationContactProposal[]
-  onResolve: (proposal: CollaborationContactProposal, status: 'approved' | 'rejected') => void
-}) {
-  if (proposals.length === 0) {
-    return <EmptyState title="No contact proposals" detail="External or campaign-specific proposed contacts will appear here for review." />
-  }
-
-  return (
-    <div style={tableStyle}>
-      <Header columns="1fr 1fr 1fr 0.75fr 96px" labels={['Contact', 'Campaign', 'Proposed by', 'Status', '']} />
-      {proposals.map(proposal => (
-        <div key={proposal.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 0.75fr 96px', minHeight: 62, alignItems: 'center', borderBottom: '1px solid var(--divider)' }}>
-          <Cell primary={String(proposal.contact_payload.name ?? 'New contact')} secondary={String(proposal.contact_payload.company ?? proposal.contact_payload.email ?? formatDate(proposal.created_at))} />
-          <Cell primary={proposal.campaign_label ?? 'General proposal'} secondary={proposal.matched_contact_id ? 'Possible match found' : 'No match linked'} />
-          <Cell primary={proposal.proposed_by_label} secondary={proposal.review_note ?? ''} />
-          <div style={{ padding: '10px 12px' }}><StatusPill status={proposal.status} /></div>
-          <Actions disabled={proposal.status !== 'pending'} onApprove={() => onResolve(proposal, 'approved')} onReject={() => onResolve(proposal, 'rejected')} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function SharedRequestsTable({
-  requests,
-  busyRequestId,
-  highlightedRequestId,
-  onRespond,
-}: {
-  requests: CollaborationAccessGrant[]
-  busyRequestId: string | null
-  highlightedRequestId: string | null
-  onRespond: (request: CollaborationAccessGrant, status: 'accepted' | 'declined') => void
-}) {
-  if (requests.length === 0) {
-    return <EmptyState title="No shared requests" detail="Contact, pod, company, and campaign shares sent to you will appear here." />
-  }
-
-  return (
-    <div style={tableStyle}>
-      <Header columns="1fr 1fr 1fr 0.75fr 96px" labels={['Resource', 'Shared by', 'Fields', 'Status', '']} />
-      {requests.map(request => {
-        const isBusy = busyRequestId === request.id
-        const isHighlighted = highlightedRequestId === request.id
-        const isActionable = request.status === 'pending' && accessStatus(request.expires_at, request.revoked_at) === 'active'
-
-        return (
-          <div
-            key={request.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr 0.75fr 96px',
-              minHeight: 62,
-              alignItems: 'center',
-              borderBottom: '1px solid var(--divider)',
-              animation: isHighlighted ? 'shared-request-row-confirm 1.2s ease-out' : undefined,
-            }}
-          >
-            <Cell primary={request.resource_label} secondary={`${titleCase(request.resource_type)} - ${permissionLabel(request.permission_level)}`} />
-            <Cell primary={request.created_by_label ?? 'Shared contact owner'} secondary={request.created_by_email ?? formatDate(request.created_at)} />
-            <Cell primary={fieldScopeSummary(request.field_scopes)} secondary={request.field_scopes.map(titleCase).join(', ')} />
-            <div style={{ padding: '10px 12px' }}>
-              <TagPill tone={isBusy ? 'blue' : request.status === 'accepted' ? 'green' : request.status === 'pending' ? 'yellow' : 'red'}>
-                {isBusy ? 'Updating' : titleCase(request.status)}
-              </TagPill>
-            </div>
-            <Actions
-              disabled={!isActionable || Boolean(busyRequestId)}
-              busy={isBusy}
-              approveLabel="Accept"
-              rejectLabel="Decline"
-              onApprove={() => onRespond(request, 'accepted')}
-              onReject={() => onRespond(request, 'declined')}
-            />
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 function SharedRequestFeedbackBanner({ feedback }: { feedback: SharedRequestFeedback }) {
   const isError = feedback.tone === 'error'
   const isWarning = feedback.tone === 'warning'
@@ -2044,20 +1939,6 @@ function Select({ value, onChange, children }: { value: string; onChange: (value
     <select value={value} onChange={event => onChange(event.target.value)} style={inputStyle}>
       {children}
     </select>
-  )
-}
-
-function StatusPill({ status }: { status: 'pending' | 'approved' | 'rejected' }) {
-  const style = status === 'approved'
-    ? ['rgba(37,180,57,0.10)', 'var(--color-brand)']
-    : status === 'rejected'
-      ? ['rgba(225,29,72,0.10)', 'var(--health-fading)']
-      : ['rgba(245,166,35,0.14)', '#a16207']
-
-  return (
-    <span style={{ display: 'inline-flex', minHeight: 22, alignItems: 'center', padding: '0 8px', borderRadius: 999, background: style[0], color: style[1], fontSize: 11, fontWeight: 750 }}>
-      {titleCase(status)}
-    </span>
   )
 }
 
