@@ -1,4 +1,5 @@
 import type { SharedContactAccessSnapshot } from './collaboration'
+import { deriveSharedContactVisibleFieldIdsFromScopes, type SharedContactVisibleFieldId } from './sharedContactVisibleFields'
 import type { Campaign, CampaignContact, CampaignStage, Category, Contact, Pod } from './types'
 
 type ProjectionStructure = {
@@ -15,6 +16,42 @@ const SHARED_CAMPAIGN_PREFIX = 'shared-campaign:'
 const SHARED_CAMPAIGN_STAGE_PREFIX = 'shared-campaign-stage:'
 const SHARED_COMPANY_PREFIX = 'shared-company:'
 const SHARED_SUB_PODS_LABEL = 'Shared sub-pods'
+
+type SharedCampaignMembershipSnapshot = {
+  campaign_id: string | null
+  campaign_name: string | null
+  campaign_type: string | null
+  campaign_status: string | null
+  campaign_deadline: string | null
+  campaign_notes: string | null
+  campaign_description: string | null
+  campaign_custom_fields: Record<string, unknown>
+  campaign_created_at: string | null
+  campaign_contact_id: string | null
+  contact_id: string | null
+  status: string | null
+  stage_id: string | null
+  stage_name: string | null
+  stage_order: number | null
+  stage_color: string | null
+  notes: string | null
+  owner: string | null
+  next_step: string | null
+  next_step_due: string | null
+  moved_at: string | null
+  custom_fields: Record<string, unknown>
+  created_at: string | null
+}
+
+type SharedCampaignSource = {
+  snapshot: SharedContactAccessSnapshot
+  label: string
+  membership: SharedCampaignMembershipSnapshot | null
+}
+
+const CAMPAIGN_TYPES: Campaign['type'][] = ['event', 'investment', 'outreach', 'deal_flow', 'fundraise', 'talent', 'partnerships', 'other']
+const CAMPAIGN_STATUSES: Campaign['status'][] = ['active', 'completed', 'hidden']
+const CAMPAIGN_CONTACT_STATUSES: CampaignContact['status'][] = ['pending', 'reached', 'responded', 'confirmed']
 
 export type OrganizedSharedContacts = {
   allContacts: Contact[]
@@ -40,6 +77,77 @@ function slugLabel(value: string | null | undefined): string {
 
 function unique(values: Array<string | null | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value)))]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {}
+}
+
+function visibleFieldsForSnapshot(snapshot: SharedContactAccessSnapshot): SharedContactVisibleFieldId[] {
+  return snapshot.visible_field_ids.length > 0
+    ? snapshot.visible_field_ids
+    : deriveSharedContactVisibleFieldIdsFromScopes(snapshot.field_scopes)
+}
+
+function hasVisibleField(snapshot: SharedContactAccessSnapshot, fieldId: SharedContactVisibleFieldId): boolean {
+  return visibleFieldsForSnapshot(snapshot).includes(fieldId)
+}
+
+function sharedCampaignMemberships(snapshot: SharedContactAccessSnapshot): SharedCampaignMembershipSnapshot[] {
+  const raw = snapshot.contact.custom_fields?.shared_campaign_memberships
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .filter(isRecord)
+    .map(item => ({
+      campaign_id: stringValue(item.campaign_id),
+      campaign_name: stringValue(item.campaign_name),
+      campaign_type: stringValue(item.campaign_type),
+      campaign_status: stringValue(item.campaign_status),
+      campaign_deadline: stringValue(item.campaign_deadline),
+      campaign_notes: stringValue(item.campaign_notes),
+      campaign_description: stringValue(item.campaign_description),
+      campaign_custom_fields: recordValue(item.campaign_custom_fields),
+      campaign_created_at: stringValue(item.campaign_created_at),
+      campaign_contact_id: stringValue(item.campaign_contact_id),
+      contact_id: stringValue(item.contact_id),
+      status: stringValue(item.status),
+      stage_id: stringValue(item.stage_id),
+      stage_name: stringValue(item.stage_name),
+      stage_order: numberValue(item.stage_order),
+      stage_color: stringValue(item.stage_color),
+      notes: stringValue(item.notes),
+      owner: stringValue(item.owner),
+      next_step: stringValue(item.next_step),
+      next_step_due: stringValue(item.next_step_due),
+      moved_at: stringValue(item.moved_at),
+      custom_fields: recordValue(item.custom_fields),
+      created_at: stringValue(item.created_at),
+    }))
+}
+
+function asCampaignType(value: string | null | undefined): Campaign['type'] {
+  return CAMPAIGN_TYPES.includes(value as Campaign['type']) ? value as Campaign['type'] : 'outreach'
+}
+
+function asCampaignStatus(value: string | null | undefined): Campaign['status'] {
+  return CAMPAIGN_STATUSES.includes(value as Campaign['status']) ? value as Campaign['status'] : 'active'
+}
+
+function asCampaignContactStatus(value: string | null | undefined): CampaignContact['status'] {
+  return CAMPAIGN_CONTACT_STATUSES.includes(value as CampaignContact['status']) ? value as CampaignContact['status'] : 'pending'
 }
 
 function normalizeSharedContact(contact: Contact): Contact {
@@ -144,29 +252,36 @@ function sharedCompanyId(label: string): string {
 
 function projectOneSharedContact(snapshot: SharedContactAccessSnapshot, structure: ProjectionStructure): Contact {
   const contact = normalizeSharedContact(snapshot.contact)
+  const canProjectPods = hasVisibleField(snapshot, 'pods')
+  const canProjectSubPods = hasVisibleField(snapshot, 'sub_pods')
+  const canProjectCompany = hasVisibleField(snapshot, 'company')
   const localPodIds = new Set(structure.pods.map(pod => pod.id))
   const localCategoryIds = new Set(structure.categories.map(category => category.id))
-  const listIds = new Set(contact.list_ids.filter(id => localPodIds.has(id)))
-  const categoryIds = new Set(contact.category_ids.filter(id => localCategoryIds.has(id)))
+  const listIds = new Set(canProjectPods ? contact.list_ids.filter(id => localPodIds.has(id)) : [])
+  const categoryIds = new Set(canProjectSubPods ? contact.category_ids.filter(id => localCategoryIds.has(id)) : [])
 
   if (snapshot.resource_type === 'pod') {
     const targetSubPodLabel = subPodLabel(snapshot.resource_label)
-    if (targetSubPodLabel) {
+    if (targetSubPodLabel && canProjectSubPods) {
       const category = findByName(structure.categories, targetSubPodLabel)
       if (category) {
         categoryIds.add(category.id)
         listIds.add(category.list_id)
       }
-    } else {
+    } else if (!targetSubPodLabel && canProjectPods) {
       const pod = findByName(structure.pods, snapshot.resource_label)
       if (pod) listIds.add(pod.id)
     }
   }
 
   const companyRecords = structure.contacts?.filter(item => item.type === 'Company') ?? []
-  const matchedCompany = findByName(companyRecords, contact.company)
-    ?? (snapshot.resource_type === 'company' ? findByName(companyRecords, snapshot.resource_label) : null)
-  const companyRecordId = matchedCompany?.id ?? (companyRecords.some(company => company.id === contact.company_record_id) ? contact.company_record_id : null)
+  const matchedCompany = canProjectCompany
+    ? findByName(companyRecords, contact.company)
+      ?? (snapshot.resource_type === 'company' ? findByName(companyRecords, snapshot.resource_label) : null)
+    : null
+  const companyRecordId = canProjectCompany
+    ? matchedCompany?.id ?? (companyRecords.some(company => company.id === contact.company_record_id) ? contact.company_record_id : null)
+    : null
 
   return {
     ...contact,
@@ -174,7 +289,9 @@ function projectOneSharedContact(snapshot: SharedContactAccessSnapshot, structur
     category_ids: [...categoryIds],
     primary_list_id: listIds.has(contact.primary_list_id ?? '') ? contact.primary_list_id : [...listIds][0] ?? null,
     company_record_id: companyRecordId,
-    company_ids: unique([companyRecordId, ...contact.company_ids.filter(id => companyRecords.some(company => company.id === id))]),
+    company_ids: canProjectCompany
+      ? unique([companyRecordId, ...contact.company_ids.filter(id => companyRecords.some(company => company.id === id))])
+      : [],
     custom_fields: {
       ...contact.custom_fields,
       shared_contact_grant_id: snapshot.grant_id,
@@ -299,6 +416,7 @@ function projectSharedPodsToWorkspace(snapshots: SharedContactAccessSnapshot[], 
   const projectedKeys = new Set<string>()
   for (const snapshot of snapshots) {
     if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
+    if (!hasVisibleField(snapshot, 'pods')) continue
     if (subPodLabel(snapshot.resource_label)) continue
     const key = normalizeLabel(snapshot.resource_label)
     if (!key || byName.has(key) || projectedKeys.has(key)) continue
@@ -335,6 +453,7 @@ function projectSharedCategoriesToWorkspace(
   const projectedKeys = new Set<string>()
   for (const snapshot of snapshots) {
     if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
+    if (!hasVisibleField(snapshot, 'sub_pods')) continue
     const label = subPodLabel(snapshot.resource_label)
     if (!label) continue
     const key = normalizeLabel(label)
@@ -381,6 +500,7 @@ function projectSharedCompaniesToWorkspace(snapshots: SharedContactAccessSnapsho
   const projected = new Map<string, Contact>()
   for (const snapshot of snapshots) {
     if (!isActiveSnapshot(snapshot)) continue
+    if (!hasVisibleField(snapshot, 'company')) continue
     const labels = unique([
       snapshot.resource_type === 'company' ? snapshot.resource_label : null,
       snapshot.contact.company,
@@ -419,6 +539,49 @@ function projectSharedCompaniesToWorkspace(snapshots: SharedContactAccessSnapsho
   return [...localContacts, ...projected.values()]
 }
 
+function sharedCampaignSourcesForSnapshot(snapshot: SharedContactAccessSnapshot): SharedCampaignSource[] {
+  if (!hasVisibleField(snapshot, 'campaign')) return []
+
+  const sources: SharedCampaignSource[] = []
+  if (snapshot.resource_type === 'campaign') {
+    sources.push({
+      snapshot,
+      label: snapshot.resource_label,
+      membership: null,
+    })
+  }
+
+  for (const membership of sharedCampaignMemberships(snapshot)) {
+    if (!membership.campaign_name) continue
+    sources.push({
+      snapshot,
+      label: membership.campaign_name,
+      membership,
+    })
+  }
+
+  return sources
+}
+
+function sharedCampaignStageSnapshots(sources: SharedCampaignSource[]): Array<{ name: string; color: string | null; order: number; created_at: string }> {
+  const byName = new Map<string, { name: string; color: string | null; order: number; created_at: string }>()
+
+  for (const source of sources) {
+    const membership = source.membership
+    if (!membership?.stage_name || !hasVisibleField(source.snapshot, 'campaign_step')) continue
+    const key = normalizeLabel(membership.stage_name)
+    if (!key || byName.has(key)) continue
+    byName.set(key, {
+      name: membership.stage_name,
+      color: membership.stage_color,
+      order: membership.stage_order ?? byName.size,
+      created_at: membership.created_at ?? source.snapshot.created_at,
+    })
+  }
+
+  return [...byName.values()].sort((a, b) => a.order - b.order)
+}
+
 export function projectSharedCampaignsToWorkspace(
   snapshots: SharedContactAccessSnapshot[],
   {
@@ -435,18 +598,20 @@ export function projectSharedCampaignsToWorkspace(
     if (key && !localByName.has(key)) localByName.set(key, campaign)
   }
 
-  const grouped = new Map<string, SharedContactAccessSnapshot[]>()
+  const grouped = new Map<string, SharedCampaignSource[]>()
   for (const snapshot of snapshots) {
-    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'campaign') continue
-    const key = normalizeLabel(snapshot.resource_label)
-    if (!key) continue
-    grouped.set(key, [...(grouped.get(key) ?? []), snapshot])
+    if (!isActiveSnapshot(snapshot)) continue
+    for (const source of sharedCampaignSourcesForSnapshot(snapshot)) {
+      const key = normalizeLabel(source.label)
+      if (!key) continue
+      grouped.set(key, [...(grouped.get(key) ?? []), source])
+    }
   }
 
   const overlays = new Map<string, Campaign>()
   const virtualCampaigns: Campaign[] = []
   for (const [key, group] of grouped.entries()) {
-    const contactIds = unique(group.map(snapshot => resolveContactId?.(snapshot) ?? snapshot.contact.id))
+    const contactIds = unique(group.map(source => resolveContactId?.(source.snapshot) ?? source.snapshot.contact.id))
     const local = localByName.get(key) ?? null
     if (local) {
       overlays.set(local.id, {
@@ -456,22 +621,26 @@ export function projectSharedCampaignsToWorkspace(
       continue
     }
 
-    const label = group[0].resource_label
+    const firstSource = group[0]
+    const firstMembership = group.find(source => source.membership)?.membership ?? null
+    const label = firstMembership?.campaign_name ?? firstSource.label
+    const stageSnapshots = sharedCampaignStageSnapshots(group)
     virtualCampaigns.push({
       id: sharedCampaignId(label),
       name: label,
-      type: 'outreach',
-      deadline: null,
-      status: 'active',
-      notes: null,
-      description: null,
+      type: asCampaignType(firstMembership?.campaign_type),
+      deadline: firstMembership?.campaign_deadline ?? null,
+      status: asCampaignStatus(firstMembership?.campaign_status),
+      notes: firstMembership && hasVisibleField(firstSource.snapshot, 'campaign_notes') ? firstMembership.campaign_notes : null,
+      description: firstMembership?.campaign_description ?? null,
       custom_fields: {
         shared_campaign: true,
-        shared_campaign_grant_ids: unique(group.map(snapshot => snapshot.grant_id)),
+        shared_campaign_grant_ids: unique(group.map(source => source.snapshot.grant_id)),
         shared_campaign_resource_label: label,
+        shared_campaign_stages: stageSnapshots,
       },
       contact_ids: contactIds,
-      created_at: earliestDate(group.map(snapshot => snapshot.created_at)),
+      created_at: earliestDate(group.map(source => source.membership?.campaign_created_at ?? source.snapshot.created_at)),
     })
   }
 
@@ -483,6 +652,21 @@ export function projectSharedCampaignsToWorkspace(
 
 export function projectedSharedCampaignStages(campaign: Campaign): CampaignStage[] {
   if (!isProjectedSharedCampaign(campaign)) return []
+  const stageSnapshots = Array.isArray(campaign.custom_fields?.shared_campaign_stages)
+    ? campaign.custom_fields.shared_campaign_stages.filter(isRecord)
+    : []
+
+  if (stageSnapshots.length > 0) {
+    return stageSnapshots.map((stage, index) => ({
+      id: `${sharedCampaignStageId(campaign.id)}:${slugLabel(stringValue(stage.name) ?? `stage-${index + 1}`)}`,
+      campaign_id: campaign.id,
+      name: stringValue(stage.name) ?? 'Shared',
+      color: stringValue(stage.color),
+      order: numberValue(stage.order) ?? index,
+      created_at: stringValue(stage.created_at) ?? campaign.created_at,
+    }))
+  }
+
   return [{
     id: sharedCampaignStageId(campaign.id),
     campaign_id: campaign.id,
@@ -514,6 +698,7 @@ export function projectSharedWorkspaceResources(
   const projectedSubPodParentNeeded = snapshots.some(snapshot => (
     isActiveSnapshot(snapshot)
     && snapshot.resource_type === 'pod'
+    && hasVisibleField(snapshot, 'sub_pods')
     && Boolean(subPodLabel(snapshot.resource_label))
     && !structure.categories.some(category => normalizeLabel(category.name) === normalizeLabel(subPodLabel(snapshot.resource_label)))
   ))
@@ -587,33 +772,41 @@ export function projectedSharedCampaignContacts(
   const firstStage = [...stages].sort((a, b) => a.order - b.order)[0] ?? null
   const campaignLabel = normalizeLabel(campaign.name)
 
-  return snapshots
-    .filter(snapshot => (
-      isActiveSnapshot(snapshot)
-      && snapshot.resource_type === 'campaign'
-      && normalizeLabel(snapshot.resource_label) === campaignLabel
-    ))
-    .map(snapshot => {
+  const rows: CampaignContact[] = []
+
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot)) continue
+    for (const source of sharedCampaignSourcesForSnapshot(snapshot)) {
+      if (normalizeLabel(source.label) !== campaignLabel) continue
+
+      const membership = source.membership
       const contactId = resolveContactId(snapshot)
-      return {
-        id: `${SHARED_CAMPAIGN_CONTACT_PREFIX}${snapshot.grant_id}:${contactId}:${campaign.id}`,
+      const stage = membership?.stage_name && hasVisibleField(snapshot, 'campaign_step')
+        ? stages.find(item => normalizeLabel(item.name) === normalizeLabel(membership.stage_name)) ?? firstStage
+        : firstStage
+      rows.push({
+        id: `${SHARED_CAMPAIGN_CONTACT_PREFIX}${snapshot.grant_id}:${contactId}:${campaign.id}:${slugLabel(membership?.campaign_contact_id ?? source.label)}`,
         campaign_id: campaign.id,
         contact_id: contactId,
-        status: 'pending',
-        stage_id: firstStage?.id ?? null,
-        notes: null,
+        status: hasVisibleField(snapshot, 'campaign_status') ? asCampaignContactStatus(membership?.status) : 'pending',
+        stage_id: stage?.id ?? null,
+        notes: hasVisibleField(snapshot, 'campaign_notes') ? membership?.notes ?? null : null,
         owner: null,
-        next_step: null,
-        next_step_due: null,
-        moved_at: snapshot.created_at,
+        next_step: hasVisibleField(snapshot, 'campaign_step') ? membership?.next_step ?? null : null,
+        next_step_due: hasVisibleField(snapshot, 'campaign_step') ? membership?.next_step_due ?? null : null,
+        moved_at: membership?.moved_at ?? snapshot.created_at,
         is_priority: false,
         custom_fields: {
           shared_contact_grant_id: snapshot.grant_id,
           shared_campaign_contact: true,
+          shared_campaign_membership_id: membership?.campaign_contact_id ?? null,
         },
-        created_at: snapshot.created_at,
-      }
-    })
+        created_at: membership?.created_at ?? snapshot.created_at,
+      })
+    }
+  }
+
+  return rows
 }
 
 export function isProjectedSharedCampaignContact(contact: CampaignContact): boolean {

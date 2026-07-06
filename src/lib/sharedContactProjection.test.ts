@@ -89,6 +89,35 @@ function snapshot(overrides: Partial<SharedContactAccessSnapshot> = {}): SharedC
   }
 }
 
+function campaignMembership(overrides: Record<string, unknown> = {}) {
+  return {
+    campaign_id: 'owner-campaign',
+    campaign_name: 'Kinship Ventures Fund I',
+    campaign_type: 'fundraise',
+    campaign_status: 'active',
+    campaign_deadline: null,
+    campaign_notes: 'Fund I campaign notes',
+    campaign_description: 'Fund I Raise',
+    campaign_custom_fields: {},
+    campaign_created_at: '2026-07-01T00:00:00.000Z',
+    campaign_contact_id: 'owner-campaign-contact',
+    contact_id: baseContact.id,
+    status: 'confirmed',
+    stage_id: 'owner-stage',
+    stage_name: 'Invited',
+    stage_order: 2,
+    stage_color: '#9CA3AF',
+    notes: 'Invite notes',
+    owner: 'Owner User',
+    next_step: 'Follow up',
+    next_step_due: '2026-07-09',
+    moved_at: '2026-07-03T00:00:00.000Z',
+    custom_fields: {},
+    created_at: '2026-07-02T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
 describe('shared contact projection', () => {
   it('projects a shared pod contact onto the receiver pod with the same name', () => {
     const projected = projectSharedContactsToWorkspace([snapshot()], {
@@ -133,7 +162,13 @@ describe('shared contact projection', () => {
     ]
 
     const rows = projectedSharedCampaignContacts([
-      snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Fund III Launch Dinner' }),
+      snapshot({
+        resource_type: 'campaign',
+        resource_id: 'owner-campaign',
+        resource_label: 'Fund III Launch Dinner',
+        field_scopes: ['public_profile', 'campaign_private'],
+        visible_field_ids: ['name', 'campaign'],
+      }),
     ], campaign, stages)
 
     expect(rows).toHaveLength(1)
@@ -197,7 +232,13 @@ describe('shared contact projection', () => {
       { id: 'stage-1', campaign_id: campaign.id, name: 'Prospects', color: null, order: 0, created_at: '' },
     ]
 
-    const contactSnapshot = snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Fund III Launch Dinner' })
+    const contactSnapshot = snapshot({
+      resource_type: 'campaign',
+      resource_id: 'owner-campaign',
+      resource_label: 'Fund III Launch Dinner',
+      field_scopes: ['public_profile', 'campaign_private'],
+      visible_field_ids: ['name', 'campaign'],
+    })
     const rows = projectedSharedCampaignContacts(
       [contactSnapshot],
       campaign,
@@ -218,7 +259,13 @@ describe('shared contact projection', () => {
 
   it('creates a virtual shared campaign when the receiver does not have a matching campaign', () => {
     const projection = projectSharedWorkspaceResources([
-      snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Kinship Ventures Fund I' }),
+      snapshot({
+        resource_type: 'campaign',
+        resource_id: 'owner-campaign',
+        resource_label: 'Kinship Ventures Fund I',
+        field_scopes: ['public_profile', 'campaign_private'],
+        visible_field_ids: ['name', 'campaign'],
+      }),
     ], {
       pods: [],
       categories: [],
@@ -248,7 +295,13 @@ describe('shared contact projection', () => {
     }
 
     const projection = projectSharedWorkspaceResources([
-      snapshot({ resource_type: 'campaign', resource_id: 'owner-campaign', resource_label: 'Kinship Ventures Fund I' }),
+      snapshot({
+        resource_type: 'campaign',
+        resource_id: 'owner-campaign',
+        resource_label: 'Kinship Ventures Fund I',
+        field_scopes: ['public_profile', 'campaign_private'],
+        visible_field_ids: ['name', 'campaign'],
+      }),
     ], {
       pods: [],
       categories: [],
@@ -277,5 +330,89 @@ describe('shared contact projection', () => {
     expect(projection.categories.map(category => category.name)).toEqual(['Inner Circle'])
     expect(projection.contacts.some(contact => contact.type === 'Company' && contact.name === 'Kinship Ventures')).toBe(true)
     expect(projection.sharedContacts[0].list_ids).toContain(projection.pods[0].id)
+  })
+
+  it('does not project pods, sub-pods, or companies when those visible fields are not selected', () => {
+    const projection = projectSharedWorkspaceResources([
+      snapshot({
+        resource_type: 'pod',
+        resource_label: 'LPs',
+        field_scopes: ['public_profile'],
+        visible_field_ids: ['name'],
+      }),
+      snapshot({
+        grant_id: 'grant-2',
+        resource_type: 'pod',
+        resource_label: 'Sub-pod: Inner Circle',
+        field_scopes: ['public_profile'],
+        visible_field_ids: ['name'],
+      }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(projection.pods).toEqual([])
+    expect(projection.categories).toEqual([])
+    expect(projection.contacts.some(contact => contact.type === 'Company')).toBe(false)
+    expect(projection.sharedContacts[0].list_ids).toEqual([])
+  })
+
+  it('projects campaign memberships from shared contacts only when campaign fields are selected', () => {
+    const contactWithMembership = {
+      ...baseContact,
+      custom_fields: {
+        shared_campaign_memberships: [campaignMembership()],
+      },
+    }
+
+    const withoutCampaignField = projectSharedWorkspaceResources([
+      snapshot({
+        contact: contactWithMembership,
+        field_scopes: ['public_profile'],
+        visible_field_ids: ['name'],
+      }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(withoutCampaignField.campaigns).toEqual([])
+
+    const withCampaignField = projectSharedWorkspaceResources([
+      snapshot({
+        contact: contactWithMembership,
+        field_scopes: ['public_profile', 'campaign_private'],
+        visible_field_ids: ['name', 'campaign', 'campaign_status', 'campaign_step', 'campaign_notes'],
+      }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(withCampaignField.campaigns).toHaveLength(1)
+    expect(withCampaignField.campaigns[0].name).toBe('Kinship Ventures Fund I')
+    expect(withCampaignField.campaigns[0].contact_ids).toEqual(['owner-contact-1'])
+
+    const stages = projectedSharedCampaignStages(withCampaignField.campaigns[0])
+    const rows = projectedSharedCampaignContacts([
+      snapshot({
+        contact: contactWithMembership,
+        field_scopes: ['public_profile', 'campaign_private'],
+        visible_field_ids: ['name', 'campaign', 'campaign_status', 'campaign_step', 'campaign_notes'],
+      }),
+    ], withCampaignField.campaigns[0], stages)
+
+    expect(stages[0].name).toBe('Invited')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].status).toBe('confirmed')
+    expect(rows[0].stage_id).toBe(stages[0].id)
+    expect(rows[0].notes).toBe('Invite notes')
   })
 })
