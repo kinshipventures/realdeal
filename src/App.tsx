@@ -13,7 +13,7 @@ import { WaitlistPage } from './components/waitlist/WaitlistPage'
 import { Sidebar } from './components/nav/Sidebar'
 import { NotFoundPage } from './components/errors/NotFoundPage'
 import { ErrorBoundary } from './components/errors/ErrorBoundary'
-import { SearchPalette, type SearchResult, type QuickActionId } from './components/search/SearchPalette'
+import type { SearchResult, QuickActionId } from './components/search/SearchPalette'
 import { AcceptInvitePage } from './components/settings/AcceptInvitePage'
 import { SharedListPage } from './components/sharing/SharedListPage'
 import { ChatPanel } from '@/components/chat/ChatPanel'
@@ -35,6 +35,7 @@ const CategoryTable = lazy(() => import('./components/contacts/CategoryTable').t
 const RecordPage = lazy(() => import('./components/records/RecordPage').then(m => ({ default: m.RecordPage })))
 const RecordsList = lazy(() => import('./components/records/RecordsList').then(m => ({ default: m.RecordsList })))
 const CreateRecordModal = lazy(() => import('./components/records/CreateRecordModal').then(m => ({ default: m.CreateRecordModal })))
+const SearchPalette = lazy(() => import('./components/search/SearchPalette').then(m => ({ default: m.SearchPalette })))
 const PodDetailPage = lazy(() => import('./components/pods/PodDetailPage').then(m => ({ default: m.PodDetailPage })))
 const CampaignsPage = lazy(() => import('./components/campaigns/CampaignsPage').then(m => ({ default: m.CampaignsPage })))
 const CampaignDetailRoute = lazy(() => import('./components/campaigns/CampaignDetailRoute').then(m => ({ default: m.CampaignDetailRoute })))
@@ -296,51 +297,57 @@ function AppShell() {
       )}
 
       {showSearch && (
-        <SearchPalette
-          onClose={closeSearch}
-          onSelect={(result: SearchResult) => {
-            setShowSearch(false)
-            const routes: Record<string, string> = {
-              contact: `/contact/${result.id}`,
-              company: `/contact/${result.id}`,
-              pod: `/pod/${result.id}`,
-              pipeline: '/campaigns',
-              project: '/campaigns',
-              campaign: '/campaigns',
-            }
-            navigate(routes[result.type] || '/')
-          }}
-          onQuickAction={(action: QuickActionId) => {
-            setShowSearch(false)
-            if (action === 'create-contact') {
-              setCreateType('Contact')
-              setShowCreate(true)
-            } else if (action === 'create-company') {
-              setCreateType('Company')
-              setShowCreate(true)
-            } else if (action === 'new-campaign') {
-              navigate('/campaigns')
-            } else if (action === 'import') {
-              navigate('/import')
-            }
-          }}
-          onSelectContact={(contact) => {
-            setShowSearch(false)
-            if (isPods && contact.list_ids.length > 0) {
-              window.dispatchEvent(new CustomEvent('map:highlight-pods', { detail: contact.list_ids }))
-            } else {
-              navigate(`/contact/${contact.id}`)
-            }
-          }}
-        />
+        <Suspense fallback={null}>
+          <SearchPalette
+            onClose={closeSearch}
+            onSelect={(result: SearchResult) => {
+              setShowSearch(false)
+              const routes: Record<string, string> = {
+                contact: `/contact/${result.id}`,
+                company: `/contact/${result.id}`,
+                pod: `/pod/${result.id}`,
+                pipeline: '/campaigns',
+                project: '/campaigns',
+                campaign: '/campaigns',
+              }
+              navigate(routes[result.type] || '/')
+            }}
+            onQuickAction={(action: QuickActionId) => {
+              setShowSearch(false)
+              if (action === 'create-contact') {
+                setCreateType('Contact')
+                setShowCreate(true)
+              } else if (action === 'create-company') {
+                setCreateType('Company')
+                setShowCreate(true)
+              } else if (action === 'new-campaign') {
+                navigate('/campaigns')
+              } else if (action === 'import') {
+                navigate('/import')
+              }
+            }}
+            onSelectContact={(contact) => {
+              setShowSearch(false)
+              if (isPods && contact.list_ids.length > 0) {
+                window.dispatchEvent(new CustomEvent('map:highlight-pods', { detail: contact.list_ids }))
+              } else {
+                navigate(`/contact/${contact.id}`)
+              }
+            }}
+          />
+        </Suspense>
       )}
 
-      <CreateRecordModal
-        isOpen={showCreate}
-        onClose={() => { setShowCreate(false); setCreateType(null) }}
-        onCreated={(_contact: Contact) => { setShowCreate(false); setCreateType(null) }}
-        initialType={createType}
-      />
+      {showCreate && (
+        <Suspense fallback={null}>
+          <CreateRecordModal
+            isOpen={showCreate}
+            onClose={() => { setShowCreate(false); setCreateType(null) }}
+            onCreated={(_contact: Contact) => { setShowCreate(false); setCreateType(null) }}
+            initialType={createType}
+          />
+        </Suspense>
+      )}
 
       {/* Demo data toggle - mobile only (desktop uses sidebar) */}
       {isMobile && showDemoControls && (
