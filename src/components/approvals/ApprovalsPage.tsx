@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, UserCheck, UserPlus, Users, X } from 'lucide-react'
+import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
 import {
@@ -21,12 +21,14 @@ import {
 } from '@/lib/sharedContactVisibleFields'
 import {
   createCollaborationAccessGrant,
+  dismissCollaborationAccessGrant,
+  dismissCollaborationPublicCampaignLink,
   getCollaborationAccessGrants,
   getIncomingCollaborationAccessGrants,
   getCollaborationPublicCampaignLinks,
   getSharedContactsWithMe,
+  removeCollaborationAccessGrant,
   respondIncomingCollaborationAccessGrant,
-  revokeCollaborationAccessGrant,
   revokeCollaborationPublicCampaignLink,
   updateCollaborationAccessGrant,
   type CollaborationAccessGrant,
@@ -439,6 +441,9 @@ export function ApprovalsPage() {
   const [sharedRequestFeedback, setSharedRequestFeedback] = useState<SharedRequestFeedback | null>(null)
   const [selectedSharedContact, setSelectedSharedContact] = useState<{ contact: Contact; shareAccess: ContactDetailShareAccess } | null>(null)
   const [editingGrant, setEditingGrant] = useState<CollaborationAccessGrant | null>(null)
+  const [selectedSharedRowIds, setSelectedSharedRowIds] = useState<Set<string>>(() => new Set())
+  const [busySharedRowIds, setBusySharedRowIds] = useState<Set<string>>(() => new Set())
+  const [busySharedBulkAction, setBusySharedBulkAction] = useState<'remove' | 'delete' | null>(null)
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
@@ -483,6 +488,10 @@ export function ApprovalsPage() {
       ].some(value => String(value ?? '').toLowerCase().includes(query))
     })
   }, [campaignFilter, permissionFilter, podFilter, searchText, sharedRows, sourceFilter, statusFilter, subPodFilter])
+  const selectedSharedRows = useMemo(
+    () => filteredSharedRows.filter(row => selectedSharedRowIds.has(row.id)),
+    [filteredSharedRows, selectedSharedRowIds],
+  )
   const activeSharedRows = useMemo(() => sharedRows.filter(row => row.status === 'active'), [sharedRows])
   const activePublicLinks = useMemo(() => publicLinks.filter(link => !link.revoked_at), [publicLinks])
   const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
@@ -606,6 +615,14 @@ export function ApprovalsPage() {
   }, [])
 
   useEffect(() => {
+    const visibleRowIds = new Set(filteredSharedRows.map(row => row.id))
+    setSelectedSharedRowIds(current => {
+      const next = new Set([...current].filter(id => visibleRowIds.has(id)))
+      return next.size === current.size ? current : next
+    })
+  }, [filteredSharedRows])
+
+  useEffect(() => {
     if (!workspaceId || loading) return
 
     let cancelled = false
@@ -717,14 +734,100 @@ export function ApprovalsPage() {
     }
   }
 
-  async function handleRevokeSharedRow(row: SharedContactRow) {
-    if (!workspaceId || !row.canRevoke || !['active', 'pending'].includes(row.status)) return
-    if (row.revokeKind === 'grant') {
-      await revokeCollaborationAccessGrant(row.revokeId, workspaceId)
-    } else {
+  function toggleSharedRowSelection(rowId: string) {
+    setSelectedSharedRowIds(current => {
+      const next = new Set(current)
+      if (next.has(rowId)) {
+        next.delete(rowId)
+      } else {
+        next.add(rowId)
+      }
+      return next
+    })
+  }
+
+  function toggleAllVisibleSharedRows() {
+    setSelectedSharedRowIds(current => {
+      const visibleIds = filteredSharedRows.map(row => row.id)
+      const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => current.has(id))
+      const next = new Set(current)
+      if (allVisibleSelected) {
+        visibleIds.forEach(id => next.delete(id))
+      } else {
+        visibleIds.forEach(id => next.add(id))
+      }
+      return next
+    })
+  }
+
+  async function removeSharedRowAccess(row: SharedContactRow) {
+    if (!['active', 'pending'].includes(row.status)) return
+
+    if (row.revokeKind === 'public_link') {
+      if (!workspaceId) return
       await revokeCollaborationPublicCampaignLink(row.revokeId, workspaceId)
+      return
     }
-    await loadData()
+
+    if (row.revokeKind === 'incoming_grant' && row.incomingGrant && row.status === 'pending') {
+      await respondIncomingCollaborationAccessGrant(row.revokeId, 'declined')
+      return
+    }
+
+    await removeCollaborationAccessGrant(row.revokeId)
+  }
+
+  async function deleteSharedRowHistory(row: SharedContactRow) {
+    if (row.revokeKind === 'public_link') {
+      if (!workspaceId) return
+      await dismissCollaborationPublicCampaignLink(row.revokeId, workspaceId)
+      return
+    }
+
+    await dismissCollaborationAccessGrant(row.revokeId)
+  }
+
+  async function runSharedRowsAction(rows: SharedContactRow[], action: 'remove' | 'delete') {
+    if (rows.length === 0 || busySharedBulkAction) return
+
+    const rowIds = rows.map(row => row.id)
+    setBusySharedBulkAction(action)
+    setBusySharedRowIds(current => new Set([...current, ...rowIds]))
+    setError('')
+
+    try {
+      for (const row of rows) {
+        if (action === 'remove') {
+          await removeSharedRowAccess(row)
+        } else {
+          await deleteSharedRowHistory(row)
+        }
+      }
+
+      setSelectedSharedRowIds(current => {
+        const next = new Set(current)
+        rowIds.forEach(id => next.delete(id))
+        return next
+      })
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${action} selected shares`)
+    } finally {
+      setBusySharedBulkAction(null)
+      setBusySharedRowIds(current => {
+        const next = new Set(current)
+        rowIds.forEach(id => next.delete(id))
+        return next
+      })
+    }
+  }
+
+  async function handleRevokeSharedRow(row: SharedContactRow) {
+    await runSharedRowsAction([row], 'remove')
+  }
+
+  async function handleDeleteSharedRow(row: SharedContactRow) {
+    await runSharedRowsAction([row], 'delete')
   }
 
   function handleEditSharedRow(row: SharedContactRow) {
@@ -776,7 +879,7 @@ export function ApprovalsPage() {
             Shared contacts
           </h1>
           <p style={{ margin: '6px 0 0', color: 'var(--color-text-tertiary)', fontSize: 13, lineHeight: 1.5 }}>
-            Manage shared contacts, permissions, public links, campaign access, and approval queues from one place.
+            Manage shared contacts, permissions, public links, campaign access, and share requests from one place.
           </p>
         </div>
       </header>
@@ -785,7 +888,7 @@ export function ApprovalsPage() {
         <SummaryCard icon={<Users size={16} />} label="Shared contacts" value={sharedContactCount} />
         <SummaryCard icon={<ShieldCheck size={16} />} label="Active access" value={activeSharedRows.length} />
         <SummaryCard icon={<Link size={16} />} label="Public links" value={activePublicLinks.length} />
-        <SummaryCard icon={<UserPlus size={16} />} label="Pending approvals" value={pendingSharedRequests.length} />
+        <SummaryCard icon={<UserPlus size={16} />} label="Pending shares" value={pendingSharedRequests.length} />
       </section>
 
       <ConnectionsPanel
@@ -839,12 +942,24 @@ export function ApprovalsPage() {
 
       {error && <div style={{ ...noticeStyle, color: 'var(--health-fading)' }}>{error}</div>}
 
+      <SharedContactBulkActions
+        selectedCount={selectedSharedRows.length}
+        busyAction={busySharedBulkAction}
+        onRemoveSelected={() => runSharedRowsAction(selectedSharedRows, 'remove')}
+        onDeleteSelected={() => runSharedRowsAction(selectedSharedRows, 'delete')}
+      />
+
       {loading ? (
         <div style={{ color: 'var(--color-text-secondary)', fontSize: 13, padding: 24 }}>Loading...</div>
       ) : (
         <SharedContactsTable
           rows={filteredSharedRows}
+          selectedRowIds={selectedSharedRowIds}
+          busyRowIds={busySharedRowIds}
+          onToggleRow={toggleSharedRowSelection}
+          onToggleAllRows={toggleAllVisibleSharedRows}
           onRevoke={handleRevokeSharedRow}
+          onDelete={handleDeleteSharedRow}
           onEditAccess={handleEditSharedRow}
           onOpenContact={handleOpenSharedContact}
           busyRequestId={busySharedRequestId}
@@ -1234,9 +1349,60 @@ function SharedContactFilters({
   )
 }
 
+function SharedContactBulkActions({
+  selectedCount,
+  busyAction,
+  onRemoveSelected,
+  onDeleteSelected,
+}: {
+  selectedCount: number
+  busyAction: 'remove' | 'delete' | null
+  onRemoveSelected: () => void
+  onDeleteSelected: () => void
+}) {
+  if (selectedCount === 0) return null
+
+  const isBusy = Boolean(busyAction)
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        border: '1px solid var(--edge)',
+        borderRadius: 8,
+        background: 'var(--surface-panel)',
+        padding: '10px 12px',
+        marginBottom: 10,
+      }}
+    >
+      <span style={{ fontSize: 12, fontWeight: 750, color: 'var(--color-text-secondary)' }}>
+        {selectedCount} selected
+      </span>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <button type="button" disabled={isBusy} onClick={onRemoveSelected} style={{ ...secondaryActionButtonStyle, opacity: isBusy ? 0.55 : 1 }}>
+          <X size={14} />
+          {busyAction === 'remove' ? 'Removing' : 'Remove selected'}
+        </button>
+        <button type="button" disabled={isBusy} onClick={onDeleteSelected} style={{ ...dangerActionButtonStyle, opacity: isBusy ? 0.55 : 1 }}>
+          <Trash2 size={14} />
+          {busyAction === 'delete' ? 'Deleting' : 'Delete selected'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function SharedContactsTable({
   rows,
+  selectedRowIds,
+  busyRowIds,
+  onToggleRow,
+  onToggleAllRows,
   onRevoke,
+  onDelete,
   onEditAccess,
   onOpenContact,
   busyRequestId,
@@ -1244,7 +1410,12 @@ function SharedContactsTable({
   onRespondSharedRequest,
 }: {
   rows: SharedContactRow[]
+  selectedRowIds: Set<string>
+  busyRowIds: Set<string>
+  onToggleRow: (rowId: string) => void
+  onToggleAllRows: () => void
   onRevoke: (row: SharedContactRow) => void
+  onDelete: (row: SharedContactRow) => void
   onEditAccess: (row: SharedContactRow) => void
   onOpenContact: (row: SharedContactRow) => void
   busyRequestId: string | null
@@ -1255,15 +1426,38 @@ function SharedContactsTable({
     return <EmptyState title="No shared contacts match this view" detail="Shared campaign contacts, pod contacts, sub-pod contacts, direct contacts, and public links will appear here." />
   }
 
+  const allRowsSelected = rows.length > 0 && rows.every(row => selectedRowIds.has(row.id))
+  const gridColumns = '44px 1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 172px'
+
   return (
     <div style={tableStyle}>
-      <Header columns="1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 108px" labels={['Contact', 'Shared through', 'Shared with', 'Permission', 'Fields', 'Status', '']} />
+      <Header
+        columns={gridColumns}
+        labels={[
+          <input
+            key="select-all"
+            type="checkbox"
+            checked={allRowsSelected}
+            onChange={onToggleAllRows}
+            aria-label="Select all shared contacts"
+            style={checkboxStyle}
+          />,
+          'Contact',
+          'Shared through',
+          'Shared with',
+          'Permission',
+          'Fields',
+          'Status',
+          'Actions',
+        ]}
+      />
       {rows.map(row => {
         const canOpenContact = Boolean(row.contact && row.shareAccess)
         const canEditAccess = row.revokeKind === 'grant' && row.canRevoke && ['active', 'pending'].includes(row.status)
         const canOpenRow = canEditAccess || canOpenContact
         const isIncomingRequest = row.revokeKind === 'incoming_grant' && row.incomingGrant
         const isBusyRequest = Boolean(isIncomingRequest && busyRequestId === row.revokeId)
+        const isBusyRow = busyRowIds.has(row.id)
         const isHighlightedRequest = highlightedRequestId === row.revokeId
         const canRespondRequest = Boolean(
           isIncomingRequest
@@ -1271,6 +1465,8 @@ function SharedContactsTable({
           && accessStatus(row.expiresAt) === 'active'
           && !busyRequestId
         )
+        const canRemoveRow = ['active', 'pending'].includes(row.status)
+        const canDeleteRow = row.revokeKind !== 'public_link' || Boolean(row.canRevoke)
         const shareLabel = row.shareDirection === 'shared_with_me'
           ? 'Shared with me'
           : row.shareDirection === 'shared_by_me'
@@ -1302,7 +1498,7 @@ function SharedContactsTable({
             }}
             style={{
               display: 'grid',
-              gridTemplateColumns: '1.1fr 1fr 0.85fr 0.9fr 0.85fr 0.8fr 108px',
+              gridTemplateColumns: gridColumns,
               minHeight: 62,
               alignItems: 'center',
               borderBottom: '1px solid var(--divider)',
@@ -1310,6 +1506,15 @@ function SharedContactsTable({
               animation: isHighlightedRequest ? 'shared-request-row-confirm 1.2s ease-out' : undefined,
             }}
           >
+            <div onClick={event => event.stopPropagation()} style={{ padding: '10px 12px' }}>
+              <input
+                type="checkbox"
+                checked={selectedRowIds.has(row.id)}
+                onChange={() => onToggleRow(row.id)}
+                aria-label={`Select ${row.contactName}`}
+                style={checkboxStyle}
+              />
+            </div>
             <div style={{ padding: '10px 12px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minWidth: 0 }}>
                 <span style={{ fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1336,25 +1541,35 @@ function SharedContactsTable({
             </div>
             <div
               onClick={event => event.stopPropagation()}
-              style={{ padding: isIncomingRequest && row.status === 'pending' ? 0 : '10px 12px', display: 'flex', justifyContent: 'flex-end' }}
+              style={{ padding: '10px 12px', display: 'flex', justifyContent: 'flex-end', gap: 6, flexWrap: 'wrap' }}
             >
               {isIncomingRequest && row.incomingGrant && row.status === 'pending' ? (
                 <Actions
                   disabled={!canRespondRequest}
                   busy={isBusyRequest}
                   approveLabel="Accept"
-                  rejectLabel="Decline"
+                  rejectLabel="Remove"
                   onApprove={() => onRespondSharedRequest(row.incomingGrant as CollaborationAccessGrant, 'accepted')}
                   onReject={() => onRespondSharedRequest(row.incomingGrant as CollaborationAccessGrant, 'declined')}
                 />
               ) : (
-                <IconButton
-                  label={row.revokeKind === 'incoming_grant' ? 'Owner controls this access' : row.revokeKind === 'public_link' ? 'Revoke public link' : 'Revoke access'}
-                  disabled={!row.canRevoke || !['active', 'pending'].includes(row.status)}
-                  onClick={() => onRevoke(row)}
-                >
-                  <X size={14} />
-                </IconButton>
+                <>
+                  <button
+                    type="button"
+                    disabled={!canRemoveRow || isBusyRow}
+                    onClick={() => onRevoke(row)}
+                    style={{ ...smallActionButtonStyle, opacity: !canRemoveRow || isBusyRow ? 0.5 : 1 }}
+                  >
+                    {isBusyRow ? 'Working' : 'Remove'}
+                  </button>
+                  <IconButton
+                    label="Delete from shared contact history"
+                    disabled={!canDeleteRow || isBusyRow}
+                    onClick={() => onDelete(row)}
+                  >
+                    <Trash2 size={14} />
+                  </IconButton>
+                </>
               )}
             </div>
           </div>
@@ -1917,10 +2132,10 @@ function SharedRequestFeedbackBanner({ feedback }: { feedback: SharedRequestFeed
   )
 }
 
-function Header({ columns, labels }: { columns: string; labels: string[] }) {
+function Header({ columns, labels }: { columns: string; labels: React.ReactNode[] }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: columns, minHeight: 38, alignItems: 'center', background: 'var(--tint)', borderBottom: '1px solid var(--edge)' }}>
-      {labels.map((label, index) => <div key={`${label}-${index}`} style={headerCellStyle}>{label}</div>)}
+      {labels.map((label, index) => <div key={index} style={headerCellStyle}>{label}</div>)}
     </div>
   )
 }
@@ -1974,9 +2189,15 @@ function Actions({
   onReject: () => void
 }) {
   return (
-    <div style={{ padding: '10px 12px', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-      <IconButton label={busy ? 'Updating request' : approveLabel} disabled={disabled} onClick={onApprove}><Check size={14} /></IconButton>
-      <IconButton label={busy ? 'Updating request' : rejectLabel} disabled={disabled} onClick={onReject}><X size={14} /></IconButton>
+    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+      <button type="button" disabled={disabled} onClick={onApprove} style={{ ...smallActionButtonStyle, opacity: disabled ? 0.5 : 1 }}>
+        <Check size={13} />
+        {busy ? 'Working' : approveLabel}
+      </button>
+      <button type="button" disabled={disabled} onClick={onReject} style={{ ...smallDangerButtonStyle, opacity: disabled ? 0.5 : 1 }}>
+        <X size={13} />
+        {busy ? 'Working' : rejectLabel}
+      </button>
     </div>
   )
 }
@@ -2056,6 +2277,51 @@ const iconButtonStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
+}
+
+const checkboxStyle: React.CSSProperties = {
+  width: 14,
+  height: 14,
+  margin: 0,
+  cursor: 'pointer',
+}
+
+const smallActionButtonStyle: React.CSSProperties = {
+  height: 30,
+  borderRadius: 8,
+  border: '1px solid rgba(0,61,165,0.18)',
+  background: 'rgba(0,61,165,0.08)',
+  color: 'var(--color-brand)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 5,
+  padding: '0 10px',
+  fontSize: 11,
+  fontWeight: 800,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+}
+
+const smallDangerButtonStyle: React.CSSProperties = {
+  ...smallActionButtonStyle,
+  border: '1px solid rgba(225,29,72,0.18)',
+  background: 'rgba(225,29,72,0.08)',
+  color: 'var(--health-fading)',
+}
+
+const secondaryActionButtonStyle: React.CSSProperties = {
+  ...smallActionButtonStyle,
+  height: 34,
+  background: 'var(--surface-panel)',
+  border: '1px solid var(--edge)',
+  color: 'var(--color-text-secondary)',
+  fontSize: 12,
+}
+
+const dangerActionButtonStyle: React.CSSProperties = {
+  ...secondaryActionButtonStyle,
+  color: 'var(--health-fading)',
 }
 
 const primaryButtonStyle: React.CSSProperties = {

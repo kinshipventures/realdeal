@@ -43,6 +43,8 @@ export interface CollaborationAccessGrant {
   created_at: string
   responded_at: string | null
   revoked_at: string | null
+  dismissed_at?: string | null
+  dismissed_by?: string | null
 }
 
 export interface SharedContactAccessSnapshot {
@@ -128,6 +130,8 @@ export interface CollaborationPublicCampaignLink {
   created_by: string | null
   created_at: string
   revoked_at: string | null
+  dismissed_at?: string | null
+  dismissed_by?: string | null
 }
 
 export interface CollaborationPublicLinkReview {
@@ -294,6 +298,7 @@ export async function getCollaborationAccessGrants(workspaceId: string): Promise
     .from('collaboration_access_grants')
     .select('*')
     .eq('workspace_id', workspaceId)
+    .is('dismissed_at', null)
     .order('created_at', { ascending: false })
 
   if (error) return emptyWhenMissing<CollaborationAccessGrant>(error)
@@ -328,6 +333,24 @@ export async function respondIncomingCollaborationAccessGrant(
   const { data, error } = await db.rpc('respond_incoming_collaboration_access_grant', {
     grant_id: id,
     next_status: status,
+  })
+
+  if (error) throw error
+  return normalizeAccessGrants(Array.isArray(data) ? data : [data])[0]
+}
+
+export async function removeCollaborationAccessGrant(id: string): Promise<CollaborationAccessGrant> {
+  const { data, error } = await db.rpc('remove_collaboration_access_grant', {
+    grant_id: id,
+  })
+
+  if (error) throw error
+  return normalizeAccessGrants(Array.isArray(data) ? data : [data])[0]
+}
+
+export async function dismissCollaborationAccessGrant(id: string): Promise<CollaborationAccessGrant> {
+  const { data, error } = await db.rpc('dismiss_collaboration_access_grant', {
+    grant_id: id,
   })
 
   if (error) throw error
@@ -544,6 +567,7 @@ export async function getCollaborationPublicCampaignLinks(
     .from('collaboration_public_campaign_links')
     .select('*')
     .eq('workspace_id', workspaceId)
+    .is('dismissed_at', null)
     .order('created_at', { ascending: false })
 
   if (campaignId) query = query.eq('campaign_id', campaignId)
@@ -606,6 +630,31 @@ export async function revokeCollaborationPublicCampaignLink(id: string, workspac
   await recordCollaborationAuditEvent({
     workspace_id: workspaceId,
     event_type: 'public_campaign_link_revoked',
+    resource_type: 'public_campaign_link',
+    resource_id: id,
+    resource_label: data.campaign_label,
+    metadata: { campaign_id: data.campaign_id },
+  })
+}
+
+export async function dismissCollaborationPublicCampaignLink(id: string, workspaceId: string): Promise<void> {
+  const dismissed_by = await getCurrentUserId()
+  const { data, error } = await db
+    .from('collaboration_public_campaign_links')
+    .update({
+      revoked_at: new Date().toISOString(),
+      dismissed_at: new Date().toISOString(),
+      dismissed_by,
+    })
+    .eq('id', id)
+    .eq('workspace_id', workspaceId)
+    .select()
+    .single()
+
+  if (error) throw error
+  await recordCollaborationAuditEvent({
+    workspace_id: workspaceId,
+    event_type: 'public_campaign_link_dismissed',
     resource_type: 'public_campaign_link',
     resource_id: id,
     resource_label: data.campaign_label,
