@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, ListFilter, Share2, UserPlus } from 'lucide-react'
-import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache } from '../../lib/data'
+import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache, getCompanies } from '../../lib/data'
 import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
+import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
+import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
 import { ContactDetail, type ContactDetailShareAccess } from '../contacts/ContactDetail'
@@ -22,7 +24,7 @@ import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
 import { supabase } from '@/integrations/supabase/client'
-import type { Contact, Pod, Category, Campaign, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
+import type { Contact, Pod, Category, Campaign, Company, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
 // ── Column definitions ───────────────────────────────────────────────────────
 
@@ -69,6 +71,8 @@ interface FilterState {
   search: string
   pod: string | null
   category: string | null
+  propertyField: string | null
+  propertyValue: string | null
   type: RelationshipType | null
   status: RelationshipStatus | null
   recency: RecencyFilter
@@ -78,10 +82,69 @@ const DEFAULT_FILTERS: FilterState = {
   search: '',
   pod: null,
   category: null,
+  propertyField: null,
+  propertyValue: null,
   type: null,
   status: null,
   recency: 'any',
 }
+
+type RelationshipFilterFieldDef = {
+  id: string
+  label: string
+}
+
+const BASE_RELATIONSHIP_FILTER_FIELDS: RelationshipFilterFieldDef[] = [
+  { id: 'Name', label: 'Name' },
+  { id: 'Company', label: 'Company' },
+  { id: 'Job Title', label: 'Job Title' },
+  { id: 'LinkedIn', label: 'LinkedIn' },
+  { id: 'Referred By', label: 'Referred By' },
+  { id: 'Gender', label: 'Gender' },
+  { id: 'Birthday', label: 'Birthday' },
+  { id: 'Notables', label: 'Notables' },
+  { id: 'Email', label: 'Email' },
+  { id: 'Email 2', label: 'Email 2' },
+  { id: 'Email 3', label: 'Email 3' },
+  { id: 'Phone', label: 'Phone' },
+  { id: 'Address', label: 'Address' },
+  { id: 'Location', label: 'Location' },
+  { id: 'City', label: 'City' },
+  { id: 'State', label: 'State' },
+  { id: 'Country', label: 'Country' },
+  { id: 'Global Region', label: 'Global Region' },
+  { id: 'Assistant Info', label: 'Assistant Info' },
+  { id: 'Kinship Investments 1', label: 'Kinship Investments 1' },
+  { id: 'Kinship Investments 2', label: 'Kinship Investments 2' },
+  { id: 'Kinship Investments 3', label: 'Kinship Investments 3' },
+  { id: 'Kinship Investments 4', label: 'Kinship Investments 4' },
+  { id: 'Kinship Investments 5', label: 'Kinship Investments 5' },
+  { id: 'Investment Entity', label: 'Investment Entity' },
+  { id: 'Investment Email', label: 'Investment Email' },
+  { id: 'Pod 1', label: 'Pod 1' },
+  { id: 'Pod 2', label: 'Pod 2' },
+  { id: 'Pod 3', label: 'Pod 3' },
+  { id: 'Sub-pod 1', label: 'Sub-pod 1' },
+  { id: 'Sub-pod 2', label: 'Sub-pod 2' },
+  { id: 'Sub-pod 3', label: 'Sub-pod 3' },
+  { id: 'Sub-pod 4', label: 'Sub-pod 4' },
+  { id: 'Sub-pod 5', label: 'Sub-pod 5' },
+  { id: 'Campaign 1', label: 'Campaign 1' },
+  { id: 'Campaign 1 Status', label: 'Campaign 1 Status' },
+  { id: 'Campaign 1 Target Commitment', label: 'Campaign 1 Target Commitment' },
+  { id: 'Campaign 2', label: 'Campaign 2' },
+  { id: 'Campaign 2 Status', label: 'Campaign 2 Status' },
+  { id: 'Campaign 2 Target Commitment', label: 'Campaign 2 Target Commitment' },
+  { id: 'Campaign 3', label: 'Campaign 3' },
+  { id: 'Campaign 3 Status', label: 'Campaign 3 Status' },
+  { id: 'Campaign 3 Target Commitment', label: 'Campaign 3 Target Commitment' },
+  { id: 'Companies', label: 'Companies' },
+  { id: 'Contacts', label: 'Contacts' },
+  { id: 'Industry', label: 'Industry' },
+]
+
+const CUSTOM_FILTER_FIELD_PREFIX = 'custom:'
+const DEFAULT_CAMPAIGN_STATUS_FILTER_OPTIONS = ['Pending', 'Reached', 'Responded', 'Confirmed']
 
 const RELATIONSHIP_SCOPE_OPTIONS: Array<{ value: RelationshipScope; label: string }> = [
   { value: 'all', label: 'All contacts' },
@@ -267,6 +330,56 @@ function isRelationshipScope(value: string | null): value is RelationshipScope {
   return value === 'all' || value === 'mine' || value === 'shared_with_me' || value === 'shared_by_me'
 }
 
+function normalizedFilterText(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function uniqueFilterOptions(values: Iterable<string>): string[] {
+  const seen = new Map<string, string>()
+  for (const value of values) {
+    const trimmed = value.trim()
+    if (!trimmed) continue
+    const key = normalizedFilterText(trimmed)
+    if (!seen.has(key)) seen.set(key, trimmed)
+  }
+  return [...seen.values()].sort((a, b) => a.localeCompare(b))
+}
+
+function filterValueParts(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(filterValueParts)
+  if (typeof value === 'boolean') return [value ? 'Yes' : 'No']
+  if (typeof value === 'number' && Number.isFinite(value)) return [String(value)]
+  if (typeof value === 'string') return value.split(/[;,|\n]+/).map(item => item.trim()).filter(Boolean)
+  return value === null || value === undefined ? [] : [String(value)]
+}
+
+function simpleFieldKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+function customFieldValues(contact: Contact, keys: string[]): string[] {
+  const fields = contact.custom_fields ?? {}
+  const keySet = new Set(keys.filter(Boolean))
+  const simpleKeys = new Set([...keySet].map(simpleFieldKey))
+  const values: unknown[] = []
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (keySet.has(key) || simpleKeys.has(simpleFieldKey(key))) values.push(value)
+  }
+
+  return values.flatMap(filterValueParts)
+}
+
+function customFieldConfigFilterId(config: FieldConfig): string {
+  return `${CUSTOM_FILTER_FIELD_PREFIX}${config.id}`
+}
+
+function customFieldConfigForFilterId(fieldConfigs: FieldConfig[], id: string | null): FieldConfig | null {
+  if (!id?.startsWith(CUSTOM_FILTER_FIELD_PREFIX)) return null
+  const configId = id.slice(CUSTOM_FILTER_FIELD_PREFIX.length)
+  return fieldConfigs.find(config => config.id === configId) ?? null
+}
+
 // ── View toggle ─────────────────────────────────────────────────────────────
 
 function ViewToggle({ active, onChange }: { active: 'people' | 'companies'; onChange: (v: 'people' | 'companies') => void }) {
@@ -317,6 +430,8 @@ export function RecordsList() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [pods, setPods] = useState<Pod[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [fieldConfigs, setFieldConfigs] = useState<FieldConfig[]>([])
   const [equityMap, setEquityMap] = useState<Record<string, number>>({})
   const [collaborationGrants, setCollaborationGrants] = useState<CollaborationAccessGrant[]>([])
   const [incomingSharedContacts, setIncomingSharedContacts] = useState<SharedContactAccessSnapshot[]>([])
@@ -453,8 +568,10 @@ export function RecordsList() {
         allCategories,
         allInteractions,
         allCampaigns,
+        allCompanies,
         allGrants,
         allIncomingSharedContacts,
+        allFieldConfigs,
       ] = await Promise.all([
         supabase.auth.getUser(),
         getContacts(),
@@ -462,8 +579,10 @@ export function RecordsList() {
         getCategories(),
         getAllInteractions(),
         getCampaigns(),
+        getCompanies().catch(() => []),
         workspaceId ? getCollaborationAccessGrants(workspaceId) : Promise.resolve([]),
         includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([]),
+        getFieldConfigs().catch(() => []),
       ])
       if (stale) return
 
@@ -479,6 +598,8 @@ export function RecordsList() {
       setCategories(projection.categories)
       setContacts(projection.contacts)
       setCampaigns(projection.campaigns)
+      setCompanies(allCompanies)
+      setFieldConfigs(allFieldConfigs)
       setCollaborationGrants(allGrants)
       setIncomingSharedContacts(allIncomingSharedContacts)
 
@@ -565,6 +686,30 @@ export function RecordsList() {
     return m
   }, [pods])
 
+  const categoryMap = useMemo<Record<string, Category>>(() => {
+    const m: Record<string, Category> = {}
+    for (const category of categories) m[category.id] = category
+    return m
+  }, [categories])
+
+  const contactMap = useMemo<Record<string, Contact>>(() => {
+    const m: Record<string, Contact> = {}
+    for (const contact of contacts) m[contact.id] = contact
+    return m
+  }, [contacts])
+
+  const companyRecordMap = useMemo<Record<string, Company>>(() => {
+    const m: Record<string, Company> = {}
+    for (const company of companies) m[company.id] = company
+    return m
+  }, [companies])
+
+  const companyRecordsByName = useMemo(() => {
+    const m = new Map<string, Company>()
+    for (const company of companies) m.set(normalizedFilterText(company.name), company)
+    return m
+  }, [companies])
+
   const subPodsByPod = useMemo(
     () => pods
       .map(pod => ({
@@ -601,6 +746,179 @@ export function RecordsList() {
     () => relationshipScope === 'shared_with_me' ? sharedWithMeContacts : relationshipContacts,
     [relationshipContacts, relationshipScope, sharedWithMeContacts],
   )
+
+  const relationshipFilterSourceContacts = useMemo(
+    () => visibleRelationshipContacts.filter(contact => contact.type !== 'Company'),
+    [visibleRelationshipContacts],
+  )
+
+  const relationshipFilterFields = useMemo<RelationshipFilterFieldDef[]>(() => {
+    const existingLabels = new Set(BASE_RELATIONSHIP_FILTER_FIELDS.map(field => normalizedFilterText(field.label)))
+    const customFields = fieldConfigs
+      .filter(config => config.source_field_id.startsWith('custom_'))
+      .filter(config => config.scope_type === 'Contact' || config.scope_type === 'Both')
+      .filter(config => !existingLabels.has(normalizedFilterText(config.name)))
+      .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name))
+      .map(config => ({ id: customFieldConfigFilterId(config), label: config.name }))
+
+    return [...BASE_RELATIONSHIP_FILTER_FIELDS, ...customFields]
+  }, [fieldConfigs])
+
+  const relationshipFilterValuesForContact = useCallback((contact: Contact, fieldId: string | null): string[] => {
+    if (!fieldId) return []
+
+    const customConfig = customFieldConfigForFilterId(fieldConfigs, fieldId)
+    if (customConfig) {
+      return customFieldValues(contact, [customConfig.source_field_id, customConfig.name])
+    }
+
+    if (/^Pod \d+$/.test(fieldId)) {
+      return contact.list_ids.map(id => podMap[id]?.name ?? '').filter(Boolean)
+    }
+
+    if (/^Sub-pod \d+$/.test(fieldId)) {
+      return contact.category_ids.map(id => categoryMap[id]?.name ?? '').filter(Boolean)
+    }
+
+    if (/^Campaign \d+$/.test(fieldId)) {
+      return campaigns
+        .filter(campaign => campaign.contact_ids.includes(contact.id))
+        .map(campaign => campaign.name)
+    }
+
+    if (/^Campaign \d+ Status$/.test(fieldId)) {
+      return customFieldValues(contact, ['campaignStatus', 'campaign status', 'Campaign Status'])
+    }
+
+    if (/^Campaign \d+ Target Commitment$/.test(fieldId)) {
+      return customFieldValues(contact, ['commitment_amount', 'commitmentAmount', 'targetCommitment', 'investmentAmount', 'Campaign Target Commitment'])
+    }
+
+    switch (fieldId) {
+      case 'Name':
+        return [contact.name]
+      case 'Company':
+        return uniqueFilterOptions([
+          ...filterValueParts(contact.company),
+          ...contact.company_ids.map(id => contactMap[id]?.name ?? '').filter(Boolean),
+          ...contact.company_ids.map(id => companyRecordMap[id]?.name ?? '').filter(Boolean),
+        ])
+      case 'Job Title':
+        return filterValueParts(contact.role)
+      case 'LinkedIn':
+        return filterValueParts(contact.linkedin)
+      case 'Referred By':
+        return filterValueParts(contact.recommended_by)
+      case 'Gender':
+        return filterValueParts(contact.gender)
+      case 'Birthday':
+        return filterValueParts(contact.birthday)
+      case 'Notables':
+        return customFieldValues(contact, ['notables', 'Notables'])
+      case 'Email':
+        return filterValueParts(contact.email)
+      case 'Email 2':
+        return filterValueParts(contact.email_2)
+      case 'Email 3':
+        return filterValueParts(contact.email_3)
+      case 'Phone':
+        return filterValueParts(contact.phone)
+      case 'Address':
+        return customFieldValues(contact, ['address', 'Address'])
+      case 'Location':
+        return uniqueFilterOptions([
+          ...filterValueParts(contact.location),
+          ...customFieldValues(contact, ['location', 'Location']),
+        ])
+      case 'City':
+        return customFieldValues(contact, ['city', 'City'])
+      case 'State':
+        return customFieldValues(contact, ['state', 'State'])
+      case 'Country':
+        return filterValueParts(contact.country)
+      case 'Global Region':
+        return uniqueFilterOptions([
+          ...filterValueParts(contact.global_region),
+          ...customFieldValues(contact, ['globalRegionDetail', 'globalRegion', 'Global Region']),
+        ])
+      case 'Assistant Info': {
+        const assistantIds = customFieldValues(contact, ['assistantContactIds', 'Assistant Info'])
+        const assistantNames = assistantIds.map(id => contactMap[id]?.name ?? id)
+        return uniqueFilterOptions([...assistantNames, ...customFieldValues(contact, ['assistantInfo', 'Assistant Info'])])
+      }
+      case 'Kinship Investments 1':
+      case 'Kinship Investments 2':
+      case 'Kinship Investments 3':
+      case 'Kinship Investments 4':
+      case 'Kinship Investments 5':
+        return filterValueParts(contact.kv_fund_investor)
+      case 'Investment Entity':
+        return customFieldValues(contact, ['investmentEntity', 'Investment Entity'])
+      case 'Investment Email':
+        return customFieldValues(contact, ['investmentEmail', 'Investment Email'])
+      case 'Companies':
+        return uniqueFilterOptions([
+          ...contact.company_ids.map(id => contactMap[id]?.name ?? '').filter(Boolean),
+          ...contact.company_ids.map(id => companyRecordMap[id]?.name ?? '').filter(Boolean),
+          ...filterValueParts(contact.company),
+        ])
+      case 'Contacts': {
+        const linkedContacts = customFieldValues(contact, [
+          'contacts',
+          'Contacts',
+          'contactIds',
+          'contact_ids',
+          'linkedContacts',
+          'linkedContactIds',
+        ])
+        return uniqueFilterOptions(linkedContacts.map(value => contactMap[value]?.name ?? value))
+      }
+      case 'Industry':
+        return uniqueFilterOptions([
+          ...filterValueParts(contact.industry),
+          ...contact.company_ids.flatMap(id => filterValueParts(contactMap[id]?.industry)),
+          ...contact.company_ids.flatMap(id => filterValueParts(companyRecordMap[id]?.industry)),
+          ...filterValueParts(companyRecordsByName.get(normalizedFilterText(contact.company ?? ''))?.industry),
+          ...customFieldValues(contact, ['industry', 'Industry']),
+        ])
+      default:
+        return []
+    }
+  }, [campaigns, categoryMap, companyRecordMap, companyRecordsByName, contactMap, fieldConfigs, podMap])
+
+  const relationshipFilterValueOptions = useMemo(() => {
+    const fieldId = filters.propertyField
+    if (!fieldId) return []
+
+    const presetValues =
+      /^Pod \d+$/.test(fieldId)
+        ? pods.map(pod => pod.name)
+        : /^Sub-pod \d+$/.test(fieldId)
+          ? categories.map(category => category.name)
+          : /^Campaign \d+$/.test(fieldId)
+            ? campaigns.map(campaign => campaign.name)
+            : /^Campaign \d+ Status$/.test(fieldId)
+              ? DEFAULT_CAMPAIGN_STATUS_FILTER_OPTIONS
+              : fieldId === 'Company' || fieldId === 'Companies'
+                ? [
+                    ...contacts
+                      .filter(contact => contact.type === 'Company')
+                      .map(contact => contact.name),
+                    ...companies.map(company => company.name),
+                  ]
+                : fieldId.startsWith('Kinship Investments')
+                  ? DEFAULT_KINSHIP_INVESTMENTS
+                  : fieldId === 'Gender'
+                    ? ['Male', 'Female', 'Non-binary', 'Other']
+                    : fieldId === 'Global Region'
+                      ? ['AMER', 'APAC', 'EU', 'LATAM', 'ME']
+                      : []
+
+    return uniqueFilterOptions([
+      ...presetValues,
+      ...relationshipFilterSourceContacts.flatMap(contact => relationshipFilterValuesForContact(contact, fieldId)),
+    ])
+  }, [campaigns, categories, companies, contacts, filters.propertyField, pods, relationshipFilterSourceContacts, relationshipFilterValuesForContact])
 
   const selectedCampaign = useMemo(
     () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
@@ -727,6 +1045,8 @@ export function RecordsList() {
     return false
   }, [sharedContactMetaById])
 
+  const hasPropertyFilter = Boolean(filters.propertyField && filters.propertyValue)
+
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
     let result = visibleRelationshipContacts.filter(c => c.type !== 'Company')
@@ -744,6 +1064,14 @@ export function RecordsList() {
         (c.company ?? '').toLowerCase().includes(q) ||
         (c.email ?? '').toLowerCase().includes(q)
       )
+    }
+
+    if (filters.propertyField && filters.propertyValue) {
+      const selectedValue = normalizedFilterText(filters.propertyValue)
+      result = result.filter(contact => (
+        relationshipFilterValuesForContact(contact, filters.propertyField)
+          .some(value => normalizedFilterText(value) === selectedValue)
+      ))
     }
 
     if (filters.category) {
@@ -794,7 +1122,7 @@ export function RecordsList() {
           return 0
       }
     })
-  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, podMap, categories])
+  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, podMap, categories, relationshipFilterValuesForContact])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -880,7 +1208,7 @@ export function RecordsList() {
       setVisibleColumns(new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id)))
       setSort({ col: 'equity', dir: 'desc' })
     } else {
-      setFilters(view.filters)
+      setFilters({ ...DEFAULT_FILTERS, ...view.filters })
       setRelationshipScope(view.relationshipScope ?? 'all')
       setVisibleColumns(new Set(view.visibleColumns))
       setSort(view.sort)
@@ -903,10 +1231,11 @@ export function RecordsList() {
     setRelationshipScope('all')
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.category || filters.recency !== 'any' || relationshipScope !== 'all'
+  const hasActiveFilters = filters.search || filters.pod || filters.category || hasPropertyFilter || filters.recency !== 'any' || relationshipScope !== 'all'
   const activeFilterCount =
     (filters.search ? 1 : 0) +
     (filters.pod || filters.category ? 1 : 0) +
+    (hasPropertyFilter ? 1 : 0) +
     (filters.recency !== 'any' ? 1 : 0) +
     (relationshipScope !== 'all' ? 1 : 0)
   const atRiskCount = useMemo(
@@ -1520,28 +1849,47 @@ export function RecordsList() {
 
           {/* Primary filters */}
           <select
-            value={filters.category ? `cat:${filters.category}` : filters.pod ?? ''}
+            value={filters.propertyField ?? ''}
             onChange={e => {
-              const v = e.target.value
-              if (v.startsWith('cat:')) {
-                setFilters(f => ({ ...f, pod: null, category: v.slice(4) }))
-              } else {
-                setFilters(f => ({ ...f, pod: v || null, category: null }))
-              }
+              const fieldId = e.target.value || null
+              setFilters(f => ({ ...f, propertyField: fieldId, propertyValue: null, pod: null, category: null }))
             }}
             className="records-toolbar-select"
-            style={selectStyle}
+            aria-label="Relationship filter field"
+            style={{ ...selectStyle, minWidth: 170, flex: '0 1 220px' }}
           >
-            <option value="">All Pods</option>
-            {pods.map(p => {
-              const podCats = categories.filter(c => c.list_id === p.id)
-              return [
-                <option key={p.id} value={p.id}>{p.name}</option>,
-                ...podCats.map(c => (
-                  <option key={c.id} value={`cat:${c.id}`}>&nbsp;&nbsp;{c.name}</option>
-                )),
-              ]
-            })}
+            <option value="">Filter by field</option>
+            {relationshipFilterFields.map(field => (
+              <option key={field.id} value={field.id}>{field.label}</option>
+            ))}
+          </select>
+
+          <select
+            value={filters.propertyValue ?? ''}
+            onChange={e => {
+              const value = e.target.value || null
+              setFilters(f => ({ ...f, propertyValue: value, pod: null, category: null }))
+            }}
+            className="records-toolbar-select"
+            aria-label="Relationship filter value"
+            disabled={!filters.propertyField || relationshipFilterValueOptions.length === 0}
+            style={{
+              ...selectStyle,
+              minWidth: 170,
+              flex: '0 1 220px',
+              opacity: !filters.propertyField || relationshipFilterValueOptions.length === 0 ? 0.62 : 1,
+            }}
+          >
+            <option value="">
+              {!filters.propertyField
+                ? 'Choose field first'
+                : relationshipFilterValueOptions.length === 0
+                  ? 'No values found'
+                  : 'Choose value'}
+            </option>
+            {relationshipFilterValueOptions.map(value => (
+              <option key={value} value={value}>{value}</option>
+            ))}
           </select>
 
           <select
