@@ -58,9 +58,11 @@ export async function upsertGoogleConnection(admin: SupabaseClient, input: {
     updated_at: new Date().toISOString(),
   }
 
-  const { data, error } = await admin
-    .from('google_connections')
-    .upsert(payload, { onConflict: 'user_id' })
+  const query = existing
+    ? admin.from('google_connections').update(payload).eq('id', existing.id)
+    : admin.from('google_connections').insert(payload)
+
+  const { data, error } = await query
     .select('*')
     .single()
 

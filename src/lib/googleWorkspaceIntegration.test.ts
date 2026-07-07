@@ -7,24 +7,47 @@ interface GoogleConnectionTable extends Partial<GoogleConnection> {
   updated_at?: string
 }
 
+interface GoogleConnectionWrite {
+  operation: 'insert' | 'update'
+  payload: GoogleConnectionTable
+  filter?: { column: string; value: string }
+}
+
 class GoogleConnectionQuery {
   data: GoogleConnectionTable | null = null
   error: Error | null = null
-  private op: 'select' | 'upsert' | null = null
+  private op: 'select' | 'insert' | 'update' | null = null
+  private writePayload: GoogleConnectionTable | null = null
 
   constructor(
     private row: GoogleConnectionTable | null,
-    private onUpsert: (payload: GoogleConnectionTable) => void,
+    private onWrite: (write: GoogleConnectionWrite) => void,
   ) {}
 
   select() {
-    this.op = 'select'
+    if (!this.op) this.op = 'select'
     return this
   }
 
   eq(column: string, value: string) {
     if (this.op === 'select' && column === 'user_id') {
       this.data = this.row?.user_id === value ? this.row : null
+    }
+    if (this.op === 'update' && column === 'id' && this.writePayload) {
+      this.onWrite({ operation: 'update', payload: this.writePayload, filter: { column, value } })
+      this.data = {
+        id: this.row?.id ?? value,
+        gmail_sync_enabled: true,
+        calendar_sync_enabled: true,
+        daily_focus_email_enabled: false,
+        daily_focus_email_time: '08:00',
+        daily_focus_email_to: null,
+        daily_focus_email_last_sent_on: null,
+        last_gmail_synced_at: null,
+        last_calendar_synced_at: null,
+        ...this.row,
+        ...this.writePayload,
+      }
     }
     return this
   }
@@ -33,9 +56,9 @@ class GoogleConnectionQuery {
     return this
   }
 
-  upsert(payload: GoogleConnectionTable) {
-    this.op = 'upsert'
-    this.onUpsert(payload)
+  insert(payload: GoogleConnectionTable) {
+    this.op = 'insert'
+    this.onWrite({ operation: 'insert', payload })
     this.data = {
       id: this.row?.id ?? 'google-connection-1',
       gmail_sync_enabled: true,
@@ -49,6 +72,12 @@ class GoogleConnectionQuery {
       ...this.row,
       ...payload,
     }
+    return this
+  }
+
+  update(payload: GoogleConnectionTable) {
+    this.op = 'update'
+    this.writePayload = payload
     return this
   }
 
@@ -270,11 +299,11 @@ describe('Google Workspace integration', () => {
       return new Response(null, { status: 404 })
     }))
 
-    let upserted: GoogleConnectionTable | null = null
+    let write: GoogleConnectionWrite | null = null
     const admin = {
       from(table: string) {
         expect(table).toBe('google_connections')
-        return new GoogleConnectionQuery(null, payload => { upserted = payload })
+        return new GoogleConnectionQuery(null, nextWrite => { write = nextWrite })
       },
     }
 
@@ -295,10 +324,11 @@ describe('Google Workspace integration', () => {
 
     expect(connection.user_id).toBe('user-a')
     expect(connection.google_email).toBe('owner@example.com')
-    expect(upserted?.user_id).toBe('user-a')
-    expect(decryptToken(upserted?.access_token_encrypted)).toBe('access-token-a')
-    expect(decryptToken(upserted?.refresh_token_encrypted)).toBe('refresh-token-a')
-    expect(upserted?.scopes).toEqual([
+    expect(write?.operation).toBe('insert')
+    expect(write?.payload.user_id).toBe('user-a')
+    expect(decryptToken(write?.payload.access_token_encrypted)).toBe('access-token-a')
+    expect(decryptToken(write?.payload.refresh_token_encrypted)).toBe('refresh-token-a')
+    expect(write?.payload.scopes).toEqual([
       'openid',
       'email',
       'profile',
@@ -314,7 +344,7 @@ describe('Google Workspace integration', () => {
       return new Response(null, { status: 404 })
     }))
 
-    let upserted: GoogleConnectionTable | null = null
+    let write: GoogleConnectionWrite | null = null
     const existing: GoogleConnectionTable = {
       id: 'google-connection-1',
       user_id: 'user-a',
@@ -327,7 +357,7 @@ describe('Google Workspace integration', () => {
     const admin = {
       from(table: string) {
         expect(table).toBe('google_connections')
-        return new GoogleConnectionQuery(existing, payload => { upserted = payload })
+        return new GoogleConnectionQuery(existing, nextWrite => { write = nextWrite })
       },
     }
 
@@ -340,8 +370,10 @@ describe('Google Workspace integration', () => {
       scopes: ['openid'],
     })
 
-    expect(decryptToken(upserted?.access_token_encrypted)).toBe('new-access-token')
-    expect(decryptToken(upserted?.refresh_token_encrypted)).toBe('existing-refresh-token')
+    expect(write?.operation).toBe('update')
+    expect(write?.filter).toEqual({ column: 'id', value: 'google-connection-1' })
+    expect(decryptToken(write?.payload.access_token_encrypted)).toBe('new-access-token')
+    expect(decryptToken(write?.payload.refresh_token_encrypted)).toBe('existing-refresh-token')
   })
 
   it('adds Gmail interactions for the connected user only in their workspaces', async () => {
