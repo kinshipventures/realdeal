@@ -39,7 +39,10 @@ export async function upsertGoogleConnection(admin: SupabaseClient, input: {
   scopes?: string[]
 }): Promise<GoogleConnection> {
   const existing = await getGoogleConnection(admin, input.userId)
-  const googleEmail = await fetchGoogleEmail(input.accessToken).catch(() => input.appEmail)
+  const [googleEmail, grantedScopes] = await Promise.all([
+    fetchGoogleEmail(input.accessToken).catch(() => input.appEmail),
+    fetchGoogleTokenScopes(input.accessToken).catch(() => [] as string[]),
+  ])
   const expiresIn = Number.isFinite(input.expiresIn) ? Number(input.expiresIn) : 3600
   const tokenExpiresAt = new Date(Date.now() + Math.max(60, expiresIn - 60) * 1000).toISOString()
 
@@ -51,7 +54,7 @@ export async function upsertGoogleConnection(admin: SupabaseClient, input: {
       ? encryptToken(input.refreshToken)
       : existing?.refresh_token_encrypted ?? null,
     token_expires_at: tokenExpiresAt,
-    scopes: input.scopes ?? existing?.scopes ?? [],
+    scopes: grantedScopes.length > 0 ? grantedScopes : input.scopes ?? existing?.scopes ?? [],
     updated_at: new Date().toISOString(),
   }
 
@@ -115,4 +118,13 @@ async function fetchGoogleEmail(accessToken: string): Promise<string | null> {
   if (!response.ok) return null
   const data = await response.json() as { email?: string }
   return data.email?.toLowerCase() ?? null
+}
+
+async function fetchGoogleTokenScopes(accessToken: string): Promise<string[]> {
+  const url = new URL('https://oauth2.googleapis.com/tokeninfo')
+  url.searchParams.set('access_token', accessToken)
+  const response = await fetch(url)
+  if (!response.ok) return []
+  const data = await response.json() as { scope?: string }
+  return data.scope?.split(/\s+/).filter(Boolean) ?? []
 }
