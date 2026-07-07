@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import type { Category, Contact, Pod } from '../../lib/types'
+import type { Category, Contact, GlobalRegion, Pod } from '../../lib/types'
 import { createContact, getCategories, getPods, getContactsByType } from '../../lib/data'
 import { planClearSubPodForPod, planMoveToSubPod } from '../../lib/subPodAssignment'
 import { useEscape } from '../../lib/escapeStack'
@@ -69,6 +69,7 @@ const compactInput: React.CSSProperties = {
 }
 
 const requiredDot = <span style={{ color: '#25B439', marginLeft: 2 }}>*</span>
+const GLOBAL_REGION_OPTIONS: GlobalRegion[] = ['AMER', 'APAC', 'ME', 'LATAM', 'EU']
 
 let _rowCounter = 0
 function newRow(): MultiRow {
@@ -110,7 +111,19 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
   // Single mode — Company fields
   const [companyName, setCompanyName] = useState('')
   const [industry, setIndustry] = useState('')
+  const [companyStage, setCompanyStage] = useState('')
   const [domain, setDomain] = useState('')
+  const [companyWebsite, setCompanyWebsite] = useState('')
+  const [companyLinkedIn, setCompanyLinkedIn] = useState('')
+  const [companyEmail, setCompanyEmail] = useState('')
+  const [companyPhone, setCompanyPhone] = useState('')
+  const [companyLocation, setCompanyLocation] = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
+  const [companyCity, setCompanyCity] = useState('')
+  const [companyState, setCompanyState] = useState('')
+  const [companyCountry, setCompanyCountry] = useState('')
+  const [companyGlobalRegion, setCompanyGlobalRegion] = useState<GlobalRegion | ''>('')
+  const [companyNotes, setCompanyNotes] = useState('')
   const [duplicateWarning, setDuplicateWarning] = useState<Contact | null>(null)
 
   // Multi mode
@@ -169,7 +182,10 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
     setBraindump(false); setDumpText('')
     setCompanyQuery(''); setCompanyResults([])
     setSelectedCompany(null); setShowCompanyDrop(false)
-    setCompanyName(''); setIndustry(''); setDomain('')
+    setCompanyName(''); setIndustry(''); setCompanyStage(''); setDomain('')
+    setCompanyWebsite(''); setCompanyLinkedIn(''); setCompanyEmail(''); setCompanyPhone('')
+    setCompanyLocation(''); setCompanyAddress(''); setCompanyCity(''); setCompanyState('')
+    setCompanyCountry(''); setCompanyGlobalRegion(''); setCompanyNotes('')
     setDuplicateWarning(null)
     setError(null)
     setMultiProgress(null)
@@ -364,6 +380,11 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
           })
         }
       } else {
+        const companyCustomFields: Record<string, unknown> = {
+          ...(companyAddress.trim() ? { address: companyAddress.trim() } : {}),
+          ...(companyCity.trim() ? { city: companyCity.trim() } : {}),
+          ...(companyState.trim() ? { state: companyState.trim() } : {}),
+        }
         created = await createContact({
           ...baseContact,
           name: companyName.trim(),
@@ -373,7 +394,17 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
           category_ids: categoryIds,
           primary_list_id: primaryPodId,
           industry: industry.trim() || null,
+          stage: companyStage.trim() || null,
           domain: domain.trim() || null,
+          website: companyWebsite.trim() || null,
+          linkedin: companyLinkedIn.trim() || null,
+          email: companyEmail.trim() || null,
+          phone: companyPhone.trim() || null,
+          location: companyLocation.trim() || null,
+          country: companyCountry.trim() || null,
+          global_region: companyGlobalRegion || null,
+          notes: companyNotes.trim() || null,
+          custom_fields: companyCustomFields,
         })
       }
 
@@ -532,7 +563,7 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
           WebkitBackdropFilter: 'blur(32px)',
           borderRadius: 16,
           boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
-          maxWidth: formMode === 'multi' ? 560 : 480,
+          maxWidth: formMode === 'multi' || recordType === 'Company' ? 560 : 480,
           width: '90vw',
           maxHeight: '85vh',
           overflowY: 'auto',
@@ -784,13 +815,85 @@ export function CreateRecordModal({ isOpen, onClose, onCreated, initialType, cat
                     </div>
                   )}
                 </div>
-                <div style={{ marginBottom: 12 }}>
-                  <label style={labelStyle}>Industry</label>
-                  <input type="text" value={industry} onChange={e => setIndustry(e.target.value)} style={inputStyle} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Industry</label>
+                    <input type="text" value={industry} onChange={e => setIndustry(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Stage</label>
+                    <input type="text" value={companyStage} onChange={e => setCompanyStage(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Domain</label>
+                    <input type="text" value={domain} onChange={e => setDomain(e.target.value)} placeholder="example.com" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Website</label>
+                    <input type="url" value={companyWebsite} onChange={e => setCompanyWebsite(e.target.value)} placeholder="https://example.com" style={inputStyle} />
+                  </div>
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <label style={labelStyle}>Domain</label>
-                  <input type="text" value={domain} onChange={e => setDomain(e.target.value)} placeholder="example.com" style={inputStyle} />
+                  <label style={labelStyle}>LinkedIn</label>
+                  <input type="url" value={companyLinkedIn} onChange={e => setCompanyLinkedIn(e.target.value)} placeholder="https://linkedin.com/company/..." style={inputStyle} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Email</label>
+                    <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Phone</label>
+                    <input type="tel" value={companyPhone} onChange={e => setCompanyPhone(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Location</label>
+                  <input type="text" value={companyLocation} onChange={e => setCompanyLocation(e.target.value)} style={inputStyle} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Address</label>
+                  <input type="text" value={companyAddress} onChange={e => setCompanyAddress(e.target.value)} style={inputStyle} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <label style={labelStyle}>City</label>
+                    <input type="text" value={companyCity} onChange={e => setCompanyCity(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>State</label>
+                    <input type="text" value={companyState} onChange={e => setCompanyState(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Country</label>
+                    <input type="text" value={companyCountry} onChange={e => setCompanyCountry(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Global Region</label>
+                    <select
+                      value={companyGlobalRegion}
+                      onChange={e => setCompanyGlobalRegion(e.target.value as GlobalRegion | '')}
+                      style={inputStyle}
+                    >
+                      <option value="">Select region</option>
+                      {GLOBAL_REGION_OPTIONS.map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Notes</label>
+                  <textarea
+                    value={companyNotes}
+                    onChange={e => setCompanyNotes(e.target.value)}
+                    rows={3}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: 72 }}
+                  />
                 </div>
                 <PodPicker pods={pods} selectedPodIds={selectedPodIds} onToggle={togglePod} />
                 <SubPodSelector
