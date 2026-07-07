@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
 import { isDemoMode, setDemoMode } from '@/lib/sampleData'
+import { saveGoogleConnection } from '@/lib/googleIntegration'
 
 interface AuthContextValue {
   session: Session | null
@@ -17,12 +18,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && isDemoMode()) setDemoMode(false)
+      if (session?.provider_token) void saveGoogleConnection(session).catch(() => undefined)
       setSession(session)
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session && isDemoMode()) setDemoMode(false)
+      if (session?.provider_token) void saveGoogleConnection(session).catch(() => undefined)
       setSession(session)
       setLoading(false)
     })

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
+import { syncGmailActivity } from './googleIntegration'
 
 interface GmailSyncResult {
   synced: number
@@ -8,20 +9,20 @@ interface GmailSyncResult {
 }
 
 export async function syncGmail(): Promise<GmailSyncResult> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Not authenticated')
+  try {
+    return await syncGmailActivity()
+  } catch (syncError) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const providerToken = session?.provider_token
+    if (!providerToken) throw syncError
 
-  const providerToken = session.provider_token
-  if (!providerToken) {
-    throw new Error('No Google access token available. Please sign out and sign back in to grant Gmail access.')
+    const { data, error } = await supabase.functions.invoke('sync-gmail', {
+      body: { google_access_token: providerToken },
+    })
+
+    if (error) throw new Error(error.message)
+    return data as GmailSyncResult
   }
-
-  const { data, error } = await supabase.functions.invoke('sync-gmail', {
-    body: { google_access_token: providerToken },
-  })
-
-  if (error) throw new Error(error.message)
-  return data as GmailSyncResult
 }
 
 export async function getLastSyncTime(): Promise<string | null> {

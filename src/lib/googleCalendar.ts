@@ -1,4 +1,5 @@
 import { getGoogleAccessToken } from './auth'
+import { authorizedApi } from './googleIntegration'
 
 export interface GoogleCalendarEvent {
   id: string
@@ -11,23 +12,19 @@ export interface GoogleCalendarEvent {
   attendeeCount: number
 }
 
-interface GoogleCalendarEventResponse {
-  id?: string
-  summary?: string
-  status?: string
-  htmlLink?: string
-  location?: string
-  attendees?: unknown[]
-  start?: { date?: string; dateTime?: string }
-  end?: { date?: string; dateTime?: string }
+export async function getGoogleCalendarEvents(from: Date, to: Date): Promise<GoogleCalendarEvent[]> {
+  const params = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() })
+  try {
+    const data = await authorizedApi<{ events?: GoogleCalendarEvent[] }>(`/api/google/calendar-events?${params}`)
+    return data.events ?? []
+  } catch (calendarError) {
+    const token = await getGoogleAccessToken()
+    if (!token) throw calendarError
+    return getGoogleCalendarEventsWithToken(token, from, to)
+  }
 }
 
-export async function getGoogleCalendarEvents(from: Date, to: Date): Promise<GoogleCalendarEvent[]> {
-  const token = await getGoogleAccessToken()
-  if (!token) {
-    throw new Error('Connect Google to load your calendar.')
-  }
-
+async function getGoogleCalendarEventsWithToken(token: string, from: Date, to: Date): Promise<GoogleCalendarEvent[]> {
   const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
   url.searchParams.set('timeMin', from.toISOString())
   url.searchParams.set('timeMax', to.toISOString())
@@ -64,6 +61,17 @@ export async function getGoogleCalendarEvents(from: Date, to: Date): Promise<Goo
         attendeeCount: event.attendees?.length ?? 0,
       }]
     })
+}
+
+interface GoogleCalendarEventResponse {
+  id?: string
+  summary?: string
+  status?: string
+  htmlLink?: string
+  location?: string
+  attendees?: unknown[]
+  start?: { date?: string; dateTime?: string }
+  end?: { date?: string; dateTime?: string }
 }
 
 export function calendarEventDateKey(event: GoogleCalendarEvent): string {

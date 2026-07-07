@@ -1,5 +1,6 @@
 import { lovable } from '@/integrations/lovable'
 import { supabase } from '@/integrations/supabase/client'
+import { GOOGLE_OAUTH_SCOPES } from './googleScopes'
 
 const USE_LOVABLE_AUTH_BRIDGE = import.meta.env.VITE_USE_LOVABLE_AUTH_BRIDGE !== 'false'
 
@@ -16,14 +17,7 @@ export async function signInWithGoogle(): Promise<GoogleSignInResult> {
   const queryParams = {
     access_type: 'offline',
     prompt: 'consent',
-    scope: [
-      'openid',
-      'email',
-      'profile',
-      'https://www.googleapis.com/auth/gmail.readonly',
-      'https://www.googleapis.com/auth/contacts.readonly',
-      'https://www.googleapis.com/auth/calendar.readonly',
-    ].join(' '),
+    scope: GOOGLE_OAUTH_SCOPES.join(' '),
   }
 
   if (USE_LOVABLE_AUTH_BRIDGE) {

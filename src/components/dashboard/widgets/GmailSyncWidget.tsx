@@ -3,6 +3,7 @@ import { Mail, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { signInWithGoogle } from '../../../lib/auth'
 import { syncGmail, getLastSyncTime } from '../../../lib/gmail'
+import { getGoogleConnectionStatus } from '../../../lib/googleIntegration'
 import { WidgetHeading } from './WidgetHeading'
 
 interface GmailSyncWidgetProps {
@@ -16,10 +17,20 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
   const [lastSync, setLastSync] = useState<string | null>(null)
   const [result, setResult] = useState<{ synced: number; matched: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const connected = Boolean(session?.provider_token)
+  const [connectionReady, setConnectionReady] = useState(false)
+  const [gmailEnabled, setGmailEnabled] = useState(true)
+  const googleConnected = connectionReady || Boolean(session?.provider_token)
 
   useEffect(() => {
-    getLastSyncTime().then(setLastSync).catch(() => {})
+    getGoogleConnectionStatus()
+      .then(status => {
+        setConnectionReady(status.connected)
+        setGmailEnabled(status.gmail_sync_enabled)
+        setLastSync(status.last_gmail_synced_at ?? null)
+      })
+      .catch(() => {
+        getLastSyncTime().then(setLastSync).catch(() => {})
+      })
   }, [])
 
   async function handleSync() {
@@ -48,9 +59,13 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
     }
   }
 
-  const lastSyncLabel = lastSync
-    ? `Last synced ${formatTimeAgo(lastSync)}`
-    : 'Never synced'
+  const lastSyncLabel = !googleConnected
+    ? 'Connect Google to match email with contacts.'
+    : !gmailEnabled
+      ? 'Gmail sync is turned off in Settings.'
+      : lastSync
+        ? `Last synced ${formatTimeAgo(lastSync)}`
+        : 'Never synced'
 
   return (
     <div style={{ marginBottom: 0 }}>
@@ -73,13 +88,13 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>Gmail</span>
             </div>
             <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', margin: 0 }}>
-              {connected ? lastSyncLabel : 'Connect Google to match email with contacts.'}
+              {lastSyncLabel}
             </p>
           </div>
           <button
             type="button"
-            onClick={connected ? handleSync : handleConnect}
-            disabled={syncing || connecting}
+            onClick={googleConnected ? handleSync : handleConnect}
+            disabled={syncing || connecting || (googleConnected && !gmailEnabled)}
             style={{
               background: syncing || connecting ? 'var(--tint)' : 'var(--color-brand)',
               border: 'none',
@@ -89,7 +104,8 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
               fontWeight: 600,
               padding: '8px 16px',
               minHeight: 44,
-              cursor: syncing || connecting ? 'wait' : 'pointer',
+              opacity: googleConnected && !gmailEnabled ? 0.55 : 1,
+              cursor: syncing || connecting ? 'wait' : googleConnected && !gmailEnabled ? 'not-allowed' : 'pointer',
               fontFamily: 'inherit',
               whiteSpace: 'nowrap',
               display: 'inline-flex',
@@ -97,8 +113,8 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
               gap: 7,
             }}
           >
-            {connected && <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : undefined }} aria-hidden />}
-            {connecting ? 'Connecting...' : syncing ? 'Syncing...' : connected ? 'Sync emails' : 'Connect Google'}
+            {googleConnected && gmailEnabled && <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : undefined }} aria-hidden />}
+            {connecting ? 'Connecting...' : syncing ? 'Syncing...' : googleConnected ? gmailEnabled ? 'Sync emails' : 'Disabled' : 'Connect Google'}
           </button>
         </div>
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { signInWithGoogle } from '../../../lib/auth'
+import { getGoogleConnectionStatus } from '../../../lib/googleIntegration'
 import {
   calendarEventDateKey,
   getGoogleCalendarEvents,
@@ -50,7 +51,22 @@ export function CalendarWidget() {
   const [loading, setLoading] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const connected = Boolean(session?.provider_token)
+  const [connectionReady, setConnectionReady] = useState(false)
+  const [calendarEnabled, setCalendarEnabled] = useState(true)
+  const googleConnected = connectionReady || Boolean(session?.provider_token)
+  const connected = googleConnected && calendarEnabled
+
+  useEffect(() => {
+    getGoogleConnectionStatus()
+      .then(status => {
+        setConnectionReady(status.connected)
+        setCalendarEnabled(status.calendar_sync_enabled)
+      })
+      .catch(() => {
+        setConnectionReady(false)
+        setCalendarEnabled(true)
+      })
+  }, [])
 
   const gridDays = useMemo(() => {
     const start = startOfCalendarGrid(month)
@@ -142,18 +158,26 @@ export function CalendarWidget() {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {connected ? (
+            {googleConnected ? (
               <>
-                <button type="button" onClick={showToday} style={textButtonStyle}>Today</button>
-                <button type="button" onClick={() => moveMonth(-1)} aria-label="Previous month" title="Previous month" style={iconButtonStyle}>
-                  <ChevronLeft size={15} />
-                </button>
-                <button type="button" onClick={() => moveMonth(1)} aria-label="Next month" title="Next month" style={iconButtonStyle}>
-                  <ChevronRight size={15} />
-                </button>
-                <button type="button" onClick={() => void loadEvents()} disabled={loading} aria-label="Sync calendar" title="Sync calendar" style={iconButtonStyle}>
-                  <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : undefined }} />
-                </button>
+                {calendarEnabled ? (
+                  <>
+                    <button type="button" onClick={showToday} style={textButtonStyle}>Today</button>
+                    <button type="button" onClick={() => moveMonth(-1)} aria-label="Previous month" title="Previous month" style={iconButtonStyle}>
+                      <ChevronLeft size={15} />
+                    </button>
+                    <button type="button" onClick={() => moveMonth(1)} aria-label="Next month" title="Next month" style={iconButtonStyle}>
+                      <ChevronRight size={15} />
+                    </button>
+                    <button type="button" onClick={() => void loadEvents()} disabled={loading} aria-label="Sync calendar" title="Sync calendar" style={iconButtonStyle}>
+                      <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : undefined }} />
+                    </button>
+                  </>
+                ) : (
+                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
+                    Disabled in Settings
+                  </span>
+                )}
               </>
             ) : (
               <button type="button" onClick={() => void connectGoogle()} disabled={connecting} style={connectButtonStyle}>
@@ -295,7 +319,9 @@ export function CalendarWidget() {
         ) : (
           <div style={{ padding: '28px 18px', display: 'flex', alignItems: 'center', gap: 12, color: 'var(--color-text-tertiary)' }}>
             <CalendarDays size={22} aria-hidden />
-            <span style={{ fontSize: 13 }}>Google Calendar is not connected.</span>
+            <span style={{ fontSize: 13 }}>
+              {googleConnected && !calendarEnabled ? 'Google Calendar is turned off in Settings.' : 'Google Calendar is not connected.'}
+            </span>
           </div>
         )}
       </div>

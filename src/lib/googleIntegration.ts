@@ -81,11 +81,12 @@ export async function authorizedApi<T = Record<string, unknown>>(
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
 
-  const data = await response.json().catch(() => ({}))
+  const data = await response.json().catch(() => null)
   if (!response.ok) {
     const message = typeof data?.error === 'string' ? data.error : 'Google integration request failed'
     throw new Error(message)
   }
+  if (data === null) throw new Error('Google integration request failed')
 
   return data as T
 }
