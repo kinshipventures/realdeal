@@ -24,7 +24,6 @@ import { ContactDetail } from '../contacts/ContactDetail'
 import { CampaignDetail } from '../campaigns/CampaignDetail'
 import { EmptyState } from '../empty/EmptyState'
 import type { WrappedInsight } from './WrappedCard'
-import { PendingTrayWidget } from '../categorization/PendingTrayWidget'
 import { CategorizationQueue } from '../categorization/CategorizationQueue'
 import { DashboardSettings } from './DashboardSettings'
 import { PodHealthWidget } from './widgets/PodHealthWidget'
@@ -362,6 +361,19 @@ export function Dashboard() {
     return ids.size
   }, [allInteractions, dashboardNow])
 
+  const touchesThisWeek = useMemo(() => {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000
+    return allInteractions.filter(ix => dashboardNow - new Date(ix.date).getTime() < oneWeek).length
+  }, [allInteractions, dashboardNow])
+
+  const dashboardDateLabel = useMemo(() => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    }).format(new Date(appClock.todayStartMs)).replace(',', ' -').toUpperCase()
+  }, [appClock.todayStartMs])
+
   const topPod = useMemo(() => {
     if (podStats.length === 0) return null
     return [...podStats].sort((a, b) => b.score - a.score)[0]
@@ -518,7 +530,7 @@ export function Dashboard() {
       <main id="main-content" className="content-enter" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
         <h1 className="sr-only">Dashboard</h1>
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 24px 120px' }}>
+        <div className="dashboard-reference-shell" style={{ maxWidth: 1320, margin: '0 auto', padding: '20px 20px 120px' }}>
 
           {/* No pulse yet */}
           {dataReady && !interactionsLoading && pods.length === 0 && contacts.length === 0 && (
@@ -539,88 +551,89 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Gear — floats top-right of hero */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -36 }}>
-            <button
-              type="button"
-              onClick={() => setShowSettings(true)}
-              aria-label="Customize dashboard"
-              title="Customize dashboard"
-              style={{
-                width: 36, height: 36, borderRadius: 8,
-                background: 'transparent', border: '1px solid var(--edge)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-text-tertiary)', flexShrink: 0,
-                transition: 'background 0.15s ease',
-                position: 'relative', zIndex: 2,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--tint)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </button>
-          </div>
-
-          {/* ─── Hero ─── */}
-          <section className="dashboard-hero widget-enter" style={{ '--stagger': 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, marginBottom: 32 } as React.CSSProperties}>
-            <h1 style={{
-              fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 'clamp(3rem, 1.7rem + 3.4vw, 4.8rem)',
-              margin: 0, letterSpacing: 0, color: 'var(--color-text-primary)', lineHeight: 0.98, textAlign: 'center',
-            }}>
-              Your network, remembered.
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>Health</span>
-              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{scoreLabel(overallScore)}</span>
-              <span style={{ display: 'inline-flex', gap: 3 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 40 ? '#25B439' : 'var(--edge)' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 70 ? '#25B439' : 'var(--edge)' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: overallScore >= 85 ? '#25B439' : 'var(--edge)' }} />
-              </span>
+          {/* Dashboard header actions */}
+          <header className="dashboard-reference-header widget-enter" style={{ '--stagger': 0 } as React.CSSProperties}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+                {dashboardDateLabel}
+              </div>
+              <h2 style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800,
+                fontSize: 'clamp(1.45rem, 1.2rem + 0.8vw, 2rem)',
+                color: 'var(--color-text-primary)',
+                margin: 0,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.05,
+              }}>
+                Your network, remembered.
+              </h2>
             </div>
-            <div style={{ width: '100%' }}>
+            <div className="dashboard-reference-actions">
+              <button
+                type="button"
+                onClick={() => setShowSettings(true)}
+                aria-label="Customize dashboard"
+                title="Customize dashboard"
+                style={secondaryActionButtonStyle}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
+              <button type="button" onClick={() => setShowLogInteraction(true)} style={primaryActionButtonStyle}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Log a touch
+              </button>
+            </div>
+          </header>
+
+          {/* Top row */}
+          <div className="dashboard-reference-top">
+            <section className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
               <RadarWidget
                 dimensions={radarDimensions}
                 loading={interactionsLoading || contactsLoading}
                 overallScore={overallScore}
                 overallLabel={scoreLabel(overallScore)}
               />
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowLogInteraction(true)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '13px 26px', borderRadius: 8,
-                background: 'var(--color-brand)', color: '#FFFFFF',
-                border: 'none', cursor: 'pointer',
-                fontSize: 14, fontWeight: 700, letterSpacing: '0',
-                opacity: 1,
-                boxShadow: '0 12px 30px rgba(0,61,165,0.22)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                marginTop: 4,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-              Log a touch
-            </button>
+            </section>
+            {isVisible('todays-focus') && (
+              <section className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                <TodaysFocusWidget
+                  items={focusItems}
+                  onContactClick={handleContactClick}
+                  onRefresh={refreshTodaysFocus}
+                  refreshing={focusRefreshing}
+                />
+              </section>
+            )}
+          </div>
+
+          {/* Summary stats */}
+          <section className="dashboard-reference-stats widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+            <DashboardStatCard label="Relationships" value={contacts.length} subtext="total relationships" />
+            <DashboardStatCard label="Fading" value={overdueContacts.length} subtext="ready for a little love" tone="fading" />
+            <DashboardStatCard label="Touches - 7d" value={touchesThisWeek} subtext={`${peopleTouchedThisWeek} people reached`} />
+            {isVisible('pending-tray') && (
+              <DashboardStatCard
+                label="Intake tray"
+                value={pendingContacts.length}
+                subtext={pendingContacts.length > 0 ? 'Review intake ->' : 'Nothing to review'}
+                onClick={pendingContacts.length > 0 ? () => setShowQueue(true) : undefined}
+              />
+            )}
           </section>
 
-          {/* ─── Chapter 1: Core Signals ─── */}
-          <ChapterHeader title="Core Signals" />
-          <div className="chapter-2up" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
+          <div className="dashboard-reference-middle">
             {isVisible('pod-health') && (
-              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 4 } as React.CSSProperties}>
                 <PodHealthWidget podStats={podStats} dataReady={dataReady} />
               </div>
             )}
             {(isVisible('recent-activity') || isVisible('wrapped')) && !interactionsLoading && (
-              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 5 } as React.CSSProperties}>
                 <ThisWeekWidget
                   insights={isVisible('wrapped') ? wrappedInsights : []}
                   activity={isVisible('recent-activity') ? recentActivity : []}
@@ -631,7 +644,7 @@ export function Dashboard() {
           </div>
 
           {isVisible('campaign-progress') && (
-            <div className="widget-enter" style={{ '--stagger': 3, marginTop: 24 } as React.CSSProperties}>
+            <div className="widget-enter" style={{ '--stagger': 6 } as React.CSSProperties}>
               <CampaignProgressWidget
                 campaigns={campaigns}
                 campaignContacts={campaignContacts}
@@ -644,38 +657,24 @@ export function Dashboard() {
           )}
 
           {(isVisible('calendar') || isVisible('gmail-sync')) && (
-            <>
-              <ChapterHeader title="Connected Activity" />
-              <div className="connected-activity-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(280px, 0.75fr)', gap: 24, alignItems: 'start' }}>
+            <div className="dashboard-reference-connected">
                 {isVisible('calendar') && (
-                  <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
+                  <div className="widget-enter" style={{ '--stagger': 7 } as React.CSSProperties}>
                     <CalendarWidget />
                   </div>
                 )}
                 {isVisible('gmail-sync') && (
-                  <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+                  <div className="widget-enter" style={{ '--stagger': 8 } as React.CSSProperties}>
                     <GmailSyncWidget onSynced={refreshConnectedActivity} />
                   </div>
                 )}
-              </div>
-            </>
+            </div>
           )}
 
-          {/* ─── Chapter 2: Who Needs Attention ─── */}
-          <ChapterHeader title="Who Needs Attention" />
-          <div className="chapter-3up" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, alignItems: 'start' }}>
-            {isVisible('todays-focus') && (
-              <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                <TodaysFocusWidget
-                  items={focusItems}
-                  onContactClick={handleContactClick}
-                  onRefresh={refreshTodaysFocus}
-                  refreshing={focusRefreshing}
-                />
-              </div>
-            )}
+          {/* Lower attention widgets */}
+          <div className="dashboard-reference-attention">
             {isVisible('needs-attention') && (
-              <div className="widget-enter" style={{ '--stagger': 2 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 9 } as React.CSSProperties}>
                 <NeedsAttentionWidget
                   overdueContacts={overdueContacts}
                   followUpOverdue={followUpOverdue}
@@ -702,23 +701,12 @@ export function Dashboard() {
               </div>
             )}
             {isVisible('coming-up') && (
-              <div className="widget-enter" style={{ '--stagger': 3 } as React.CSSProperties}>
+              <div className="widget-enter" style={{ '--stagger': 10 } as React.CSSProperties}>
                 <ComingUpWidget items={upcomingItems} onContactClick={handleContactClick} />
               </div>
             )}
           </div>
 
-          {/* ─── Chapter 3: In Motion ─── */}
-          {pendingContacts.length > 0 && isVisible('pending-tray') && (
-            <>
-              <ChapterHeader title="In Motion" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 24 }}>
-                <div className="widget-enter" style={{ '--stagger': 1 } as React.CSSProperties}>
-                  <PendingTrayWidget pendingContacts={pendingContacts} onReview={() => setShowQueue(true)} />
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
       </main>
@@ -756,22 +744,110 @@ export function Dashboard() {
   )
 }
 
-// ── Chapter Header ───────────────────────────────────────────────────────────
+// Dashboard stat card
 
-function ChapterHeader({ title }: { title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24, margin: '96px 0 40px' }}>
-      <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
-      <h2 style={{
-        fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: 28,
-        color: 'var(--color-text-primary)', margin: 0, letterSpacing: 0,
-        whiteSpace: 'nowrap',
+function DashboardStatCard({
+  label,
+  value,
+  subtext,
+  tone,
+  onClick,
+}: {
+  label: string
+  value: number
+  subtext: string
+  tone?: 'fading'
+  onClick?: () => void
+}) {
+  const content = (
+    <>
+      <div style={{
+        fontSize: 10,
+        fontWeight: 700,
+        color: 'var(--color-text-tertiary)',
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        marginBottom: 8,
       }}>
-        {title}
-      </h2>
-      <div style={{ flex: 1, height: 1, background: 'var(--divider)' }} />
+        {label}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 30,
+        fontWeight: 800,
+        color: tone === 'fading' ? 'var(--health-fading)' : 'var(--color-text-primary)',
+        letterSpacing: '-0.03em',
+        lineHeight: 1,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        color: 'var(--color-text-secondary)',
+        fontSize: 12,
+        fontWeight: 600,
+        marginTop: 8,
+      }}>
+        {subtext}
+      </div>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="dashboard-stat-card" style={{ ...statCardStyle, cursor: 'pointer', textAlign: 'left' }}>
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div className="dashboard-stat-card" style={statCardStyle}>
+      {content}
     </div>
   )
+}
+
+const statCardStyle: React.CSSProperties = {
+  minHeight: 104,
+  padding: '18px 18px 16px',
+  background: 'var(--surface-panel)',
+  border: 'var(--surface-panel-border)',
+  borderRadius: 'var(--panel-radius)',
+  fontFamily: 'inherit',
+}
+
+const secondaryActionButtonStyle: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: 8,
+  background: 'var(--surface-panel)',
+  border: '1px solid var(--edge)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--color-text-tertiary)',
+  flexShrink: 0,
+}
+
+const primaryActionButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  minHeight: 36,
+  padding: '0 16px',
+  borderRadius: 8,
+  background: 'var(--color-brand)',
+  color: '#FFFFFF',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: 13,
+  fontWeight: 700,
+  fontFamily: 'inherit',
+  letterSpacing: 0,
+  boxShadow: '0 12px 30px rgba(0,61,165,0.18)',
+  whiteSpace: 'nowrap',
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
