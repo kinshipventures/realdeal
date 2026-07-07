@@ -33,7 +33,7 @@ export type ImportTemplateWorkspaceData = {
   customFieldNames: string[]
 }
 
-const TEMPLATE_HEADERS = [
+export const IMPORT_TEMPLATE_BASE_HEADERS = [
   'Name',
   'Company',
   'Job Title',
@@ -78,7 +78,7 @@ const TEMPLATE_HEADERS = [
   'Campaign 3 Target Commitment',
   'Companies',
   'Contacts',
-]
+] as const
 
 const BASE_VALIDATIONS: TemplateValidation[] = [
   { header: 'Gender', optionKey: 'gender' },
@@ -169,14 +169,14 @@ function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
   ]
 }
 
-function templateHeaders(customFieldNames: string[]): string[] {
-  const standard = new Set(TEMPLATE_HEADERS.map(header => header.toLowerCase()))
+export function buildImportTemplateHeaders(customFieldNames: string[]): string[] {
+  const standard = new Set(IMPORT_TEMPLATE_BASE_HEADERS.map(header => header.toLowerCase()))
   const lpTracker = new Set(LP_TRACKER_FIELDS.map(field => field.target.toLowerCase()))
   const custom = customFieldNames.filter(name => {
     const key = normalizeRemovedTemplateFieldName(name)
     return key && !standard.has(key) && !lpTracker.has(key) && !REMOVED_TEMPLATE_FIELD_NAMES.has(key)
   })
-  return [...TEMPLATE_HEADERS, ...custom]
+  return [...IMPORT_TEMPLATE_BASE_HEADERS, ...custom]
 }
 
 function templateSectionForHeader(header: string): string {
@@ -399,7 +399,7 @@ function optionsRows(optionColumns: OptionColumn[]): string[][] {
 
 export function buildImportTemplateWorkbook(data: ImportTemplateWorkspaceData): Uint8Array {
   const optionColumns = buildOptionColumns(data)
-  const headers = templateHeaders(data.customFieldNames)
+  const headers = buildImportTemplateHeaders(data.customFieldNames)
   const sectionLabels = templateSectionLabels(headers)
   const validations = validationXml(headers, optionColumns, BASE_VALIDATIONS, 3)
   const files = {

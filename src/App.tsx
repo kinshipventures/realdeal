@@ -48,6 +48,7 @@ const LearnPage = lazy(() => import('./components/learn/LearnPage').then(m => ({
 const ChangelogPage = lazy(() => import('./components/changelog/ChangelogPage').then(m => ({ default: m.ChangelogPage })))
 
 const BG = 'var(--color-bg)'
+const SHOW_APP_CHAT_PANEL = false
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false)
@@ -378,7 +379,7 @@ function AppShell() {
         </button>
       )}
 
-      <ChatPanel />
+      {SHOW_APP_CHAT_PANEL && <ChatPanel />}
     </div>
   )
 }

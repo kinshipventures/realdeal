@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, ListFilter, Share2, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache, getCompanies } from '../../lib/data'
-import { downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
+import { buildImportTemplateHeaders, downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
 import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
 import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
@@ -28,7 +28,7 @@ import type { Contact, Pod, Category, Campaign, Company, RelationshipType, Relat
 
 // ── Column definitions ───────────────────────────────────────────────────────
 
-type ColumnId = 'name' | 'company' | 'pod' | 'sub_pod' | 'equity' | 'type' | 'status' | 'last_contact' | 'cadence' | 'location' | 'follow_up'
+type ColumnId = string
 
 interface ColumnDef {
   id: ColumnId
@@ -36,19 +36,61 @@ interface ColumnDef {
   defaultVisible: boolean
 }
 
-const COLUMNS: ColumnDef[] = [
-  { id: 'name',         label: 'Name',         defaultVisible: true },
-  { id: 'company',      label: 'Company',       defaultVisible: true },
-  { id: 'pod',          label: 'Pod',           defaultVisible: true },
-  { id: 'sub_pod',      label: 'Sub-pod',       defaultVisible: true },
-  { id: 'equity',       label: 'Health',        defaultVisible: true },
-  { id: 'type',         label: 'Type',          defaultVisible: false },
-  { id: 'status',       label: 'Status',        defaultVisible: false },
-  { id: 'last_contact', label: 'Last Reached Out', defaultVisible: false },
-  { id: 'cadence',      label: 'Rhythm',        defaultVisible: false },
-  { id: 'location',     label: 'Location',      defaultVisible: false },
-  { id: 'follow_up',    label: 'Follow-up',     defaultVisible: false },
-]
+const CONTACT_TEMPLATE_DEFAULT_VISIBLE = new Set(['Name', 'Company', 'Pod 1', 'Sub-pod 1'])
+
+const LEGACY_COLUMN_IDS: Record<string, string | null> = {
+  name: 'Name',
+  company: 'Company',
+  pod: 'Pod 1',
+  sub_pod: 'Sub-pod 1',
+  equity: null,
+  type: null,
+  status: null,
+  last_contact: null,
+  cadence: null,
+  location: 'City',
+  follow_up: null,
+}
+
+function templateColumnDefs(customFieldNames: string[]): ColumnDef[] {
+  return buildImportTemplateHeaders(customFieldNames).map(header => ({
+    id: header,
+    label: header,
+    defaultVisible: CONTACT_TEMPLATE_DEFAULT_VISIBLE.has(header),
+  }))
+}
+
+const COLUMNS: ColumnDef[] = templateColumnDefs([])
+
+function defaultVisibleColumnIds(columns: ColumnDef[]): ColumnId[] {
+  return columns.filter(col => col.defaultVisible).map(col => col.id)
+}
+
+function normalizeColumnId(id: string | null | undefined): string | null {
+  if (!id) return null
+  return Object.prototype.hasOwnProperty.call(LEGACY_COLUMN_IDS, id) ? LEGACY_COLUMN_IDS[id] : id
+}
+
+function normalizeVisibleColumnIds(ids: Iterable<string>, columns: ColumnDef[]): ColumnId[] {
+  const allowed = new Set(columns.map(col => col.id))
+  const normalized: ColumnId[] = []
+  const seen = new Set<string>()
+
+  for (const id of ids) {
+    const next = normalizeColumnId(id)
+    if (!next || !allowed.has(next) || seen.has(next)) continue
+    seen.add(next)
+    normalized.push(next)
+  }
+
+  return normalized
+}
+
+function sameColumnIds(a: Iterable<string>, b: Iterable<string>): boolean {
+  const left = Array.from(a)
+  const right = Array.from(b)
+  return left.length === right.length && left.every((value, index) => value === right[index])
+}
 
 // ── Filter types ─────────────────────────────────────────────────────────────
 
@@ -93,55 +135,6 @@ type RelationshipFilterFieldDef = {
   id: string
   label: string
 }
-
-const BASE_RELATIONSHIP_FILTER_FIELDS: RelationshipFilterFieldDef[] = [
-  { id: 'Name', label: 'Name' },
-  { id: 'Company', label: 'Company' },
-  { id: 'Job Title', label: 'Job Title' },
-  { id: 'LinkedIn', label: 'LinkedIn' },
-  { id: 'Referred By', label: 'Referred By' },
-  { id: 'Gender', label: 'Gender' },
-  { id: 'Birthday', label: 'Birthday' },
-  { id: 'Notables', label: 'Notables' },
-  { id: 'Email', label: 'Email' },
-  { id: 'Email 2', label: 'Email 2' },
-  { id: 'Email 3', label: 'Email 3' },
-  { id: 'Phone', label: 'Phone' },
-  { id: 'Address', label: 'Address' },
-  { id: 'Location', label: 'Location' },
-  { id: 'City', label: 'City' },
-  { id: 'State', label: 'State' },
-  { id: 'Country', label: 'Country' },
-  { id: 'Global Region', label: 'Global Region' },
-  { id: 'Assistant Info', label: 'Assistant Info' },
-  { id: 'Kinship Investments 1', label: 'Kinship Investments 1' },
-  { id: 'Kinship Investments 2', label: 'Kinship Investments 2' },
-  { id: 'Kinship Investments 3', label: 'Kinship Investments 3' },
-  { id: 'Kinship Investments 4', label: 'Kinship Investments 4' },
-  { id: 'Kinship Investments 5', label: 'Kinship Investments 5' },
-  { id: 'Investment Entity', label: 'Investment Entity' },
-  { id: 'Investment Email', label: 'Investment Email' },
-  { id: 'Pod 1', label: 'Pod 1' },
-  { id: 'Pod 2', label: 'Pod 2' },
-  { id: 'Pod 3', label: 'Pod 3' },
-  { id: 'Sub-pod 1', label: 'Sub-pod 1' },
-  { id: 'Sub-pod 2', label: 'Sub-pod 2' },
-  { id: 'Sub-pod 3', label: 'Sub-pod 3' },
-  { id: 'Sub-pod 4', label: 'Sub-pod 4' },
-  { id: 'Sub-pod 5', label: 'Sub-pod 5' },
-  { id: 'Campaign 1', label: 'Campaign 1' },
-  { id: 'Campaign 1 Status', label: 'Campaign 1 Status' },
-  { id: 'Campaign 1 Target Commitment', label: 'Campaign 1 Target Commitment' },
-  { id: 'Campaign 2', label: 'Campaign 2' },
-  { id: 'Campaign 2 Status', label: 'Campaign 2 Status' },
-  { id: 'Campaign 2 Target Commitment', label: 'Campaign 2 Target Commitment' },
-  { id: 'Campaign 3', label: 'Campaign 3' },
-  { id: 'Campaign 3 Status', label: 'Campaign 3 Status' },
-  { id: 'Campaign 3 Target Commitment', label: 'Campaign 3 Target Commitment' },
-  { id: 'Companies', label: 'Companies' },
-  { id: 'Contacts', label: 'Contacts' },
-  { id: 'Industry', label: 'Industry' },
-]
 
 const CUSTOM_FILTER_FIELD_PREFIX = 'custom:'
 const DEFAULT_CAMPAIGN_STATUS_FILTER_OPTIONS = ['Pending', 'Reached', 'Responded', 'Confirmed']
@@ -353,6 +346,18 @@ function filterValueParts(value: unknown): string[] {
   return value === null || value === undefined ? [] : [String(value)]
 }
 
+function numberedTemplateIndex(fieldId: string, prefix: string): number | null {
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = fieldId.match(new RegExp(`^${escapedPrefix} (\\d+)$`))
+  if (!match) return null
+  return Number(match[1]) - 1
+}
+
+function cellText(values: Iterable<string>, index: number | null = null): string {
+  const options = uniqueFilterOptions(values)
+  return index === null ? options.join(', ') : options[index] ?? ''
+}
+
 function simpleFieldKey(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
@@ -368,10 +373,6 @@ function customFieldValues(contact: Contact, keys: string[]): string[] {
   }
 
   return values.flatMap(filterValueParts)
-}
-
-function customFieldConfigFilterId(config: FieldConfig): string {
-  return `${CUSTOM_FILTER_FIELD_PREFIX}${config.id}`
 }
 
 function customFieldConfigForFilterId(fieldConfigs: FieldConfig[], id: string | null): FieldConfig | null {
@@ -460,10 +461,10 @@ export function RecordsList() {
 
   // Sort - restore from URL query params
   const [sort, setSort] = useState<{ col: ColumnId; dir: SortDir }>(() => {
-    const col = searchParams.get('sort_col') as ColumnId | null
+    const col = normalizeColumnId(searchParams.get('sort_col')) as ColumnId | null
     const dir = searchParams.get('sort_dir') as SortDir | null
-    const validCols: ColumnId[] = ['name', 'company', 'pod', 'sub_pod', 'equity', 'type', 'status', 'last_contact', 'cadence', 'location', 'follow_up']
-    if (col && validCols.includes(col) && (dir === 'asc' || dir === 'desc')) return { col, dir }
+    const validCols = new Set<ColumnId>(['equity', ...COLUMNS.map(col => col.id)])
+    if (col && validCols.has(col) && (dir === 'asc' || dir === 'desc')) return { col, dir }
     return { col: 'equity', dir: 'desc' }
   })
 
@@ -493,7 +494,7 @@ export function RecordsList() {
 
   // Column visibility
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnId>>(
-    () => new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id))
+    () => new Set(defaultVisibleColumnIds(COLUMNS))
   )
 
   // Selection
@@ -752,17 +753,28 @@ export function RecordsList() {
     [visibleRelationshipContacts],
   )
 
-  const relationshipFilterFields = useMemo<RelationshipFilterFieldDef[]>(() => {
-    const existingLabels = new Set(BASE_RELATIONSHIP_FILTER_FIELDS.map(field => normalizedFilterText(field.label)))
-    const customFields = fieldConfigs
-      .filter(config => config.source_field_id.startsWith('custom_'))
-      .filter(config => config.scope_type === 'Contact' || config.scope_type === 'Both')
-      .filter(config => !existingLabels.has(normalizedFilterText(config.name)))
-      .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name))
-      .map(config => ({ id: customFieldConfigFilterId(config), label: config.name }))
+  const importTemplateCustomFieldNames = useMemo(
+    () => fieldConfigs.map(config => config.name),
+    [fieldConfigs],
+  )
 
-    return [...BASE_RELATIONSHIP_FILTER_FIELDS, ...customFields]
-  }, [fieldConfigs])
+  const relationshipColumns = useMemo<ColumnDef[]>(
+    () => templateColumnDefs(importTemplateCustomFieldNames),
+    [importTemplateCustomFieldNames],
+  )
+
+  useEffect(() => {
+    setVisibleColumns(prev => {
+      const normalized = normalizeVisibleColumnIds(prev, relationshipColumns)
+      const nextIds = normalized.length > 0 ? normalized : defaultVisibleColumnIds(relationshipColumns)
+      return sameColumnIds(prev, nextIds) ? prev : new Set(nextIds)
+    })
+  }, [relationshipColumns])
+
+  const relationshipFilterFields = useMemo<RelationshipFilterFieldDef[]>(
+    () => relationshipColumns.map(col => ({ id: col.id, label: col.label })),
+    [relationshipColumns],
+  )
 
   const relationshipFilterValuesForContact = useCallback((contact: Contact, fieldId: string | null): string[] => {
     if (!fieldId) return []
@@ -831,7 +843,10 @@ export function RecordsList() {
           ...customFieldValues(contact, ['location', 'Location']),
         ])
       case 'City':
-        return customFieldValues(contact, ['city', 'City'])
+        return uniqueFilterOptions([
+          ...customFieldValues(contact, ['city', 'City']),
+          ...filterValueParts(contact.location),
+        ])
       case 'State':
         return customFieldValues(contact, ['state', 'State'])
       case 'Country':
@@ -882,7 +897,7 @@ export function RecordsList() {
           ...customFieldValues(contact, ['industry', 'Industry']),
         ])
       default:
-        return []
+        return customFieldValues(contact, [fieldId])
     }
   }, [campaigns, categoryMap, companyRecordMap, companyRecordsByName, contactMap, fieldConfigs, podMap])
 
@@ -1088,16 +1103,22 @@ export function RecordsList() {
       const dir = sort.dir === 'asc' ? 1 : -1
       switch (sort.col) {
         case 'name':
+        case 'Name':
           return dir * a.name.localeCompare(b.name)
         case 'company':
+        case 'Company':
           return dir * (a.company ?? '').localeCompare(b.company ?? '')
-        case 'pod': {
-          const aPod = a.primary_list_id ? (podMap[a.primary_list_id]?.name ?? '') : ''
-          const bPod = b.primary_list_id ? (podMap[b.primary_list_id]?.name ?? '') : ''
+        case 'pod':
+        case 'Pod 1': {
+          const aPod = relationshipFilterValuesForContact(a, 'Pod 1')[0] ?? ''
+          const bPod = relationshipFilterValuesForContact(b, 'Pod 1')[0] ?? ''
           return dir * aPod.localeCompare(bPod)
         }
         case 'sub_pod':
-          return dir * formatContactSubPods(a, categories).localeCompare(formatContactSubPods(b, categories))
+        case 'Sub-pod 1':
+          return dir * (
+            relationshipFilterValuesForContact(a, 'Sub-pod 1')[0] ?? ''
+          ).localeCompare(relationshipFilterValuesForContact(b, 'Sub-pod 1')[0] ?? '')
         case 'equity':
           return dir * ((equityMap[a.id] ?? 0) - (equityMap[b.id] ?? 0))
         case 'type':
@@ -1119,10 +1140,11 @@ export function RecordsList() {
           return dir * (aF - bF)
         }
         default:
-          return 0
+          return dir * cellText(relationshipFilterValuesForContact(a, sort.col))
+            .localeCompare(cellText(relationshipFilterValuesForContact(b, sort.col)), undefined, { numeric: true, sensitivity: 'base' })
       }
     })
-  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, podMap, categories, relationshipFilterValuesForContact])
+  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, relationshipFilterValuesForContact])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -1205,17 +1227,18 @@ export function RecordsList() {
     if (!view) {
       setFilters(DEFAULT_FILTERS)
       setRelationshipScope('all')
-      setVisibleColumns(new Set(COLUMNS.filter(c => c.defaultVisible).map(c => c.id)))
+      setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipColumns)))
       setSort({ col: 'equity', dir: 'desc' })
     } else {
       setFilters({ ...DEFAULT_FILTERS, ...view.filters })
       setRelationshipScope(view.relationshipScope ?? 'all')
-      setVisibleColumns(new Set(view.visibleColumns))
-      setSort(view.sort)
+      const visibleFields = normalizeVisibleColumnIds(view.visibleColumns, relationshipColumns)
+      setVisibleColumns(new Set(visibleFields.length > 0 ? visibleFields : defaultVisibleColumnIds(relationshipColumns)))
+      setSort({ col: normalizeColumnId(view.sort.col) ?? 'equity', dir: view.sort.dir })
     }
     setShowMoreDropdown(false)
     setShowColumnFilter(false)
-  }, [])
+  }, [relationshipColumns])
 
   // Delete saved view
   const deleteView = useCallback((name: string, e: React.MouseEvent) => {
@@ -1377,9 +1400,40 @@ export function RecordsList() {
   }
 
   function cellValue(contact: Contact, colId: ColumnId): string {
+    const normalizedColId = normalizeColumnId(colId) ?? colId
+    const podIndex = numberedTemplateIndex(normalizedColId, 'Pod')
+    if (podIndex !== null) {
+      return cellText(contact.list_ids.map(id => podMap[id]?.name ?? '').filter(Boolean), podIndex)
+    }
+
+    const subPodIndex = numberedTemplateIndex(normalizedColId, 'Sub-pod')
+    if (subPodIndex !== null) {
+      return cellText(getContactSubPods(contact, categories).map(subPod => subPod.name), subPodIndex)
+    }
+
+    const kinshipIndex = numberedTemplateIndex(normalizedColId, 'Kinship Investments')
+    if (kinshipIndex !== null) {
+      return cellText(filterValueParts(contact.kv_fund_investor), kinshipIndex)
+    }
+
+    const campaignMatch = normalizedColId.match(/^Campaign (\d+)$/)
+    if (campaignMatch) {
+      const campaignIndex = Number(campaignMatch[1]) - 1
+      return cellText(
+        campaigns
+          .filter(campaign => campaign.contact_ids.includes(contact.id))
+          .map(campaign => campaign.name),
+        campaignIndex,
+      )
+    }
+
     switch (colId) {
-      case 'name': return contact.name
-      case 'company': return contact.company ?? ''
+      case 'name':
+      case 'Name':
+        return contact.name
+      case 'company':
+      case 'Company':
+        return contact.company ?? ''
       case 'pod': { const p = contact.primary_list_id ? podMap[contact.primary_list_id] : null; return p?.name ?? '' }
       case 'sub_pod': return formatContactSubPods(contact, categories)
       case 'equity': return String(equityMap[contact.id] ?? 0)
@@ -1389,7 +1443,8 @@ export function RecordsList() {
       case 'cadence': return contact.cadence_override ?? contact.contact_frequency ?? ''
       case 'location': return contact.location ?? ''
       case 'follow_up': return contact.next_follow_up_date ?? ''
-      default: return ''
+      default:
+        return cellText(relationshipFilterValuesForContact(contact, normalizedColId))
     }
   }
 
@@ -1615,7 +1670,7 @@ export function RecordsList() {
     }
   }
 
-  const visibleCols = COLUMNS.filter(col => visibleColumns.has(col.id))
+  const visibleCols = relationshipColumns.filter(col => visibleColumns.has(col.id))
   const selectedShareResources: CollaborationResourceOption[] = contacts
     .filter(contact => selectedIds.has(contact.id))
     .map(contact => ({
@@ -1935,7 +1990,7 @@ export function RecordsList() {
             {showColumnFilter && (
               <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 220 }}>
                 <div style={menuLabelStyle}>Visible sections</div>
-                {COLUMNS.map(col => (
+                {relationshipColumns.map(col => (
                   <label
                     key={col.id}
                     style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
@@ -1952,14 +2007,14 @@ export function RecordsList() {
                 <div className="records-dropdown-group" style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                   <button
                     type="button"
-                    onClick={() => setVisibleColumns(new Set(COLUMNS.map(col => col.id)))}
+                    onClick={() => setVisibleColumns(new Set(relationshipColumns.map(col => col.id)))}
                     style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
                   >
                     Show all sections
                   </button>
                   <button
                     type="button"
-                    onClick={() => setVisibleColumns(new Set(COLUMNS.filter(col => col.defaultVisible).map(col => col.id)))}
+                    onClick={() => setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipColumns)))}
                     style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
                   >
                     Restore default
@@ -2599,9 +2654,20 @@ export function RecordsList() {
                       </div>
                     </td>
 
-                    {visibleCols.map(col => (
+                    {visibleCols.map(col => {
+                      const normalizedColId = normalizeColumnId(col.id) ?? col.id
+                      const value = cellValue(contact, col.id)
+                      const isPodColumn = /^Pod \d+$/.test(normalizedColId)
+                      const isSubPodColumn = /^Sub-pod \d+$/.test(normalizedColId)
+                      const usesTemplateTextCell = normalizedColId !== 'Name' &&
+                        normalizedColId !== 'Company' &&
+                        !isPodColumn &&
+                        !isSubPodColumn &&
+                        !['equity', 'type', 'status', 'last_contact', 'cadence', 'location', 'follow_up'].includes(col.id)
+
+                      return (
                       <td key={col.id} style={{ padding: '10px 12px', height: 52 }}>
-                        {col.id === 'name' && (
+                        {normalizedColId === 'Name' && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span className="contact-avatar" style={{
                               width: 36,
@@ -2653,34 +2719,33 @@ export function RecordsList() {
                             </span>
                           </span>
                         )}
-                        {col.id === 'company' && (
+                        {normalizedColId === 'Company' && (
                           <span style={{ color: contact.company ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
                             {contact.company ?? '—'}
                           </span>
                         )}
-                        {col.id === 'pod' && (() => {
+                        {isPodColumn && (() => {
+                          const podIndex = numberedTemplateIndex(normalizedColId, 'Pod') ?? 0
                           const contactPods = contact.list_ids.map(id => pods.find(p => p.id === id)).filter(Boolean) as Pod[]
-                          if (contactPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
+                          const visiblePod = contactPods[podIndex]
+                          if (!visiblePod) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
                           return (
                             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {contactPods.map((p, i) => (
-                                <span key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.color ?? 'var(--edge)', flexShrink: 0 }} />
-                                  {i === 0 && <span style={{ color: 'var(--color-text-secondary)' }}>{p.name}</span>}
-                                </span>
-                              ))}
-                              {contactPods.length > 1 && (
-                                <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>+{contactPods.length - 1}</span>
-                              )}
+                              <span key={visiblePod.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: visiblePod.color ?? 'var(--edge)', flexShrink: 0 }} />
+                                <span style={{ color: 'var(--color-text-secondary)' }}>{visiblePod.name}</span>
+                              </span>
                             </span>
                           )
                         })()}
-                        {col.id === 'sub_pod' && (() => {
+                        {isSubPodColumn && (() => {
+                          const subPodIndex = numberedTemplateIndex(normalizedColId, 'Sub-pod') ?? 0
                           const contactSubPods = getContactSubPods(contact, categories)
-                          if (contactSubPods.length === 0) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
+                          const visibleSubPod = contactSubPods[subPodIndex]
+                          if (!visibleSubPod) return <span style={{ color: 'var(--color-text-tertiary)', fontSize: 11 }}>-</span>
                           return (
                             <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', maxWidth: 'clamp(140px, 18vw, 280px)' }}>
-                              {contactSubPods.map(subPod => {
+                              {[visibleSubPod].map(subPod => {
                                 const parentPod = pods.find(pod => pod.id === subPod.list_id)
                                 return (
                                   <span
@@ -2784,8 +2849,14 @@ export function RecordsList() {
                             }
                           </span>
                         )}
+                        {usesTemplateTextCell && (
+                          <span style={{ color: value ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
+                            {value || '-'}
+                          </span>
+                        )}
                       </td>
-                    ))}
+                      )
+                    })}
                   </tr>
                 )
               })}
