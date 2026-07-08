@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/sync-gmail",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/assets/(.*)", "status": 404 },

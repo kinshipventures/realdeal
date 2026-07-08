@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { decryptToken, encryptToken } from '../../api/_lib/secure-tokens'
+import { syncGmailForEnabledConnections } from '../../api/_lib/gmail-cron'
 import { syncGmailForConnection } from '../../api/_lib/gmail-sync'
 import { upsertGoogleConnection, type GoogleConnection } from '../../api/_lib/google-connection'
 
@@ -115,6 +116,7 @@ interface GmailFixtureState {
   insertedInteractions: InteractionRow[]
   contactUpdates: Array<{ id: string; patch: Record<string, unknown> }>
   connectionUpdates: Array<{ id: string; patch: Record<string, unknown> }>
+  googleConnections: GoogleConnection[]
 }
 
 class GmailFixtureQuery {
@@ -123,6 +125,7 @@ class GmailFixtureQuery {
   private op: 'select' | 'insert' | 'update' | null = null
   private filters: Record<string, unknown> = {}
   private inFilters: Record<string, unknown[]> = {}
+  private notNullColumns = new Set<string>()
   private updatePatch: Record<string, unknown> | null = null
 
   constructor(private table: string, private state: GmailFixtureState) {}
@@ -146,7 +149,10 @@ class GmailFixtureQuery {
     return this
   }
 
-  not() {
+  not(column?: string, operator?: string, value?: unknown) {
+    if (operator === 'is' && value === null && column) {
+      this.notNullColumns.add(column)
+    }
     if (this.op === 'select') this.refreshSelect()
     return this
   }
@@ -190,6 +196,13 @@ class GmailFixtureQuery {
         .filter(row => workspaceIds.includes(row.workspace_id ?? ''))
         .filter(row => row.email_link !== null)
         .map(row => ({ contact_id: row.contact_id, email_link: row.email_link }))
+      return
+    }
+
+    if (this.table === 'google_connections') {
+      this.data = this.state.googleConnections.filter(connection => (
+        !this.notNullColumns.has('refresh_token_encrypted') || connection.refresh_token_encrypted !== null
+      ))
       return
     }
 
@@ -238,6 +251,7 @@ function createGmailAdminFixture(overrides: Partial<GmailFixtureState> = {}) {
     insertedInteractions: [],
     contactUpdates: [],
     connectionUpdates: [],
+    googleConnections: [connectedUser()],
     ...overrides,
   }
   return {
@@ -436,6 +450,43 @@ describe('Google Workspace integration', () => {
     expect(result).toEqual({ synced: 0, matched: 0, total_messages: 0 })
     expect(state.insertedInteractions).toHaveLength(0)
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('syncs Gmail automatically for connected accounts with refresh tokens', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch())
+    const disabledConnection: GoogleConnection = {
+      ...connectedUser(),
+      id: 'connection-disabled',
+      user_id: 'user-disabled',
+      gmail_sync_enabled: false,
+    }
+    const missingRefreshConnection: GoogleConnection = {
+      ...connectedUser(),
+      id: 'connection-missing-refresh',
+      user_id: 'user-missing-refresh',
+      refresh_token_encrypted: null,
+    }
+    const { admin, state } = createGmailAdminFixture({
+      workspaceMembers: [
+        { user_id: 'user-a', workspace_id: 'workspace-a' },
+        { user_id: 'user-disabled', workspace_id: 'workspace-a' },
+        { user_id: 'user-missing-refresh', workspace_id: 'workspace-a' },
+      ],
+      googleConnections: [connectedUser(), disabledConnection, missingRefreshConnection],
+    })
+
+    const result = await syncGmailForEnabledConnections(admin as never)
+
+    expect(result.connections).toBe(1)
+    expect(result.failures).toBe(0)
+    expect(result.synced).toBe(2)
+    expect(result.matched).toBe(1)
+    expect(result.results.map(row => row.connection_id)).toEqual(['connection-a'])
+    expect(state.insertedInteractions).toHaveLength(1)
+    expect(state.connectionUpdates).toEqual([
+      { id: 'connection-a', patch: expect.objectContaining({ updated_at: expect.any(String) }) },
+    ])
   })
 })
 

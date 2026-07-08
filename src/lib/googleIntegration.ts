@@ -30,6 +30,8 @@ export interface DailyFocusEmailPreferences {
   daily_focus_email_to?: string | null
 }
 
+const GMAIL_BACKGROUND_SYNC_INTERVAL_MS = 15 * 60 * 1000
+
 export async function saveGoogleConnection(session: Session): Promise<void> {
   const providerToken = session.provider_token
   if (!providerToken) return
@@ -54,7 +56,30 @@ export async function disconnectGoogleConnection(): Promise<void> {
 }
 
 export async function syncGmailActivity(): Promise<GmailSyncResult> {
-  return authorizedApi<GmailSyncResult>('/api/google/sync-gmail', { method: 'POST' })
+  const result = await authorizedApi<GmailSyncResult>('/api/google/sync-gmail', { method: 'POST' })
+  if (result.matched > 0) {
+    void import('./data').then(({ invalidateContactsCache, invalidateInteractionsCache }) => {
+      invalidateContactsCache()
+      invalidateInteractionsCache()
+    })
+  }
+  return result
+}
+
+export async function maybeSyncGmailActivityInBackground(userId: string): Promise<void> {
+  if (typeof window === 'undefined') return
+
+  const status = await getGoogleConnectionStatus().catch(() => null)
+  if (!status?.connected || !status.gmail_sync_enabled || status.needs_reconnect) return
+
+  const storageKey = `rd:gmail-background-sync:${userId}`
+  const lastAttempt = Number(window.localStorage.getItem(storageKey) ?? 0)
+  const lastSynced = status.last_gmail_synced_at ? Date.parse(status.last_gmail_synced_at) : 0
+  const lastKnownRun = Math.max(Number.isFinite(lastAttempt) ? lastAttempt : 0, Number.isNaN(lastSynced) ? 0 : lastSynced)
+  if (Date.now() - lastKnownRun < GMAIL_BACKGROUND_SYNC_INTERVAL_MS) return
+
+  window.localStorage.setItem(storageKey, String(Date.now()))
+  await syncGmailActivity().catch(() => undefined)
 }
 
 export async function updateGooglePreferences(preferences: DailyFocusEmailPreferences): Promise<void> {
