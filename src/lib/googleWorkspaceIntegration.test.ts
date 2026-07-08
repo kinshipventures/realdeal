@@ -305,6 +305,13 @@ function connectedUser(): GoogleConnection {
     gmail_backfill_completed_at: null,
     gmail_last_full_sync_at: null,
     gmail_last_error: null,
+    gmail_last_messages_scanned: 0,
+    gmail_last_contacts_indexed: 0,
+    gmail_last_email_addresses_indexed: 0,
+    gmail_last_matches_found: 0,
+    gmail_last_inserted: 0,
+    gmail_last_duplicates: 0,
+    gmail_last_sync_mode: null,
   }
 }
 
@@ -415,7 +422,7 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toMatchObject({ synced: 2, matched: 1, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(result).toMatchObject({ synced: 2, matched: 1, inserted: 1, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
     expect(state.insertedInteractions).toHaveLength(1)
     expect(state.insertedInteractions[0]).toMatchObject({
       contact_id: 'contact-a',
@@ -449,7 +456,7 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toMatchObject({ synced: 2, matched: 0, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(result).toMatchObject({ synced: 2, matched: 1, inserted: 0, duplicates: 1, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
     expect(state.insertedInteractions).toHaveLength(0)
     expect(state.contactUpdates).toHaveLength(0)
     expect(state.connectionUpdates).toHaveLength(1)
@@ -499,7 +506,7 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toMatchObject({ synced: 2, matched: 2, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(result).toMatchObject({ synced: 2, matched: 2, inserted: 2, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
     expect(state.insertedInteractions.map(row => row.contact_id).sort()).toEqual(['contact-secondary', 'contact-tertiary'])
     expect(state.insertedInteractions.map(row => row.email_link).sort()).toEqual(['gmail:secondary-message', 'gmail:tertiary-message'])
   })
@@ -522,7 +529,7 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toMatchObject({ synced: 2, matched: 2, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(result).toMatchObject({ synced: 2, matched: 2, inserted: 2, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
     expect(state.insertedInteractions.map(row => row.email_link).sort()).toEqual(['gmail:message-1', 'gmail:message-3'])
     expect(state.connectionUpdates.at(-1)?.patch).toMatchObject({
       gmail_backfill_page_token: null,
@@ -545,11 +552,46 @@ describe('Google Workspace integration', () => {
       gmail_backfill_completed_at: '2026-07-01T00:00:00.000Z',
     })
 
-    expect(result).toMatchObject({ synced: 1, matched: 1, total_messages: 1, mode: 'incremental', backfill_complete: true })
+    expect(result).toMatchObject({ synced: 2, matched: 1, inserted: 1, duplicates: 0, total_messages: 2, mode: 'incremental+rolling', backfill_complete: true })
     expect(state.insertedInteractions).toHaveLength(1)
     expect(state.connectionUpdates.at(-1)?.patch).toMatchObject({
       gmail_history_id: 'history-next',
       last_gmail_synced_at: expect.any(String),
+      gmail_last_messages_scanned: 2,
+      gmail_last_matches_found: 1,
+      gmail_last_inserted: 1,
+    })
+  })
+
+  it('recovers recent Gmail messages when history has no message events', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch({
+      pages: [['rolling-message']],
+      historyMessages: [],
+      messages: {
+        'rolling-message': {
+          id: 'rolling-message',
+          from: 'Owner <owner@example.com>',
+          to: 'Contact <contact@example.com>',
+          date: 'Wed, 8 Jul 2026 09:50:00 -0500',
+          subject: 'Rolling recovery',
+        },
+      },
+    }))
+    const { admin, state } = createGmailAdminFixture()
+
+    const result = await syncGmailForConnection(admin as never, {
+      ...connectedUser(),
+      gmail_history_id: 'history-old',
+      gmail_backfill_completed_at: '2026-07-08T14:49:00.000Z',
+    })
+
+    expect(result).toMatchObject({ synced: 1, matched: 1, inserted: 1, duplicates: 0, total_messages: 1, mode: 'incremental+rolling', backfill_complete: true })
+    expect(state.insertedInteractions).toHaveLength(1)
+    expect(state.insertedInteractions[0]).toMatchObject({
+      contact_id: 'contact-a',
+      email_link: 'gmail:rolling-message',
+      summary: 'Rolling recovery',
     })
   })
 
@@ -563,7 +605,7 @@ describe('Google Workspace integration', () => {
       gmail_sync_enabled: false,
     })
 
-    expect(result).toEqual({ synced: 0, matched: 0, total_messages: 0 })
+    expect(result).toMatchObject({ synced: 0, matched: 0, inserted: 0, duplicates: 0, total_messages: 0 })
     expect(state.insertedInteractions).toHaveLength(0)
     expect(fetch).not.toHaveBeenCalled()
   })
@@ -598,6 +640,7 @@ describe('Google Workspace integration', () => {
     expect(result.failures).toBe(0)
     expect(result.synced).toBe(2)
     expect(result.matched).toBe(1)
+    expect(result.inserted).toBe(1)
     expect(result.results.map(row => row.connection_id)).toEqual(['connection-a'])
     expect(state.insertedInteractions).toHaveLength(1)
     expect(state.connectionUpdates).toEqual([

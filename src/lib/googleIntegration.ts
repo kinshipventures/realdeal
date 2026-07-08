@@ -12,13 +12,29 @@ export interface GoogleConnectionStatus {
   daily_focus_email_last_sent_on: string | null
   last_gmail_synced_at: string | null
   last_calendar_synced_at: string | null
+  gmail_last_messages_scanned: number
+  gmail_last_contacts_indexed: number
+  gmail_last_email_addresses_indexed: number
+  gmail_last_matches_found: number
+  gmail_last_inserted: number
+  gmail_last_duplicates: number
+  gmail_last_sync_mode: string | null
+  gmail_last_error: string | null
   needs_reconnect: boolean
 }
 
 export interface GmailSyncResult {
   synced: number
   matched: number
+  inserted: number
+  duplicates: number
   total_messages: number
+  messages_scanned: number
+  contacts_indexed: number
+  email_addresses_indexed: number
+  mode?: string
+  backfill_complete?: boolean
+  last_error?: string | null
   error?: string
 }
 
@@ -59,7 +75,7 @@ export async function disconnectGoogleConnection(): Promise<void> {
 
 export async function syncGmailActivity(): Promise<GmailSyncResult> {
   const result = await authorizedApi<GmailSyncResult>('/api/google/sync-gmail', { method: 'POST' })
-  if (result.matched > 0) {
+  if (result.inserted > 0) {
     void import('./data').then(({ invalidateContactsCache, invalidateInteractionsCache }) => {
       invalidateContactsCache()
       invalidateInteractionsCache()

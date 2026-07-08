@@ -7,7 +7,13 @@ export interface GmailCronConnectionResult {
   user_id: string
   synced: number
   matched: number
+  inserted: number
+  duplicates: number
   total_messages: number
+  messages_scanned: number
+  contacts_indexed: number
+  email_addresses_indexed: number
+  mode?: string
   error?: string
 }
 
@@ -15,7 +21,12 @@ export interface GmailCronSummary {
   connections: number
   synced: number
   matched: number
+  inserted: number
+  duplicates: number
   total_messages: number
+  messages_scanned: number
+  contacts_indexed: number
+  email_addresses_indexed: number
   failures: number
   results: GmailCronConnectionResult[]
 }
@@ -34,7 +45,12 @@ export async function syncGmailForEnabledConnections(admin: SupabaseClient): Pro
     connections: connections.length,
     synced: 0,
     matched: 0,
+    inserted: 0,
+    duplicates: 0,
     total_messages: 0,
+    messages_scanned: 0,
+    contacts_indexed: 0,
+    email_addresses_indexed: 0,
     failures: 0,
     results: [],
   }
@@ -44,7 +60,12 @@ export async function syncGmailForEnabledConnections(admin: SupabaseClient): Pro
       const result = await syncGmailForConnection(admin, connection)
       summary.synced += result.synced
       summary.matched += result.matched
+      summary.inserted += result.inserted
+      summary.duplicates += result.duplicates
       summary.total_messages += result.total_messages
+      summary.messages_scanned += result.messages_scanned
+      summary.contacts_indexed += result.contacts_indexed
+      summary.email_addresses_indexed += result.email_addresses_indexed
       summary.results.push({
         connection_id: connection.id,
         user_id: connection.user_id,
@@ -63,7 +84,12 @@ export async function syncGmailForEnabledConnections(admin: SupabaseClient): Pro
         user_id: connection.user_id,
         synced: 0,
         matched: 0,
+        inserted: 0,
+        duplicates: 0,
         total_messages: 0,
+        messages_scanned: 0,
+        contacts_indexed: 0,
+        email_addresses_indexed: 0,
         error: message,
       })
     }

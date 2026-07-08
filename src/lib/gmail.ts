@@ -4,7 +4,15 @@ import { syncGmailActivity } from './googleIntegration'
 interface GmailSyncResult {
   synced: number
   matched: number
+  inserted: number
+  duplicates: number
   total_messages: number
+  messages_scanned: number
+  contacts_indexed: number
+  email_addresses_indexed: number
+  mode?: string
+  backfill_complete?: boolean
+  last_error?: string | null
   error?: string
 }
 

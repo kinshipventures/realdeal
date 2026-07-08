@@ -11,6 +11,17 @@ export default async function handler(request: any, response: any) {
     const connection = await getGoogleConnection(admin, user.id)
     if (!connection) return json(response, 400, { error: 'Connect Google first' })
     const result = await syncGmailForConnection(admin, connection)
+    console.info('Gmail sync completed', {
+      connection_id: connection.id,
+      user_id: user.id,
+      mode: result.mode,
+      messages_scanned: result.messages_scanned,
+      contacts_indexed: result.contacts_indexed,
+      email_addresses_indexed: result.email_addresses_indexed,
+      matched: result.matched,
+      inserted: result.inserted,
+      duplicates: result.duplicates,
+    })
     return json(response, 200, result)
   } catch (error) {
     const status = error instanceof Error && error.message === 'Unauthorized' ? 401 : 500

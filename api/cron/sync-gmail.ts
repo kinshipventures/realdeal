@@ -14,6 +14,16 @@ export default async function handler(request: any, response: any) {
   try {
     const admin = createAdminClient()
     const summary = await syncGmailForEnabledConnections(admin)
+    console.info('Gmail cron completed', {
+      connections: summary.connections,
+      failures: summary.failures,
+      messages_scanned: summary.messages_scanned,
+      contacts_indexed: summary.contacts_indexed,
+      email_addresses_indexed: summary.email_addresses_indexed,
+      matched: summary.matched,
+      inserted: summary.inserted,
+      duplicates: summary.duplicates,
+    })
     return json(response, 200, summary)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Gmail cron failed'

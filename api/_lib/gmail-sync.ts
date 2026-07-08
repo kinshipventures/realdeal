@@ -5,9 +5,15 @@ import { getFreshGoogleAccessToken } from './google-connection.js'
 export interface GmailSyncSummary {
   synced: number
   matched: number
+  inserted: number
+  duplicates: number
   total_messages: number
-  mode?: 'full' | 'incremental'
+  messages_scanned: number
+  contacts_indexed: number
+  email_addresses_indexed: number
+  mode?: 'full' | 'incremental' | 'full+rolling' | 'incremental+rolling'
   backfill_complete?: boolean
+  last_error?: string | null
 }
 
 interface GmailHeader {
@@ -52,6 +58,7 @@ interface GmailSyncContext {
   contactById: Map<string, ContactEmailMatchRow>
   emailToContacts: Map<string, Array<{ id: string; workspace_id: string }>>
   existingKeys: Set<string>
+  processedMessageIds: Set<string>
 }
 
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
@@ -59,6 +66,9 @@ const GMAIL_MESSAGE_BATCH_SIZE = 15
 const GMAIL_FULL_SYNC_PAGE_SIZE = 100
 const GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN = 5
 const GMAIL_FULL_SYNC_TIME_BUDGET_MS = 8000
+const GMAIL_ROLLING_LOOKBACK_DAYS = 14
+const GMAIL_ROLLING_MAX_PAGES_PER_RUN = 3
+const GMAIL_ROLLING_TIME_BUDGET_MS = 6000
 
 class GmailHistoryExpiredError extends Error {
   constructor() {
@@ -73,7 +83,7 @@ class GmailPageTokenExpiredError extends Error {
 }
 
 export async function syncGmailForConnection(admin: SupabaseClient, connection: GoogleConnection): Promise<GmailSyncSummary> {
-  if (!connection.gmail_sync_enabled) return { synced: 0, matched: 0, total_messages: 0 }
+  if (!connection.gmail_sync_enabled) return emptyGmailSummary()
 
   try {
     const accessToken = await getFreshGoogleAccessToken(admin, connection)
@@ -83,17 +93,25 @@ export async function syncGmailForConnection(admin: SupabaseClient, connection: 
       await updateGoogleConnectionSyncState(admin, connection.id, {
         last_gmail_synced_at: new Date().toISOString(),
         gmail_last_error: null,
+        ...gmailDiagnosticPatch(emptyGmailSummary()),
       })
-      return { synced: 0, matched: 0, total_messages: 0 }
+      return emptyGmailSummary()
     }
 
     const contacts = await getWorkspaceContacts(admin, workspaceIds)
+    const emailToContacts = buildContactEmailMap(contacts)
     if (contacts.length === 0) {
+      const summary = {
+        ...emptyGmailSummary(),
+        contacts_indexed: 0,
+        email_addresses_indexed: 0,
+      }
       await updateGoogleConnectionSyncState(admin, connection.id, {
         last_gmail_synced_at: new Date().toISOString(),
         gmail_last_error: null,
+        ...gmailDiagnosticPatch(summary),
       })
-      return { synced: 0, matched: 0, total_messages: 0 }
+      return summary
     }
 
     const context: GmailSyncContext = {
@@ -102,19 +120,23 @@ export async function syncGmailForConnection(admin: SupabaseClient, connection: 
       accessToken,
       userEmail,
       contactById: new Map(contacts.map(contact => [contact.id, contact])),
-      emailToContacts: buildContactEmailMap(contacts),
+      emailToContacts,
       existingKeys: await getExistingGmailInteractionKeys(admin, workspaceIds),
+      processedMessageIds: new Set(),
     }
 
+    let summary: GmailSyncSummary
     if (connection.gmail_history_id && connection.gmail_backfill_completed_at) {
       try {
-        return await syncIncrementalGmail(context)
+        summary = await syncIncrementalGmail(context)
+        return withIndexDiagnostics(summary, contacts.length, emailToContacts.size)
       } catch (error) {
         if (!(error instanceof GmailHistoryExpiredError)) throw error
       }
     }
 
-    return await syncFullGmailBackfill(context)
+    summary = await syncFullGmailBackfill(context)
+    return withIndexDiagnostics(summary, contacts.length, emailToContacts.size)
   } catch (error) {
     await updateGoogleConnectionSyncState(admin, connection.id, {
       gmail_last_error: error instanceof Error ? error.message : 'Gmail sync failed',
@@ -125,17 +147,32 @@ export async function syncGmailForConnection(admin: SupabaseClient, connection: 
 
 async function syncIncrementalGmail(context: GmailSyncContext): Promise<GmailSyncSummary> {
   const history = await listGmailHistoryMessageIds(context.accessToken, context.connection.gmail_history_id)
-  const result = await processGmailMessages(context, history.ids)
+  const historyResult = await processGmailMessages(context, history.ids)
+  const rollingResult = await syncRollingRecentGmail(context)
+  const result = mergeGmailResults(historyResult, rollingResult)
   await updateGoogleConnectionSyncState(context.admin, context.connection.id, {
     gmail_history_id: history.historyId,
     last_gmail_synced_at: new Date().toISOString(),
     gmail_last_error: null,
+    ...gmailDiagnosticPatch({
+      ...result,
+      total_messages: context.processedMessageIds.size,
+      messages_scanned: result.synced,
+      contacts_indexed: context.contactById.size,
+      email_addresses_indexed: context.emailToContacts.size,
+      mode: 'incremental+rolling',
+      backfill_complete: true,
+    }),
   })
   return {
     ...result,
-    total_messages: history.ids.length,
-    mode: 'incremental',
+    total_messages: context.processedMessageIds.size,
+    messages_scanned: result.synced,
+    contacts_indexed: context.contactById.size,
+    email_addresses_indexed: context.emailToContacts.size,
+    mode: 'incremental+rolling',
     backfill_complete: true,
+    last_error: null,
   }
 }
 
@@ -144,8 +181,7 @@ async function syncFullGmailBackfill(context: GmailSyncContext): Promise<GmailSy
   let pageToken = context.connection.gmail_backfill_page_token ?? null
   let processedPages = 0
   let totalMessages = 0
-  let synced = 0
-  let matched = 0
+  let result: GmailProcessResult = emptyGmailProcessResult()
   let completed = false
   let nextPageToken: string | null = pageToken
 
@@ -162,9 +198,7 @@ async function syncFullGmailBackfill(context: GmailSyncContext): Promise<GmailSy
       throw error
     }
 
-    const result = await processGmailMessages(context, page.ids)
-    synced += result.synced
-    matched += result.matched
+    result = mergeGmailResults(result, await processGmailMessages(context, page.ids))
     totalMessages += page.ids.length
     processedPages++
     nextPageToken = page.nextPageToken
@@ -176,6 +210,9 @@ async function syncFullGmailBackfill(context: GmailSyncContext): Promise<GmailSy
 
     pageToken = page.nextPageToken
   }
+
+  const rollingResult = await syncRollingRecentGmail(context)
+  result = mergeGmailResults(result, rollingResult)
 
   const now = new Date().toISOString()
   const update: Record<string, unknown> = {
@@ -194,23 +231,54 @@ async function syncFullGmailBackfill(context: GmailSyncContext): Promise<GmailSy
     update.gmail_backfill_page_token = nextPageToken
   }
 
+  const summary: GmailSyncSummary = {
+    ...result,
+    total_messages: Math.max(totalMessages, context.processedMessageIds.size),
+    messages_scanned: result.synced,
+    contacts_indexed: context.contactById.size,
+    email_addresses_indexed: context.emailToContacts.size,
+    mode: 'full+rolling',
+    backfill_complete: completed,
+    last_error: null,
+  }
+  Object.assign(update, gmailDiagnosticPatch(summary))
   await updateGoogleConnectionSyncState(context.admin, context.connection.id, update)
 
-  return {
-    synced,
-    matched,
-    total_messages: totalMessages,
-    mode: 'full',
-    backfill_complete: completed,
-  }
+  return summary
 }
 
-async function processGmailMessages(context: GmailSyncContext, messageIds: string[]): Promise<Pick<GmailSyncSummary, 'synced' | 'matched'>> {
+type GmailProcessResult = Pick<GmailSyncSummary, 'synced' | 'matched' | 'inserted' | 'duplicates'>
+
+async function syncRollingRecentGmail(context: GmailSyncContext): Promise<GmailProcessResult> {
+  const startedAt = Date.now()
+  let pageToken: string | null = null
+  let pages = 0
+  let result = emptyGmailProcessResult()
+
+  while (pages < GMAIL_ROLLING_MAX_PAGES_PER_RUN && Date.now() - startedAt < GMAIL_ROLLING_TIME_BUDGET_MS) {
+    const page = await listGmailMessagePage(context.accessToken, pageToken, `newer_than:${GMAIL_ROLLING_LOOKBACK_DAYS}d`)
+    result = mergeGmailResults(result, await processGmailMessages(context, page.ids))
+    pages++
+    if (!page.nextPageToken) break
+    pageToken = page.nextPageToken
+  }
+
+  return result
+}
+
+async function processGmailMessages(context: GmailSyncContext, messageIds: string[]): Promise<GmailProcessResult> {
   let synced = 0
   let matched = 0
+  let inserted = 0
+  let duplicates = 0
+  const ids = messageIds.filter(id => {
+    if (!id || context.processedMessageIds.has(id)) return false
+    context.processedMessageIds.add(id)
+    return true
+  })
 
-  for (let i = 0; i < messageIds.length; i += GMAIL_MESSAGE_BATCH_SIZE) {
-    const details = await Promise.all(messageIds.slice(i, i + GMAIL_MESSAGE_BATCH_SIZE).map(id => getGmailMessage(context.accessToken, id)))
+  for (let i = 0; i < ids.length; i += GMAIL_MESSAGE_BATCH_SIZE) {
+    const details = await Promise.all(ids.slice(i, i + GMAIL_MESSAGE_BATCH_SIZE).map(id => getGmailMessage(context.accessToken, id)))
     for (const message of details) {
       if (!message) continue
       synced++
@@ -237,9 +305,13 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
       }
 
       for (const contact of matchedContacts.values()) {
+        matched++
         const gmailKey = `gmail:${message.id}`
         const interactionKey = `${contact.id}:${gmailKey}`
-        if (context.existingKeys.has(interactionKey)) continue
+        if (context.existingKeys.has(interactionKey)) {
+          duplicates++
+          continue
+        }
 
         const date = parseDateOnly(dateHeader)
         const { error } = await context.admin.from('interactions').insert({
@@ -268,6 +340,7 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
         if (error) {
           if (isDuplicateInteractionError(error)) {
             context.existingKeys.add(interactionKey)
+            duplicates++
             continue
           }
           throw error
@@ -280,12 +353,12 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
           if (currentContact) currentContact.last_contacted_at = date
         }
         context.existingKeys.add(interactionKey)
-        matched++
+        inserted++
       }
     }
   }
 
-  return { synced, matched }
+  return { synced, matched, inserted, duplicates }
 }
 
 function buildContactEmailMap(contacts: ContactEmailMatchRow[]): Map<string, Array<{ id: string; workspace_id: string }>> {
@@ -332,10 +405,11 @@ async function getExistingGmailInteractionKeys(admin: SupabaseClient, workspaceI
   return new Set((data ?? []).map((row: { contact_id: string; email_link: string }) => `${row.contact_id}:${row.email_link}`))
 }
 
-async function listGmailMessagePage(accessToken: string, pageToken: string | null): Promise<GmailMessagePage> {
+async function listGmailMessagePage(accessToken: string, pageToken: string | null, query?: string): Promise<GmailMessagePage> {
   const url = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
   url.searchParams.set('maxResults', String(GMAIL_FULL_SYNC_PAGE_SIZE))
   if (pageToken) url.searchParams.set('pageToken', pageToken)
+  if (query) url.searchParams.set('q', query)
   const response = await fetch(url, { headers: gmailHeaders(accessToken) })
   if (!response.ok) {
     if (response.status === 400 && pageToken) throw new GmailPageTokenExpiredError()
@@ -432,4 +506,50 @@ function parseDateOnly(value: string): string {
   const parsed = value ? new Date(value) : new Date()
   const date = Number.isNaN(parsed.getTime()) ? new Date() : parsed
   return date.toISOString().slice(0, 10)
+}
+
+function emptyGmailProcessResult(): GmailProcessResult {
+  return { synced: 0, matched: 0, inserted: 0, duplicates: 0 }
+}
+
+function emptyGmailSummary(): GmailSyncSummary {
+  return {
+    ...emptyGmailProcessResult(),
+    total_messages: 0,
+    messages_scanned: 0,
+    contacts_indexed: 0,
+    email_addresses_indexed: 0,
+    last_error: null,
+  }
+}
+
+function mergeGmailResults(a: GmailProcessResult, b: GmailProcessResult): GmailProcessResult {
+  return {
+    synced: a.synced + b.synced,
+    matched: a.matched + b.matched,
+    inserted: a.inserted + b.inserted,
+    duplicates: a.duplicates + b.duplicates,
+  }
+}
+
+function withIndexDiagnostics(summary: GmailSyncSummary, contactsIndexed: number, emailAddressesIndexed: number): GmailSyncSummary {
+  return {
+    ...summary,
+    contacts_indexed: contactsIndexed,
+    email_addresses_indexed: emailAddressesIndexed,
+    messages_scanned: summary.synced,
+    last_error: summary.last_error ?? null,
+  }
+}
+
+function gmailDiagnosticPatch(summary: GmailSyncSummary): Record<string, unknown> {
+  return {
+    gmail_last_messages_scanned: summary.messages_scanned,
+    gmail_last_contacts_indexed: summary.contacts_indexed,
+    gmail_last_email_addresses_indexed: summary.email_addresses_indexed,
+    gmail_last_matches_found: summary.matched,
+    gmail_last_inserted: summary.inserted,
+    gmail_last_duplicates: summary.duplicates,
+    gmail_last_sync_mode: summary.mode ?? null,
+  }
 }

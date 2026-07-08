@@ -151,6 +151,14 @@ function defaultGoogleStatus(): GoogleConnectionStatus {
     daily_focus_email_last_sent_on: null,
     last_gmail_synced_at: null,
     last_calendar_synced_at: null,
+    gmail_last_messages_scanned: 0,
+    gmail_last_contacts_indexed: 0,
+    gmail_last_email_addresses_indexed: 0,
+    gmail_last_matches_found: 0,
+    gmail_last_inserted: 0,
+    gmail_last_duplicates: 0,
+    gmail_last_sync_mode: null,
+    gmail_last_error: null,
     needs_reconnect: false,
   }
 }
@@ -200,9 +208,9 @@ export function GoogleIntegrationSettings() {
     try {
       const result = await syncGmailActivity()
       setMessage(
-        result.matched === 0
-          ? `Gmail sync checked ${result.synced} message${result.synced === 1 ? '' : 's'}. No new contact matches were found.`
-          : `Gmail sync complete: ${result.matched} activit${result.matched === 1 ? 'y' : 'ies'} added.`,
+        result.inserted === 0
+          ? `Gmail sync checked ${result.messages_scanned} message${result.messages_scanned === 1 ? '' : 's'} across ${result.contacts_indexed} contact${result.contacts_indexed === 1 ? '' : 's'}. No new activity was added.`
+          : `Gmail sync complete: ${result.inserted} activit${result.inserted === 1 ? 'y' : 'ies'} added, ${result.duplicates} duplicate${result.duplicates === 1 ? '' : 's'} skipped.`,
       )
       await refreshStatus()
     } catch (error) {

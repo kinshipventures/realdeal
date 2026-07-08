@@ -2,9 +2,17 @@
   "crons": [
     {
       "path": "/api/cron/sync-gmail",
-      "schedule": "0 12 * * *"
+      "schedule": "*/10 * * * *"
     }
   ],
+  "functions": {
+    "api/google/sync-gmail.ts": {
+      "maxDuration": 60
+    },
+    "api/cron/sync-gmail.ts": {
+      "maxDuration": 60
+    }
+  },
   "routes": [
     { "handle": "filesystem" },
     { "src": "/assets/(.*)", "status": 404 },

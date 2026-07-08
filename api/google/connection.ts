@@ -24,6 +24,14 @@ function connectionStatus(connection: GoogleConnection | null, userEmail: string
     daily_focus_email_last_sent_on: connection?.daily_focus_email_last_sent_on ?? null,
     last_gmail_synced_at: connection?.last_gmail_synced_at ?? null,
     last_calendar_synced_at: connection?.last_calendar_synced_at ?? null,
+    gmail_last_messages_scanned: connection?.gmail_last_messages_scanned ?? 0,
+    gmail_last_contacts_indexed: connection?.gmail_last_contacts_indexed ?? 0,
+    gmail_last_email_addresses_indexed: connection?.gmail_last_email_addresses_indexed ?? 0,
+    gmail_last_matches_found: connection?.gmail_last_matches_found ?? 0,
+    gmail_last_inserted: connection?.gmail_last_inserted ?? 0,
+    gmail_last_duplicates: connection?.gmail_last_duplicates ?? 0,
+    gmail_last_sync_mode: connection?.gmail_last_sync_mode ?? null,
+    gmail_last_error: connection?.gmail_last_error ?? null,
     needs_reconnect: needsReconnect,
   }
 }

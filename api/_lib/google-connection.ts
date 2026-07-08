@@ -23,6 +23,13 @@ export interface GoogleConnection {
   gmail_backfill_completed_at: string | null
   gmail_last_full_sync_at: string | null
   gmail_last_error: string | null
+  gmail_last_messages_scanned: number | null
+  gmail_last_contacts_indexed: number | null
+  gmail_last_email_addresses_indexed: number | null
+  gmail_last_matches_found: number | null
+  gmail_last_inserted: number | null
+  gmail_last_duplicates: number | null
+  gmail_last_sync_mode: string | null
 }
 
 export async function getGoogleConnection(admin: SupabaseClient, userId: string): Promise<GoogleConnection | null> {

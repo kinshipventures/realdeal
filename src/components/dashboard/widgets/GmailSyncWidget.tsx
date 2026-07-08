@@ -15,7 +15,7 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
   const [syncing, setSyncing] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [lastSync, setLastSync] = useState<string | null>(null)
-  const [result, setResult] = useState<{ synced: number; matched: number } | null>(null)
+  const [result, setResult] = useState<{ messages_scanned: number; inserted: number; duplicates: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [connectionReady, setConnectionReady] = useState(false)
   const [gmailEnabled, setGmailEnabled] = useState(true)
@@ -39,7 +39,7 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
     setResult(null)
     try {
       const res = await syncGmail()
-      setResult({ synced: res.synced, matched: res.matched })
+      setResult({ messages_scanned: res.messages_scanned, inserted: res.inserted, duplicates: res.duplicates })
       setLastSync(new Date().toISOString())
       await onSynced?.()
     } catch (err) {
@@ -120,9 +120,9 @@ export function GmailSyncWidget({ onSynced }: GmailSyncWidgetProps) {
 
         {result && (
           <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '10px 0 0' }}>
-            {result.matched === 0
-              ? `Checked ${result.synced} new email${result.synced !== 1 ? 's' : ''}. No contact matches found.`
-              : `Added ${result.matched} email${result.matched !== 1 ? 's' : ''} to recent activity.`}
+            {result.inserted === 0
+              ? `Checked ${result.messages_scanned} email${result.messages_scanned !== 1 ? 's' : ''}. No new activity added.`
+              : `Added ${result.inserted} email${result.inserted !== 1 ? 's' : ''} to recent activity.`}
           </p>
         )}
 
