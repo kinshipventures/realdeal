@@ -17,6 +17,12 @@ export interface GoogleConnection {
   daily_focus_email_last_sent_on: string | null
   last_gmail_synced_at: string | null
   last_calendar_synced_at: string | null
+  gmail_history_id: string | null
+  gmail_backfill_page_token: string | null
+  gmail_backfill_started_at: string | null
+  gmail_backfill_completed_at: string | null
+  gmail_last_full_sync_at: string | null
+  gmail_last_error: string | null
 }
 
 export async function getGoogleConnection(admin: SupabaseClient, userId: string): Promise<GoogleConnection | null> {

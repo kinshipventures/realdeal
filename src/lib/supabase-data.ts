@@ -499,6 +499,7 @@ export async function deleteContact(id: string): Promise<void> {
     return
   }
   const deletedContact = _contactsCache?.find(c => c.id === id)
+  await assertContactHasNoLockedGmailHistory(id)
   const { error } = await supabase.from('contacts').delete().eq('id', id)
   if (error) throw error
   if (_contactsCache) _contactsCache = _contactsCache.filter(c => c.id !== id)
@@ -599,6 +600,8 @@ export async function updateInteraction(id: string, data: Partial<Pick<Interacti
     Object.assign(DEMO_INTERACTIONS[idx], data)
     return DEMO_INTERACTIONS[idx]
   }
+  const existingInteraction = await getInteractionMutationRow(id)
+  assertMutableInteraction(existingInteraction)
   const { data: row, error } = await supabase.from('interactions').update(data).eq('id', id).select().single()
   if (error) throw error
   const interaction = mapInteraction(row)
@@ -621,8 +624,10 @@ export async function deleteInteraction(id: string): Promise<void> {
     if (idx !== -1) DEMO_INTERACTIONS.splice(idx, 1)
     return
   }
-  const deletedInteraction = _interactionsCache?.find(i => i.id === id)
-  await supabase.from('interactions').delete().eq('id', id)
+  const deletedInteraction = await getInteractionMutationRow(id)
+  assertMutableInteraction(deletedInteraction)
+  const { error } = await supabase.from('interactions').delete().eq('id', id)
+  if (error) throw error
   if (_interactionsCache) _interactionsCache = _interactionsCache.filter(i => i.id !== id)
   queueWorkspaceActivityEvent({
     action: 'deleted',
@@ -636,6 +641,37 @@ export async function deleteInteraction(id: string): Promise<void> {
 }
 
 // ── Follow-up helpers ────────────────────────────────────────────────────────
+
+async function getInteractionMutationRow(id: string): Promise<Pick<Interaction, 'id' | 'contact_id' | 'source'> | null> {
+  const cached = _interactionsCache?.find(i => i.id === id)
+  if (cached) return cached
+  const { data, error } = await supabase
+    .from('interactions')
+    .select('id, contact_id, source')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data as Pick<Interaction, 'id' | 'contact_id' | 'source'> | null
+}
+
+function assertMutableInteraction(interaction: Pick<Interaction, 'source'> | null): void {
+  if (interaction?.source === 'Gmail') {
+    throw new Error('Gmail activity is locked and cannot be edited or deleted.')
+  }
+}
+
+async function assertContactHasNoLockedGmailHistory(contactId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('interactions')
+    .select('id')
+    .eq('contact_id', contactId)
+    .eq('source', 'Gmail')
+    .limit(1)
+  if (error) throw error
+  if ((data ?? []).length > 0) {
+    throw new Error('Contacts with Gmail history cannot be deleted.')
+  }
+}
 
 const CADENCE_MS: Record<Cadence, number> = {
   weekly: 7 * 86400000, biweekly: 14 * 86400000, monthly: 30 * 86400000, quarterly: 90 * 86400000,

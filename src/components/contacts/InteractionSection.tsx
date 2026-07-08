@@ -505,6 +505,7 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
 
         // Human interaction card
         const gmailDetail = gmailEventDetail(interaction)
+        const isGmailInteraction = interaction.source === 'Gmail'
         return (
         <div
           key={interaction.id}
@@ -613,60 +614,64 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setEditingInteraction({
-                      id: interaction.id,
-                      type: interaction.type,
-                      date: interaction.date.slice(0, 10),
-                      notes: interaction.notes,
-                    })}
-                    className="interaction-action"
-                    style={{
-                      fontSize: 11, color: 'var(--color-text-tertiary)',
-                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                      opacity: 0, transition: 'opacity 0.15s',
-                    }}
-                  >
-                    edit
-                  </button>
-                  {confirmDeleteId === interaction.id ? (
-                    <span style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {!isGmailInteraction && (
+                    <>
                       <button
-                        onClick={() => { setConfirmDeleteId(null); handleDeleteInteraction(interaction.id) }}
-                        style={{
-                          fontSize: 11, fontWeight: 600, color: 'var(--health-fading)',
-                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        confirm
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
+                        onClick={() => setEditingInteraction({
+                          id: interaction.id,
+                          type: interaction.type,
+                          date: interaction.date.slice(0, 10),
+                          notes: interaction.notes,
+                        })}
+                        className="interaction-action"
                         style={{
                           fontSize: 11, color: 'var(--color-text-tertiary)',
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          fontFamily: 'inherit',
+                          opacity: 0, transition: 'opacity 0.15s',
                         }}
                       >
-                        cancel
+                        edit
                       </button>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDeleteId(interaction.id)}
-                      className="interaction-action"
-                      style={{
-                        fontSize: 11, color: 'var(--color-text-tertiary)',
-                        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                        opacity: 0, transition: 'opacity 0.15s',
-                        fontFamily: 'inherit',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
-                    >
-                      delete
-                    </button>
+                      {confirmDeleteId === interaction.id ? (
+                        <span style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <button
+                            onClick={() => { setConfirmDeleteId(null); handleDeleteInteraction(interaction.id) }}
+                            style={{
+                              fontSize: 11, fontWeight: 600, color: 'var(--health-fading)',
+                              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            confirm
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            style={{
+                              fontSize: 11, color: 'var(--color-text-tertiary)',
+                              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            cancel
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(interaction.id)}
+                          className="interaction-action"
+                          style={{
+                            fontSize: 11, color: 'var(--color-text-tertiary)',
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                            opacity: 0, transition: 'opacity 0.15s',
+                            fontFamily: 'inherit',
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(180,40,40,0.75)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-tertiary)' }}
+                        >
+                          delete
+                        </button>
+                      )}
+                    </>
                   )}
                   {interaction.actor && (
                     <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginRight: 4 }}>

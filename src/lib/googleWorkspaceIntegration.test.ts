@@ -46,6 +46,12 @@ class GoogleConnectionQuery {
         daily_focus_email_last_sent_on: null,
         last_gmail_synced_at: null,
         last_calendar_synced_at: null,
+        gmail_history_id: null,
+        gmail_backfill_page_token: null,
+        gmail_backfill_started_at: null,
+        gmail_backfill_completed_at: null,
+        gmail_last_full_sync_at: null,
+        gmail_last_error: null,
         ...this.row,
         ...this.writePayload,
       }
@@ -70,6 +76,12 @@ class GoogleConnectionQuery {
       daily_focus_email_last_sent_on: null,
       last_gmail_synced_at: null,
       last_calendar_synced_at: null,
+      gmail_history_id: null,
+      gmail_backfill_page_token: null,
+      gmail_backfill_started_at: null,
+      gmail_backfill_completed_at: null,
+      gmail_last_full_sync_at: null,
+      gmail_last_error: null,
       ...this.row,
       ...payload,
     }
@@ -287,6 +299,12 @@ function connectedUser(): GoogleConnection {
     daily_focus_email_last_sent_on: null,
     last_gmail_synced_at: null,
     last_calendar_synced_at: null,
+    gmail_history_id: null,
+    gmail_backfill_page_token: null,
+    gmail_backfill_started_at: null,
+    gmail_backfill_completed_at: null,
+    gmail_last_full_sync_at: null,
+    gmail_last_error: null,
   }
 }
 
@@ -397,7 +415,7 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toEqual({ synced: 2, matched: 1, total_messages: 2 })
+    expect(result).toMatchObject({ synced: 2, matched: 1, total_messages: 2, mode: 'full', backfill_complete: true })
     expect(state.insertedInteractions).toHaveLength(1)
     expect(state.insertedInteractions[0]).toMatchObject({
       contact_id: 'contact-a',
@@ -431,10 +449,108 @@ describe('Google Workspace integration', () => {
 
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
-    expect(result).toEqual({ synced: 2, matched: 0, total_messages: 2 })
+    expect(result).toMatchObject({ synced: 2, matched: 0, total_messages: 2, mode: 'full', backfill_complete: true })
     expect(state.insertedInteractions).toHaveLength(0)
     expect(state.contactUpdates).toHaveLength(0)
     expect(state.connectionUpdates).toHaveLength(1)
+  })
+
+  it('matches Gmail messages against secondary and tertiary contact emails', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch({
+      pages: [['secondary-message', 'tertiary-message']],
+      messages: {
+        'secondary-message': {
+          id: 'secondary-message',
+          from: 'Owner <owner@example.com>',
+          to: 'Secondary <secondary@example.com>',
+          date: 'Tue, 7 Jul 2026 12:00:00 -0500',
+          subject: 'Secondary email',
+        },
+        'tertiary-message': {
+          id: 'tertiary-message',
+          from: 'Third <third@example.com>',
+          to: 'Owner <owner@example.com>',
+          date: 'Tue, 7 Jul 2026 13:00:00 -0500',
+          subject: 'Tertiary email',
+        },
+      },
+    }))
+    const { admin, state } = createGmailAdminFixture({
+      contacts: [
+        {
+          id: 'contact-secondary',
+          email: null,
+          email_2: 'secondary@example.com',
+          email_3: null,
+          workspace_id: 'workspace-a',
+          last_contacted_at: null,
+        },
+        {
+          id: 'contact-tertiary',
+          email: null,
+          email_2: null,
+          email_3: 'third@example.com',
+          workspace_id: 'workspace-a',
+          last_contacted_at: null,
+        },
+      ],
+    })
+
+    const result = await syncGmailForConnection(admin as never, connectedUser())
+
+    expect(result).toMatchObject({ synced: 2, matched: 2, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(state.insertedInteractions.map(row => row.contact_id).sort()).toEqual(['contact-secondary', 'contact-tertiary'])
+    expect(state.insertedInteractions.map(row => row.email_link).sort()).toEqual(['gmail:secondary-message', 'gmail:tertiary-message'])
+  })
+
+  it('continues full Gmail backfill across paginated message pages', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch({
+      pages: [['message-1'], ['message-3']],
+      messages: {
+        'message-3': {
+          id: 'message-3',
+          from: 'Owner <owner@example.com>',
+          to: 'Contact <contact@example.com>',
+          date: 'Tue, 7 Jul 2026 12:30:00 -0500',
+          subject: 'Second page update',
+        },
+      },
+    }))
+    const { admin, state } = createGmailAdminFixture()
+
+    const result = await syncGmailForConnection(admin as never, connectedUser())
+
+    expect(result).toMatchObject({ synced: 2, matched: 2, total_messages: 2, mode: 'full', backfill_complete: true })
+    expect(state.insertedInteractions.map(row => row.email_link).sort()).toEqual(['gmail:message-1', 'gmail:message-3'])
+    expect(state.connectionUpdates.at(-1)?.patch).toMatchObject({
+      gmail_backfill_page_token: null,
+      gmail_backfill_completed_at: expect.any(String),
+      gmail_last_full_sync_at: expect.any(String),
+      gmail_history_id: 'profile-history-1',
+    })
+  })
+
+  it('uses Gmail history for incremental sync after the full backfill is complete', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch({
+      historyMessages: ['message-1'],
+    }))
+    const { admin, state } = createGmailAdminFixture()
+
+    const result = await syncGmailForConnection(admin as never, {
+      ...connectedUser(),
+      gmail_history_id: 'history-old',
+      gmail_backfill_completed_at: '2026-07-01T00:00:00.000Z',
+    })
+
+    expect(result).toMatchObject({ synced: 1, matched: 1, total_messages: 1, mode: 'incremental', backfill_complete: true })
+    expect(state.insertedInteractions).toHaveLength(1)
+    expect(state.connectionUpdates.at(-1)?.patch).toMatchObject({
+      gmail_history_id: 'history-next',
+      last_gmail_synced_at: expect.any(String),
+    })
   })
 
   it('returns a no-op result when Gmail sync is disabled', async () => {
@@ -490,42 +606,92 @@ describe('Google Workspace integration', () => {
   })
 })
 
-function gmailFetch() {
+interface GmailFetchMessage {
+  id: string
+  threadId?: string
+  from: string
+  to: string
+  cc?: string
+  bcc?: string
+  date: string
+  subject: string
+}
+
+interface GmailFetchOptions {
+  pages?: string[][]
+  messages?: Record<string, GmailFetchMessage>
+  historyMessages?: string[]
+  historyStatus?: number
+  profileHistoryId?: string
+}
+
+const defaultGmailMessages: Record<string, GmailFetchMessage> = {
+  'message-1': {
+    id: 'message-1',
+    threadId: 'thread-1',
+    from: 'Owner <owner@example.com>',
+    to: 'Contact <contact@example.com>',
+    date: 'Tue, 7 Jul 2026 10:00:00 -0500',
+    subject: 'Fund update',
+  },
+  'message-2': {
+    id: 'message-2',
+    threadId: 'thread-2',
+    from: 'Other <other@example.com>',
+    to: 'Owner <owner@example.com>',
+    date: 'Tue, 7 Jul 2026 11:00:00 -0500',
+    subject: 'Other workspace email',
+  },
+}
+
+function gmailFetch(options: GmailFetchOptions = {}) {
+  const pages = options.pages ?? [['message-1', 'message-2']]
+  const messages = { ...defaultGmailMessages, ...(options.messages ?? {}) }
+
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input))
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer access-token-a' })
 
-    if (url.pathname.endsWith('/gmail/v1/users/me/messages') && !url.pathname.includes('/messages/message-')) {
-      return Response.json({ messages: [{ id: 'message-1' }, { id: 'message-2' }] })
+    if (url.pathname.endsWith('/gmail/v1/users/me/profile')) {
+      return Response.json({ historyId: options.profileHistoryId ?? 'profile-history-1' })
     }
 
-    if (url.pathname.endsWith('/messages/message-1')) {
+    if (url.pathname.endsWith('/gmail/v1/users/me/history')) {
+      if (options.historyStatus) return new Response(null, { status: options.historyStatus })
       return Response.json({
-        id: 'message-1',
-        threadId: 'thread-1',
-        payload: {
-          headers: [
-            { name: 'From', value: 'Owner <owner@example.com>' },
-            { name: 'To', value: 'Contact <contact@example.com>' },
-            { name: 'Date', value: 'Tue, 7 Jul 2026 10:00:00 -0500' },
-            { name: 'Subject', value: 'Fund update' },
-          ],
-        },
+        historyId: 'history-next',
+        history: [{
+          messagesAdded: (options.historyMessages ?? ['message-1']).map(id => ({ message: { id } })),
+        }],
       })
     }
 
-    if (url.pathname.endsWith('/messages/message-2')) {
+    if (url.pathname.endsWith('/gmail/v1/users/me/messages')) {
+      const token = url.searchParams.get('pageToken')
+      const pageIndex = token ? Number(token.replace('page-', '')) : 0
+      const ids = pages[pageIndex] ?? []
+      const nextPageToken = pageIndex < pages.length - 1 ? `page-${pageIndex + 1}` : undefined
       return Response.json({
-        id: 'message-2',
-        threadId: 'thread-2',
-        payload: {
-          headers: [
-            { name: 'From', value: 'Other <other@example.com>' },
-            { name: 'To', value: 'Owner <owner@example.com>' },
-            { name: 'Date', value: 'Tue, 7 Jul 2026 11:00:00 -0500' },
-            { name: 'Subject', value: 'Other workspace email' },
-          ],
-        },
+        messages: ids.map(id => ({ id })),
+        nextPageToken,
+      })
+    }
+
+    const messageId = url.pathname.match(/\/messages\/([^/]+)$/)?.[1]
+    if (messageId && messages[messageId]) {
+      const message = messages[messageId]
+      const headers = [
+        { name: 'From', value: message.from },
+        { name: 'To', value: message.to },
+        { name: 'Date', value: message.date },
+        { name: 'Subject', value: message.subject },
+      ]
+      if (message.cc) headers.push({ name: 'Cc', value: message.cc })
+      if (message.bcc) headers.push({ name: 'Bcc', value: message.bcc })
+      return Response.json({
+        id: message.id,
+        threadId: message.threadId ?? message.id.replace('message', 'thread'),
+        payload: { headers },
       })
     }
 
