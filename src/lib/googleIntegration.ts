@@ -28,6 +28,7 @@ export interface GmailSyncResult {
   matched: number
   inserted: number
   duplicates: number
+  affected_contact_ids?: string[]
   total_messages: number
   messages_scanned: number
   contacts_indexed: number
@@ -45,6 +46,8 @@ export interface DailyFocusEmailPreferences {
   daily_focus_email_time?: string
   daily_focus_email_to?: string | null
 }
+
+export const GMAIL_SYNC_COMPLETE_EVENT = 'realdeal:gmail-sync-complete'
 
 const GMAIL_BACKGROUND_SYNC_RETRY_GUARD_MS = 10 * 1000
 const gmailBackgroundSyncInFlight = new Set<string>()
@@ -80,8 +83,14 @@ export async function syncGmailActivity(): Promise<GmailSyncResult> {
       invalidateContactsCache()
       invalidateInteractionsCache()
     })
+    notifyGmailSyncComplete(result)
   }
   return result
+}
+
+export function notifyGmailSyncComplete(result: GmailSyncResult): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(GMAIL_SYNC_COMPLETE_EVENT, { detail: result }))
 }
 
 export async function maybeSyncGmailActivityInBackground(userId: string): Promise<void> {

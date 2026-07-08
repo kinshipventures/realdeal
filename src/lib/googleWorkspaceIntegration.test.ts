@@ -423,6 +423,7 @@ describe('Google Workspace integration', () => {
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
     expect(result).toMatchObject({ synced: 2, matched: 1, inserted: 1, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
+    expect(result.affected_contact_ids).toEqual(['contact-a'])
     expect(state.insertedInteractions).toHaveLength(1)
     expect(state.insertedInteractions[0]).toMatchObject({
       contact_id: 'contact-a',
@@ -507,8 +508,60 @@ describe('Google Workspace integration', () => {
     const result = await syncGmailForConnection(admin as never, connectedUser())
 
     expect(result).toMatchObject({ synced: 2, matched: 2, inserted: 2, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
+    expect(result.affected_contact_ids?.sort()).toEqual(['contact-secondary', 'contact-tertiary'])
     expect(state.insertedInteractions.map(row => row.contact_id).sort()).toEqual(['contact-secondary', 'contact-tertiary'])
     expect(state.insertedInteractions.map(row => row.email_link).sort()).toEqual(['gmail:secondary-message', 'gmail:tertiary-message'])
+  })
+
+  it('matches real self-emails when the contact email is the connected Gmail address', async () => {
+    process.env.GOOGLE_TOKEN_ENCRYPTION_KEY = 'b'.repeat(64)
+    vi.stubGlobal('fetch', gmailFetch({
+      pages: [['self-message', 'third-party-message']],
+      messages: {
+        'self-message': {
+          id: 'self-message',
+          from: 'Owner <owner@example.com>',
+          to: 'Owner <owner@example.com>',
+          date: 'Wed, 8 Jul 2026 15:28:00 -0500',
+          subject: 'Self email',
+        },
+        'third-party-message': {
+          id: 'third-party-message',
+          from: 'Other <other@example.com>',
+          to: 'Owner <owner@example.com>',
+          date: 'Wed, 8 Jul 2026 15:30:00 -0500',
+          subject: 'Not a self email',
+        },
+      },
+    }))
+    const { admin, state } = createGmailAdminFixture({
+      contacts: [
+        {
+          id: 'contact-self',
+          email: 'owner@example.com',
+          email_2: null,
+          email_3: null,
+          workspace_id: 'workspace-a',
+          last_contacted_at: null,
+        },
+      ],
+    })
+
+    const result = await syncGmailForConnection(admin as never, connectedUser())
+
+    expect(result).toMatchObject({ synced: 2, matched: 1, inserted: 1, duplicates: 0, total_messages: 2, mode: 'full+rolling', backfill_complete: true })
+    expect(result.affected_contact_ids).toEqual(['contact-self'])
+    expect(state.insertedInteractions).toHaveLength(1)
+    expect(state.insertedInteractions[0]).toMatchObject({
+      contact_id: 'contact-self',
+      email_link: 'gmail:self-message',
+      summary: 'Self email',
+    })
+    expect(JSON.parse(String(state.insertedInteractions[0].event_detail))).toMatchObject({
+      direction: 'sent',
+      matchedEmail: 'owner@example.com',
+      selfEmail: true,
+    })
   })
 
   it('continues full Gmail backfill across paginated message pages', async () => {

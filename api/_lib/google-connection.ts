@@ -108,7 +108,7 @@ export async function getFreshGoogleAccessToken(admin: SupabaseClient, connectio
     body,
   })
 
-  if (!response.ok) throw new Error('Could not refresh Google access')
+  if (!response.ok) throw await googleRefreshError(response)
   const data = await response.json() as { access_token?: string; expires_in?: number; scope?: string }
   if (!data.access_token) throw new Error('Google did not return an access token')
 
@@ -124,6 +124,31 @@ export async function getFreshGoogleAccessToken(admin: SupabaseClient, connectio
     .eq('id', connection.id)
 
   return data.access_token
+}
+
+export function isGoogleReconnectErrorMessage(error: unknown): boolean {
+  const message = typeof error === 'string'
+    ? error
+    : error instanceof Error
+      ? error.message
+      : ''
+  return /google needs to be reconnected|could not refresh google access|google did not return an access token|invalid_grant|expired or revoked|refresh token/i.test(message)
+}
+
+async function googleRefreshError(response: Response): Promise<Error> {
+  const text = await response.text().catch(() => '')
+  let detail = text.trim()
+  if (detail) {
+    try {
+      const data = JSON.parse(detail) as { error?: string; error_description?: string }
+      detail = [data.error, data.error_description].filter(Boolean).join(': ') || detail
+    } catch {
+      detail = detail.slice(0, 160)
+    }
+  }
+  return new Error(detail
+    ? `Could not refresh Google access (${response.status}): ${detail}`
+    : `Could not refresh Google access (${response.status})`)
 }
 
 async function fetchGoogleEmail(accessToken: string): Promise<string | null> {

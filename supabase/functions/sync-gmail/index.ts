@@ -103,10 +103,15 @@ Deno.serve(async (req) => {
       .in("workspace_id", workspaceIds);
 
     // Build email -> contact map
-    const emailToContact = new Map<string, { id: string; workspace_id: string }>();
+    const emailToContacts = new Map<string, Array<{ id: string; workspace_id: string; address: string }>>();
     for (const c of contacts || []) {
       for (const field of [c.email, c.email_2, c.email_3]) {
-        if (field) emailToContact.set(field.toLowerCase(), { id: c.id, workspace_id: c.workspace_id });
+        if (!field) continue;
+        const address = String(field).trim().toLowerCase();
+        if (!address) continue;
+        const matches = emailToContacts.get(address) || [];
+        matches.push({ id: c.id, workspace_id: c.workspace_id, address });
+        emailToContacts.set(address, matches);
       }
     }
 
@@ -127,6 +132,9 @@ Deno.serve(async (req) => {
     // Fetch message details in batches of 10
     let synced = 0;
     let matched = 0;
+    let inserted = 0;
+    let duplicates = 0;
+    const affectedContactIds = new Set<string>();
 
     for (let i = 0; i < messageIds.length; i += 10) {
       const batch = messageIds.slice(i, i + 10);
@@ -156,28 +164,17 @@ Deno.serve(async (req) => {
         const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
         const fromEmails = (from.match(emailRegex) || []).map((email: string) => email.toLowerCase());
         const toEmails = (to.match(emailRegex) || []).map((email: string) => email.toLowerCase());
-        const direction = fromEmails.includes(userEmail) ? "sent" : "received";
-        const counterpartEmails = (direction === "sent" ? toEmails : fromEmails)
-          .filter((email: string) => email !== userEmail);
-        const fallbackEmails = [...fromEmails, ...toEmails]
-          .filter((email: string) => email !== userEmail);
-        const candidateEmails = [...new Set([...counterpartEmails, ...fallbackEmails])];
-
-        // Match every unique contact represented by the message.
-        const matchedContacts = new Map<string, { id: string; workspace_id: string; address: string }>();
-        for (const addr of candidateEmails) {
-          const contact = emailToContact.get(addr);
-          if (contact && !matchedContacts.has(contact.id)) {
-            matchedContacts.set(contact.id, { ...contact, address: addr });
-          }
-        }
+        const matchedContacts = matchGmailMessageContacts(userEmail, emailToContacts, fromEmails, toEmails);
 
         for (const contact of matchedContacts.values()) {
           const interactionKey = `${contact.id}:${gmailId}`;
-          if (existingKeys.has(interactionKey)) continue;
+          if (existingKeys.has(interactionKey)) {
+            duplicates++;
+            continue;
+          }
           const date = dateStr ? new Date(dateStr).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
 
-          await supabaseAdmin.from("interactions").insert({
+          const { error: insertError } = await supabaseAdmin.from("interactions").insert({
             contact_id: contact.id,
             user_id: userId,
             workspace_id: contact.workspace_id,
@@ -186,17 +183,28 @@ Deno.serve(async (req) => {
             date,
             email_link: gmailId,
             summary: subject || null,
-            notes: direction === "sent"
+            notes: contact.direction === "sent"
               ? `Sent email to ${contact.address}`
               : `Received email from ${contact.address}`,
             event_detail: JSON.stringify({
-              direction,
+              direction: contact.direction,
+              matchedEmail: contact.address,
+              selfEmail: contact.selfEmail,
               from,
               to,
               messageId: msg.id,
               threadId: msg.threadId || msg.id,
             }),
           });
+
+          if (insertError) {
+            if (/duplicate/i.test(insertError.message || "")) {
+              existingKeys.add(interactionKey);
+              duplicates++;
+              continue;
+            }
+            throw insertError;
+          }
 
           // Update last_contacted_at
           await supabaseAdmin
@@ -206,7 +214,9 @@ Deno.serve(async (req) => {
             .lt("last_contacted_at", date);
 
           existingKeys.add(interactionKey);
+          affectedContactIds.add(contact.id);
           matched++;
+          inserted++;
         }
         synced++;
       }
@@ -215,7 +225,18 @@ Deno.serve(async (req) => {
     await upsertSyncState(supabaseAdmin, userId, listData.resultSizeEstimate?.toString() || null);
 
     return new Response(
-      JSON.stringify({ synced, matched, total_messages: messageIds.length }),
+      JSON.stringify({
+        synced,
+        matched,
+        inserted,
+        duplicates,
+        affected_contact_ids: [...affectedContactIds],
+        total_messages: messageIds.length,
+        messages_scanned: synced,
+        contacts_indexed: contacts?.length || 0,
+        email_addresses_indexed: emailToContacts.size,
+        mode: "legacy-fallback",
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
@@ -225,6 +246,38 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+function matchGmailMessageContacts(
+  userEmail: string,
+  emailToContacts: Map<string, Array<{ id: string; workspace_id: string; address: string }>>,
+  fromEmails: string[],
+  recipientEmails: string[],
+): Map<string, { id: string; workspace_id: string; address: string; direction: "sent" | "received"; selfEmail: boolean }> {
+  const matchedContacts = new Map<string, { id: string; workspace_id: string; address: string; direction: "sent" | "received"; selfEmail: boolean }>();
+  if (!userEmail) return matchedContacts;
+
+  const fromSet = new Set(fromEmails);
+  const recipientSet = new Set(recipientEmails);
+  const messageEmails = new Set([...fromSet, ...recipientSet]);
+
+  for (const address of messageEmails) {
+    const selfEmail = address === userEmail;
+    const fromUserToContact = fromSet.has(userEmail) && recipientSet.has(address);
+    const fromContactToUser = fromSet.has(address) && recipientSet.has(userEmail);
+    const isMatch = selfEmail
+      ? fromSet.has(userEmail) && recipientSet.has(userEmail)
+      : fromUserToContact || fromContactToUser;
+
+    if (!isMatch) continue;
+
+    const direction: "sent" | "received" = fromUserToContact ? "sent" : "received";
+    for (const contact of emailToContacts.get(address) || []) {
+      if (!matchedContacts.has(contact.id)) matchedContacts.set(contact.id, { ...contact, direction, selfEmail });
+    }
+  }
+
+  return matchedContacts;
+}
 
 async function upsertSyncState(supabase: any, userId: string, historyId: string | null) {
   const now = new Date().toISOString();

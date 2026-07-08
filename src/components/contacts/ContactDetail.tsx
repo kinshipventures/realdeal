@@ -12,6 +12,7 @@ import { callEnrichFunction, isEnrichmentAllowed, computeFieldDiffs, applyEnrich
 import type { Campaign, CampaignContact, CampaignStage } from '../../lib/types'
 import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount, withMoneyField } from '../../lib/campaignCommitments'
 import { avatarHue, initials } from '../../lib/utils'
+import { syncGmailActivity } from '../../lib/googleIntegration'
 import { useEscape } from '../../lib/escapeStack'
 import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
@@ -50,6 +51,10 @@ export type ContactDetailShareAccess = {
 }
 
 type ContactPatch = Partial<Omit<Contact, 'id' | 'created_at'>>
+
+function normalizeContactEmailForGmailSync(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : ''
+}
 
 const SHARED_SECTION_SCOPE_REQUIREMENTS: Partial<Record<ContactDisplaySectionId, CollaborationFieldScope>> = {
   relationship_overview: 'relationship_private',
@@ -796,6 +801,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setSavingContactInfo(true)
     setContactSaveError(null)
     try {
+      const previousGmailSyncEmails = [contact.email, contact.email_2, contact.email_3].map(normalizeContactEmailForGmailSync)
       const updated = await persistContactPatch(contact.id, {
         name: nextName || contact.name,
         email: draft.email ?? null,
@@ -826,6 +832,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       setNewOptionTarget(null)
       setNewOptionValue('')
       onSaved(updated)
+      const nextGmailSyncEmails = [updated.email, updated.email_2, updated.email_3].map(normalizeContactEmailForGmailSync)
+      if (previousGmailSyncEmails.some((email, index) => email !== nextGmailSyncEmails[index])) {
+        void syncGmailActivity().catch(() => undefined)
+      }
     } catch {
       setContactSaveError('Could not save. Try again.')
     } finally {

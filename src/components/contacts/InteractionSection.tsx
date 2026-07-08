@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { EmptyState } from '../empty/EmptyState'
 import type { Contact, Interaction, InteractionType, ISODate, SystemEventType } from '../../lib/types'
 import { SYSTEM_TYPES } from '../../lib/types'
+import { supabase } from '../../integrations/supabase/client'
+import { GMAIL_SYNC_COMPLETE_EVENT } from '../../lib/googleIntegration'
 import {
   getInteractions,
   logInteraction,
@@ -63,6 +65,11 @@ interface GmailEventDetail {
   threadId?: string
 }
 
+interface GmailSyncCompleteDetail {
+  inserted?: number
+  affected_contact_ids?: string[]
+}
+
 function gmailEventDetail(interaction: Interaction): GmailEventDetail | null {
   if (interaction.source !== 'Gmail' || !interaction.event_detail) return null
   try {
@@ -108,14 +115,26 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
   const [localInteractions, setLocalInteractions] = useState<Interaction[]>([])
   const [interactionsError, setInteractionsError] = useState(false)
   const interactions = externalInteractions ?? localInteractions
-  const setInteractions = (updater: Interaction[] | ((prev: Interaction[]) => Interaction[])) => {
-    const next = typeof updater === 'function' ? updater(interactions) : updater
+  const replaceInteractions = useCallback((next: Interaction[]) => {
     if (externalInteractions !== undefined) {
       onInteractionsChange?.(next)
     } else {
       setLocalInteractions(next)
     }
-  }
+  }, [externalInteractions, onInteractionsChange])
+  const setInteractions = useCallback((updater: Interaction[] | ((prev: Interaction[]) => Interaction[])) => {
+    const next = typeof updater === 'function' ? updater(interactions) : updater
+    replaceInteractions(next)
+  }, [interactions, replaceInteractions])
+  const refreshInteractions = useCallback(async () => {
+    if (!contact?.id) return
+    setInteractionsError(false)
+    try {
+      replaceInteractions(await getInteractions(contact.id))
+    } catch {
+      setInteractionsError(true)
+    }
+  }, [contact.id, replaceInteractions])
   const [showLogForm, setShowLogForm] = useState(false)
   const [logType, setLogType] = useState<InteractionType>('call')
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10))
@@ -139,6 +158,38 @@ export function InteractionSection({ contact, onContactUpdated, activeFilters, s
       .catch(() => { if (!canceled) setInteractionsError(true) })
     return () => { canceled = true }
   }, [contact.id, externalInteractions])
+
+  useEffect(() => {
+    if (!contact?.id) return
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+      refreshTimer = setTimeout(() => {
+        void refreshInteractions()
+      }, 100)
+    }
+    const channel = supabase
+      .channel(`contact-interactions:${contact.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'interactions', filter: `contact_id=eq.${contact.id}` },
+        scheduleRefresh,
+      )
+      .subscribe()
+    const handleGmailSyncComplete = (event: Event) => {
+      const detail = (event as CustomEvent<GmailSyncCompleteDetail>).detail
+      const affectedContactIds = detail?.affected_contact_ids ?? []
+      if (detail?.inserted && (affectedContactIds.length === 0 || affectedContactIds.includes(contact.id))) {
+        scheduleRefresh()
+      }
+    }
+    window.addEventListener(GMAIL_SYNC_COMPLETE_EVENT, handleGmailSyncComplete)
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+      window.removeEventListener(GMAIL_SYNC_COMPLETE_EVENT, handleGmailSyncComplete)
+      void supabase.removeChannel(channel)
+    }
+  }, [contact.id, refreshInteractions])
 
   // Auto-open log form if navigated here via quick-log
   useEffect(() => {

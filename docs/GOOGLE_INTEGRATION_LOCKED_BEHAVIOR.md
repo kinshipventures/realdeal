@@ -10,13 +10,16 @@ Protected behavior:
 
 - Users can connect Google Workspace through OAuth with Gmail, Calendar, Contacts, profile, email, and OpenID scopes.
 - Gmail sync is owned by the app/API. Supabase only stores the connection state, diagnostics, and resulting interactions.
-- Gmail sync matches sent and received Gmail messages against each contact's `email`, `email_2`, and `email_3` fields.
+- Gmail sync matches sent and received Gmail messages between the connected Google email and each contact's current `email`, `email_2`, and `email_3` fields.
+- Gmail sync supports self-email contacts. When the connected Google email equals a contact email, only real self-emails where that address is both sender and recipient are saved.
 - Matched Gmail messages are saved as permanent `interactions` rows with `type = email`, `source = Gmail`, a stable `gmail:<messageId>` key, direction metadata, and the Gmail thread/message details.
 - Gmail interactions are deduplicated by contact and Gmail message key. Repeated syncs must not duplicate activity.
 - Gmail sync is multi-user and workspace-scoped. Each Google connection processes only the connected user's workspaces and contacts.
 - Manual sync uses `POST /api/google/sync-gmail` for the authenticated user.
 - Background sync runs automatically while an authenticated session is active.
 - Vercel Cron runs `/api/cron/sync-gmail` for all active Gmail-enabled Google connections, guarded by `CRON_SECRET`.
+- Contact email changes trigger an immediate Gmail reconciliation attempt while the app is open, using the contact's current email fields.
+- Open Recent Activity panels refresh from Gmail inserts through Supabase Realtime and the app-owned Gmail sync completion event.
 - Incremental Gmail history sync is backed by rolling recent-message reconciliation so messages missed by Gmail History are recovered.
 - Rolling reconciliation uses the current approved 14-day lookback window.
 - Diagnostics remain available after each sync: messages scanned, contacts indexed, email addresses indexed, matches found, inserted rows, duplicates skipped, sync mode, and last error.

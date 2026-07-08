@@ -1,11 +1,12 @@
 import { supabase } from '@/integrations/supabase/client'
-import { syncGmailActivity } from './googleIntegration'
+import { notifyGmailSyncComplete, syncGmailActivity } from './googleIntegration'
 
 interface GmailSyncResult {
   synced: number
   matched: number
   inserted: number
   duplicates: number
+  affected_contact_ids?: string[]
   total_messages: number
   messages_scanned: number
   contacts_indexed: number
@@ -29,7 +30,14 @@ export async function syncGmail(): Promise<GmailSyncResult> {
     })
 
     if (error) throw new Error(error.message)
-    return data as GmailSyncResult
+    const result = data as GmailSyncResult
+    if (result.inserted > 0) {
+      const { invalidateContactsCache, invalidateInteractionsCache } = await import('./data')
+      invalidateContactsCache()
+      invalidateInteractionsCache()
+      notifyGmailSyncComplete(result)
+    }
+    return result
   }
 }
 

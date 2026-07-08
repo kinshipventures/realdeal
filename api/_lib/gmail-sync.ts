@@ -7,6 +7,7 @@ export interface GmailSyncSummary {
   matched: number
   inserted: number
   duplicates: number
+  affected_contact_ids: string[]
   total_messages: number
   messages_scanned: number
   contacts_indexed: number
@@ -56,9 +57,15 @@ interface GmailSyncContext {
   accessToken: string
   userEmail: string
   contactById: Map<string, ContactEmailMatchRow>
-  emailToContacts: Map<string, Array<{ id: string; workspace_id: string }>>
+  emailToContacts: Map<string, GmailContactEmailMatch[]>
   existingKeys: Set<string>
   processedMessageIds: Set<string>
+}
+
+interface GmailContactEmailMatch {
+  id: string
+  workspace_id: string
+  address: string
 }
 
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
@@ -247,7 +254,7 @@ async function syncFullGmailBackfill(context: GmailSyncContext): Promise<GmailSy
   return summary
 }
 
-type GmailProcessResult = Pick<GmailSyncSummary, 'synced' | 'matched' | 'inserted' | 'duplicates'>
+type GmailProcessResult = Pick<GmailSyncSummary, 'synced' | 'matched' | 'inserted' | 'duplicates' | 'affected_contact_ids'>
 
 async function syncRollingRecentGmail(context: GmailSyncContext): Promise<GmailProcessResult> {
   const startedAt = Date.now()
@@ -271,6 +278,7 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
   let matched = 0
   let inserted = 0
   let duplicates = 0
+  const affectedContactIds = new Set<string>()
   const ids = messageIds.filter(id => {
     if (!id || context.processedMessageIds.has(id)) return false
     context.processedMessageIds.add(id)
@@ -292,17 +300,7 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
       const subject = headerValue(headers, 'Subject')
       const fromEmails = extractEmails(from)
       const recipientEmails = extractEmails(`${to}, ${cc}, ${bcc}`)
-      const direction = context.userEmail && fromEmails.includes(context.userEmail) ? 'sent' : 'received'
-      const counterpartEmails = (direction === 'sent' ? recipientEmails : fromEmails).filter(email => email !== context.userEmail)
-      const fallbackEmails = [...fromEmails, ...recipientEmails].filter(email => email !== context.userEmail)
-      const candidateEmails = [...new Set([...counterpartEmails, ...fallbackEmails])]
-      const matchedContacts = new Map<string, { id: string; workspace_id: string; address: string }>()
-
-      for (const address of candidateEmails) {
-        for (const contact of context.emailToContacts.get(address) ?? []) {
-          if (!matchedContacts.has(contact.id)) matchedContacts.set(contact.id, { ...contact, address })
-        }
-      }
+      const matchedContacts = matchGmailMessageContacts(context, fromEmails, recipientEmails)
 
       for (const contact of matchedContacts.values()) {
         matched++
@@ -323,11 +321,13 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
           date,
           email_link: gmailKey,
           summary: subject || null,
-          notes: direction === 'sent'
+          notes: contact.direction === 'sent'
             ? `Sent email to ${contact.address}`
             : `Received email from ${contact.address}`,
           event_detail: JSON.stringify({
-            direction,
+            direction: contact.direction,
+            matchedEmail: contact.address,
+            selfEmail: contact.selfEmail,
             from,
             to,
             cc,
@@ -353,16 +353,50 @@ async function processGmailMessages(context: GmailSyncContext, messageIds: strin
           if (currentContact) currentContact.last_contacted_at = date
         }
         context.existingKeys.add(interactionKey)
+        affectedContactIds.add(contact.id)
         inserted++
       }
     }
   }
 
-  return { synced, matched, inserted, duplicates }
+  return { synced, matched, inserted, duplicates, affected_contact_ids: [...affectedContactIds] }
 }
 
-function buildContactEmailMap(contacts: ContactEmailMatchRow[]): Map<string, Array<{ id: string; workspace_id: string }>> {
-  const emailToContacts = new Map<string, Array<{ id: string; workspace_id: string }>>()
+function matchGmailMessageContacts(
+  context: GmailSyncContext,
+  fromEmails: string[],
+  recipientEmails: string[],
+): Map<string, GmailContactEmailMatch & { direction: 'sent' | 'received'; selfEmail: boolean }> {
+  const matchedContacts = new Map<string, GmailContactEmailMatch & { direction: 'sent' | 'received'; selfEmail: boolean }>()
+  const userEmail = context.userEmail
+  if (!userEmail) return matchedContacts
+
+  const fromSet = new Set(fromEmails)
+  const recipientSet = new Set(recipientEmails)
+  const messageEmails = new Set([...fromSet, ...recipientSet])
+  const candidateEmails = [...messageEmails]
+
+  for (const address of candidateEmails) {
+    const selfEmail = address === userEmail
+    const fromUserToContact = fromSet.has(userEmail) && recipientSet.has(address)
+    const fromContactToUser = fromSet.has(address) && recipientSet.has(userEmail)
+    const isMatch = selfEmail
+      ? fromSet.has(userEmail) && recipientSet.has(userEmail)
+      : fromUserToContact || fromContactToUser
+
+    if (!isMatch) continue
+
+    const direction: 'sent' | 'received' = fromUserToContact ? 'sent' : 'received'
+    for (const contact of context.emailToContacts.get(address) ?? []) {
+      if (!matchedContacts.has(contact.id)) matchedContacts.set(contact.id, { ...contact, direction, selfEmail })
+    }
+  }
+
+  return matchedContacts
+}
+
+function buildContactEmailMap(contacts: ContactEmailMatchRow[]): Map<string, GmailContactEmailMatch[]> {
+  const emailToContacts = new Map<string, GmailContactEmailMatch[]>()
   for (const contact of contacts) {
     for (const value of [contact.email, contact.email_2, contact.email_3]) {
       if (typeof value === 'string' && value.trim()) {
@@ -371,6 +405,7 @@ function buildContactEmailMap(contacts: ContactEmailMatchRow[]): Map<string, Arr
         matches.push({
           id: contact.id,
           workspace_id: contact.workspace_id,
+          address: email,
         })
         emailToContacts.set(email, matches)
       }
@@ -509,7 +544,7 @@ function parseDateOnly(value: string): string {
 }
 
 function emptyGmailProcessResult(): GmailProcessResult {
-  return { synced: 0, matched: 0, inserted: 0, duplicates: 0 }
+  return { synced: 0, matched: 0, inserted: 0, duplicates: 0, affected_contact_ids: [] }
 }
 
 function emptyGmailSummary(): GmailSyncSummary {
@@ -529,6 +564,7 @@ function mergeGmailResults(a: GmailProcessResult, b: GmailProcessResult): GmailP
     matched: a.matched + b.matched,
     inserted: a.inserted + b.inserted,
     duplicates: a.duplicates + b.duplicates,
+    affected_contact_ids: [...new Set([...a.affected_contact_ids, ...b.affected_contact_ids])],
   }
 }
 

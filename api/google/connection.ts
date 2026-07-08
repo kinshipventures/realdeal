@@ -1,6 +1,6 @@
 import { createAdminClient, requireUser } from '../_lib/supabase.js'
 import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
-import { getGoogleConnection, upsertGoogleConnection, type GoogleConnection } from '../_lib/google-connection.js'
+import { getGoogleConnection, isGoogleReconnectErrorMessage, upsertGoogleConnection, type GoogleConnection } from '../_lib/google-connection.js'
 
 const REQUIRED_GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -11,7 +11,11 @@ const REQUIRED_GOOGLE_SCOPES = [
 function connectionStatus(connection: GoogleConnection | null, userEmail: string | undefined | null) {
   const scopes = new Set(connection?.scopes ?? [])
   const missingScopes = connection ? REQUIRED_GOOGLE_SCOPES.filter(scope => !scopes.has(scope)) : []
-  const needsReconnect = Boolean(connection && (!connection.refresh_token_encrypted || missingScopes.length > 0))
+  const needsReconnect = Boolean(connection && (
+    !connection.refresh_token_encrypted ||
+    missingScopes.length > 0 ||
+    isGoogleReconnectErrorMessage(connection.gmail_last_error)
+  ))
 
   return {
     connected: Boolean(connection),

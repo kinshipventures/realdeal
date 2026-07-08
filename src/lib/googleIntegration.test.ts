@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { maybeSyncGmailActivityInBackground } from './googleIntegration'
+import { GMAIL_SYNC_COMPLETE_EVENT, maybeSyncGmailActivityInBackground, syncGmailActivity } from './googleIntegration'
 
 const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -92,6 +92,34 @@ describe('Google integration background Gmail sync', () => {
     await Promise.all([first, second])
 
     expect(syncCalls(fetchMock)).toHaveLength(1)
+  })
+
+  it('notifies open timelines after Gmail sync inserts activity', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/google/sync-gmail') {
+        return Response.json({
+          synced: 1,
+          matched: 1,
+          inserted: 1,
+          duplicates: 0,
+          affected_contact_ids: ['contact-a'],
+          total_messages: 1,
+          messages_scanned: 1,
+          contacts_indexed: 1,
+          email_addresses_indexed: 1,
+        })
+      }
+      return Response.json({ error: 'unexpected request' }, { status: 500 })
+    })
+    const listener = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    window.addEventListener(GMAIL_SYNC_COMPLETE_EVENT, listener)
+
+    await syncGmailActivity()
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect((listener.mock.calls[0]?.[0] as CustomEvent).detail.affected_contact_ids).toEqual(['contact-a'])
+    window.removeEventListener(GMAIL_SYNC_COMPLETE_EVENT, listener)
   })
 })
 

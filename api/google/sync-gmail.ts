@@ -1,6 +1,6 @@
 import { createAdminClient, requireUser } from '../_lib/supabase.js'
 import { json, methodNotAllowed } from '../_lib/http.js'
-import { getGoogleConnection } from '../_lib/google-connection.js'
+import { getGoogleConnection, isGoogleReconnectErrorMessage } from '../_lib/google-connection.js'
 import { syncGmailForConnection } from '../_lib/gmail-sync.js'
 
 export default async function handler(request: any, response: any) {
@@ -24,7 +24,23 @@ export default async function handler(request: any, response: any) {
     })
     return json(response, 200, result)
   } catch (error) {
-    const status = error instanceof Error && error.message === 'Unauthorized' ? 401 : 500
-    return json(response, status, { error: status === 401 ? 'Unauthorized' : 'Gmail sync failed' })
+    const message = error instanceof Error ? error.message : 'Gmail sync failed'
+    const unauthorized = message === 'Unauthorized'
+    const needsReconnect = isGoogleReconnectErrorMessage(error)
+    if (!unauthorized) {
+      console.error('Gmail sync failed', {
+        error: message,
+        needs_reconnect: needsReconnect,
+      })
+    }
+    const status = unauthorized ? 401 : needsReconnect ? 409 : 500
+    return json(response, status, {
+      error: unauthorized
+        ? 'Unauthorized'
+        : needsReconnect
+          ? 'Reconnect Google to resume Gmail sync.'
+          : 'Gmail sync failed',
+      needs_reconnect: needsReconnect,
+    })
   }
 }
