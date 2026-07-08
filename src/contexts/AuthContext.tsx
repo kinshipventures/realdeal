@@ -15,15 +15,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const syncGmailInBackground = useCallback((nextSession: Session | null) => {
+    if (!nextSession) return
+    void maybeSyncGmailActivityInBackground(nextSession.user.id).catch(() => undefined)
+  }, [])
+
   const syncGoogleInBackground = useCallback((nextSession: Session | null) => {
     if (!nextSession) return
-    const sync = () => maybeSyncGmailActivityInBackground(nextSession.user.id).catch(() => undefined)
     if (nextSession.provider_token) {
-      void saveGoogleConnection(nextSession).then(sync).catch(() => undefined)
+      void saveGoogleConnection(nextSession).then(() => syncGmailInBackground(nextSession)).catch(() => undefined)
       return
     }
-    void sync()
-  }, [])
+    syncGmailInBackground(nextSession)
+  }, [syncGmailInBackground])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,6 +45,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     return () => subscription.unsubscribe()
   }, [syncGoogleInBackground])
+
+  useEffect(() => {
+    if (!session) return
+
+    const sync = () => syncGmailInBackground(session)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sync()
+    }
+
+    window.addEventListener('focus', sync)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('focus', sync)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [session, syncGmailInBackground])
 
   return (
     <AuthContext.Provider value={{ session, loading }}>

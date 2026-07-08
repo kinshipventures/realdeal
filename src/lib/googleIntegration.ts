@@ -30,7 +30,9 @@ export interface DailyFocusEmailPreferences {
   daily_focus_email_to?: string | null
 }
 
-const GMAIL_BACKGROUND_SYNC_INTERVAL_MS = 15 * 60 * 1000
+const GMAIL_BACKGROUND_SYNC_RETRY_GUARD_MS = 10 * 1000
+const gmailBackgroundSyncInFlight = new Set<string>()
+const gmailBackgroundSyncLastAttempt = new Map<string, number>()
 
 export async function saveGoogleConnection(session: Session): Promise<void> {
   const providerToken = session.provider_token
@@ -69,17 +71,21 @@ export async function syncGmailActivity(): Promise<GmailSyncResult> {
 export async function maybeSyncGmailActivityInBackground(userId: string): Promise<void> {
   if (typeof window === 'undefined') return
 
-  const status = await getGoogleConnectionStatus().catch(() => null)
-  if (!status?.connected || !status.gmail_sync_enabled || status.needs_reconnect) return
+  if (gmailBackgroundSyncInFlight.has(userId)) return
 
-  const storageKey = `rd:gmail-background-sync:${userId}`
-  const lastAttempt = Number(window.localStorage.getItem(storageKey) ?? 0)
-  const lastSynced = status.last_gmail_synced_at ? Date.parse(status.last_gmail_synced_at) : 0
-  const lastKnownRun = Math.max(Number.isFinite(lastAttempt) ? lastAttempt : 0, Number.isNaN(lastSynced) ? 0 : lastSynced)
-  if (Date.now() - lastKnownRun < GMAIL_BACKGROUND_SYNC_INTERVAL_MS) return
+  const lastAttempt = gmailBackgroundSyncLastAttempt.get(userId) ?? 0
+  if (Date.now() - lastAttempt < GMAIL_BACKGROUND_SYNC_RETRY_GUARD_MS) return
 
-  window.localStorage.setItem(storageKey, String(Date.now()))
-  await syncGmailActivity().catch(() => undefined)
+  gmailBackgroundSyncInFlight.add(userId)
+  gmailBackgroundSyncLastAttempt.set(userId, Date.now())
+
+  try {
+    const status = await getGoogleConnectionStatus().catch(() => null)
+    if (!status?.connected || !status.gmail_sync_enabled || status.needs_reconnect) return
+    await syncGmailActivity().catch(() => undefined)
+  } finally {
+    gmailBackgroundSyncInFlight.delete(userId)
+  }
 }
 
 export async function updateGooglePreferences(preferences: DailyFocusEmailPreferences): Promise<void> {
