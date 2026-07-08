@@ -10,6 +10,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue>({ session: null, loading: true })
+const GMAIL_BACKGROUND_SYNC_INTERVAL_MS = 10 * 60 * 1000
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!session) return
 
     const sync = () => syncGmailInBackground(session)
+    const intervalId = window.setInterval(sync, GMAIL_BACKGROUND_SYNC_INTERVAL_MS)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') sync()
     }
@@ -57,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('focus', sync)
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => {
+      window.clearInterval(intervalId)
       window.removeEventListener('focus', sync)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
