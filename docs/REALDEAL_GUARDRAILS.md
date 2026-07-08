@@ -47,6 +47,7 @@ Approved behavior becomes locked behavior after verification. Examples:
 - Calculations and scoring.
 - Supabase storage boundaries.
 - Import behavior that has already been verified.
+- Google Workspace and Gmail activity sync behavior documented in `docs/GOOGLE_INTEGRATION_LOCKED_BEHAVIOR.md`.
 
 Locked behavior may only be changed when the user explicitly names that behavior as the target of the task.
 
@@ -86,6 +87,7 @@ For documentation-only or guardrail-only changes:
 
 - Review the diff.
 - Run the guardrail script against the staged files.
+- Run `npm.cmd run verify:google-integration` when Google integration guardrails or Google integration files are in scope.
 - Do not deploy unless the deployed app changes.
 
 ## Diff Review Rule
