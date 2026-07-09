@@ -32,6 +32,7 @@ import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
 import type { SharedContactVisibleFieldId } from '@/lib/sharedContactVisibleFields'
+import { getUserConnections, type UserConnection } from '@/lib/connections'
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact, Pod, Category, Campaign, Company, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
@@ -73,6 +74,43 @@ const COLUMNS: ColumnDef[] = templateColumnDefs([])
 
 function defaultVisibleColumnIds(columns: ColumnDef[]): ColumnId[] {
   return columns.filter(col => col.defaultVisible).map(col => col.id)
+}
+
+function mergeShareAccessMembers(workspaceMembers: WorkspaceMember[], connections: UserConnection[]): WorkspaceMember[] {
+  const byUserId = new Map<string, WorkspaceMember>()
+
+  workspaceMembers.forEach(member => {
+    if (!member.user_id) return
+    byUserId.set(member.user_id, member)
+  })
+
+  connections
+    .filter(connection => connection.status === 'accepted')
+    .forEach(connection => {
+      if (!connection.connected_user_id) return
+      const existing = byUserId.get(connection.connected_user_id)
+      if (existing) {
+        byUserId.set(connection.connected_user_id, {
+          ...existing,
+          display_name: existing.display_name ?? connection.connected_display_name,
+          email: existing.email ?? connection.connected_email,
+        })
+        return
+      }
+
+      byUserId.set(connection.connected_user_id, {
+        id: `connection-${connection.id}`,
+        user_id: connection.connected_user_id,
+        role: 'member',
+        created_at: connection.created_at,
+        display_name: connection.connected_display_name,
+        email: connection.connected_email,
+      })
+    })
+
+  return [...byUserId.values()].sort((a, b) => (
+    (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '')
+  ))
 }
 
 function normalizeColumnId(id: string | null | undefined): string | null {
@@ -1778,7 +1816,11 @@ export function RecordsList() {
     }
     setShareAccessLoading(true)
     try {
-      setWorkspaceMembers(await fetchWorkspaceMembers(activeWorkspace.id))
+      const [members, connections] = await Promise.all([
+        fetchWorkspaceMembers(activeWorkspace.id),
+        getUserConnections(),
+      ])
+      setWorkspaceMembers(mergeShareAccessMembers(members, connections))
       setShowShareAccess(true)
     } catch (err) {
       console.error('Load workspace members failed:', err)

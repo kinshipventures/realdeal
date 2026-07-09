@@ -130,6 +130,9 @@ export function CollaborationQuickAccessModal({
     const labels = visibleFieldLabels.filter(Boolean)
     return labels.length > 0 ? labels : visibleFieldIds.map(fieldId => titleCase(fieldId))
   }, [visibleFieldIds, visibleFieldLabels])
+  const selectedMember = subjectType === 'user'
+    ? members.find(member => member.user_id === subjectId) ?? null
+    : null
   const selectionPermissionLevel: CollaborationPermissionLevel = selectionPermission === 'reader'
     ? 'view'
     : editorRequiresApproval
@@ -182,6 +185,7 @@ export function CollaborationQuickAccessModal({
           workspace_id: workspaceId,
           subject_type: subjectType,
           subject_id: subjectType === 'user' ? subjectId : null,
+          subject_email: subjectType === 'user' ? selectedMember?.email ?? null : null,
           subject_label: label,
           resource_type: resource.type,
           resource_id: resource.id,
