@@ -166,12 +166,64 @@ export async function deletePod(id: string): Promise<void> {
   if (isDemoMode()) {
     const idx = DEMO_PODS.findIndex(p => p.id === id)
     if (idx >= 0) DEMO_PODS.splice(idx, 1)
+    const removedCategoryIds = new Set(DEMO_CATEGORIES.filter(c => c.list_id === id).map(c => c.id))
+    for (let i = DEMO_CATEGORIES.length - 1; i >= 0; i -= 1) {
+      if (DEMO_CATEGORIES[i].list_id === id) DEMO_CATEGORIES.splice(i, 1)
+    }
+    for (const contact of DEMO_CONTACTS) {
+      const nextPodIds = contact.list_ids.filter(podId => podId !== id)
+      const nextCategoryIds = contact.category_ids.filter(categoryId => !removedCategoryIds.has(categoryId))
+      contact.list_ids = nextPodIds
+      contact.category_ids = nextCategoryIds
+      if (contact.primary_list_id === id) contact.primary_list_id = nextPodIds[0] ?? null
+    }
     return
   }
   const deletedPod = _podsCache?.find(p => p.id === id)
+  const wsId = getActiveWorkspaceId()
+  const { data: categoryRows, error: categoryError } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('workspace_id', wsId)
+    .eq('pod_id', id)
+  if (categoryError) throw categoryError
+
+  const removedCategoryIds = new Set((categoryRows ?? []).map(row => row.id))
+  const { data: contactRows, error: contactsError } = await supabase
+    .from('contacts')
+    .select('id,pod_ids,category_ids,primary_pod_id')
+    .eq('workspace_id', wsId)
+  if (contactsError) throw contactsError
+
+  await Promise.all((contactRows ?? []).map(async row => {
+    const podIds = Array.isArray(row.pod_ids) ? row.pod_ids : []
+    const categoryIds = Array.isArray(row.category_ids) ? row.category_ids : []
+    const nextPodIds = podIds.filter(podId => podId !== id)
+    const nextCategoryIds = categoryIds.filter(categoryId => !removedCategoryIds.has(categoryId))
+    const nextPrimaryPodId = row.primary_pod_id === id ? (nextPodIds[0] ?? null) : row.primary_pod_id
+    if (
+      nextPrimaryPodId === row.primary_pod_id &&
+      nextPodIds.length === podIds.length &&
+      nextCategoryIds.length === categoryIds.length
+    ) return
+
+    const { error } = await supabase
+      .from('contacts')
+      .update({
+        pod_ids: nextPodIds,
+        category_ids: nextCategoryIds,
+        primary_pod_id: nextPrimaryPodId,
+      })
+      .eq('workspace_id', wsId)
+      .eq('id', row.id)
+    if (error) throw error
+  }))
+
   const { error } = await supabase.from('pods').delete().eq('id', id)
   if (error) throw error
   _podsCache = null
+  _categoriesCache = null
+  _contactsCache = null
   queueWorkspaceActivityEvent({ action: 'deleted', entityType: 'pod', entityId: id, entityLabel: deletedPod?.name ?? null })
 }
 

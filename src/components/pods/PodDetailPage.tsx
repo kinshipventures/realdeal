@@ -249,6 +249,7 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   const [renamingPod, setRenamingPod] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deletingPod, setDeletingPod] = useState(false)
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
   const [editCatName, setEditCatName] = useState('')
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -386,10 +387,15 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
   }, [pod, podId, renameValue, save])
 
   const handleDeletePod = useCallback(async () => {
-    if (!podId || (pod && isProjectedSharedPod(pod))) return
-    await deletePod(podId)
-    navigate('/pods')
-  }, [pod, podId, navigate])
+    if (!podId || deletingPod || (pod && isProjectedSharedPod(pod))) return
+    setDeletingPod(true)
+    try {
+      await deletePod(podId)
+      navigate('/pods')
+    } finally {
+      setDeletingPod(false)
+    }
+  }, [deletingPod, pod, podId, navigate])
 
   const handleRenameCategory = useCallback(async (catId: string) => {
     const target = categories.find(category => category.id === catId)
@@ -735,9 +741,10 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
                   <button
                     type="button"
                     onClick={handleDeletePod}
-                    style={{ padding: '8px 16px', background: '#dc2626', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#fff' }}
+                    disabled={deletingPod}
+                    style={{ padding: '8px 16px', background: deletingPod ? 'var(--edge-strong)' : '#dc2626', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: deletingPod ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: deletingPod ? 'var(--color-text-tertiary)' : '#fff' }}
                   >
-                    Delete
+                    {deletingPod ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -1299,6 +1306,35 @@ export function PodDetailPage({ podIdProp, onClose }: { podIdProp?: string; onCl
               </div>
             </section>
           </>
+        )}
+
+        {!podReadOnly && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 0 12px' }}>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deletingPod}
+              title="Delete pod"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                border: '1px solid rgba(220, 38, 38, 0.24)',
+                background: 'rgba(220, 38, 38, 0.06)',
+                color: '#dc2626',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: deletingPod ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                opacity: deletingPod ? 0.6 : 1,
+              }}
+            >
+              <LucideIcon name="Trash2" size={14} />
+              Delete pod
+            </button>
+          </div>
         )}
 
       </div>
