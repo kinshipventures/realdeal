@@ -31,6 +31,7 @@ import { organizeSharedContactsForWorkspace, projectSharedWorkspaceResources } f
 import { isTeamWorkspace, useWorkspace } from '@/contexts/WorkspaceContext'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
 import { createCollaborationSavedView, getCollaborationAccessGrants, getSharedContactsWithMe, recordCollaborationAuditEvent, type CollaborationAccessGrant, type CollaborationFieldScope, type CollaborationPermissionLevel, type SharedContactAccessSnapshot } from '@/lib/collaboration'
+import type { SharedContactVisibleFieldId } from '@/lib/sharedContactVisibleFields'
 import { supabase } from '@/integrations/supabase/client'
 import type { Contact, Pod, Category, Campaign, Company, RelationshipType, RelationshipStatus, Interaction } from '../../lib/types'
 
@@ -103,6 +104,59 @@ function sameColumnIds(a: Iterable<string>, b: Iterable<string>): boolean {
   const left = Array.from(a)
   const right = Array.from(b)
   return left.length === right.length && left.every((value, index) => value === right[index])
+}
+
+function sharedContactVisibleFieldForColumn(id: ColumnId): SharedContactVisibleFieldId | null {
+  const normalized = normalizeRelationshipSectionId(id) ?? id
+  const directMap: Partial<Record<string, SharedContactVisibleFieldId>> = {
+    Name: 'name',
+    Company: 'company',
+    'Job Title': 'job_title',
+    LinkedIn: 'linkedin',
+    'Referred By': 'referred_by',
+    Gender: 'gender',
+    Birthday: 'birthday',
+    Notables: 'notables',
+    Email: 'email',
+    'Email 2': 'email_2',
+    'Email 3': 'email_3',
+    Phone: 'phone',
+    Address: 'address',
+    City: 'city',
+    Country: 'country',
+    'Assistant Info': 'assistant_info',
+    'Kinship Investments': 'kinship_investments',
+    'Investment Entity': 'investment_entity',
+    'Investment Email': 'investment_email',
+    Pods: 'pods',
+    'Sub-pods': 'sub_pods',
+    Campaigns: 'campaign',
+    'Campaign Status': 'campaign_status',
+    'Campaign Target Commitment': 'commitment_amount',
+  }
+
+  if (directMap[normalized]) return directMap[normalized] ?? null
+  if (/^Pod \d+$/.test(normalized)) return 'pods'
+  if (/^Sub-pod \d+$/.test(normalized)) return 'sub_pods'
+  if (/^Kinship Investments \d+$/.test(normalized)) return 'kinship_investments'
+  if (/^Campaign \d+$/.test(normalized)) return 'campaign'
+  if (/^Campaign \d+ Status$/.test(normalized)) return 'campaign_status'
+  if (/^Campaign \d+ Target Commitment$/.test(normalized)) return 'commitment_amount'
+  return null
+}
+
+function sharedContactVisibleFieldIdsForColumns(columns: readonly ColumnDef[]): SharedContactVisibleFieldId[] {
+  const ids: SharedContactVisibleFieldId[] = []
+  const seen = new Set<SharedContactVisibleFieldId>()
+
+  for (const column of columns) {
+    const fieldId = sharedContactVisibleFieldForColumn(column.id)
+    if (!fieldId || seen.has(fieldId)) continue
+    seen.add(fieldId)
+    ids.push(fieldId)
+  }
+
+  return ids
 }
 
 // ── Filter types ─────────────────────────────────────────────────────────────
@@ -1718,6 +1772,10 @@ export function RecordsList() {
       showToast('Choose a workspace before sharing access.')
       return
     }
+    if (selectedShareVisibleFieldIds.length === 0) {
+      showToast('Choose at least one shareable visible section before sharing.')
+      return
+    }
     setShareAccessLoading(true)
     try {
       setWorkspaceMembers(await fetchWorkspaceMembers(activeWorkspace.id))
@@ -1776,6 +1834,10 @@ export function RecordsList() {
   }
 
   const visibleCols = relationshipFilterFields.filter(col => visibleColumns.has(col.id))
+  const selectedShareVisibleFieldIds = sharedContactVisibleFieldIdsForColumns(visibleCols)
+  const selectedShareVisibleFieldLabels = visibleCols
+    .filter(column => sharedContactVisibleFieldForColumn(column.id))
+    .map(column => column.label)
   const selectedShareResources: CollaborationResourceOption[] = contacts
     .filter(contact => selectedIds.has(contact.id))
     .map(contact => ({
@@ -2205,7 +2267,21 @@ export function RecordsList() {
             </span>
           )}
 
-          <div ref={moreRef} style={{ marginLeft: 'auto', position: 'relative' }}>
+          <div ref={moreRef} style={{ marginLeft: 'auto', position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="records-toolbar-button"
+              type="button"
+              onClick={() => navigate('/approvals')}
+              style={{
+                ...utilityBtnStyle(false),
+                minWidth: 172,
+                background: 'var(--color-brand)',
+                borderColor: 'var(--color-brand)',
+                color: '#fff',
+              }}
+            >
+              Shared contacts Detail view
+            </button>
             <button
               className="delight-button"
               type="button"
@@ -2555,10 +2631,18 @@ export function RecordsList() {
               type="button"
               onClick={openShareAccess}
               disabled={bulkOperating || shareAccessLoading}
-              style={{ ...bulkBtnStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{
+                ...bulkBtnStyle,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'var(--color-brand)',
+                borderColor: 'var(--color-brand)',
+                color: '#fff',
+              }}
             >
               <Share2 size={12} />
-              {shareAccessLoading ? 'Loading...' : 'Share Access'}
+              {shareAccessLoading ? 'Loading...' : 'Share current selection'}
             </button>
           </div>
           <button
@@ -2597,13 +2681,16 @@ export function RecordsList() {
           workspaceId={activeWorkspace.id}
           members={workspaceMembers}
           resources={selectedShareResources}
-          title="Share selected contacts"
-          detail="Grant access to the selected people or companies without duplicating records or changing the contact database."
+          variant="selection"
+          visibleFieldIds={selectedShareVisibleFieldIds}
+          visibleFieldLabels={selectedShareVisibleFieldLabels}
+          title="Share current selection"
+          detail="Share selected contacts using only the sections currently enabled in Visible Sections."
           onClose={() => setShowShareAccess(false)}
           onCreated={(count) => {
             setShowShareAccess(false)
             setSelectedIds(new Set())
-            showToast(`Shared access for ${count} ${count === 1 ? 'record' : 'records'}.`)
+            showToast(`Shared current selection for ${count} ${count === 1 ? 'record' : 'records'}.`)
           }}
         />
       )}

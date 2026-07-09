@@ -36,14 +36,40 @@ describe('Shared contacts guardrails', () => {
     expect(approvalsPage.match(/window\.dispatchEvent\(new Event\(CONNECTIONS_CHANGED_EVENT\)\)/g)?.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('keeps the Shared contacts sidebar badge visible and accessible', () => {
+  it('keeps Shared contacts accessible from Relationships instead of the sidebar', () => {
     const sidebar = source('src/components/nav/Sidebar.tsx')
+    const recordsList = source('src/components/records/RecordsList.tsx')
 
     expect(sidebar).toContain('sharedContactsBadgeCount?: number')
     expect(sidebar).toContain('sharedContactsBadgeLabel?: string')
-    expect(sidebar).toContain('badgeCount={sharedContactsBadgeCount}')
+    expect(sidebar).not.toContain('label="Shared contacts"')
+    expect(recordsList).toContain('Shared contacts Detail view')
+    expect(recordsList).toContain("navigate('/approvals')")
+    expect(recordsList).toContain('Share current selection')
+    expect(recordsList).toContain('visibleFieldIds={selectedShareVisibleFieldIds}')
+    expect(recordsList).toContain('visibleFieldLabels={selectedShareVisibleFieldLabels}')
+    expect(recordsList).toContain('Choose at least one shareable visible section before sharing.')
     expect(sidebar).toContain('aria-label={badgeLabel ? `${label}: ${badgeLabel}` : label}')
     expect(sidebar).toContain("{badgeCount > 99 ? '99+' : badgeCount}")
+  })
+
+  it('keeps quick shared-contact selection scoped to visible sections', () => {
+    const modal = source('src/components/collaboration/CollaborationQuickAccessModal.tsx')
+    const recordsList = source('src/components/records/RecordsList.tsx')
+
+    expect(recordsList).toContain('function sharedContactVisibleFieldForColumn')
+    expect(recordsList).toContain("Pods: 'pods'")
+    expect(recordsList).toContain("'Sub-pods': 'sub_pods'")
+    expect(recordsList).toContain("Campaigns: 'campaign'")
+    expect(recordsList).toContain("if (/^Pod \\d+$/.test(normalized)) return 'pods'")
+    expect(recordsList).toContain("if (/^Sub-pod \\d+$/.test(normalized)) return 'sub_pods'")
+    expect(recordsList).toContain("if (/^Campaign \\d+$/.test(normalized)) return 'campaign'")
+    expect(recordsList).toContain('variant="selection"')
+    expect(modal).toContain("type QuickAccessVariant = 'full' | 'selection'")
+    expect(modal).toContain('visible_field_ids: isSelectionVariant ? visibleFieldIds : undefined')
+    expect(modal).toContain('Reader')
+    expect(modal).toContain('Editor')
+    expect(modal).toContain('Require approval before editor changes apply')
   })
 
   it('keeps trusted-user RPC contracts intact', () => {

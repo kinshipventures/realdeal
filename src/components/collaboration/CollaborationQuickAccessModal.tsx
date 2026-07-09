@@ -7,6 +7,7 @@ import {
   type CollaborationResourceType,
   type CollaborationSubjectType,
 } from '@/lib/collaboration'
+import type { SharedContactVisibleFieldId } from '@/lib/sharedContactVisibleFields'
 import type { WorkspaceMember } from '@/lib/supabase-data'
 
 export type CollaborationResourceOption = {
@@ -86,10 +87,16 @@ const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
   { label: '90 days', days: 90 },
 ]
 
+type QuickAccessVariant = 'full' | 'selection'
+type SelectionPermission = 'reader' | 'editor'
+
 export function CollaborationQuickAccessModal({
   workspaceId,
   members,
   resources,
+  variant = 'full',
+  visibleFieldIds = [],
+  visibleFieldLabels = [],
   title = 'Share access',
   detail = 'Choose who can access the selected records and which field groups are visible.',
   onClose,
@@ -98,21 +105,40 @@ export function CollaborationQuickAccessModal({
   workspaceId: string
   members: WorkspaceMember[]
   resources: CollaborationResourceOption[]
+  variant?: QuickAccessVariant
+  visibleFieldIds?: readonly SharedContactVisibleFieldId[]
+  visibleFieldLabels?: readonly string[]
   title?: string
   detail?: string
   onClose: () => void
   onCreated: (createdCount: number) => void
 }) {
+  const isSelectionVariant = variant === 'selection'
   const [subjectType, setSubjectType] = useState<CollaborationSubjectType>(members.length > 0 ? 'user' : 'team')
   const [subjectId, setSubjectId] = useState(members[0]?.user_id ?? '')
   const [subjectLabel, setSubjectLabel] = useState(members[0]?.display_name || members[0]?.email || '')
   const [permission, setPermission] = useState<CollaborationPermissionLevel>('view')
+  const [selectionPermission, setSelectionPermission] = useState<SelectionPermission>('reader')
+  const [editorRequiresApproval, setEditorRequiresApproval] = useState(true)
   const [fieldScopes, setFieldScopes] = useState<CollaborationFieldScope[]>(['public_profile'])
-  const [expirationDays, setExpirationDays] = useState<number | null>(30)
+  const [expirationDays, setExpirationDays] = useState<number | null>(isSelectionVariant ? null : 30)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const resourcePreview = useMemo(() => resources.slice(0, 5), [resources])
+  const selectedVisibleFieldSummary = useMemo(() => {
+    const labels = visibleFieldLabels.filter(Boolean)
+    return labels.length > 0 ? labels : visibleFieldIds.map(fieldId => titleCase(fieldId))
+  }, [visibleFieldIds, visibleFieldLabels])
+  const selectionPermissionLevel: CollaborationPermissionLevel = selectionPermission === 'reader'
+    ? 'view'
+    : editorRequiresApproval
+      ? 'suggest'
+      : 'edit'
+  const canSubmit = !saving
+    && resources.length > 0
+    && subjectLabel.trim().length > 0
+    && (!isSelectionVariant || visibleFieldIds.length > 0)
 
   useEffect(() => {
     if (subjectType !== 'user') {
@@ -144,6 +170,7 @@ export function CollaborationQuickAccessModal({
   async function handleSubmit() {
     const label = subjectLabel.trim()
     if (!label || fieldScopes.length === 0 || resources.length === 0 || saving) return
+    if (isSelectionVariant && visibleFieldIds.length === 0) return
     setSaving(true)
     setError('')
     try {
@@ -159,8 +186,9 @@ export function CollaborationQuickAccessModal({
           resource_type: resource.type,
           resource_id: resource.id,
           resource_label: resource.label,
-          permission_level: permission,
+          permission_level: isSelectionVariant ? selectionPermissionLevel : permission,
           field_scopes: fieldScopes,
+          visible_field_ids: isSelectionVariant ? visibleFieldIds : undefined,
           expires_at,
         })
       }
@@ -226,106 +254,214 @@ export function CollaborationQuickAccessModal({
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}>Permission preset</div>
-            <div style={{ display: 'grid', gap: 8 }}>
-              {PRESETS.map(preset => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  style={{
-                    textAlign: 'left',
-                    border: permission === preset.permission && preset.scopes.every(scope => fieldScopes.includes(scope))
-                      ? '1px solid var(--color-brand)'
-                      : '1px solid var(--edge)',
-                    borderRadius: 8,
-                    background: 'var(--surface-panel)',
-                    padding: 10,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 3 }}>{preset.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>{preset.description}</div>
-                </button>
-              ))}
-            </div>
-          </section>
+        {isSelectionVariant ? (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <section style={panelStyle}>
+                <div style={sectionTitleStyle}>Selected contacts</div>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {resourcePreview.map(resource => (
+                    <div key={`${resource.type}-${resource.id ?? resource.label}`} style={{ border: '1px solid var(--edge)', borderRadius: 8, padding: 10 }}>
+                      <div style={{ fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)' }}>{resource.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3 }}>
+                        {titleCase(resource.type)}{resource.description ? ` - ${resource.description}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                  {resources.length > resourcePreview.length && (
+                    <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                      +{resources.length - resourcePreview.length} more selected
+                    </div>
+                  )}
+                </div>
+              </section>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}>Selected resources</div>
-            <div style={{ display: 'grid', gap: 8 }}>
-              {resourcePreview.map(resource => (
-                <div key={`${resource.type}-${resource.id ?? resource.label}`} style={{ border: '1px solid var(--edge)', borderRadius: 8, padding: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)' }}>{resource.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3 }}>
-                    {titleCase(resource.type)}{resource.description ? ` - ${resource.description}` : ''}
+              <section style={panelStyle}>
+                <div style={sectionTitleStyle}>Visible Sections</div>
+                {selectedVisibleFieldSummary.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--health-fading)' }}>
+                    Choose at least one shareable visible section before sharing.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {selectedVisibleFieldSummary.map(label => (
+                      <span
+                        key={label}
+                        style={{
+                          borderRadius: 999,
+                          border: '1px solid var(--edge)',
+                          background: 'var(--surface-panel)',
+                          color: 'var(--color-text-secondary)',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '4px 8px',
+                        }}
+                      >
+                        {label}
+                      </span>
+                    ))}
                   </div>
-                </div>
-              ))}
-              {resources.length > resourcePreview.length && (
-                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                  +{resources.length - resourcePreview.length} more selected
-                </div>
+                )}
+              </section>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 14 }}>
+              <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
+                {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+              </SelectField>
+
+              {subjectType === 'user' ? (
+                <SelectField label="User" value={subjectId} onChange={setSubjectId}>
+                  {members.length === 0 && <option value="">No users found</option>}
+                  {members.map(member => (
+                    <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
+                  ))}
+                </SelectField>
+              ) : (
+                <TextField
+                  label="Label"
+                  value={subjectLabel}
+                  onChange={setSubjectLabel}
+                  placeholder={subjectType === 'public_link' ? 'Public reviewer link' : 'Team or organization name'}
+                />
               )}
             </div>
-          </section>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 14 }}>
-          <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
-            {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-          </SelectField>
+            <section style={{ ...panelStyle, marginTop: 14 }}>
+              <div style={sectionTitleStyle}>Permissions</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectionPermission('reader')}
+                  style={selectionPermissionButtonStyle(selectionPermission === 'reader')}
+                >
+                  Reader
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectionPermission('editor')}
+                  style={selectionPermissionButtonStyle(selectionPermission === 'editor')}
+                >
+                  Editor
+                </button>
+              </div>
+              {selectionPermission === 'editor' && (
+                <label style={{ marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 8, color: 'var(--color-text-secondary)', fontSize: 12, lineHeight: 1.4 }}>
+                  <input
+                    type="checkbox"
+                    checked={editorRequiresApproval}
+                    onChange={event => setEditorRequiresApproval(event.target.checked)}
+                    style={{ marginTop: 2, accentColor: 'var(--color-brand)' }}
+                  />
+                  <span>Require approval before editor changes apply</span>
+                </label>
+              )}
+            </section>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <section style={panelStyle}>
+                <div style={sectionTitleStyle}>Permission preset</div>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      style={{
+                        textAlign: 'left',
+                        border: permission === preset.permission && preset.scopes.every(scope => fieldScopes.includes(scope))
+                          ? '1px solid var(--color-brand)'
+                          : '1px solid var(--edge)',
+                        borderRadius: 8,
+                        background: 'var(--surface-panel)',
+                        padding: 10,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 3 }}>{preset.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>{preset.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
 
-          {subjectType === 'user' ? (
-            <SelectField label="User" value={subjectId} onChange={setSubjectId}>
-              {members.length === 0 && <option value="">No users found</option>}
-              {members.map(member => (
-                <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
-              ))}
-            </SelectField>
-          ) : (
-            <TextField
-              label="Label"
-              value={subjectLabel}
-              onChange={setSubjectLabel}
-              placeholder={subjectType === 'public_link' ? 'Public reviewer link' : 'Team or organization name'}
-            />
-          )}
+              <section style={panelStyle}>
+                <div style={sectionTitleStyle}>Selected resources</div>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {resourcePreview.map(resource => (
+                    <div key={`${resource.type}-${resource.id ?? resource.label}`} style={{ border: '1px solid var(--edge)', borderRadius: 8, padding: 10 }}>
+                      <div style={{ fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)' }}>{resource.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3 }}>
+                        {titleCase(resource.type)}{resource.description ? ` - ${resource.description}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                  {resources.length > resourcePreview.length && (
+                    <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                      +{resources.length - resourcePreview.length} more selected
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
 
-          <SelectField label="Permission level" value={permission} onChange={value => setPermission(value as CollaborationPermissionLevel)}>
-            {PERMISSION_LEVELS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
-          </SelectField>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 14 }}>
+              <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
+                {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+              </SelectField>
 
-          <SelectField label="Expiration" value={String(expirationDays ?? '')} onChange={value => setExpirationDays(value ? Number(value) : null)}>
-            {EXPIRATION_OPTIONS.map(option => (
-              <option key={option.label} value={option.days ?? ''}>{option.label}</option>
-            ))}
-          </SelectField>
-        </div>
-
-        <section style={{ ...panelStyle, marginTop: 14 }}>
-          <div style={sectionTitleStyle}>Visible fields</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-            {FIELD_SCOPES.map(scope => (
-              <label key={scope.value} style={checkboxCardStyle(fieldScopes.includes(scope.value), scope.value === 'public_profile')}>
-                <input
-                  type="checkbox"
-                  checked={fieldScopes.includes(scope.value)}
-                  disabled={scope.value === 'public_profile'}
-                  onChange={() => toggleScope(scope.value)}
-                  style={{ width: 15, height: 15, accentColor: 'var(--color-brand)', marginTop: 2 }}
+              {subjectType === 'user' ? (
+                <SelectField label="User" value={subjectId} onChange={setSubjectId}>
+                  {members.length === 0 && <option value="">No users found</option>}
+                  {members.map(member => (
+                    <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
+                  ))}
+                </SelectField>
+              ) : (
+                <TextField
+                  label="Label"
+                  value={subjectLabel}
+                  onChange={setSubjectLabel}
+                  placeholder={subjectType === 'public_link' ? 'Public reviewer link' : 'Team or organization name'}
                 />
-                <span>
-                  <span style={{ display: 'block', fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)' }}>{scope.label}</span>
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4, marginTop: 2 }}>{scope.detail}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </section>
+              )}
+
+              <SelectField label="Permission level" value={permission} onChange={value => setPermission(value as CollaborationPermissionLevel)}>
+                {PERMISSION_LEVELS.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
+              </SelectField>
+
+              <SelectField label="Expiration" value={String(expirationDays ?? '')} onChange={value => setExpirationDays(value ? Number(value) : null)}>
+                {EXPIRATION_OPTIONS.map(option => (
+                  <option key={option.label} value={option.days ?? ''}>{option.label}</option>
+                ))}
+              </SelectField>
+            </div>
+
+            <section style={{ ...panelStyle, marginTop: 14 }}>
+              <div style={sectionTitleStyle}>Visible fields</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                {FIELD_SCOPES.map(scope => (
+                  <label key={scope.value} style={checkboxCardStyle(fieldScopes.includes(scope.value), scope.value === 'public_profile')}>
+                    <input
+                      type="checkbox"
+                      checked={fieldScopes.includes(scope.value)}
+                      disabled={scope.value === 'public_profile'}
+                      onChange={() => toggleScope(scope.value)}
+                      style={{ width: 15, height: 15, accentColor: 'var(--color-brand)', marginTop: 2 }}
+                    />
+                    <span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 750, color: 'var(--color-text-primary)' }}>{scope.label}</span>
+                      <span style={{ display: 'block', fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4, marginTop: 2 }}>{scope.detail}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
         {error && <div style={{ color: 'var(--health-fading)', fontSize: 12, marginTop: 12 }}>{error}</div>}
 
@@ -334,14 +470,18 @@ export function CollaborationQuickAccessModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={saving || resources.length === 0 || !subjectLabel.trim()}
+            disabled={!canSubmit}
             style={{
               ...primaryButtonStyle,
-              opacity: saving || resources.length === 0 || !subjectLabel.trim() ? 0.62 : 1,
-              cursor: saving || resources.length === 0 || !subjectLabel.trim() ? 'default' : 'pointer',
+              opacity: canSubmit ? 1 : 0.62,
+              cursor: canSubmit ? 'pointer' : 'default',
             }}
           >
-            {saving ? 'Saving...' : `Share ${resources.length === 1 ? 'access' : `${resources.length} records`}`}
+            {saving
+              ? 'Saving...'
+              : isSelectionVariant
+                ? 'Share current selection'
+                : `Share ${resources.length === 1 ? 'access' : `${resources.length} records`}`}
           </button>
         </div>
       </div>
@@ -473,6 +613,20 @@ const secondaryButtonStyle: React.CSSProperties = {
   fontWeight: 750,
   fontFamily: 'inherit',
   cursor: 'pointer',
+}
+
+function selectionPermissionButtonStyle(selected: boolean): React.CSSProperties {
+  return {
+    border: selected ? '1px solid var(--color-brand)' : '1px solid var(--edge)',
+    borderRadius: 8,
+    background: selected ? 'rgba(0,61,165,0.08)' : 'var(--surface-panel)',
+    color: selected ? 'var(--color-brand)' : 'var(--color-text-primary)',
+    fontSize: 13,
+    fontWeight: 800,
+    fontFamily: 'inherit',
+    minHeight: 40,
+    cursor: 'pointer',
+  }
 }
 
 function checkboxCardStyle(selected: boolean, locked: boolean): React.CSSProperties {
