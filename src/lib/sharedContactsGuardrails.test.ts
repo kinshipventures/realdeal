@@ -185,13 +185,15 @@ describe('Shared contacts guardrails', () => {
     expect(responseFixMigration).toContain('GRANT EXECUTE ON FUNCTION public.respond_incoming_collaboration_access_grant(uuid, text) TO authenticated')
   })
 
-  it('keeps Shared contact manager row actions from hiding active access', () => {
+  it('keeps Shared contact manager delete actions from removing original contacts', () => {
     const approvalsPage = source('src/components/approvals/ApprovalsPage.tsx')
     const collaboration = source('src/lib/collaboration.ts')
+    const accessGrantApi = source('api/collaboration/access-grant.ts')
     const migration = source('supabase/migrations/20260706143000_shared_contact_manager_row_actions.sql')
 
     expect(approvalsPage).toContain('selectedSharedRowIds')
     expect(approvalsPage).toContain('busySharedRowIds')
+    expect(approvalsPage).toContain('uniqueSharedActionRows(rows)')
     expect(approvalsPage).toContain('Remove selected')
     expect(approvalsPage).toContain('Delete selected')
     expect(approvalsPage).toContain('Select all shared contacts')
@@ -201,8 +203,13 @@ describe('Shared contacts guardrails', () => {
     expect(approvalsPage).toContain("await runSharedRowsAction([row], 'delete')")
     expect(approvalsPage).toContain('await removeSharedRowAccess(row)')
     expect(approvalsPage).toContain('await deleteSharedRowHistory(row)')
+    expect(approvalsPage).toContain('await deleteCollaborationAccessGrant(row.revokeId)')
     expect(collaboration).toContain("db.rpc('remove_collaboration_access_grant'")
-    expect(collaboration).toContain("db.rpc('dismiss_collaboration_access_grant'")
+    expect(collaboration).toContain("authorizedCollaborationApi<{ grant: CollaborationAccessGrant }>('/api/collaboration/access-grant'")
+    expect(accessGrantApi).toContain("from('collaboration_access_grants')")
+    expect(accessGrantApi).toContain('.delete()')
+    expect(accessGrantApi).toContain("from('workspace_members')")
+    expect(accessGrantApi).not.toContain("from('contacts')")
     expect(collaboration).toContain('.is(\'dismissed_at\', null)')
     expect(migration).toContain('ADD COLUMN IF NOT EXISTS dismissed_at')
     expect(migration).toContain('CREATE OR REPLACE FUNCTION public.remove_collaboration_access_grant')

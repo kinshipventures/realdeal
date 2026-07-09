@@ -288,6 +288,32 @@ function nullWhenMissing<T>(error: unknown): T | null {
   throw error
 }
 
+async function authorizedCollaborationApi<T = Record<string, unknown>>(
+  path: string,
+  options: { method?: string; body?: object } = {},
+): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) throw new Error('Not authenticated')
+
+  const response = await fetch(path, {
+    method: options.method ?? 'GET',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  })
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    const message = typeof data?.error === 'string' ? data.error : 'Shared contacts request failed'
+    throw new Error(message)
+  }
+  if (data === null) throw new Error('Shared contacts request failed')
+
+  return data as T
+}
+
 async function getCurrentUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getUser()
   return data.user?.id ?? null
@@ -355,6 +381,15 @@ export async function dismissCollaborationAccessGrant(id: string): Promise<Colla
 
   if (error) throw error
   return normalizeAccessGrants(Array.isArray(data) ? data : [data])[0]
+}
+
+export async function deleteCollaborationAccessGrant(id: string): Promise<CollaborationAccessGrant> {
+  const data = await authorizedCollaborationApi<{ grant: CollaborationAccessGrant }>('/api/collaboration/access-grant', {
+    method: 'DELETE',
+    body: { grant_id: id },
+  })
+
+  return normalizeAccessGrants([data.grant])[0]
 }
 
 export async function getSharedContactsWithMe(): Promise<SharedContactAccessSnapshot[]> {

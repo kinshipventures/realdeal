@@ -21,7 +21,7 @@ import {
 } from '@/lib/sharedContactVisibleFields'
 import {
   createCollaborationAccessGrant,
-  dismissCollaborationAccessGrant,
+  deleteCollaborationAccessGrant,
   dismissCollaborationPublicCampaignLink,
   getCollaborationAccessGrants,
   getIncomingCollaborationAccessGrants,
@@ -413,6 +413,16 @@ function rowForIncomingSharedRequest(grant: CollaborationAccessGrant): SharedCon
   }
 }
 
+function uniqueSharedActionRows(rows: SharedContactRow[]): SharedContactRow[] {
+  const seen = new Set<string>()
+  return rows.filter(row => {
+    const key = `${row.revokeKind}:${row.revokeId}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function ApprovalsPage() {
   const { activeWorkspace } = useWorkspace()
   const workspaceId = activeWorkspace?.id
@@ -784,7 +794,7 @@ export function ApprovalsPage() {
       return
     }
 
-    await dismissCollaborationAccessGrant(row.revokeId)
+    await deleteCollaborationAccessGrant(row.revokeId)
   }
 
   async function runSharedRowsAction(rows: SharedContactRow[], action: 'remove' | 'delete') {
@@ -796,7 +806,7 @@ export function ApprovalsPage() {
     setError('')
 
     try {
-      for (const row of rows) {
+      for (const row of uniqueSharedActionRows(rows)) {
         if (action === 'remove') {
           await removeSharedRowAccess(row)
         } else {
