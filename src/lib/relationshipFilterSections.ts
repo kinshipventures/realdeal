@@ -27,6 +27,7 @@ function uniqueValues(values: Iterable<string>): string[] {
 
 export function normalizeRelationshipFilterFieldId(fieldId: string | null | undefined): string | null {
   if (!fieldId) return null
+  if (/^Email(?: [23])?$/.test(fieldId)) return 'Email'
   if (/^Pod \d+$/.test(fieldId) || fieldId === 'Pods') return 'Pods'
   if (/^Sub-pod \d+$/.test(fieldId) || fieldId === 'Sub-pods') return 'Sub-pods'
   if (/^Kinship Investments \d+$/.test(fieldId) || fieldId === 'Kinship Investments') return 'Kinship Investments'

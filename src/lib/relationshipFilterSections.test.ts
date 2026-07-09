@@ -13,17 +13,23 @@ describe('relationship filter sections', () => {
     expect(normalizeRelationshipFilterFieldId('Pod 3')).toBe('Pods')
     expect(normalizeRelationshipFilterFieldId('Campaign 2')).toBe('Campaigns')
     expect(normalizeRelationshipFilterFieldId('Kinship Investments 5')).toBe('Kinship Investments')
+    expect(normalizeRelationshipFilterFieldId('Email 2')).toBe('Email')
+    expect(normalizeRelationshipFilterFieldId('Email 3')).toBe('Email')
   })
 
   it('builds deduped section filters from template columns', () => {
     expect(buildRelationshipFilterFields([
       { id: 'Name', label: 'Name' },
+      { id: 'Email', label: 'Email' },
+      { id: 'Email 2', label: 'Email 2' },
+      { id: 'Email 3', label: 'Email 3' },
       { id: 'Pod 1', label: 'Pod 1' },
       { id: 'Pod 2', label: 'Pod 2' },
       { id: 'Campaign 1', label: 'Campaign 1' },
       { id: 'Campaign 2', label: 'Campaign 2' },
     ])).toEqual([
       { id: 'Name', label: 'Name' },
+      { id: 'Email', label: 'Email' },
       { id: 'Pods', label: 'Pods' },
       { id: 'Campaigns', label: 'Campaigns' },
     ])

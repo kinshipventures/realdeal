@@ -79,13 +79,18 @@ function normalizeColumnId(id: string | null | undefined): string | null {
   return Object.prototype.hasOwnProperty.call(LEGACY_COLUMN_IDS, id) ? LEGACY_COLUMN_IDS[id] : id
 }
 
+function normalizeRelationshipSectionId(id: string | null | undefined): string | null {
+  const normalizedColumnId = normalizeColumnId(id)
+  return normalizeRelationshipFilterFieldId(normalizedColumnId ?? id)
+}
+
 function normalizeVisibleColumnIds(ids: Iterable<string>, columns: ColumnDef[]): ColumnId[] {
   const allowed = new Set(columns.map(col => col.id))
   const normalized: ColumnId[] = []
   const seen = new Set<string>()
 
   for (const id of ids) {
-    const next = normalizeColumnId(id)
+    const next = normalizeRelationshipSectionId(id)
     if (!next || !allowed.has(next) || seen.has(next)) continue
     seen.add(next)
     normalized.push(next)
@@ -139,11 +144,6 @@ const DEFAULT_FILTERS: FilterState = {
   type: null,
   status: null,
   recency: 'any',
-}
-
-type RelationshipFilterFieldDef = {
-  id: string
-  label: string
 }
 
 const CUSTOM_FILTER_FIELD_PREFIX = 'custom:'
@@ -778,18 +778,24 @@ export function RecordsList() {
     [importTemplateCustomFieldNames],
   )
 
-  useEffect(() => {
-    setVisibleColumns(prev => {
-      const normalized = normalizeVisibleColumnIds(prev, relationshipColumns)
-      const nextIds = normalized.length > 0 ? normalized : defaultVisibleColumnIds(relationshipColumns)
-      return sameColumnIds(prev, nextIds) ? prev : new Set(nextIds)
-    })
-  }, [relationshipColumns])
-
-  const relationshipFilterFields = useMemo<RelationshipFilterFieldDef[]>(
-    () => buildRelationshipFilterFields(relationshipColumns.map(col => ({ id: col.id, label: col.label }))),
+  const relationshipFilterFields = useMemo<ColumnDef[]>(
+    () => buildRelationshipFilterFields(relationshipColumns.map(col => ({ id: col.id, label: col.label })))
+      .map(field => ({
+        ...field,
+        defaultVisible: relationshipColumns.some(col => (
+          normalizeRelationshipSectionId(col.id) === field.id && col.defaultVisible
+        )),
+      })),
     [relationshipColumns],
   )
+
+  useEffect(() => {
+    setVisibleColumns(prev => {
+      const normalized = normalizeVisibleColumnIds(prev, relationshipFilterFields)
+      const nextIds = normalized.length > 0 ? normalized : defaultVisibleColumnIds(relationshipFilterFields)
+      return sameColumnIds(prev, nextIds) ? prev : new Set(nextIds)
+    })
+  }, [relationshipFilterFields])
 
   const relationshipFilterValuesForContact = useCallback((contact: Contact, fieldId: string | null): string[] => {
     if (!fieldId) return []
@@ -845,11 +851,11 @@ export function RecordsList() {
       case 'Notables':
         return customFieldValues(contact, ['notables', 'Notables'])
       case 'Email':
-        return filterValueParts(contact.email)
-      case 'Email 2':
-        return filterValueParts(contact.email_2)
-      case 'Email 3':
-        return filterValueParts(contact.email_3)
+        return uniqueFilterOptions([
+          ...filterValueParts(contact.email),
+          ...filterValueParts(contact.email_2),
+          ...filterValueParts(contact.email_3),
+        ])
       case 'Phone':
         return filterValueParts(contact.phone)
       case 'Address':
@@ -1122,12 +1128,12 @@ export function RecordsList() {
     }
 
     if (filters.search.trim()) {
-      const q = filters.search.toLowerCase()
-      result = result.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.company ?? '').toLowerCase().includes(q) ||
-        (c.email ?? '').toLowerCase().includes(q)
-      )
+      const q = normalizedFilterText(filters.search)
+      result = result.filter(contact => (
+        relationshipFilterFields
+          .flatMap(field => relationshipFilterValuesForContact(contact, field.id))
+          .some(value => normalizedFilterText(value).includes(q))
+      ))
     }
 
     if (filters.propertyField && selectedPropertyValues.length > 0) {
@@ -1194,7 +1200,7 @@ export function RecordsList() {
             .localeCompare(cellText(relationshipFilterValuesForContact(b, sort.col)), undefined, { numeric: true, sensitivity: 'base' })
       }
     })
-  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, selectedPropertyValues, sort, equityMap, relationshipFilterValuesForContact])
+  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, selectedPropertyValues, sort, equityMap, relationshipFilterFields, relationshipFilterValuesForContact])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -1277,7 +1283,7 @@ export function RecordsList() {
     if (!view) {
       setFilters(DEFAULT_FILTERS)
       setRelationshipScope('all')
-      setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipColumns)))
+      setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipFilterFields)))
       setSort({ col: 'equity', dir: 'desc' })
     } else {
       const nextFilters = { ...DEFAULT_FILTERS, ...view.filters }
@@ -1290,14 +1296,14 @@ export function RecordsList() {
         propertyValues,
       })
       setRelationshipScope(view.relationshipScope ?? 'all')
-      const visibleFields = normalizeVisibleColumnIds(view.visibleColumns, relationshipColumns)
-      setVisibleColumns(new Set(visibleFields.length > 0 ? visibleFields : defaultVisibleColumnIds(relationshipColumns)))
-      setSort({ col: normalizeColumnId(view.sort.col) ?? 'equity', dir: view.sort.dir })
+      const visibleFields = normalizeVisibleColumnIds(view.visibleColumns, relationshipFilterFields)
+      setVisibleColumns(new Set(visibleFields.length > 0 ? visibleFields : defaultVisibleColumnIds(relationshipFilterFields)))
+      setSort({ col: normalizeRelationshipSectionId(view.sort.col) ?? 'equity', dir: view.sort.dir })
     }
     setShowMoreDropdown(false)
     setShowColumnFilter(false)
     setShowPropertyValueFilter(false)
-  }, [relationshipColumns])
+  }, [relationshipFilterFields])
 
   // Delete saved view
   const deleteView = useCallback((name: string, e: React.MouseEvent) => {
@@ -1730,7 +1736,7 @@ export function RecordsList() {
     }
   }
 
-  const visibleCols = relationshipColumns.filter(col => visibleColumns.has(col.id))
+  const visibleCols = relationshipFilterFields.filter(col => visibleColumns.has(col.id))
   const selectedShareResources: CollaborationResourceOption[] = contacts
     .filter(contact => selectedIds.has(contact.id))
     .map(contact => ({
@@ -1943,7 +1949,7 @@ export function RecordsList() {
           <input
             className="records-search"
             type="search"
-            placeholder="Search people"
+            placeholder="Search everything"
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
             style={{
@@ -2098,7 +2104,7 @@ export function RecordsList() {
             {showColumnFilter && (
               <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 220 }}>
                 <div style={menuLabelStyle}>Visible sections</div>
-                {relationshipColumns.map(col => (
+                {relationshipFilterFields.map(col => (
                   <label
                     key={col.id}
                     style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
@@ -2115,14 +2121,14 @@ export function RecordsList() {
                 <div className="records-dropdown-group" style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                   <button
                     type="button"
-                    onClick={() => setVisibleColumns(new Set(relationshipColumns.map(col => col.id)))}
+                    onClick={() => setVisibleColumns(new Set(relationshipFilterFields.map(col => col.id)))}
                     style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
                   >
                     Show all sections
                   </button>
                   <button
                     type="button"
-                    onClick={() => setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipColumns)))}
+                    onClick={() => setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipFilterFields)))}
                     style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
                   >
                     Restore default
