@@ -3,6 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { Download, FileSpreadsheet, ListFilter, Share2, UserPlus } from 'lucide-react'
 import { getContacts, getPods, getCategories, getAllInteractions, updateContact, deleteContact, invalidateContactsCache, getCampaigns, addContactToCampaign, invalidateCampaignsCache, getCompanies } from '../../lib/data'
 import { buildImportTemplateHeaders, downloadWorkspaceImportTemplate } from '../../lib/importTemplate'
+import {
+  RELATIONSHIP_NONE_FILTER_VALUE,
+  buildRelationshipFilterFields,
+  normalizeRelationshipFilterFieldId,
+  relationshipFilterValueLabel,
+  relationshipMatchesSelectedValues,
+  selectedRelationshipFilterValues,
+} from '../../lib/relationshipFilterSections'
 import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
 import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
@@ -115,6 +123,7 @@ interface FilterState {
   category: string | null
   propertyField: string | null
   propertyValue: string | null
+  propertyValues: string[]
   type: RelationshipType | null
   status: RelationshipStatus | null
   recency: RecencyFilter
@@ -126,6 +135,7 @@ const DEFAULT_FILTERS: FilterState = {
   category: null,
   propertyField: null,
   propertyValue: null,
+  propertyValues: [],
   type: null,
   status: null,
   recency: 'any',
@@ -530,6 +540,7 @@ export function RecordsList() {
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadViews)
   const [showMoreDropdown, setShowMoreDropdown] = useState(false)
   const [showColumnFilter, setShowColumnFilter] = useState(false)
+  const [showPropertyValueFilter, setShowPropertyValueFilter] = useState(false)
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
@@ -555,6 +566,7 @@ export function RecordsList() {
 
   const moreRef = useRef<HTMLDivElement>(null)
   const columnFilterRef = useRef<HTMLDivElement>(null)
+  const propertyValueFilterRef = useRef<HTMLDivElement>(null)
   const createMenuRef = useRef<HTMLDivElement>(null)
 
   // Load data
@@ -633,6 +645,9 @@ export function RecordsList() {
       }
       if (columnFilterRef.current && !columnFilterRef.current.contains(e.target as Node)) {
         setShowColumnFilter(false)
+      }
+      if (propertyValueFilterRef.current && !propertyValueFilterRef.current.contains(e.target as Node)) {
+        setShowPropertyValueFilter(false)
       }
       if (podPickerRef.current && !podPickerRef.current.contains(e.target as Node)) {
         setShowPodPicker(false)
@@ -772,7 +787,7 @@ export function RecordsList() {
   }, [relationshipColumns])
 
   const relationshipFilterFields = useMemo<RelationshipFilterFieldDef[]>(
-    () => relationshipColumns.map(col => ({ id: col.id, label: col.label })),
+    () => buildRelationshipFilterFields(relationshipColumns.map(col => ({ id: col.id, label: col.label }))),
     [relationshipColumns],
   )
 
@@ -784,29 +799,31 @@ export function RecordsList() {
       return customFieldValues(contact, [customConfig.source_field_id, customConfig.name])
     }
 
-    if (/^Pod \d+$/.test(fieldId)) {
+    const normalizedFieldId = normalizeRelationshipFilterFieldId(fieldId) ?? fieldId
+
+    if (normalizedFieldId === 'Pods') {
       return contact.list_ids.map(id => podMap[id]?.name ?? '').filter(Boolean)
     }
 
-    if (/^Sub-pod \d+$/.test(fieldId)) {
+    if (normalizedFieldId === 'Sub-pods') {
       return contact.category_ids.map(id => categoryMap[id]?.name ?? '').filter(Boolean)
     }
 
-    if (/^Campaign \d+$/.test(fieldId)) {
+    if (normalizedFieldId === 'Campaigns') {
       return campaigns
         .filter(campaign => campaign.contact_ids.includes(contact.id))
         .map(campaign => campaign.name)
     }
 
-    if (/^Campaign \d+ Status$/.test(fieldId)) {
+    if (normalizedFieldId === 'Campaign Status') {
       return customFieldValues(contact, ['campaignStatus', 'campaign status', 'Campaign Status'])
     }
 
-    if (/^Campaign \d+ Target Commitment$/.test(fieldId)) {
+    if (normalizedFieldId === 'Campaign Target Commitment') {
       return customFieldValues(contact, ['commitment_amount', 'commitmentAmount', 'targetCommitment', 'investmentAmount', 'Campaign Target Commitment'])
     }
 
-    switch (fieldId) {
+    switch (normalizedFieldId) {
       case 'Name':
         return [contact.name]
       case 'Company':
@@ -861,11 +878,7 @@ export function RecordsList() {
         const assistantNames = assistantIds.map(id => contactMap[id]?.name ?? id)
         return uniqueFilterOptions([...assistantNames, ...customFieldValues(contact, ['assistantInfo', 'Assistant Info'])])
       }
-      case 'Kinship Investments 1':
-      case 'Kinship Investments 2':
-      case 'Kinship Investments 3':
-      case 'Kinship Investments 4':
-      case 'Kinship Investments 5':
+      case 'Kinship Investments':
         return filterValueParts(contact.kv_fund_investor)
       case 'Investment Entity':
         return customFieldValues(contact, ['investmentEntity', 'Investment Entity'])
@@ -904,36 +917,72 @@ export function RecordsList() {
   const relationshipFilterValueOptions = useMemo(() => {
     const fieldId = filters.propertyField
     if (!fieldId) return []
+    const normalizedFieldId = normalizeRelationshipFilterFieldId(fieldId) ?? fieldId
 
     const presetValues =
-      /^Pod \d+$/.test(fieldId)
+      normalizedFieldId === 'Pods'
         ? pods.map(pod => pod.name)
-        : /^Sub-pod \d+$/.test(fieldId)
+        : normalizedFieldId === 'Sub-pods'
           ? categories.map(category => category.name)
-          : /^Campaign \d+$/.test(fieldId)
+          : normalizedFieldId === 'Campaigns'
             ? campaigns.map(campaign => campaign.name)
-            : /^Campaign \d+ Status$/.test(fieldId)
+            : normalizedFieldId === 'Campaign Status'
               ? DEFAULT_CAMPAIGN_STATUS_FILTER_OPTIONS
-              : fieldId === 'Company' || fieldId === 'Companies'
+              : normalizedFieldId === 'Company' || normalizedFieldId === 'Companies'
                 ? [
                     ...contacts
                       .filter(contact => contact.type === 'Company')
                       .map(contact => contact.name),
                     ...companies.map(company => company.name),
                   ]
-                : fieldId.startsWith('Kinship Investments')
+                : normalizedFieldId === 'Kinship Investments'
                   ? DEFAULT_KINSHIP_INVESTMENTS
-                  : fieldId === 'Gender'
+                  : normalizedFieldId === 'Gender'
                     ? ['Male', 'Female', 'Non-binary', 'Other']
-                    : fieldId === 'Global Region'
+                    : normalizedFieldId === 'Global Region'
                       ? ['AMER', 'APAC', 'EU', 'LATAM', 'ME']
                       : []
 
-    return uniqueFilterOptions([
-      ...presetValues,
-      ...relationshipFilterSourceContacts.flatMap(contact => relationshipFilterValuesForContact(contact, fieldId)),
-    ])
+    return [
+      RELATIONSHIP_NONE_FILTER_VALUE,
+      ...uniqueFilterOptions([
+        ...presetValues,
+        ...relationshipFilterSourceContacts.flatMap(contact => relationshipFilterValuesForContact(contact, fieldId)),
+      ]),
+    ]
   }, [campaigns, categories, companies, contacts, filters.propertyField, pods, relationshipFilterSourceContacts, relationshipFilterValuesForContact])
+
+  const selectedPropertyValues = useMemo(
+    () => selectedRelationshipFilterValues({
+      propertyValue: filters.propertyValue,
+      propertyValues: filters.propertyValues,
+    }),
+    [filters.propertyValue, filters.propertyValues],
+  )
+
+  const propertyValueButtonLabel = useMemo(() => {
+    if (!filters.propertyField) return 'Choose field first'
+    if (selectedPropertyValues.length === 0) return 'Choose values'
+    if (selectedPropertyValues.length === 1) return relationshipFilterValueLabel(selectedPropertyValues[0])
+    return `${selectedPropertyValues.length} selected`
+  }, [filters.propertyField, selectedPropertyValues])
+
+  const togglePropertyFilterValue = useCallback((value: string) => {
+    setFilters(current => {
+      const selectedValues = selectedRelationshipFilterValues(current)
+      const nextValues = selectedValues.includes(value)
+        ? selectedValues.filter(selectedValue => selectedValue !== value)
+        : [...selectedValues, value]
+
+      return {
+        ...current,
+        propertyValue: nextValues[0] ?? null,
+        propertyValues: nextValues,
+        pod: null,
+        category: null,
+      }
+    })
+  }, [])
 
   const selectedCampaign = useMemo(
     () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
@@ -1060,7 +1109,7 @@ export function RecordsList() {
     return false
   }, [sharedContactMetaById])
 
-  const hasPropertyFilter = Boolean(filters.propertyField && filters.propertyValue)
+  const hasPropertyFilter = Boolean(filters.propertyField && selectedPropertyValues.length > 0)
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
@@ -1081,11 +1130,12 @@ export function RecordsList() {
       )
     }
 
-    if (filters.propertyField && filters.propertyValue) {
-      const selectedValue = normalizedFilterText(filters.propertyValue)
+    if (filters.propertyField && selectedPropertyValues.length > 0) {
       result = result.filter(contact => (
-        relationshipFilterValuesForContact(contact, filters.propertyField)
-          .some(value => normalizedFilterText(value) === selectedValue)
+        relationshipMatchesSelectedValues(
+          relationshipFilterValuesForContact(contact, filters.propertyField),
+          selectedPropertyValues,
+        )
       ))
     }
 
@@ -1144,7 +1194,7 @@ export function RecordsList() {
             .localeCompare(cellText(relationshipFilterValuesForContact(b, sort.col)), undefined, { numeric: true, sensitivity: 'base' })
       }
     })
-  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, sort, equityMap, relationshipFilterValuesForContact])
+  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, selectedPropertyValues, sort, equityMap, relationshipFilterValuesForContact])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -1230,7 +1280,15 @@ export function RecordsList() {
       setVisibleColumns(new Set(defaultVisibleColumnIds(relationshipColumns)))
       setSort({ col: 'equity', dir: 'desc' })
     } else {
-      setFilters({ ...DEFAULT_FILTERS, ...view.filters })
+      const nextFilters = { ...DEFAULT_FILTERS, ...view.filters }
+      const propertyField = normalizeRelationshipFilterFieldId(nextFilters.propertyField)
+      const propertyValues = propertyField ? selectedRelationshipFilterValues(nextFilters) : []
+      setFilters({
+        ...nextFilters,
+        propertyField,
+        propertyValue: propertyValues[0] ?? null,
+        propertyValues,
+      })
       setRelationshipScope(view.relationshipScope ?? 'all')
       const visibleFields = normalizeVisibleColumnIds(view.visibleColumns, relationshipColumns)
       setVisibleColumns(new Set(visibleFields.length > 0 ? visibleFields : defaultVisibleColumnIds(relationshipColumns)))
@@ -1238,6 +1296,7 @@ export function RecordsList() {
     }
     setShowMoreDropdown(false)
     setShowColumnFilter(false)
+    setShowPropertyValueFilter(false)
   }, [relationshipColumns])
 
   // Delete saved view
@@ -1252,6 +1311,7 @@ export function RecordsList() {
   const clearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS)
     setRelationshipScope('all')
+    setShowPropertyValueFilter(false)
   }, [])
 
   const hasActiveFilters = filters.search || filters.pod || filters.category || hasPropertyFilter || filters.recency !== 'any' || relationshipScope !== 'all'
@@ -1906,8 +1966,9 @@ export function RecordsList() {
           <select
             value={filters.propertyField ?? ''}
             onChange={e => {
-              const fieldId = e.target.value || null
-              setFilters(f => ({ ...f, propertyField: fieldId, propertyValue: null, pod: null, category: null }))
+              const fieldId = normalizeRelationshipFilterFieldId(e.target.value) || null
+              setFilters(f => ({ ...f, propertyField: fieldId, propertyValue: null, propertyValues: [], pod: null, category: null }))
+              setShowPropertyValueFilter(false)
             }}
             className="records-toolbar-select"
             aria-label="Relationship filter field"
@@ -1919,33 +1980,79 @@ export function RecordsList() {
             ))}
           </select>
 
-          <select
-            value={filters.propertyValue ?? ''}
-            onChange={e => {
-              const value = e.target.value || null
-              setFilters(f => ({ ...f, propertyValue: value, pod: null, category: null }))
-            }}
-            className="records-toolbar-select"
-            aria-label="Relationship filter value"
-            disabled={!filters.propertyField || relationshipFilterValueOptions.length === 0}
-            style={{
-              ...selectStyle,
-              minWidth: 170,
-              flex: '0 1 220px',
-              opacity: !filters.propertyField || relationshipFilterValueOptions.length === 0 ? 0.62 : 1,
-            }}
-          >
-            <option value="">
-              {!filters.propertyField
-                ? 'Choose field first'
-                : relationshipFilterValueOptions.length === 0
-                  ? 'No values found'
-                  : 'Choose value'}
-            </option>
-            {relationshipFilterValueOptions.map(value => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
+          <div ref={propertyValueFilterRef} style={{ position: 'relative', minWidth: 170, flex: '0 1 220px' }}>
+            <button
+              type="button"
+              className="records-toolbar-select"
+              aria-label="Relationship filter values"
+              aria-expanded={showPropertyValueFilter}
+              disabled={!filters.propertyField}
+              onClick={() => {
+                if (!filters.propertyField) return
+                setShowPropertyValueFilter(value => !value)
+                setShowColumnFilter(false)
+                setShowMoreDropdown(false)
+              }}
+              style={{
+                ...selectStyle,
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                textAlign: 'left',
+                cursor: filters.propertyField ? 'pointer' : 'not-allowed',
+                opacity: filters.propertyField ? 1 : 0.62,
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {propertyValueButtonLabel}
+              </span>
+              <span aria-hidden="true" style={{ opacity: 0.5 }}>&#9662;</span>
+            </button>
+
+            {showPropertyValueFilter && filters.propertyField && (
+              <div
+                className="records-dropdown"
+                style={{
+                  ...dropdownStyle,
+                  minWidth: 240,
+                  maxHeight: 320,
+                  overflowY: 'auto',
+                }}
+              >
+                <div style={menuLabelStyle}>{filters.propertyField}</div>
+                {relationshipFilterValueOptions.map(value => {
+                  const checked = selectedPropertyValues.includes(value)
+                  return (
+                    <label
+                      key={value}
+                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => togglePropertyFilterValue(value)}
+                        style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                      />
+                      <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(value)}</span>
+                    </label>
+                  )
+                })}
+                {selectedPropertyValues.length > 0 && (
+                  <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => setFilters(f => ({ ...f, propertyValue: null, propertyValues: [] }))}
+                      style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
+                    >
+                      Clear values
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <select
             value={filters.recency}
@@ -1982,6 +2089,7 @@ export function RecordsList() {
               onClick={() => {
                 setShowColumnFilter(v => !v)
                 setShowMoreDropdown(false)
+                setShowPropertyValueFilter(false)
               }}
               style={{ ...utilityBtnStyle(showColumnFilter), minWidth: 44, width: 44, padding: 0 }}
             >
@@ -2059,6 +2167,7 @@ export function RecordsList() {
               onClick={() => {
                 setShowMoreDropdown(v => !v)
                 setShowColumnFilter(false)
+                setShowPropertyValueFilter(false)
               }}
               style={utilityBtnStyle(showMoreDropdown)}
             >
