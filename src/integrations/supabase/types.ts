@@ -498,6 +498,9 @@ export type Database = {
           airtable_field_id: string | null
           created_at: string
           display_order: number
+          display_section_id: string | null
+          display_section_label: string | null
+          field_options: string[]
           field_type: string
           id: string
           name: string
@@ -512,6 +515,9 @@ export type Database = {
           airtable_field_id?: string | null
           created_at?: string
           display_order?: number
+          display_section_id?: string | null
+          display_section_label?: string | null
+          field_options?: string[]
           field_type: string
           id?: string
           name: string
@@ -526,6 +532,9 @@ export type Database = {
           airtable_field_id?: string | null
           created_at?: string
           display_order?: number
+          display_section_id?: string | null
+          display_section_label?: string | null
+          field_options?: string[]
           field_type?: string
           id?: string
           name?: string

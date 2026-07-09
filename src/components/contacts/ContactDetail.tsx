@@ -18,7 +18,13 @@ import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId 
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
-import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
+import {
+  FIELD_CONFIGS_EVENT,
+  fieldConfigDisplaySectionId,
+  fieldConfigDisplaySectionLabel,
+  getFieldConfigs,
+  type FieldConfig,
+} from '../../lib/fieldConfig'
 import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
@@ -604,6 +610,17 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       })
     return () => { canceled = true }
   }, [activeWorkspace?.id])
+
+  useEffect(() => {
+    function refreshFieldConfigs() {
+      getFieldConfigs()
+        .then(setFieldConfigs)
+        .catch(() => setFieldConfigs([]))
+    }
+
+    window.addEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+    return () => window.removeEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+  }, [])
 
   useEffect(() => {
     if (!contact) return
@@ -1927,7 +1944,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         const customFields = fields as Record<string, unknown>
         return customFields[key] ?? customFields[config.source_field_id] ?? null
       }),
-      [current],
+      [current, ...(config.field_options ?? [])],
     )
   }
 
@@ -3028,16 +3045,48 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   const recordType = (draft.type ?? contact?.type ?? 'Contact') as Contact['type']
-  const assignedPodIds = draft.list_ids ?? []
+  const assignedPodIds = useMemo(() => draft.list_ids ?? [], [draft.list_ids])
   const canShowCustomProperties = !isInboundSharedContact || hasSharedCustomFieldAccess()
-  const visibleCustomPropertyConfigs = canShowCustomProperties
-    ? fieldConfigs
+  const visibleCustomPropertyConfigs = useMemo(() => {
+    if (!canShowCustomProperties) return []
+
+    return fieldConfigs
         .filter(config => config.source_field_id.startsWith('custom_'))
         .filter(config => !hiddenFieldConfigIds.has(config.id))
         .filter(config => config.scope_type === recordType || config.scope_type === 'Both')
         .filter(config => !config.scope_pod_id || assignedPodIds.includes(config.scope_pod_id))
         .sort((a, b) => a.display_order - b.display_order)
-    : []
+  }, [assignedPodIds, canShowCustomProperties, fieldConfigs, hiddenFieldConfigIds, recordType])
+  const customPropertiesBySection = useMemo(() => {
+    const groups = new Map<string, FieldConfig[]>()
+
+    visibleCustomPropertyConfigs.forEach(config => {
+      const sectionId = fieldConfigDisplaySectionId(config, 'custom_properties')
+      groups.set(sectionId, [...(groups.get(sectionId) ?? []), config])
+    })
+
+    return groups
+  }, [visibleCustomPropertyConfigs])
+  const standardCustomPropertySectionIds = useMemo(() => new Set(['details', 'ways_to_contact', 'fund_activity']), [])
+  const customPropertySectionGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; configs: FieldConfig[] }>()
+
+    visibleCustomPropertyConfigs.forEach(config => {
+      const sectionId = fieldConfigDisplaySectionId(config, 'custom_properties')
+      if (standardCustomPropertySectionIds.has(sectionId) || sectionId === 'custom_properties') return
+      const existing = groups.get(sectionId)
+      groups.set(sectionId, {
+        label: existing?.label ?? fieldConfigDisplaySectionLabel(config),
+        configs: [...(existing?.configs ?? []), config],
+      })
+    })
+
+    return [...groups.entries()].map(([id, group]) => ({ id, ...group }))
+  }, [standardCustomPropertySectionIds, visibleCustomPropertyConfigs])
+
+  function customPropertiesForSection(sectionId: string): FieldConfig[] {
+    return customPropertiesBySection.get(sectionId) ?? []
+  }
 
   function linkedinField() {
     if (!standardFieldVisible('linkedin')) return null
@@ -3607,6 +3656,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {field('industry', 'Industry')}
                       {customFieldByKey('fundType')}
                       {field('notes', 'Notes', { multi: true })}
+                      {customPropertiesForSection('details').map(config => customPropertyField(config))}
                     </div>
                   )}
 
@@ -3622,6 +3672,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {customFieldByKey('state')}
                       {field('country', 'Country', { options: contactFieldOptions('country') })}
                       {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
+                      {customPropertiesForSection('ways_to_contact').map(config => customPropertyField(config))}
                     </div>
                   )}
                 </>
@@ -3640,6 +3691,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {field('gender', 'Gender', { options: contactFieldOptions('gender', ['Male', 'Female', 'Non-binary', 'Other']) })}
                       {field('birthday', 'Birthday', { inputType: 'date' })}
                       {customFieldByKey('notables')}
+                      {customPropertiesForSection('details').map(config => customPropertyField(config))}
                     </div>
                   )}
 
@@ -3658,6 +3710,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {field('country', 'Country', { options: contactFieldOptions('country') })}
                       {field('global_region', 'Global Region', { options: contactFieldOptions('global_region', ['AMER', 'APAC', 'ME', 'LATAM', 'EU']) })}
                       {assistantInfoField()}
+                      {customPropertiesForSection('ways_to_contact').map(config => customPropertyField(config))}
                     </div>
                   )}
 
@@ -3669,19 +3722,29 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       {arrayField('kv_fund_investor', 'Kinship Investments', contactFieldOptions('kv_fund_investor'), { allowCustom: false })}
                       {customFieldByKey('investmentEntity')}
                       {customFieldByKey('investmentEmail')}
+                      {customPropertiesForSection('fund_activity').map(config => customPropertyField(config))}
                     </div>
                   )}
                 </>
               )}
 
-              {visibleCustomPropertyConfigs.length > 0 && (
+              {customPropertiesForSection('custom_properties').length > 0 && (
                 <div style={sectionShell}>
                   <div style={sectionHeader}>
                     <div style={sectionLabel}>custom properties</div>
                   </div>
-                  {visibleCustomPropertyConfigs.map(config => customPropertyField(config))}
+                  {customPropertiesForSection('custom_properties').map(config => customPropertyField(config))}
                 </div>
               )}
+
+              {customPropertySectionGroups.map(group => (
+                <div key={group.id} style={sectionShell}>
+                  <div style={sectionHeader}>
+                    <div style={sectionLabel}>{group.label}</div>
+                  </div>
+                  {group.configs.map(config => customPropertyField(config))}
+                </div>
+              ))}
 
               {sectionVisible('pods') && (
                 <div style={sectionShell}>

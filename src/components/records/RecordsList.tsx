@@ -12,7 +12,7 @@ import {
   selectedRelationshipFilterValues,
 } from '../../lib/relationshipFilterSections'
 import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
-import { getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
+import { FIELD_CONFIGS_EVENT, getFieldConfigs, type FieldConfig } from '../../lib/fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { EmptyState } from '../empty/EmptyState'
 import { MergeModal } from '../merge/MergeModal'
@@ -637,6 +637,17 @@ export function RecordsList() {
     return () => { stale = true }
   }, [activeWorkspace?.id, includeSharedWorkspaceResources, refreshKey])
 
+  useEffect(() => {
+    function refreshFieldConfigs() {
+      getFieldConfigs()
+        .then(setFieldConfigs)
+        .catch(() => setFieldConfigs([]))
+    }
+
+    window.addEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+    return () => window.removeEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+  }, [])
+
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -779,14 +790,32 @@ export function RecordsList() {
   )
 
   const relationshipFilterFields = useMemo<ColumnDef[]>(
-    () => buildRelationshipFilterFields(relationshipColumns.map(col => ({ id: col.id, label: col.label })))
-      .map(field => ({
-        ...field,
-        defaultVisible: relationshipColumns.some(col => (
-          normalizeRelationshipSectionId(col.id) === field.id && col.defaultVisible
-        )),
-      })),
-    [relationshipColumns],
+    () => {
+      const filterFieldConfigNames = new Set(
+        fieldConfigs
+          .filter(config => config.scope_type === 'Contact' || config.scope_type === 'Both')
+          .map(config => config.name),
+      )
+      const standardFields = buildRelationshipFilterFields(relationshipColumns.map(col => ({ id: col.id, label: col.label })))
+        .filter(field => !filterFieldConfigNames.has(field.label))
+        .map(field => ({
+          ...field,
+          defaultVisible: relationshipColumns.some(col => (
+            normalizeRelationshipSectionId(col.id) === field.id && col.defaultVisible
+          )),
+        }))
+      const customFields = fieldConfigs
+        .filter(config => config.scope_type === 'Contact' || config.scope_type === 'Both')
+        .sort((a, b) => a.display_order - b.display_order)
+        .map(config => ({
+          id: `${CUSTOM_FILTER_FIELD_PREFIX}${config.id}`,
+          label: config.name,
+          defaultVisible: false,
+        }))
+
+      return [...standardFields, ...customFields]
+    },
+    [fieldConfigs, relationshipColumns],
   )
 
   useEffect(() => {
@@ -796,6 +825,12 @@ export function RecordsList() {
       return sameColumnIds(prev, nextIds) ? prev : new Set(nextIds)
     })
   }, [relationshipFilterFields])
+
+  useEffect(() => {
+    if (!filters.propertyField) return
+    if (relationshipFilterFields.some(field => field.id === filters.propertyField)) return
+    setFilters(current => ({ ...current, propertyField: null, propertyValue: null, propertyValues: [] }))
+  }, [filters.propertyField, relationshipFilterFields])
 
   const relationshipFilterValuesForContact = useCallback((contact: Contact, fieldId: string | null): string[] => {
     if (!fieldId) return []
@@ -972,6 +1007,10 @@ export function RecordsList() {
     if (selectedPropertyValues.length === 1) return relationshipFilterValueLabel(selectedPropertyValues[0])
     return `${selectedPropertyValues.length} selected`
   }, [filters.propertyField, selectedPropertyValues])
+  const selectedPropertyFieldLabel = useMemo(
+    () => relationshipFilterFields.find(field => field.id === filters.propertyField)?.label ?? filters.propertyField,
+    [filters.propertyField, relationshipFilterFields],
+  )
 
   const togglePropertyFilterValue = useCallback((value: string) => {
     setFilters(current => {
@@ -2027,7 +2066,7 @@ export function RecordsList() {
                   overflowY: 'auto',
                 }}
               >
-                <div style={menuLabelStyle}>{filters.propertyField}</div>
+                <div style={menuLabelStyle}>{selectedPropertyFieldLabel}</div>
                 {relationshipFilterValueOptions.map(value => {
                   const checked = selectedPropertyValues.includes(value)
                   return (

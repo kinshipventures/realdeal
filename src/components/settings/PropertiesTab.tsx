@@ -15,7 +15,17 @@ import {
   type PropertyOption,
 } from '@/lib/contactDisplaySettings'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
-import { createCustomField, deleteCustomField, getFieldConfigs, type FieldConfig } from '@/lib/fieldConfig'
+import {
+  FIELD_CONFIGS_EVENT,
+  createCustomField,
+  deleteCustomField,
+  fieldConfigDisplaySectionId,
+  fieldConfigDisplaySectionLabel,
+  getFieldConfigs,
+  isCustomFieldConfig,
+  updateCustomField,
+  type FieldConfig,
+} from '@/lib/fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '@/lib/kinshipInvestments'
 import { isDemoMode } from '@/lib/sampleData'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
@@ -27,11 +37,22 @@ type PropertyRow = PropertyOption & {
   onDelete?: () => void
   deleteDisabled?: boolean
   depth?: number
+  sectionValue?: string
+  sectionOptions?: PropertySectionOption[]
+  sectionDisabled?: boolean
+  onSectionChange?: (value: string) => void
+  optionsEditor?: React.ReactNode
 }
 
 type PropertyRowGroup = {
   row: PropertyRow
   children: PropertyRow[]
+}
+
+type PropertySectionOption = {
+  id: string
+  label: string
+  isCustom: boolean
 }
 
 const TABLE_GRID_COLUMNS = '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px'
@@ -96,12 +117,66 @@ const FIELD_TYPE_OPTIONS: Array<{ value: FieldConfig['field_type']; label: strin
   { value: 'checkbox', label: 'Checkbox' },
 ]
 
+const CUSTOM_PROPERTY_STANDARD_SECTION_IDS: ContactDisplaySectionId[] = [
+  'details',
+  'ways_to_contact',
+  'fund_activity',
+]
+
+const DEFAULT_PROPERTY_SECTION_ID = 'details'
+const CUSTOM_PROPERTIES_SECTION_ID = 'custom_properties'
+const CREATE_NEW_SECTION_VALUE = '__create_new_section__'
+
 function isCustomUserField(config: FieldConfig): boolean {
-  return config.source_field_id.startsWith('custom_')
+  return isCustomFieldConfig(config)
 }
 
 function propertyNameKey(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function customSectionIdForName(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 48) || 'section'
+
+  return `custom_section_${slug}_${Date.now().toString(36)}`
+}
+
+function fieldTypeSupportsOptions(fieldType: FieldConfig['field_type']): boolean {
+  return fieldType === 'select' || fieldType === 'multi_select'
+}
+
+function parsePropertyOptionsInput(value: string): string[] {
+  const seen = new Set<string>()
+  const options: string[] = []
+
+  value
+    .split(/[\n,]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .forEach(option => {
+      const key = propertyNameKey(option)
+      if (seen.has(key)) return
+      seen.add(key)
+      options.push(option)
+    })
+
+  return options
+}
+
+function mergePropertyOptions(values: string[], nextValue: string): string[] {
+  return parsePropertyOptionsInput([...values, nextValue].join('\n'))
+}
+
+function removePropertyOption(values: string[], removedValue: string): string[] {
+  const removedKey = propertyNameKey(removedValue)
+  return values.filter(value => propertyNameKey(value) !== removedKey)
 }
 
 function toggleValue(list: string[], value: string): string[] {
@@ -190,6 +265,120 @@ function PropertyCheckbox({ row }: { row: PropertyRow }) {
       style={checkboxStyle(row.checked)}
       aria-label={`Toggle ${row.label}`}
     />
+  )
+}
+
+function CustomPropertyOptionsEditor({
+  options,
+  draftValue,
+  disabled,
+  onDraftChange,
+  onAdd,
+  onRemove,
+}: {
+  options: string[]
+  draftValue: string
+  disabled?: boolean
+  onDraftChange: (value: string) => void
+  onAdd: () => void
+  onRemove: (value: string) => void
+}) {
+  return (
+    <div style={{
+      display: 'grid',
+      gap: 8,
+      padding: '0 12px 12px 80px',
+      background: 'rgba(248,250,252,0.36)',
+      borderBottom: '1px solid var(--divider)',
+    }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {options.length > 0 ? options.map(option => (
+          <span
+            key={option}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              maxWidth: '100%',
+              padding: '4px 8px',
+              borderRadius: 999,
+              border: '1px solid var(--edge)',
+              color: 'var(--color-text-secondary)',
+              background: 'var(--surface-panel)',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{option}</span>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onRemove(option)}
+              aria-label={`Remove ${option}`}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--color-text-tertiary)',
+                cursor: disabled ? 'default' : 'pointer',
+                fontSize: 13,
+                lineHeight: 1,
+                padding: 0,
+              }}
+            >
+              x
+            </button>
+          </span>
+        )) : (
+          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>No options yet</span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          value={draftValue}
+          disabled={disabled}
+          onChange={event => onDraftChange(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              onAdd()
+            }
+          }}
+          placeholder="Add option"
+          style={{
+            minWidth: 160,
+            flex: '1 1 180px',
+            height: 34,
+            borderRadius: 8,
+            border: '1px solid var(--edge)',
+            background: 'var(--surface-panel)',
+            color: 'var(--color-text-primary)',
+            fontSize: 12,
+            fontFamily: 'inherit',
+            padding: '0 10px',
+          }}
+        />
+        <button
+          type="button"
+          disabled={disabled || !draftValue.trim()}
+          onClick={onAdd}
+          style={{
+            minHeight: 34,
+            padding: '0 12px',
+            borderRadius: 8,
+            border: '1px solid var(--edge)',
+            background: draftValue.trim() ? 'var(--color-brand)' : 'var(--tint)',
+            color: draftValue.trim() ? '#fff' : 'var(--color-text-tertiary)',
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: 'inherit',
+            cursor: disabled || !draftValue.trim() ? 'default' : 'pointer',
+          }}
+        >
+          Add option
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -448,7 +637,35 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
               ) : (
                 <>
                   <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
-                  <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyGroupDisplayLabel(row)}</div>
+                  <div style={{ padding: '8px 12px', minWidth: 0 }}>
+                    {row.sectionOptions && row.onSectionChange ? (
+                      <select
+                        value={row.sectionValue ?? DEFAULT_PROPERTY_SECTION_ID}
+                        disabled={row.sectionDisabled}
+                        onChange={event => row.onSectionChange?.(event.target.value)}
+                        aria-label={`Move ${row.label} to section`}
+                        style={{
+                          width: '100%',
+                          height: 32,
+                          borderRadius: 8,
+                          border: '1px solid var(--edge)',
+                          background: 'var(--surface-panel)',
+                          color: 'var(--color-text-secondary)',
+                          fontSize: 12,
+                          fontFamily: 'inherit',
+                          padding: '0 8px',
+                        }}
+                      >
+                        {row.sectionOptions.map(option => (
+                          <option key={option.id} value={option.id}>{option.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {propertyGroupDisplayLabel(row)}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
                   <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <StatusPill active={row.checked} label={row.statusLabel} />
@@ -483,6 +700,7 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                 </>
               )}
             </div>
+            {row.optionsEditor}
             {hasChildren && isExpanded && <PropertyOptionPanel rows={children} sectionLabel={row.label} />}
           </div>
         )
@@ -506,9 +724,14 @@ export function PropertiesTab() {
   const [showCreateProperty, setShowCreateProperty] = useState(false)
   const [newPropertyName, setNewPropertyName] = useState('')
   const [newPropertyType, setNewPropertyType] = useState<FieldConfig['field_type']>('text')
+  const [newPropertySectionId, setNewPropertySectionId] = useState(DEFAULT_PROPERTY_SECTION_ID)
+  const [newPropertySectionName, setNewPropertySectionName] = useState('')
+  const [newPropertyOptionsInput, setNewPropertyOptionsInput] = useState('')
   const [createPropertyError, setCreatePropertyError] = useState<string | null>(null)
   const [creatingProperty, setCreatingProperty] = useState(false)
   const [deletingFieldConfigId, setDeletingFieldConfigId] = useState<string | null>(null)
+  const [updatingFieldConfigId, setUpdatingFieldConfigId] = useState<string | null>(null)
+  const [optionDrafts, setOptionDrafts] = useState<Record<string, string>>({})
   const workspaceOwner = activeWorkspace?.name || 'Workspace'
   const canManageCustomProperties = objectType === 'Contact' || objectType === 'Company'
 
@@ -533,6 +756,17 @@ export function PropertiesTab() {
       })
     return () => { stale = true }
   }, [activeWorkspace?.id])
+
+  useEffect(() => {
+    function refreshFieldConfigs() {
+      getFieldConfigs()
+        .then(setFieldConfigs)
+        .catch(() => setFieldConfigs([]))
+    }
+
+    window.addEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+    return () => window.removeEventListener(FIELD_CONFIGS_EVENT, refreshFieldConfigs)
+  }, [])
 
   const podById = useMemo(() => new Map(pods.map(pod => [pod.id, pod])), [pods])
   const companyContacts = useMemo(
@@ -562,6 +796,44 @@ export function PropertiesTab() {
 
     return names
   }, [fieldConfigs, objectType])
+  const propertySectionOptions = useMemo<PropertySectionOption[]>(() => {
+    const availableSections = CONTACT_DISPLAY_SECTION_OPTIONS
+      .filter(section => section.appliesTo === objectType || section.appliesTo === 'Both')
+      .filter(section => CUSTOM_PROPERTY_STANDARD_SECTION_IDS.includes(section.id))
+      .filter(section => objectType === 'Contact' || section.id !== 'fund_activity')
+      .map(section => ({
+        id: section.id,
+        label: contactDetailSectionLabel(section.id, section.label, objectType),
+        isCustom: false,
+      }))
+
+    const standardSectionIds = new Set(availableSections.map(section => section.id))
+    const customSections = new Map<string, PropertySectionOption>()
+
+    fieldConfigs
+      .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => isCustomUserField(config))
+      .forEach(config => {
+        const sectionId = fieldConfigDisplaySectionId(config, DEFAULT_PROPERTY_SECTION_ID)
+        if (standardSectionIds.has(sectionId) || sectionId === CUSTOM_PROPERTIES_SECTION_ID) return
+        customSections.set(sectionId, {
+          id: sectionId,
+          label: fieldConfigDisplaySectionLabel(config),
+          isCustom: true,
+        })
+      })
+
+    return [...availableSections, ...customSections.values()]
+  }, [fieldConfigs, objectType])
+  const propertySectionById = useMemo(
+    () => new Map(propertySectionOptions.map(section => [section.id, section])),
+    [propertySectionOptions],
+  )
+  useEffect(() => {
+    if (newPropertySectionId === CREATE_NEW_SECTION_VALUE) return
+    if (propertySectionById.has(newPropertySectionId)) return
+    setNewPropertySectionId(propertySectionOptions[0]?.id ?? DEFAULT_PROPERTY_SECTION_ID)
+  }, [newPropertySectionId, propertySectionById, propertySectionOptions])
   const filteredContacts = useMemo(() => {
     const query = contactQuery.trim().toLowerCase()
     if (!query) return []
@@ -654,11 +926,24 @@ export function PropertiesTab() {
       setCreatePropertyError('Could not save this property for the current workspace.')
       return
     }
+    const createsNewSection = newPropertySectionId === CREATE_NEW_SECTION_VALUE
+    const sectionName = createsNewSection ? newPropertySectionName.trim() : ''
+    const selectedSection = createsNewSection ? null : propertySectionById.get(newPropertySectionId)
+    if (createsNewSection && !sectionName) {
+      setCreatePropertyError('Section name is required.')
+      return
+    }
+    if (!createsNewSection && !selectedSection) {
+      setCreatePropertyError('Choose a section for this property.')
+      return
+    }
 
     setCreatingProperty(true)
     setCreatePropertyError(null)
     try {
       const displayOrder = Math.max(0, ...fieldConfigs.map(config => config.display_order)) + 1
+      const displaySectionId = createsNewSection ? customSectionIdForName(sectionName) : selectedSection!.id
+      const displaySectionLabel = createsNewSection ? sectionName : selectedSection!.label
       const created = await createCustomField({
         workspace_id: activeWorkspace?.id ?? 'demo-workspace',
         user_id: session?.user?.id ?? 'demo-user',
@@ -668,10 +953,18 @@ export function PropertiesTab() {
         scope_pod_id: null,
         required: false,
         display_order: displayOrder,
+        display_section_id: displaySectionId,
+        display_section_label: displaySectionLabel,
+        field_options: fieldTypeSupportsOptions(newPropertyType)
+          ? parsePropertyOptionsInput(newPropertyOptionsInput)
+          : [],
       })
-      setFieldConfigs(current => [...current, created])
+      setFieldConfigs(current => current.some(item => item.id === created.id) ? current : [...current, created])
       setNewPropertyName('')
       setNewPropertyType('text')
+      setNewPropertySectionId(DEFAULT_PROPERTY_SECTION_ID)
+      setNewPropertySectionName('')
+      setNewPropertyOptionsInput('')
       setShowCreateProperty(false)
     } catch {
       setCreatePropertyError('Could not create this property. Try again.')
@@ -684,8 +977,12 @@ export function PropertiesTab() {
     existingPropertyNames,
     fieldConfigs,
     newPropertyName,
+    newPropertyOptionsInput,
+    newPropertySectionId,
+    newPropertySectionName,
     newPropertyType,
     objectType,
+    propertySectionById,
     session?.user?.id,
   ])
 
@@ -705,6 +1002,53 @@ export function PropertiesTab() {
       setDeletingFieldConfigId(null)
     }
   }, [updateSettings])
+
+  const handleMoveCustomProperty = useCallback(async (config: FieldConfig, sectionId: string) => {
+    const section = propertySectionById.get(sectionId)
+    if (!section || !isCustomUserField(config)) return
+
+    setUpdatingFieldConfigId(config.id)
+    try {
+      const updated = await updateCustomField(config.id, {
+        display_section_id: section.id,
+        display_section_label: section.label,
+      })
+      setFieldConfigs(current => current.map(item => item.id === updated.id ? updated : item))
+    } finally {
+      setUpdatingFieldConfigId(null)
+    }
+  }, [propertySectionById])
+
+  const handleAddCustomPropertyOption = useCallback(async (config: FieldConfig) => {
+    if (!fieldTypeSupportsOptions(config.field_type)) return
+    const draft = optionDrafts[config.id]?.trim() ?? ''
+    if (!draft) return
+
+    setUpdatingFieldConfigId(config.id)
+    try {
+      const updated = await updateCustomField(config.id, {
+        field_options: mergePropertyOptions(config.field_options, draft),
+      })
+      setFieldConfigs(current => current.map(item => item.id === updated.id ? updated : item))
+      setOptionDrafts(current => ({ ...current, [config.id]: '' }))
+    } finally {
+      setUpdatingFieldConfigId(null)
+    }
+  }, [optionDrafts])
+
+  const handleRemoveCustomPropertyOption = useCallback(async (config: FieldConfig, option: string) => {
+    if (!fieldTypeSupportsOptions(config.field_type)) return
+
+    setUpdatingFieldConfigId(config.id)
+    try {
+      const updated = await updateCustomField(config.id, {
+        field_options: removePropertyOption(config.field_options, option),
+      })
+      setFieldConfigs(current => current.map(item => item.id === updated.id ? updated : item))
+    } finally {
+      setUpdatingFieldConfigId(null)
+    }
+  }, [])
 
   const rows = useMemo<PropertyRow[]>(() => {
     const hiddenLabelValues = settings.hiddenFieldOptionValues.kv_fund_investor ?? []
@@ -934,18 +1278,35 @@ export function PropertiesTab() {
         const checked = !settings.hiddenFieldConfigIds.includes(config.id)
         const pod = config.scope_pod_id ? podById.get(config.scope_pod_id) : null
         const canDelete = isCustomUserField(config)
+        const sectionId = fieldConfigDisplaySectionId(config, DEFAULT_PROPERTY_SECTION_ID)
+        const sectionLabel = propertySectionById.get(sectionId)?.label ?? fieldConfigDisplaySectionLabel(config)
+        const updating = updatingFieldConfigId === config.id
         return {
           id: config.id,
           label: config.name,
           fieldType: FIELD_TYPE_LABELS[config.field_type] ?? config.field_type,
-          group: pod ? `${pod.name} fields` : 'Custom properties',
+          group: pod ? `${pod.name} fields` : sectionLabel,
           objectType,
           ownerLabel: workspaceOwner,
           checked,
           statusLabel: checked ? 'Shown' : (selectedContact ? 'Hidden here' : 'Hidden'),
           onToggle: () => toggleFieldConfig(config.id),
           onDelete: canDelete ? () => handleDeleteCustomProperty(config) : undefined,
-          deleteDisabled: deletingFieldConfigId === config.id,
+          deleteDisabled: deletingFieldConfigId === config.id || updating,
+          sectionValue: sectionId,
+          sectionOptions: canDelete ? propertySectionOptions : undefined,
+          sectionDisabled: updating,
+          onSectionChange: canDelete ? sectionValue => { void handleMoveCustomProperty(config, sectionValue) } : undefined,
+          optionsEditor: canDelete && fieldTypeSupportsOptions(config.field_type) ? (
+            <CustomPropertyOptionsEditor
+              options={config.field_options}
+              draftValue={optionDrafts[config.id] ?? ''}
+              disabled={updating}
+              onDraftChange={value => setOptionDrafts(current => ({ ...current, [config.id]: value }))}
+              onAdd={() => { void handleAddCustomPropertyOption(config) }}
+              onRemove={option => { void handleRemoveCustomPropertyOption(config, option) }}
+            />
+          ) : undefined,
         }
       })
 
@@ -956,11 +1317,17 @@ export function PropertiesTab() {
     companyContacts,
     deletingFieldConfigId,
     fieldConfigs,
+    handleAddCustomPropertyOption,
     handleDeleteCustomProperty,
+    handleMoveCustomProperty,
+    handleRemoveCustomPropertyOption,
     kinshipInvestmentOptions,
     objectType,
+    optionDrafts,
     podById,
     pods,
+    propertySectionById,
+    propertySectionOptions,
     settings,
     selectedContact,
     toggleFieldConfig,
@@ -971,6 +1338,7 @@ export function PropertiesTab() {
     toggleHiddenSubPod,
     toggleSection,
     toggleStandardField,
+    updatingFieldConfigId,
     workspaceOwner,
   ])
 
@@ -1269,7 +1637,11 @@ export function PropertiesTab() {
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Type</span>
               <select
                 value={newPropertyType}
-                onChange={event => setNewPropertyType(event.target.value as FieldConfig['field_type'])}
+                onChange={event => {
+                  const nextType = event.target.value as FieldConfig['field_type']
+                  setNewPropertyType(nextType)
+                  if (!fieldTypeSupportsOptions(nextType)) setNewPropertyOptionsInput('')
+                }}
                 style={{
                   width: '100%',
                   height: 38,
@@ -1287,6 +1659,84 @@ export function PropertiesTab() {
                 ))}
               </select>
             </label>
+            <label style={{ display: 'grid', gap: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Contact card section</span>
+              <select
+                value={newPropertySectionId}
+                onChange={event => {
+                  setNewPropertySectionId(event.target.value)
+                  setCreatePropertyError(null)
+                }}
+                style={{
+                  width: '100%',
+                  height: 38,
+                  borderRadius: 8,
+                  border: '1px solid var(--edge)',
+                  background: 'var(--tint)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  padding: '0 10px',
+                }}
+              >
+                {propertySectionOptions.map(option => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+                <option value={CREATE_NEW_SECTION_VALUE}>Create new section...</option>
+              </select>
+            </label>
+            {newPropertySectionId === CREATE_NEW_SECTION_VALUE && (
+              <label style={{ display: 'grid', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>New section name</span>
+                <input
+                  type="text"
+                  value={newPropertySectionName}
+                  onChange={event => {
+                    setNewPropertySectionName(event.target.value)
+                    setCreatePropertyError(null)
+                  }}
+                  placeholder="Children birthdays"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    borderRadius: 8,
+                    border: '1px solid var(--edge)',
+                    background: 'var(--tint)',
+                    color: 'var(--color-text-primary)',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    padding: '0 10px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+            )}
+            {fieldTypeSupportsOptions(newPropertyType) && (
+              <label style={{ display: 'grid', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Options</span>
+                <textarea
+                  value={newPropertyOptionsInput}
+                  onChange={event => setNewPropertyOptionsInput(event.target.value)}
+                  placeholder="Option one, Option two"
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    minHeight: 38,
+                    borderRadius: 8,
+                    border: '1px solid var(--edge)',
+                    background: 'var(--tint)',
+                    color: 'var(--color-text-primary)',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    padding: '8px 10px',
+                    outline: 'none',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
+            )}
             <button
               type="button"
               onClick={() => void handleCreateProperty()}
@@ -1313,6 +1763,9 @@ export function PropertiesTab() {
                 setShowCreateProperty(false)
                 setNewPropertyName('')
                 setNewPropertyType('text')
+                setNewPropertySectionId(DEFAULT_PROPERTY_SECTION_ID)
+                setNewPropertySectionName('')
+                setNewPropertyOptionsInput('')
                 setCreatePropertyError(null)
               }}
               style={{

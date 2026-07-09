@@ -377,11 +377,14 @@ interface FieldConfigShape {
   id: string
   name: string
   source_field_id: string
-  field_type: 'text' | 'multiline' | 'number' | 'select' | 'date' | 'checkbox'
+  field_type: 'text' | 'multiline' | 'number' | 'select' | 'multi_select' | 'date' | 'checkbox' | 'email' | 'url'
   scope_type: 'Contact' | 'Company' | 'Both'
   scope_pod_id: string | null
   required: boolean
   display_order: number
+  display_section_id?: string | null
+  display_section_label?: string | null
+  field_options?: string[]
 }
 
 const now = new Date().toISOString()
