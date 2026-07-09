@@ -9,7 +9,20 @@ function bufferFromBytes(bytes: Uint8Array): ArrayBuffer {
 }
 
 function optionColumnValues(optionsXml: string, column: string): string[] {
-  return [...optionsXml.matchAll(new RegExp(`<c r="${column}\\d+"[^>]*><is><t>(.*?)</t></is></c>`, 'g'))].map(match => match[1])
+  return [...optionsXml.matchAll(new RegExp(`<c r="${column}\\d+"[^>]*><is><t>(.*?)</t></is></c>`, 'g'))]
+    .map(match => match[1])
+    .filter(Boolean)
+}
+
+function columnName(index: number): string {
+  let n = index + 1
+  let name = ''
+  while (n > 0) {
+    const remainder = (n - 1) % 26
+    name = String.fromCharCode(65 + remainder) + name
+    n = Math.floor((n - 1) / 26)
+  }
+  return name
 }
 
 describe('workspace import template', () => {
@@ -56,6 +69,13 @@ describe('workspace import template', () => {
       contacts,
       companies,
       customFieldNames: ['Favorite Coffee', 'SPV Investor', 'SPV Investor (checkbox)', 'Category', 'Notes'],
+      customFields: [
+        { name: 'Favorite Coffee', field_type: 'select', field_options: ['Latte', 'Espresso'] },
+        { name: 'SPV Investor', field_type: 'text', field_options: [] },
+        { name: 'SPV Investor (checkbox)', field_type: 'checkbox', field_options: [] },
+        { name: 'Category', field_type: 'text', field_options: [] },
+        { name: 'Notes', field_type: 'multiline', field_options: [] },
+      ],
     })
 
     const parsed = await parseWorkbookBuffer(bufferFromBytes(bytes))
@@ -98,6 +118,8 @@ describe('workspace import template', () => {
     const contactsXml = new TextDecoder().decode(workbookFiles['xl/worksheets/sheet1.xml'])
     const optionsXml = new TextDecoder().decode(workbookFiles['xl/worksheets/sheet2.xml'])
     const kinshipInvestmentOptions = optionColumnValues(optionsXml, 'G')
+    const customOptionColumn = 'J'
+    const favoriteCoffeeColumn = columnName(parsed.headers.indexOf('Favorite Coffee'))
 
     expect(contactsXml).toContain('<pane ySplit="2" topLeftCell="A3"')
     expect(contactsXml).toContain('<c r="A1" t="inlineStr" s="1"><is><t>contact information</t></is></c>')
@@ -116,5 +138,8 @@ describe('workspace import template', () => {
     expect(kinshipInvestmentOptions).toContain('Kinship Fund I')
     expect(kinshipInvestmentOptions).toContain('TeraWulf')
     expect(kinshipInvestmentOptions).not.toContain('Company Record')
+    expect(optionColumnValues(optionsXml, customOptionColumn)).toEqual(['Favorite Coffee', 'Espresso', 'Latte'])
+    expect(contactsXml).toContain(`sqref="${favoriteCoffeeColumn}3:${favoriteCoffeeColumn}1000"`)
+    expect(contactsXml).toContain(`&apos;Options&apos;!$${customOptionColumn}$2:$${customOptionColumn}$3`)
   })
 })

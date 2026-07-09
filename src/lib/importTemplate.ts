@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from 'fflate'
 import { getCampaigns, getCategories, getCompanies, getContacts, getPipelineStages, getPods } from './data'
-import { getFieldConfigs } from './fieldConfig'
+import { getFieldConfigs, type FieldConfig } from './fieldConfig'
 import { DEFAULT_KINSHIP_INVESTMENTS } from './kinshipInvestments'
 import { LP_TRACKER_FIELDS } from './lpTrackerFields'
 import type { Campaign, CampaignStage, Category, Company, Contact, Pod } from './types'
@@ -14,6 +14,12 @@ type OptionColumn = {
 type TemplateValidation = {
   header: string
   optionKey: string
+}
+
+export type ImportTemplateCustomField = {
+  name: string
+  field_type: FieldConfig['field_type']
+  field_options: string[]
 }
 
 type WorksheetOptions = {
@@ -31,6 +37,7 @@ export type ImportTemplateWorkspaceData = {
   contacts: Contact[]
   companies: Company[]
   customFieldNames: string[]
+  customFields?: ImportTemplateCustomField[]
 }
 
 export const IMPORT_TEMPLATE_BASE_HEADERS = [
@@ -135,6 +142,34 @@ function uniqueSorted(values: Iterable<string>): string[] {
   return [...seen.values()].sort((a, b) => a.localeCompare(b))
 }
 
+function customFieldTemplateKey(value: string): string {
+  return normalizeRemovedTemplateFieldName(value)
+}
+
+function customFieldsForTemplate(data: ImportTemplateWorkspaceData): ImportTemplateCustomField[] {
+  const sourceFields = data.customFields?.length
+    ? data.customFields
+    : data.customFieldNames.map(name => ({ name, field_type: 'text' as const, field_options: [] }))
+  const standard = new Set(IMPORT_TEMPLATE_BASE_HEADERS.map(header => header.toLowerCase()))
+  const lpTracker = new Set(LP_TRACKER_FIELDS.map(field => field.target.toLowerCase()))
+  const seen = new Set<string>()
+  const customFields: ImportTemplateCustomField[] = []
+
+  for (const field of sourceFields) {
+    const name = field.name.trim()
+    const key = customFieldTemplateKey(name)
+    if (!name || standard.has(key) || lpTracker.has(key) || REMOVED_TEMPLATE_FIELD_NAMES.has(key) || seen.has(key)) continue
+    seen.add(key)
+    customFields.push({
+      name,
+      field_type: field.field_type,
+      field_options: uniqueSorted(field.field_options ?? []),
+    })
+  }
+
+  return customFields
+}
+
 function companyOptionNames(contacts: Contact[], companies: Company[]): string[] {
   return uniqueSorted([
     ...companies.map(company => company.name),
@@ -147,7 +182,7 @@ function investmentOptionNames(): string[] {
   return uniqueSorted(DEFAULT_KINSHIP_INVESTMENTS)
 }
 
-function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
+function buildOptionColumns(data: ImportTemplateWorkspaceData, customFields = customFieldsForTemplate(data)): OptionColumn[] {
   const companyNames = companyOptionNames(data.contacts, data.companies)
   const investmentNames = investmentOptionNames()
   const contactNames = uniqueSorted(data.contacts.filter(contact => contact.type === 'Contact').map(contact => contact.name))
@@ -156,7 +191,7 @@ function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
     ...data.campaignStages.map(stage => stage.name),
   ])
 
-  return [
+  const baseColumns = [
     { key: 'pods', label: 'Pods', values: uniqueSorted(data.pods.map(pod => pod.name)) },
     { key: 'subPods', label: 'Sub-pods', values: uniqueSorted(data.categories.map(category => category.name)) },
     { key: 'campaigns', label: 'Campaigns', values: uniqueSorted(data.campaigns.map(campaign => campaign.name)) },
@@ -167,6 +202,15 @@ function buildOptionColumns(data: ImportTemplateWorkspaceData): OptionColumn[] {
     { key: 'gender', label: 'Gender', values: ['Female', 'Male', 'Non-binary', 'Other'] },
     { key: 'globalRegion', label: 'Global Region', values: ['AMER', 'APAC', 'EU', 'LATAM', 'ME'] },
   ]
+  const customColumns = customFields
+    .filter(field => (field.field_type === 'select' || field.field_type === 'multi_select') && field.field_options.length > 0)
+    .map(field => ({
+      key: `custom:${customFieldTemplateKey(field.name)}`,
+      label: field.name,
+      values: field.field_options,
+    }))
+
+  return [...baseColumns, ...customColumns]
 }
 
 export function buildImportTemplateHeaders(customFieldNames: string[]): string[] {
@@ -398,10 +442,17 @@ function optionsRows(optionColumns: OptionColumn[]): string[][] {
 }
 
 export function buildImportTemplateWorkbook(data: ImportTemplateWorkspaceData): Uint8Array {
-  const optionColumns = buildOptionColumns(data)
-  const headers = buildImportTemplateHeaders(data.customFieldNames)
+  const customFields = customFieldsForTemplate(data)
+  const optionColumns = buildOptionColumns(data, customFields)
+  const headers = buildImportTemplateHeaders(customFields.map(field => field.name))
   const sectionLabels = templateSectionLabels(headers)
-  const validations = validationXml(headers, optionColumns, BASE_VALIDATIONS, 3)
+  const customValidations = customFields
+    .filter(field => (field.field_type === 'select' || field.field_type === 'multi_select') && field.field_options.length > 0)
+    .map(field => ({
+      header: field.name,
+      optionKey: `custom:${customFieldTemplateKey(field.name)}`,
+    }))
+  const validations = validationXml(headers, optionColumns, [...BASE_VALIDATIONS, ...customValidations], 3)
   const files = {
     '[Content_Types].xml': strToU8(contentTypesXml()),
     '_rels/.rels': strToU8(rootRelsXml()),
@@ -437,6 +488,11 @@ export async function getWorkspaceImportTemplateData(): Promise<ImportTemplateWo
     contacts,
     companies,
     customFieldNames: fieldConfigs.map(field => field.name),
+    customFields: fieldConfigs.map(field => ({
+      name: field.name,
+      field_type: field.field_type,
+      field_options: field.field_options,
+    })),
   }
 }
 
