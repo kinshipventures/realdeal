@@ -164,7 +164,11 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           <div style={{ borderTop: '1px solid var(--divider)', padding: 4 }}>
             <button
               type="button"
-              onClick={() => { navigate('/account'); setOpen(false) }}
+              onClick={() => {
+                sessionStorage.setItem('realdeal:settings-tab', 'team')
+                navigate('/account')
+                setOpen(false)
+              }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 width: '100%', padding: '8px 12px',
@@ -187,7 +191,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
           </div>
 
           {/* New team */}
-          <div style={{ borderTop: '1px solid var(--divider)', padding: 4 }}>
+          <div className="rd-hidden-until-needed" style={{ borderTop: '1px solid var(--divider)', padding: 4 }}>
             {creating ? (
               <div style={{ display: 'flex', gap: 6, padding: '4px 8px' }}>
                 <input

@@ -1196,6 +1196,7 @@ export function OrbMap() {
         }}>
           {viewMode === 'map' && mapView === 'hub' && (
             <MapChromeButton
+              className="rd-hidden-until-needed"
               onClick={handleResetLayout}
               title="Reset orb positions"
             >

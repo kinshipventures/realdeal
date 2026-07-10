@@ -2117,3 +2117,7 @@ body::after {
     border-bottom: 1px solid var(--divider);
   }
 }
+
+.rd-hidden-until-needed {
+  display: none !important;
+}

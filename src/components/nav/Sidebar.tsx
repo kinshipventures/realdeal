@@ -209,17 +209,19 @@ export function Sidebar({
           collapsed={collapsed}
           onClick={() => navigate('/learn')}
         />
-        <NavItem
-          icon={<ChangelogIcon />}
-          label="What's New"
-          active={isChangelog}
-          collapsed={collapsed}
-          onClick={() => {
-            localStorage.setItem('realdeal:changelog-seen:0.2', '1')
-            navigate('/changelog')
-          }}
-          badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
-        />
+        <div className="rd-hidden-until-needed">
+          <NavItem
+            icon={<ChangelogIcon />}
+            label="What's New"
+            active={isChangelog}
+            collapsed={collapsed}
+            onClick={() => {
+              localStorage.setItem('realdeal:changelog-seen:0.2', '1')
+              navigate('/changelog')
+            }}
+            badge={!localStorage.getItem('realdeal:changelog-seen:0.2')}
+          />
+        </div>
         <NavItem
           icon={<SignOutIcon />}
           label="Sign out"

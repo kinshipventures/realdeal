@@ -3381,7 +3381,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               )}
               {/* Enrich button -- only for existing contacts */}
               {!isNew && contact && !contactCardStructureReadOnly && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <div className="rd-hidden-until-needed" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <button
                     type="button"
                     disabled={enriching || !isEnrichmentAllowed(contact, availablePods)}
@@ -4362,6 +4362,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
               /* Empty state: no follow-up set */
               !contactCardReadOnly && <button
                 type="button"
+                className="rd-hidden-until-needed"
                 onClick={() => {
                   setEditFollowUpDate('')
                   setEditFollowUpAction('')
