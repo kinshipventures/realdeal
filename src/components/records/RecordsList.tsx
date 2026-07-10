@@ -2307,7 +2307,7 @@ export function RecordsList() {
 
           <div ref={moreRef} style={{ marginLeft: 'auto', position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
-              className="records-toolbar-button"
+              className="records-toolbar-button records-primary-action"
               type="button"
               onClick={() => navigate('/approvals')}
               style={{
@@ -2665,7 +2665,7 @@ export function RecordsList() {
               Add to Campaign
             </button>
             <button
-              className="delight-button"
+              className="delight-button records-primary-action"
               type="button"
               onClick={openShareAccess}
               disabled={bulkOperating || shareAccessLoading}
@@ -3410,6 +3410,24 @@ export function RecordsList() {
         }
         .records-checkbox:checked {
           animation: checkbox-pop 0.22s ease-out;
+        }
+        .records-primary-action {
+          background: var(--color-brand) !important;
+          border-color: var(--color-brand) !important;
+          color: #fff !important;
+        }
+        .records-primary-action:hover {
+          background: color-mix(in srgb, var(--color-brand) 88%, #000 12%) !important;
+          border-color: color-mix(in srgb, var(--color-brand) 88%, #000 12%) !important;
+          color: #fff !important;
+        }
+        .records-primary-action svg {
+          color: #fff !important;
+          stroke: currentColor !important;
+        }
+        .records-primary-action:disabled {
+          opacity: 0.65 !important;
+          cursor: not-allowed !important;
         }
         @media (prefers-color-scheme: dark) {
           input[type="checkbox"] {
