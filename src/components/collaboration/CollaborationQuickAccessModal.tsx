@@ -114,7 +114,7 @@ export function CollaborationQuickAccessModal({
   onCreated: (createdCount: number) => void
 }) {
   const isSelectionVariant = variant === 'selection'
-  const [subjectType, setSubjectType] = useState<CollaborationSubjectType>(members.length > 0 ? 'user' : 'team')
+  const [subjectType, setSubjectType] = useState<CollaborationSubjectType>(isSelectionVariant ? 'user' : members.length > 0 ? 'user' : 'team')
   const [subjectId, setSubjectId] = useState(members[0]?.user_id ?? '')
   const [subjectLabel, setSubjectLabel] = useState(members[0]?.display_name || members[0]?.email || '')
   const [permission, setPermission] = useState<CollaborationPermissionLevel>('view')
@@ -144,6 +144,10 @@ export function CollaborationQuickAccessModal({
     && (!isSelectionVariant || visibleFieldIds.length > 0)
 
   useEffect(() => {
+    if (isSelectionVariant && subjectType !== 'user') {
+      setSubjectType('user')
+      return
+    }
     if (subjectType !== 'user') {
       setSubjectId('')
       if (!subjectLabel.trim()) {
@@ -156,7 +160,7 @@ export function CollaborationQuickAccessModal({
       setSubjectId(member.user_id)
       setSubjectLabel(member.display_name || member.email || 'User')
     }
-  }, [members, subjectId, subjectLabel, subjectType])
+  }, [isSelectionVariant, members, subjectId, subjectLabel, subjectType])
 
   function applyPreset(preset: PermissionPreset) {
     setPermission(preset.permission)
@@ -309,26 +313,13 @@ export function CollaborationQuickAccessModal({
               </section>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 14 }}>
-              <SelectField label="Share with" value={subjectType} onChange={value => setSubjectType(value as CollaborationSubjectType)}>
-                {SUBJECT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 12, marginTop: 14 }}>
+              <SelectField label="User" value={subjectId} onChange={setSubjectId}>
+                {members.length === 0 && <option value="">No users found</option>}
+                {members.map(member => (
+                  <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
+                ))}
               </SelectField>
-
-              {subjectType === 'user' ? (
-                <SelectField label="User" value={subjectId} onChange={setSubjectId}>
-                  {members.length === 0 && <option value="">No users found</option>}
-                  {members.map(member => (
-                    <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
-                  ))}
-                </SelectField>
-              ) : (
-                <TextField
-                  label="Label"
-                  value={subjectLabel}
-                  onChange={setSubjectLabel}
-                  placeholder={subjectType === 'public_link' ? 'Public reviewer link' : 'Team or organization name'}
-                />
-              )}
             </div>
 
             <section style={{ ...panelStyle, marginTop: 14 }}>

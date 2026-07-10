@@ -81,7 +81,29 @@ describe('Shared contacts guardrails', () => {
     expect(modal).toContain('visible_field_ids: isSelectionVariant ? visibleFieldIds : undefined')
     expect(modal).toContain('Reader')
     expect(modal).toContain('Editor')
+    expect(modal).toContain("const [subjectType, setSubjectType] = useState<CollaborationSubjectType>(isSelectionVariant ? 'user'")
+    expect(modal).toContain("if (isSelectionVariant && subjectType !== 'user')")
+    expect(modal).toContain('<SelectField label="User" value={subjectId} onChange={setSubjectId}>')
     expect(modal).toContain('Require approval before editor changes apply')
+  })
+
+  it('keeps relationship dropdowns searchable, scrollable, and visually ordered without changing filter logic', () => {
+    const recordsList = source('src/components/records/RecordsList.tsx')
+
+    expect(recordsList).toContain('function labelSort(a: string, b: string): number')
+    expect(recordsList).toContain('function matchesMenuSearch(label: string, search: string): boolean')
+    expect(recordsList).toContain('const sortedRelationshipFilterFields = useMemo')
+    expect(recordsList).toContain('{sortedRelationshipFilterFields.map(field => (')
+    expect(recordsList).toContain('placeholder="Search values..."')
+    expect(recordsList).toContain('filteredRelationshipFilterValueOptions.map')
+    expect(recordsList).toContain('placeholder="Search sections..."')
+    expect(recordsList).toContain('filteredVisibleSectionOptions.map')
+    expect(recordsList).toContain("maxHeight: 'min(420px, calc(100vh - 240px))'")
+    expect(recordsList).toContain('const dropdownSearchInputStyle: React.CSSProperties')
+    expect(recordsList).toContain('placeholder="Search pods..."')
+    expect(recordsList).toContain('filteredPodPickerPods.map')
+    expect(recordsList).toContain('placeholder="Search sub-pods..."')
+    expect(recordsList).toContain('filteredSubPodsByPod.map')
   })
 
   it('keeps trusted-user RPC contracts intact', () => {

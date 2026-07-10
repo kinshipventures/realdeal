@@ -429,6 +429,15 @@ function normalizedFilterText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+function labelSort(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+}
+
+function matchesMenuSearch(label: string, search: string): boolean {
+  const query = normalizedFilterText(search)
+  return !query || normalizedFilterText(label).includes(query)
+}
+
 function uniqueFilterOptions(values: Iterable<string>): string[] {
   const seen = new Map<string, string>()
   for (const value of values) {
@@ -633,6 +642,10 @@ export function RecordsList() {
   const [showMoreDropdown, setShowMoreDropdown] = useState(false)
   const [showColumnFilter, setShowColumnFilter] = useState(false)
   const [showPropertyValueFilter, setShowPropertyValueFilter] = useState(false)
+  const [propertyValueSearch, setPropertyValueSearch] = useState('')
+  const [visibleSectionSearch, setVisibleSectionSearch] = useState('')
+  const [podPickerSearch, setPodPickerSearch] = useState('')
+  const [subPodPickerSearch, setSubPodPickerSearch] = useState('')
   const [savingViewName, setSavingViewName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
@@ -798,6 +811,22 @@ export function RecordsList() {
     deleteDialogRef.current?.focus()
   }, [showDeleteConfirm, showAddToCampaign, showArchiveConfirm])
 
+  useEffect(() => {
+    if (!showPropertyValueFilter) setPropertyValueSearch('')
+  }, [showPropertyValueFilter])
+
+  useEffect(() => {
+    if (!showColumnFilter) setVisibleSectionSearch('')
+  }, [showColumnFilter])
+
+  useEffect(() => {
+    if (!showPodPicker) setPodPickerSearch('')
+  }, [showPodPicker])
+
+  useEffect(() => {
+    if (!showSubPodPicker) setSubPodPickerSearch('')
+  }, [showSubPodPicker])
+
   // Pod map for lookups
   const podMap = useMemo<Record<string, Pod>>(() => {
     const m: Record<string, Pod> = {}
@@ -829,14 +858,33 @@ export function RecordsList() {
     return m
   }, [companies])
 
-  const subPodsByPod = useMemo(
-    () => pods
-      .map(pod => ({
-        pod,
-        subPods: categories.filter(category => category.list_id === pod.id),
-      }))
+  const sortedPods = useMemo(
+    () => [...pods].sort((a, b) => labelSort(a.name, b.name)),
+    [pods],
+  )
+
+  const filteredPodPickerPods = useMemo(
+    () => sortedPods.filter(pod => matchesMenuSearch(pod.name, podPickerSearch)),
+    [podPickerSearch, sortedPods],
+  )
+
+  const filteredSubPodsByPod = useMemo(
+    () => sortedPods
+      .map(pod => {
+        const subPods = categories
+          .filter(category => category.list_id === pod.id)
+          .sort((a, b) => labelSort(a.name, b.name))
+        if (!subPodPickerSearch.trim()) return { pod, subPods }
+        const podMatches = matchesMenuSearch(pod.name, subPodPickerSearch)
+        return {
+          pod,
+          subPods: podMatches
+            ? subPods
+            : subPods.filter(subPod => matchesMenuSearch(subPod.name, subPodPickerSearch)),
+        }
+      })
       .filter(group => group.subPods.length > 0),
-    [pods, categories],
+    [categories, sortedPods, subPodPickerSearch],
   )
 
   const activeCampaigns = useMemo(
@@ -908,6 +956,11 @@ export function RecordsList() {
       return [...standardFields, ...customFields]
     },
     [fieldConfigs, relationshipColumns],
+  )
+
+  const sortedRelationshipFilterFields = useMemo(
+    () => [...relationshipFilterFields].sort((a, b) => labelSort(a.label, b.label)),
+    [relationshipFilterFields],
   )
 
   useEffect(() => {
@@ -1084,6 +1137,28 @@ export function RecordsList() {
       ]),
     ]
   }, [campaigns, categories, companies, contacts, filters.propertyField, pods, relationshipFilterSourceContacts, relationshipFilterValuesForContact])
+
+  const sortedRelationshipFilterValueOptions = useMemo(() => {
+    const hasNone = relationshipFilterValueOptions.includes(RELATIONSHIP_NONE_FILTER_VALUE)
+    const values = relationshipFilterValueOptions
+      .filter(value => value !== RELATIONSHIP_NONE_FILTER_VALUE)
+      .sort((a, b) => labelSort(relationshipFilterValueLabel(a), relationshipFilterValueLabel(b)))
+    return hasNone ? [RELATIONSHIP_NONE_FILTER_VALUE, ...values] : values
+  }, [relationshipFilterValueOptions])
+
+  const filteredRelationshipFilterValueOptions = useMemo(
+    () => sortedRelationshipFilterValueOptions.filter(value => (
+      value === RELATIONSHIP_NONE_FILTER_VALUE
+        ? matchesMenuSearch(relationshipFilterValueLabel(value), propertyValueSearch)
+        : matchesMenuSearch(value, propertyValueSearch)
+    )),
+    [propertyValueSearch, sortedRelationshipFilterValueOptions],
+  )
+
+  const filteredVisibleSectionOptions = useMemo(
+    () => sortedRelationshipFilterFields.filter(field => matchesMenuSearch(field.label, visibleSectionSearch)),
+    [sortedRelationshipFilterFields, visibleSectionSearch],
+  )
 
   const selectedPropertyValues = useMemo(
     () => selectedRelationshipFilterValues({
@@ -2120,7 +2195,7 @@ export function RecordsList() {
             style={{ ...selectStyle, minWidth: 170, flex: '0 1 220px' }}
           >
             <option value="">Filter by field</option>
-            {relationshipFilterFields.map(field => (
+            {sortedRelationshipFilterFields.map(field => (
               <option key={field.id} value={field.id}>{field.label}</option>
             ))}
           </select>
@@ -2162,28 +2237,41 @@ export function RecordsList() {
                 style={{
                   ...dropdownStyle,
                   minWidth: 240,
-                  maxHeight: 320,
-                  overflowY: 'auto',
+                  maxHeight: 'min(360px, calc(100vh - 260px))',
+                  overflow: 'hidden',
                 }}
               >
                 <div style={menuLabelStyle}>{selectedPropertyFieldLabel}</div>
-                {relationshipFilterValueOptions.map(value => {
-                  const checked = selectedPropertyValues.includes(value)
-                  return (
-                    <label
-                      key={value}
-                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => togglePropertyFilterValue(value)}
-                        style={{ margin: 0, accentColor: 'var(--color-brand)' }}
-                      />
-                      <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(value)}</span>
-                    </label>
-                  )
-                })}
+                <input
+                  type="search"
+                  aria-label={`Search ${selectedPropertyFieldLabel} values`}
+                  placeholder="Search values..."
+                  value={propertyValueSearch}
+                  onChange={event => setPropertyValueSearch(event.target.value)}
+                  style={dropdownSearchInputStyle}
+                />
+                <div style={{ maxHeight: 230, overflowY: 'auto', paddingRight: 2 }}>
+                  {filteredRelationshipFilterValueOptions.map(value => {
+                    const checked = selectedPropertyValues.includes(value)
+                    return (
+                      <label
+                        key={value}
+                        style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => togglePropertyFilterValue(value)}
+                          style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                        />
+                        <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(value)}</span>
+                      </label>
+                    )
+                  })}
+                  {filteredRelationshipFilterValueOptions.length === 0 && (
+                    <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching values</div>
+                  )}
+                </div>
                 {selectedPropertyValues.length > 0 && (
                   <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                     <button
@@ -2241,22 +2329,35 @@ export function RecordsList() {
               <ListFilter size={16} />
             </button>
             {showColumnFilter && (
-              <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 220 }}>
+              <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 240, maxHeight: 'min(420px, calc(100vh - 240px))', overflow: 'hidden' }}>
                 <div style={menuLabelStyle}>Visible sections</div>
-                {relationshipFilterFields.map(col => (
-                  <label
-                    key={col.id}
-                    style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns.has(col.id)}
-                      onChange={() => toggleColumn(col.id)}
-                      style={{ margin: 0, accentColor: 'var(--color-brand)' }}
-                    />
-                    <span style={{ fontSize: 13 }}>{col.label}</span>
-                  </label>
-                ))}
+                <input
+                  type="search"
+                  aria-label="Search visible sections"
+                  placeholder="Search sections..."
+                  value={visibleSectionSearch}
+                  onChange={event => setVisibleSectionSearch(event.target.value)}
+                  style={dropdownSearchInputStyle}
+                />
+                <div style={{ maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
+                  {filteredVisibleSectionOptions.map(col => (
+                    <label
+                      key={col.id}
+                      style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns.has(col.id)}
+                        onChange={() => toggleColumn(col.id)}
+                        style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                      />
+                      <span style={{ fontSize: 13 }}>{col.label}</span>
+                    </label>
+                  ))}
+                  {filteredVisibleSectionOptions.length === 0 && (
+                    <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching sections</div>
+                  )}
+                </div>
                 <div className="records-dropdown-group" style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                   <button
                     type="button"
@@ -2455,11 +2556,20 @@ export function RecordsList() {
                 <span style={{ marginLeft: 4, opacity: 0.5 }}>&#9662;</span>
               </button>
               {showPodPicker && (
-                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 200 }}>
+                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 220, maxHeight: 360, overflow: 'hidden' }}>
+                  <input
+                    type="search"
+                    aria-label="Search pods"
+                    placeholder="Search pods..."
+                    value={podPickerSearch}
+                    onChange={event => setPodPickerSearch(event.target.value)}
+                    style={dropdownSearchInputStyle}
+                  />
+                  <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 2 }}>
                   <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Add to pod
                   </div>
-                  {pods.map(pod => (
+                  {filteredPodPickerPods.map(pod => (
                     <button
                       key={`add-${pod.id}`}
                       type="button"
@@ -2474,7 +2584,7 @@ export function RecordsList() {
                   <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Move to pod
                   </div>
-                  {pods.map(pod => (
+                  {filteredPodPickerPods.map(pod => (
                     <button
                       key={`move-${pod.id}`}
                       type="button"
@@ -2485,9 +2595,10 @@ export function RecordsList() {
                       {pod.name}
                     </button>
                   ))}
-                  {pods.length === 0 && (
+                  {filteredPodPickerPods.length === 0 && (
                     <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No pods</div>
                   )}
+                  </div>
                 </div>
               )}
             </div>
@@ -2505,11 +2616,20 @@ export function RecordsList() {
                 <span style={{ marginLeft: 4, opacity: 0.5 }}>&#9662;</span>
               </button>
               {showSubPodPicker && (
-                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 240, maxHeight: 360, overflowY: 'auto' }}>
+                <div className="records-dropdown" style={{ ...dropdownStyle, minWidth: 240, maxHeight: 360, overflow: 'hidden' }}>
+                  <input
+                    type="search"
+                    aria-label="Search sub-pods"
+                    placeholder="Search sub-pods..."
+                    value={subPodPickerSearch}
+                    onChange={event => setSubPodPickerSearch(event.target.value)}
+                    style={dropdownSearchInputStyle}
+                  />
+                  <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 2 }}>
                   <div style={{ padding: '4px 8px', fontSize: 10, fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Move to sub-pod
                   </div>
-                  {subPodsByPod.map(({ pod, subPods }) => (
+                  {filteredSubPodsByPod.map(({ pod, subPods }) => (
                     <div key={pod.id} className="records-dropdown-group">
                       <div style={{ padding: '8px 8px 4px', fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                         {pod.color && <span style={{ width: 7, height: 7, borderRadius: '50%', background: pod.color, flexShrink: 0 }} />}
@@ -2527,11 +2647,12 @@ export function RecordsList() {
                       ))}
                     </div>
                   ))}
-                  {subPodsByPod.length === 0 && (
+                  {filteredSubPodsByPod.length === 0 && (
                     <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)', whiteSpace: 'normal' }}>
                       No sub-pods yet. Add sub-pods from a pod page.
                     </div>
                   )}
+                  </div>
                 </div>
               )}
             </div>
@@ -3515,6 +3636,21 @@ const dropdownItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   transition: 'background 0.1s',
+}
+
+const dropdownSearchInputStyle: React.CSSProperties = {
+  width: 'calc(100% - 8px)',
+  height: 32,
+  margin: '4px 4px 6px',
+  padding: '0 10px',
+  borderRadius: 8,
+  border: '1px solid var(--edge)',
+  background: 'var(--color-bg)',
+  color: 'var(--color-text-primary)',
+  fontSize: 12,
+  fontFamily: 'inherit',
+  outline: 'none',
+  boxSizing: 'border-box',
 }
 
 const dropdownButtonStyle: React.CSSProperties = {
