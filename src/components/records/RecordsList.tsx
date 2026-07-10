@@ -1240,11 +1240,7 @@ export function RecordsList() {
     return ids
   }, [sharedContactMetaById])
 
-  const canSelectContact = useCallback((contact: Contact) => {
-    const inboundShare = sharedContactMetaById.get(contact.id)?.find(item => item.direction === 'shared_with_me')
-    if (!inboundShare) return true
-    return false
-  }, [sharedContactMetaById])
+  const canSelectContact = useCallback((_contact: Contact) => true, [])
 
   const hasPropertyFilter = Boolean(filters.propertyField && selectedPropertyValues.length > 0)
 
@@ -2923,7 +2919,7 @@ export function RecordsList() {
                     {/* Pod color + checkbox */}
                     <td style={{ padding: '0', width: 48, height: 52 }} onClick={e => toggleSelectRow(contact, e)}>
                       <div
-                        title={selectable ? undefined : 'Reader shared contacts cannot be used for bulk actions'}
+                        title={`Select ${contact.name}`}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, cursor: selectable ? 'pointer' : 'not-allowed' }}
                       >
                         <input

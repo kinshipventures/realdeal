@@ -259,6 +259,14 @@ describe('Shared contacts guardrails', () => {
     expect(contactDetail).toContain('if (isInboundSharedContact && sectionId === \'recent_activity\') return false')
   })
 
+  it('allows shared-with-me contacts to be selected in relationships bulk selection', () => {
+    const recordsList = source('src/components/records/RecordsList.tsx')
+
+    expect(recordsList).toContain('const canSelectContact = useCallback((_contact: Contact) => true, [])')
+    expect(recordsList).toContain("aria-label={allSelected ? 'Deselect all people' : 'Select all people'}")
+    expect(recordsList).not.toContain('Reader shared contacts cannot be used for bulk actions')
+  })
+
   it('keeps Editor and Admin shared contacts editable through a guarded RPC', () => {
     const collaboration = source('src/lib/collaboration.ts')
     const contactDetail = source('src/components/contacts/ContactDetail.tsx')
