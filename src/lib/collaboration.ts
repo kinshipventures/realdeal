@@ -19,7 +19,7 @@ export type CollaborationFieldScope =
   | 'campaign_private'
 
 export type CollaborationRequestStatus = 'pending' | 'approved' | 'rejected'
-export type CollaborationRequestType = 'campaign_participation' | 'private_information_access'
+export type CollaborationRequestType = 'campaign_participation' | 'private_information_access' | 'shared_contact_change'
 export type PublicCampaignReviewStatus = 'approved' | 'rejected' | 'discussion'
 
 export interface CollaborationAccessGrant {
@@ -79,6 +79,10 @@ export interface CollaborationApprovalRequest {
   status: CollaborationRequestStatus
   reason: string | null
   requested_field_scopes: CollaborationFieldScope[]
+  access_grant_id?: string | null
+  proposed_contact_patch?: Record<string, unknown> | null
+  original_contact_snapshot?: Record<string, unknown> | null
+  approved_contact_patch?: Record<string, unknown> | null
   created_at: string
   resolved_at: string | null
 }
@@ -420,6 +424,36 @@ export async function updateSharedContactWithGrant(
 
   if (error) throw error
   return data as Contact
+}
+
+export async function createSharedContactChangeRequest(
+  grantId: string,
+  contactId: string,
+  patch: Partial<Omit<Contact, 'id' | 'created_at'>>,
+): Promise<CollaborationApprovalRequest> {
+  const { data, error } = await db.rpc('create_shared_contact_change_request', {
+    _grant_id: grantId,
+    _contact_id: contactId,
+    _contact_patch: patch,
+  })
+
+  if (error) throw error
+  return data as CollaborationApprovalRequest
+}
+
+export async function resolveSharedContactChangeRequest(
+  requestId: string,
+  status: Extract<CollaborationRequestStatus, 'approved' | 'rejected'>,
+  approvedPatch: Record<string, unknown> = {},
+): Promise<CollaborationApprovalRequest> {
+  const { data, error } = await db.rpc('resolve_shared_contact_change_request', {
+    _request_id: requestId,
+    _status: status,
+    _approved_contact_patch: approvedPatch,
+  })
+
+  if (error) throw error
+  return data as CollaborationApprovalRequest
 }
 
 export async function createCollaborationAccessGrant(input: CreateAccessGrantInput): Promise<CollaborationAccessGrant> {

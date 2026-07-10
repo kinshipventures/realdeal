@@ -408,10 +408,10 @@ function pulseCopy(count: number, atRisk: number, hasFilters: boolean): string {
 function permissionLabel(value: CollaborationPermissionLevel): string {
   if (value === 'view') return 'Reader'
   if (value === 'comment') return 'Commenter'
-  if (value === 'suggest') return 'Contributor'
+  if (value === 'suggest') return 'Editor (request)'
   if (value === 'edit') return 'Editor'
   if (value === 'approve') return 'Approver'
-  if (value === 'admin') return 'Admin'
+  if (value === 'admin') return 'Editor'
   return 'Reader'
 }
 

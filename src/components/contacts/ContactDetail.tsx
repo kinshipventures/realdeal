@@ -29,7 +29,7 @@ import { CloseButton } from '../ui'
 import { InteractionSection } from './InteractionSection'
 import { CampaignCommitmentInput } from '../campaigns/CampaignCommitmentInput'
 import { SubPodSelector } from '../subpods/SubPodSelector'
-import { updateSharedContactWithGrant, type CollaborationFieldScope, type CollaborationPermissionLevel } from '../../lib/collaboration'
+import { createSharedContactChangeRequest, updateSharedContactWithGrant, type CollaborationFieldScope, type CollaborationPermissionLevel } from '../../lib/collaboration'
 import {
   normalizeSharedContactVisibleFieldIds,
   type SharedContactVisibleFieldId,
@@ -383,7 +383,9 @@ function sanitizeCustomFields(fields: unknown): Record<string, unknown> {
 export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted, pods = [], categories: providedCategories, onCampaignContactUpdated, sharedAccess }: Props) {
   const isNew = contact === null
   const isInboundSharedContact = sharedAccess?.direction === 'shared_with_me'
-  const sharedContactCanEdit = isInboundSharedContact && (sharedAccess?.permissionLevel === 'edit' || sharedAccess?.permissionLevel === 'admin')
+  const sharedContactCanEditDirectly = isInboundSharedContact && (sharedAccess?.permissionLevel === 'edit' || sharedAccess?.permissionLevel === 'admin')
+  const sharedContactCanRequestChanges = isInboundSharedContact && sharedAccess?.permissionLevel === 'suggest'
+  const sharedContactCanEdit = Boolean(sharedContactCanEditDirectly || sharedContactCanRequestChanges)
   const contactCardReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEdit)
   const contactCardStructureReadOnly = Boolean(isInboundSharedContact)
   const sharedFieldScopes = useMemo(
@@ -421,6 +423,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const [hasPendingContactChanges, setHasPendingContactChanges] = useState(false)
   const [savingContactInfo, setSavingContactInfo] = useState(false)
   const [contactSaveError, setContactSaveError] = useState<string | null>(null)
+  const [contactSaveNotice, setContactSaveNotice] = useState<string | null>(null)
   const [newOptionTarget, setNewOptionTarget] = useState<string | null>(null)
   const [newOptionValue, setNewOptionValue] = useState('')
   const [openLinkedRecordDropdown, setOpenLinkedRecordDropdown] = useState<string | null>(null)
@@ -544,7 +547,15 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       }
       const dirtyPatch = dirtySharedWritablePatch(scopedPatch)
       if (Object.keys(dirtyPatch).length === 0) return contact
-      return updateSharedContactWithGrant(sharedAccess.grantId, id, dirtyPatch)
+      if (sharedContactCanEditDirectly) {
+        return updateSharedContactWithGrant(sharedAccess.grantId, id, dirtyPatch)
+      }
+      if (sharedContactCanRequestChanges) {
+        await createSharedContactChangeRequest(sharedAccess.grantId, id, dirtyPatch)
+        setContactSaveNotice('Change request sent for approval.')
+        return contact
+      }
+      throw new Error('This shared contact is read-only.')
     }
     return updateContact(id, data)
   }
@@ -587,6 +598,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     setHasPendingContactChanges(false)
     setSavingContactInfo(false)
     setContactSaveError(null)
+    setContactSaveNotice(null)
     setSaveError(null)
     setCustomFieldSaveError(null)
     setNewOptionTarget(null)
@@ -774,6 +786,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     if (contactCardReadOnly) return
     setHasPendingContactChanges(true)
     setContactSaveError(null)
+    setContactSaveNotice(null)
     setSaveError(null)
     setCustomFieldSaveError(null)
   }
@@ -817,6 +830,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
     setSavingContactInfo(true)
     setContactSaveError(null)
+    setContactSaveNotice(null)
     try {
       const previousGmailSyncEmails = [contact.email, contact.email_2, contact.email_3].map(normalizeContactEmailForGmailSync)
       const updated = await persistContactPatch(contact.id, {
@@ -853,8 +867,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       if (previousGmailSyncEmails.some((email, index) => email !== nextGmailSyncEmails[index])) {
         void syncGmailActivity().catch(() => undefined)
       }
-    } catch {
-      setContactSaveError('Could not save. Try again.')
+    } catch (err) {
+      setContactSaveError(err instanceof Error ? err.message : 'Could not save. Try again.')
     } finally {
       setSavingContactInfo(false)
     }
@@ -3359,6 +3373,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                   </button>
                   {contactSaveError && (
                     <div style={{ fontSize: 10, color: '#D93025' }}>{contactSaveError}</div>
+                  )}
+                  {contactSaveNotice && (
+                    <div style={{ fontSize: 10, color: 'var(--color-brand)' }}>{contactSaveNotice}</div>
                   )}
                 </div>
               )}

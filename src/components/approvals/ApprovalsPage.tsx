@@ -24,14 +24,17 @@ import {
   deleteCollaborationAccessGrant,
   dismissCollaborationPublicCampaignLink,
   getCollaborationAccessGrants,
+  getCollaborationApprovalRequests,
   getIncomingCollaborationAccessGrants,
   getCollaborationPublicCampaignLinks,
   getSharedContactsWithMe,
   removeCollaborationAccessGrant,
   respondIncomingCollaborationAccessGrant,
+  resolveSharedContactChangeRequest,
   revokeCollaborationPublicCampaignLink,
   updateCollaborationAccessGrant,
   type CollaborationAccessGrant,
+  type CollaborationApprovalRequest,
   type CollaborationFieldScope,
   type CollaborationPermissionLevel,
   type CollaborationPublicCampaignLink,
@@ -90,14 +93,13 @@ type SharedRequestFeedback = {
   message: string
 }
 
+type ContactPatchRecord = Record<string, unknown>
+
 const PERMISSION_OPTIONS: Array<{ value: 'all' | CollaborationPermissionLevel | 'public_link'; label: string }> = [
   { value: 'all', label: 'All permissions' },
   { value: 'view', label: 'Reader' },
-  { value: 'comment', label: 'Commenter' },
-  { value: 'suggest', label: 'Contributor' },
+  { value: 'suggest', label: 'Editor (request)' },
   { value: 'edit', label: 'Editor' },
-  { value: 'approve', label: 'Approver' },
-  { value: 'admin', label: 'Admin' },
   { value: 'public_link', label: 'Public link' },
 ]
 
@@ -134,11 +136,8 @@ const SUBJECT_TYPES: Array<{ value: CollaborationSubjectType; label: string }> =
 
 const CREATE_PERMISSION_OPTIONS: Array<{ value: CollaborationPermissionLevel; label: string }> = [
   { value: 'view', label: 'Reader' },
-  { value: 'comment', label: 'Commenter' },
-  { value: 'suggest', label: 'Contributor' },
+  { value: 'suggest', label: 'Editor (request)' },
   { value: 'edit', label: 'Editor' },
-  { value: 'approve', label: 'Approver' },
-  { value: 'admin', label: 'Admin' },
 ]
 
 const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
@@ -170,12 +169,33 @@ function formatDate(value: string | null): string {
 function permissionLabel(value: CollaborationPermissionLevel | 'public_link', publicPermissions?: string[]): string {
   if (value === 'view') return 'Reader'
   if (value === 'comment') return 'Commenter'
-  if (value === 'suggest') return 'Contributor'
+  if (value === 'suggest') return 'Editor (request)'
   if (value === 'edit') return 'Editor'
   if (value === 'approve') return 'Approver'
-  if (value === 'admin') return 'Admin'
+  if (value === 'admin') return 'Editor'
   if (publicPermissions?.length) return publicPermissions.map(titleCase).join(', ')
   return 'Public link'
+}
+
+function fieldChangeLabel(value: string): string {
+  const visibleLabel = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
+    .flatMap(group => group.fields)
+    .find(field => field.id === value)?.label
+  return visibleLabel ?? titleCase(value)
+}
+
+function formatPatchValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '-'
+  if (Array.isArray(value)) return value.length > 0 ? value.map(item => String(item)).join(', ') : '-'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+function pickPatchFields(patch: ContactPatchRecord, fieldKeys: string[]): ContactPatchRecord {
+  return fieldKeys.reduce<ContactPatchRecord>((next, key) => {
+    next[key] = patch[key]
+    return next
+  }, {})
 }
 
 function fieldScopeSummary(scopes: CollaborationFieldScope[]): string {
@@ -436,6 +456,7 @@ export function ApprovalsPage() {
   const [incomingGrants, setIncomingGrants] = useState<CollaborationAccessGrant[]>([])
   const [incomingSharedContacts, setIncomingSharedContacts] = useState<SharedContactAccessSnapshot[]>([])
   const [publicLinks, setPublicLinks] = useState<CollaborationPublicCampaignLink[]>([])
+  const [approvalRequests, setApprovalRequests] = useState<CollaborationApprovalRequest[]>([])
   const [showShareModal, setShowShareModal] = useState(false)
   const [sourceFilter, setSourceFilter] = useState<SharedSourceFilter>('all')
   const [campaignFilter, setCampaignFilter] = useState('all')
@@ -454,12 +475,16 @@ export function ApprovalsPage() {
   const [selectedSharedRowIds, setSelectedSharedRowIds] = useState<Set<string>>(() => new Set())
   const [busySharedRowIds, setBusySharedRowIds] = useState<Set<string>>(() => new Set())
   const [busySharedBulkAction, setBusySharedBulkAction] = useState<'remove' | 'delete' | null>(null)
+  const [busyContactChangeRequestId, setBusyContactChangeRequestId] = useState<string | null>(null)
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
   const pendingSharedRequests = useMemo(() => (
     incomingGrants.filter(grant => grant.status === 'pending' && accessStatus(grant.expires_at, grant.revoked_at) === 'active')
   ), [incomingGrants])
+  const pendingContactChangeRequests = useMemo(() => (
+    approvalRequests.filter(request => request.request_type === 'shared_contact_change' && request.status === 'pending')
+  ), [approvalRequests])
   const contactMap = useMemo(() => new Map(contacts.map(contact => [contact.id, contact])), [contacts])
   const campaignMap = useMemo(() => new Map(campaigns.map(campaign => [campaign.id, campaign])), [campaigns])
   const sharedRows = useMemo(() => {
@@ -585,6 +610,7 @@ export function ApprovalsPage() {
         nextIncomingGrants,
         nextIncomingSharedContacts,
         nextPublicLinks,
+        nextApprovalRequests,
       ] = await Promise.all([
         getContacts(),
         getPods(),
@@ -595,6 +621,7 @@ export function ApprovalsPage() {
         getIncomingCollaborationAccessGrants(),
         getSharedContactsWithMe(),
         getCollaborationPublicCampaignLinks(workspaceId),
+        getCollaborationApprovalRequests(workspaceId),
       ])
       const activeContacts = nextContacts.filter(contact => contact.status !== 'Archived')
       const contactEmailList = activeContacts.flatMap(contactEmails)
@@ -609,6 +636,7 @@ export function ApprovalsPage() {
       setIncomingGrants(nextIncomingGrants)
       setIncomingSharedContacts(nextIncomingSharedContacts)
       setPublicLinks(nextPublicLinks)
+      setApprovalRequests(nextApprovalRequests)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load shared contacts')
     } finally {
@@ -641,16 +669,18 @@ export function ApprovalsPage() {
       if (document.visibilityState === 'hidden') return
 
       try {
-        const [nextConnections, nextIncomingGrants, nextIncomingSharedContacts] = await Promise.all([
+        const [nextConnections, nextIncomingGrants, nextIncomingSharedContacts, nextApprovalRequests] = await Promise.all([
           getUserConnections(),
           getIncomingCollaborationAccessGrants(),
           getSharedContactsWithMe(),
+          getCollaborationApprovalRequests(workspaceId),
         ])
         if (cancelled) return
 
         setConnections(nextConnections)
         setIncomingGrants(nextIncomingGrants)
         setIncomingSharedContacts(nextIncomingSharedContacts)
+        setApprovalRequests(nextApprovalRequests)
 
         if (contacts.length === 0) return
 
@@ -741,6 +771,41 @@ export function ApprovalsPage() {
       })
     } finally {
       setBusySharedRequestId(null)
+    }
+  }
+
+  async function handleResolveContactChangeRequest(
+    request: CollaborationApprovalRequest,
+    status: 'approved' | 'rejected',
+    approvedPatch: ContactPatchRecord,
+  ) {
+    if (busyContactChangeRequestId) return
+
+    setBusyContactChangeRequestId(request.id)
+    setSharedRequestFeedback(null)
+    setError('')
+
+    try {
+      await resolveSharedContactChangeRequest(request.id, status, approvedPatch)
+      await loadData()
+      setSharedRequestFeedback({
+        id: Date.now(),
+        tone: status === 'approved' ? 'success' : 'warning',
+        message: status === 'approved' ? 'Contact change request approved.' : 'Contact change request rejected.',
+      })
+
+      if (sharedRequestFeedbackTimer.current) window.clearTimeout(sharedRequestFeedbackTimer.current)
+      sharedRequestFeedbackTimer.current = window.setTimeout(() => {
+        setSharedRequestFeedback(null)
+      }, 4500)
+    } catch (err) {
+      setSharedRequestFeedback({
+        id: Date.now(),
+        tone: 'error',
+        message: err instanceof Error ? err.message : 'Could not update contact change request.',
+      })
+    } finally {
+      setBusyContactChangeRequestId(null)
     }
   }
 
@@ -898,7 +963,7 @@ export function ApprovalsPage() {
         <SummaryCard icon={<Users size={16} />} label="Shared contacts" value={sharedContactCount} />
         <SummaryCard icon={<ShieldCheck size={16} />} label="Active access" value={activeSharedRows.length} />
         <SummaryCard icon={<Link size={16} />} label="Public links" value={activePublicLinks.length} />
-        <SummaryCard icon={<UserPlus size={16} />} label="Pending shares" value={pendingSharedRequests.length} />
+        <SummaryCard icon={<UserPlus size={16} />} label="Pending requests" value={pendingSharedRequests.length + pendingContactChangeRequests.length} />
       </section>
 
       <ConnectionsPanel
@@ -907,6 +972,12 @@ export function ApprovalsPage() {
         contacts={contacts}
         onCreateConnection={handleCreateConnection}
         onRespondConnection={handleRespondConnection}
+      />
+
+      <ContactChangeRequestsPanel
+        requests={pendingContactChangeRequests}
+        busyRequestId={busyContactChangeRequestId}
+        onResolve={handleResolveContactChangeRequest}
       />
 
       <section ref={sharedContactManagerRef} style={{ marginBottom: 28 }}>
@@ -1024,6 +1095,172 @@ export function ApprovalsPage() {
         `}
       </style>
     </main>
+  )
+}
+
+function ContactChangeRequestsPanel({
+  requests,
+  busyRequestId,
+  onResolve,
+}: {
+  requests: CollaborationApprovalRequest[]
+  busyRequestId: string | null
+  onResolve: (request: CollaborationApprovalRequest, status: 'approved' | 'rejected', approvedPatch: ContactPatchRecord) => Promise<void>
+}) {
+  if (requests.length === 0) return null
+
+  return (
+    <section style={{ marginBottom: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+            Change requests
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
+            Review editor updates before they apply to the original contact.
+          </p>
+        </div>
+        <TagPill tone="yellow">{requests.length} pending</TagPill>
+      </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        {requests.map(request => (
+          <ContactChangeRequestCard
+            key={request.id}
+            request={request}
+            busy={busyRequestId === request.id}
+            onResolve={onResolve}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ContactChangeRequestCard({
+  request,
+  busy,
+  onResolve,
+}: {
+  request: CollaborationApprovalRequest
+  busy: boolean
+  onResolve: (request: CollaborationApprovalRequest, status: 'approved' | 'rejected', approvedPatch: ContactPatchRecord) => Promise<void>
+}) {
+  const proposedPatch = useMemo(
+    () => (request.proposed_contact_patch ?? {}) as ContactPatchRecord,
+    [request.proposed_contact_patch],
+  )
+  const originalSnapshot = useMemo(
+    () => (request.original_contact_snapshot ?? {}) as ContactPatchRecord,
+    [request.original_contact_snapshot],
+  )
+  const fieldKeys = useMemo(() => Object.keys(proposedPatch).sort((a, b) => fieldChangeLabel(a).localeCompare(fieldChangeLabel(b))), [proposedPatch])
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(fieldKeys)
+
+  useEffect(() => {
+    setSelectedKeys(fieldKeys)
+  }, [fieldKeys, request.id])
+
+  function toggleField(key: string) {
+    setSelectedKeys(current => (
+      current.includes(key)
+        ? current.filter(item => item !== key)
+        : [...current, key]
+    ))
+  }
+
+  const selectedPatch = pickPatchFields(proposedPatch, selectedKeys)
+  const canApproveSelected = selectedKeys.length > 0 && !busy
+
+  return (
+    <div style={{ ...surfaceMiniStyle, padding: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+              {request.contact_label || 'Shared contact'}
+            </h3>
+            <TagPill tone="blue">Editor request</TagPill>
+          </div>
+          <p style={{ margin: '4px 0 0', color: 'var(--color-text-tertiary)', fontSize: 12, lineHeight: 1.45 }}>
+            Requested by {request.requested_by_label || 'Editor'} on {formatDate(request.created_at)}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            disabled={!canApproveSelected}
+            onClick={() => onResolve(request, 'approved', selectedPatch)}
+            style={{ ...primaryButtonStyle, minHeight: 32, opacity: canApproveSelected ? 1 : 0.55 }}
+          >
+            <Check size={14} />
+            Approve selected
+          </button>
+          <button
+            type="button"
+            disabled={busy || fieldKeys.length === 0}
+            onClick={() => onResolve(request, 'approved', proposedPatch)}
+            style={{ ...secondaryButtonStyle, minHeight: 32, opacity: busy || fieldKeys.length === 0 ? 0.55 : 1 }}
+          >
+            Approve all
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onResolve(request, 'rejected', {})}
+            style={{ ...smallDangerButtonStyle, minHeight: 32, opacity: busy ? 0.55 : 1 }}
+          >
+            <X size={14} />
+            Reject
+          </button>
+        </div>
+      </div>
+
+      {fieldKeys.length === 0 ? (
+        <MiniEmptyState detail="No field changes were included in this request." />
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {fieldKeys.map(key => (
+            <label
+              key={key}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '18px minmax(120px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr)',
+                gap: 10,
+                alignItems: 'center',
+                border: '1px solid var(--edge)',
+                borderRadius: 8,
+                background: 'var(--color-bg)',
+                padding: '9px 10px',
+                cursor: busy ? 'default' : 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedKeys.includes(key)}
+                disabled={busy}
+                onChange={() => toggleField(key)}
+                style={checkboxStyle}
+              />
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-text-primary)' }}>
+                {fieldChangeLabel(key)}
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={fieldLabelStyle}>Current</span>
+                <span style={{ display: 'block', marginTop: 2, color: 'var(--color-text-secondary)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {formatPatchValue(originalSnapshot[key])}
+                </span>
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={fieldLabelStyle}>Proposed</span>
+                <span style={{ display: 'block', marginTop: 2, color: 'var(--color-text-primary)', fontSize: 12, fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {formatPatchValue(proposedPatch[key])}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

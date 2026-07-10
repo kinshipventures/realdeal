@@ -61,12 +61,9 @@ const SUBJECT_TYPES: Array<{ value: CollaborationSubjectType; label: string }> =
 ]
 
 const PERMISSION_LEVELS: Array<{ value: CollaborationPermissionLevel; label: string }> = [
-  { value: 'view', label: 'View' },
-  { value: 'comment', label: 'Comment' },
-  { value: 'suggest', label: 'Suggest' },
-  { value: 'edit', label: 'Edit' },
-  { value: 'approve', label: 'Approve' },
-  { value: 'admin', label: 'Admin' },
+  { value: 'view', label: 'Reader' },
+  { value: 'suggest', label: 'Editor (request)' },
+  { value: 'edit', label: 'Editor' },
 ]
 
 const FIELD_SCOPES: Array<{ value: CollaborationFieldScope; label: string; summary: string; defaultStatus: string }> = [
