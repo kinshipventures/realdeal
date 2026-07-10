@@ -1,17 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, KeyRound, Link, Mail, Plus, Search, Send, ShieldCheck, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
+import { Check, KeyRound, Plus, Search, Trash2, UserPlus, X } from 'lucide-react'
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getCategories, getContacts, getPods } from '@/lib/data'
-import {
-  createUserConnectionRequest,
-  findAppUsersForContactEmails,
-  getUserConnections,
-  respondUserConnection,
-  type RecognizedAppUser,
-  type UserConnection,
-} from '@/lib/connections'
+import { getUserConnections, type UserConnection } from '@/lib/connections'
 import type { Campaign, Category, Contact, Pod } from '@/lib/types'
-import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
 import { ContactDetail, type ContactDetailShareAccess } from '@/components/contacts/ContactDetail'
 import {
   DEFAULT_SHARED_CONTACT_VISIBLE_FIELD_IDS,
@@ -237,12 +229,6 @@ function contactFromMap(contactMap: Map<string, Contact>, contactId: string | nu
   return contactMap.get(contactId) ?? null
 }
 
-function contactEmails(contact: Contact): string[] {
-  return [contact.email, contact.email_2, contact.email_3]
-    .map(email => email?.trim().toLowerCase())
-    .filter((email): email is string => Boolean(email))
-}
-
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase()
 }
@@ -451,13 +437,13 @@ export function ApprovalsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [connections, setConnections] = useState<UserConnection[]>([])
-  const [recognizedUsers, setRecognizedUsers] = useState<RecognizedAppUser[]>([])
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
   const [incomingGrants, setIncomingGrants] = useState<CollaborationAccessGrant[]>([])
   const [incomingSharedContacts, setIncomingSharedContacts] = useState<SharedContactAccessSnapshot[]>([])
   const [publicLinks, setPublicLinks] = useState<CollaborationPublicCampaignLink[]>([])
   const [approvalRequests, setApprovalRequests] = useState<CollaborationApprovalRequest[]>([])
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showPendingRequestsModal, setShowPendingRequestsModal] = useState(false)
   const [sourceFilter, setSourceFilter] = useState<SharedSourceFilter>('all')
   const [campaignFilter, setCampaignFilter] = useState('all')
   const [podFilter, setPodFilter] = useState('all')
@@ -479,9 +465,6 @@ export function ApprovalsPage() {
   const sharedContactManagerRef = useRef<HTMLElement | null>(null)
   const sharedRequestFeedbackTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
-  const pendingSharedRequests = useMemo(() => (
-    incomingGrants.filter(grant => grant.status === 'pending' && accessStatus(grant.expires_at, grant.revoked_at) === 'active')
-  ), [incomingGrants])
   const pendingContactChangeRequests = useMemo(() => (
     approvalRequests.filter(request => request.request_type === 'shared_contact_change' && request.status === 'pending')
   ), [approvalRequests])
@@ -527,9 +510,6 @@ export function ApprovalsPage() {
     () => filteredSharedRows.filter(row => selectedSharedRowIds.has(row.id)),
     [filteredSharedRows, selectedSharedRowIds],
   )
-  const activeSharedRows = useMemo(() => sharedRows.filter(row => row.status === 'active'), [sharedRows])
-  const activePublicLinks = useMemo(() => publicLinks.filter(link => !link.revoked_at), [publicLinks])
-  const sharedContactCount = useMemo(() => new Set(activeSharedRows.map(row => row.contactId ?? row.contactName)).size, [activeSharedRows])
   const shareUsers = useMemo<ShareUserOption[]>(() => {
     const byUserId = new Map<string, ShareUserOption>()
     connections
@@ -624,14 +604,11 @@ export function ApprovalsPage() {
         getCollaborationApprovalRequests(workspaceId),
       ])
       const activeContacts = nextContacts.filter(contact => contact.status !== 'Archived')
-      const contactEmailList = activeContacts.flatMap(contactEmails)
-      const nextRecognizedUsers = await findAppUsersForContactEmails(contactEmailList)
       setContacts(activeContacts)
       setPods(nextPods)
       setCategories(nextCategories)
       setCampaigns(nextCampaigns.filter(campaign => campaign.status !== 'hidden'))
       setConnections(nextConnections)
-      setRecognizedUsers(nextRecognizedUsers)
       setGrants(nextGrants)
       setIncomingGrants(nextIncomingGrants)
       setIncomingSharedContacts(nextIncomingSharedContacts)
@@ -682,10 +659,6 @@ export function ApprovalsPage() {
         setIncomingSharedContacts(nextIncomingSharedContacts)
         setApprovalRequests(nextApprovalRequests)
 
-        if (contacts.length === 0) return
-
-        const nextRecognizedUsers = await findAppUsersForContactEmails(contacts.flatMap(contactEmails))
-        if (!cancelled) setRecognizedUsers(nextRecognizedUsers)
       } catch (err) {
         if (!cancelled) console.warn('Failed to refresh shared contact requests', err)
       }
@@ -710,7 +683,7 @@ export function ApprovalsPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [contacts, loading, workspaceId])
+  }, [loading, workspaceId])
 
   async function handleRespondSharedRequest(grant: CollaborationAccessGrant, status: 'accepted' | 'declined') {
     if (busySharedRequestId) return
@@ -934,18 +907,6 @@ export function ApprovalsPage() {
     void loadData()
   }
 
-  async function handleCreateConnection(email: string) {
-    await createUserConnectionRequest(email)
-    await loadData()
-    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
-  }
-
-  async function handleRespondConnection(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
-    await respondUserConnection(connection.id, status)
-    await loadData()
-    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
-  }
-
   return (
     <main className="content-enter" style={{ padding: '32px clamp(16px, 4vw, 36px) 80px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', gap: 18, alignItems: 'flex-start', marginBottom: 22 }}>
@@ -959,26 +920,14 @@ export function ApprovalsPage() {
         </div>
       </header>
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
-        <SummaryCard icon={<Users size={16} />} label="Shared contacts" value={sharedContactCount} />
-        <SummaryCard icon={<ShieldCheck size={16} />} label="Active access" value={activeSharedRows.length} />
-        <SummaryCard icon={<Link size={16} />} label="Public links" value={activePublicLinks.length} />
-        <SummaryCard icon={<UserPlus size={16} />} label="Pending requests" value={pendingSharedRequests.length + pendingContactChangeRequests.length} />
+      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 360px)', gap: 10, marginBottom: 18 }}>
+        <SummaryCard
+          icon={<UserPlus size={16} />}
+          label="Pending requests"
+          value={pendingContactChangeRequests.length}
+          onClick={() => setShowPendingRequestsModal(true)}
+        />
       </section>
-
-      <ConnectionsPanel
-        connections={connections}
-        recognizedUsers={recognizedUsers}
-        contacts={contacts}
-        onCreateConnection={handleCreateConnection}
-        onRespondConnection={handleRespondConnection}
-      />
-
-      <ContactChangeRequestsPanel
-        requests={pendingContactChangeRequests}
-        busyRequestId={busyContactChangeRequestId}
-        onResolve={handleResolveContactChangeRequest}
-      />
 
       <section ref={sharedContactManagerRef} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
@@ -1081,6 +1030,14 @@ export function ApprovalsPage() {
           sharedAccess={selectedSharedContact.shareAccess}
         />
       )}
+      {showPendingRequestsModal && (
+        <PendingContactRequestsModal
+          requests={pendingContactChangeRequests}
+          busyRequestId={busyContactChangeRequestId}
+          onClose={() => setShowPendingRequestsModal(false)}
+          onResolve={handleResolveContactChangeRequest}
+        />
+      )}
       <style>
         {`
           @keyframes shared-request-feedback-enter {
@@ -1098,24 +1055,55 @@ export function ApprovalsPage() {
   )
 }
 
-function ContactChangeRequestsPanel({
+function PendingContactRequestsModal({
   requests,
   busyRequestId,
+  onClose,
   onResolve,
 }: {
   requests: CollaborationApprovalRequest[]
   busyRequestId: string | null
+  onClose: () => void
   onResolve: (request: CollaborationApprovalRequest, status: 'approved' | 'rejected', approvedPatch: ContactPatchRecord) => Promise<void>
 }) {
-  if (requests.length === 0) return null
+  return (
+    <Modal title="Pending requests" onClose={onClose}>
+      <ContactChangeRequestsPanel
+        requests={requests}
+        busyRequestId={busyRequestId}
+        embedded
+        onResolve={onResolve}
+      />
+    </Modal>
+  )
+}
+
+function ContactChangeRequestsPanel({
+  requests,
+  busyRequestId,
+  embedded = false,
+  onResolve,
+}: {
+  requests: CollaborationApprovalRequest[]
+  busyRequestId: string | null
+  embedded?: boolean
+  onResolve: (request: CollaborationApprovalRequest, status: 'approved' | 'rejected', approvedPatch: ContactPatchRecord) => Promise<void>
+}) {
+  if (requests.length === 0) {
+    return (
+      <MiniEmptyState detail="No pending editor change requests." />
+    )
+  }
 
   return (
-    <section style={{ marginBottom: 28 }}>
+    <section style={{ marginBottom: embedded ? 0 : 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
-            Change requests
-          </h2>
+          {!embedded && (
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
+              Change requests
+            </h2>
+          )}
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
             Review editor updates before they apply to the original contact.
           </p>
@@ -1258,257 +1246,6 @@ function ContactChangeRequestCard({
               </span>
             </label>
           ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ConnectionsPanel({
-  connections,
-  recognizedUsers,
-  contacts,
-  onCreateConnection,
-  onRespondConnection,
-}: {
-  connections: UserConnection[]
-  recognizedUsers: RecognizedAppUser[]
-  contacts: Contact[]
-  onCreateConnection: (email: string) => Promise<void>
-  onRespondConnection: (connection: UserConnection, status: 'accepted' | 'declined' | 'removed') => Promise<void>
-}) {
-  const [email, setEmail] = useState('')
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const [notice, setNotice] = useState('')
-  const [error, setError] = useState('')
-  const acceptedConnections = connections.filter(connection => connection.status === 'accepted')
-  const pendingReceived = connections.filter(connection => connection.status === 'pending' && connection.direction === 'received')
-  const pendingSent = connections.filter(connection => connection.status === 'pending' && connection.direction === 'sent')
-  const contactByEmail = useMemo(() => {
-    const map = new Map<string, Contact>()
-    contacts.forEach(contact => {
-      contactEmails(contact).forEach(contactEmail => {
-        if (!map.has(contactEmail)) map.set(contactEmail, contact)
-      })
-    })
-    return map
-  }, [contacts])
-  const recognizedCards = useMemo(() => {
-    const byUserId = new Map<string, RecognizedAppUser>()
-    recognizedUsers.forEach(user => {
-      if (!byUserId.has(user.user_id)) byUserId.set(user.user_id, user)
-    })
-    return [...byUserId.values()]
-  }, [recognizedUsers])
-
-  async function handleInvite(targetEmail: string) {
-    const cleanEmail = targetEmail.trim().toLowerCase()
-    if (!cleanEmail) return
-    setBusyId(cleanEmail)
-    setError('')
-    setNotice('')
-    try {
-      await onCreateConnection(cleanEmail)
-      setEmail('')
-      setNotice('Connection request sent.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send connection request')
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  async function handleRespond(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
-    setBusyId(connection.id)
-    setError('')
-    setNotice('')
-    try {
-      await onRespondConnection(connection, status)
-      setNotice(status === 'accepted' ? 'Connection accepted.' : status === 'removed' ? 'Connection removed.' : 'Connection declined.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update connection')
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  return (
-    <section style={{ marginBottom: 28 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 12 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850, color: 'var(--color-text-primary)' }}>
-            Connections
-          </h2>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
-            Add trusted Real Deal users before sharing direct contacts, pods, sub-pods, or campaigns with them.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 360 }}>
-          <label style={{ ...inputWrapStyle, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px' }}>
-            <Mail size={14} color="var(--color-text-tertiary)" />
-            <input
-              value={email}
-              onChange={event => setEmail(event.target.value)}
-              placeholder="Find user by email"
-              style={{ border: 0, outline: 'none', background: 'transparent', width: '100%', fontSize: 13, color: 'var(--color-text-primary)' }}
-            />
-          </label>
-          <button type="button" onClick={() => handleInvite(email)} disabled={!email.trim() || Boolean(busyId)} style={{ ...primaryButtonStyle, minWidth: 96, opacity: !email.trim() || busyId ? 0.62 : 1 }}>
-            <Send size={14} />
-            Invite
-          </button>
-        </div>
-      </div>
-
-      {(notice || error) && (
-        <div style={{ ...noticeStyle, color: error ? 'var(--health-fading)' : 'var(--color-brand)' }}>
-          {error || notice}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.15fr', gap: 12 }}>
-        <div style={surfaceMiniStyle}>
-          <ConnectionPanelHeader icon={<UserCheck size={15} />} title="Trusted users" count={acceptedConnections.length} />
-          {acceptedConnections.length === 0 ? (
-            <MiniEmptyState detail="Accepted users will appear in Share contacts." />
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {acceptedConnections.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
-                  detail={connection.connected_email || 'Connected user'}
-                  meta="Connected"
-                  actionLabel="Remove"
-                  busy={busyId === connection.id}
-                  onAction={() => handleRespond(connection, 'removed')}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={surfaceMiniStyle}>
-          <ConnectionPanelHeader icon={<UserPlus size={15} />} title="Pending requests" count={pendingReceived.length + pendingSent.length} />
-          {pendingReceived.length === 0 && pendingSent.length === 0 ? (
-            <MiniEmptyState detail="Incoming and sent requests will appear here." />
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {pendingReceived.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
-                  detail={connection.connected_email || 'Pending user'}
-                  meta="Incoming request"
-                  busy={busyId === connection.id}
-                  actionLabel="Accept"
-                  secondaryActionLabel="Decline"
-                  onAction={() => handleRespond(connection, 'accepted')}
-                  onSecondaryAction={() => handleRespond(connection, 'declined')}
-                />
-              ))}
-              {pendingSent.map(connection => (
-                <ConnectionCard
-                  key={connection.id}
-                  title={connection.connected_display_name || connection.connected_email || 'Real Deal user'}
-                  detail={connection.connected_email || 'Pending user'}
-                  meta="Request sent"
-                  busy={busyId === connection.id}
-                  actionLabel="Cancel"
-                  onAction={() => handleRespond(connection, 'removed')}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={surfaceMiniStyle}>
-          <ConnectionPanelHeader icon={<Users size={15} />} title="App users in contacts" count={recognizedCards.length} />
-          {recognizedCards.length === 0 ? (
-            <MiniEmptyState detail="Contacts that match Real Deal user emails will appear here." />
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {recognizedCards.slice(0, 5).map(user => {
-                const contact = contactByEmail.get(user.contact_email)
-                const isConnected = user.connection_status === 'accepted'
-                const isPending = user.connection_status === 'pending'
-                return (
-                  <ConnectionCard
-                    key={user.user_id}
-                    title={contact?.name || user.display_name || user.email || 'Real Deal user'}
-                    detail={user.email || user.contact_email}
-                    meta={isConnected ? 'Connected' : isPending ? 'Pending' : 'Detected contact'}
-                    busy={busyId === user.contact_email}
-                    actionLabel={isConnected ? undefined : isPending ? undefined : 'Invite'}
-                    onAction={isConnected || isPending ? undefined : () => handleInvite(user.email || user.contact_email)}
-                  />
-                )
-              })}
-              {recognizedCards.length > 5 && (
-                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                  +{recognizedCards.length - 5} more app users detected in contacts
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function ConnectionPanelHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,61,165,0.08)', color: 'var(--color-brand)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-          {icon}
-        </span>
-        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 850, color: 'var(--color-text-primary)' }}>{title}</h3>
-      </div>
-      <TagPill tone="blue">{count}</TagPill>
-    </div>
-  )
-}
-
-function ConnectionCard({
-  title,
-  detail,
-  meta,
-  actionLabel,
-  secondaryActionLabel,
-  busy,
-  onAction,
-  onSecondaryAction,
-}: {
-  title: string
-  detail: string
-  meta: string
-  actionLabel?: string
-  secondaryActionLabel?: string
-  busy?: boolean
-  onAction?: () => void
-  onSecondaryAction?: () => void
-}) {
-  return (
-    <div style={{ border: '1px solid var(--edge)', borderRadius: 8, background: 'var(--color-bg)', padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-        <div style={{ marginTop: 3, fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>
-        <div style={{ marginTop: 6 }}><TagPill tone="gray">{meta}</TagPill></div>
-      </div>
-      {(actionLabel || secondaryActionLabel) && (
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          {secondaryActionLabel && onSecondaryAction && (
-            <button type="button" onClick={onSecondaryAction} disabled={busy} style={{ ...secondaryButtonStyle, minHeight: 30, padding: '6px 9px', opacity: busy ? 0.6 : 1 }}>
-              {secondaryActionLabel}
-            </button>
-          )}
-          {actionLabel && onAction && (
-            <button type="button" onClick={onAction} disabled={busy} style={{ ...primaryButtonStyle, minHeight: 30, padding: '6px 9px', opacity: busy ? 0.6 : 1 }}>
-              {busy ? 'Working...' : actionLabel}
-            </button>
-          )}
         </div>
       )}
     </div>
@@ -2332,9 +2069,9 @@ function ModalActions({
   )
 }
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
-  return (
-    <div style={{ border: '1px solid var(--edge)', borderRadius: 10, background: 'var(--surface-panel)', padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+function SummaryCard({ icon, label, value, onClick }: { icon: React.ReactNode; label: string; value: number; onClick?: () => void }) {
+  const content = (
+    <>
       <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,61,165,0.08)', color: 'var(--color-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
       </div>
@@ -2342,6 +2079,40 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
         <div style={{ fontSize: 20, fontWeight: 850, color: 'var(--color-text-primary)', lineHeight: 1 }}>{value}</div>
         <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 4 }}>{label}</div>
       </div>
+    </>
+  )
+
+  const style: React.CSSProperties = {
+    border: '1px solid var(--edge)',
+    borderRadius: 10,
+    background: 'var(--surface-panel)',
+    padding: 14,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          ...style,
+          width: '100%',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+          cursor: 'pointer',
+        }}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div style={style}>
+      {content}
     </div>
   )
 }

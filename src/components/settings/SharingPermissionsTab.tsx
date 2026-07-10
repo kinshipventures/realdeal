@@ -3,7 +3,17 @@ import { Check, Clock, KeyRound, Link, Plus, ShieldCheck, Users, X } from 'lucid
 import { useWorkspace } from '@/contexts/WorkspaceContext'
 import { getCampaigns, getContacts, getPods } from '@/lib/data'
 import { fetchWorkspaceMembers, type WorkspaceMember } from '@/lib/supabase-data'
+import { ConnectionManagementPanel } from '@/components/collaboration/ConnectionManagementPanel'
 import type { Campaign, Contact, Pod } from '@/lib/types'
+import {
+  createUserConnectionRequest,
+  findAppUsersForContactEmails,
+  getUserConnections,
+  respondUserConnection,
+  type RecognizedAppUser,
+  type UserConnection,
+} from '@/lib/connections'
+import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
 import {
   createCollaborationAccessGrant,
   createCollaborationApprovalRequest,
@@ -104,6 +114,12 @@ function titleCase(value: string): string {
   return value.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function contactEmails(contact: Contact): string[] {
+  return [contact.email, contact.email_2, contact.email_3]
+    .map(email => email?.trim().toLowerCase())
+    .filter((email): email is string => Boolean(email))
+}
+
 function StatusPill({ tone, children }: { tone: 'green' | 'yellow' | 'red' | 'gray' | 'blue'; children: React.ReactNode }) {
   const colors = {
     green: ['rgba(37,180,57,0.10)', 'var(--color-brand)'],
@@ -183,6 +199,8 @@ export function SharingPermissionsTab() {
   const [pods, setPods] = useState<Pod[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [members, setMembers] = useState<WorkspaceMember[]>([])
+  const [connections, setConnections] = useState<UserConnection[]>([])
+  const [recognizedUsers, setRecognizedUsers] = useState<RecognizedAppUser[]>([])
   const [grants, setGrants] = useState<CollaborationAccessGrant[]>([])
   const [requests, setRequests] = useState<CollaborationApprovalRequest[]>([])
   const [events, setEvents] = useState<CollaborationAuditEvent[]>([])
@@ -248,6 +266,7 @@ export function SharingPermissionsTab() {
         nextPods,
         nextCampaigns,
         nextMembers,
+        nextConnections,
         nextGrants,
         nextRequests,
         nextEvents,
@@ -258,16 +277,21 @@ export function SharingPermissionsTab() {
         getPods(),
         getCampaigns(),
         fetchWorkspaceMembers(workspaceId),
+        getUserConnections(),
         getCollaborationAccessGrants(workspaceId),
         getCollaborationApprovalRequests(workspaceId),
         getCollaborationAuditEvents(workspaceId),
         getCollaborationPublicCampaignLinks(workspaceId),
         getCollaborationSavedViews(workspaceId),
       ])
-      setContacts(nextContacts.filter(contact => contact.status !== 'Archived'))
+      const activeContacts = nextContacts.filter(contact => contact.status !== 'Archived')
+      const nextRecognizedUsers = await findAppUsersForContactEmails(activeContacts.flatMap(contactEmails))
+      setContacts(activeContacts)
       setPods(nextPods)
       setCampaigns(nextCampaigns.filter(campaign => campaign.status !== 'hidden'))
       setMembers(nextMembers)
+      setConnections(nextConnections)
+      setRecognizedUsers(nextRecognizedUsers)
       setGrants(nextGrants)
       setRequests(nextRequests)
       setEvents(nextEvents)
@@ -283,6 +307,18 @@ export function SharingPermissionsTab() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  async function handleCreateConnection(email: string) {
+    await createUserConnectionRequest(email)
+    await loadData()
+    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
+  }
+
+  async function handleRespondConnection(connection: UserConnection, status: 'accepted' | 'declined' | 'removed') {
+    await respondUserConnection(connection.id, status)
+    await loadData()
+    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
+  }
 
   async function handleRevoke(grant: CollaborationAccessGrant) {
     if (!workspaceId) return
@@ -333,6 +369,14 @@ export function SharingPermissionsTab() {
           </button>
         </div>
       </div>
+
+      <ConnectionManagementPanel
+        connections={connections}
+        recognizedUsers={recognizedUsers}
+        contacts={contacts}
+        onCreateConnection={handleCreateConnection}
+        onRespondConnection={handleRespondConnection}
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 16 }}>
         <SummaryCard icon={<Users size={15} />} label="Active access" value={activeGrants.length} />
