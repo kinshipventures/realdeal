@@ -1086,6 +1086,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const legacyLinkedIn = typeof customFields.upworkLink === 'string' ? customFields.upworkLink : null
     const legacyGlobalRegion = typeof customFields.globalRegionDetail === 'string' ? customFields.globalRegionDetail : null
     const nextGlobalRegion = (draft.global_region ?? legacyGlobalRegion ?? null) as Contact['global_region'] | null
+    const sharedRequestStructurePatch = sharedContactCanRequestChanges
+      ? sharedOwnerContactStructurePatch(
+          draft.list_ids ?? [],
+          draft.primary_list_id ?? null,
+          draft.category_ids ?? [],
+        )
+      : {}
     if ((draft.linkedin ?? legacyLinkedIn) && customFields.upworkLink) delete customFields.upworkLink
     if (nextGlobalRegion && customFields.globalRegionDetail) delete customFields.globalRegionDetail
 
@@ -1113,6 +1120,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         recommended_by: draft.recommended_by ?? null,
         company_record_id: ownerCompanyRecordId,
         company_ids: ownerCompanyIds,
+        ...sharedRequestStructurePatch,
         kv_fund_investor: kvFundInvestor.length > 0 ? kvFundInvestor : null,
         spv_investor: spvInvestor.length > 0 ? spvInvestor : null,
         custom_fields: customFields,
@@ -3081,6 +3089,10 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   async function persistPodAssignment(nextListIds: string[], nextPrimaryId: string | null, nextCategoryIds = draft.category_ids ?? []) {
     if (contactCardStructureReadOnly) return
     if (isNew || !contact) return
+    if (sharedContactCanRequestChanges) {
+      markContactInfoChanged()
+      return
+    }
     const previousListIds = contact.list_ids
     const previousPrimaryId = contact.primary_list_id
     const previousCategoryIds = contact.category_ids

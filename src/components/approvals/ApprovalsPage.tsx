@@ -171,17 +171,129 @@ function permissionLabel(value: CollaborationPermissionLevel | 'public_link', pu
   return 'Public link'
 }
 
+const CONTACT_PATCH_FIELD_LABELS: Record<string, string> = {
+  name: 'Name',
+  company: 'Company',
+  company_record_id: 'Primary company',
+  company_ids: 'Companies',
+  role: 'Job Title',
+  linkedin: 'LinkedIn',
+  recommended_by: 'Referred By',
+  gender: 'Gender',
+  birthday: 'Birthday',
+  notes: 'Notables',
+  email: 'Email',
+  email_2: 'Email 2',
+  email_3: 'Email 3',
+  phone: 'Phone',
+  location: 'Address',
+  country: 'Country',
+  global_region: 'Global Region',
+  relationship_context: 'Relationship Context',
+  next_follow_up_date: 'Next Touchpoint Date',
+  next_action: 'Next Action',
+  kv_fund_investor: 'Kinship Investments',
+  spv_investor: 'Kinship Investments',
+  investment_entity: 'Investment Entity',
+  investment_email: 'Investment Email',
+  list_ids: 'Pods',
+  primary_list_id: 'Primary pod',
+  category_ids: 'Sub-pods',
+  campaign_ids: 'Campaigns',
+  campaign_status: 'Campaign Status',
+  campaign_step: 'Campaign Step',
+  campaign_notes: 'Campaign Notes',
+  commitment_amount: 'Commitment Amount',
+  custom_fields: 'Custom Fields',
+}
+
 function fieldChangeLabel(value: string): string {
+  if (CONTACT_PATCH_FIELD_LABELS[value]) return CONTACT_PATCH_FIELD_LABELS[value]
   const visibleLabel = SHARED_CONTACT_VISIBLE_FIELD_GROUPS
     .flatMap(group => group.fields)
     .find(field => field.id === value)?.label
   return visibleLabel ?? titleCase(value)
 }
 
-function formatPatchValue(value: unknown): string {
+type SharedStructureResolutionItem = {
+  id?: unknown
+  label?: unknown
+  pod_label?: unknown
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function structureResolutionItems(
+  patch: ContactPatchRecord,
+  collection: 'pods' | 'categories' | 'companies',
+): SharedStructureResolutionItem[] {
+  const resolution = patch[SHARED_STRUCTURE_RESOLUTION_PATCH_KEY]
+  if (!isPlainRecord(resolution)) return []
+  const items = resolution[collection]
+  return Array.isArray(items) ? items.filter(isPlainRecord) : []
+}
+
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+}
+
+function resolutionLabelForId(
+  patch: ContactPatchRecord,
+  collection: 'pods' | 'categories' | 'companies',
+  id: string,
+): string | null {
+  const item = structureResolutionItems(patch, collection)
+    .find(entry => String(entry.id ?? '') === id)
+  if (!item) return null
+  const label = typeof item.label === 'string' ? item.label : null
+  const parentLabel = typeof item.pod_label === 'string' ? item.pod_label : null
+  if (collection === 'categories' && label && parentLabel) return `${parentLabel} / ${label}`
+  return label
+}
+
+function formatResolvedIds(
+  ids: string[],
+  patch: ContactPatchRecord,
+  collection: 'pods' | 'categories' | 'companies',
+  fallbackSingular: string,
+): string {
+  if (ids.length === 0) return '-'
+  const labels = ids.map(id => resolutionLabelForId(patch, collection, id)).filter(Boolean) as string[]
+  if (labels.length === ids.length) return labels.join(', ')
+  if (labels.length > 0) return `${labels.join(', ')}${ids.length > labels.length ? `, ${ids.length - labels.length} more` : ''}`
+  return `${ids.length} ${ids.length === 1 ? fallbackSingular : `${fallbackSingular}s`}`
+}
+
+function formatPatchValue(fieldKey: string, value: unknown, proposedPatch: ContactPatchRecord): string {
   if (value === null || value === undefined || value === '') return '-'
-  if (Array.isArray(value)) return value.length > 0 ? value.map(item => String(item)).join(', ') : '-'
-  if (typeof value === 'object') return JSON.stringify(value)
+  if (fieldKey === 'list_ids' && Array.isArray(value)) {
+    return formatResolvedIds(value.map(String), proposedPatch, 'pods', 'pod')
+  }
+  if (fieldKey === 'category_ids' && Array.isArray(value)) {
+    return formatResolvedIds(value.map(String), proposedPatch, 'categories', 'sub-pod')
+  }
+  if (fieldKey === 'company_ids' && Array.isArray(value)) {
+    return formatResolvedIds(value.map(String), proposedPatch, 'companies', 'company')
+  }
+  if (fieldKey === 'primary_list_id') {
+    const label = resolutionLabelForId(proposedPatch, 'pods', String(value))
+    return label ?? 'Selected pod'
+  }
+  if (fieldKey === 'company_record_id') {
+    const label = resolutionLabelForId(proposedPatch, 'companies', String(value))
+    return label ?? 'Selected company'
+  }
+  if (fieldKey === 'custom_fields' && isPlainRecord(value)) return 'Custom fields updated'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '-'
+    const values = value.map(item => String(item))
+    if (values.every(isUuidLike)) return `${values.length} selected`
+    return values.join(', ')
+  }
+  if (isPlainRecord(value)) return 'Updated'
+  if (typeof value === 'string' && isUuidLike(value)) return 'Selected record'
   return String(value)
 }
 
@@ -1245,13 +1357,13 @@ function ContactChangeRequestCard({
               <span style={{ minWidth: 0 }}>
                 <span style={fieldLabelStyle}>Current</span>
                 <span style={{ display: 'block', marginTop: 2, color: 'var(--color-text-secondary)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {formatPatchValue(originalSnapshot[key])}
+                  {formatPatchValue(key, originalSnapshot[key], proposedPatch)}
                 </span>
               </span>
               <span style={{ minWidth: 0 }}>
                 <span style={fieldLabelStyle}>Proposed</span>
                 <span style={{ display: 'block', marginTop: 2, color: 'var(--color-text-primary)', fontSize: 12, fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {formatPatchValue(proposedPatch[key])}
+                  {formatPatchValue(key, proposedPatch[key], proposedPatch)}
                 </span>
               </span>
             </label>
