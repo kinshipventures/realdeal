@@ -38,6 +38,7 @@ import {
 const SHARED_POD_PREFIX = 'shared-pod:'
 const SHARED_CATEGORY_PREFIX = 'shared-category:'
 const SHARED_COMPANY_PREFIX = 'shared-company:'
+const SHARED_STRUCTURE_RESOLUTION_PATCH_KEY = '__shared_structure_resolution'
 
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
@@ -61,6 +62,19 @@ export type ContactDetailShareAccess = {
 }
 
 type ContactPatch = Partial<Omit<Contact, 'id' | 'created_at'>>
+
+type SharedStructureResolutionItem = {
+  id: string
+  label: string
+  pod_id?: string | null
+  pod_label?: string | null
+}
+
+type SharedStructureResolutionPatch = {
+  pods?: SharedStructureResolutionItem[]
+  categories?: SharedStructureResolutionItem[]
+  companies?: SharedStructureResolutionItem[]
+}
 
 function normalizeContactEmailForGmailSync(value: unknown): string {
   return typeof value === 'string' ? value.trim().toLowerCase() : ''
@@ -661,6 +675,115 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     }
   }
 
+  function uniqueSharedResolutionItems(items: SharedStructureResolutionItem[]): SharedStructureResolutionItem[] {
+    const seen = new Set<string>()
+    const next: SharedStructureResolutionItem[] = []
+    for (const item of items) {
+      if (!item.id || !item.label || seen.has(item.id)) continue
+      seen.add(item.id)
+      next.push(item)
+    }
+    return next
+  }
+
+  function sharedPodResolutionItem(id: string): SharedStructureResolutionItem | null {
+    const selectedPod = availablePods.find(pod => pod.id === id)
+    if (selectedPod) return { id, label: selectedPod.name }
+
+    for (const row of sharedMetadataRows('shared_pod_memberships')) {
+      const ownerId = stringRecordValue(row, 'pod_id')
+      const label = stringRecordValue(row, 'pod_name')
+      if (!ownerId || !label) continue
+      if (id === ownerId || id === sharedProjectedPodId(label)) return { id, label }
+    }
+
+    return null
+  }
+
+  function sharedCategoryResolutionItem(id: string): SharedStructureResolutionItem | null {
+    const selectedCategory = availableCategories.find(category => category.id === id)
+    if (selectedCategory) {
+      const selectedParent = availablePods.find(pod => pod.id === selectedCategory.list_id)
+      return {
+        id,
+        label: selectedCategory.name,
+        pod_id: selectedCategory.list_id,
+        pod_label: selectedParent?.name ?? null,
+      }
+    }
+
+    for (const row of sharedMetadataRows('shared_sub_pod_memberships')) {
+      const ownerId = stringRecordValue(row, 'category_id')
+      const label = stringRecordValue(row, 'category_name')
+      if (!ownerId || !label) continue
+      if (id === ownerId || id === sharedProjectedCategoryId(label)) {
+        return {
+          id,
+          label,
+          pod_id: stringRecordValue(row, 'pod_id'),
+          pod_label: stringRecordValue(row, 'pod_name'),
+        }
+      }
+    }
+
+    return null
+  }
+
+  function sharedCompanyResolutionItem(id: string): SharedStructureResolutionItem | null {
+    const selectedCompany = contactsForOptions.find(record => record.id === id && record.type === 'Company')
+    if (selectedCompany) return { id, label: selectedCompany.name }
+
+    for (const row of sharedMetadataRows('shared_company_memberships')) {
+      const ownerId = stringRecordValue(row, 'company_id')
+      const label = stringRecordValue(row, 'company_name')
+      if (!ownerId || !label) continue
+      if (id === ownerId || id === sharedProjectedCompanyId(label)) return { id, label }
+    }
+
+    return null
+  }
+
+  function sharedStructureResolutionForPatch(patch: ContactPatch): SharedStructureResolutionPatch | null {
+    if (!isInboundSharedContact) return null
+
+    const podIds = new Set<string>()
+    if (Array.isArray(patch.list_ids)) {
+      for (const id of patch.list_ids) podIds.add(id)
+    }
+    if (patch.primary_list_id) podIds.add(patch.primary_list_id)
+
+    const categoryIds = new Set<string>()
+    if (Array.isArray(patch.category_ids)) {
+      for (const id of patch.category_ids) categoryIds.add(id)
+    }
+
+    const companyIds = new Set<string>()
+    if (Array.isArray(patch.company_ids)) {
+      for (const id of patch.company_ids) companyIds.add(id)
+    }
+    if (patch.company_record_id) companyIds.add(patch.company_record_id)
+
+    const resolution: SharedStructureResolutionPatch = {}
+    const podItems = uniqueSharedResolutionItems([...podIds].map(sharedPodResolutionItem).filter(Boolean) as SharedStructureResolutionItem[])
+    const categoryItems = uniqueSharedResolutionItems([...categoryIds].map(sharedCategoryResolutionItem).filter(Boolean) as SharedStructureResolutionItem[])
+    const companyItems = uniqueSharedResolutionItems([...companyIds].map(sharedCompanyResolutionItem).filter(Boolean) as SharedStructureResolutionItem[])
+
+    if (podItems.length > 0) resolution.pods = podItems
+    if (categoryItems.length > 0) resolution.categories = categoryItems
+    if (companyItems.length > 0) resolution.companies = companyItems
+
+    return Object.keys(resolution).length > 0 ? resolution : null
+  }
+
+  function withSharedStructureResolution(patch: ContactPatch): ContactPatch {
+    const resolution = sharedStructureResolutionForPatch(patch)
+    if (!resolution) return patch
+    return {
+      ...patch,
+      [SHARED_STRUCTURE_RESOLUTION_PATCH_KEY]: resolution,
+    } as ContactPatch
+  }
+
   async function persistContactPatch(id: string, data: ContactPatch): Promise<Contact> {
     if (isInboundSharedContact) {
       if (!sharedContactCanEdit || !sharedAccess?.grantId || !contact || contact.id !== id) {
@@ -672,11 +795,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       }
       const dirtyPatch = dirtySharedWritablePatch(scopedPatch)
       if (Object.keys(dirtyPatch).length === 0) return contact
+      const outgoingPatch = withSharedStructureResolution(dirtyPatch)
       if (sharedContactCanEditDirectly) {
-        return updateSharedContactWithGrant(sharedAccess.grantId, id, dirtyPatch)
+        return updateSharedContactWithGrant(sharedAccess.grantId, id, outgoingPatch)
       }
       if (sharedContactCanRequestChanges) {
-        await createSharedContactChangeRequest(sharedAccess.grantId, id, dirtyPatch)
+        await createSharedContactChangeRequest(sharedAccess.grantId, id, outgoingPatch)
         setContactSaveNotice('Change request sent for approval.')
         return contact
       }
