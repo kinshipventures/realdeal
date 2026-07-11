@@ -35,6 +35,10 @@ import {
   type SharedContactVisibleFieldId,
 } from '../../lib/sharedContactVisibleFields'
 
+const SHARED_POD_PREFIX = 'shared-pod:'
+const SHARED_CATEGORY_PREFIX = 'shared-category:'
+const SHARED_COMPANY_PREFIX = 'shared-company:'
+
 const RING_COLORS: Record<string, string> = {
   intro: '#C2185B',
   meeting: '#E65100',
@@ -142,6 +146,9 @@ const SHARED_FIELD_VISIBLE_REQUIREMENTS: Record<string, SharedContactVisibleFiel
   company: 'company',
   company_record_id: 'company',
   company_ids: 'company',
+  list_ids: 'pods',
+  primary_list_id: 'pods',
+  category_ids: 'sub_pods',
   role: 'job_title',
   linkedin: 'linkedin',
   city: 'city',
@@ -207,6 +214,11 @@ const SHARED_WRITABLE_FIELD_SCOPE_REQUIREMENTS: Record<string, CollaborationFiel
   last_contacted_at: 'relationship_private',
   cadence_override: 'relationship_private',
   custom_fields: 'relationship_private',
+  list_ids: 'public_profile',
+  primary_list_id: 'public_profile',
+  category_ids: 'public_profile',
+  company_record_id: 'public_profile',
+  company_ids: 'public_profile',
 }
 
 function stableComparableValue(value: unknown): string {
@@ -333,6 +345,33 @@ function normalizeStoredFieldKey(value: string): string {
     .trim()
 }
 
+function sharedProjectionSlug(value: string): string {
+  return normalizeStoredFieldKey(value).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'shared'
+}
+
+function sharedProjectedPodId(label: string): string {
+  return `${SHARED_POD_PREFIX}${sharedProjectionSlug(label)}`
+}
+
+function sharedProjectedCategoryId(label: string): string {
+  return `${SHARED_CATEGORY_PREFIX}${sharedProjectionSlug(label)}`
+}
+
+function sharedProjectedCompanyId(label: string): string {
+  return `${SHARED_COMPANY_PREFIX}${sharedProjectionSlug(label)}`
+}
+
+function plainRecords(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
+    : []
+}
+
+function stringRecordValue(record: Record<string, unknown>, key: string): string | null {
+  const value = record[key]
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
 function lpFieldForStoredKey(key: string): LpTrackerFieldDefinition | null {
   const normalized = normalizeStoredFieldKey(key)
   return LP_TRACKER_FIELDS.find(field =>
@@ -387,7 +426,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const sharedContactCanRequestChanges = isInboundSharedContact && sharedAccess?.permissionLevel === 'suggest'
   const sharedContactCanEdit = Boolean(sharedContactCanEditDirectly || sharedContactCanRequestChanges)
   const contactCardReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEdit)
-  const contactCardStructureReadOnly = Boolean(isInboundSharedContact)
+  const contactCardStructureReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEditDirectly)
   const sharedFieldScopes = useMemo(
     () => new Set(sharedAccess?.fieldScopes ?? []),
     [sharedAccess?.fieldScopes],
@@ -534,6 +573,92 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       }
     }
     return next
+  }
+
+  function sharedMetadataRows(
+    key: 'shared_pod_memberships' | 'shared_sub_pod_memberships' | 'shared_company_memberships',
+  ): Record<string, unknown>[] {
+    return plainRecords(draft.custom_fields?.[key] ?? contact?.custom_fields?.[key])
+  }
+
+  function ownerPodIdForSharedSelection(id: string): string {
+    const selectedPod = availablePods.find(pod => pod.id === id)
+    const selectedLabel = selectedPod?.name ?? null
+    for (const row of sharedMetadataRows('shared_pod_memberships')) {
+      const ownerId = stringRecordValue(row, 'pod_id')
+      const label = stringRecordValue(row, 'pod_name')
+      if (!ownerId || !label) continue
+      if (
+        id === ownerId ||
+        id === sharedProjectedPodId(label) ||
+        (selectedLabel && normalizeStoredFieldKey(selectedLabel) === normalizeStoredFieldKey(label))
+      ) {
+        return ownerId
+      }
+    }
+    return id
+  }
+
+  function ownerCategoryIdForSharedSelection(id: string): string {
+    const selectedCategory = availableCategories.find(category => category.id === id)
+    const selectedLabel = selectedCategory?.name ?? null
+    const selectedParentLabel = selectedCategory
+      ? availablePods.find(pod => pod.id === selectedCategory.list_id)?.name ?? null
+      : null
+    for (const row of sharedMetadataRows('shared_sub_pod_memberships')) {
+      const ownerId = stringRecordValue(row, 'category_id')
+      const label = stringRecordValue(row, 'category_name')
+      const parentLabel = stringRecordValue(row, 'pod_name')
+      if (!ownerId || !label) continue
+      const labelMatches = id === ownerId ||
+        id === sharedProjectedCategoryId(label) ||
+        (selectedLabel && normalizeStoredFieldKey(selectedLabel) === normalizeStoredFieldKey(label))
+      const parentMatches = !selectedParentLabel ||
+        !parentLabel ||
+        normalizeStoredFieldKey(selectedParentLabel) === normalizeStoredFieldKey(parentLabel)
+      if (labelMatches && parentMatches) return ownerId
+    }
+    return id
+  }
+
+  function ownerCompanyIdForSharedSelection(id: string): string {
+    const selectedCompany = contactsForOptions.find(record => record.id === id && record.type === 'Company')
+    const selectedLabel = selectedCompany?.name ?? null
+    for (const row of sharedMetadataRows('shared_company_memberships')) {
+      const ownerId = stringRecordValue(row, 'company_id')
+      const label = stringRecordValue(row, 'company_name')
+      if (!ownerId || !label) continue
+      if (
+        id === ownerId ||
+        id === sharedProjectedCompanyId(label) ||
+        (selectedLabel && normalizeStoredFieldKey(selectedLabel) === normalizeStoredFieldKey(label))
+      ) {
+        return ownerId
+      }
+    }
+    return id
+  }
+
+  function sharedOwnerContactStructurePatch(
+    listIds: string[],
+    primaryListId: string | null,
+    categoryIds: string[],
+  ): Pick<ContactPatch, 'list_ids' | 'primary_list_id' | 'category_ids'> {
+    if (!isInboundSharedContact) {
+      return {
+        list_ids: listIds,
+        primary_list_id: primaryListId,
+        category_ids: categoryIds,
+      }
+    }
+    const ownerListIds = uniqueIds(listIds.map(ownerPodIdForSharedSelection))
+    const ownerCategoryIds = uniqueIds(categoryIds.map(ownerCategoryIdForSharedSelection))
+    const ownerPrimaryListId = primaryListId ? ownerPodIdForSharedSelection(primaryListId) : ownerListIds[0] ?? null
+    return {
+      list_ids: ownerListIds,
+      primary_list_id: ownerPrimaryListId,
+      category_ids: ownerCategoryIds,
+    }
   }
 
   async function persistContactPatch(id: string, data: ContactPatch): Promise<Contact> {
@@ -821,6 +946,14 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const companyIds = Array.isArray(draft.company_ids)
       ? uniqueIds(draft.company_ids.map(value => String(value).trim()))
       : []
+    const nextCompanyRecordId = draft.company_record_id ?? companyIds[0] ?? null
+    const selectedCompanyIds = uniqueIds([...companyIds, nextCompanyRecordId ?? ''])
+    const ownerCompanyIds = isInboundSharedContact
+      ? uniqueIds(selectedCompanyIds.map(ownerCompanyIdForSharedSelection))
+      : selectedCompanyIds
+    const ownerCompanyRecordId = isInboundSharedContact && nextCompanyRecordId
+      ? ownerCompanyIdForSharedSelection(nextCompanyRecordId)
+      : nextCompanyRecordId
     const customFields = getDraftCustomFields()
     const legacyLinkedIn = typeof customFields.upworkLink === 'string' ? customFields.upworkLink : null
     const legacyGlobalRegion = typeof customFields.globalRegionDetail === 'string' ? customFields.globalRegionDetail : null
@@ -850,8 +983,8 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
         global_region: nextGlobalRegion,
         gender: draft.gender ?? null,
         recommended_by: draft.recommended_by ?? null,
-        company_record_id: draft.company_record_id ?? companyIds[0] ?? null,
-        company_ids: companyIds,
+        company_record_id: ownerCompanyRecordId,
+        company_ids: ownerCompanyIds,
         kv_fund_investor: kvFundInvestor.length > 0 ? kvFundInvestor : null,
         spv_investor: spvInvestor.length > 0 ? spvInvestor : null,
         custom_fields: customFields,
@@ -2823,11 +2956,11 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     const previousListIds = contact.list_ids
     const previousPrimaryId = contact.primary_list_id
     const previousCategoryIds = contact.category_ids
-    const updated = await updateContact(contact.id, {
-      list_ids: nextListIds,
-      primary_list_id: nextPrimaryId,
-      category_ids: nextCategoryIds,
-    } as Partial<Contact>)
+    const updated = await persistContactPatch(contact.id, sharedOwnerContactStructurePatch(
+      nextListIds,
+      nextPrimaryId,
+      nextCategoryIds,
+    ) as ContactPatch)
     onSaved(updated)
 
     const changedPods =
@@ -2837,7 +2970,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
       previousCategoryIds.length !== nextCategoryIds.length ||
       previousCategoryIds.some(id => !nextCategoryIds.includes(id))
 
-    if (changedPods) {
+    if (changedPods && !isInboundSharedContact) {
       await logSystemEvent({
         contactId: contact.id,
         type: 'pod_change',

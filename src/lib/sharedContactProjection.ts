@@ -43,6 +43,29 @@ type SharedCampaignMembershipSnapshot = {
   created_at: string | null
 }
 
+type SharedPodMembershipSnapshot = {
+  pod_id: string | null
+  pod_name: string | null
+  color: string | null
+  owner: string | null
+  is_priority: boolean | null
+  cadence: string | null
+  description: string | null
+  capacity: number | null
+  enrichment_opt_in: boolean | null
+  created_at: string | null
+}
+
+type SharedSubPodMembershipSnapshot = {
+  category_id: string | null
+  category_name: string | null
+  pod_id: string | null
+  pod_name: string | null
+  color: string | null
+  icon: string | null
+  created_at: string | null
+}
+
 type SharedCampaignSource = {
   snapshot: SharedContactAccessSnapshot
   label: string
@@ -134,6 +157,43 @@ function sharedCampaignMemberships(snapshot: SharedContactAccessSnapshot): Share
       next_step_due: stringValue(item.next_step_due),
       moved_at: stringValue(item.moved_at),
       custom_fields: recordValue(item.custom_fields),
+      created_at: stringValue(item.created_at),
+    }))
+}
+
+function sharedPodMemberships(snapshot: SharedContactAccessSnapshot): SharedPodMembershipSnapshot[] {
+  const raw = snapshot.contact.custom_fields?.shared_pod_memberships
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .filter(isRecord)
+    .map(item => ({
+      pod_id: stringValue(item.pod_id),
+      pod_name: stringValue(item.pod_name),
+      color: stringValue(item.color),
+      owner: stringValue(item.owner),
+      is_priority: typeof item.is_priority === 'boolean' ? item.is_priority : null,
+      cadence: stringValue(item.cadence),
+      description: stringValue(item.description),
+      capacity: numberValue(item.capacity),
+      enrichment_opt_in: typeof item.enrichment_opt_in === 'boolean' ? item.enrichment_opt_in : null,
+      created_at: stringValue(item.created_at),
+    }))
+}
+
+function sharedSubPodMemberships(snapshot: SharedContactAccessSnapshot): SharedSubPodMembershipSnapshot[] {
+  const raw = snapshot.contact.custom_fields?.shared_sub_pod_memberships
+  if (!Array.isArray(raw)) return []
+
+  return raw
+    .filter(isRecord)
+    .map(item => ({
+      category_id: stringValue(item.category_id),
+      category_name: stringValue(item.category_name),
+      pod_id: stringValue(item.pod_id),
+      pod_name: stringValue(item.pod_name),
+      color: stringValue(item.color),
+      icon: stringValue(item.icon),
       created_at: stringValue(item.created_at),
     }))
 }
@@ -259,6 +319,35 @@ function projectOneSharedContact(snapshot: SharedContactAccessSnapshot, structur
   const localCategoryIds = new Set(structure.categories.map(category => category.id))
   const listIds = new Set(canProjectPods ? contact.list_ids.filter(id => localPodIds.has(id)) : [])
   const categoryIds = new Set(canProjectSubPods ? contact.category_ids.filter(id => localCategoryIds.has(id)) : [])
+
+  if (canProjectPods || canProjectSubPods) {
+    for (const membership of sharedPodMemberships(snapshot)) {
+      if (!membership.pod_name) continue
+      const pod = structure.pods.find(item => item.id === membership.pod_id)
+        ?? structure.pods.find(item => item.id === sharedPodId(membership.pod_name ?? ''))
+        ?? findByName(structure.pods, membership.pod_name)
+      if (pod && (canProjectPods || canProjectSubPods)) listIds.add(pod.id)
+    }
+  }
+
+  if (canProjectSubPods) {
+    for (const membership of sharedSubPodMemberships(snapshot)) {
+      if (!membership.category_name) continue
+      const category = structure.categories.find(item => item.id === membership.category_id)
+        ?? structure.categories.find(item => item.id === sharedCategoryId(membership.category_name ?? ''))
+        ?? structure.categories.find(item => {
+          if (normalizeLabel(item.name) !== normalizeLabel(membership.category_name)) return false
+          if (!membership.pod_name) return true
+          const parent = structure.pods.find(pod => pod.id === item.list_id)
+          return normalizeLabel(parent?.name) === normalizeLabel(membership.pod_name)
+        })
+        ?? findByName(structure.categories, membership.category_name)
+      if (category) {
+        categoryIds.add(category.id)
+        listIds.add(category.list_id)
+      }
+    }
+  }
 
   if (snapshot.resource_type === 'pod') {
     const targetSubPodLabel = subPodLabel(snapshot.resource_label)
@@ -414,25 +503,38 @@ function projectSharedPodsToWorkspace(snapshots: SharedContactAccessSnapshot[], 
 
   const projected: Pod[] = []
   const projectedKeys = new Set<string>()
-  for (const snapshot of snapshots) {
-    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
-    if (!hasVisibleField(snapshot, 'pods')) continue
-    if (subPodLabel(snapshot.resource_label)) continue
-    const key = normalizeLabel(snapshot.resource_label)
-    if (!key || byName.has(key) || projectedKeys.has(key)) continue
+  function addProjectedPod(label: string, snapshot: SharedContactAccessSnapshot, membership?: SharedPodMembershipSnapshot) {
+    const key = normalizeLabel(label)
+    if (!key || byName.has(key) || projectedKeys.has(key)) return
     projectedKeys.add(key)
     projected.push({
-      id: sharedPodId(snapshot.resource_label),
-      name: snapshot.resource_label,
-      color: null,
-      owner: null,
-      is_priority: false,
-      cadence: null,
-      description: null,
-      capacity: null,
-      enrichment_opt_in: false,
-      created_at: snapshot.created_at,
+      id: sharedPodId(label),
+      name: label,
+      color: (membership?.color as Pod['color']) ?? null,
+      owner: (membership?.owner as Pod['owner']) ?? null,
+      is_priority: membership?.is_priority ?? false,
+      cadence: (membership?.cadence as Pod['cadence']) ?? null,
+      description: membership?.description ?? null,
+      capacity: membership?.capacity ?? null,
+      enrichment_opt_in: membership?.enrichment_opt_in ?? false,
+      created_at: membership?.created_at ?? snapshot.created_at,
     })
+  }
+
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot)) continue
+    if (hasVisibleField(snapshot, 'pods') || hasVisibleField(snapshot, 'sub_pods')) {
+      for (const membership of sharedPodMemberships(snapshot)) {
+        if (membership.pod_name) addProjectedPod(membership.pod_name, snapshot, membership)
+      }
+      for (const membership of sharedSubPodMemberships(snapshot)) {
+        if (membership.pod_name) addProjectedPod(membership.pod_name, snapshot)
+      }
+    }
+    if (snapshot.resource_type !== 'pod') continue
+    if (!hasVisibleField(snapshot, 'pods')) continue
+    if (subPodLabel(snapshot.resource_label)) continue
+    addProjectedPod(snapshot.resource_label, snapshot)
   }
 
   return [...localPods, ...projected]
@@ -451,16 +553,20 @@ function projectSharedCategoriesToWorkspace(
 
   const projected: Category[] = []
   const projectedKeys = new Set<string>()
-  for (const snapshot of snapshots) {
-    if (!isActiveSnapshot(snapshot) || snapshot.resource_type !== 'pod') continue
-    if (!hasVisibleField(snapshot, 'sub_pods')) continue
-    const label = subPodLabel(snapshot.resource_label)
-    if (!label) continue
+  function addProjectedCategory(
+    label: string,
+    snapshot: SharedContactAccessSnapshot,
+    membership?: SharedSubPodMembershipSnapshot,
+  ) {
     const key = normalizeLabel(label)
-    if (!key || byName.has(key) || projectedKeys.has(key)) continue
-    projectedKeys.add(key)
+    const parentPod = membership?.pod_name
+      ? findByName(pods, membership.pod_name) ?? pods.find(pod => pod.id === sharedPodId(membership.pod_name ?? ''))
+      : null
+    const scopedKey = `${normalizeLabel(parentPod?.name) || 'shared'}:${key}`
+    if (!key || byName.has(key) || projectedKeys.has(scopedKey)) return
+    projectedKeys.add(scopedKey)
 
-    const parentPod = pods.find(pod => pod.id === snapshot.contact.primary_list_id)
+    const fallbackParentPod = pods.find(pod => pod.id === snapshot.contact.primary_list_id)
       ?? pods.find(pod => snapshot.contact.list_ids.includes(pod.id))
       ?? findByName(pods, SHARED_SUB_PODS_LABEL)
       ?? {
@@ -478,12 +584,26 @@ function projectSharedCategoriesToWorkspace(
 
     projected.push({
       id: sharedCategoryId(label),
-      list_id: parentPod.id,
+      list_id: parentPod?.id ?? fallbackParentPod.id,
       name: label,
-      color: null,
-      icon: null,
-      created_at: snapshot.created_at,
+      color: (membership?.color as Category['color']) ?? null,
+      icon: membership?.icon ?? null,
+      created_at: membership?.created_at ?? snapshot.created_at,
     })
+  }
+
+  for (const snapshot of snapshots) {
+    if (!isActiveSnapshot(snapshot)) continue
+    if (hasVisibleField(snapshot, 'sub_pods')) {
+      for (const membership of sharedSubPodMemberships(snapshot)) {
+        if (membership.category_name) addProjectedCategory(membership.category_name, snapshot, membership)
+      }
+    }
+    if (snapshot.resource_type !== 'pod') continue
+    if (!hasVisibleField(snapshot, 'sub_pods')) continue
+    const label = subPodLabel(snapshot.resource_label)
+    if (!label) continue
+    addProjectedCategory(label, snapshot)
   }
 
   return [...localCategories, ...projected]

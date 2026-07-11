@@ -332,6 +332,44 @@ describe('shared contact projection', () => {
     expect(projection.sharedContacts[0].list_ids).toContain(projection.pods[0].id)
   })
 
+  it('projects pod and sub-pod memberships from direct contact shares without sharing the whole pod', () => {
+    const projection = projectSharedWorkspaceResources([
+      snapshot({
+        resource_type: 'contact',
+        resource_id: baseContact.id,
+        resource_label: baseContact.name,
+        visible_field_ids: ['name', 'pods', 'sub_pods'],
+        contact: {
+          ...baseContact,
+          custom_fields: {
+            shared_pod_memberships: [
+              { pod_id: 'owner-pod-maps', pod_name: 'MAPS', created_at: baseContact.created_at },
+            ],
+            shared_sub_pod_memberships: [
+              {
+                category_id: 'owner-cat-music',
+                category_name: 'Music',
+                pod_id: 'owner-pod-maps',
+                pod_name: 'MAPS',
+                created_at: baseContact.created_at,
+              },
+            ],
+          },
+        },
+      }),
+    ], {
+      pods: [],
+      categories: [],
+      campaigns: [],
+      contacts: [],
+    })
+
+    expect(projection.pods.map(pod => pod.name)).toEqual(['MAPS'])
+    expect(projection.categories.map(category => category.name)).toEqual(['Music'])
+    expect(projection.sharedContacts[0].list_ids).toEqual([projection.pods[0].id])
+    expect(projection.sharedContacts[0].category_ids).toEqual([projection.categories[0].id])
+  })
+
   it('does not project pods, sub-pods, or companies when those visible fields are not selected', () => {
     const projection = projectSharedWorkspaceResources([
       snapshot({
