@@ -195,6 +195,21 @@ export interface CreateAccessGrantInput {
   expires_at?: string | null
 }
 
+export interface CreatePendingTrustedContactShareInput {
+  connection_id: string
+  workspace_id: string
+  subject_id: string
+  subject_email?: string | null
+  subject_label: string
+  resource_type: CollaborationResourceType
+  resource_id?: string | null
+  resource_label: string
+  permission_level: CollaborationPermissionLevel
+  field_scopes: CollaborationFieldScope[]
+  visible_field_ids?: readonly SharedContactVisibleFieldId[]
+  expires_at?: string | null
+}
+
 export interface UpdateAccessGrantInput {
   id: string
   workspace_id: string
@@ -485,6 +500,45 @@ export async function createCollaborationAccessGrant(input: CreateAccessGrantInp
     },
   })
   return normalizeAccessGrants([data])[0]
+}
+
+export async function createPendingTrustedContactShare(input: CreatePendingTrustedContactShareInput): Promise<void> {
+  const created_by = await getCurrentUserId()
+  if (!created_by) throw new Error('Not authenticated')
+
+  const { visible_field_ids, ...shareInput } = input
+  const field_scopes = visible_field_ids
+    ? encodeSharedContactFieldScopes(visible_field_ids)
+    : normalizeSharedContactFieldScopes(input.field_scopes)
+
+  const { error } = await db
+    .from('collaboration_pending_connection_shares')
+    .insert({
+      ...shareInput,
+      subject_email: input.subject_email ?? null,
+      resource_id: input.resource_id ?? null,
+      field_scopes,
+      created_by,
+      expires_at: input.expires_at ?? null,
+    })
+
+  if (error) throw error
+  await recordCollaborationAuditEvent({
+    workspace_id: input.workspace_id,
+    event_type: 'pending_connection_share_created',
+    resource_type: input.resource_type,
+    resource_id: input.resource_id ?? null,
+    resource_label: input.resource_label,
+    metadata: {
+      connection_id: input.connection_id,
+      subject_label: input.subject_label,
+      subject_email: input.subject_email ?? null,
+      permission_level: input.permission_level,
+      field_scopes: normalizeSharedContactFieldScopes(field_scopes),
+      visible_field_ids: decodeSharedContactVisibleFieldIdsFromScopes(field_scopes),
+      status: 'pending_connection_acceptance',
+    },
+  })
 }
 
 export async function updateCollaborationAccessGrant(input: UpdateAccessGrantInput): Promise<CollaborationAccessGrant> {

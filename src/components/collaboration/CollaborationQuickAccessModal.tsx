@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { KeyRound, X } from 'lucide-react'
 import {
   createCollaborationAccessGrant,
+  createPendingTrustedContactShare,
   type CollaborationFieldScope,
   type CollaborationPermissionLevel,
   type CollaborationResourceType,
   type CollaborationSubjectType,
 } from '@/lib/collaboration'
+import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connectionNotifications'
+import { createUserConnectionRequest } from '@/lib/connections'
 import type { SharedContactVisibleFieldId } from '@/lib/sharedContactVisibleFields'
 import type { WorkspaceMember } from '@/lib/supabase-data'
 
@@ -87,6 +90,8 @@ const EXPIRATION_OPTIONS: Array<{ label: string; days: number | null }> = [
 type QuickAccessVariant = 'full' | 'selection'
 type SelectionPermission = 'reader' | 'editor'
 
+const INVITE_TRUSTED_CONTACT_VALUE = '__invite_new_trusted_contact__'
+
 export function CollaborationQuickAccessModal({
   workspaceId,
   members,
@@ -119,6 +124,7 @@ export function CollaborationQuickAccessModal({
   const [editorRequiresApproval, setEditorRequiresApproval] = useState(true)
   const [fieldScopes, setFieldScopes] = useState<CollaborationFieldScope[]>(['public_profile'])
   const [expirationDays, setExpirationDays] = useState<number | null>(isSelectionVariant ? null : 30)
+  const [inviteEmail, setInviteEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -130,6 +136,8 @@ export function CollaborationQuickAccessModal({
   const selectedMember = subjectType === 'user'
     ? members.find(member => member.user_id === subjectId) ?? null
     : null
+  const isInvitingTrustedContact = isSelectionVariant && subjectId === INVITE_TRUSTED_CONTACT_VALUE
+  const normalizedInviteEmail = inviteEmail.trim().toLowerCase()
   const selectionPermissionLevel: CollaborationPermissionLevel = selectionPermission === 'reader'
     ? 'view'
     : editorRequiresApproval
@@ -137,7 +145,7 @@ export function CollaborationQuickAccessModal({
       : 'edit'
   const canSubmit = !saving
     && resources.length > 0
-    && subjectLabel.trim().length > 0
+    && (isInvitingTrustedContact ? isValidEmail(normalizedInviteEmail) : subjectLabel.trim().length > 0)
     && (!isSelectionVariant || visibleFieldIds.length > 0)
 
   useEffect(() => {
@@ -152,12 +160,17 @@ export function CollaborationQuickAccessModal({
       }
       return
     }
+    if (isInvitingTrustedContact) {
+      const nextLabel = normalizedInviteEmail || 'New trusted contact'
+      if (subjectLabel !== nextLabel) setSubjectLabel(nextLabel)
+      return
+    }
     const member = members.find(item => item.user_id === subjectId) ?? members[0]
     if (member) {
       setSubjectId(member.user_id)
       setSubjectLabel(member.display_name || member.email || 'User')
     }
-  }, [isSelectionVariant, members, subjectId, subjectLabel, subjectType])
+  }, [isInvitingTrustedContact, isSelectionVariant, members, normalizedInviteEmail, subjectId, subjectLabel, subjectType])
 
   function applyPreset(preset: PermissionPreset) {
     setPermission(preset.permission)
@@ -171,31 +184,78 @@ export function CollaborationQuickAccessModal({
     })
   }
 
+  function handleSelectionSubjectChange(nextSubjectId: string) {
+    setSubjectId(nextSubjectId)
+    setError('')
+    if (nextSubjectId !== INVITE_TRUSTED_CONTACT_VALUE) setInviteEmail('')
+  }
+
   async function handleSubmit() {
-    const label = subjectLabel.trim()
+    const label = isInvitingTrustedContact ? normalizedInviteEmail : subjectLabel.trim()
     if (!label || fieldScopes.length === 0 || resources.length === 0 || saving) return
     if (isSelectionVariant && visibleFieldIds.length === 0) return
+    if (isInvitingTrustedContact && !isValidEmail(normalizedInviteEmail)) {
+      setError('Enter a valid trusted contact email')
+      return
+    }
     setSaving(true)
     setError('')
     try {
       const expires_at = expirationDays
         ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000).toISOString()
         : null
+      let grantSubjectId = subjectType === 'user' ? subjectId : null
+      let grantSubjectEmail = subjectType === 'user' ? selectedMember?.email ?? null : null
+      let grantSubjectLabel = label
+      let queuePendingShareConnectionId: string | null = null
+
+      if (isInvitingTrustedContact) {
+        const connection = await createUserConnectionRequest(normalizedInviteEmail)
+        if (!connection) throw new Error('Could not create trusted contact invitation')
+
+        grantSubjectId = connection.connected_user_id
+        grantSubjectEmail = connection.connected_email ?? normalizedInviteEmail
+        grantSubjectLabel = connection.connected_display_name || connection.connected_email || normalizedInviteEmail
+        if (connection.status === 'pending') queuePendingShareConnectionId = connection.id
+        window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT))
+      }
+
+      if (queuePendingShareConnectionId && !grantSubjectId) {
+        throw new Error('Could not prepare the trusted contact share')
+      }
+
       for (const resource of resources) {
-        await createCollaborationAccessGrant({
-          workspace_id: workspaceId,
-          subject_type: subjectType,
-          subject_id: subjectType === 'user' ? subjectId : null,
-          subject_email: subjectType === 'user' ? selectedMember?.email ?? null : null,
-          subject_label: label,
-          resource_type: resource.type,
-          resource_id: resource.id,
-          resource_label: resource.label,
-          permission_level: isSelectionVariant ? selectionPermissionLevel : permission,
-          field_scopes: fieldScopes,
-          visible_field_ids: isSelectionVariant ? visibleFieldIds : undefined,
-          expires_at,
-        })
+        if (queuePendingShareConnectionId && grantSubjectId) {
+          await createPendingTrustedContactShare({
+            connection_id: queuePendingShareConnectionId,
+            workspace_id: workspaceId,
+            subject_id: grantSubjectId,
+            subject_email: grantSubjectEmail,
+            subject_label: grantSubjectLabel,
+            resource_type: resource.type,
+            resource_id: resource.id,
+            resource_label: resource.label,
+            permission_level: selectionPermissionLevel,
+            field_scopes: fieldScopes,
+            visible_field_ids: visibleFieldIds,
+            expires_at,
+          })
+        } else {
+          await createCollaborationAccessGrant({
+            workspace_id: workspaceId,
+            subject_type: subjectType,
+            subject_id: grantSubjectId,
+            subject_email: grantSubjectEmail,
+            subject_label: grantSubjectLabel,
+            resource_type: resource.type,
+            resource_id: resource.id,
+            resource_label: resource.label,
+            permission_level: isSelectionVariant ? selectionPermissionLevel : permission,
+            field_scopes: fieldScopes,
+            visible_field_ids: isSelectionVariant ? visibleFieldIds : undefined,
+            expires_at,
+          })
+        }
       }
       onCreated(resources.length)
     } catch (err) {
@@ -311,12 +371,26 @@ export function CollaborationQuickAccessModal({
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 12, marginTop: 14 }}>
-              <SelectField label="User" value={subjectId} onChange={setSubjectId}>
-                {members.length === 0 && <option value="">No users found</option>}
+              <SelectField label="User" value={subjectId} onChange={handleSelectionSubjectChange}>
+                {members.length === 0 && <option value="">No trusted users found</option>}
                 {members.map(member => (
                   <option key={member.id} value={member.user_id}>{member.display_name || member.email || 'User'}</option>
                 ))}
+                <option value={INVITE_TRUSTED_CONTACT_VALUE}>Add new trusted contact...</option>
               </SelectField>
+              {isInvitingTrustedContact && (
+                <div style={{ display: 'grid', gap: 6 }}>
+                  <TextField
+                    label="Trusted contact email"
+                    value={inviteEmail}
+                    onChange={setInviteEmail}
+                    placeholder="name@example.com"
+                  />
+                  <p style={{ margin: 0, fontSize: 11, lineHeight: 1.45, color: 'var(--color-text-tertiary)' }}>
+                    The selected contacts will be shared only after this user accepts the trusted contact invitation.
+                  </p>
+                </div>
+              )}
             </div>
 
             <section style={{ ...panelStyle, marginTop: 14 }}>
@@ -483,6 +557,10 @@ export function CollaborationQuickAccessModal({
 
 function titleCase(value: string): string {
   return value.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
 function TextField({
