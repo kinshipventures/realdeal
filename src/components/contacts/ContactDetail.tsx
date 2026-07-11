@@ -439,8 +439,12 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   const sharedContactCanEditDirectly = isInboundSharedContact && (sharedAccess?.permissionLevel === 'edit' || sharedAccess?.permissionLevel === 'admin')
   const sharedContactCanRequestChanges = isInboundSharedContact && sharedAccess?.permissionLevel === 'suggest'
   const sharedContactCanEdit = Boolean(sharedContactCanEditDirectly || sharedContactCanRequestChanges)
+  const sharedContactCanEditStructure = Boolean(sharedContactCanEditDirectly || sharedContactCanRequestChanges)
   const contactCardReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEdit)
-  const contactCardStructureReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEditDirectly)
+  const contactCardStructureReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEditStructure)
+  const contactCardDestructiveReadOnly = Boolean(isInboundSharedContact && !sharedContactCanEditDirectly)
+  const sharedContactSaveActionLabel = sharedContactCanRequestChanges ? 'Request approval' : 'Save'
+  const sharedContactSavingActionLabel = sharedContactCanRequestChanges ? 'Requesting...' : 'Saving...'
   const sharedFieldScopes = useMemo(
     () => new Set(sharedAccess?.fieldScopes ?? []),
     [sharedAccess?.fieldScopes],
@@ -3253,7 +3257,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
   }
 
   async function handleDelete() {
-    if (contactCardStructureReadOnly) return
+    if (contactCardDestructiveReadOnly) return
     if (!contact?.id) return
     setDeleting(true)
     try {
@@ -3563,7 +3567,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
           background: 'color-mix(in srgb, var(--surface-panel) 74%, transparent)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            {!isNew && !contactCardStructureReadOnly ? (
+            {!isNew && !contactCardDestructiveReadOnly ? (
               confirmDelete ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
@@ -3626,7 +3630,7 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
                       boxShadow: hasPendingContactChanges ? '0 8px 18px rgba(0,0,0,0.12)' : 'none',
                     }}
                   >
-                    {savingContactInfo ? 'Saving...' : 'Save'}
+                    {savingContactInfo ? sharedContactSavingActionLabel : sharedContactSaveActionLabel}
                   </button>
                   {contactSaveError && (
                     <div style={{ fontSize: 10, color: '#D93025' }}>{contactSaveError}</div>

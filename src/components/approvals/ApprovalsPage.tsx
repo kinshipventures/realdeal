@@ -87,6 +87,8 @@ type SharedRequestFeedback = {
 
 type ContactPatchRecord = Record<string, unknown>
 
+const SHARED_STRUCTURE_RESOLUTION_PATCH_KEY = '__shared_structure_resolution'
+
 const PERMISSION_OPTIONS: Array<{ value: 'all' | CollaborationPermissionLevel | 'public_link'; label: string }> = [
   { value: 'all', label: 'All permissions' },
   { value: 'view', label: 'Reader' },
@@ -188,6 +190,10 @@ function pickPatchFields(patch: ContactPatchRecord, fieldKeys: string[]): Contac
     next[key] = patch[key]
     return next
   }, {})
+}
+
+function publicContactPatchFields(patch: ContactPatchRecord): string[] {
+  return Object.keys(patch).filter(key => key !== SHARED_STRUCTURE_RESOLUTION_PATCH_KEY)
 }
 
 function fieldScopeSummary(scopes: CollaborationFieldScope[]): string {
@@ -1141,7 +1147,10 @@ function ContactChangeRequestCard({
     () => (request.original_contact_snapshot ?? {}) as ContactPatchRecord,
     [request.original_contact_snapshot],
   )
-  const fieldKeys = useMemo(() => Object.keys(proposedPatch).sort((a, b) => fieldChangeLabel(a).localeCompare(fieldChangeLabel(b))), [proposedPatch])
+  const fieldKeys = useMemo(
+    () => publicContactPatchFields(proposedPatch).sort((a, b) => fieldChangeLabel(a).localeCompare(fieldChangeLabel(b))),
+    [proposedPatch],
+  )
   const [selectedKeys, setSelectedKeys] = useState<string[]>(fieldKeys)
 
   useEffect(() => {
@@ -1157,6 +1166,7 @@ function ContactChangeRequestCard({
   }
 
   const selectedPatch = pickPatchFields(proposedPatch, selectedKeys)
+  const fullVisiblePatch = pickPatchFields(proposedPatch, fieldKeys)
   const canApproveSelected = selectedKeys.length > 0 && !busy
 
   return (
@@ -1186,7 +1196,7 @@ function ContactChangeRequestCard({
           <button
             type="button"
             disabled={busy || fieldKeys.length === 0}
-            onClick={() => onResolve(request, 'approved', proposedPatch)}
+            onClick={() => onResolve(request, 'approved', fullVisiblePatch)}
             style={{ ...secondaryButtonStyle, minHeight: 32, opacity: busy || fieldKeys.length === 0 ? 0.55 : 1 }}
           >
             Approve all
