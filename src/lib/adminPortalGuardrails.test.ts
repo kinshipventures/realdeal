@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { readJsonBody } from '../../api/_lib/http'
 
 const root = process.cwd()
 
@@ -60,6 +61,17 @@ describe('admin portal guardrails', () => {
     expect(adminWaitlist).toContain('approve_waitlist_entry')
     expect(adminWaitlist).toContain('deny_waitlist_entry')
     expect(adminWaitlist).toContain('inviteUserByEmail')
+  })
+
+  it('does not let malformed request bodies crash waitlist parsing', async () => {
+    const request = {}
+    Object.defineProperty(request, 'body', {
+      get() {
+        throw new Error('Invalid JSON')
+      },
+    })
+
+    await expect(readJsonBody(request)).resolves.toEqual({})
   })
 
   it('stores admin-only data in service-role tables with RLS enabled', () => {

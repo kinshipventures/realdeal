@@ -5,7 +5,12 @@ export function readBearerToken(request: any): string | null {
 }
 
 export async function readJsonBody(request: any): Promise<Record<string, unknown>> {
-  const body = request?.body
+  let body: unknown
+  try {
+    body = request?.body
+  } catch {
+    return {}
+  }
   if (!body) return {}
   if (typeof body === 'object') return body
   if (typeof body !== 'string') return {}
