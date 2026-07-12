@@ -1,4 +1,4 @@
-import { adminErrorStatus, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
+import { adminErrorStatus, getSupabaseAuthAdmin, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
 import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
 
 type ApiRequest = {
@@ -78,9 +78,9 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       let invitedUserId: string | null = null
       let inviteWarning: string | null = null
 
-      const inviteResult = await admin.auth.admin.inviteUserByEmail(email, {
+      const inviteResult = await getSupabaseAuthAdmin(admin).inviteUserByEmail(email, {
         data: { display_name: entry.display_name ?? undefined },
-      } as any)
+      })
 
       if (inviteResult.error) {
         const message = inviteResult.error.message ?? 'Could not invite user'

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { adminErrorStatus, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
+import { adminErrorStatus, asMetadataRecord, getSupabaseAuthAdmin, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
 import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
 
 type ApiRequest = {
@@ -72,7 +72,7 @@ async function getOwnedWorkspaceIds(admin: SupabaseClient, userId: string): Prom
 }
 
 async function buildDeletePreview(admin: SupabaseClient, userId: string) {
-  const { data: authUser, error: authError } = await admin.auth.admin.getUserById(userId)
+  const { data: authUser, error: authError } = await getSupabaseAuthAdmin(admin).getUserById(userId)
   if (authError) throw authError
   if (!authUser?.user) {
     const notFound = new Error('User not found')
@@ -125,7 +125,7 @@ async function buildDeletePreview(admin: SupabaseClient, userId: string) {
 }
 
 async function listUsers(admin: SupabaseClient, page: number, perPage: number) {
-  const { data, error } = await admin.auth.admin.listUsers({ page, perPage })
+  const { data, error } = await getSupabaseAuthAdmin(admin).listUsers({ page, perPage })
   if (error) throw error
 
   const users = data.users ?? []
@@ -137,6 +137,7 @@ async function listUsers(admin: SupabaseClient, page: number, perPage: number) {
 
   const enriched = await Promise.all(
     users.map(async user => {
+      const metadata = asMetadataRecord(user.user_metadata)
       const ownedWorkspaces = await getOwnedWorkspaceIds(admin, user.id)
       const memberships = await countRows(admin.from('workspace_members').select('id', { count: 'exact', head: true }).eq('user_id', user.id))
       return {
@@ -144,7 +145,7 @@ async function listUsers(admin: SupabaseClient, page: number, perPage: number) {
         email: normalizeAdminEmail(user.email),
         created_at: user.created_at,
         last_sign_in_at: user.last_sign_in_at,
-        display_name: profileById.get(user.id)?.display_name ?? user.user_metadata?.display_name ?? null,
+        display_name: profileById.get(user.id)?.display_name ?? (typeof metadata.display_name === 'string' ? metadata.display_name : null),
         workspace_memberships: memberships,
         owned_workspaces: ownedWorkspaces.length,
       }
@@ -232,7 +233,7 @@ async function deleteAccount(admin: SupabaseClient, userId: string, confirmEmail
   deleted.workspace_memberships = await deleteRows(admin.from('workspace_members').delete({ count: 'exact' }).eq('user_id', userId))
   deleted.profile = await deleteRows(admin.from('profiles').delete({ count: 'exact' }).eq('id', userId))
 
-  const deleteResult = await admin.auth.admin.deleteUser(userId)
+  const deleteResult = await getSupabaseAuthAdmin(admin).deleteUser(userId)
   if (deleteResult.error) throw deleteResult.error
 
   return { preview, deleted }
@@ -274,15 +275,15 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     }
 
     if (action === 'reset_password') {
-      const { data: target, error: targetError } = await admin.auth.admin.getUserById(targetUserId)
+      const { data: target, error: targetError } = await getSupabaseAuthAdmin(admin).getUserById(targetUserId)
       if (targetError) throw targetError
       const email = normalizeAdminEmail(target.user?.email)
       if (!email) return json(response, 400, { error: 'Target user has no email' })
 
-      const { data, error } = await admin.auth.admin.generateLink({
+      const { data, error } = await getSupabaseAuthAdmin(admin).generateLink({
         type: 'recovery',
         email,
-      } as any)
+      })
       if (error) throw error
 
       await writeAdminAudit(admin, {

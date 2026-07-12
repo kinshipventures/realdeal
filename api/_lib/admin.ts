@@ -3,6 +3,14 @@ import { createAdminClient, requireUser } from './supabase.js'
 
 export type PlatformAdminRole = 'owner' | 'admin'
 
+export type SupabaseAuthAdmin = {
+  deleteUser: (userId: string) => Promise<any>
+  generateLink: (params: Record<string, unknown>) => Promise<any>
+  getUserById: (userId: string) => Promise<any>
+  inviteUserByEmail: (email: string, options?: Record<string, unknown>) => Promise<any>
+  listUsers: (params: { page: number; perPage: number }) => Promise<any>
+}
+
 type AdminContext = {
   admin: SupabaseClient
   role: PlatformAdminRole
@@ -14,6 +22,14 @@ type AdminContext = {
 
 export function normalizeAdminEmail(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase()
+}
+
+export function getSupabaseAuthAdmin(admin: SupabaseClient): SupabaseAuthAdmin {
+  return (admin.auth as any).admin as SupabaseAuthAdmin
+}
+
+export function asMetadataRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
 }
 
 function parseAllowedAdminEmails(): Set<string> {
