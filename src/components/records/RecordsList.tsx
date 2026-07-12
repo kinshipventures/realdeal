@@ -72,6 +72,19 @@ function templateColumnDefs(customFieldNames: string[]): ColumnDef[] {
 
 const COLUMNS: ColumnDef[] = templateColumnDefs([])
 
+const HIDDEN_RELATIONSHIP_PROPERTY_FILTER_LABELS = new Set([
+  'Address',
+  'Campaign Status',
+  'Campaign Target Commitment',
+  'Sub-pods',
+])
+
+function isHiddenRelationshipPropertyFilterField(field: Pick<ColumnDef, 'id' | 'label'>): boolean {
+  const normalized = normalizeRelationshipFilterFieldId(field.id) ?? field.label
+  return HIDDEN_RELATIONSHIP_PROPERTY_FILTER_LABELS.has(field.label) ||
+    HIDDEN_RELATIONSHIP_PROPERTY_FILTER_LABELS.has(normalized)
+}
+
 function defaultVisibleColumnIds(columns: ColumnDef[]): ColumnId[] {
   return columns.filter(col => col.defaultVisible).map(col => col.id)
 }
@@ -991,6 +1004,11 @@ export function RecordsList() {
     [relationshipFilterFields],
   )
 
+  const relationshipPropertyFilterFields = useMemo(
+    () => sortedRelationshipFilterFields.filter(field => !isHiddenRelationshipPropertyFilterField(field)),
+    [sortedRelationshipFilterFields],
+  )
+
   useEffect(() => {
     setVisibleColumns(prev => {
       const normalized = normalizeVisibleColumnIds(prev, relationshipFilterFields)
@@ -1002,6 +1020,22 @@ export function RecordsList() {
   useEffect(() => {
     if (!filters.propertyField) return
     if (relationshipFilterFields.some(field => field.id === filters.propertyField)) return
+    setFilters(current => ({
+      ...current,
+      propertyField: null,
+      propertyValue: null,
+      propertyValues: [],
+      pod: null,
+      podIds: [],
+      category: null,
+      categoryIds: [],
+    }))
+  }, [filters.propertyField, relationshipFilterFields])
+
+  useEffect(() => {
+    if (!filters.propertyField) return
+    const field = relationshipFilterFields.find(item => item.id === filters.propertyField)
+    if (!field || !isHiddenRelationshipPropertyFilterField(field)) return
     setFilters(current => ({
       ...current,
       propertyField: null,
@@ -1198,8 +1232,8 @@ export function RecordsList() {
   )
 
   const filteredPropertyFieldOptions = useMemo(
-    () => sortedRelationshipFilterFields.filter(field => matchesMenuSearch(field.label, propertyFieldSearch)),
-    [propertyFieldSearch, sortedRelationshipFilterFields],
+    () => relationshipPropertyFilterFields.filter(field => matchesMenuSearch(field.label, propertyFieldSearch)),
+    [propertyFieldSearch, relationshipPropertyFilterFields],
   )
 
   const filteredPodFilterOptions = useMemo(

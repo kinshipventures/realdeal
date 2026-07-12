@@ -114,6 +114,13 @@ describe('Shared contacts guardrails', () => {
     expect(recordsList).toContain('function labelSort(a: string, b: string): number')
     expect(recordsList).toContain('function matchesMenuSearch(label: string, search: string): boolean')
     expect(recordsList).toContain('const sortedRelationshipFilterFields = useMemo')
+    expect(recordsList).toContain('const HIDDEN_RELATIONSHIP_PROPERTY_FILTER_LABELS = new Set')
+    expect(recordsList).toContain("'Address'")
+    expect(recordsList).toContain("'Campaign Status'")
+    expect(recordsList).toContain("'Campaign Target Commitment'")
+    expect(recordsList).toContain("'Sub-pods'")
+    expect(recordsList).toContain('const relationshipPropertyFilterFields = useMemo')
+    expect(recordsList).toContain('!isHiddenRelationshipPropertyFilterField(field)')
     expect(recordsList).toContain('const filteredPropertyFieldOptions = useMemo')
     expect(recordsList).toContain('filteredPropertyFieldOptions.map(field =>')
     expect(recordsList).toContain("const isPodsFilterField = normalizeRelationshipFilterFieldId(filters.propertyField) === 'Pods'")
@@ -134,6 +141,14 @@ describe('Shared contacts guardrails', () => {
     expect(recordsList).toContain('placeholder="Search sub-pods..."')
     expect(recordsList).toContain('filteredSubPodsByPod.map')
     expect(recordsList).toContain('filteredSubPodFilterOptions.map')
+  })
+
+  it('keeps shared-contact badges hidden from campaign cards without changing share metadata contracts', () => {
+    const campaignCard = source('src/components/campaigns/CampaignContactCard.tsx')
+
+    expect(campaignCard).toContain('shareMeta?: SharedContactBadgeMeta | null')
+    expect(campaignCard).not.toContain("import { SharedContactBadge }")
+    expect(campaignCard).not.toContain('<SharedContactBadge')
   })
 
   it('keeps trusted-user RPC contracts intact', () => {

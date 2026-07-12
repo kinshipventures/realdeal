@@ -6,7 +6,6 @@ import type { CampaignContact, Contact } from '../../lib/types'
 import type { ScoreLabel } from '../../lib/equity'
 import { formatMoneyCompact, getCampaignContactCampaignStatus, getCampaignContactCommitmentAmount } from '../../lib/campaignCommitments'
 import { Avatar } from '../ui'
-import { SharedContactBadge } from '../collaboration/SharedContactBadge'
 import type { SharedContactBadgeMeta } from '@/hooks/useSharedContactBadges'
 
 interface Props {
@@ -57,7 +56,7 @@ function isDueSoon(due: string | null): boolean {
   return diff < 3 * DAY_MS
 }
 
-export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger, shareMeta, readOnly = false }: Props) {
+export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onClick, onTogglePriority, isDragOverlay, selected, onToggleSelect, visibleFields, stagger, readOnly = false }: Props) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cc.id, disabled: readOnly })
 
@@ -138,7 +137,6 @@ export function CampaignContactCard({ cc, contact, equityScore, equityLabel, onC
             }}>
               {contact.name}
             </span>
-            {shareMeta && <SharedContactBadge meta={shareMeta} compact />}
           </div>
           {show('company') && contact.company && (
             <div style={{
