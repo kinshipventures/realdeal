@@ -217,7 +217,9 @@ type ContactShareMeta = {
 interface FilterState {
   search: string
   pod: string | null
+  podIds: string[]
   category: string | null
+  categoryIds: string[]
   propertyField: string | null
   propertyValue: string | null
   propertyValues: string[]
@@ -229,7 +231,9 @@ interface FilterState {
 const DEFAULT_FILTERS: FilterState = {
   search: '',
   pod: null,
+  podIds: [],
   category: null,
+  categoryIds: [],
   propertyField: null,
   propertyValue: null,
   propertyValues: [],
@@ -641,7 +645,10 @@ export function RecordsList() {
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadViews)
   const [showMoreDropdown, setShowMoreDropdown] = useState(false)
   const [showColumnFilter, setShowColumnFilter] = useState(false)
+  const [showPropertyFieldFilter, setShowPropertyFieldFilter] = useState(false)
   const [showPropertyValueFilter, setShowPropertyValueFilter] = useState(false)
+  const [propertyFieldSearch, setPropertyFieldSearch] = useState('')
+  const [podFilterSearch, setPodFilterSearch] = useState('')
   const [propertyValueSearch, setPropertyValueSearch] = useState('')
   const [visibleSectionSearch, setVisibleSectionSearch] = useState('')
   const [podPickerSearch, setPodPickerSearch] = useState('')
@@ -671,6 +678,7 @@ export function RecordsList() {
 
   const moreRef = useRef<HTMLDivElement>(null)
   const columnFilterRef = useRef<HTMLDivElement>(null)
+  const propertyFieldFilterRef = useRef<HTMLDivElement>(null)
   const propertyValueFilterRef = useRef<HTMLDivElement>(null)
   const createMenuRef = useRef<HTMLDivElement>(null)
 
@@ -762,6 +770,9 @@ export function RecordsList() {
       if (columnFilterRef.current && !columnFilterRef.current.contains(e.target as Node)) {
         setShowColumnFilter(false)
       }
+      if (propertyFieldFilterRef.current && !propertyFieldFilterRef.current.contains(e.target as Node)) {
+        setShowPropertyFieldFilter(false)
+      }
       if (propertyValueFilterRef.current && !propertyValueFilterRef.current.contains(e.target as Node)) {
         setShowPropertyValueFilter(false)
       }
@@ -812,6 +823,13 @@ export function RecordsList() {
   }, [showDeleteConfirm, showAddToCampaign, showArchiveConfirm])
 
   useEffect(() => {
+    if (!showPropertyFieldFilter) {
+      setPropertyFieldSearch('')
+      setPodFilterSearch('')
+    }
+  }, [showPropertyFieldFilter])
+
+  useEffect(() => {
     if (!showPropertyValueFilter) setPropertyValueSearch('')
   }, [showPropertyValueFilter])
 
@@ -838,6 +856,16 @@ export function RecordsList() {
     const m: Record<string, Category> = {}
     for (const category of categories) m[category.id] = category
     return m
+  }, [categories])
+
+  const categoryIdsByPodId = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const category of categories) {
+      const ids = map.get(category.list_id) ?? new Set<string>()
+      ids.add(category.id)
+      map.set(category.list_id, ids)
+    }
+    return map
   }, [categories])
 
   const contactMap = useMemo<Record<string, Contact>>(() => {
@@ -974,7 +1002,16 @@ export function RecordsList() {
   useEffect(() => {
     if (!filters.propertyField) return
     if (relationshipFilterFields.some(field => field.id === filters.propertyField)) return
-    setFilters(current => ({ ...current, propertyField: null, propertyValue: null, propertyValues: [] }))
+    setFilters(current => ({
+      ...current,
+      propertyField: null,
+      propertyValue: null,
+      propertyValues: [],
+      pod: null,
+      podIds: [],
+      category: null,
+      categoryIds: [],
+    }))
   }, [filters.propertyField, relationshipFilterFields])
 
   const relationshipFilterValuesForContact = useCallback((contact: Contact, fieldId: string | null): string[] => {
@@ -1107,7 +1144,7 @@ export function RecordsList() {
 
     const presetValues =
       normalizedFieldId === 'Pods'
-        ? pods.map(pod => pod.name)
+        ? []
         : normalizedFieldId === 'Sub-pods'
           ? categories.map(category => category.name)
           : normalizedFieldId === 'Campaigns'
@@ -1160,6 +1197,16 @@ export function RecordsList() {
     [sortedRelationshipFilterFields, visibleSectionSearch],
   )
 
+  const filteredPropertyFieldOptions = useMemo(
+    () => sortedRelationshipFilterFields.filter(field => matchesMenuSearch(field.label, propertyFieldSearch)),
+    [propertyFieldSearch, sortedRelationshipFilterFields],
+  )
+
+  const filteredPodFilterOptions = useMemo(
+    () => sortedPods.filter(pod => matchesMenuSearch(pod.name, podFilterSearch)),
+    [podFilterSearch, sortedPods],
+  )
+
   const selectedPropertyValues = useMemo(
     () => selectedRelationshipFilterValues({
       propertyValue: filters.propertyValue,
@@ -1168,16 +1215,112 @@ export function RecordsList() {
     [filters.propertyValue, filters.propertyValues],
   )
 
+  const isPodsFilterField = normalizeRelationshipFilterFieldId(filters.propertyField) === 'Pods'
+
+  const selectedPodFilterValues = useMemo(() => {
+    if (!isPodsFilterField) return []
+    const values = [
+      ...(Array.isArray(filters.podIds) ? filters.podIds : []),
+      ...(filters.pod ? [filters.pod] : []),
+    ]
+    const seen = new Set<string>()
+    const next: string[] = []
+    for (const value of values) {
+      if (
+        seen.has(value) ||
+        (value !== RELATIONSHIP_NONE_FILTER_VALUE && !podMap[value])
+      ) {
+        continue
+      }
+      seen.add(value)
+      next.push(value)
+    }
+    return next
+  }, [filters.pod, filters.podIds, isPodsFilterField, podMap])
+
+  const selectedRealPodFilterIds = useMemo(
+    () => selectedPodFilterValues.filter(value => value !== RELATIONSHIP_NONE_FILTER_VALUE),
+    [selectedPodFilterValues],
+  )
+
+  const selectedSubPodFilterValues = useMemo(() => {
+    if (!isPodsFilterField) return []
+    const selectedPods = new Set(selectedRealPodFilterIds)
+    const values = [
+      ...(Array.isArray(filters.categoryIds) ? filters.categoryIds : []),
+      ...(filters.category ? [filters.category] : []),
+    ]
+    const seen = new Set<string>()
+    const next: string[] = []
+    for (const value of values) {
+      if (seen.has(value)) continue
+      if (value !== RELATIONSHIP_NONE_FILTER_VALUE) {
+        const category = categoryMap[value]
+        if (!category || !selectedPods.has(category.list_id)) continue
+      }
+      seen.add(value)
+      next.push(value)
+    }
+    return next
+  }, [categoryMap, filters.category, filters.categoryIds, isPodsFilterField, selectedRealPodFilterIds])
+
+  const selectedRealSubPodFilterIds = useMemo(
+    () => selectedSubPodFilterValues.filter(value => value !== RELATIONSHIP_NONE_FILTER_VALUE),
+    [selectedSubPodFilterValues],
+  )
+
+  const subPodFilterOptions = useMemo(
+    () => categories
+      .filter(category => selectedRealPodFilterIds.includes(category.list_id))
+      .sort((a, b) => {
+        const podCompare = labelSort(podMap[a.list_id]?.name ?? '', podMap[b.list_id]?.name ?? '')
+        return podCompare || labelSort(a.name, b.name)
+      }),
+    [categories, podMap, selectedRealPodFilterIds],
+  )
+
+  const filteredSubPodFilterOptions = useMemo(
+    () => subPodFilterOptions.filter(category => (
+      matchesMenuSearch(`${category.name} ${podMap[category.list_id]?.name ?? ''}`, propertyValueSearch)
+    )),
+    [podMap, propertyValueSearch, subPodFilterOptions],
+  )
+
+  const showNoPodOption = matchesMenuSearch('None', podFilterSearch)
+  const showNoSubPodOption = matchesMenuSearch('None', propertyValueSearch)
+
   const propertyValueButtonLabel = useMemo(() => {
     if (!filters.propertyField) return 'Choose field first'
+    if (isPodsFilterField) {
+      if (selectedRealPodFilterIds.length === 0) {
+        return selectedPodFilterValues.includes(RELATIONSHIP_NONE_FILTER_VALUE) ? 'No sub-pods' : 'Choose pods first'
+      }
+      if (selectedSubPodFilterValues.length === 0) return 'Choose sub-pods'
+      const labels = selectedSubPodFilterValues.map(value => (
+        value === RELATIONSHIP_NONE_FILTER_VALUE ? relationshipFilterValueLabel(value) : categoryMap[value]?.name
+      )).filter(Boolean)
+      if (labels.length === 1) return labels[0]
+      return `${labels.length} selected`
+    }
     if (selectedPropertyValues.length === 0) return 'Choose values'
     if (selectedPropertyValues.length === 1) return relationshipFilterValueLabel(selectedPropertyValues[0])
     return `${selectedPropertyValues.length} selected`
-  }, [filters.propertyField, selectedPropertyValues])
+  }, [categoryMap, filters.propertyField, isPodsFilterField, selectedPodFilterValues, selectedPropertyValues, selectedRealPodFilterIds.length, selectedSubPodFilterValues])
   const selectedPropertyFieldLabel = useMemo(
     () => relationshipFilterFields.find(field => field.id === filters.propertyField)?.label ?? filters.propertyField,
     [filters.propertyField, relationshipFilterFields],
   )
+
+  const propertyFieldButtonLabel = useMemo(() => {
+    if (!filters.propertyField) return 'Filter by field'
+    if (!isPodsFilterField || selectedPodFilterValues.length === 0) return selectedPropertyFieldLabel
+
+    const labels = selectedPodFilterValues.map(value => (
+      value === RELATIONSHIP_NONE_FILTER_VALUE ? relationshipFilterValueLabel(value) : podMap[value]?.name
+    )).filter(Boolean)
+    if (labels.length === 1) return `Pods: ${labels[0]}`
+    return `Pods: ${labels.length} selected`
+  }, [filters.propertyField, isPodsFilterField, podMap, selectedPodFilterValues, selectedPropertyFieldLabel])
 
   const togglePropertyFilterValue = useCallback((value: string) => {
     setFilters(current => {
@@ -1191,10 +1334,98 @@ export function RecordsList() {
         propertyValue: nextValues[0] ?? null,
         propertyValues: nextValues,
         pod: null,
+        podIds: [],
         category: null,
+        categoryIds: [],
       }
     })
   }, [])
+
+  const selectRelationshipFilterField = useCallback((fieldId: string | null) => {
+    const normalizedFieldId = normalizeRelationshipFilterFieldId(fieldId) || null
+    setFilters(current => ({
+      ...current,
+      propertyField: normalizedFieldId,
+      propertyValue: null,
+      propertyValues: [],
+      pod: null,
+      podIds: [],
+      category: null,
+      categoryIds: [],
+    }))
+    setShowPropertyValueFilter(false)
+    if (normalizedFieldId !== 'Pods') setShowPropertyFieldFilter(false)
+  }, [])
+
+  const togglePodFilterValue = useCallback((value: string) => {
+    setFilters(current => {
+      const selectedValues = [
+        ...(Array.isArray(current.podIds) ? current.podIds : []),
+        ...(current.pod ? [current.pod] : []),
+      ]
+      const selectedSet = new Set(selectedValues)
+      if (selectedSet.has(value)) selectedSet.delete(value)
+      else selectedSet.add(value)
+
+      const nextPodValues = [...selectedSet].filter(id => (
+        id === RELATIONSHIP_NONE_FILTER_VALUE || Boolean(podMap[id])
+      ))
+      const nextRealPodIds = nextPodValues.filter(id => id !== RELATIONSHIP_NONE_FILTER_VALUE)
+      const nextRealPodSet = new Set(nextRealPodIds)
+      const nextCategoryValues = [
+        ...(Array.isArray(current.categoryIds) ? current.categoryIds : []),
+        ...(current.category ? [current.category] : []),
+      ].filter(id => (
+        id === RELATIONSHIP_NONE_FILTER_VALUE ||
+        (categoryMap[id] && nextRealPodSet.has(categoryMap[id].list_id))
+      ))
+      const nextCategorySet = new Set(nextCategoryValues)
+      const nextCategoryIds = [...nextCategorySet]
+      const firstCategoryId = nextCategoryIds.find(id => id !== RELATIONSHIP_NONE_FILTER_VALUE) ?? null
+
+      return {
+        ...current,
+        propertyField: 'Pods',
+        propertyValue: null,
+        propertyValues: [],
+        pod: nextRealPodIds[0] ?? null,
+        podIds: nextPodValues,
+        category: firstCategoryId,
+        categoryIds: nextCategoryIds,
+      }
+    })
+  }, [categoryMap, podMap])
+
+  const toggleSubPodFilterValue = useCallback((value: string) => {
+    setFilters(current => {
+      const selectedValues = [
+        ...(Array.isArray(current.categoryIds) ? current.categoryIds : []),
+        ...(current.category ? [current.category] : []),
+      ]
+      const selectedSet = new Set(selectedValues)
+      if (selectedSet.has(value)) selectedSet.delete(value)
+      else selectedSet.add(value)
+
+      const selectedPodSet = new Set([
+        ...(Array.isArray(current.podIds) ? current.podIds : []),
+        ...(current.pod ? [current.pod] : []),
+      ].filter(id => id !== RELATIONSHIP_NONE_FILTER_VALUE))
+      const nextCategoryIds = [...selectedSet].filter(id => (
+        id === RELATIONSHIP_NONE_FILTER_VALUE ||
+        (categoryMap[id] && selectedPodSet.has(categoryMap[id].list_id))
+      ))
+      const firstCategoryId = nextCategoryIds.find(id => id !== RELATIONSHIP_NONE_FILTER_VALUE) ?? null
+
+      return {
+        ...current,
+        propertyField: 'Pods',
+        propertyValue: null,
+        propertyValues: [],
+        category: firstCategoryId,
+        categoryIds: nextCategoryIds,
+      }
+    })
+  }, [categoryMap])
 
   const selectedCampaign = useMemo(
     () => activeCampaigns.find(c => c.id === selectedCampaignId) ?? null,
@@ -1317,7 +1548,13 @@ export function RecordsList() {
 
   const canSelectContact = useCallback((_contact: Contact) => true, [])
 
-  const hasPropertyFilter = Boolean(filters.propertyField && selectedPropertyValues.length > 0)
+  const hasPodsPropertyFilter = isPodsFilterField && (
+    selectedPodFilterValues.length > 0 ||
+    selectedSubPodFilterValues.length > 0
+  )
+  const hasPropertyFilter = isPodsFilterField
+    ? hasPodsPropertyFilter
+    : Boolean(filters.propertyField && selectedPropertyValues.length > 0)
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
@@ -1338,7 +1575,32 @@ export function RecordsList() {
       ))
     }
 
-    if (filters.propertyField && selectedPropertyValues.length > 0) {
+    if (isPodsFilterField) {
+      if (selectedPodFilterValues.length > 0) {
+        const includeNoPod = selectedPodFilterValues.includes(RELATIONSHIP_NONE_FILTER_VALUE)
+        result = result.filter(contact => (
+          selectedRealPodFilterIds.some(podId => contact.list_ids.includes(podId)) ||
+          (includeNoPod && contact.list_ids.length === 0)
+        ))
+      }
+
+      if (selectedSubPodFilterValues.length > 0 && selectedRealPodFilterIds.length > 0) {
+        const includeNoSubPod = selectedSubPodFilterValues.includes(RELATIONSHIP_NONE_FILTER_VALUE)
+        result = result.filter(contact => {
+          const matchesSelectedSubPod = selectedRealSubPodFilterIds.some(categoryId => (
+            contact.category_ids.includes(categoryId)
+          ))
+          if (matchesSelectedSubPod) return true
+          if (!includeNoSubPod) return false
+
+          return selectedRealPodFilterIds.some(podId => {
+            if (!contact.list_ids.includes(podId)) return false
+            const podCategoryIds = categoryIdsByPodId.get(podId) ?? new Set<string>()
+            return !contact.category_ids.some(categoryId => podCategoryIds.has(categoryId))
+          })
+        })
+      }
+    } else if (filters.propertyField && selectedPropertyValues.length > 0) {
       result = result.filter(contact => (
         relationshipMatchesSelectedValues(
           relationshipFilterValuesForContact(contact, filters.propertyField),
@@ -1347,9 +1609,9 @@ export function RecordsList() {
       ))
     }
 
-    if (filters.category) {
+    if (!isPodsFilterField && filters.category) {
       result = result.filter(c => c.category_ids.includes(filters.category!))
-    } else if (filters.pod) {
+    } else if (!isPodsFilterField && filters.pod) {
       result = result.filter(c => c.list_ids.includes(filters.pod!))
     }
 
@@ -1402,7 +1664,7 @@ export function RecordsList() {
             .localeCompare(cellText(relationshipFilterValuesForContact(b, sort.col)), undefined, { numeric: true, sensitivity: 'base' })
       }
     })
-  }, [relationshipScope, sharedByMeContactIds, sharedWithMeContactIds, visibleRelationshipContacts, filters, selectedPropertyValues, sort, equityMap, relationshipFilterFields, relationshipFilterValuesForContact])
+  }, [categoryIdsByPodId, equityMap, filters, isPodsFilterField, relationshipFilterFields, relationshipFilterValuesForContact, relationshipScope, selectedPodFilterValues, selectedPropertyValues, selectedRealPodFilterIds, selectedRealSubPodFilterIds, selectedSubPodFilterValues, sharedByMeContactIds, sharedWithMeContactIds, sort, visibleRelationshipContacts])
 
   // Toggle sort
   const toggleSort = useCallback((col: ColumnId) => {
@@ -1496,6 +1758,8 @@ export function RecordsList() {
         propertyField,
         propertyValue: propertyValues[0] ?? null,
         propertyValues,
+        podIds: Array.isArray(nextFilters.podIds) ? nextFilters.podIds : [],
+        categoryIds: Array.isArray(nextFilters.categoryIds) ? nextFilters.categoryIds : [],
       })
       setRelationshipScope(view.relationshipScope ?? 'all')
       const visibleFields = normalizeVisibleColumnIds(view.visibleColumns, relationshipFilterFields)
@@ -1504,6 +1768,7 @@ export function RecordsList() {
     }
     setShowMoreDropdown(false)
     setShowColumnFilter(false)
+    setShowPropertyFieldFilter(false)
     setShowPropertyValueFilter(false)
   }, [relationshipFilterFields])
 
@@ -1519,13 +1784,14 @@ export function RecordsList() {
   const clearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS)
     setRelationshipScope('all')
+    setShowPropertyFieldFilter(false)
     setShowPropertyValueFilter(false)
   }, [])
 
-  const hasActiveFilters = filters.search || filters.pod || filters.category || hasPropertyFilter || filters.recency !== 'any' || relationshipScope !== 'all'
+  const hasActiveFilters = filters.search || (!isPodsFilterField && (filters.pod || filters.category)) || hasPropertyFilter || filters.recency !== 'any' || relationshipScope !== 'all'
   const activeFilterCount =
     (filters.search ? 1 : 0) +
-    (filters.pod || filters.category ? 1 : 0) +
+    (!isPodsFilterField && (filters.pod || filters.category) ? 1 : 0) +
     (hasPropertyFilter ? 1 : 0) +
     (filters.recency !== 'any' ? 1 : 0) +
     (relationshipScope !== 'all' ? 1 : 0)
@@ -2183,33 +2449,15 @@ export function RecordsList() {
           />
 
           {/* Primary filters */}
-          <select
-            value={filters.propertyField ?? ''}
-            onChange={e => {
-              const fieldId = normalizeRelationshipFilterFieldId(e.target.value) || null
-              setFilters(f => ({ ...f, propertyField: fieldId, propertyValue: null, propertyValues: [], pod: null, category: null }))
-              setShowPropertyValueFilter(false)
-            }}
-            className="records-toolbar-select"
-            aria-label="Relationship filter field"
-            style={{ ...selectStyle, minWidth: 170, flex: '0 1 220px' }}
-          >
-            <option value="">Filter by field</option>
-            {sortedRelationshipFilterFields.map(field => (
-              <option key={field.id} value={field.id}>{field.label}</option>
-            ))}
-          </select>
-
-          <div ref={propertyValueFilterRef} style={{ position: 'relative', minWidth: 170, flex: '0 1 220px' }}>
+          <div ref={propertyFieldFilterRef} style={{ position: 'relative', minWidth: 170, flex: '0 1 220px' }}>
             <button
               type="button"
               className="records-toolbar-select"
-              aria-label="Relationship filter values"
-              aria-expanded={showPropertyValueFilter}
-              disabled={!filters.propertyField}
+              aria-label="Relationship filter field"
+              aria-expanded={showPropertyFieldFilter}
               onClick={() => {
-                if (!filters.propertyField) return
-                setShowPropertyValueFilter(value => !value)
+                setShowPropertyFieldFilter(value => !value)
+                setShowPropertyValueFilter(false)
                 setShowColumnFilter(false)
                 setShowMoreDropdown(false)
               }}
@@ -2221,8 +2469,156 @@ export function RecordsList() {
                 justifyContent: 'space-between',
                 gap: 8,
                 textAlign: 'left',
-                cursor: filters.propertyField ? 'pointer' : 'not-allowed',
-                opacity: filters.propertyField ? 1 : 0.62,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {propertyFieldButtonLabel}
+              </span>
+              <span aria-hidden="true" style={{ opacity: 0.5 }}>&#9662;</span>
+            </button>
+
+            {showPropertyFieldFilter && (
+              <div
+                className="records-dropdown"
+                style={{
+                  ...dropdownStyle,
+                  minWidth: 280,
+                  maxHeight: 'min(440px, calc(100vh - 240px))',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={menuLabelStyle}>Filter by field</div>
+                <input
+                  type="search"
+                  aria-label="Search relationship fields"
+                  placeholder="Search fields..."
+                  value={propertyFieldSearch}
+                  onChange={event => setPropertyFieldSearch(event.target.value)}
+                  style={dropdownSearchInputStyle}
+                />
+                <div style={{ maxHeight: 320, overflowY: 'auto', paddingRight: 2 }}>
+                  {filteredPropertyFieldOptions.map(field => {
+                    const isSelected = filters.propertyField === field.id
+                    const isPodsField = field.id === 'Pods'
+                    return (
+                      <div key={field.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectRelationshipFilterField(field.id)}
+                          style={{
+                            ...dropdownButtonStyle,
+                            background: isSelected ? 'color-mix(in srgb, var(--color-brand) 10%, transparent)' : dropdownButtonStyle.background,
+                            color: isSelected ? 'var(--color-brand)' : dropdownButtonStyle.color,
+                            fontWeight: isSelected ? 700 : 500,
+                          }}
+                        >
+                          {field.label}
+                        </button>
+                        {isPodsField && isSelected && (
+                          <div style={{ padding: '4px 8px 8px 12px' }}>
+                            <div style={{ ...menuLabelStyle, marginBottom: 6 }}>Pods</div>
+                            <input
+                              type="search"
+                              aria-label="Search pods"
+                              placeholder="Search pods..."
+                              value={podFilterSearch}
+                              onChange={event => setPodFilterSearch(event.target.value)}
+                              style={{ ...dropdownSearchInputStyle, marginBottom: 6 }}
+                            />
+                            <div style={{ maxHeight: 170, overflowY: 'auto', paddingRight: 2 }}>
+                              {showNoPodOption && (
+                                <label
+                                  style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPodFilterValues.includes(RELATIONSHIP_NONE_FILTER_VALUE)}
+                                    onChange={() => togglePodFilterValue(RELATIONSHIP_NONE_FILTER_VALUE)}
+                                    style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                                  />
+                                  <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(RELATIONSHIP_NONE_FILTER_VALUE)}</span>
+                                </label>
+                              )}
+                              {filteredPodFilterOptions.map(pod => (
+                                <label
+                                  key={pod.id}
+                                  style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPodFilterValues.includes(pod.id)}
+                                    onChange={() => togglePodFilterValue(pod.id)}
+                                    style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                                  />
+                                  <span style={{ fontSize: 13 }}>{pod.name}</span>
+                                </label>
+                              ))}
+                              {!showNoPodOption && filteredPodFilterOptions.length === 0 && (
+                                <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching pods</div>
+                              )}
+                            </div>
+                            {selectedPodFilterValues.length > 0 && (
+                              <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setFilters(f => ({
+                                    ...f,
+                                    pod: null,
+                                    podIds: [],
+                                    category: null,
+                                    categoryIds: [],
+                                    propertyValue: null,
+                                    propertyValues: [],
+                                  }))}
+                                  style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
+                                >
+                                  Clear pods
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {filteredPropertyFieldOptions.length === 0 && (
+                    <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching fields</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div ref={propertyValueFilterRef} style={{ position: 'relative', minWidth: 170, flex: '0 1 220px' }}>
+            {(() => {
+              const valueFilterDisabled = isPodsFilterField
+                ? selectedRealPodFilterIds.length === 0
+                : !filters.propertyField
+              return (
+            <button
+              type="button"
+              className="records-toolbar-select"
+              aria-label="Relationship filter values"
+              aria-expanded={showPropertyValueFilter}
+              disabled={valueFilterDisabled}
+              onClick={() => {
+                if (valueFilterDisabled) return
+                setShowPropertyValueFilter(value => !value)
+                setShowPropertyFieldFilter(false)
+                setShowColumnFilter(false)
+                setShowMoreDropdown(false)
+              }}
+              style={{
+                ...selectStyle,
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                textAlign: 'left',
+                cursor: valueFilterDisabled ? 'not-allowed' : 'pointer',
+                opacity: valueFilterDisabled ? 0.62 : 1,
               }}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -2230,6 +2626,8 @@ export function RecordsList() {
               </span>
               <span aria-hidden="true" style={{ opacity: 0.5 }}>&#9662;</span>
             </button>
+              )
+            })()}
 
             {showPropertyValueFilter && filters.propertyField && (
               <div
@@ -2244,16 +2642,55 @@ export function RecordsList() {
                 <div style={menuLabelStyle}>{selectedPropertyFieldLabel}</div>
                 <input
                   type="search"
-                  aria-label={`Search ${selectedPropertyFieldLabel} values`}
-                  placeholder="Search values..."
+                  aria-label={`Search ${isPodsFilterField ? 'Sub-pods' : selectedPropertyFieldLabel} values`}
+                  placeholder={isPodsFilterField ? 'Search sub-pods...' : 'Search values...'}
                   value={propertyValueSearch}
                   onChange={event => setPropertyValueSearch(event.target.value)}
                   style={dropdownSearchInputStyle}
                 />
                 <div style={{ maxHeight: 230, overflowY: 'auto', paddingRight: 2 }}>
-                  {filteredRelationshipFilterValueOptions.map(value => {
-                    const checked = selectedPropertyValues.includes(value)
-                    return (
+                  {isPodsFilterField ? (
+                    <>
+                      {showNoSubPodOption && (
+                        <label
+                          style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubPodFilterValues.includes(RELATIONSHIP_NONE_FILTER_VALUE)}
+                            onChange={() => toggleSubPodFilterValue(RELATIONSHIP_NONE_FILTER_VALUE)}
+                            style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                          />
+                          <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(RELATIONSHIP_NONE_FILTER_VALUE)}</span>
+                        </label>
+                      )}
+                      {filteredSubPodFilterOptions.map(category => (
+                        <label
+                          key={category.id}
+                          style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubPodFilterValues.includes(category.id)}
+                            onChange={() => toggleSubPodFilterValue(category.id)}
+                            style={{ margin: 0, accentColor: 'var(--color-brand)' }}
+                          />
+                          <span style={{ fontSize: 13 }}>
+                            {category.name}
+                            {selectedRealPodFilterIds.length > 1 && (
+                              <span style={{ color: 'var(--color-text-tertiary)' }}> - {podMap[category.list_id]?.name}</span>
+                            )}
+                          </span>
+                        </label>
+                      ))}
+                      {!showNoSubPodOption && filteredSubPodFilterOptions.length === 0 && (
+                        <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching sub-pods</div>
+                      )}
+                    </>
+                  ) : (
+                    filteredRelationshipFilterValueOptions.map(value => {
+                      const checked = selectedPropertyValues.includes(value)
+                      return (
                       <label
                         key={value}
                         style={{ ...dropdownItemStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
@@ -2266,20 +2703,27 @@ export function RecordsList() {
                         />
                         <span style={{ fontSize: 13 }}>{relationshipFilterValueLabel(value)}</span>
                       </label>
-                    )
-                  })}
-                  {filteredRelationshipFilterValueOptions.length === 0 && (
+                      )
+                    })
+                  )}
+                  {!isPodsFilterField && filteredRelationshipFilterValueOptions.length === 0 && (
                     <div style={{ ...dropdownItemStyle, color: 'var(--color-text-tertiary)' }}>No matching values</div>
                   )}
                 </div>
-                {selectedPropertyValues.length > 0 && (
+                {(isPodsFilterField ? selectedSubPodFilterValues.length > 0 : selectedPropertyValues.length > 0) && (
                   <div style={{ borderTop: '1px solid var(--edge)', marginTop: 4, paddingTop: 4 }}>
                     <button
                       type="button"
-                      onClick={() => setFilters(f => ({ ...f, propertyValue: null, propertyValues: [] }))}
+                      onClick={() => setFilters(f => ({
+                        ...f,
+                        propertyValue: null,
+                        propertyValues: [],
+                        category: isPodsFilterField ? null : f.category,
+                        categoryIds: isPodsFilterField ? [] : f.categoryIds,
+                      }))}
                       style={{ ...dropdownButtonStyle, color: 'var(--color-text-secondary)', fontSize: 12 }}
                     >
-                      Clear values
+                      {isPodsFilterField ? 'Clear sub-pods' : 'Clear values'}
                     </button>
                   </div>
                 )}
@@ -2322,6 +2766,7 @@ export function RecordsList() {
               onClick={() => {
                 setShowColumnFilter(v => !v)
                 setShowMoreDropdown(false)
+                setShowPropertyFieldFilter(false)
                 setShowPropertyValueFilter(false)
               }}
               style={{ ...utilityBtnStyle(showColumnFilter), minWidth: 44, width: 44, padding: 0 }}
@@ -2427,6 +2872,7 @@ export function RecordsList() {
               onClick={() => {
                 setShowMoreDropdown(v => !v)
                 setShowColumnFilter(false)
+                setShowPropertyFieldFilter(false)
                 setShowPropertyValueFilter(false)
               }}
               style={utilityBtnStyle(showMoreDropdown)}
