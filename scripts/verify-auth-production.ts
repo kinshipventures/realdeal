@@ -226,6 +226,15 @@ function checkRepositorySupabaseRefs() {
 
 function checkNoAuthUserDeletion() {
   const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.sql'])
+  const allowedAdminDeletionFile = 'api/admin/users.ts'
+  const requiredAdminDeletionGuards = [
+    'requirePlatformAdmin',
+    'delete_preview',
+    'delete_confirm',
+    'confirm_email',
+    'targetUserId === user.id',
+    'buildDeletePreview',
+  ]
   const banned = [
     /auth\.admin\.deleteUser/i,
     /deleteUser\s*\(/i,
@@ -234,13 +243,29 @@ function checkNoAuthUserDeletion() {
   ]
 
   const offenders: string[] = []
+  let allowedAdminDeletionText: string | null = null
+
   for (const file of listFiles(root)) {
     if (![...extensions].some(ext => file.endsWith(ext))) continue
     const text = readFileSync(file, 'utf8')
-    if (banned.some(pattern => pattern.test(text))) offenders.push(file.slice(root.length + 1).replace(/\\/g, '/'))
+    if (!banned.some(pattern => pattern.test(text))) continue
+
+    const relative = file.slice(root.length + 1).replace(/\\/g, '/')
+    if (relative === allowedAdminDeletionFile) {
+      allowedAdminDeletionText = text
+      continue
+    }
+
+    offenders.push(relative)
   }
 
-  if (offenders.length === 0) pass('no app path deletes Supabase Auth users')
+  if (allowedAdminDeletionText) {
+    const missingGuards = requiredAdminDeletionGuards.filter(guard => !allowedAdminDeletionText.includes(guard))
+    if (missingGuards.length === 0) pass('admin account deletion is isolated behind required safeguards')
+    else fail(`admin account deletion is missing safeguards: ${missingGuards.join(', ')}`)
+  }
+
+  if (offenders.length === 0) pass('no unauthorized app path deletes Supabase Auth users')
   else fail(`Supabase Auth user deletion patterns found in: ${offenders.join(', ')}`)
 }
 

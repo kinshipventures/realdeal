@@ -14,7 +14,7 @@ export function useWaitlistSubmit() {
     if (error) setError(null)
   }
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (status !== 'idle') return
     const trimmed = email.trim()
@@ -27,9 +27,25 @@ export function useWaitlistSubmit() {
       return
     }
     setStatus('loading')
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmed,
+          source: window.location.pathname,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error ?? 'Could not join the waitlist')
+    } catch (err) {
+      setStatus('idle')
+      setError(err instanceof Error ? err.message : 'Could not join the waitlist')
+      return
+    }
+    window.setTimeout(() => {
       setStatus('exiting')
-      setTimeout(() => setStatus('done'), 260)
+      window.setTimeout(() => setStatus('done'), 260)
     }, 600)
   }
 
