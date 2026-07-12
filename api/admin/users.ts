@@ -15,6 +15,12 @@ type ApiResponse = {
 
 type AdminAction = 'reset_password' | 'delete_preview' | 'delete_confirm'
 
+type UserProfileSummary = {
+  id: string
+  display_name?: string | null
+  email?: string | null
+}
+
 const OWNED_WORKSPACE_TABLES = [
   'campaign_contacts',
   'campaign_stages',
@@ -133,7 +139,10 @@ async function listUsers(admin: SupabaseClient, page: number, perPage: number) {
   const { data: profiles } = ids.length
     ? await admin.from('profiles').select('id, display_name, email').in('id', ids)
     : { data: [] as any[] }
-  const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]))
+  const profileRows = (profiles ?? []) as UserProfileSummary[]
+  const profileById = new Map<string, { display_name?: string | null }>(
+    profileRows.map(profile => [profile.id, { display_name: typeof profile.display_name === 'string' ? profile.display_name : null }]),
+  )
 
   const enriched = await Promise.all(
     users.map(async user => {
