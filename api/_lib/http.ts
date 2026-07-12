@@ -12,7 +12,7 @@ export async function readJsonBody(request: any): Promise<Record<string, unknown
     return {}
   }
   if (!body) return {}
-  if (typeof body === 'object') return body
+  if (typeof body === 'object' && !Array.isArray(body)) return body as Record<string, unknown>
   if (typeof body !== 'string') return {}
   try {
     return JSON.parse(body)
