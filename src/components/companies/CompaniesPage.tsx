@@ -36,25 +36,20 @@ type CompanyPropertyField = {
   getValues: (company: Contact) => string[]
 }
 
-const COMPANY_DEFAULT_VISIBLE_FIELD_IDS = new Set(['name', 'industry', 'stage', 'pod', 'subpod', 'domain', 'location'])
+const COMPANY_DEFAULT_VISIBLE_FIELD_IDS = new Set(['name', 'industry', 'pod', 'subpod', 'website', 'city', 'country'])
 
 const COMPANY_FIELD_ORDER = [
   'name',
   'industry',
-  'stage',
   'pod',
   'subpod',
-  'domain',
-  'location',
-  'contacts',
   'website',
+  'contacts',
   'linkedin',
   'companyType',
   'fundType',
   'notes',
   'email',
-  'email_2',
-  'email_3',
   'phone',
   'address',
   'city',
@@ -72,13 +67,8 @@ const COMPANY_STANDARD_FIELD_SECTION_IDS: Record<string, ContactDisplaySectionId
   companyType: 'details',
   industry: 'details',
   fundType: 'details',
-  stage: 'details',
-  domain: 'details',
-  location: 'details',
   notes: 'details',
   email: 'ways_to_contact',
-  email_2: 'ways_to_contact',
-  email_3: 'ways_to_contact',
   phone: 'ways_to_contact',
   address: 'ways_to_contact',
   city: 'ways_to_contact',
@@ -208,22 +198,12 @@ function companyStandardValues(company: Contact, fieldId: string, contacts: Cont
       return peopleNamesForCompany(company, contacts)
     case 'industry':
       return filterValueParts(company.industry)
-    case 'stage':
-      return filterValueParts(company.stage)
-    case 'domain':
-      return filterValueParts(companyDomain(company))
-    case 'location':
-      return filterValueParts(companyLocation(company))
     case 'website':
       return filterValueParts(company.website)
     case 'linkedin':
       return filterValueParts(company.linkedin)
     case 'email':
       return filterValueParts(company.email)
-    case 'email_2':
-      return filterValueParts(company.email_2)
-    case 'email_3':
-      return filterValueParts(company.email_3)
     case 'phone':
       return filterValueParts(company.phone)
     case 'address':

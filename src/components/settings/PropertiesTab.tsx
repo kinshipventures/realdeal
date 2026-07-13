@@ -1259,7 +1259,7 @@ export function PropertiesTab() {
           if (section.id === 'details') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['name', 'contacts', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'stage', 'domain', 'location', 'notes'],
+              ['name', 'contacts', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'notes'],
               1,
             ))
           }
@@ -1267,7 +1267,7 @@ export function PropertiesTab() {
           if (section.id === 'ways_to_contact') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['email', 'email_2', 'email_3', 'phone', 'address', 'city', 'state', 'country', 'global_region'],
+              ['email', 'phone', 'address', 'city', 'state', 'country', 'global_region'],
               1,
             ))
           }
