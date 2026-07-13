@@ -57,8 +57,8 @@ type PropertySectionOption = {
   isCustom: boolean
 }
 
-const TABLE_GRID_COLUMNS = '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) minmax(110px, 0.8fr) 86px'
-const CHILD_GRID_COLUMNS = '36px minmax(170px, 1.4fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr) 86px'
+const TABLE_GRID_COLUMNS = '42px minmax(180px, 1.4fr) minmax(120px, 0.8fr) minmax(150px, 1fr) 86px'
+const CHILD_GRID_COLUMNS = '36px minmax(170px, 1.4fr) minmax(120px, 0.8fr) 86px'
 
 const OBJECT_OPTIONS: { value: PropertyObjectType; label: string }[] = [
   { value: 'Contact', label: 'Contact properties' },
@@ -443,7 +443,6 @@ function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sect
                   {optionPanelGroupDisplayLabel(group.label, sectionLabel)}
                 </span>
                 <div />
-                <div />
                 <span style={{
                   padding: '0 10px',
                   fontSize: 11,
@@ -484,7 +483,6 @@ function PropertyOptionPanel({ rows, sectionLabel }: { rows: PropertyRow[]; sect
                   </div>
                 </div>
                 <div style={{ padding: '7px 10px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.fieldType}</div>
-                <div style={{ padding: '7px 10px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
                 <div style={{ padding: '7px 10px' }}>
                   <StatusPill active={row.checked} label={row.statusLabel} />
                 </div>
@@ -639,7 +637,6 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                   <div />
                   <div />
                   <div />
-                  <div />
                 </>
               ) : (
                 <>
@@ -673,7 +670,6 @@ function PropertiesTable({ rows, emptyLabel }: { rows: PropertyRow[]; emptyLabel
                       </div>
                     )}
                   </div>
-                  <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ownerLabel}</div>
                   <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <StatusPill active={row.checked} label={row.statusLabel} />
                     {row.onDelete && (
