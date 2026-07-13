@@ -52,30 +52,59 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="admin-portal admin-portal-centered">
-      <section className="admin-panel admin-login-panel">
-        <p className="admin-eyebrow">Real Deal Admin</p>
-        <h1>Admin sign in</h1>
-        <p>Use the dedicated admin credentials for platform administration.</p>
-        {error && <div className="admin-message admin-message-error">{error}</div>}
-        {checkingSession ? (
-          <p>Checking admin session...</p>
-        ) : (
-          <form className="admin-login-form" onSubmit={submit}>
-            <label className="admin-label">
-              Admin email
-              <input type="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="username" required />
-            </label>
-            <label className="admin-label">
-              Password
-              <input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required />
-            </label>
-            <button type="submit" className="admin-primary-button" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
-        )}
-      </section>
+    <main className="admin-auth-page">
+      <div className="admin-auth-shell">
+        <section className="admin-auth-story">
+          <div>
+            <h1>Keep your people warm.</h1>
+            <p>Start the day with a clean read on your people.</p>
+          </div>
+
+          <div className="admin-auth-stage">
+            <div className="admin-auth-note admin-auth-note-top">
+              <strong>Private access</strong>
+              <span>Owner tools stay separated from the regular app.</span>
+            </div>
+            <div className="admin-auth-note admin-auth-note-right">
+              <strong>Clean controls</strong>
+              <span>Users and waitlist decisions stay easy to scan.</span>
+            </div>
+            <div className="admin-auth-orb" aria-hidden="true">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-auth-panel-wrap">
+          <div className="admin-auth-panel">
+            <div className="admin-auth-header">
+              <h2>Admin sign in</h2>
+              <p>Use the dedicated admin credentials for platform administration.</p>
+            </div>
+
+            {error && <div className="admin-auth-feedback">{error}</div>}
+            {checkingSession ? (
+              <p className="admin-auth-muted">Checking admin session...</p>
+            ) : (
+              <form className="admin-login-form" onSubmit={submit}>
+                <label className="admin-login-field">
+                  <span>Admin email</span>
+                  <input type="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="username" required />
+                </label>
+                <label className="admin-login-field">
+                  <span>Password</span>
+                  <input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required />
+                </label>
+                <button type="submit" className="admin-auth-primary-button" disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign in'}
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
+      </div>
     </main>
   )
 }

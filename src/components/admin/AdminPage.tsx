@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { LogOut, UserPlus, Users } from 'lucide-react'
 
 type AdminMe = {
   admin: boolean
@@ -32,15 +33,6 @@ type WaitlistEntry = {
   created_at: string
 }
 
-type AuditEvent = {
-  id: string
-  actor_email: string | null
-  action: string
-  target_type: string
-  target_id: string | null
-  created_at: string
-}
-
 type DeletePreview = {
   user: {
     id: string
@@ -52,7 +44,7 @@ type DeletePreview = {
   warning: string
 }
 
-type AdminTab = 'users' | 'waitlist' | 'audit'
+type AdminTab = 'users' | 'waitlist'
 
 function formatDate(value: string | null | undefined) {
   if (!value) return 'Never'
@@ -74,7 +66,6 @@ export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([])
-  const [audit, setAudit] = useState<AuditEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -111,16 +102,11 @@ export default function AdminPage() {
     setWaitlist(payload.entries)
   }, [adminFetch])
 
-  const loadAudit = useCallback(async () => {
-    const payload = await adminFetch<{ events: AuditEvent[] }>('/api/admin/audit')
-    setAudit(payload.events)
-  }, [adminFetch])
-
   const refresh = useCallback(async () => {
     setError(null)
     setMessage(null)
-    await Promise.all([loadUsers(), loadWaitlist(), loadAudit()])
-  }, [loadAudit, loadUsers, loadWaitlist])
+    await Promise.all([loadUsers(), loadWaitlist()])
+  }, [loadUsers, loadWaitlist])
 
   useEffect(() => {
     let cancelled = false
@@ -239,185 +225,172 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="admin-portal">
-      <header className="admin-header">
-        <div>
-          <p className="admin-eyebrow">Real Deal Admin</p>
-          <h1>Admin console</h1>
-          <p>Manage platform accounts, waitlist approvals, password recovery, and admin audit history.</p>
+    <main className="admin-portal admin-portal-shell">
+      <aside className="admin-sidebar" aria-label="Admin navigation">
+        <div className="admin-sidebar-brand">
+          <div className="admin-sidebar-logo" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <strong>realdeal</strong>
+            <small>Admin</small>
+          </div>
         </div>
-        <div className="admin-header-actions">
-          <span>{me.user?.email}</span>
-          <button type="button" className="admin-secondary-button" onClick={logout}>
+
+        <nav className="admin-sidebar-nav">
+          <button
+            type="button"
+            className={tab === 'users' ? 'admin-sidebar-item admin-sidebar-item-active' : 'admin-sidebar-item'}
+            onClick={() => setTab('users')}
+          >
+            <Users size={18} aria-hidden="true" />
+            <span>Users</span>
+          </button>
+          <button
+            type="button"
+            className={tab === 'waitlist' ? 'admin-sidebar-item admin-sidebar-item-active' : 'admin-sidebar-item'}
+            onClick={() => setTab('waitlist')}
+          >
+            <UserPlus size={18} aria-hidden="true" />
+            <span>Waitlist</span>
+          </button>
+        </nav>
+
+        <div className="admin-sidebar-footer">
+          <span className="admin-sidebar-email">{me.user?.email}</span>
+          <button type="button" className="admin-sidebar-item admin-sidebar-signout" onClick={logout}>
+            <LogOut size={18} aria-hidden="true" />
             Sign out
           </button>
         </div>
-      </header>
+      </aside>
 
-      <nav className="admin-tabs" aria-label="Admin sections">
-        {(['users', 'waitlist', 'audit'] as AdminTab[]).map(nextTab => (
-          <button
-            key={nextTab}
-            type="button"
-            className={tab === nextTab ? 'admin-tab admin-tab-active' : 'admin-tab'}
-            onClick={() => setTab(nextTab)}
-          >
-            {nextTab === 'users' ? 'Users' : nextTab === 'waitlist' ? 'Waitlist' : 'Audit'}
-          </button>
-        ))}
-        <button type="button" className="admin-secondary-button" onClick={() => void refresh()}>
-          Refresh
-        </button>
-      </nav>
-
-      {message && <div className="admin-message admin-message-ok">{message}</div>}
-      {error && <div className="admin-message admin-message-error">{error}</div>}
-      {resetLink && (
-        <section className="admin-panel">
-          <h2>Password recovery link</h2>
-          <textarea readOnly value={resetLink} className="admin-copy-field" />
-        </section>
-      )}
-
-      {deletePreview && (
-        <section className="admin-panel admin-danger-panel">
+      <section className="admin-main">
+        <header className="admin-header">
           <div>
-            <p className="admin-eyebrow">Delete preview</p>
-            <h2>{deletePreview.user.email}</h2>
-            <p>{deletePreview.warning}</p>
+            <p className="admin-eyebrow">Real Deal Admin</p>
+            <h1>Admin console</h1>
+            <p>Manage platform accounts, waitlist approvals, and password recovery.</p>
           </div>
-          <div className="admin-count-grid">
-            {Object.entries(deletePreview.counts).map(([label, count]) => (
-              <div key={label} className="admin-count-card">
-                <strong>{count}</strong>
-                <span>{label.replace(/_/g, ' ')}</span>
-              </div>
-            ))}
-          </div>
-          <label className="admin-label">
-            Type the user email to permanently delete this account
-            <input value={deleteEmailConfirm} onChange={event => setDeleteEmailConfirm(event.target.value)} />
-          </label>
-          <button
-            type="button"
-            className="admin-danger-button"
-            disabled={deleteEmailConfirm.trim().toLowerCase() !== deletePreview.user.email || busy === `delete-${deletePreview.user.id}`}
-            onClick={deleteAccount}
-          >
-            Permanently delete account
-          </button>
-        </section>
-      )}
+        </header>
 
-      {tab === 'users' && (
-        <section className="admin-panel">
-          <div className="admin-section-heading">
-            <div>
-              <h2>Users</h2>
-              <p>Manual admin actions. Deletion requires a preview and exact email confirmation.</p>
-            </div>
-            <span>{users.length} shown</span>
-          </div>
-          <div className="admin-table">
-            <div className="admin-table-row admin-table-head">
-              <span>User</span>
-              <span>Workspaces</span>
-              <span>Last sign in</span>
-              <span>Actions</span>
-            </div>
-            {users.map(user => (
-              <div key={user.id} className="admin-table-row">
-                <span>
-                  <strong>{user.display_name || user.email || 'Unnamed user'}</strong>
-                  <small>{user.email}</small>
-                </span>
-                <span>
-                  <strong>{user.owned_workspaces}</strong>
-                  <small>{user.workspace_memberships} memberships</small>
-                </span>
-                <span>{formatDate(user.last_sign_in_at)}</span>
-                <span className="admin-row-actions">
-                  <button type="button" onClick={() => resetPassword(user)} disabled={busy === `reset-${user.id}`}>
-                    Reset password
-                  </button>
-                  <button type="button" onClick={() => previewDelete(user)} disabled={busy === `preview-${user.id}`}>
-                    Preview deletion
-                  </button>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+        {message && <div className="admin-message admin-message-ok">{message}</div>}
+        {error && <div className="admin-message admin-message-error">{error}</div>}
+        {resetLink && (
+          <section className="admin-panel">
+            <h2>Password recovery link</h2>
+            <textarea readOnly value={resetLink} className="admin-copy-field" />
+          </section>
+        )}
 
-      {tab === 'waitlist' && (
-        <section className="admin-panel">
-          <div className="admin-section-heading">
+        {deletePreview && (
+          <section className="admin-panel admin-danger-panel">
             <div>
-              <h2>Waitlist</h2>
-              <p>Waitlist signups stay pending until an admin explicitly approves and invites them.</p>
+              <p className="admin-eyebrow">Delete preview</p>
+              <h2>{deletePreview.user.email}</h2>
+              <p>{deletePreview.warning}</p>
             </div>
-            <span>{waitlist.length} entries</span>
-          </div>
-          <div className="admin-table">
-            <div className="admin-table-row admin-table-head">
-              <span>Person</span>
-              <span>Status</span>
-              <span>Submitted</span>
-              <span>Actions</span>
+            <div className="admin-count-grid">
+              {Object.entries(deletePreview.counts).map(([label, count]) => (
+                <div key={label} className="admin-count-card">
+                  <strong>{count}</strong>
+                  <span>{label.replace(/_/g, ' ')}</span>
+                </div>
+              ))}
             </div>
-            {waitlist.map(entry => (
-              <div key={entry.id} className="admin-table-row">
-                <span>
-                  <strong>{entry.display_name || entry.email}</strong>
-                  <small>{entry.email}</small>
-                </span>
-                <span className={`admin-status admin-status-${entry.status}`}>{statusLabel(entry.status)}</span>
-                <span>{formatDate(entry.created_at)}</span>
-                <span className="admin-row-actions">
-                  <button type="button" onClick={() => approveWaitlist(entry)} disabled={busy === `approve-${entry.id}` || entry.status === 'denied'}>
-                    Approve and invite
-                  </button>
-                  <button type="button" onClick={() => denyWaitlist(entry)} disabled={busy === `deny-${entry.id}` || entry.status === 'denied'}>
-                    Deny
-                  </button>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+            <label className="admin-label">
+              Type the user email to permanently delete this account
+              <input value={deleteEmailConfirm} onChange={event => setDeleteEmailConfirm(event.target.value)} />
+            </label>
+            <button
+              type="button"
+              className="admin-danger-button"
+              disabled={deleteEmailConfirm.trim().toLowerCase() !== deletePreview.user.email || busy === `delete-${deletePreview.user.id}`}
+              onClick={deleteAccount}
+            >
+              Permanently delete account
+            </button>
+          </section>
+        )}
 
-      {tab === 'audit' && (
-        <section className="admin-panel">
-          <div className="admin-section-heading">
-            <div>
-              <h2>Audit history</h2>
-              <p>Recent admin actions recorded by the isolated admin endpoints.</p>
-            </div>
-            <span>{audit.length} events</span>
-          </div>
-          <div className="admin-table">
-            <div className="admin-table-row admin-table-head">
-              <span>Action</span>
-              <span>Actor</span>
-              <span>Target</span>
-              <span>Created</span>
-            </div>
-            {audit.map(event => (
-              <div key={event.id} className="admin-table-row">
-                <span>{event.action}</span>
-                <span>{event.actor_email ?? 'System'}</span>
-                <span>
-                  <strong>{event.target_type}</strong>
-                  <small>{event.target_id}</small>
-                </span>
-                <span>{formatDate(event.created_at)}</span>
+        {tab === 'users' && (
+          <section className="admin-panel">
+            <div className="admin-section-heading">
+              <div>
+                <h2>Users</h2>
+                <p>Manual admin actions. Deletion requires a preview and exact email confirmation.</p>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              <span>{users.length} shown</span>
+            </div>
+            <div className="admin-table admin-users-table">
+              <div className="admin-table-row admin-table-head">
+                <span>Name</span>
+                <span>Email</span>
+                <span>Owned</span>
+                <span>Memberships</span>
+                <span>Last sign in</span>
+                <span>Actions</span>
+              </div>
+              {users.map(user => (
+                <div key={user.id} className="admin-table-row">
+                  <span className="admin-user-name">{user.display_name || user.email || 'Unnamed user'}</span>
+                  <span className="admin-user-email">{user.email}</span>
+                  <span>{user.owned_workspaces}</span>
+                  <span>{user.workspace_memberships}</span>
+                  <span>{formatDate(user.last_sign_in_at)}</span>
+                  <span className="admin-row-actions">
+                    <button type="button" onClick={() => resetPassword(user)} disabled={busy === `reset-${user.id}`}>
+                      Reset password
+                    </button>
+                    <button type="button" onClick={() => previewDelete(user)} disabled={busy === `preview-${user.id}`}>
+                      Preview deletion
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tab === 'waitlist' && (
+          <section className="admin-panel">
+            <div className="admin-section-heading">
+              <div>
+                <h2>Waitlist</h2>
+                <p>Waitlist signups stay pending until an admin explicitly approves and invites them.</p>
+              </div>
+              <span>{waitlist.length} entries</span>
+            </div>
+            <div className="admin-table admin-waitlist-table">
+              <div className="admin-table-row admin-table-head">
+                <span>Name</span>
+                <span>Email</span>
+                <span>Status</span>
+                <span>Submitted</span>
+                <span>Actions</span>
+              </div>
+              {waitlist.map(entry => (
+                <div key={entry.id} className="admin-table-row">
+                  <span className="admin-user-name">{entry.display_name || entry.email}</span>
+                  <span className="admin-user-email">{entry.email}</span>
+                  <span className={`admin-status admin-status-${entry.status}`}>{statusLabel(entry.status)}</span>
+                  <span>{formatDate(entry.created_at)}</span>
+                  <span className="admin-row-actions">
+                    <button type="button" onClick={() => approveWaitlist(entry)} disabled={busy === `approve-${entry.id}` || entry.status === 'denied'}>
+                      Approve and invite
+                    </button>
+                    <button type="button" onClick={() => denyWaitlist(entry)} disabled={busy === `deny-${entry.id}` || entry.status === 'denied'}>
+                      Deny
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </section>
     </main>
   )
 }

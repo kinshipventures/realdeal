@@ -47,6 +47,9 @@ describe('admin portal guardrails', () => {
     expect(adminLoginPage).toContain("fetch('/api/admin/me'")
     expect(adminLoginPage).toContain("credentials: 'include'")
     expect(adminLoginPage).toContain("adminrealdeal@admin.com")
+    expect(adminLoginPage).toContain('admin-auth-shell')
+    expect(adminLoginPage).toContain('Sign in')
+    expect(adminLoginPage).not.toContain('Continue with Google')
 
     expect(adminHelper).not.toContain('requireUser')
     expect(adminHelper).not.toContain('REALDEAL_ADMIN_EMAILS')
@@ -57,6 +60,17 @@ describe('admin portal guardrails', () => {
     expect(adminHelper).toContain('SameSite=Strict')
     expect(adminHelper).toContain('createHmac')
     expect(adminHelper).toContain('pbkdf2Sync')
+  })
+
+  it('keeps the visible admin navigation focused on users and waitlist only', () => {
+    const adminPage = read('src/components/admin/AdminPage.tsx')
+
+    expect(adminPage).toContain("setTab('users')")
+    expect(adminPage).toContain("setTab('waitlist')")
+    expect(adminPage).toContain('Sign out')
+    expect(adminPage).not.toContain('Audit')
+    expect(adminPage).not.toContain('Refresh')
+    expect(adminPage).not.toContain('/api/admin/audit')
   })
 
   it('requires isolated admin session access on every protected admin API', () => {
