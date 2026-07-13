@@ -1,4 +1,4 @@
-import { adminErrorStatus, getSupabaseAuthAdmin, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
+import { adminErrorStatus, getSupabaseAuthAdmin, normalizeAdminEmail, requireAdminSession, writeAdminAudit } from '../_lib/admin.js'
 import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
 
 type ApiRequest = {
@@ -15,7 +15,7 @@ type WaitlistAction = 'approve_waitlist_entry' | 'deny_waitlist_entry'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   try {
-    const { admin, user } = await requirePlatformAdmin(request)
+    const { admin, user } = await requireAdminSession(request)
 
     if (request.method === 'GET') {
       const { data, error } = await admin
@@ -51,7 +51,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         .from('waitlist_entries')
         .update({
           status: 'denied',
-          decided_by: user.id,
+          decided_by: null,
           decided_at: new Date().toISOString(),
           notes,
         })
@@ -61,7 +61,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
       if (error) throw error
       await writeAdminAudit(admin, {
-        actorUserId: user.id,
+        actorUserId: null,
         actorEmail: user.email,
         action: 'waitlist.denied',
         targetType: 'waitlist_entry',
@@ -95,7 +95,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         .update({
           status: invitedUserId ? 'invited' : 'approved',
           auth_user_id: invitedUserId,
-          decided_by: user.id,
+          decided_by: null,
           decided_at: new Date().toISOString(),
           invite_sent_at: new Date().toISOString(),
           notes,
@@ -110,7 +110,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
       if (error) throw error
       await writeAdminAudit(admin, {
-        actorUserId: user.id,
+        actorUserId: null,
         actorEmail: user.email,
         action: 'waitlist.approved',
         targetType: 'waitlist_entry',

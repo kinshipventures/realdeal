@@ -13,9 +13,12 @@ describe('admin portal guardrails', () => {
   it('keeps the admin route isolated from the normal app shell', () => {
     const app = read('src/App.tsx')
 
+    expect(app).toContain("path=\"admin-login\"")
     expect(app).toContain("path=\"admin\"")
+    expect(app).toContain("import('./components/admin/AdminLoginPage')")
     expect(app).toContain("import('./components/admin/AdminPage')")
     expect(app.indexOf('path="admin"')).toBeLessThan(app.indexOf('<Route element={<AppShell />}>'))
+    expect(app.indexOf('path="admin"')).toBeLessThan(app.indexOf('<Route element={<RequireAuth />}>'))
 
     const possibleSidebarPaths = [
       'src/components/layout/AppSidebar.tsx',
@@ -30,9 +33,38 @@ describe('admin portal guardrails', () => {
     }
   })
 
-  it('requires platform admin access on every admin API', () => {
+  it('keeps admin auth separate from normal app auth', () => {
+    const adminPage = read('src/components/admin/AdminPage.tsx')
+    const adminLoginPage = read('src/components/admin/AdminLoginPage.tsx')
+    const adminHelper = read('api/_lib/admin.ts')
+
+    expect(adminPage).not.toContain('useAuth')
+    expect(adminPage).not.toContain('session.access_token')
+    expect(adminPage).not.toContain('Authorization')
+    expect(adminPage).not.toContain('Back to app')
+    expect(adminPage).toContain("credentials: 'include'")
+
+    expect(adminLoginPage).toContain("fetch('/api/admin/login'")
+    expect(adminLoginPage).toContain("credentials: 'include'")
+    expect(adminLoginPage).toContain("adminrealdeal@admin.com")
+
+    expect(adminHelper).not.toContain('requireUser')
+    expect(adminHelper).not.toContain('REALDEAL_ADMIN_EMAILS')
+    expect(adminHelper).toContain('REALDEAL_ADMIN_EMAIL')
+    expect(adminHelper).toContain('REALDEAL_ADMIN_PASSWORD_HASH')
+    expect(adminHelper).toContain('ADMIN_SESSION_SECRET')
+    expect(adminHelper).toContain('HttpOnly')
+    expect(adminHelper).toContain('SameSite=Strict')
+    expect(adminHelper).toContain('createHmac')
+    expect(adminHelper).toContain('pbkdf2Sync')
+  })
+
+  it('requires isolated admin session access on every protected admin API', () => {
     for (const relativePath of ['api/admin/me.ts', 'api/admin/users.ts', 'api/admin/waitlist.ts', 'api/admin/audit.ts']) {
-      expect(read(relativePath)).toContain('requirePlatformAdmin')
+      const api = read(relativePath)
+      expect(api).toContain('requireAdminSession')
+      expect(api).not.toContain('requirePlatformAdmin')
+      expect(api).not.toContain('requireUser')
     }
   })
 
@@ -42,9 +74,18 @@ describe('admin portal guardrails', () => {
     expect(usersApi).toContain('delete_preview')
     expect(usersApi).toContain('delete_confirm')
     expect(usersApi).toContain('confirm_email')
-    expect(usersApi).toContain('targetUserId === user.id')
+    expect(usersApi).toContain('protectedAdminEmail')
     expect(usersApi).toContain('Email confirmation does not match')
     expect(usersApi).toContain('It does not delete contacts owned by other users')
+  })
+
+  it('does not store personal admin credentials in admin source', () => {
+    for (const relativePath of ['api/_lib/admin.ts', 'api/admin/login.ts', 'src/components/admin/AdminPage.tsx', 'src/components/admin/AdminLoginPage.tsx']) {
+      const source = read(relativePath).toLowerCase()
+      expect(source).not.toContain('juan.zuluaga')
+      expect(source).not.toContain('withtrolley')
+      expect(source).not.toContain('gmail.com')
+    }
   })
 
   it('keeps waitlist signups stored without creating users automatically', () => {

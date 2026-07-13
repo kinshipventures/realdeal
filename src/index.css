@@ -2191,9 +2191,13 @@ body::after {
 }
 
 .admin-tab,
+.admin-primary-button,
 .admin-secondary-button,
 .admin-row-actions button,
 .admin-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 36px;
   border-radius: 8px;
   border: 1px solid var(--color-border);
@@ -2202,9 +2206,11 @@ body::after {
   padding: 0 14px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .admin-tab-active,
+.admin-primary-button,
 .admin-danger-button {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -2217,6 +2223,7 @@ body::after {
 }
 
 .admin-danger-button:disabled,
+.admin-primary-button:disabled,
 .admin-row-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -2234,6 +2241,16 @@ body::after {
 
 .admin-danger-panel {
   border-color: rgba(185, 28, 28, 0.32);
+}
+
+.admin-login-panel {
+  width: min(100%, 420px);
+}
+
+.admin-login-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
 }
 
 .admin-message {

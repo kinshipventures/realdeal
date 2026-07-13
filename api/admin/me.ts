@@ -1,4 +1,4 @@
-import { adminErrorStatus, requirePlatformAdmin } from '../_lib/admin.js'
+import { adminErrorStatus, requireAdminSession } from '../_lib/admin.js'
 import { json, methodNotAllowed } from '../_lib/http.js'
 
 type ApiRequest = {
@@ -14,12 +14,12 @@ type ApiResponse = {
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   try {
     if (request.method !== 'GET') return methodNotAllowed(response)
-    const { role, user } = await requirePlatformAdmin(request)
+    const { role, user } = await requireAdminSession(request)
     return json(response, 200, {
       admin: true,
       role,
       user: {
-        id: user.id,
+        id: user.id ?? null,
         email: user.email ?? null,
       },
     })

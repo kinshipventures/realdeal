@@ -47,6 +47,7 @@ const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow
 const LearnPage = lazy(() => import('./components/learn/LearnPage').then(m => ({ default: m.LearnPage })))
 const ChangelogPage = lazy(() => import('./components/changelog/ChangelogPage').then(m => ({ default: m.ChangelogPage })))
 const AdminPage = lazy(() => import('./components/admin/AdminPage'))
+const AdminLoginPage = lazy(() => import('./components/admin/AdminLoginPage'))
 
 const BG = 'var(--color-bg)'
 const SHOW_APP_CHAT_PANEL = false
@@ -426,8 +427,9 @@ export default function App() {
       <Route path="map" element={<Navigate to="/pods" replace />} />
       <Route path="invite" element={<AcceptInvitePage />} />
       <Route index element={<LandingRedirect />} />
+      <Route path="admin-login" element={<Suspense fallback={null}><AdminLoginPage /></Suspense>} />
+      <Route path="admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
       <Route element={<RequireAuth />}>
-        <Route path="admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
         <Route element={<AppShell />}>
           <Route path="pods" element={<OrbMap />} />
           <Route path="pods/:podName" element={<OrbMap />} />

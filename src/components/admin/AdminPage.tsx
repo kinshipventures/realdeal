@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
-import { useAuth } from '@/contexts/AuthContext'
+import { useCallback, useEffect, useState } from 'react'
 
 type AdminMe = {
   admin: boolean
   role?: string
   user?: {
-    id: string
+    id: string | null
     email: string | null
   }
   error?: string
@@ -72,8 +70,6 @@ function statusLabel(status: string) {
 }
 
 export default function AdminPage() {
-  const { session } = useAuth()
-  const navigate = useNavigate()
   const [me, setMe] = useState<AdminMe | null>(null)
   const [tab, setTab] = useState<AdminTab>('users')
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -87,26 +83,22 @@ export default function AdminPage() {
   const [deleteEmailConfirm, setDeleteEmailConfirm] = useState('')
   const [resetLink, setResetLink] = useState<string | null>(null)
 
-  const authHeader = useMemo(() => {
-    const token = session?.access_token
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  }, [session?.access_token])
-
   const adminFetch = useCallback(
     async <T,>(path: string, init: RequestInit = {}): Promise<T> => {
       const response = await fetch(path, {
         ...init,
+        credentials: 'include',
         headers: {
-          ...authHeader,
           ...(init.body ? { 'Content-Type': 'application/json' } : {}),
           ...init.headers,
         },
       })
       const payload = await response.json().catch(() => ({}))
+      if (response.status === 401) window.location.assign('/admin-login')
       if (!response.ok) throw new Error(payload.error ?? 'Admin request failed')
       return payload as T
     },
-    [authHeader],
+    [],
   )
 
   const loadUsers = useCallback(async () => {
@@ -131,7 +123,6 @@ export default function AdminPage() {
   }, [loadAudit, loadUsers, loadWaitlist])
 
   useEffect(() => {
-    if (!session?.access_token) return
     let cancelled = false
     setLoading(true)
     adminFetch<AdminMe>('/api/admin/me')
@@ -150,7 +141,12 @@ export default function AdminPage() {
     return () => {
       cancelled = true
     }
-  }, [adminFetch, refresh, session?.access_token])
+  }, [adminFetch, refresh])
+
+  const logout = () => {
+    void fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
+      .finally(() => window.location.assign('/admin-login'))
+  }
 
   const runAction = async (key: string, action: () => Promise<void>) => {
     setBusy(key)
@@ -236,9 +232,7 @@ export default function AdminPage() {
           <p className="admin-eyebrow">Real Deal Admin</p>
           <h1>Access restricted</h1>
           <p>{me?.error ?? 'This page is only available to platform admins.'}</p>
-          <button type="button" className="admin-secondary-button" onClick={() => navigate('/relationships')}>
-            Back to app
-          </button>
+          <a className="admin-secondary-button" href="/admin-login">Admin sign in</a>
         </section>
       </main>
     )
@@ -254,8 +248,8 @@ export default function AdminPage() {
         </div>
         <div className="admin-header-actions">
           <span>{me.user?.email}</span>
-          <button type="button" className="admin-secondary-button" onClick={() => navigate('/relationships')}>
-            Back to app
+          <button type="button" className="admin-secondary-button" onClick={logout}>
+            Sign out
           </button>
         </div>
       </header>

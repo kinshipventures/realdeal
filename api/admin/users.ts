@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { adminErrorStatus, asMetadataRecord, getSupabaseAuthAdmin, normalizeAdminEmail, requirePlatformAdmin, writeAdminAudit } from '../_lib/admin.js'
+import { adminErrorStatus, asMetadataRecord, getSupabaseAuthAdmin, normalizeAdminEmail, requireAdminSession, writeAdminAudit } from '../_lib/admin.js'
 import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
 
 type ApiRequest = {
@@ -169,9 +169,14 @@ async function listUsers(admin: SupabaseClient, page: number, perPage: number) {
   }
 }
 
-async function deleteAccount(admin: SupabaseClient, userId: string, confirmEmail: string) {
+async function deleteAccount(admin: SupabaseClient, userId: string, confirmEmail: string, protectedAdminEmail: string) {
   const preview = await buildDeletePreview(admin, userId)
   const email = normalizeAdminEmail(preview.user.email)
+  if (email && email === normalizeAdminEmail(protectedAdminEmail)) {
+    const protectedAdmin = new Error('This account is reserved for admin access and cannot be deleted here')
+    ;(protectedAdmin as any).statusCode = 400
+    throw protectedAdmin
+  }
   if (!email || normalizeAdminEmail(confirmEmail) !== email) {
     const mismatch = new Error('Email confirmation does not match')
     ;(mismatch as any).statusCode = 400
@@ -250,7 +255,7 @@ async function deleteAccount(admin: SupabaseClient, userId: string, confirmEmail
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   try {
-    const { admin, user } = await requirePlatformAdmin(request)
+    const { admin, user } = await requireAdminSession(request)
 
     if (request.method === 'GET') {
       const rawPage = Number(asString(request.query?.page) || '1')
@@ -267,14 +272,13 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     const targetUserId = asString(body.target_user_id)
 
     if (!targetUserId) return json(response, 400, { error: 'Target user is required' })
-    if (targetUserId === user.id && action === 'delete_confirm') {
-      return json(response, 400, { error: 'Admins cannot delete their current signed-in account from this session' })
-    }
-
     if (action === 'delete_preview') {
       const preview = await buildDeletePreview(admin, targetUserId)
+      if (preview.user.email === user.email) {
+        return json(response, 400, { error: 'This account is reserved for admin access and cannot be deleted here' })
+      }
       await writeAdminAudit(admin, {
-        actorUserId: user.id,
+        actorUserId: null,
         actorEmail: user.email,
         action: 'user.delete_previewed',
         targetType: 'auth_user',
@@ -296,7 +300,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       if (error) throw error
 
       await writeAdminAudit(admin, {
-        actorUserId: user.id,
+        actorUserId: null,
         actorEmail: user.email,
         action: 'user.password_reset_link_created',
         targetType: 'auth_user',
@@ -311,9 +315,9 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
     if (action === 'delete_confirm') {
       const confirmEmail = asString(body.confirm_email)
-      const result = await deleteAccount(admin, targetUserId, confirmEmail)
+      const result = await deleteAccount(admin, targetUserId, confirmEmail, user.email)
       await writeAdminAudit(admin, {
-        actorUserId: user.id,
+        actorUserId: null,
         actorEmail: user.email,
         action: 'user.deleted',
         targetType: 'auth_user',

@@ -228,11 +228,12 @@ function checkNoAuthUserDeletion() {
   const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.sql'])
   const allowedAdminDeletionFile = 'api/admin/users.ts'
   const requiredAdminDeletionGuards = [
-    'requirePlatformAdmin',
+    'requireAdminSession',
     'delete_preview',
     'delete_confirm',
     'confirm_email',
-    'targetUserId === user.id',
+    'protectedAdminEmail',
+    'This account is reserved for admin access',
     'buildDeletePreview',
   ]
   const banned = [
