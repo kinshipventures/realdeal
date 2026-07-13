@@ -8,6 +8,8 @@ import {
   CONTACT_DISPLAY_SECTION_OPTIONS,
   CONTACT_STANDARD_PROPERTY_OPTIONS,
   DEFAULT_CONTACT_DISPLAY_SETTINGS,
+  displaySectionVisibilityId,
+  standardFieldVisibilityId,
   type ContactDisplaySettings,
   type ContactDisplaySectionId,
   type ContactDisplaySectionOption,
@@ -837,9 +839,10 @@ export function PropertiesTab() {
   const filteredContacts = useMemo(() => {
     const query = contactQuery.trim().toLowerCase()
     if (!query) return []
+    const targetType = objectType === 'Company' ? 'Company' : 'Contact'
 
     return contacts
-      .filter(contact => contact.type !== 'Company')
+      .filter(contact => contact.type === targetType)
       .filter(contact => {
         const haystack = [contact.name, contact.company, contact.email]
           .filter(Boolean)
@@ -848,19 +851,21 @@ export function PropertiesTab() {
         return haystack.includes(query)
       })
       .slice(0, 8)
-  }, [contacts, contactQuery])
+  }, [contacts, contactQuery, objectType])
 
   const toggleSection = useCallback((id: string) => {
+    const visibilityId = displaySectionVisibilityId(objectType, id)
     updateSettings(current => replaceSettings(current, {
-      hiddenSectionIds: toggleValue(current.hiddenSectionIds, id) as ContactDisplaySettings['hiddenSectionIds'],
+      hiddenSectionIds: toggleValue(current.hiddenSectionIds, visibilityId),
     }))
-  }, [updateSettings])
+  }, [objectType, updateSettings])
 
   const toggleStandardField = useCallback((id: string) => {
+    const visibilityId = standardFieldVisibilityId(objectType, id)
     updateSettings(current => replaceSettings(current, {
-      hiddenStandardFieldIds: toggleValue(current.hiddenStandardFieldIds, id),
+      hiddenStandardFieldIds: toggleValue(current.hiddenStandardFieldIds, visibilityId),
     }))
-  }, [updateSettings])
+  }, [objectType, updateSettings])
 
   const toggleFieldConfig = useCallback((id: string) => {
     updateSettings(current => replaceSettings(current, {
@@ -1142,7 +1147,8 @@ export function PropertiesTab() {
         .map(id => optionById.get(id))
         .filter((option): option is PropertyOption => Boolean(option))
         .map(option => {
-          const checked = !settings.hiddenStandardFieldIds.includes(option.id)
+          const visibilityId = standardFieldVisibilityId(objectType, option.id)
+          const checked = !settings.hiddenStandardFieldIds.includes(visibilityId)
           return {
             ...option,
             objectType,
@@ -1183,7 +1189,8 @@ export function PropertiesTab() {
 
     const sectionRows = orderedSections
       .flatMap(section => {
-        const checked = !settings.hiddenSectionIds.includes(section.id)
+        const sectionVisibilityId = displaySectionVisibilityId(objectType, section.id)
+        const checked = !settings.hiddenSectionIds.includes(sectionVisibilityId)
         const rowsForSection: PropertyRow[] = [{
           ...section,
           label: contactDetailSectionLabel(section.id, section.label, objectType),
@@ -1252,7 +1259,7 @@ export function PropertiesTab() {
           if (section.id === 'details') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['name', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'notes'],
+              ['name', 'contacts', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'stage', 'domain', 'location', 'notes'],
               1,
             ))
           }
@@ -1260,10 +1267,14 @@ export function PropertiesTab() {
           if (section.id === 'ways_to_contact') {
             rowsForSection.push(...standardFieldRows(
               standardOptions,
-              ['email', 'phone', 'address', 'city', 'state', 'country', 'global_region'],
+              ['email', 'email_2', 'email_3', 'phone', 'address', 'city', 'state', 'country', 'global_region'],
               1,
             ))
           }
+
+          if (section.id === 'pods') rowsForSection.push(...podRows(1))
+          if (section.id === 'sub_pods') rowsForSection.push(...subPodRows(1))
+          if (section.id === 'campaigns') rowsForSection.push(...campaignRows(1))
         }
 
         return rowsForSection
@@ -1358,7 +1369,7 @@ export function PropertiesTab() {
             Properties
           </h2>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.45 }}>
-            {selectedContact ? `Only ${selectedContact.name}` : 'All contacts'}
+            {selectedContact ? `Only ${selectedContact.name}` : objectType === 'Company' ? 'All companies' : 'All contacts'}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1415,7 +1426,7 @@ export function PropertiesTab() {
       </div>
 
       <div style={{ display: 'grid', gap: 8, marginBottom: 18, position: 'relative' }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>Contact scope</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>{objectType === 'Company' ? 'Company scope' : 'Contact scope'}</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: 420 }}>
             <Search size={14} style={{
@@ -1433,7 +1444,7 @@ export function PropertiesTab() {
                 setContactQuery(event.target.value)
                 if (selectedContactId) setSelectedContactId(null)
               }}
-              placeholder="Search a contact"
+              placeholder={objectType === 'Company' ? 'Search a company' : 'Search a contact'}
               style={{
                 width: '100%',
                 height: 40,
@@ -1510,7 +1521,7 @@ export function PropertiesTab() {
                   >
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>{contact.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
-                      {[contact.company, contact.email].filter(Boolean).join(' · ') || 'Contact'}
+                      {[contact.company, contact.email].filter(Boolean).join(' · ') || contact.type}
                     </div>
                   </button>
                 ))}
@@ -1537,7 +1548,7 @@ export function PropertiesTab() {
                   setSelectedContactId(null)
                   setContactQuery('')
                 }}
-                aria-label="Use all contacts"
+                aria-label={objectType === 'Company' ? 'Use all companies' : 'Use all contacts'}
                 style={{
                   width: 20,
                   height: 20,
@@ -1565,6 +1576,8 @@ export function PropertiesTab() {
           value={objectType}
           onChange={event => {
             setObjectType(event.target.value as PropertyObjectType)
+            setSelectedContactId(null)
+            setContactQuery('')
             setShowCreateProperty(false)
             setCreatePropertyError(null)
           }}

@@ -32,7 +32,7 @@ export interface ContactDisplaySectionOption extends PropertyOption {
 }
 
 export interface ContactDisplaySettings {
-  hiddenSectionIds: ContactDisplaySectionId[]
+  hiddenSectionIds: string[]
   hiddenStandardFieldIds: string[]
   hiddenFieldConfigIds: string[]
   hiddenPodIds: string[]
@@ -228,6 +228,10 @@ export const CONTACT_STANDARD_PROPERTY_OPTIONS: PropertyOption[] = [
 
 export const COMPANY_STANDARD_PROPERTY_OPTIONS: PropertyOption[] = [
   { id: 'name', label: 'Company Name', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'contacts', label: 'Contacts', fieldType: 'Linked records', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'stage', label: 'Stage', fieldType: 'Single select', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'domain', label: 'Domain', fieldType: 'URL', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
+  { id: 'location', label: 'Location', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'email', label: 'Email', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'phone', label: 'Phone', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
   { id: 'address', label: 'Address', fieldType: 'Single-line text', group: 'Company information', objectType: 'Company', ownerLabel: 'Real Deal' },
@@ -259,7 +263,7 @@ export function normalizeContactDisplaySettings(value: unknown): ContactDisplayS
     : {}
 
   return {
-    hiddenSectionIds: normalizeStringArray(raw.hiddenSectionIds) as ContactDisplaySectionId[],
+    hiddenSectionIds: normalizeStringArray(raw.hiddenSectionIds),
     hiddenStandardFieldIds: normalizeStringArray(raw.hiddenStandardFieldIds),
     hiddenFieldConfigIds: normalizeStringArray(raw.hiddenFieldConfigIds),
     hiddenPodIds: normalizeStringArray(raw.hiddenPodIds),
@@ -427,6 +431,30 @@ export function isSectionVisible(settings: ContactDisplaySettings, sectionId: Co
 
 export function isStandardFieldVisible(settings: ContactDisplaySettings, fieldId: string): boolean {
   return !settings.hiddenStandardFieldIds.includes(fieldId)
+}
+
+export function displaySectionVisibilityId(objectType: PropertyObjectType | 'Both', sectionId: string): string {
+  return objectType === 'Company' ? `company:${sectionId}` : sectionId
+}
+
+export function standardFieldVisibilityId(objectType: PropertyObjectType | 'Both', fieldId: string): string {
+  return objectType === 'Company' ? `company:${fieldId}` : fieldId
+}
+
+export function isSectionVisibleForObject(
+  settings: ContactDisplaySettings,
+  objectType: PropertyObjectType | 'Both',
+  sectionId: string,
+): boolean {
+  return !settings.hiddenSectionIds.includes(displaySectionVisibilityId(objectType, sectionId))
+}
+
+export function isStandardFieldVisibleForObject(
+  settings: ContactDisplaySettings,
+  objectType: PropertyObjectType | 'Both',
+  fieldId: string,
+): boolean {
+  return !settings.hiddenStandardFieldIds.includes(standardFieldVisibilityId(objectType, fieldId))
 }
 
 export function isFieldConfigVisible(settings: ContactDisplaySettings, fieldConfigId: string): boolean {

@@ -14,7 +14,7 @@ import { CAMPAIGN_COMMITMENT_AMOUNT_FIELD, formatMoney, getCampaignContactCampai
 import { avatarHue, initials } from '../../lib/utils'
 import { syncGmailActivity } from '../../lib/googleIntegration'
 import { useEscape } from '../../lib/escapeStack'
-import { isSectionVisible, isStandardFieldVisible, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
+import { isSectionVisibleForObject, isStandardFieldVisibleForObject, type ContactDisplaySectionId } from '../../lib/contactDisplaySettings'
 import { DEFAULT_KINSHIP_INVESTMENTS } from '../../lib/kinshipInvestments'
 import { useContactDisplaySettings } from '../../hooks/useContactDisplaySettings'
 import { useWorkspace } from '../../contexts/WorkspaceContext'
@@ -828,11 +828,13 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
 
   function sectionVisible(sectionId: ContactDisplaySectionId): boolean {
     if (isInboundSharedContact && sectionId === 'recent_activity') return false
-    return isSectionVisible(displaySettings, sectionId) && scopeAllowsSharedSection(sectionId)
+    const recordType = (draft.type ?? contact?.type ?? 'Contact') as Contact['type']
+    return isSectionVisibleForObject(displaySettings, recordType, sectionId) && scopeAllowsSharedSection(sectionId)
   }
 
   function standardFieldVisible(fieldId: string): boolean {
-    return isStandardFieldVisible(displaySettings, fieldId) && scopeAllowsSharedField(fieldId)
+    const recordType = (draft.type ?? contact?.type ?? 'Contact') as Contact['type']
+    return isStandardFieldVisibleForObject(displaySettings, recordType, fieldId) && scopeAllowsSharedField(fieldId)
   }
 
   useEffect(() => {

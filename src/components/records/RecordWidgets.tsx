@@ -2,8 +2,11 @@ import { useMemo } from 'react'
 import type { Category, Contact, Interaction, Pod } from '../../lib/types'
 import type { FieldConfig } from '../../lib/fieldConfig'
 import {
+  COMPANY_STANDARD_PROPERTY_OPTIONS,
+  CONTACT_STANDARD_PROPERTY_OPTIONS,
   DEFAULT_CONTACT_DISPLAY_SETTINGS,
-  isSectionVisible,
+  isSectionVisibleForObject,
+  isStandardFieldVisibleForObject,
   type ContactDisplaySectionId,
   type ContactDisplaySettings,
 } from '../../lib/contactDisplaySettings'
@@ -119,7 +122,14 @@ export function RecordWidgets({
   missingFieldCount,
   displaySettings = DEFAULT_CONTACT_DISPLAY_SETTINGS,
 }: RecordWidgetsProps) {
-  const hiddenStandardFieldIds = useMemo(() => new Set(displaySettings.hiddenStandardFieldIds), [displaySettings.hiddenStandardFieldIds])
+  const hiddenStandardFieldIds = useMemo(() => {
+    const options = contact.type === 'Company' ? COMPANY_STANDARD_PROPERTY_OPTIONS : CONTACT_STANDARD_PROPERTY_OPTIONS
+    return new Set(
+      options
+        .filter(option => !isStandardFieldVisibleForObject(displaySettings, contact.type, option.id))
+        .map(option => option.id),
+    )
+  }, [contact.type, displaySettings])
   const hiddenFieldConfigIds = useMemo(() => new Set(displaySettings.hiddenFieldConfigIds), [displaySettings.hiddenFieldConfigIds])
   const hiddenPodIds = useMemo(() => new Set(displaySettings.hiddenPodIds), [displaySettings.hiddenPodIds])
   const hiddenSubPodIds = useMemo(() => new Set(displaySettings.hiddenSubPodIds), [displaySettings.hiddenSubPodIds])
@@ -158,7 +168,7 @@ export function RecordWidgets({
   }, [contact.kv_fund_investor, displaySettings.hiddenFieldOptionValues])
 
   function sectionVisible(sectionId: ContactDisplaySectionId) {
-    return isSectionVisible(displaySettings, sectionId)
+    return isSectionVisibleForObject(displaySettings, contact.type, sectionId)
   }
 
   const requiredFieldKeys = useMemo(() => {
