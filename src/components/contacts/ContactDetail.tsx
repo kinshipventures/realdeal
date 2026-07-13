@@ -3342,7 +3342,9 @@ export function ContactDetail({ contact, categoryId, onClose, onSaved, onDeleted
     return fieldConfigs
         .filter(config => config.source_field_id.startsWith('custom_'))
         .filter(config => !hiddenFieldConfigIds.has(config.id))
-        .filter(config => config.scope_type === recordType || config.scope_type === 'Both')
+        .filter(config => recordType === 'Company'
+          ? config.scope_type === 'Company'
+          : config.scope_type === recordType || config.scope_type === 'Both')
         .filter(config => !config.scope_pod_id || assignedPodIds.includes(config.scope_pod_id))
         .sort((a, b) => a.display_order - b.display_order)
   }, [assignedPodIds, canShowCustomProperties, fieldConfigs, hiddenFieldConfigIds, recordType])

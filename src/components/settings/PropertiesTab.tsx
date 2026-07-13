@@ -133,6 +133,11 @@ function isCustomUserField(config: FieldConfig): boolean {
   return isCustomFieldConfig(config)
 }
 
+function fieldConfigAppliesToPropertiesObject(config: FieldConfig, objectType: PropertyObjectType): boolean {
+  if (objectType === 'Company') return config.scope_type === 'Company' && isCustomUserField(config)
+  return config.scope_type === objectType || config.scope_type === 'Both'
+}
+
 function propertyNameKey(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
@@ -793,7 +798,7 @@ export function PropertiesTab() {
     const names = new Set(standardOptions.map(option => propertyNameKey(option.label)))
 
     fieldConfigs
-      .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => fieldConfigAppliesToPropertiesObject(config, objectType))
       .forEach(config => names.add(propertyNameKey(config.name)))
 
     return names
@@ -813,7 +818,7 @@ export function PropertiesTab() {
     const customSections = new Map<string, PropertySectionOption>()
 
     fieldConfigs
-      .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => fieldConfigAppliesToPropertiesObject(config, objectType))
       .filter(config => isCustomUserField(config))
       .forEach(config => {
         const sectionId = fieldConfigDisplaySectionId(config, DEFAULT_PROPERTY_SECTION_ID)
@@ -1281,7 +1286,7 @@ export function PropertiesTab() {
       })
 
     const customRows = fieldConfigs
-      .filter(config => config.scope_type === objectType || config.scope_type === 'Both')
+      .filter(config => fieldConfigAppliesToPropertiesObject(config, objectType))
       .filter(config => objectType !== 'Contact' || isCustomUserField(config))
       .filter(config => objectType !== 'Contact' || !REMOVED_CONTACT_PROPERTY_NAMES.has(normalizeRemovedPropertyName(config.name)))
       .sort((a, b) => a.display_order - b.display_order)

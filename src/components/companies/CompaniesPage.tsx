@@ -16,6 +16,7 @@ import {
   FIELD_CONFIGS_EVENT,
   fieldConfigDisplaySectionId,
   getFieldConfigs,
+  isCustomFieldConfig,
   type FieldConfig,
 } from '../../lib/fieldConfig'
 import { downloadRelationshipExportWorkbook } from '../../lib/relationshipExport'
@@ -402,7 +403,8 @@ export function CompaniesPage({
     })
 
     fieldConfigs
-      .filter(config => config.scope_type === 'Company' || config.scope_type === 'Both')
+      .filter(config => config.scope_type === 'Company')
+      .filter(config => isCustomFieldConfig(config))
       .filter(config => !hiddenFieldConfigIds.has(config.id))
       .filter(config => {
         const sectionId = fieldConfigDisplaySectionId(config, 'details')

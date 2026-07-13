@@ -52,6 +52,7 @@ describe('Company properties guardrails', () => {
 
     expect(propertiesTab).toContain('displaySectionVisibilityId(objectType, id)')
     expect(propertiesTab).toContain('standardFieldVisibilityId(objectType, id)')
+    expect(propertiesTab).toContain("if (objectType === 'Company') return config.scope_type === 'Company' && isCustomUserField(config)")
     expect(companyRows).toContain("'name', 'contacts', 'website', 'linkedin', 'companyType', 'industry', 'fundType', 'notes'")
     expect(companyRows).toContain("'email', 'phone', 'address', 'city', 'state', 'country', 'global_region'")
     expect(companyRows).not.toContain("'stage', 'domain', 'location'")
@@ -66,6 +67,8 @@ describe('Company properties guardrails', () => {
     const companiesPage = source('src/components/companies/CompaniesPage.tsx')
 
     expect(companiesPage).toContain('COMPANY_STANDARD_PROPERTY_OPTIONS')
+    expect(companiesPage).toContain("config.scope_type === 'Company'")
+    expect(companiesPage).toContain('isCustomFieldConfig(config)')
     expect(companiesPage).toContain('useContactDisplaySettings(activeWorkspace?.id)')
     expect(companiesPage).toContain('getFieldConfigs()')
     expect(companiesPage).toContain('FIELD_CONFIGS_EVENT')
@@ -85,5 +88,13 @@ describe('Company properties guardrails', () => {
     expect(companiesPage).toContain('includeSharedWorkspaceResources')
     expect(companiesPage).toContain('includeSharedWorkspaceResources ? getSharedContactsWithMe() : Promise.resolve([])')
     expect(companiesPage).toContain('projectSharedWorkspaceResources')
+  })
+
+  it('keeps the company card from inheriting contact-scoped custom properties', () => {
+    const contactDetail = source('src/components/contacts/ContactDetail.tsx')
+
+    expect(contactDetail).toContain("recordType === 'Company'")
+    expect(contactDetail).toContain("config.scope_type === 'Company'")
+    expect(contactDetail).toContain("config.scope_type === recordType || config.scope_type === 'Both'")
   })
 })
