@@ -91,6 +91,39 @@ describe('admin portal guardrails', () => {
     expect(usersApi).toContain('protectedAdminEmail')
     expect(usersApi).toContain('Email confirmation does not match')
     expect(usersApi).toContain('It does not delete contacts owned by other users')
+    expect(usersApi).toContain("admin.rpc('admin_purge_user_owned_storage'")
+    expect(usersApi).toContain('targetId: null')
+    expect(usersApi).not.toContain("delete({ count: 'exact' }).eq('created_by', userId)")
+    expect(usersApi).not.toContain('confirmed_email: normalizeAdminEmail(confirmEmail)')
+  })
+
+  it('limits admin account purge to the target user, incoming access, and owned workspaces', () => {
+    const migration = read('supabase/migrations/20260712213000_admin_account_purge_guardrails.sql')
+
+    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.admin_purge_user_owned_storage')
+    expect(migration).toContain("auth.role() <> 'service_role'")
+    expect(migration).toContain('REVOKE ALL ON FUNCTION public.admin_purge_user_owned_storage(uuid, text) FROM anon')
+    expect(migration).toContain('REVOKE ALL ON FUNCTION public.admin_purge_user_owned_storage(uuid, text) FROM authenticated')
+    expect(migration).toContain('WHERE user_id = target_user_id')
+    expect(migration).toContain("AND role = 'owner'::public.workspace_role")
+    expect(migration).toContain("subject_type = 'user'")
+    expect(migration).toContain('subject_id = target_user_id::text')
+    expect(migration).toContain('WHERE id = ANY(owned_workspace_ids)')
+    expect(migration).not.toContain('DELETE FROM public.collaboration_access_grants\n  WHERE created_by = target_user_id')
+    expect(migration).not.toContain('DELETE FROM public.collaboration_public_campaign_links\n  WHERE created_by = target_user_id')
+    expect(migration).not.toContain('DELETE FROM public.collaboration_approval_requests\n  WHERE requested_by = target_user_id')
+  })
+
+  it('keeps Gmail activity locked except during scoped admin account purge', () => {
+    const migration = read('supabase/migrations/20260712213000_admin_account_purge_guardrails.sql')
+
+    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.prevent_gmail_interaction_changes')
+    expect(migration).toContain("current_setting('realdeal.admin_account_purge_user_id', true)")
+    expect(migration).toContain("current_setting('realdeal.admin_account_purge_workspace_ids', true)")
+    expect(migration).toContain('OLD.workspace_id::text = ANY(purge_workspace_ids)')
+    expect(migration).toContain("RAISE EXCEPTION 'Gmail interactions cannot be deleted'")
+    expect(migration).toContain("RAISE EXCEPTION 'Gmail interactions cannot be edited'")
+    expect(migration).toContain("AND source = 'Gmail'::public.interaction_source")
   })
 
   it('does not store personal admin credentials in admin source', () => {

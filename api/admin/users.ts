@@ -35,10 +35,9 @@ const OWNED_WORKSPACE_TABLES = [
   'workspace_invites',
 ]
 
-const OPTIONAL_USER_TABLES = [
-  'gmail_sync_state',
-  'google_connections',
-]
+type AdminPurgeResult = {
+  deleted?: Record<string, number>
+}
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -57,13 +56,13 @@ async function countRows(query: any): Promise<number> {
   return count ?? 0
 }
 
-async function deleteRows(query: any): Promise<number> {
-  const { count, error } = await query
-  if (error) {
-    if (isMissingTable(error)) return 0
-    throw error
+function errorMessage(error: unknown): string | null {
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === 'string' && message.trim()) return message
   }
-  return count ?? 0
+  return null
 }
 
 async function getOwnedWorkspaceIds(admin: SupabaseClient, userId: string): Promise<string[]> {
@@ -184,68 +183,14 @@ async function deleteAccount(admin: SupabaseClient, userId: string, confirmEmail
   }
 
   const ownedWorkspaceIds = preview.owned_workspace_ids
-  const deleted: Record<string, number> = {}
+  const { data: purgeResult, error: purgeError } = await admin.rpc('admin_purge_user_owned_storage', {
+    target_user_id: userId,
+    target_email: email,
+  })
+  if (purgeError) throw purgeError
 
-  if (email) {
-    deleted.waitlist_entries = await deleteRows(
-      admin.from('waitlist_entries').delete({ count: 'exact' }).or(`auth_user_id.eq.${userId},email.eq.${email}`),
-    )
-    deleted.platform_admins = await deleteRows(
-      admin.from('platform_admins').delete({ count: 'exact' }).or(`user_id.eq.${userId},email.eq.${email}`),
-    )
-  }
-
-  deleted.incoming_access_grants = await deleteRows(
-    admin
-      .from('collaboration_access_grants')
-      .delete({ count: 'exact' })
-      .eq('subject_type', 'user')
-      .eq('subject_id', userId),
-  )
-  deleted.created_access_grants = await deleteRows(
-    admin.from('collaboration_access_grants').delete({ count: 'exact' }).eq('created_by', userId),
-  )
-  deleted.trusted_connections = await deleteRows(
-    admin
-      .from('collaboration_user_connections')
-      .delete({ count: 'exact' })
-      .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`),
-  )
-  deleted.approval_requests = await deleteRows(
-    admin
-      .from('collaboration_approval_requests')
-      .delete({ count: 'exact' })
-      .or(`requested_by.eq.${userId},approver_id.eq.${userId}`),
-  )
-  deleted.saved_views = await deleteRows(
-    admin.from('collaboration_saved_views').delete({ count: 'exact' }).eq('owner_user_id', userId),
-  )
-  deleted.pending_connection_shares = await deleteRows(
-    admin
-      .from('collaboration_pending_connection_shares')
-      .delete({ count: 'exact' })
-      .or(`subject_id.eq.${userId},created_by.eq.${userId}`),
-  )
-  deleted.public_campaign_links = await deleteRows(
-    admin.from('collaboration_public_campaign_links').delete({ count: 'exact' }).eq('created_by', userId),
-  )
-
-  for (const table of OPTIONAL_USER_TABLES) {
-    deleted[table] = await deleteRows(admin.from(table).delete({ count: 'exact' }).eq('user_id', userId))
-  }
-
-  if (ownedWorkspaceIds.length > 0) {
-    deleted.owned_workspace_access_grants = await deleteRows(
-      admin.from('collaboration_access_grants').delete({ count: 'exact' }).in('workspace_id', ownedWorkspaceIds),
-    )
-    deleted.owned_workspace_approval_requests = await deleteRows(
-      admin.from('collaboration_approval_requests').delete({ count: 'exact' }).in('workspace_id', ownedWorkspaceIds),
-    )
-    deleted.owned_workspaces = await deleteRows(admin.from('workspaces').delete({ count: 'exact' }).in('id', ownedWorkspaceIds))
-  }
-
-  deleted.workspace_memberships = await deleteRows(admin.from('workspace_members').delete({ count: 'exact' }).eq('user_id', userId))
-  deleted.profile = await deleteRows(admin.from('profiles').delete({ count: 'exact' }).eq('id', userId))
+  const deleted = ((purgeResult as AdminPurgeResult | null)?.deleted ?? {}) as Record<string, number>
+  deleted.preview_owned_workspaces = ownedWorkspaceIds.length
 
   const deleteResult = await getSupabaseAuthAdmin(admin).deleteUser(userId)
   if (deleteResult.error) throw deleteResult.error
@@ -321,9 +266,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         actorEmail: user.email,
         action: 'user.deleted',
         targetType: 'auth_user',
-        targetId: targetUserId,
+        targetId: null,
         metadata: {
-          confirmed_email: normalizeAdminEmail(confirmEmail),
           deleted: result.deleted,
         },
       })
@@ -334,14 +278,15 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   } catch (error) {
     console.error('Admin users request failed', error)
     const status = adminErrorStatus(error)
+    const message = errorMessage(error)
     return json(response, status, {
       error:
         status === 403
           ? 'Admin access required'
           : status === 401
             ? 'Unauthorized'
-            : error instanceof Error
-              ? error.message
+            : message
+              ? message
               : 'Could not process user admin request',
     })
   }
