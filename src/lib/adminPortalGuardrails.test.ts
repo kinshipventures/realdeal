@@ -44,7 +44,7 @@ describe('admin portal guardrails', () => {
     expect(adminPage).not.toContain('Back to app')
     expect(adminPage).toContain("credentials: 'include'")
 
-    expect(adminLoginPage).toContain("fetch('/api/admin/login'")
+    expect(adminLoginPage).toContain("fetch('/api/admin/me'")
     expect(adminLoginPage).toContain("credentials: 'include'")
     expect(adminLoginPage).toContain("adminrealdeal@admin.com")
 
@@ -80,7 +80,7 @@ describe('admin portal guardrails', () => {
   })
 
   it('does not store personal admin credentials in admin source', () => {
-    for (const relativePath of ['api/_lib/admin.ts', 'api/admin/login.ts', 'src/components/admin/AdminPage.tsx', 'src/components/admin/AdminLoginPage.tsx']) {
+    for (const relativePath of ['api/_lib/admin.ts', 'api/admin/me.ts', 'src/components/admin/AdminPage.tsx', 'src/components/admin/AdminLoginPage.tsx']) {
       const source = read(relativePath).toLowerCase()
       expect(source).not.toContain('juan.zuluaga')
       expect(source).not.toContain('withtrolley')

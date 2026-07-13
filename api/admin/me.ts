@@ -1,9 +1,17 @@
-import { adminErrorStatus, requireAdminSession } from '../_lib/admin.js'
-import { json, methodNotAllowed } from '../_lib/http.js'
+import {
+  adminErrorStatus,
+  clearAdminSessionCookie,
+  normalizeAdminEmail,
+  requireAdminSession,
+  setAdminSessionCookie,
+  verifyAdminPassword,
+} from '../_lib/admin.js'
+import { json, methodNotAllowed, readJsonBody } from '../_lib/http.js'
 
 type ApiRequest = {
   method?: string
   headers?: Record<string, string | string[] | undefined>
+  body?: unknown
 }
 
 type ApiResponse = {
@@ -13,6 +21,28 @@ type ApiResponse = {
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   try {
+    if (request.method === 'POST') {
+      const body = await readJsonBody(request)
+      const email = normalizeAdminEmail(typeof body.email === 'string' ? body.email : '')
+      const password = typeof body.password === 'string' ? body.password : ''
+
+      if (!verifyAdminPassword(email, password)) {
+        return json(response, 401, { admin: false, error: 'Invalid admin credentials' })
+      }
+
+      setAdminSessionCookie(response, email)
+      return json(response, 200, {
+        admin: true,
+        role: 'owner',
+        user: { id: null, email },
+      })
+    }
+
+    if (request.method === 'DELETE') {
+      clearAdminSessionCookie(response)
+      return json(response, 200, { admin: false })
+    }
+
     if (request.method !== 'GET') return methodNotAllowed(response)
     const { role, user } = await requireAdminSession(request)
     return json(response, 200, {

@@ -144,7 +144,7 @@ export default function AdminPage() {
   }, [adminFetch, refresh])
 
   const logout = () => {
-    void fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
+    void fetch('/api/admin/me', { method: 'DELETE', credentials: 'include' })
       .finally(() => window.location.assign('/admin-login'))
   }
 
